@@ -1,0 +1,49 @@
+{
+  "name": "vensuite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fluentui-vue/file-type-icons": "^2.0.0",
+    "@iconify-prerendered/vue-file-icons": "^0.23.1702312002",
+    "@radix-icons/vue": "^1.0.0",
+    "@univerjs/core": "^0.1.6",
+    "@univerjs/data-validation": "^0.1.6",
+    "@univerjs/design": "^0.1.6",
+    "@univerjs/docs": "^0.1.6",
+    "@univerjs/docs-ui": "^0.1.6",
+    "@univerjs/engine-formula": "^0.1.6",
+    "@univerjs/engine-render": "^0.1.6",
+    "@univerjs/find-replace": "^0.1.6",
+    "@univerjs/sheets": "^0.1.6",
+    "@univerjs/sheets-formula": "^0.1.6",
+    "@univerjs/sheets-ui": "^0.1.6",
+    "@univerjs/slides": "^0.1.6",
+    "@univerjs/slides-ui": "^0.1.6",
+    "@univerjs/ui": "^0.1.6",
+    "@vueuse/core": "^10.9.0",
+    "axios": "^1.6.8",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "lucide-vue-next": "^0.364.0",
+    "radix-vue": "^1.6.2",
+    "tailwind-merge": "^2.2.2",
+    "tailwindcss-animate": "^1.0.7",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.4",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "autoprefixer": "^10.4.19",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0",
+    "vue-tsc": "^2.0.6"
+  }
+}
