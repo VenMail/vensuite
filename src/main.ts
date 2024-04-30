@@ -5,12 +5,14 @@ import RunSheet from './RunSheet.vue'
 import RunDoc from './RunDoc.vue'
 import RunSlide from './RunSlide.vue'
 import Home from './Home.vue'
+import OauthCallback from './services/OauthCallback.vue'
 
 const routes = [
     { path: '/', component: Home },
     { path: '/sheets', component: RunSheet },
     { path: '/slides', component: RunSlide },
-    { path: '/docs', component: RunDoc }
+    { path: '/docs', component: RunDoc },
+    { path: '/oauth/callback', component: OauthCallback }
 ]
 
 const router = createRouter({
