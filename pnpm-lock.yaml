@@ -83,12 +83,12 @@ importers:
       clsx:
         specifier: ^2.1.0
         version: 2.1.1
-      deep-diff:
-        specifier: ^1.0.2
-        version: 1.0.2
       lucide-vue-next:
         specifier: ^0.364.0
         version: 0.364.0(vue@3.4.27(typescript@5.4.5))
+      microdiff:
+        specifier: ^1.4.0
+        version: 1.4.0
       radix-vue:
         specifier: ^1.6.2
         version: 1.8.1(vue@3.4.27(typescript@5.4.5))
@@ -105,9 +105,9 @@ importers:
         specifier: ^4.3.0
         version: 4.3.2(vue@3.4.27(typescript@5.4.5))
     devDependencies:
-      '@types/deep-diff':
-        specifier: ^1.0.5
-        version: 1.0.5
+      '@types/json-diff':
+        specifier: ^1.0.3
+        version: 1.0.3
       '@types/node':
         specifier: ^20.12.4
         version: 20.12.12
@@ -600,11 +600,11 @@ packages:
     peerDependencies:
       vue: ^2.7.0 || ^3.0.0
 
-  '@types/deep-diff@1.0.5':
-    resolution: {integrity: sha512-PQyNSy1YMZU1hgZA5tTYfHPpUAo9Dorn1PZho2/budQLfqLu3JIP37JAavnwYpR1S2yFZTXa3hxaE4ifGW5jaA==}
-
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
+
+  '@types/json-diff@1.0.3':
+    resolution: {integrity: sha512-Qvxm8fpRMv/1zZR3sQWImeRK2mBYJji20xF51Fq9Gt//Ed18u0x6/FNLogLS1xhfUWTEmDyqveJqn95ltB6Kvw==}
 
   '@types/keyv@3.1.4':
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
@@ -1204,9 +1204,6 @@ packages:
     resolution: {integrity: sha512-BzRPQuY1ip+qDonAOz42gRm/pg9F768C+npV/4JOsxRC2sq+Rlk+Q4ZCAsOhnIaMrgarILY+RMUIvMmmX1qAEA==}
     engines: {node: '>=4'}
 
-  deep-diff@1.0.2:
-    resolution: {integrity: sha512-aWS3UIVH+NPGCD1kki+DCU9Dua032iSsO43LqQpcs4R3+dVv7tX0qBGjiVHJHjplsoUM2XRO/KB92glqc68awg==}
-
   deep-extend@0.6.0:
     resolution: {integrity: sha512-LOHxIOaPYdHlJRtCQfDIVZtfw/ufM8+rVj649RIHzcm/vGwQRXFt6OPqIFWsm2XEMrNIEtWR64sY1LEKD2vAOA==}
     engines: {node: '>=4.0.0'}
@@ -1682,6 +1679,9 @@ packages:
   merge2@1.4.1:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
+
+  microdiff@1.4.0:
+    resolution: {integrity: sha512-OBKBOa1VBznvLPb/3ljeJaENVe0fO0lnWl77lR4vhPlQD71UpjEoRV5P0KdQkcjbFlBu1Oy2mEUBMU3wxcBAGg==}
 
   micromatch@4.0.6:
     resolution: {integrity: sha512-Y4Ypn3oujJYxJcMacVgcs92wofTHxp9FzfDpQON4msDefoC0lb3ETvQLOdLcbhSwU1bz8HrL/1sygfBIHudrkQ==}
@@ -3099,9 +3099,9 @@ snapshots:
       '@tanstack/virtual-core': 3.5.0
       vue: 3.4.27(typescript@5.4.5)
 
-  '@types/deep-diff@1.0.5': {}
-
   '@types/estree@1.0.5': {}
+
+  '@types/json-diff@1.0.3': {}
 
   '@types/keyv@3.1.4':
     dependencies:
@@ -3752,8 +3752,6 @@ snapshots:
     dependencies:
       mimic-response: 1.0.1
 
-  deep-diff@1.0.2: {}
-
   deep-extend@0.6.0: {}
 
   defer-to-connect@1.1.3: {}
@@ -4197,6 +4195,8 @@ snapshots:
       yargs-parser: 10.1.0
 
   merge2@1.4.1: {}
+
+  microdiff@1.4.0: {}
 
   micromatch@4.0.6:
     dependencies:

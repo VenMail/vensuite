@@ -26,6 +26,7 @@ import { UniverSheetsFormulaPlugin } from "@univerjs/sheets-formula";
 import { UniverSheetsUIPlugin } from "@univerjs/sheets-ui";
 import { UniverUIPlugin } from "@univerjs/ui";
 import { onBeforeUnmount, onMounted, ref, watch, defineEmits, toRef } from "vue";
+import diff from "microdiff";
 
 const props = defineProps({
   // workbook data
@@ -49,12 +50,31 @@ const dataRef = toRef(props, 'data');
 watch(dataRef, (newValue, oldValue) => {
   if (oldValue == null || newValue.id !== oldValue.id) {
     console.log("Data value changed")
-    console.log(newValue)
-    console.log(oldValue)
     // Reinitialize with the new data
     init(newValue);
+  } else {
+    console.log(oldValue);
+    //sync changes probably
+    const differences = diff(newValue, oldValue);
+    console.log("diff", differences);
   }
 });
+
+// Function to send changes to the backend
+const sendChangesToBackend = async (changes: any) => {
+  try {
+    await fetch('https://app.venmail.io/api/v1/office/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(changes)
+    });
+    console.log('Changes sent to the backend');
+  } catch (error) {
+    console.error('Failed to send changes to the backend', error);
+  }
+};
 
 onMounted(() => {
   init(props.data);
@@ -132,6 +152,17 @@ const getData = () => {
   return workbook.value.getSnapshot();
 };
 
+/**
+ * Set workbook data
+ */
+const setData = (data: IWorkbookData) => {
+  if (!workbook.value) {
+    throw new Error('Workbook is not initialized');
+  }
+  workbook.value.load(data);
+  return workbook.value.getSnapshot();
+};
+
 const setName = (n: string) => {
   if (!workbook.value) {
     throw new Error('Workbook is not initialized');
@@ -143,6 +174,7 @@ const setName = (n: string) => {
 defineExpose({
   getData,
   setName,
+  setData,
   univerRef,
 });
 </script>

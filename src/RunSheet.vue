@@ -94,7 +94,8 @@ const togglePencil = (v: boolean) => {
 const iconRef = ref<HTMLElement | null>(null);
 onMounted(() => {
     watchEffect(() => {
-        if (route.params.id) {
+        if (route.params.id && title.value == "New Spreadsheet") {
+            console.log('efffect change', route.params.id);
             // Load data after route is initialized
             data.value = loadData(route.params.id as string);
 
@@ -108,17 +109,10 @@ onMounted(() => {
             const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, "#38a169").replace(/1em/g, "");
             const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || "")}`;
             useFavicon(iconDataURL);
-
-            getData();
         }
     });
 });
 
-// Get data from UniverSheet instance
-const getData = () => {
-    const result = univerRef.value?.getData();
-    console.log(JSON.stringify(result, null, 2));
-}
 </script>
 
 <style>
@@ -138,7 +132,8 @@ body {
     /** The height of the Union uses the height of the parent container */
     flex: 1;
 }
+
 [contenteditable="true"] {
-  outline: 2px dotted #38a160;
+    outline: 2px dotted #38a160;
 }
 </style>

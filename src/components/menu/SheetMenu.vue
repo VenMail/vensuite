@@ -179,7 +179,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, ref, onMounted } from 'vue';
+import { defineProps, defineEmits, ref, onMounted, watchEffect } from 'vue';
 import {
   Menubar,
   MenubarContent,
@@ -224,6 +224,7 @@ import { FUniver } from "@univerjs/facade";
 import { ICellData, IWorkbookData, Univer } from '@univerjs/core';
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data';
 import { useRouter } from 'vue-router';
+import diff from "microdiff";
 
 interface File {
   id: string;
@@ -245,13 +246,16 @@ let facadeAPI: FUniver | null = null;
 let disposable = null;
 
 onMounted(() => {
-  if (props.coreRef) {
-    facadeAPI = FUniver.newAPI(props.coreRef);
-    disposable = facadeAPI.onBeforeCommandExecute((command) => {
-      console.log(command);
-      // custom preprocessing logic before the command is executed
-    });
-  }
+  watchEffect(() => {
+    if (props.coreRef && !facadeAPI) {
+      facadeAPI = FUniver.newAPI(props.coreRef);
+      disposable = facadeAPI.onBeforeCommandExecute((command) => {
+        console.log("logging", command);
+        // custom preprocessing logic before the command is executed
+      });
+    }
+  });
+
   loadRecentFiles();
 });
 
@@ -278,12 +282,40 @@ const updateRecentFiles = (file: File) => {
   saveRecentFiles(recentFiles.value);
 };
 
+
+
+// Function to send changes to the backend
+const sendChangesToBackend = async (changes: any) => {
+  try {
+    await fetch('https://app.venmail.io/api/v1/office/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(changes)
+    });
+    console.log('Changes sent to the backend');
+  } catch (error) {
+    console.error('Failed to send changes to the backend', error);
+  }
+};
+
 const saveData = (data: IWorkbookData) => {
   //todo: we probably want to use our own custom ID
   //also show modal to set spreadsheet name
+  const oldData = localStorage.getItem(data.id);
+  if (oldData && props.univerRef) {
+
+    const oldValue = JSON.parse(oldData);
+    const differences = diff(data, oldValue);
+    sendChangesToBackend(JSON.stringify(differences));
+    console.log("diff", differences);
+  }
+
   localStorage.setItem(data.id, JSON.stringify(data));
   console.log('saved.. ', data.id);
   router.replace({ path: `/sheets/${data.id}` });
+
   updateRecentFiles({ id: data.id, name: data.name || "New Spreadsheet" });
 };
 
@@ -429,42 +461,65 @@ const formatStrikethrough = () => {
   }
 };
 
-const sort = async () => {
-  //todo: add direction
+const sort = async (ascending = true) => {
+  //todo: transfer formula/attributes of old cells to the new cells
+  //todo: adding rich sort where we sort the entire rows based on the column being sorted
   if (facadeAPI) {
     const workbook = facadeAPI.getActiveWorkbook();
     const worksheet = workbook?.getActiveSheet();
     const range = worksheet?.getSelection()?.getActiveRange();
+
     if (!range) {
       console.error('No active range selected');
       return;
     }
 
     // Gather the cell data
-    const cellData: ICellData[][] = [];
-    range.forEach((row, col, cell) => {
+    const cellData: (ICellData | null)[][] = [];
+    range.forEach((row: number, col: number, cell: ICellData) => {
       if (!cellData[row]) {
         cellData[row] = [];
       }
       cellData[row][col] = cell;
     });
 
-    // Convert cellData to an array of arrays of values
-    const values = cellData.map(row => row.map(cell => cell?.v || ''));
+    // Filter out rows that are completely null
+    const nonNullRows = cellData.filter(row => row.some(cell => cell !== null));
 
-    // Sort the values
-    values.sort((a, b) => {
+    // Convert cellData to an array of arrays of values
+    const values = nonNullRows.map(row => row.map(cell => cell?.v || null));
+
+    // Determine which columns are non-empty
+    const nonEmptyColumns = values[0].map((_, colIndex) =>
+      values.some(row => row[colIndex] !== null)
+    );
+
+    // Filter out the empty columns
+    const filteredValues = values.map(row => 
+      row.filter((_, colIndex) => nonEmptyColumns[colIndex])
+    );
+
+    // Sort the values considering null
+    filteredValues.sort((a, b) => {
       for (let i = 0; i < a.length; i++) {
-        if (a[i] < b[i]) return -1;
-        if (a[i] > b[i]) return 1;
+        const valA = a[i];
+        const valB = b[i];
+
+        if (valA === null && valB !== null) return ascending ? 1 : -1;
+        if (valA !== null && valB === null) return ascending ? -1 : 1;
+        if (valA === null && valB === null) continue;
+
+        if (valA! < valB!) return ascending ? -1 : 1;
+        if (valA! > valB!) return ascending ? 1 : -1;
       }
       return 0;
     });
 
     // Map sorted values back to cellData format
-    const sortedCellData = values.map(rowValues =>
+    const sortedCellData = filteredValues.map(rowValues =>
       rowValues.map(value => ({ v: value }))
     );
+    console.log('sortedCells', sortedCellData);
 
     // Set the sorted values back into the range
     range.setValues(sortedCellData);

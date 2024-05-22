@@ -34,8 +34,8 @@
     "axios": "^1.6.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "deep-diff": "^1.0.2",
     "lucide-vue-next": "^0.364.0",
+    "microdiff": "^1.4.0",
     "radix-vue": "^1.6.2",
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7",
@@ -43,7 +43,7 @@
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
-    "@types/deep-diff": "^1.0.5",
+    "@types/json-diff": "^1.0.3",
     "@types/node": "^20.12.4",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/compiler-sfc": "^3.4.27",
