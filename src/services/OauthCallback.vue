@@ -49,10 +49,10 @@ export default {
         }
       })
       .then(response => {
-        // Handle response
+        console.log(response);
       })
       .catch(error => {
-        // Handle error
+        toast
       });
     }
   }

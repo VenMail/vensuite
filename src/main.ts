@@ -10,6 +10,7 @@ import OauthCallback from './services/OauthCallback.vue'
 const routes = [
     { path: '/', component: Home },
     { path: '/sheets', component: RunSheet },
+    { path: '/sheets/:id', component: RunSheet },
     { path: '/slides', component: RunSlide },
     { path: '/docs', component: RunDoc },
     { path: '/oauth/callback', component: OauthCallback }

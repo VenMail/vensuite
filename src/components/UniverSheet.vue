@@ -8,7 +8,7 @@ import "@univerjs/ui/lib/index.css";
 import "@univerjs/sheets-ui/lib/index.css";
 import "@univerjs/sheets-formula/lib/index.css";
 
-import { LocaleType, Univer, Workbook } from "@univerjs/core";
+import { IWorkbookData, LocaleType, UnitModel, Univer, UniverInstanceType, Workbook } from "@univerjs/core";
 import { enUS as UniverDesignEnUS } from '@univerjs/design';
 import { enUS as UniverDocsUIEnUS } from '@univerjs/docs-ui';
 import { enUS as UniverSheetsEnUS } from '@univerjs/sheets';
@@ -25,10 +25,9 @@ import { UniverSheetsPlugin } from "@univerjs/sheets";
 import { UniverSheetsFormulaPlugin } from "@univerjs/sheets-formula";
 import { UniverSheetsUIPlugin } from "@univerjs/sheets-ui";
 import { UniverUIPlugin } from "@univerjs/ui";
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch, defineEmits, toRef } from "vue";
 
-
-const { data } = defineProps({
+const props = defineProps({
   // workbook data
   data: {
     type: Object,
@@ -37,11 +36,28 @@ const { data } = defineProps({
 });
 
 const univerRef = ref<Univer | null>(null);
-const workbook = ref<Workbook | null>(null);
+const workbook = ref<Workbook & UnitModel | null>(null);
 const container = ref<HTMLElement | null>(null);
+const emit = defineEmits(['univerRefChange']);
+
+watch(univerRef, (newValue) => {
+  emit('univerRefChange', newValue);
+});
+
+const dataRef = toRef(props, 'data');
+
+watch(dataRef, (newValue, oldValue) => {
+  if (oldValue == null || newValue.id !== oldValue.id) {
+    console.log("Data value changed")
+    console.log(newValue)
+    console.log(oldValue)
+    // Reinitialize with the new data
+    init(newValue);
+  }
+});
 
 onMounted(() => {
-  init(data);
+  init(props.data);
 });
 
 onBeforeUnmount(() => {
@@ -57,15 +73,15 @@ const init = (data = {}) => {
     theme: defaultTheme,
     locale: LocaleType.EN_US,
     locales: {
-    [LocaleType.EN_US]: {
-      ...UniverSheetsEnUS,
-      ...UniverDocsUIEnUS,
-      ...UniverSheetsUIEnUS,
-      ...UniverUIEnUS,
-      ...UniverDesignEnUS,
-      ...UniverSheetsFormulaUIEnUS
+      [LocaleType.EN_US]: {
+        ...UniverSheetsEnUS,
+        ...UniverDocsUIEnUS,
+        ...UniverSheetsUIEnUS,
+        ...UniverUIEnUS,
+        ...UniverDesignEnUS,
+        ...UniverSheetsFormulaUIEnUS
+      },
     },
-  },
   });
   univerRef.value = univer;
 
@@ -91,7 +107,9 @@ const init = (data = {}) => {
   univer.registerPlugin(UniverSheetsFormulaPlugin);
 
   // create workbook instance
-  workbook.value = univer.createUniverSheet(data);
+  workbook.value = univer.createUnit<IWorkbookData, Workbook & UnitModel>(UniverInstanceType.UNIVER_SHEET, data);
+  workbook.value.save();
+  console.log("initialize..." + data);
 };
 
 /**
@@ -114,8 +132,18 @@ const getData = () => {
   return workbook.value.getSnapshot();
 };
 
+const setName = (n: string) => {
+  if (!workbook.value) {
+    throw new Error('Workbook is not initialized');
+  }
+  workbook.value.setName(n);
+  return n;
+};
+
 defineExpose({
   getData,
+  setName,
+  univerRef,
 });
 </script>
 
@@ -128,6 +156,5 @@ defineExpose({
 }
 
 /* Also hide the menubar */
-:global(.univer-menubar) {
-}
+:global(.univer-menubar) {}
 </style>
