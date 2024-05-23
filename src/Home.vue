@@ -100,7 +100,7 @@ interface FileData {
   file_size: string;
 }
 
-const isAuthenticated = false;
+const isAuthenticated = ref(false);
 const searchValue = ref("");
 const authURL = "http://localhost:8000/auth/oauth";
 
@@ -128,6 +128,7 @@ const toggleDocs = () => {
 
 // Fetch files from the API
 const fetchFiles = async () => {
+  //todo: get recent files too
   try {
     const response = await axios.get("/api/files"); // Replace '/api/files' with your API endpoint
     console.log(files.value.length, "flen");

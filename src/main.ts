@@ -13,6 +13,7 @@ const routes = [
     { path: '/sheets/:id', component: RunSheet },
     { path: '/slides', component: RunSlide },
     { path: '/docs', component: RunDoc },
+    { path: '/docs:id', component: RunDoc },
     { path: '/oauth/callback', component: OauthCallback }
 ]
 

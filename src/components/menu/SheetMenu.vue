@@ -176,6 +176,7 @@
       </MenubarContent>
     </MenubarMenu>
   </Menubar>
+  <div ref="spellcheckDiv" contenteditable="true" style="display:none"></div>
 </template>
 
 <script setup lang="ts">
@@ -409,18 +410,26 @@ const deleteSelected = () => {
   }
 };
 
-const zoomIn = () => {
-  //todo: zoomin
-  document.execCommand("zoomIn")
-};
+let scale = 1; // Initial scale value
 
-const zoomOut = () => {
-  //todo: zooomout
-};
+function zoomIn() {
+  scale += 0.1; // Increase the scale
+  document.body.style.transform = `scale(${scale})`;
+  document.body.style.transformOrigin = '0 0'; // Ensure scaling happens from the top-left corner
+}
 
-const resetZoom = () => {
-  //todo: zooomreset
-};
+function zoomOut() {
+  scale = Math.max(0.1, scale - 0.1); // Decrease the scale, but prevent it from going below 0.1
+  document.body.style.transform = `scale(${scale})`;
+  document.body.style.transformOrigin = '0 0';
+}
+
+function resetZoom() {
+  scale = 1; //reset
+  document.body.style.transform = `scale(${scale})`;
+  document.body.style.transformOrigin = '0 0';
+}
+
 const formatBold = () => {
   if (facadeAPI) {
     const workbook = facadeAPI.getActiveWorkbook();
@@ -495,7 +504,7 @@ const sort = async (ascending = true) => {
     );
 
     // Filter out the empty columns
-    const filteredValues = values.map(row => 
+    const filteredValues = values.map(row =>
       row.filter((_, colIndex) => nonEmptyColumns[colIndex])
     );
 
@@ -538,14 +547,96 @@ const group = () => {
 
 const spellCheck = () => {
   if (facadeAPI) {
-    //todo: check words in cell
+    const data = props.univerRef?.getData();
+    if (data) {
+      const text = extractTextFromWorkbook(data);
+      performSpellCheck(text);
+    }
   }
 };
 
 const wordCount = () => {
   if (facadeAPI) {
-    //todo: count characters in cell
+    const data = props.univerRef?.getData();
+    if (data) {
+      const { characterCount, wordCount } = countCharactersAndWords(data);
+      console.log(`Character Count: ${characterCount}\nWord Count: ${wordCount}`);
+    }
   }
+};
+
+const countCharactersAndWords = (data: IWorkbookData) => {
+  let characterCount = 0;
+  let wordCount = 0;
+
+  for (const sheetKey in data.sheets) {
+    if (data.sheets.hasOwnProperty(sheetKey)) {
+      const sheet = data.sheets[sheetKey];
+      const cellData = sheet.cellData as (ICellData | null)[][];
+      cellData.forEach((row) => {
+        row.forEach((cell) => {
+          if (cell && cell.v) {
+            const text = cell.v.toString();
+            characterCount += text.length;
+            wordCount += text.trim().split(/\s+/).length;
+          }
+        });
+      });
+    }
+  }
+
+  return { characterCount, wordCount };
+};
+
+const extractTextFromWorkbook = (data: IWorkbookData) => {
+  let text = '';
+
+  for (const sheetKey in data.sheets) {
+    if (data.sheets.hasOwnProperty(sheetKey)) {
+      const sheet = data.sheets[sheetKey];
+      const cellData = sheet.cellData as (ICellData | null)[][];
+      cellData.forEach((row) => {
+        row.forEach((cell) => {
+          if (cell && cell.v) {
+            text += cell.v.toString() + ' ';
+          }
+        });
+      });
+    }
+  }
+
+  return text.trim();
+};
+
+const performSpellCheck = (text: string) => {
+  const spellcheckDiv = document.createElement('div');
+  spellcheckDiv.contentEditable = 'true';
+  spellcheckDiv.style.display = 'none';
+  document.body.appendChild(spellcheckDiv);
+
+  spellcheckDiv.innerText = text;
+
+  setTimeout(() => {
+    const misspelledWords: string[] = [];
+
+    const range = document.createRange();
+    range.selectNodeContents(spellcheckDiv);
+    const textNodes = range.cloneContents().querySelectorAll('span');
+
+    textNodes.forEach((node) => {
+      if (node.classList.contains('misspelled')) {
+        misspelledWords.push(node.innerText);
+      }
+    });
+
+    document.body.removeChild(spellcheckDiv);
+
+    if (misspelledWords.length) {
+      console.log(`Misspelled words: ${misspelledWords.join(', ')}`);
+    } else {
+      console.log('No misspelled words found.');
+    }
+  }, 100);
 };
 
 const openHelpCenter = () => {
