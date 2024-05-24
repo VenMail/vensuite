@@ -5,7 +5,7 @@
                 xmlns='http://www.w3.org/2000/svg' />
             <div class="flex flex-col">
                 <div class="flex" @mouseover="togglePencil(true)" @mouseleave="togglePencil(false)">
-                    <div :contenteditable="isTitleEdit" @input="updateTitle" @blur="saveTitle"
+                    <div id="docHead" :contenteditable="isTitleEdit" @input="updateTitle" @blur="saveTitle"
                         @keydown.enter.prevent="saveTitle"
                         class="mt-2 ml-3 font-bold border-b border-dotted border-gray-300"
                         :class="{ 'cursor-text': isTitleEdit }" ref="titleRef" @click="editTitle">
@@ -13,15 +13,16 @@
                     </div>
                     <PencilIcon class="mt-3.5 ml-2 h-3 w-3" v-if="isTitleEdit" />
                 </div>
-                <DocMenu :univerRef="univerRef" :coreRef="univerCoreRef as Univer | null" @updateData="updateData" />
+                <DocMenu :univerRef="univerRef" :coreRef="(univerCoreRef as Univer | null)" @updateData="updateData" />
             </div>
         </div>
-        <UniverDoc id="doc" ref="univerRef" :data="data as any" @univerRefChange="onUniverRefChange" />
+        <UniverDoc id="doc" ref="univerRef" :data="(data as any)" />
     </div>
 </template>
 
 <script setup lang="ts">
 import UniverDoc from './components/UniverDoc.vue'
+import QuillDoc from './components/QuillDoc.vue';
 import * as defaultIcons from '@iconify-prerendered/vue-file-icons';
 import { DEFAULT_DOCUMENT_DATA } from './assets/default-document-data'
 import { nextTick, onMounted, ref, Ref, watchEffect } from 'vue';
@@ -51,7 +52,9 @@ const onUniverRefChange = (childUniverRef: Univer | null) => {
 
 // Load data function
 function loadData(id: string) {
+    console.log("Loading.. ", id);
     const savedData = localStorage.getItem(id);
+    console.log("Loaded.. ", savedData)
     return savedData ? JSON.parse(savedData) : DEFAULT_DOCUMENT_DATA;
 }
 
@@ -133,7 +136,59 @@ body {
     flex: 1;
 }
 
-[contenteditable="true"] {
+.ql-toolbar.ql-snow + .ql-container.ql-snow {
+    margin-left: 5%;
+    margin-right: 5%;
+}
+/* For small screens (up to 480px) */
+@media (max-width: 480px) {
+    .ql-toolbar.ql-snow + .ql-container.ql-snow {
+        margin-left: 5%;
+        margin-right: 5%;
+    }
+}
+
+/* For small to medium screens (481px to 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .ql-toolbar.ql-snow + .ql-container.ql-snow {
+        margin-left: 8%;
+        margin-right: 8%;
+    }
+}
+
+/* For medium screens (769px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .ql-toolbar.ql-snow + .ql-container.ql-snow {
+        margin-left: 10%;
+        margin-right: 10%;
+    }
+}
+
+/* For medium to large screens (1025px to 1440px) */
+@media (min-width: 1025px) and (max-width: 1440px) {
+    .ql-toolbar.ql-snow + .ql-container.ql-snow {
+        margin-left: 15%;
+        margin-right: 15%;
+    }
+}
+
+/* For large screens (1441px to 1920px) */
+@media (min-width: 1441px) and (max-width: 1920px) {
+    .ql-toolbar.ql-snow + .ql-container.ql-snow {
+        margin-left: 20%;
+        margin-right: 20%;
+    }
+}
+
+/* For extra large screens (1921px and above) */
+@media (min-width: 1921px) {
+    .ql-toolbar.ql-snow + .ql-container.ql-snow {
+        margin-left: 25%;
+        margin-right: 25%;
+    }
+}
+
+#docHead>[contenteditable="true"] {
     outline: 2px dotted #1e3a8a;
 }
 </style>

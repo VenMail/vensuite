@@ -141,7 +141,13 @@ const fetchFiles = async () => {
 };
 
 onMounted(() => {
-  fetchFiles();
+  const token = localStorage.getItem('venAuthToken');
+  if (token) {
+    isAuthenticated.value = true;
+    fetchFiles();
+  } else {
+    isAuthenticated.value = false;
+  }
   document.title = "Home";
 });
 

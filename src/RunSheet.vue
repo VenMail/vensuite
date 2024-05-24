@@ -16,7 +16,7 @@
                 <SheetMenu :univerRef="univerRef" :coreRef="univerCoreRef as Univer | null" @updateData="updateData" />
             </div>
         </div>
-        <UniverSheet id="sheet" ref="univerRef" :data="data as any" @univerRefChange="onUniverRefChange" />
+        <UniverSheet id="sheet" ref="univerRef" :data="(data as any)" @univerRefChange="onUniverRefChange" />
     </div>
 </template>
 

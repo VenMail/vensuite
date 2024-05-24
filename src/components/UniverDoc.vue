@@ -85,6 +85,9 @@ const init = (data = {}) => {
   // sheet plugins
   // create workbook instance
   docmodel.value = univer.createUnit<IDocumentData, Document & DocumentDataModel>(UniverInstanceType.UNIVER_DOC, data);
+  if (docmodel.value.snapshot.id == "default_doc") {
+    docmodel.value.updateDocumentId(docmodel.value.getUnitId());
+  }
 };
 
 /**
@@ -120,7 +123,7 @@ const setTitle = (n: string) => {
   if (!docmodel.value) {
     throw new Error('Document is not initialized');
   }
-  docmodel.value.title = n;
+  docmodel.value.reset({"title":  n});
   return n;
 };
 

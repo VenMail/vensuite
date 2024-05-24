@@ -200,7 +200,7 @@ import { DEFAULT_DOCUMENT_DATA } from '@/assets/default-document-data';
   const router = useRouter();
   
   let facadeAPI: FUniver | null = null;
-  let disposable = null;
+  let disposable;
   
   onMounted(() => {
     watchEffect(() => {
@@ -260,14 +260,18 @@ import { DEFAULT_DOCUMENT_DATA } from '@/assets/default-document-data';
     //also show modal to set document name
     const oldData = localStorage.getItem(data.id);
     if (oldData && props.univerRef) {
-  
+      
       const oldValue = JSON.parse(oldData);
+    if ( oldValue.id == "default_doc"){
+      console.log("still old?")
+    }
       const differences = diff(data, oldValue);
       sendChangesToBackend(JSON.stringify(differences));
-      console.log("diff", differences);
+      console.log("diff - " + oldValue.id, differences);
     }
   
     localStorage.setItem(data.id, JSON.stringify(data));
+    console.log(data)
     console.log('saved.. ', data.id);
     router.replace({ path: `/docs/${data.id}` });
   
@@ -275,6 +279,7 @@ import { DEFAULT_DOCUMENT_DATA } from '@/assets/default-document-data';
   };
   
   const loadData = (KEY: string) => {
+    console.log("Whocalled")
     const savedData = localStorage.getItem(KEY);
     return savedData ? JSON.parse(savedData) : DEFAULT_DOCUMENT_DATA;
   };
@@ -296,6 +301,7 @@ import { DEFAULT_DOCUMENT_DATA } from '@/assets/default-document-data';
     const univerDocInstance = props.univerRef;
     if (univerDocInstance) {
       const result = univerDocInstance.getData();
+      console.log(result);
       saveData(result);
     } else {
       console.error('UniverDoc reference is null');
