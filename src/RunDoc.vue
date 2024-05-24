@@ -16,7 +16,8 @@
                 <DocMenu :univerRef="univerRef" :coreRef="(univerCoreRef as Univer | null)" @updateData="updateData" />
             </div>
         </div>
-        <UniverDoc id="doc" ref="univerRef" :data="(data as any)" />
+        <PageEditorDeflate />
+
     </div>
 </template>
 
@@ -33,6 +34,7 @@ import { PencilIcon } from 'lucide-vue-next';
 import { useFavicon } from '@vueuse/core';
 import { IDocumentData, Univer } from '@univerjs/core';
 import { useRoute, useRouter } from 'vue-router';
+import PageEditorDeflate from './packages/cassie/views/PageEditorDeflate.vue';
 
 // Router setup
 const router = useRouter();
