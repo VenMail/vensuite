@@ -1,8 +1,6 @@
 export const signContent = "这是一个签名示例 请右键插入操作";
 
-export const pageContentHtml = `<page pagenumber="1">
-    <h1 extend="false"></h1>
-</page>`;
+export const pageContentHtml = ``;
 export const pageContent = {
   type: "doc",
   content: [

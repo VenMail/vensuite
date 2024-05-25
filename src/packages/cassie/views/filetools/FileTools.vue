@@ -10,6 +10,10 @@
 import { defineComponent, computed } from 'vue';
 import Bar from 'vue-file-toolbar-menu';
 import { Editor } from '@tiptap/vue-3';
+import { defaultDocxSerializer, writeDocxForBlob } from "./../../docx";
+import { saveAs } from "file-saver";
+
+import * as printJS from 'print-js';
 
 declare type Level = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -23,6 +27,12 @@ export default defineComponent({
   },
   data() {
     return {
+      opts: {
+      getImageBuffer(src: string) {
+        return Buffer.from("");
+      }
+    },
+
       color: 'rgb(74, 238, 164)',
       font: 'Avenir',
       fontValue: 'Avenir, sans-serif',
@@ -77,6 +87,37 @@ export default defineComponent({
             click: () => {
               this.editor.chain().focus().redo().run();
             },
+          },
+          {
+            icon: "print",
+            title: "Print",
+            click: () => {
+              let pageId = this.editor.storage.PrintExtension.pageId;
+              if (!pageId) {
+                pageId = this.editor.state.doc.firstChild?.attrs.id;
+              }
+              printJS({
+                printable: pageId,
+                type: "html",
+                targetStyles: ["*"],
+                style: `@page {margin:0 10mm};`
+              });
+            }
+          },
+          {
+            icon: "save",
+            title: "Save As",
+            click: () => {
+              let doc = this.editor?.state.doc;
+            if (doc) {
+              const wordDocument = defaultDocxSerializer.serialize(doc, this.opts);
+              writeDocxForBlob(wordDocument, (blob) => {
+                console.log(blob);
+                saveAs(blob, "example.docx");
+                console.log("Document created successfully");
+              });
+            }
+            }
           },
           { is: 'separator' },
           {

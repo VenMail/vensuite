@@ -52,6 +52,7 @@ export const Page = Node.create<PageOptions>({
   parseHTML() {
     return [
       {
+        priority: 1,
         tag: "page"
       }
     ];

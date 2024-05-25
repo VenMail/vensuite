@@ -93,6 +93,7 @@ export function createIndentCommand({
     let { tr } = state;
     tr = tr.setSelection(selection);
     tr = updateIndentLevel(tr, delta, types, editor);
+    console.log(selection, 'clicked')
 
     if (tr.docChanged) {
       dispatch && dispatch(tr);
@@ -174,6 +175,7 @@ const Indent = Extension.create<IndentOptions>({
               if (!attributes.indent) {
                 return {};
               }
+              console.log('ind', attributes)
 
               return { ['data-indent']: attributes.indent };
             },

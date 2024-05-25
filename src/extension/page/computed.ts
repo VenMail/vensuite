@@ -251,6 +251,9 @@ export class PageComputedContext {
   tr: Transaction;
   pageState: PageState;
   editor: Editor;
+  private isRunning: boolean = false;
+  private isComputing: boolean = false;
+
   constructor(editor: Editor, nodesComputed: NodesComputed, pageState: PageState, state: EditorState) {
     this.editor = editor;
     this.nodesComputed = nodesComputed;
@@ -261,30 +264,57 @@ export class PageComputedContext {
 
   //核心执行逻辑
   run() {
-    const { selection, doc } = this.state;
-    const { inserting, deleting, checkNode, splitPage }: PageState = this.pageState;
-    if (splitPage) return this.initComputed();
-    if (checkNode) return this.checkNodeAndFix();
-    if (!inserting && deleting && selection.$head.node(1) === doc.lastChild) return this.tr;
-    if (inserting || deleting) {
-      console.log("开始计算");
-      this.computed();
-      window.checkNode = true;
+    if (this.isRunning) return this.tr; // Prevent re-entry
+
+    this.isRunning = true;
+    try {
+      const { selection, doc } = this.state;
+      const { inserting, deleting, checkNode, splitPage }: PageState = this.pageState;
+      
+      if (splitPage) {
+        this.initComputed();
+      } else if (checkNode) {
+        this.checkNodeAndFix();
+      } else if (!inserting && deleting && selection.$head.node(1) === doc.lastChild) {
+        return this.tr;
+      } else if (inserting || deleting) {
+        console.log("Start calculation");
+        this.computed();
+        window.checkNode = true;
+      }
+
+      return this.tr;
+    } finally {
+      this.isRunning = false;
     }
-    return this.tr;
   }
 
   computed() {
-    const tr = this.tr;
-    const { selection } = this.state;
-    const curNunmber = tr.doc.content.findIndex(selection.head).index + 1;
-    if (tr.doc.childCount > 1 && tr.doc.content.childCount != curNunmber) {
-      this.mergeDocument();
+    if (this.isComputing) return this.tr; // Prevent re-entry
+
+    this.isComputing = true;
+    try {
+      const tr = this.tr;
+      const { selection } = this.state;
+      const curNumber = tr.doc.content.findIndex(selection.head).index + 1;
+      console.log('tr', tr.doc.content);
+      console.log('selection', selection.head);
+      if (selection.head + 4 < tr.doc.content.size) {
+        return this.tr;
+      }
+
+      if (tr.doc.childCount > 1 && tr.doc.content.childCount != curNumber) {
+        this.mergeDocument();
+      }
+
+      splitCount1 = 0;
+      splitCount = 0;
+      this.splitDocument();
+      
+      return this.tr;
+    } finally {
+      this.isComputing = false;
     }
-    splitCount1 = 0;
-    splitCount = 0;
-    this.splitDocument();
-    return this.tr;
   }
 
   /**
@@ -303,25 +333,27 @@ export class PageComputedContext {
   /**
    * @description 递归分割page
    */
-  splitDocument() {
-    const { schema } = this.state;
-    while (true) {
-      console.log("第:" + (++splitCount1) + "次计算分割点");
-      // 获取最后一个page计算高度，如果返回值存在的话证明需要分割
-      const splitInfo: SplitInfo | null = this.getNodeHeight();
-      if (!splitInfo) {
-        break; // 当不需要分割（即splitInfo为null）时，跳出循环
+    splitDocument() {
+      const { schema } = this.state;
+      while (true) {
+        console.log("第:" + (++splitCount1) + "次计算分割点");
+        // 获取最后一个page计算高度，如果返回值存在的话证明需要分割
+        const splitInfo: SplitInfo | null = this.getNodeHeight();
+        if (!splitInfo) {
+          break; // 当不需要分割（即splitInfo为null）时，跳出循环
+        } else {
+          console.log("splitInfo", splitInfo)
+        }
+        const type = getNodeType(PAGE, schema);
+        console.log("第:" + (++splitCount) + "次分割");
+        this.splitPage({
+          pos: splitInfo.pos,
+          depth: splitInfo.depth,
+          typesAfter: [{ type }],
+          schema: schema
+        });
       }
-      const type = getNodeType(PAGE, schema);
-      console.log("第:" + (++splitCount) + "次分割");
-      this.splitPage({
-        pos: splitInfo.pos,
-        depth: splitInfo.depth,
-        typesAfter: [{ type }],
-        schema: schema
-      });
     }
-  }
 
   /**
    * 重第count页开始合并page
@@ -375,6 +407,7 @@ export class PageComputedContext {
    * @param schema
    */
   splitPage({ pos, depth = 1, typesAfter, schema }: SplitParams) {
+    console.log('Splitting at pos, ', pos);
     const tr = this.tr;
     const $pos = tr.doc.resolve(pos);
     let before = Fragment.empty;

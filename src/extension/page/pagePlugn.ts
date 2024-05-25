@@ -2,7 +2,8 @@ import { EditorState, Plugin, PluginKey } from "@tiptap/pm/state";
 import { EditorView } from "@tiptap/pm/view";
 import { PAGE } from "@/extension/nodeNames";
 import { removeAbsentHtmlH } from "@/extension/page/core";
-import { findParentDomRefOfType } from "@/utils/index";
+// @ts-ignore
+import { findParentDomRefOfType } from "../../utils/index";
 import { defaultNodesComputed, PageComputedContext } from "@/extension/page/computed";
 import { Editor } from "@tiptap/core/dist/packages/core/src/Editor";
 import { PageState, PageOptions } from "@/extension/page/types";
@@ -34,6 +35,7 @@ class PageDetector {
     // @ts-ignore
     const deleting = window.stepStatus ? window.stepStatus : false;
     const pageDOM = findParentDomRefOfType(schema.nodes[PAGE], domAtPos)(selection);
+    console.log('pd', pageDOM);
     if (!pageDOM) return;
     const pageBody = (pageDOM as HTMLElement).querySelector(this.#pageClass);
     if (pageBody) {
@@ -103,8 +105,21 @@ export const pagePlugin = (editor: Editor, bodyOption: PageOptions) => {
      */
     appendTransaction([newTr], _prevState, state) {
       removeAbsentHtmlH();
+      let wahalaOn = false;
       const page = new PageComputedContext(editor, defaultNodesComputed, this.getState(state), state);
-      return page.run().scrollIntoView();
+      if (newTr.getMeta('blur') || newTr.getMeta('tableColumnResizing$')) {
+        console.log('table wahala');
+        wahalaOn = true;
+      } else if (newTr.steps.length > 2) {
+        console.log('jump wahala');
+        wahalaOn = true;
+      } else {
+        if (!wahalaOn) {
+          console.log('scrolling', newTr);
+          return page.run().scrollIntoView();
+        }
+        wahalaOn = false;
+      }
     },
     props: {
       handleTextInput(view, form, to, text) {

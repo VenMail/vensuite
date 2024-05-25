@@ -227,4 +227,18 @@ export default defineComponent({
   }
 });
 </script>
-<style scoped></style>
+<style scoped>
+ .ProseMirror {
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    white-space: break-spaces;
+    -webkit-font-variant-ligatures: none;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0; /* the above doesn't seem to work in Edge */
+  }
+
+  .ProseMirror pre {
+    white-space: pre-wrap;
+  }
+
+</style>

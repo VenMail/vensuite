@@ -2,7 +2,10 @@ import { Node } from "@tiptap/pm/model";
 import { generateHTML } from "@tiptap/html";
 import { CassieKit } from "@/extension";
 import { SplitContext } from "@/extension/page/computed";
-import { PARAGRAPH } from "@/extension/nodeNames";
+import { PAGE, PARAGRAPH } from "@/extension/nodeNames";
+
+const map = new Map();
+
 /**
  * 计算最后一行是否填满
  * @param cnode
@@ -47,69 +50,63 @@ export function getFlag(cnode: Node) {
 }
 
 /**
- * 计算节点的宽度和超出的位置
- * @param node
- * @param width
+ * Optimized calculation of node's width and overflow position.
+ * @param {Node} node - The node to calculate overflow for.
+ * @param {number} width - The available width.
+ * @param {SplitContext} splitContex - The context for splitting.
+ * @returns {{strLength: number, index: number}} The overflow width and index.
  */
-function calculateNodeOverflowWidthAndPoint(node: Node, width: number, splitContex: SplitContext) {
+function calculateNodeOverflowWidthAndPoint(node:Node, width:number, splitContex: SplitContext) {
   let strLength = 0;
   let allHeight = 0;
   let maxHeight = 0;
   let index = 0;
   let isFlag = true;
-  node.descendants((node: Node, pos: number, _: Node | null, _i: number) => {
-    if (!isFlag) {
-      return isFlag;
-    }
-    //todo 文字计算的时候使用性能较低 需要使用二分查找提高性能
-    if (node.isText) {
-      let isMarkd = false;
-      if (node.marks.length) isMarkd = true;
-      const nodeText = node.text;
 
-      if (nodeText) {
-        for (let i = 0; i < nodeText.length; i++) {
-          let resource = nodeText.charAt(i);
-          //fix bug #1 修复空格计算宽度问题和文本有样式的情况计算问题 例如加粗
-          if (isMarkd && resource != " ") {
-            const nodeJson = node.toJSON();
-            nodeJson.text = resource;
-            resource = generateHTML(getJsonFromDocForJson(nodeJson), getExtentions());
-          }
-          const { width: wl, height } = computedWidth(resource);
-          if (strLength + wl > width) {
-            allHeight += maxHeight;
-            if (splitContex.isOverflow(allHeight)) {
-              isFlag = false;
-              return isFlag;
-            }
-            index = pos + i + 1;
-            strLength = wl;
-            maxHeight = 0;
-          } else {
-            if (height > maxHeight) maxHeight = height;
-            strLength += wl;
-          }
-        }
-      }
-    } else {
-      const html = generateHTML(getJsonFromDoc(node), getExtentions());
-      const { width: wordl, height } = computedWidth(html);
-      if (strLength + wordl > width) {
-        allHeight += maxHeight;
-        if (splitContex.isOverflow(allHeight)) {
-          isFlag = false;
-          return isFlag;
-        }
-        index = pos + 1;
-        strLength = wordl;
-        maxHeight = 0;
-      } else {
-        if (height > maxHeight) maxHeight = height;
-        strLength += wordl;
-      }
+  // Cache for node dimensions to avoid recomputation.
+  const dimensionsCache = new Map();
+
+  node.descendants((node: Node, pos: number) => {
+    if (!isFlag) return false;
+
+    let content = node.isText ? node.text : generateHTML(getJsonFromDoc(node), getExtentions());
+
+    let isMarkd = false;
+    if (node.marks.length) isMarkd = true;
+
+    if (isMarkd && content != " ") {
+      content = generateHTML(getJsonFromDoc(node), getExtentions())
     }
+
+    if (dimensionsCache.has(content)) {
+      // Retrieve cached dimensions.
+      var { width: nodeWidth, height } = dimensionsCache.get(content);
+    } else {
+      // Compute and cache dimensions.
+      if (!content) {
+        isFlag = false;
+        return false;        
+      }
+      var { width: nodeWidth, height } = computedWidth(content);
+      dimensionsCache.set(content, { nodeWidth, height });
+    }
+
+    if (strLength + nodeWidth > width) {
+      allHeight += maxHeight;
+      if (splitContex.isOverflow(allHeight)) {
+        isFlag = false;
+        return false;
+      }
+      index = pos + (node.isText ? 1 : node.nodeSize);
+      strLength = nodeWidth;
+      maxHeight = height;
+    } else {
+      maxHeight = Math.max(maxHeight, height);
+      strLength += nodeWidth;
+    }
+    return true;
   });
+
   return { strLength, index };
 }
 
@@ -122,18 +119,16 @@ function calculateNodeOverflowWidthAndPoint(node: Node, width: number, splitCont
  * @param dom
  */
 export function getBreakPos(cnode: Node, dom: HTMLElement, splitContex: SplitContext) {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const paragraphDOM = dom;
-  if (!paragraphDOM) return null;
-  const width = paragraphDOM.offsetWidth;
+  if (!dom) return null;
 
+  const width = dom.offsetWidth;
   const html = generateHTML(getJsonFromDoc(cnode), getExtentions());
   const { width: wordl } = computedWidth(html, false);
-  //如果高度超过默认了 但是宽度没有超过 证明 只有一行 只是里面有 行内元素 比如 图片
+
   if (width >= wordl) {
     return null;
   }
+
   const { index } = calculateNodeOverflowWidthAndPoint(cnode, width, splitContex);
   return index ? index : null;
 }
@@ -246,30 +241,64 @@ export class UnitConversion {
   }
 }
 
-const map = new Map();
+const dimensionsCache = new Map();
 
-export function computedWidth(html: string, cache = true) {
-  if (map.has(html)) {
-    return map.get(html);
+/**
+ * Computes and caches the width and height of an HTML string.
+ * @param {string} html - The HTML string to compute dimensions for.
+ * @param {boolean} cache - Whether to cache the result.
+ * @returns {{width: number, height: number}} The dimensions of the HTML.
+ */
+function computedWidth(html:string, cache = true) {
+  // Check if the result is already cached.
+  if (cache && dimensionsCache.has(html)) {
+    return dimensionsCache.get(html);
   }
-  const computedspan = document.getElementById("computedspan");
-  if (html == " ") {
-    html = "&nbsp;";
+
+  // Compute the dimensions.
+  const computedSpan = document.getElementById('computedspan');
+  if (!computedSpan) {
+    return { height: 0, width: 0 };
   }
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  if (computedspan) {
-    computedspan.innerHTML = html;
-    const width = computedspan.getBoundingClientRect().width;
-    const height = computedspan.getBoundingClientRect().height;
-    if (cache) {
-      map.set(html, { height, width });
-    }
-    computedspan.innerHTML = "&nbsp;";
-    return { height, width };
+
+  // Use innerText for text content to avoid parsing HTML.
+  computedSpan.innerText = html === ' ' ? '\u00A0' : html;
+  const dimensions = {
+    width: computedSpan.offsetWidth,
+    height: computedSpan.offsetHeight
+  };
+
+  // Cache the result for future constant time access.
+  if (cache) {
+    dimensionsCache.set(html, dimensions);
   }
-  return 0;
+
+  // Reset the computedSpan content.
+  computedSpan.innerText = '\u00A0';
+  return dimensions;
 }
+
+// export function computedWidth(html: string, cache = true) {
+//   if (map.has(html)) {
+//     return map.get(html);
+//   }
+
+//   const computedSpan = document.getElementById("computedspan");
+//   if (!computedSpan) return { height: 0, width: 0 };
+
+//   const previousHTML = computedSpan.innerHTML;
+//   computedSpan.innerHTML = html === " " ? "&nbsp;" : html;
+
+//   const rect = computedSpan.getBoundingClientRect();
+//   const dimensions = { height: rect.height, width: rect.width };
+
+//   if (cache) {
+//     map.set(html, dimensions);
+//   }
+
+//   computedSpan.innerHTML = previousHTML;
+//   return dimensions;
+// }
 
 export function getContentSpacing(dom: HTMLElement) {
   const content = dom.querySelector(".content");
@@ -277,10 +306,10 @@ export function getContentSpacing(dom: HTMLElement) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const contentStyle = window.getComputedStyle(content);
-    const paddingTop = contentStyle.getPropertyValue("padding-top");
-    const paddingBottom = contentStyle.getPropertyValue("padding-bottom");
-    const marginTop = contentStyle.getPropertyValue("margin-top");
-    const marginBottom = contentStyle.getPropertyValue("margin-bottom");
+    const paddingTop = contentStyle.paddingTop;
+    const paddingBottom = contentStyle.paddingBottom;
+    const marginTop = contentStyle.marginTop;
+    const marginBottom = contentStyle.marginBottom;
     const padding = parseFloat(paddingTop) + parseFloat(paddingBottom);
     const margin = parseFloat(marginTop) + parseFloat(marginBottom);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -291,15 +320,11 @@ export function getContentSpacing(dom: HTMLElement) {
 }
 
 export function getSpacing(dom: HTMLElement) {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   const contentStyle = window.getComputedStyle(dom);
-  const paddingTop = contentStyle.getPropertyValue("padding-top");
-  const paddingBottom = contentStyle.getPropertyValue("padding-bottom");
-  const marginTop = contentStyle.getPropertyValue("margin-top");
-  const marginBottom = contentStyle.getPropertyValue("margin-bottom");
-  const padding = parseFloat(paddingTop) + parseFloat(paddingBottom);
-  const margin = parseFloat(marginTop) + parseFloat(marginBottom);
+
+  const padding = parseFloat(contentStyle.paddingTop) + parseFloat(contentStyle.paddingBottom);
+  const margin = parseFloat(contentStyle.marginTop) + parseFloat(contentStyle.marginBottom);
+
   return padding + margin;
 }
 
@@ -308,26 +333,31 @@ export function getDefault() {
     return map.get("defaultheight");
   }
   const computedspan = document.getElementById("computedspan");
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
+  if (!computedspan) return 0;
+
   const defaultheight = getDomHeight(computedspan);
   map.set("defaultheight", defaultheight);
   return defaultheight;
 }
 
 export function getDomHeight(dom: HTMLElement) {
-  const contentStyle = window.getComputedStyle(dom);
-  const paddingTop = contentStyle.getPropertyValue("padding-top");
-  const paddingBottom = contentStyle.getPropertyValue("padding-bottom");
-  const marginTop = contentStyle.getPropertyValue("margin-top");
-  const marginBottom = contentStyle.getPropertyValue("margin-bottom");
-  const padding = parseFloat(paddingTop) + parseFloat(paddingBottom);
-  const margin = parseFloat(marginTop) + parseFloat(marginBottom);
-  return padding + margin + dom?.offsetHeight + parseFloat(contentStyle.borderWidth);
+  if (!dom) return 0;
+
+  const style = window.getComputedStyle(dom);
+  const paddingTop = parseFloat(style.paddingTop);
+  const paddingBottom = parseFloat(style.paddingBottom);
+  const marginTop = parseFloat(style.marginTop);
+  const marginBottom = parseFloat(style.marginBottom);
+  const borderWidth = parseFloat(style.borderWidth);
+
+  return dom.offsetHeight + paddingTop + paddingBottom + marginTop + marginBottom + borderWidth;
 }
 
 export function getAbsentHtmlH(node: Node) {
   const html = generateHTML(getJsonFromDoc(node), getExtentions());
+  if (node.type.name == PAGE) {
+    return null;
+  }
   if (node.type.name == PARAGRAPH) {
     const computeddiv = document.getElementById("computedspan");
     if (computeddiv) {
@@ -352,24 +382,27 @@ export function removeAbsentHtmlH() {
 }
 
 export function buildComputedHtml(options: any) {
-  const computedspan = document.getElementById("computedspan");
-  if (!computedspan) {
-    const p = document.createElement("p");
-    p.classList.add("text-editor");
-    p.setAttribute("style", "opacity: 0;position: absolute;z-index: -89;margin-left:-2003px;");
-    p.setAttribute("id", "computedspan");
-    p.innerHTML = "&nbsp;";
-    document.body.append(p);
+  let computedSpan = document.getElementById("computedspan");
+  if (!computedSpan) {
+    computedSpan = document.createElement("p");
+    computedSpan.classList.add("text-editor");
+    computedSpan.setAttribute("style", "opacity: 0; position: absolute; z-index: -89; margin-left: -2003px;");
+    computedSpan.setAttribute("id", "computedspan");
+    computedSpan.innerHTML = "&nbsp;";
+    document.body.append(computedSpan);
   }
-  const computeddiv = document.getElementById("computeddiv");
-  if (!computeddiv) {
+
+  let computedDiv = document.getElementById("computeddiv");
+  if (!computedDiv) {
     const dom = document.createElement("div");
     dom.setAttribute("class", "Page text-editor relative");
-    dom.setAttribute("style", "opacity: 0;position: absolute;z-index: -9999;margin-left:-2003px;max-width:" + options.bodyWidth + "px;width:" + options.bodyWidth + "px;");
+    dom.setAttribute("style", `opacity: 0; position: absolute; z-index: -9999; margin-left: -2003px; max-width: ${options.bodyWidth}px; width: ${options.bodyWidth}px;`);
+
     const content = document.createElement("div");
     content.classList.add("PageContent");
-    content.setAttribute("style", "min-height: " + options.bodyHeight + "px;padding:" + options.bodyPadding + "px");
+    content.setAttribute("style", `min-height: ${options.bodyHeight}px; padding: ${options.bodyPadding}px`);
     content.setAttribute("id", "computeddiv");
+
     dom.append(content);
     document.body.append(dom);
   }

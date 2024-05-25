@@ -17,7 +17,7 @@ import { UnitConversion } from "@/extension/page/core";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import VueFileToolbarMenu from "vue-file-toolbar-menu";
-import { defaultDocxSerializer, writeDocxForBlob } from "@/docx";
+import { defaultDocxSerializer, writeDocxForBlob } from "./../docx";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { saveAs } from "file-saver";
@@ -37,7 +37,7 @@ export default {
     const editor = shallowRef<Editor>();
     const opts = {
       getImageBuffer(src: string) {
-        return "";
+        return Buffer.from("");
       }
     };
     const menus = reactive([
@@ -48,12 +48,14 @@ export default {
           title: "导出world",
           click() {
             let doc = editor.value?.state.doc;
-            const wordDocument = defaultDocxSerializer.serialize(doc, opts);
-            writeDocxForBlob(wordDocument, (blob) => {
-              console.log(blob);
-              saveAs(blob, "example.docx");
-              console.log("Document created successfully");
-            });
+            if (doc) {
+              const wordDocument = defaultDocxSerializer.serialize(doc, opts);
+              writeDocxForBlob(wordDocument, (blob) => {
+                console.log(blob);
+                saveAs(blob, "example.docx");
+                console.log("Document created successfully");
+              });
+            }
           }
         }
       ]
