@@ -29,7 +29,7 @@ export default defineComponent({
     return {
       opts: {
       getImageBuffer(src: string) {
-        return Buffer.from("");
+        return Buffer.from(src);
       }
     },
 

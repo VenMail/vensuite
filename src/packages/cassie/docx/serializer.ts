@@ -20,19 +20,24 @@ import {
   ITableCellOptions,
   InternalHyperlink,
   SimpleField,
-  FootnoteReferenceRun
+  FootnoteReferenceRun,
 } from "docx";
 import sizeOf from "buffer-image-size";
 import { createNumbering, NumberingStyles } from "./numbering";
 import { createDocFromState, createShortId } from "./utils";
 import { IFootnotes, INumbering, Mutable } from "./types";
 
-// This is duplicated from @curvenote/schema
 export type AlignOptions = "left" | "center" | "right";
 
-export type NodeSerializer = Record<string, (state: DocxSerializerState, node: Node, parent: Node, index: number) => void>;
+export type NodeSerializer = Record<
+  string,
+  (state: DocxSerializerState, node: Node, parent: Node, index: number) => void
+>;
 
-export type MarkSerializer = Record<string, (state: DocxSerializerState, node: Node, mark: Mark) => IRunOptions>;
+export type MarkSerializer = Record<
+  string,
+  (state: DocxSerializerState, node: Node, mark: Mark) => IRunOptions
+>;
 
 export type Options = {
   getImageBuffer: (src: string) => Buffer;
@@ -46,37 +51,31 @@ export type IMathOpts = {
 
 const MAX_IMAGE_WIDTH = 600;
 
-function createReferenceBookmark(id: string, kind: "Equation" | "Figure" | "Table", before?: string, after?: string) {
+function createReferenceBookmark(
+  id: string,
+  kind: "Equation" | "Figure" | "Table",
+  before?: string,
+  after?: string
+) {
   const textBefore = before ? [new TextRun(before)] : [];
   const textAfter = after ? [new TextRun(after)] : [];
   return new Bookmark({
     id,
-    children: [...textBefore, new SequentialIdentifier(kind), ...textAfter]
+    children: [...textBefore, new SequentialIdentifier(kind), ...textAfter],
   });
 }
 
 export class DocxSerializerState {
   nodes: NodeSerializer;
-
   options: Options;
-
   marks: MarkSerializer;
-
   children: (Paragraph | Table)[];
-
   numbering: INumbering[];
-
   footnotes: IFootnotes = {};
-
   nextRunOpts?: IRunOptions;
-
   current: ParagraphChild[] = [];
-
   currentLink?: { link: string; children: IRunOptions[] };
-
-  // Optionally add options
   nextParentParagraphOpts?: IParagraphOptions;
-
   currentNumbering?: { reference: string; level: number };
 
   constructor(nodes: NodeSerializer, marks: MarkSerializer, options: Options) {
@@ -96,7 +95,12 @@ export class DocxSerializerState {
 
   render(node: Node, parent: Node, index: number) {
     if (typeof parent === "number") throw new Error("!");
-    if (!this.nodes[node.type.name]) throw new Error(`节点 \`${node.type.name}\` 没有可用的序列化方式`);
+    if (!this.nodes[node.type.name]) {
+      console.log(this.nodes);
+      throw new Error(
+        `Node \`${node.type.name}\` has no available serialization`
+      );
+    }
     this.nodes[node.type.name](this, node, parent, index);
   }
 
@@ -109,14 +113,12 @@ export class DocxSerializerState {
   }
 
   renderInline(parent: Node) {
-    // Pop the stack over to this object when we encounter a link, and closeLink restores it
     let currentLink: { link: string; stack: ParagraphChild[] } | undefined;
     const closeLink = () => {
       if (!currentLink) return;
       const hyperlink = new ExternalHyperlink({
         link: currentLink.link,
-        // child: this.current[0],
-        children: this.current
+        children: this.current,
       });
       this.current = [...currentLink.stack, hyperlink];
       currentLink = undefined;
@@ -130,13 +132,12 @@ export class DocxSerializerState {
       } else {
         if (currentLink && sameLink) return;
         if (currentLink && !sameLink) {
-          // Close previous, and open a new one
           closeLink();
         }
       }
       currentLink = {
         link: href,
-        stack: this.current
+        stack: this.current,
       };
       this.current = [];
     };
@@ -155,7 +156,6 @@ export class DocxSerializerState {
       }
     };
     parent.forEach(progress);
-    // Must call close at the end of everything, just in case
     closeLink();
   }
 
@@ -177,9 +177,9 @@ export class DocxSerializerState {
     }
   }
 
-  // This is a pass through to the paragraphs, etc. underneath they will close the block
   renderListItem(node: Node) {
-    if (!this.currentNumbering) throw new Error("Trying to create a list item without a list?");
+    if (!this.currentNumbering)
+      throw new Error("Trying to create a list item without a list?");
     this.addParagraphOptions({ numbering: this.currentNumbering });
     this.renderContent(node);
   }
@@ -207,35 +207,28 @@ export class DocxSerializerState {
     this.current = [
       new TextRun("\t"),
       new Math({
-        children: [new MathRun(latex)]
+        children: [new MathRun(latex)],
       }),
       new TextRun("\t("),
       createReferenceBookmark(id, "Equation"),
-      new TextRun(")")
+      new TextRun(")"),
     ];
     this.addParagraphOptions({
       tabStops: [
         {
           type: TabStopType.CENTER,
-          position: TabStopPosition.MAX / 2
+          position: TabStopPosition.MAX / 2,
         },
         {
           type: TabStopType.RIGHT,
-          position: TabStopPosition.MAX
-        }
-      ]
+          position: TabStopPosition.MAX,
+        },
+      ],
     });
   }
 
-  // not sure what this actually is, seems to be close for 8.5x11
   maxImageWidth = MAX_IMAGE_WIDTH;
 
-  /**
-   * 处理图片块
-   * @param src
-   * @param widthPercent
-   * @param align
-   */
   image(src: string, widthPercent = 70, align: AlignOptions = "center") {
     const buffer = this.options.getImageBuffer(src);
     const dimensions = sizeOf(buffer);
@@ -246,13 +239,11 @@ export class DocxSerializerState {
         data: buffer,
         transformation: {
           width,
-          height: width * aspect
-        }
+          height: width * aspect,
+        },
       })
     );
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    let alignment: AlignmentType;
+    let alignment: typeof AlignmentType[keyof typeof AlignmentType];
     switch (align) {
       case "right":
         alignment = AlignmentType.RIGHT;
@@ -264,14 +255,10 @@ export class DocxSerializerState {
         alignment = AlignmentType.CENTER;
     }
     this.addParagraphOptions({
-      alignment
+      alignment,
     });
   }
 
-  /**
-   * 处理分页块
-   * @param node
-   */
   page(node: Node) {
     node.content.forEach(({ content }) => {
       content.forEach((node) => {
@@ -280,42 +267,43 @@ export class DocxSerializerState {
     });
   }
 
-  /**
-   * 处理表格块
-   * @param node
-   */
   table(node: Node) {
     const actualChildren = this.children;
     const rows: TableRow[] = [];
     node.content.forEach(({ content: rowContent }) => {
       const cells: TableCell[] = [];
-      // Check if all cells are headers in this row
       let tableHeader = true;
       rowContent.forEach((cell) => {
         if (cell.type.name !== "table_header") {
           tableHeader = false;
         }
       });
-      // This scales images inside of tables
       this.maxImageWidth = MAX_IMAGE_WIDTH / rowContent.childCount;
       rowContent.forEach((cell) => {
         this.children = [];
         this.renderContent(cell);
-        const tableCellOpts: Mutable<ITableCellOptions> = { children: this.children };
+        const tableCellOpts: Mutable<ITableCellOptions> = {
+          children: this.children,
+        };
         const colspan = cell.attrs.colspan ?? 1;
         const rowspan = cell.attrs.rowspan ?? 1;
         if (colspan > 1) tableCellOpts.columnSpan = colspan;
         if (rowspan > 1) tableCellOpts.rowSpan = rowspan;
+        if (tableHeader) {
+          tableCellOpts.rowSpan = 1;
+          tableCellOpts.shading = {
+            fill: "e7e6e6",
+            color: "auto",
+          };
+        }
         cells.push(new TableCell(tableCellOpts));
       });
-      rows.push(new TableRow({ children: cells, tableHeader }));
+      this.children = [];
+      rows.push(new TableRow({ children: cells }));
     });
     this.maxImageWidth = MAX_IMAGE_WIDTH;
-    const table = new Table({ rows });
-    actualChildren.push(table);
-    // If there are multiple tables, this seperates them
-    actualChildren.push(new Paragraph(""));
     this.children = actualChildren;
+    this.children.push(new Table({ rows }));
   }
 
   /**
@@ -324,16 +312,18 @@ export class DocxSerializerState {
    * @param kind
    * @param suffix
    */
-  captionLabel(id: string, kind: "Figure" | "Table", { suffix } = { suffix: ": " }) {
-    this.current.push(...[createReferenceBookmark(id, kind, `${kind} `), new TextRun(suffix)]);
+  captionLabel(
+    id: string,
+    kind: "Figure" | "Table",
+    { suffix } = { suffix: ": " }
+  ) {
+    this.current.push(
+      ...[createReferenceBookmark(id, kind, `${kind} `), new TextRun(suffix)]
+    );
   }
 
   $footnoteCounter = 0;
 
-  /**
-   * 处理脚注块
-   * @param node
-   */
   footnote(node: Node) {
     const { current, nextRunOpts } = this;
     // Delete everything and work with the footnote inline on the current
@@ -343,11 +333,15 @@ export class DocxSerializerState {
     this.$footnoteCounter += 1;
     this.renderInline(node);
     this.footnotes[this.$footnoteCounter] = {
-      children: [new Paragraph({ children: this.current })]
+      children: [new Paragraph({ children: this.current })],
     };
     this.current = current;
     this.nextRunOpts = nextRunOpts;
     this.current.push(new FootnoteReferenceRun(this.$footnoteCounter));
+  }
+
+  addFootnoteReference(id: number) {
+    this.current.push(new FootnoteReferenceRun(id));
   }
 
   /**
@@ -359,7 +353,7 @@ export class DocxSerializerState {
     const paragraph = new Paragraph({
       children: this.current,
       ...this.nextParentParagraphOpts,
-      ...props
+      ...props,
     });
     this.current = [];
     delete this.nextParentParagraphOpts;
@@ -374,8 +368,106 @@ export class DocxSerializerState {
     const ref = new InternalHyperlink({ anchor: id, children });
     this.current.push(ref);
   }
+
+  footnoteReference(node: Node) {
+    const id = parseInt(node.attrs.id ?? createShortId(), 10);
+    this.footnotes[id] = {
+      children: [new Paragraph({ children: [new TextRun(node.textContent)] })],
+    };
+    this.addFootnoteReference(id);
+  }
+
+  finish() {
+    return {
+      children: this.children,
+      numbering: this.numbering,
+      footnotes: this.footnotes,
+    };
+  }
 }
 
+export function createDocxSerializer(options: Options) {
+  const nodes: NodeSerializer = {
+    text(state, node) {
+      state.text(node.text);
+    },
+    paragraph(state, node) {
+      state.renderInline(node);
+      state.children.push(new Paragraph({ children: state.current }));
+      state.current = [];
+    },
+    heading(state, node) {
+      const level = node.attrs.level;
+      state.renderInline(node);
+      state.children.push(
+        new Paragraph({
+          children: state.current,
+          heading: `Heading${level}` as any,
+        })
+      );
+      state.current = [];
+    },
+    bullet_list(state, node) {
+      state.renderList(node, "bullets");
+    },
+    ordered_list(state, node) {
+      state.renderList(node, "numbered");
+    },
+    list_item(state, node) {
+      state.renderListItem(node);
+    },
+    image(state, node) {
+      state.image(node.attrs.src, node.attrs.widthPercent, node.attrs.align);
+    },
+    page(state, node) {
+      state.page(node);
+    },
+    table(state, node) {
+      state.table(node);
+    },
+    table_row(state, node) {
+      node.content.forEach((cell, i) => {
+        state.render(cell, node, i);
+      });
+    },
+    table_cell(state, node) {
+      node.content.forEach((block, i) => {
+        state.render(block, node, i);
+      });
+    },
+    tableCell(state, node) {
+      node.content.forEach((block, i) => {
+        state.render(block, node, i);
+      });
+    },
+    footnote_reference(state, node) {
+      state.footnoteReference(node);
+    },
+    math_inline(state, node) {
+      state.math(node.textContent, { inline: true });
+    },
+    math_display(state, node) {
+      state.math(node.textContent, { inline: false });
+    },
+  };
+
+  const marks: MarkSerializer = {
+    bold(state, node, mark) {
+      return { bold: true };
+    },
+    italic(state, node, mark) {
+      return { italics: true };
+    },
+    underline(state, node, mark) {
+      return { underline: {} };
+    },
+    link(state, node, mark) {
+      return { style: "Hyperlink" };
+    },
+  };
+
+  return new DocxSerializerState(nodes, marks, options);
+}
 export class DocxSerializer {
   nodes: NodeSerializer;
 
@@ -387,7 +479,7 @@ export class DocxSerializer {
   }
 
   serialize(content: Node, options: Options) {
-    const state = new DocxSerializerState(this.nodes, this.marks, options);
+    const state = createDocxSerializer(options);
     state.renderContent(content);
     const doc = createDocFromState(state);
     return doc;
