@@ -138,7 +138,7 @@ function saveData(data: IWorkbookData) {
   console.log('saved.. ', data.id)
   router.replace({ path: `/sheets/${data.id}` })
 
-  updateRecentFiles({ id: data.id, name: data.name || 'New Spreadsheet' })
+  updateRecentFiles({ id: data.id, name: data.name || 'New Spreadsheet', file_type: "application/vnd.ms-excel" })
 }
 
 function loadData(KEY: string) {
