@@ -1,21 +1,13 @@
-<template>
-  <div class="main">
-    <div class="bars">
-      <Bar v-for="(content, index) in barsContent" :key="'bar-' + index" :content="content" />
-    </div>
-  </div>
-</template>
-
 <script lang="ts">
-import { defineComponent, computed } from 'vue';
-import Bar from 'vue-file-toolbar-menu';
-import { Editor } from '@tiptap/vue-3';
-import { defaultDocxSerializer, writeDocxForBlob } from "./../../docx";
-import { saveAs } from "file-saver";
+import { defineComponent } from 'vue'
+import Bar from 'vue-file-toolbar-menu'
+import { Editor } from '@tiptap/vue-3'
+import { saveAs } from 'file-saver'
 
-import * as printJS from 'print-js';
+import * as printJS from 'print-js'
+import { defaultDocxSerializer, writeDocxForBlob } from './../../docx'
 
-declare type Level = 1 | 2 | 3 | 4 | 5 | 6;
+declare type Level = 1 | 2 | 3 | 4 | 5 | 6
 
 export default defineComponent({
   components: { Bar },
@@ -28,10 +20,10 @@ export default defineComponent({
   data() {
     return {
       opts: {
-      getImageBuffer(src: string) {
-        return Buffer.from(src);
-      }
-    },
+        getImageBuffer(src: string) {
+          return Buffer.from(src)
+        },
+      },
 
       color: 'rgb(74, 238, 164)',
       font: 'Avenir',
@@ -64,11 +56,11 @@ export default defineComponent({
         { value: 3, label: 'Heading 3' },
         { value: 4, label: 'Heading 4' },
         { value: 5, label: 'Heading 5' },
-        { value: 6, label: 'Heading 6' }
+        { value: 6, label: 'Heading 6' },
       ],
       editMode: true,
       check1: false,
-    };
+    }
   },
   computed: {
     barsContent() {
@@ -78,88 +70,88 @@ export default defineComponent({
             icon: 'undo',
             title: 'Undo',
             click: () => {
-              this.editor.chain().focus().undo().run();
+              this.editor.chain().focus().undo().run()
             },
           },
           {
             icon: 'redo',
             title: 'Redo',
             click: () => {
-              this.editor.chain().focus().redo().run();
+              this.editor.chain().focus().redo().run()
             },
           },
           {
-            icon: "print",
-            title: "Print",
+            icon: 'print',
+            title: 'Print',
             click: () => {
-              let pageId = this.editor.storage.PrintExtension.pageId;
+              let pageId = this.editor.storage.PrintExtension.pageId
               if (!pageId) {
-                pageId = this.editor.state.doc.firstChild?.attrs.id;
+                pageId = this.editor.state.doc.firstChild?.attrs.id
               }
               printJS({
                 printable: pageId,
-                type: "html",
-                targetStyles: ["*"],
-                style: `@page {margin:0 10mm};`
-              });
-            }
+                type: 'html',
+                targetStyles: ['*'],
+                style: `@page {margin:0 10mm};`,
+              })
+            },
           },
           {
-            icon: "save",
-            title: "Save As",
+            icon: 'save',
+            title: 'Save As',
             click: () => {
-              let doc = this.editor?.state.doc;
-            if (doc) {
-              const wordDocument = defaultDocxSerializer.serialize(doc, this.opts);
-              writeDocxForBlob(wordDocument, (blob) => {
-                console.log(blob);
-                saveAs(blob, "example.docx");
-                console.log("Document created successfully");
-              });
-            }
-            }
+              const doc = this.editor?.state.doc
+              if (doc) {
+                const wordDocument = defaultDocxSerializer.serialize(doc, this.opts)
+                writeDocxForBlob(wordDocument, (blob) => {
+                  console.log(blob)
+                  saveAs(blob, 'example.docx')
+                  console.log('Document created successfully')
+                })
+              }
+            },
           },
           { is: 'separator' },
           {
-            html: '<div class="ellipsis" style="width: 80px; font-size: 95%;">' + this.font + '</div>',
-            title: "Font",
+            html: `<div class="ellipsis" style="width: 80px; font-size: 95%;">${this.font}</div>`,
+            title: 'Font',
             chevron: true,
             menu: this.fontMenu,
-            menu_height: 200
+            menu_height: 200,
           },
           {
-            html: '<div class="ellipsis" style="width: 80px; font-size: 95%;">' + this.heading + '</div>',
-            title: "Heading",
+            html: `<div class="ellipsis" style="width: 80px; font-size: 95%;">${this.heading}</div>`,
+            title: 'Heading',
             chevron: true,
             menu: this.headingMenu,
-            menu_height: 200
+            menu_height: 200,
           },
           {
             icon: 'format_align_left',
             title: 'Align Left',
             click: () => {
-              this.editor.chain().focus().setTextAlign('left').run();
+              this.editor.chain().focus().setTextAlign('left').run()
             },
           },
           {
             icon: 'format_align_center',
             title: 'Center',
             click: () => {
-              this.editor.chain().focus().setTextAlign('center').run();
+              this.editor.chain().focus().setTextAlign('center').run()
             },
           },
           {
             icon: 'format_align_right',
             title: 'Align Right',
             click: () => {
-              this.editor.chain().focus().setTextAlign('right').run();
+              this.editor.chain().focus().setTextAlign('right').run()
             },
           },
           {
             icon: 'format_align_justify',
             title: 'Justify',
             click: () => {
-              this.editor.chain().focus().setTextAlign('justify').run();
+              this.editor.chain().focus().setTextAlign('justify').run()
             },
           },
           { is: 'separator' },
@@ -167,42 +159,42 @@ export default defineComponent({
             icon: 'format_bold',
             title: 'Bold',
             click: () => {
-              this.editor.chain().focus().toggleBold().run();
+              this.editor.chain().focus().toggleBold().run()
             },
           },
           {
             icon: 'format_italic',
             title: 'Italic',
             click: () => {
-              this.editor.chain().focus().toggleItalic().run();
+              this.editor.chain().focus().toggleItalic().run()
             },
           },
           {
             icon: 'format_underline',
             title: 'Underline',
             click: () => {
-              this.editor.chain().focus().toggleUnderline().run();
+              this.editor.chain().focus().toggleUnderline().run()
             },
           },
           {
             icon: 'format_strikethrough',
             title: 'Strikethrough',
             click: () => {
-              this.editor.chain().focus().toggleStrike().run();
+              this.editor.chain().focus().toggleStrike().run()
             },
           },
           {
             icon: 'superscript',
             title: 'Superscript',
             click: () => {
-              this.editor.chain().focus().toggleSuperscript().run();
+              this.editor.chain().focus().toggleSuperscript().run()
             },
           },
           {
             icon: 'subscript',
             title: 'Subscript',
             click: () => {
-              this.editor.chain().focus().toggleSubscript().run();
+              this.editor.chain().focus().toggleSubscript().run()
             },
           },
           { is: 'separator' },
@@ -210,35 +202,35 @@ export default defineComponent({
             icon: 'format_list_bulleted',
             title: 'Bullet List',
             click: () => {
-              this.editor.chain().focus().toggleBulletList().run();
+              this.editor.chain().focus().toggleBulletList().run()
             },
           },
           {
             icon: 'format_list_numbered',
             title: 'Numbered List',
             click: () => {
-              this.editor.chain().focus().toggleOrderedList().run();
+              this.editor.chain().focus().toggleOrderedList().run()
             },
           },
           {
             icon: 'format_quote',
             title: 'Blockquote',
             click: () => {
-              this.editor.chain().focus().toggleBlockquote().run();
+              this.editor.chain().focus().toggleBlockquote().run()
             },
           },
           {
             icon: 'format_indent_increase',
             title: 'Increase Indent',
             click: () => {
-              this.editor.chain().focus().indent().run();
+              this.editor.chain().focus().indent().run()
             },
           },
           {
             icon: 'format_indent_decrease',
             title: 'Decrease Indent',
             click: () => {
-              this.editor.chain().focus().outdent().run();
+              this.editor.chain().focus().outdent().run()
             },
           },
           { is: 'separator' },
@@ -246,9 +238,9 @@ export default defineComponent({
             icon: 'link',
             title: 'Add Link',
             click: () => {
-              const url = window.prompt('Enter URL');
+              const url = window.prompt('Enter URL')
               if (url) {
-                this.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                this.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
               }
             },
           },
@@ -256,50 +248,59 @@ export default defineComponent({
             icon: 'link_off',
             title: 'Remove Link',
             click: () => {
-              this.editor.chain().focus().unsetLink().run();
+              this.editor.chain().focus().unsetLink().run()
             },
           },
         ],
-      ];
+      ]
     },
     fontMenu() {
-      return this.fontList.map(font => {
+      return this.fontList.map((font) => {
         return {
-          html: '<span class="ellipsis" style="font-family:' + font.value + '">' + font.label + '</span>',
-          icon: (this.theme != "default" && this.fontValue == font.value) ? 'check' : false,
+          html: `<span class="ellipsis" style="font-family:${font.value}">${font.label}</span>`,
+          icon: (this.theme != 'default' && this.fontValue == font.value) ? 'check' : false,
           active: (this.font == font.value),
           height: 20,
           click: () => {
-            this.font = font.label;
-            this.fontValue = font.value;
-            this.editor.chain().focus().setFontFamily(this.fontValue).run();
-          }
-        };
-      });
+            this.font = font.label
+            this.fontValue = font.value
+            this.editor.chain().focus().setFontFamily(this.fontValue).run()
+          },
+        }
+      })
     },
     headingMenu() {
-      return this.headingList.map(heading => {
+      return this.headingList.map((heading) => {
         return {
-          html: '<span class="ellipsis">' + heading.label + '</span>',
-          icon: (this.theme != "default" && this.headingValue == heading.value) ? 'check' : false,
+          html: `<span class="ellipsis">${heading.label}</span>`,
+          icon: (this.theme != 'default' && this.headingValue == heading.value) ? 'check' : false,
           active: (this.headingValue == heading.value),
           height: 20,
           click: () => {
-            this.heading = heading.label;
-            this.headingValue = heading.value as Level;
+            this.heading = heading.label
+            this.headingValue = heading.value as Level
             if (heading.value == 0) {
               const selectedLevel = this.editor?.getAttributes('heading').level
               return this.editor?.chain().focus().toggleHeading({ level: selectedLevel }).run()
-            } else {
+            }
+            else {
               return this.editor?.chain().focus().setHeading({ level: this.headingValue }).run()
             }
-          }
-        };
-      });
+          },
+        }
+      })
     },
   },
-});
+})
 </script>
+
+<template>
+  <div class="main">
+    <div class="bars">
+      <Bar v-for="(content, index) in barsContent" :key="`bar-${index}`" :content="content" />
+    </div>
+  </div>
+</template>
 
 <style scoped>
 body {
@@ -349,7 +350,7 @@ body {
   --bar-sub-menu-border-radius: 3px;
 }
 
-.bars>.bar:first-child {
+.bars > .bar:first-child {
   border-bottom: 1px solid rgb(218, 220, 224);
   margin-bottom: 3px;
 }

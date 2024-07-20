@@ -1,12 +1,12 @@
-import mitt, { Emitter } from "mitt";
+import mitt from 'mitt'
 
-type Events = {
+interface Events {
   printSet: {
-    currentNumber: number;
-    height: number;
-    openSet: boolean;
-    pageId: string;
-  };
-};
+    currentNumber: number
+    height: number
+    openSet: boolean
+    pageId: string
+  }
+}
 
-export default mitt<Events>();
+export default mitt<Events>()

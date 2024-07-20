@@ -1,6 +1,6 @@
-export { BlockChange } from "./block-change";
-export { Change } from "./change";
-export { Span } from "./span";
-export { merge } from "./merge";
+export { BlockChange } from './block-change'
+export { Change } from './change'
+export { Span } from './span'
+export { merge } from './merge'
 
-export type { IChange } from "./types";
+export type { IChange } from './types'

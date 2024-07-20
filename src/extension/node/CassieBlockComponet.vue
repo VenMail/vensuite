@@ -1,21 +1,22 @@
-<template>
-  <node-view-wrapper class="node" :id="this.node.attrs.id" :title="this.node.attrs.title" :group="this.node.attrs.group">
-    <span class="font-black title" contenteditable="false">{{ this.node.attrs.title }}</span>
-    <node-view-content class="content" />
-  </node-view-wrapper>
-</template>
-
 <script>
-import { NodeViewContent, nodeViewProps, NodeViewWrapper } from "@tiptap/vue-3";
+import { NodeViewContent, NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
+
 export default {
   components: {
     NodeViewWrapper,
-    NodeViewContent
+    NodeViewContent,
   },
 
-  props: nodeViewProps
-};
+  props: nodeViewProps,
+}
 </script>
+
+<template>
+  <NodeViewWrapper :id="node.attrs.id" class="node" :title="node.attrs.title" :group="node.attrs.group">
+    <span class="font-black title" contenteditable="false">{{ node.attrs.title }}</span>
+    <NodeViewContent class="content" />
+  </NodeViewWrapper>
+</template>
 
 <style lang="scss">
 .node > .label {

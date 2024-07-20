@@ -8,23 +8,26 @@
       "@/*": ["./src/*"]
     },
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "skipLibCheck": true,
-
+    
+    /** univer plugin */
+    "experimentalDecorators": true,
+    
     /* Bundler mode */
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "allowImportingTsExtensions": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-
+    
     /* Linting */
     "strict": true,
+    "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "skipLibCheck": true,
+    "isolatedModules": false,
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "vue-shims.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "vue.shim.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

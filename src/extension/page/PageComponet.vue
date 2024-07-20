@@ -1,43 +1,13 @@
-<template>
-  <node-view-wrapper oncontextmenu="return false;" @mousedown="mousedown" class="Page text-editor relative" :id="node.attrs.id" :style="{ width: options.bodyWidth + 'px' }">
-    <div class="corner-top-left"></div>
-    <div class="corner-top-right"></div>
-    <div class="corner-bottom-left"></div>
-    <div class="corner-bottom-right"></div>
-    <div class="relative header" :style="{ height: options.headerHeight + 'px', width: '100%' }">
-      <div class="absolute" v-for="(item, i) in headerlist" :key="i" :style="{ width: item.w + 'px', height: item.h + 'px', top: item.y + 'px', left: item.x + 'px' }">
-        <component class="min-w-full min-h-full" :is="item.component" @inpuvalue="(v: any) => updateValue(i, item, v, true)" :value="item.value" :styles="item.styles" :editor="editor" :node="node" :extension="extension" />
-      </div>
-    </div>
-    <node-view-content class="PageContent" :style="{ minHeight: options.bodyHeight + 'px', padding: options.bodyPadding + 'px' }" />
-    <div class="relative footer" :style="{ height: options.footerHeight + 'px', width: '100%' }">
-      <div class="absolute" v-for="(item, i) in footerlist" :key="i" :style="{ width: item.w + 'px', height: item.h + 'px', top: item.y + 'px', left: item.x + 'px' }">
-        <component class="min-w-full min-h-full" @inpuvalue="(v: any) => updateValue(i, item, v, false)" :is="item.component" :value="item.value" :styles="item.styles" :editor="editor" :node="node" :extension="extension" />
-      </div>
-    </div>
-    <div
-      class="absolute flex place-content-center"
-      v-if="openPrint"
-      :style="{
-        background: '#ffffff',
-        width: '100%',
-        height: maskheight + 'px',
-        top: '0px',
-        left: '0px'
-      }"
-    ></div>
-  </node-view-wrapper>
-</template>
-
 <script lang="ts">
-import { WidgetOptions } from "@/design/config";
-import { NodeViewContent, nodeViewProps, NodeViewWrapper } from "@tiptap/vue-3";
-import { reactive, ref } from "vue";
-import emitter from "@/coolmitt";
+import { NodeViewContent, NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
+import { reactive, ref } from 'vue'
+import type { WidgetOptions } from '@/design/config'
+import emitter from '@/coolmitt'
+
 export default {
   components: {
     NodeViewWrapper,
-    NodeViewContent
+    NodeViewContent,
   },
   props: nodeViewProps,
   setup(props: any, _ctx: any) {
@@ -47,63 +17,66 @@ export default {
       bodyHeight: 350,
       bodyWidth: 700,
       bodyPadding: 5,
-      SystemAttributes: {}
-    });
-    let openPrint = ref(false);
-    let editor = reactive(props.editor);
-    let node = reactive(props.node);
-    let decorations = reactive(props.decorations);
-    let extension = reactive(props.extension);
+      SystemAttributes: {},
+    })
+    const openPrint = ref(false)
+    const editor = reactive(props.editor)
+    const node = reactive(props.node)
+    const decorations = reactive(props.decorations)
+    const extension = reactive(props.extension)
     if (extension.options.bodyHeight) {
-      options = extension.options;
+      options = extension.options
     }
-    let headerlist = editor.storage.PageExtension.headerData;
-    let footerlist = editor.storage.PageExtension.footerData;
-    let updateValue = (index: number, item: WidgetOptions, v: any, header: boolean) => {
-      item.value = v;
+    const headerlist = editor.storage.PageExtension.headerData
+    const footerlist = editor.storage.PageExtension.footerData
+    const updateValue = (index: number, item: WidgetOptions, v: any, header: boolean) => {
+      item.value = v
       if (header) {
-        editor.storage.PageExtension.headerData[index] = item;
-      } else {
-        editor.storage.PageExtension.footerData[index] = item;
+        editor.storage.PageExtension.headerData[index] = item
       }
-    };
-    let maskheight = ref(0);
-    let borderBottomText = ref("1px solid");
+      else {
+        editor.storage.PageExtension.footerData[index] = item
+      }
+    }
+    const maskheight = ref(0)
+    const borderBottomText = ref('1px solid')
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    let printSetting = ({ editor }) => {
-      openPrint.value = !editor.isEditable;
-    };
-    editor.on("update", printSetting);
+    // @ts-expect-error
+    const printSetting = ({ editor }) => {
+      openPrint.value = !editor.isEditable
+    }
+    editor.on('update', printSetting)
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    emitter.on("printSet", ({ currentNumber }) => {
-      let pageNumber = node.attrs.pageNumber;
-      //如果还是可编辑模式 直接返回
-      if (editor.isEditable || currentNumber == pageNumber) return;
-      let pageh = options.bodyHeight + options.footerHeight + options.headerHeight;
-      //当前的页面比  续打的页面 小 直接全覆盖
+    // @ts-expect-error
+    emitter.on('printSet', ({ currentNumber }) => {
+      const pageNumber = node.attrs.pageNumber
+      // 如果还是可编辑模式 直接返回
+      if (editor.isEditable || currentNumber == pageNumber)
+        return
+      const pageh = options.bodyHeight + options.footerHeight + options.headerHeight
+      // 当前的页面比  续打的页面 小 直接全覆盖
       if (pageNumber < currentNumber) {
-        maskheight.value = pageh;
+        maskheight.value = pageh
       }
-      //当前的页面比  续打的页面 大 直接不管
+      // 当前的页面比  续打的页面 大 直接不管
       if (pageNumber > currentNumber) {
-        maskheight.value = 0;
+        maskheight.value = 0
       }
-    });
-    let mousedown = (e: any) => {
+    })
+    const mousedown = (e: any) => {
       if (openPrint.value) {
-        let page = document.getElementById(node.attrs.id);
-        if (page) maskheight.value = e.pageY - page.offsetTop;
-        //起始打印页
-        editor.storage.PrintExtension.pageId = node.attrs.id;
-        //续打起始高度
-        editor.storage.PrintExtension.height = maskheight.value;
-        //续打页数 从第几页开始续打
-        editor.storage.PrintExtension.currentNumber = node.attrs.pageNumber;
-        emitter.emit("printSet", editor.storage.PrintExtension);
+        const page = document.getElementById(node.attrs.id)
+        if (page)
+          maskheight.value = e.pageY - page.offsetTop
+        // 起始打印页
+        editor.storage.PrintExtension.pageId = node.attrs.id
+        // 续打起始高度
+        editor.storage.PrintExtension.height = maskheight.value
+        // 续打页数 从第几页开始续打
+        editor.storage.PrintExtension.currentNumber = node.attrs.pageNumber
+        emitter.emit('printSet', editor.storage.PrintExtension)
       }
-    };
+    }
     return {
       footerlist,
       headerlist,
@@ -115,11 +88,43 @@ export default {
       updateValue,
       mousedown,
       maskheight,
-      openPrint
-    };
-  }
-};
+      openPrint,
+    }
+  },
+}
 </script>
+
+<template>
+  <NodeViewWrapper :id="node.attrs.id" oncontextmenu="return false;" class="Page text-editor relative" :style="{ width: `${options.bodyWidth}px` }" @mousedown="mousedown">
+    <div class="corner-top-left" />
+    <div class="corner-top-right" />
+    <div class="corner-bottom-left" />
+    <div class="corner-bottom-right" />
+    <div class="relative header" :style="{ height: `${options.headerHeight}px`, width: '100%' }">
+      <div v-for="(item, i) in headerlist" :key="i" class="absolute" :style="{ width: `${item.w}px`, height: `${item.h}px`, top: `${item.y}px`, left: `${item.x}px` }">
+        <component :is="item.component" class="min-w-full min-h-full" :value="item.value" :styles="item.styles" :editor="editor" :node="node" :extension="extension" @inpuvalue="(v: any) => updateValue(i, item, v, true)" />
+      </div>
+    </div>
+    <NodeViewContent class="PageContent" :style="{ minHeight: `${options.bodyHeight}px`, padding: `${options.bodyPadding}px` }" />
+    <div class="relative footer" :style="{ height: `${options.footerHeight}px`, width: '100%' }">
+      <div v-for="(item, i) in footerlist" :key="i" class="absolute" :style="{ width: `${item.w}px`, height: `${item.h}px`, top: `${item.y}px`, left: `${item.x}px` }">
+        <component :is="item.component" class="min-w-full min-h-full" :value="item.value" :styles="item.styles" :editor="editor" :node="node" :extension="extension" @inpuvalue="(v: any) => updateValue(i, item, v, false)" />
+      </div>
+    </div>
+    <div
+      v-if="openPrint"
+      class="absolute flex place-content-center"
+      :style="{
+        background: '#ffffff',
+        width: '100%',
+        height: `${maskheight}px`,
+        top: '0px',
+        left: '0px',
+      }"
+    />
+  </NodeViewWrapper>
+</template>
+
 <style>
 .header {
   border-bottom: 1px solid;

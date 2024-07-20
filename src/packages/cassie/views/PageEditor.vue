@@ -1,25 +1,22 @@
-<template>
-  <CassieDesignEditor :content="pageContent" :header-data="headerlist" :footer-data="footerlist" :widget-list="WIDGET_BASE_LIST"></CassieDesignEditor>
-</template>
 <script lang="ts">
-import CassieDesignEditor from "../components/CassieDesignEditor.vue";
+import { reactive, ref } from 'vue'
+import CassieDesignEditor from '../components/CassieDesignEditor.vue'
 
-import { pageContent } from "./content";
+import { UnitConversion } from '../extension/page/core'
+import { pageContent } from './content'
 
-import { onBeforeUnmount, reactive, ref } from "vue";
-import { UnitConversion } from "../extension/page/core";
-import { WIDGET_BASE_LIST } from "@/design/config";
+import { WIDGET_BASE_LIST } from '@/design/config'
 
-const unitConversion = new UnitConversion();
+const unitConversion = new UnitConversion()
 export default {
   components: {
-    CassieDesignEditor
+    CassieDesignEditor,
   },
   setup() {
-    let header = ref(true);
-    let currentindex = ref(0);
-    //页眉data
-    let headerlist = reactive([
+    const header = ref(true)
+    const currentindex = ref(0)
+    // 页眉data
+    const headerlist = reactive([
       {
         id: 2,
         x: 312,
@@ -27,20 +24,20 @@ export default {
         w: 180,
         h: 26,
         focused: false,
-        value: "烟台市口腔医院病历",
-        label: "文字",
-        component: "custom-text",
-        type: "text",
+        value: '烟台市口腔医院病历',
+        label: '文字',
+        component: 'custom-text',
+        type: 'text',
         styles: {
-          color: "#000000",
-          fontSize: "18px",
-          fontWeight: "bold"
+          color: '#000000',
+          fontSize: '18px',
+          fontWeight: 'bold',
         },
-        handles: ["mr", "bm"]
-      }
-    ]);
-    //页脚
-    let footerlist = reactive([
+        handles: ['mr', 'bm'],
+      },
+    ])
+    // 页脚
+    const footerlist = reactive([
       {
         id: 3,
         x: 292,
@@ -48,14 +45,14 @@ export default {
         w: 100,
         h: 26,
         focused: false,
-        value: "我是一个页脚",
-        label: "文字",
-        component: "custom-text",
-        type: "text",
+        value: '我是一个页脚',
+        label: '文字',
+        component: 'custom-text',
+        type: 'text',
         styles: {
-          color: "#000000",
-          fontSize: 18
-        }
+          color: '#000000',
+          fontSize: 18,
+        },
       },
       {
         id: 4,
@@ -64,20 +61,20 @@ export default {
         w: 100,
         h: 26,
         focused: false,
-        value: "第一页",
-        label: "页码",
-        component: "page-count",
-        type: "text",
+        value: '第一页',
+        label: '页码',
+        component: 'page-count',
+        type: 'text',
         styles: {
-          color: "#000000",
-          fontSize: 18
-        }
-      }
-    ]);
-    const h = unitConversion.mmConversionPx(148);
-    const w = unitConversion.mmConversionPx(210);
-    //基础配置参数
-    let page = reactive({
+          color: '#000000',
+          fontSize: 18,
+        },
+      },
+    ])
+    const h = unitConversion.mmConversionPx(148)
+    const w = unitConversion.mmConversionPx(210)
+    // 基础配置参数
+    const page = reactive({
       design: true,
       bodyHeight: h - 100,
       bodyWidth: w,
@@ -85,21 +82,21 @@ export default {
       isPaging: true,
       headerHeight: 100,
       footerHeight: 100,
-      SystemAttributes: {}
-    });
+      SystemAttributes: {},
+    })
     const menulist = [
-      { classify: "radio", label: "单选", value: "radio" },
+      { classify: 'radio', label: '单选', value: 'radio' },
       {
-        classify: "checkbox",
-        label: "多选",
-        value: "checkbox"
+        classify: 'checkbox',
+        label: '多选',
+        value: 'checkbox',
       },
       {
-        classify: "date",
-        label: "日期",
-        value: "date"
-      }
-    ];
+        classify: 'date',
+        label: '日期',
+        value: 'date',
+      },
+    ]
     return {
       page,
       header,
@@ -107,11 +104,16 @@ export default {
       headerlist,
       footerlist,
       pageContent,
-      WIDGET_BASE_LIST
-    };
-  }
-};
+      WIDGET_BASE_LIST,
+    }
+  },
+}
 </script>
+
+<template>
+  <CassieDesignEditor :content="pageContent" :header-data="headerlist" :footer-data="footerlist" :widget-list="WIDGET_BASE_LIST" />
+</template>
+
 <style scoped>
 .ProseMirror-focused {
 }

@@ -1,32 +1,32 @@
-import { VueRenderer } from "@tiptap/vue-3";
-import tippy from "tippy.js";
-import CassieContextmenu from "../components/CassieContextmenu.vue";
+import { VueRenderer } from '@tiptap/vue-3'
+import tippy from 'tippy.js'
+import CassieContextmenu from '../components/CassieContextmenu.vue'
 
-export type ContextMenuOptions = {
-  type: string;
-  label: string;
-  value: string;
-};
+export interface ContextMenuOptions {
+  type: string
+  label: string
+  value: string
+}
 
-export type SuggestionOptions = {
-  contextmenu?: ContextMenuOptions[];
-  contextHook?: (editor: any, selectItem: ContextMenuOptions) => void;
-};
+export interface SuggestionOptions {
+  contextmenu?: ContextMenuOptions[]
+  contextHook?: (editor: any, selectItem: ContextMenuOptions) => void
+}
 
-export const BuildRender = (params: SuggestionOptions) => {
+export function BuildRender(params: SuggestionOptions) {
   return {
     render: () => {
-      let component: any;
-      let popup: any;
+      let component: any
+      let popup: any
 
       return {
-        /*左键点击事件 如果点击到 自定义的 block 会触发这个事件 */
+        /* 左键点击事件 如果点击到 自定义的 block 会触发这个事件 */
         onHandleLiftClick: (props: any): boolean => {
           props.onExit = () => {
-            popup[0].destroy();
-            component.destroy();
-          };
-          const selectData = props.selectItem();
+            popup[0].destroy()
+            component.destroy()
+          }
+          const selectData = props.selectItem()
 
           /* switch (selectData.bustype) {
             case "date": {
@@ -57,65 +57,65 @@ export const BuildRender = (params: SuggestionOptions) => {
               });
               break;
             }
-          }*/
+          } */
           if (component) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
+            // @ts-expect-error
 
             if (!props.clientRect) {
-              return false;
+              return false
             }
-            popup = tippy("body", {
+            popup = tippy('body', {
               getReferenceClientRect: props.clientRect,
               appendTo: () => document.body,
               content: component.element,
               showOnCreate: true,
               interactive: true,
-              trigger: "manual",
-              placement: "bottom-start"
-            });
+              trigger: 'manual',
+              placement: 'bottom-start',
+            })
           }
 
-          return true;
+          return true
         },
-        /*右键菜单处理方法*/
+        /* 右键菜单处理方法 */
         onHandleRightClick: (props: any): boolean => {
           if (params?.contextmenu) {
             props.onExit = () => {
-              popup[0].destroy();
-              component.destroy();
-            };
+              popup[0].destroy()
+              component.destroy()
+            }
             component = new VueRenderer(CassieContextmenu, {
               props: {
                 items: params?.contextmenu,
                 contextHook: params?.contextHook,
-                ...props
+                ...props,
               },
-              editor: props.editor
-            });
+              editor: props.editor,
+            })
 
             if (!props.clientRect) {
-              return false;
+              return false
             }
-            popup = tippy("body", {
+            popup = tippy('body', {
               getReferenceClientRect: props.clientRect,
               appendTo: () => document.body,
               content: component.element,
               showOnCreate: true,
               interactive: true,
-              trigger: "manual",
-              placement: "bottom-start"
-            });
+              trigger: 'manual',
+              placement: 'bottom-start',
+            })
           }
 
-          return true;
+          return true
         },
 
         onExit() {
-          popup[0].destroy();
-          component.destroy();
-        }
-      };
-    }
-  };
-};
+          popup[0].destroy()
+          component.destroy()
+        },
+      }
+    },
+  }
+}

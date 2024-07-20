@@ -3,30 +3,71 @@
 </template>
 
 <script setup lang="ts">
+
 import "@univerjs/design/lib/index.css";
 import "@univerjs/ui/lib/index.css";
+import "@univerjs/docs-ui/lib/index.css";
 import "@univerjs/sheets-ui/lib/index.css";
 import "@univerjs/sheets-formula/lib/index.css";
-
-import { IWorkbookData, LocaleType, UnitModel, Univer, UniverInstanceType, Workbook } from "@univerjs/core";
-import { enUS as UniverDesignEnUS } from '@univerjs/design';
-import { enUS as UniverDocsUIEnUS } from '@univerjs/docs-ui';
-import { enUS as UniverSheetsEnUS } from '@univerjs/sheets';
-import { enUS as UniverSheetsUIEnUS } from '@univerjs/sheets-ui';
-import { enUS as UniverSheetsFormulaUIEnUS } from '@univerjs/sheets-formula';
-import { enUS as UniverUIEnUS } from '@univerjs/ui';
-
-import { defaultTheme } from "@univerjs/design";
-import { UniverDocsPlugin } from "@univerjs/docs";
-import { UniverDocsUIPlugin } from "@univerjs/docs-ui";
-import { UniverFormulaEnginePlugin } from "@univerjs/engine-formula";
-import { UniverRenderEnginePlugin } from "@univerjs/engine-render";
-import { UniverSheetsPlugin } from "@univerjs/sheets";
-import { UniverSheetsFormulaPlugin } from "@univerjs/sheets-formula";
-import { UniverSheetsUIPlugin } from "@univerjs/sheets-ui";
-import { UniverUIPlugin } from "@univerjs/ui";
-import { onBeforeUnmount, onMounted, ref, watch, defineEmits, toRef } from "vue";
 import diff from "microdiff";
+import { IWorkbookData, LocaleType, UnitModel, Univer, UniverInstanceType, Workbook } from '@univerjs/core'
+import { defaultTheme } from '@univerjs/design'
+import { UniverDocsPlugin } from '@univerjs/docs'
+import { UniverDocsUIPlugin } from '@univerjs/docs-ui'
+import { UniverFormulaEnginePlugin } from '@univerjs/engine-formula'
+import { UniverRenderEnginePlugin } from '@univerjs/engine-render'
+import { UniverSheetsPlugin } from '@univerjs/sheets'
+import { UniverSheetsFormulaPlugin } from '@univerjs/sheets-formula'
+import { UniverSheetsNumfmtPlugin } from '@univerjs/sheets-numfmt'
+import { UniverSheetsUIPlugin } from '@univerjs/sheets-ui'
+import { UniverUIPlugin } from '@univerjs/ui'
+import { UniverSheetsZenEditorPlugin } from '@univerjs/sheets-zen-editor'
+import { FUniver } from '@univerjs/facade'
+import { enUS } from 'univer:locales'
+//import { setupComment } from './setups/setupComment'
+import { onBeforeUnmount, onMounted, ref, toRaw, toRef, watch } from "vue";
+
+const univerRef = ref<Univer | null>(null);
+const workBook = ref<Workbook | null>(null);
+const container = ref<HTMLElement | null>(null);
+
+function setupUniver(data = {}) {
+  const univer = new Univer({
+    theme: defaultTheme,
+    locale: LocaleType.EN_US,
+    locales: {
+      [LocaleType.EN_US]: enUS,
+    },
+  })
+  univerRef.value = univer;
+
+  univer.registerPlugin(UniverRenderEnginePlugin)
+  univer.registerPlugin(UniverFormulaEnginePlugin)
+  univer.registerPlugin(UniverUIPlugin, {
+    container: container.value!,
+    header: true,
+    footer: true,
+  })
+  univer.registerPlugin(UniverDocsPlugin, {
+    hasScroll: false,
+  })
+  univer.registerPlugin(UniverDocsUIPlugin)
+
+  univer.registerPlugin(UniverSheetsPlugin)
+  univer.registerPlugin(UniverSheetsUIPlugin)
+  univer.registerPlugin(UniverSheetsFormulaPlugin)
+  univer.registerPlugin(UniverSheetsNumfmtPlugin)
+  univer.registerPlugin(UniverSheetsZenEditorPlugin)
+  console.log('data', data)
+  const initData = data || {};
+
+workBook.value = univer.createUnit<IWorkbookData, Workbook & UnitModel>(UniverInstanceType.UNIVER_SHEET, initData);
+
+  // In version v0.1.15, please register the comment plugin after calling univer.createUnit.
+  // setupComment(univer)
+
+  return FUniver.newAPI(univer)
+}
 
 const props = defineProps({
   // workbook data
@@ -36,9 +77,6 @@ const props = defineProps({
   },
 });
 
-const univerRef = ref<Univer | null>(null);
-const workbook = ref<Workbook & UnitModel | null>(null);
-const container = ref<HTMLElement | null>(null);
 const emit = defineEmits(['univerRefChange']);
 
 watch(univerRef, (newValue) => {
@@ -89,88 +127,50 @@ onBeforeUnmount(() => {
  * @param data {IWorkbookData} document see https://univer.work/api/core/interfaces/IWorkbookData.html
  */
 const init = (data = {}) => {
-  const univer = new Univer({
-    theme: defaultTheme,
-    locale: LocaleType.EN_US,
-    locales: {
-      [LocaleType.EN_US]: {
-        ...UniverSheetsEnUS,
-        ...UniverDocsUIEnUS,
-        ...UniverSheetsUIEnUS,
-        ...UniverUIEnUS,
-        ...UniverDesignEnUS,
-        ...UniverSheetsFormulaUIEnUS
-      },
-    },
-  });
-  univerRef.value = univer;
-
-
-  // core plugins
-  univer.registerPlugin(UniverRenderEnginePlugin);
-  univer.registerPlugin(UniverFormulaEnginePlugin);
-  univer.registerPlugin(UniverUIPlugin, {
-    container: container.value || undefined,
-    header: true,
-    footer: true,
-  });
-
-  // doc plugins
-  univer.registerPlugin(UniverDocsPlugin, {
-    hasScroll: false,
-  });
-  univer.registerPlugin(UniverDocsUIPlugin);
-
-  // sheet plugins
-  univer.registerPlugin(UniverSheetsPlugin);
-  univer.registerPlugin(UniverSheetsUIPlugin);
-  univer.registerPlugin(UniverSheetsFormulaPlugin);
-
-  // create workbook instance
-  workbook.value = univer.createUnit<IWorkbookData, Workbook & UnitModel>(UniverInstanceType.UNIVER_SHEET, data);
-  workbook.value.save();
-  console.log("initialize..." + data);
+  setupUniver(data);
 };
 
 /**
  * Destroy univer instance and workbook instance
  */
 const destroyUniver = () => {
-  univerRef.value?.dispose();
-  univerRef.value = null;
-  workbook.value = null;
+  if (workBook.value) {
+    toRaw(univerRef.value)?.dispose();
+    univerRef.value = null;
+    workBook.value = null
+  }
 };
 
 /**
  * Get workbook data
  */
 const getData = () => {
-  if (!workbook.value) {
+  if (!univerRef.value) {
     throw new Error('Workbook is not initialized');
   }
-  workbook.value.save();
-  return workbook.value.getSnapshot();
+  return workBook.value?.getSnapshot();
 };
 
 /**
  * Set workbook data
  */
 const setData = (data: IWorkbookData) => {
-  if (!workbook.value) {
+  if (!workBook.value) {
     throw new Error('Workbook is not initialized');
   }
-  workbook.value.load(data);
-  return workbook.value.getSnapshot();
+  workBook.value.load(data);
+  return workBook.value.getSnapshot();
 };
 
 const setName = (n: string) => {
-  if (!workbook.value) {
+  if (!workBook.value) {
     throw new Error('Workbook is not initialized');
   }
-  workbook.value.setName(n);
+  workBook.value.setName(n);
   return n;
 };
 
+// Expose methods for use in parent components
 defineExpose({
   getData,
   setName,

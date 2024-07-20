@@ -1,3 +1,3 @@
-import { Text } from "@tiptap/extension-text";
+import { Text } from '@tiptap/extension-text'
 
-export const CassieText = Text.extend({});
+export const CassieText = Text.extend({})

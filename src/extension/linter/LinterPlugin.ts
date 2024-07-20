@@ -1,20 +1,20 @@
-import { Node as ProsemirrorNode } from "@tiptap/pm/model";
+import type { Node as ProsemirrorNode } from '@tiptap/pm/model'
 
 export interface Result {
-  message: string;
-  from: number;
-  to: number;
+  message: string
+  from: number
+  to: number
   // eslint-disable-next-line @typescript-eslint/ban-types
-  fix?: Function;
+  fix?: Function
 }
 
 export default class LinterPlugin {
-  protected doc;
+  protected doc
 
-  private results: Array<Result> = [];
+  private results: Array<Result> = []
 
   constructor(doc: ProsemirrorNode) {
-    this.doc = doc;
+    this.doc = doc
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-types
@@ -23,15 +23,15 @@ export default class LinterPlugin {
       message,
       from,
       to,
-      fix
-    });
+      fix,
+    })
   }
 
   scan() {
-    return this;
+    return this
   }
 
   getResults() {
-    return this.results;
+    return this.results
   }
 }

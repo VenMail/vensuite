@@ -1,31 +1,31 @@
-import { mergeAttributes, Node } from "@tiptap/core";
-import { Paragraph } from "@tiptap/extension-paragraph";
-import { getId, idAttributes } from "@/utils/id";
+import { mergeAttributes } from '@tiptap/core'
+import { Paragraph } from '@tiptap/extension-paragraph'
+import { idAttributes } from '@/utils/id'
 
 export const EmrParagraph = Paragraph.extend({
   addOptions() {
     return {
-      HTMLAttributes: {}
-    };
+      HTMLAttributes: {},
+    }
   },
 
-  group: "block",
-  content: "inline*",
+  group: 'block',
+  content: 'inline*',
   addAttributes() {
-    return idAttributes;
+    return idAttributes
   },
   renderHTML({ node, HTMLAttributes }) {
     if (HTMLAttributes.id) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      node.attrs.id = HTMLAttributes.id;
+      // @ts-expect-error
+      node.attrs.id = HTMLAttributes.id
     }
-    return ["p", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+    return ['p', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
   },
 
   addKeyboardShortcuts() {
     return {
-      "Mod-Alt-0": () => this.editor.commands.setParagraph()
-    };
-  }
-});
+      'Mod-Alt-0': () => this.editor.commands.setParagraph(),
+    }
+  },
+})

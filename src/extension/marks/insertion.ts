@@ -1,18 +1,19 @@
-import { Mark } from "@tiptap/core";
+import { Mark } from '@tiptap/core'
+
 export const Insertion = Mark.create({
-  name: "insertion",
+  name: 'insertion',
   addAttributes() {
     return {
       dataTracked: {
-        default: null
-      }
-    };
+        default: null,
+      },
+    }
   },
   parseHTML() {
-    return [{ tag: "span.insertion" }];
+    return [{ tag: 'span.insertion' }]
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["span", { class: "insertion" }, 0];
-  }
-});
+    return ['span', { class: 'insertion' }, 0]
+  },
+})

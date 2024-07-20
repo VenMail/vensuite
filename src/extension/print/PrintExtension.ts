@@ -1,12 +1,13 @@
-import { Extension, findParentNode } from "@tiptap/core";
+import { Extension } from '@tiptap/core'
+
 export const PrintExtension = Extension.create({
-  name: "PrintExtension",
+  name: 'PrintExtension',
   addStorage() {
     return {
       currentNumber: 0,
       height: 0,
       print: false,
-      pageId: ""
-    };
-  }
-});
+      pageId: '',
+    }
+  },
+})

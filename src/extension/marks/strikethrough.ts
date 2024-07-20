@@ -1,11 +1,12 @@
-import { Mark, markInputRule, markPasteRule, mergeAttributes } from "@tiptap/core";
+import { Mark } from '@tiptap/core'
+
 export const StrikeThrough = Mark.create({
-  name: "strikethrough",
+  name: 'strikethrough',
   parseHTML() {
-    return [{ tag: "s" }, { tag: "strike" }, { style: "text-decoration=line-through" }, { style: "text-decoration-line=line-through" }];
+    return [{ tag: 's' }, { tag: 'strike' }, { style: 'text-decoration=line-through' }, { style: 'text-decoration-line=line-through' }]
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["s", 0];
-  }
-});
+    return ['s', 0]
+  },
+})

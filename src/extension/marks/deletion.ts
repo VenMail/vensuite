@@ -1,18 +1,19 @@
-import { Mark } from "@tiptap/core";
+import { Mark } from '@tiptap/core'
+
 export const Deletion = Mark.create({
-  name: "deletion",
+  name: 'deletion',
   addAttributes() {
     return {
       dataTracked: {
-        default: null
-      }
-    };
+        default: null,
+      },
+    }
   },
   parseHTML() {
-    return [{ tag: "span.deletion" }];
+    return [{ tag: 'span.deletion' }]
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["span", { class: "deletion" }, 0];
-  }
-});
+    return ['span', { class: 'deletion' }, 0]
+  },
+})

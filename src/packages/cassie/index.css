@@ -14,18 +14,26 @@
     @apply prose prose-base max-w-full;
   }
 
-  .text-editor h1, .text-editor h2, .text-editor h3, .text-editor h4, .text-editor h5, .text-editor h6 {
+  .text-editor h1,
+  .text-editor h2,
+  .text-editor h3,
+  .text-editor h4,
+  .text-editor h5,
+  .text-editor h6 {
     margin: 0;
   }
 
-  .text-editor ul, .text-editor ol, .text-editor p, .text-editor table {
+  .text-editor ul,
+  .text-editor ol,
+  .text-editor p,
+  .text-editor table {
     margin: 0;
   }
 
   .Page {
     @apply bg-white transform my-2 text-editor relative;
     padding: 20mm;
-    box-shadow: 0 0 0.5cm rgba(0,0,0,0.5);
+    box-shadow: 0 0 0.5cm rgba(0, 0, 0, 0.5);
   }
 
   .corner {

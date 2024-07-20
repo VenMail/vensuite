@@ -1,19 +1,20 @@
-import { Extension } from '@tiptap/core';
-import CommandButton from '@/components/CommandButton.vue';
+import { Extension, isList } from '@tiptap/core'
 
-import type { Command, Editor } from '@tiptap/core';
-import { isList } from '@tiptap/core';
-import { TextSelection, AllSelection, Transaction } from '@tiptap/pm/state';
+import type { Command, Editor } from '@tiptap/core'
+
+import type { Transaction } from '@tiptap/pm/state'
+import { AllSelection, TextSelection } from '@tiptap/pm/state'
+import CommandButton from '@/components/CommandButton.vue'
 
 function clamp(val: number, min: number, max: number): number {
-    if (val < min) {
-      return min;
-    }
-    if (val > max) {
-      return max;
-    }
-    return val;
+  if (val < min) {
+    return min
   }
+  if (val > max) {
+    return max
+  }
+  return val
+}
 
 export const enum IndentProps {
   max = 7,
@@ -27,87 +28,92 @@ function updateIndentLevel(
   tr: Transaction,
   delta: number,
   types: string[],
-  editor: Editor
+  editor: Editor,
 ): Transaction {
-  const { doc, selection } = tr;
+  const { doc, selection } = tr
 
-  if (!doc || !selection) return tr;
+  if (!doc || !selection)
+    return tr
 
   if (
     !(selection instanceof TextSelection || selection instanceof AllSelection)
   ) {
-    return tr;
+    return tr
   }
 
-  const { from, to } = selection;
+  const { from, to } = selection
 
   doc.nodesBetween(from, to, (node, pos) => {
-    const nodeType = node.type;
+    const nodeType = node.type
 
     if (types.includes(nodeType.name)) {
-      tr = setNodeIndentMarkup(tr, pos, delta);
-      return false;
-    } else if (isList(node.type.name, editor.extensionManager.extensions)) {
-      return false;
+      tr = setNodeIndentMarkup(tr, pos, delta)
+      return false
     }
-    return true;
-  });
+    else if (isList(node.type.name, editor.extensionManager.extensions)) {
+      return false
+    }
+    return true
+  })
 
-  return tr;
+  return tr
 }
 
 function setNodeIndentMarkup(
   tr: Transaction,
   pos: number,
-  delta: number
+  delta: number,
 ): Transaction {
-  if (!tr.doc) return tr;
+  if (!tr.doc)
+    return tr
 
-  const node = tr.doc.nodeAt(pos);
-  if (!node) return tr;
+  const node = tr.doc.nodeAt(pos)
+  if (!node)
+    return tr
 
-  const minIndent = IndentProps.min;
-  const maxIndent = IndentProps.max;
+  const minIndent = IndentProps.min
+  const maxIndent = IndentProps.max
 
-  const indent = clamp((node.attrs.indent || 0) + delta, minIndent, maxIndent);
+  const indent = clamp((node.attrs.indent || 0) + delta, minIndent, maxIndent)
 
-  if (indent === node.attrs.indent) return tr;
+  if (indent === node.attrs.indent)
+    return tr
 
   const nodeAttrs = {
     ...node.attrs,
     indent,
-  };
+  }
 
-  return tr.setNodeMarkup(pos, node.type, nodeAttrs, node.marks);
+  return tr.setNodeMarkup(pos, node.type, nodeAttrs, node.marks)
 }
 
 export function createIndentCommand({
   delta,
   types,
 }: {
-  delta: number;
-  types: string[];
+  delta: number
+  types: string[]
 }): Command {
   return ({ state, dispatch, editor }) => {
-    const { selection } = state;
-    let { tr } = state;
-    tr = tr.setSelection(selection);
-    tr = updateIndentLevel(tr, delta, types, editor);
+    const { selection } = state
+    let { tr } = state
+    tr = tr.setSelection(selection)
+    tr = updateIndentLevel(tr, delta, types, editor)
     console.log(selection, 'clicked')
 
     if (tr.docChanged) {
-      dispatch && dispatch(tr);
-      return true;
+      dispatch && dispatch(tr)
+      return true
     }
 
-    return false;
-  };
+    return false
+  }
 }
 
 export interface IndentOptions {
-  types: string[];
-  minIndent: number;
-  maxIndent: number;
+  types: string[]
+  minIndent: number
+  maxIndent: number
 }
 
 declare module '@tiptap/core' {
@@ -116,12 +122,12 @@ declare module '@tiptap/core' {
       /**
        * Set the indent attribute
        */
-      indent: () => ReturnType;
+      indent: () => ReturnType
       /**
        * Set the outdent attribute
        */
-      outdent: () => ReturnType;
-    };
+      outdent: () => ReturnType
+    }
   }
 }
 
@@ -133,13 +139,13 @@ const Indent = Extension.create<IndentOptions>({
       types: ['paragraph', 'heading', 'blockquote'],
       minIndent: IndentProps.min,
       maxIndent: IndentProps.max,
-      button({ editor, t }: { editor: Editor; t: (...args: any[]) => string }) {
+      button({ editor, t }: { editor: Editor, t: (...args: any[]) => string }) {
         return [
           {
             component: CommandButton,
             componentProps: {
               command: () => {
-                editor.commands.indent();
+                editor.commands.indent()
               },
               icon: 'indent',
               tooltip: t('editor.extensions.Indent.buttons.indent.tooltip'),
@@ -149,15 +155,15 @@ const Indent = Extension.create<IndentOptions>({
             component: CommandButton,
             componentProps: {
               command: () => {
-                editor.commands.outdent();
+                editor.commands.outdent()
               },
               icon: 'outdent',
               tooltip: t('editor.extensions.Indent.buttons.outdent.tooltip'),
             },
           },
-        ];
+        ]
       },
-    };
+    }
   },
 
   addGlobalAttributes() {
@@ -168,21 +174,21 @@ const Indent = Extension.create<IndentOptions>({
           indent: {
             default: 0,
             parseHTML: (element) => {
-              const identAttr = element.getAttribute('data-indent');
-              return (identAttr ? parseInt(identAttr, 10) : 0) || 0;
+              const identAttr = element.getAttribute('data-indent')
+              return (identAttr ? Number.parseInt(identAttr, 10) : 0) || 0
             },
             renderHTML: (attributes) => {
               if (!attributes.indent) {
-                return {};
+                return {}
               }
               console.log('ind', attributes)
 
-              return { ['data-indent']: attributes.indent };
+              return { 'data-indent': attributes.indent }
             },
           },
         },
       },
-    ];
+    ]
   },
 
   addCommands() {
@@ -197,15 +203,15 @@ const Indent = Extension.create<IndentOptions>({
           delta: IndentProps.less,
           types: this.options.types,
         }),
-    };
+    }
   },
 
   addKeyboardShortcuts() {
     return {
-      Tab: () => this.editor.commands.indent(),
+      'Tab': () => this.editor.commands.indent(),
       'Shift-Tab': () => this.editor.commands.outdent(),
-    };
+    }
   },
-});
+})
 
-export default Indent;
+export default Indent

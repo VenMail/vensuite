@@ -1,3 +1,80 @@
+<script setup lang="ts">
+import * as defaultIcons from '@iconify-prerendered/vue-file-icons'
+import axios from 'axios'
+import { onMounted, ref } from 'vue'
+import { SearchIcon } from 'lucide-vue-next'
+import AppMenu from './AppMenu.vue'
+import Input from './components/ui/input/Input.vue'
+import Button from './components/ui/button/Button.vue'
+import Separator from './components/ui/separator/Separator.vue'
+import router from './main'
+
+interface FileData {
+  id: string
+  filename: string
+  file_type: string
+  file_size: string
+}
+
+const isAuthenticated = ref(false)
+const searchValue = ref('')
+const authURL = 'http://localhost:8000/auth/oauth'
+
+// get all user files via api
+const files = ref<FileData[]>([])
+
+function loginWithVenmail() {
+  const redirectUri = encodeURIComponent(
+    `${window.location.protocol}//${window.location.host}/oauth/callback`,
+  )
+  window.location.href = `${authURL}?redirect_uri=${redirectUri}`
+}
+
+function toggleSheet() {
+  // runSheet.value = true;
+  // runDoc.value = false;
+  router.push('/sheets')
+}
+
+function toggleDocs() {
+  // runDoc.value = true;
+  // runSheet.value = false;
+  router.push('/docs')
+}
+
+// Fetch files from the API
+async function fetchFiles() {
+  // todo: get recent files too
+  try {
+    const response = await axios.get('/api/files') // Replace '/api/files' with your API endpoint
+    console.log(files.value.length, 'flen')
+    if (response.data.files) {
+      files.value = response.data.files
+    }
+  }
+  catch (error) {
+    console.error('Error fetching files:', error)
+  }
+}
+
+onMounted(() => {
+  const token = localStorage.getItem('venAuthToken')
+  if (token) {
+    isAuthenticated.value = true
+    fetchFiles()
+  }
+  else {
+    isAuthenticated.value = false
+  }
+  document.title = 'Home'
+})
+
+// Function to get the icon component based on file_type
+function getIconComponent(fileType: string): keyof typeof defaultIcons {
+  return fileType as keyof typeof defaultIcons
+}
+</script>
+
 <template>
   <template v-if="isAuthenticated">
     <AppMenu />
@@ -17,22 +94,26 @@
     </div>
     <div class="flex gap-4 m-6">
       <button
-        v-on:click="toggleSheet"
         class="flex flex-col items-center bg-gray-100 p-4 rounded-lg"
+        @click="toggleSheet"
       >
         <defaultIcons.IconMicrosoftExcel
           class="w-[8rem] h-[12rem] text-green-600"
         />
-        <p class="text-sm">New Spreadsheet</p>
+        <p class="text-sm">
+          New Spreadsheet
+        </p>
       </button>
       <button
-        v-on:click="toggleDocs"
         class="flex flex-col items-center bg-gray-100 p-4 rounded-lg"
+        @click="toggleDocs"
       >
         <defaultIcons.IconMicrosoftWord
           class="w-[8rem] h-[12rem] text-blue-600"
         />
-        <p class="text-sm">New Document</p>
+        <p class="text-sm">
+          New Document
+        </p>
       </button>
     </div>
     <Separator orientation="horizontal" class="w-full" />
@@ -61,7 +142,9 @@
             <p class="text-sm text-muted-foreground">
               You can manage your documents and spreadsheets from Venmail.
             </p>
-            <Button class="mt-4"> Upload File </Button>
+            <Button class="mt-4">
+              Upload File
+            </Button>
           </div>
         </div>
       </div>
@@ -82,77 +165,3 @@
     </div>
   </template>
 </template>
-<script setup lang="ts">
-import AppMenu from "./AppMenu.vue";
-import Input from "./components/ui/input/Input.vue";
-import Button from "./components/ui/button/Button.vue";
-import Separator from "./components/ui/separator/Separator.vue";
-import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
-import axios from "axios";
-import { ref, onMounted } from "vue";
-import { SearchIcon } from "lucide-vue-next";
-import router from "./main";
-
-interface FileData {
-  id: string;
-  filename: string;
-  file_type: string;
-  file_size: string;
-}
-
-const isAuthenticated = ref(false);
-const searchValue = ref("");
-const authURL = "http://localhost:8000/auth/oauth";
-
-// get all user files via api
-const files = ref<FileData[]>([]);
-
-const loginWithVenmail = () => {
-  const redirectUri = encodeURIComponent(
-    window.location.protocol + "//" + window.location.host + "/oauth/callback"
-  );
-  window.location.href = authURL + "?redirect_uri=" + redirectUri;
-};
-
-const toggleSheet = () => {
-  // runSheet.value = true;
-  // runDoc.value = false;
-  router.push("/sheets");
-};
-
-const toggleDocs = () => {
-  // runDoc.value = true;
-  // runSheet.value = false;
-  router.push("/docs");
-};
-
-// Fetch files from the API
-const fetchFiles = async () => {
-  //todo: get recent files too
-  try {
-    const response = await axios.get("/api/files"); // Replace '/api/files' with your API endpoint
-    console.log(files.value.length, "flen");
-    if (response.data.files) {
-      files.value = response.data.files;
-    }
-  } catch (error) {
-    console.error("Error fetching files:", error);
-  }
-};
-
-onMounted(() => {
-  const token = localStorage.getItem('venAuthToken');
-  if (token) {
-    isAuthenticated.value = true;
-    fetchFiles();
-  } else {
-    isAuthenticated.value = false;
-  }
-  document.title = "Home";
-});
-
-// Function to get the icon component based on file_type
-const getIconComponent = (fileType: string): keyof typeof defaultIcons => {
-  return fileType as keyof typeof defaultIcons;
-};
-</script>

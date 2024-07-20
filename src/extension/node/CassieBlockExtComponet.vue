@@ -1,20 +1,21 @@
-<template>
-  <node-view-wrapper :id="this.node.attrs.id">
-    <node-view-content class="content" />
-  </node-view-wrapper>
-</template>
-
 <script>
-import { NodeViewContent, nodeViewProps, NodeViewWrapper } from "@tiptap/vue-3";
+import { NodeViewContent, NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
 
 export default {
   components: {
     NodeViewWrapper,
-    NodeViewContent
+    NodeViewContent,
   },
-  props: nodeViewProps
-};
+  props: nodeViewProps,
+}
 </script>
+
+<template>
+  <NodeViewWrapper :id="node.attrs.id">
+    <NodeViewContent class="content" />
+  </NodeViewWrapper>
+</template>
+
 <style>
 .content {
   padding-top: 4px;

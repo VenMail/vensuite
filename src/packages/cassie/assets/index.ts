@@ -1,1 +1,1 @@
-export * from "./editor-icons";
+export * from './editor-icons'
