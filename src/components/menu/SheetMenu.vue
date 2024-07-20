@@ -28,6 +28,7 @@ import {
   ZoomInIcon,
   ZoomOutIcon,
 } from 'lucide-vue-next'
+import { Univer } from '@univerjs/core'
 import { FUniver } from '@univerjs/facade'
 import type { ICellData, IWorkbookData } from '@univerjs/core'
 import { useRouter } from 'vue-router'
@@ -44,10 +45,14 @@ import {
   MenubarSubTrigger,
   MenubarTrigger,
 } from '@/components/ui/menubar'
+import UniverSheet from './components/UniverSheet.vue'
 
-interface File {
+
+interface FileData {
   id: string
   name: string
+  file_type?: string
+  file_size?: string
 }
 
 interface Props {
@@ -57,7 +62,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits(['updateData'])
-const recentFiles = ref<File[]>([])
+const recentFiles = ref<FileData[]>([])
 const storageKey = 'VENX_RecentFiles'
 const router = useRouter()
 
@@ -78,7 +83,7 @@ onMounted(() => {
   loadRecentFiles()
 })
 
-function saveRecentFiles(files: File[]) {
+function saveRecentFiles(files: FileData[]) {
   localStorage.setItem(storageKey, JSON.stringify(files))
 }
 
@@ -89,7 +94,7 @@ function loadRecentFiles() {
   }
 }
 
-function updateRecentFiles(file: File) {
+function updateRecentFiles(file: FileData) {
   const existingFileIndex = recentFiles.value.findIndex(f => f.id === file.id)
   if (existingFileIndex !== -1) {
     recentFiles.value.splice(existingFileIndex, 1)

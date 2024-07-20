@@ -8,20 +8,12 @@ import Input from './components/ui/input/Input.vue'
 import Button from './components/ui/button/Button.vue'
 import Separator from './components/ui/separator/Separator.vue'
 import router from './main'
-
-interface FileData {
-  id: string
-  filename: string
-  file_type: string
-  file_size: string
-}
+import FileIcon from './components/FileIcon.vue'
 
 const isAuthenticated = ref(false)
 const searchValue = ref('')
 const authURL = 'http://localhost:8000/auth/oauth'
 
-// get all user files via api
-const files = ref<FileData[]>([])
 
 function loginWithVenmail() {
   const redirectUri = encodeURIComponent(
@@ -42,20 +34,45 @@ function toggleDocs() {
   router.push('/docs')
 }
 
+interface FileData {
+  id: string
+  name: string
+  file_type?: string
+  file_size?: string
+}
+
+// get all user files via api
+const files = ref<FileData[]>([])
+
+const storageKey = 'VENX_RecentFiles'
+
+
 // Fetch files from the API
 async function fetchFiles() {
   // todo: get recent files too
   try {
     const response = await axios.get('/api/files') // Replace '/api/files' with your API endpoint
     console.log(files.value.length, 'flen')
-    if (response.data.files) {
+    if (response.data.files && response.data.files.length > 0) {
       files.value = response.data.files
+      localStorage.setItem(storageKey, JSON.stringify(files.value))
+    } else {
+      loadRecentFiles()
     }
   }
   catch (error) {
     console.error('Error fetching files:', error)
   }
 }
+
+function loadRecentFiles() {
+  const storedFiles = localStorage.getItem(storageKey)
+  if (storedFiles) {
+    files.value = JSON.parse(storedFiles)
+    console.log(files.value);
+  }
+}
+
 
 onMounted(() => {
   const token = localStorage.getItem('venAuthToken')
@@ -69,10 +86,13 @@ onMounted(() => {
   document.title = 'Home'
 })
 
-// Function to get the icon component based on file_type
-function getIconComponent(fileType: string): keyof typeof defaultIcons {
-  return fileType as keyof typeof defaultIcons
+function openFile(id: string, fileType?: string) {
+  switch (fileType) {
+    default:
+      router.push(`sheets/${id}`)
+  }
 }
+
 </script>
 
 <template>
@@ -120,14 +140,17 @@ function getIconComponent(fileType: string): keyof typeof defaultIcons {
     <div class="flex h-full p-4">
       <!-- Grid for files -->
       <div class="grid grid-cols-6 gap-4">
-        <!-- Iterate over files -->
-        <template v-for="file in files" :key="file.id">
-          <component
-            :is="getIconComponent(file.file_type)"
-            class="w-16 h-16 text-gray-600"
-          />
-        </template>
-      </div>
+      <!-- Iterate over files -->
+      <template v-for="file in files" :key="file.id">
+        <button
+          class="flex flex-col items-center bg-gray-100 p-3 h-auto max-h-[6rem] rounded-lg"
+          @click="openFile(file.id, file.file_type)"
+        >
+          <FileIcon :fileType="file.file_type" />
+          <p class="text-sm">{{ file.name }}</p>
+        </button>
+      </template>
+    </div>
       <!-- Empty files section -->
       <!-- Conditionally render if there are no files -->
       <div class="h-full w-full flex flex-col items-center justify-center">
