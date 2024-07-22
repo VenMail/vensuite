@@ -1,32 +1,32 @@
+<template>
+  <div class="line"></div>
+</template>
+
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: 'CustomHline',
+  name: "custom-hline",
   // 变量通过props传参
   // 逻辑通过触发自定义事件来实现
   props: {
     editor: {
       type: Object,
-      required: false,
+      required: false
     },
     node: {
       type: Object,
-      required: false,
+      required: false
     },
     extension: {
       type: Object,
-      required: false,
+      required: false
     },
     value: String,
-    styles: Object,
-  },
-})
+    styles: Object
+  }
+});
 </script>
-
-<template>
-  <div class="line" />
-</template>
 
 <style scoped>
 .line {

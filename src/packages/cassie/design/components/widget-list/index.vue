@@ -1,16 +1,3 @@
-<script>
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'WidgetList',
-  // 变量通过props传参
-  // 逻辑通过触发自定义事件来实现
-  props: {
-    list: Array,
-  },
-})
-</script>
-
 <template>
   <!-- 组件列表 -->
   <div class="content element-doc content">
@@ -22,6 +9,18 @@ export default defineComponent({
   </div>
 </template>
 
+<script>
+import { defineComponent } from "vue";
+
+export default defineComponent({
+  name: "WidgetList",
+  // 变量通过props传参
+  // 逻辑通过触发自定义事件来实现
+  props: {
+    list: Array
+  }
+});
+</script>
 <style>
 .icon-list {
   overflow: hidden;

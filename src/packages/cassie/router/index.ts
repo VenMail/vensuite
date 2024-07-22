@@ -1,80 +1,85 @@
-import type { RouteRecordRaw } from 'vue-router'
-import { createRouter, createWebHashHistory } from 'vue-router'
-import BaseEditor from '../views/BaseEditor.vue'
-import PageEditor from '../views/PageEditor.vue'
-import PageEditorDeflate from '../views/PageEditorDeflate.vue'
-import SignEditor from '../views/SignEditor.vue'
-import DocxEditor from '../views/DocxEditor.vue'
-import CommentEditor from '../views/CommentEditor.vue'
-import ChangesetEditor from '../views/ChangesetEditor.vue'
-import CollaborativeEditor from '../views/CollaborativeEditor.vue'
-import PrintEditor from '../views/PrintEditor.vue'
-import DiffEditor from '../views/DiffEditor.vue'
+import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
+import BaseEditor from "../views/BaseEditor.vue";
+import PageEditor from "../views/PageEditor.vue";
+import PageEditorDeflate from "../views/PageEditorDeflate.vue";
+import SignEditor from "../views/SignEditor.vue";
+import DocxEditor from "../views/DocxEditor.vue";
+import CommentEditor from '../views/CommentEditor.vue';
+import ChangesetEditor from "../views/ChangesetEditor.vue";
+import CollaborativeEditor from "../views/CollaborativeEditor.vue";
+import PrintEditor from "../views/PrintEditor.vue";
+import DiffEditor from "../views/DiffEditor.vue";
+import PageHeaderAndFooter from "../views/PageHeaderAndFooter.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/',
-    name: 'base',
-    component: BaseEditor,
+    path: "/",
+    name: "base",
+    component: BaseEditor
   },
   {
-    path: '/page',
-    name: 'page',
-    component: PageEditor,
+    path: "/pageheaderandfooter",
+    name: "pageheaderandfooter",
+    component: PageHeaderAndFooter
   },
   {
-    path: '/page1',
-    name: 'page1',
-    component: PageEditorDeflate,
+    path: "/page",
+    name: "page",
+    component: PageEditor
   },
   {
-    path: '/collaborativeeditor',
-    name: 'collaborativeeditor',
-    component: CollaborativeEditor,
+    path: "/page1",
+    name: "page1",
+    component: PageEditorDeflate
   },
   {
-    path: '/commenteditor',
-    name: 'commenteditor',
-    component: CommentEditor,
+    path: "/collaborativeeditor",
+    name: "collaborativeeditor",
+    component: CollaborativeEditor
   },
   {
-    path: '/changeseteditor',
-    name: 'changeseteditor',
-    component: ChangesetEditor,
+    path: "/commenteditor",
+    name: "commenteditor",
+    component: CommentEditor
   },
   {
-    path: '/print',
-    name: 'print',
-    component: PrintEditor,
+    path: "/changeseteditor",
+    name: "changeseteditor",
+    component: ChangesetEditor
   },
   {
-    path: '/diff',
-    name: 'diff',
-    component: DiffEditor,
+    path: "/print",
+    name: "print",
+    component: PrintEditor
   },
   {
-    path: '/sign',
-    name: 'sign',
-    component: SignEditor,
+    path: "/diff",
+    name: "diff",
+    component: DiffEditor
   },
   {
-    path: '/docx',
-    name: 'docx',
-    component: DocxEditor,
+    path: "/sign",
+    name: "sign",
+    component: SignEditor
   },
   {
-    path: '/about',
-    name: 'about',
+    path: "/docx",
+    name: "docx",
+    component: DocxEditor
+  },
+  {
+    path: "/about",
+    name: "about",
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue'),
-  },
-]
+    component: () => import(/* webpackChunkName: "about" */ "../views/AboutView.vue")
+  }
+];
 
 const router = createRouter({
   history: createWebHashHistory(),
-  routes,
-})
+  routes
+});
 
-export default router
+export default router;

@@ -60,8 +60,6 @@ export function BuildRender(contextmenu?: ContextMenuOptions[]) {
           }
           if (component) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-expect-error
-
             if (!props.clientRect) {
               return false
             }

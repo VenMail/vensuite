@@ -1,248 +1,234 @@
-<script lang="ts">
-// import applyDevTools from "prosemirror-dev-tools";
-import { Editor, EditorContent } from '@tiptap/vue-3'
-import type { PropType } from 'vue'
-import { defineComponent, onBeforeUnmount, onMounted, shallowRef, unref, watchEffect } from 'vue'
-import * as Y from 'yjs'
-import Collaboration from '@tiptap/extension-collaboration'
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
-import { HocuspocusProvider } from '@hocuspocus/provider'
-import type { Extensions } from '@tiptap/core'
-import type { ContextMenuOptions } from '../default'
-import { BuildRender } from '../default'
-import { CassieKit } from '@/extension'
-import FileTools from '@/views/filetools/FileTools.vue'
+<template>
+  <div class="grid flex-grow card bg-base-300 rounded-box place-items-center">
+    <div>
+      <FileTools :editor="editor" v-if="editor"></FileTools>
+    </div>
+    <editor-content :editor="editor" class="my-2" />
+  </div>
+</template>
 
+<script lang="ts">
+//import applyDevTools from "prosemirror-dev-tools";
+import { EditorContent, Editor } from "@tiptap/vue-3";
+import { defineComponent, onBeforeUnmount, onMounted, PropType, ref, shallowRef, unref, watchEffect } from "vue";
+import { BuildRender, ContextMenuOptions } from "@/default";
+import { CassieKit } from "@/extension";
+import * as Y from "yjs";
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { HocuspocusProvider } from "@hocuspocus/provider";
+import { Extensions } from "@tiptap/core";
+import FileTools from "@/views/filetools/FileTools.vue";
 export default defineComponent({
-  name: 'CassieEditor',
+  name: "cassie-editor",
   components: {
     FileTools,
-    EditorContent,
+    EditorContent
   },
   props: {
     content: {
-      type: [Object, String],
+      type: [Object, String]
     },
     menuList: {
-      type: Array as PropType<ContextMenuOptions[]>,
+      type: Array as PropType<ContextMenuOptions[]>
     },
     footerHeight: {
       type: Number,
-      default: 100,
+      default: 100
     },
     headerHeight: {
       type: Number,
-      default: 100,
+      default: 100
     },
     bodyHeight: {
       type: Number,
-      default: 400,
+      default: 400
     },
     bodyWidth: {
       type: Number,
-      default: 1200,
+      default: 1200
+    },
+    mode:{
+      type: Number,
+      default: 1
     },
     bodyPadding: {
       type: Number,
-      default: 10,
+      default: 10
     },
     isPaging: {
       type: Boolean,
-      default: true,
+      default: true
     },
     headerData: {
       type: Array,
       // eslint-disable-next-line vue/require-valid-default-prop
-      default: [],
+      default: []
     },
     footerData: {
       type: Array,
       // eslint-disable-next-line vue/require-valid-default-prop
-      default: [],
+      default: []
     },
     output: {
       type: String,
-      default: 'html',
+      default: "html"
     },
     class: {
       type: String,
-      default: '',
+      default: ""
     },
     spellcheck: {
       type: Boolean,
-      default: false,
+      default: false
     },
     editable: {
       type: Boolean,
-      default: true,
+      default: true
     },
     collaborationUrl: {
       type: String,
-      default: undefined,
+      default: undefined
     },
     user: {
       type: Object,
       // eslint-disable-next-line vue/require-valid-default-prop
-      default: { name: 'John Doe', color: '#ffcc00' },
-    },
+      default: { name: "John Doe", color: "#ffcc00" }
+    }
   },
   setup(props, { emit }) {
-    const ydoc = new Y.Doc()
-    const editor = shallowRef<Editor>()
-    const provider = shallowRef<HocuspocusProvider>()
+    const ydoc = new Y.Doc();
+    const editor = shallowRef<Editor>();
+    const provider = shallowRef<HocuspocusProvider>();
     onMounted(() => {
-      // 协作编辑 ws url
-      const extensions: Extensions = [
+      //协作编辑 ws url
+      let extensions: Extensions = [
         CassieKit.configure({
-          textAlign: { types: ['heading', 'paragraph'] },
+          textAlign: { types: ["heading", "paragraph"] },
           mention: {
-            clickSuggestion: BuildRender(props.menuList), // 编辑器右键菜单
+            clickSuggestion: BuildRender(props.menuList) //编辑器右键菜单
           },
           page: { ...props },
           table: {
             HTMLAttributes: {
-              class: 'border-collapse border border-slate-400',
-            },
+              class: "border-collapse border border-slate-400"
+            }
           },
           tableCell: {
             HTMLAttributes: {
-              class: 'border border-slate-300',
-            },
+              class: "border border-slate-300"
+            }
           },
           tableHeader: {
             HTMLAttributes: {
-              class: 'border border-slate-300',
-            },
+              class: "border border-slate-300"
+            }
           },
-          focus: false, // 选中样式
-          history: false, // 历史记录回退 协作模式禁止开启
-        }),
-      ]
+          focus: false, //选中样式
+          history: false //历史记录回退 协作模式禁止开启
+        })
+      ];
       if (props.collaborationUrl) {
         provider.value = new HocuspocusProvider({
           url: props.collaborationUrl,
-          name: '1', // TODO 这里需要修改 这里是文档唯一id 用于区分不同的文档
+          name: "1", //TODO 这里需要修改 这里是文档唯一id 用于区分不同的文档
           document: ydoc,
           onStatus: (data) => {
-            emit('onStatus', data, editor.value)
+            emit("onStatus", data, editor.value);
           },
           onConnect: () => {},
           onClose: (data) => {
-            console.log(data)
+            console.log(data);
           },
           onAwarenessChange: (data) => {
-            // 协作用户状态的变化
-            emit('onAwarenessChange', data)
+            //协作用户状态的变化
+            emit("onAwarenessChange", data);
           },
           onSynced: (data) => {
-            // TODO 如果当前协作文档 只有一个人 证明是第一个打开文档的 需要添加文档
-            // TODO  这里的实现是错误的 应该在服务端实现打开文档的时候就添加文档 为了演示暂时这样处理减少网络请求
+            //TODO 如果当前协作文档 只有一个人 证明是第一个打开文档的 需要添加文档
+            //TODO  这里的实现是错误的 应该在服务端实现打开文档的时候就添加文档 为了演示暂时这样处理减少网络请求
             if (editor.value && editor.value.storage.collaborationCursor.users.length == 1) {
               if (props.content) {
-                editor.value.commands.setContent(props.content)
+                editor.value.commands.setContent(props.content);
               }
             }
-          },
-        })
+          }
+        });
         extensions.push(
           Collaboration.configure({
-            document: ydoc,
-          }),
-        )
+            document: ydoc
+          })
+        );
         extensions.push(
           CollaborationCursor.configure({
             provider: provider.value,
-            // 这里应该使用当前你的登录用户
-            user: props.user,
-          }),
-        )
+            //这里应该使用当前你的登录用户
+            user: props.user
+          })
+        );
       }
-      // 如果是协作模式 设置 content需要滞后 否则会重复添加
+      //如果是协作模式 设置 content需要滞后 否则会重复添加
       editor.value = new Editor({
         editable: props.editable,
         content: props.collaborationUrl ? null : props.content,
         onCreate: (options) => {
-          emit('onCreate', options)
+          emit("onCreate", options);
         },
         onTransaction: (options) => {
-          emit('onTransaction', options)
+          emit("onTransaction", options);
         },
         onFocus: (options) => {
-          emit('onFocus', options)
+          emit("onFocus", options);
         },
         onBlur: (options) => {
-          emit('onBlur', options)
+          emit("onBlur", options);
         },
         onDestroy: (options) => {
-          emit('onDestroy', options)
+          emit("onDestroy", options);
         },
         onUpdate({ editor }) {
-          let output
-          if (props.output === 'html') {
-            output = editor.getHTML()
+          let output;
+          if (props.output === "html") {
+            output = editor.getHTML();
+          } else {
+            output = editor.getJSON();
           }
-          else {
-            output = editor.getJSON()
-          }
-          emit('update:content', output)
-          emit('onUpdate', output, editor)
+          emit("update:content", output);
+          emit("onUpdate", output, editor);
         },
         onSelectionUpdate({ editor }) {
-          emit('onSelectionUpdate', editor)
+          emit("onSelectionUpdate", editor);
         },
         editorProps: {
           attributes: {
-            class: props.class,
-          },
+            class: props.class
+          }
         },
         injectCSS: false,
-        extensions,
-      })
+        extensions
+      });
       setTimeout(() => {
-        editor.value?.view.dispatch(editor.value?.state.tr.setMeta('splitPage', true))
-      }, 1000)
-      // TODO 开发模式打开 applyDevTools(editor.value.view);
-    })
+        editor.value?.view.dispatch(editor.value?.state.tr.setMeta("splitPage", true));
+      }, 1000);
+      //TODO 开发模式打开 applyDevTools(editor.value.view);
+    });
 
     onBeforeUnmount(() => {
-      editor.value?.destroy()
-      provider.value?.destroy()
-    })
+      editor.value?.destroy();
+      provider.value?.destroy();
+    });
 
     watchEffect(() => {
       unref(editor)?.setOptions({
         editorProps: {
           attributes: {
-            spellcheck: String(props.spellcheck),
-          },
-        },
-      })
-    })
-    return { editor }
-  },
-})
+            spellcheck: String(props.spellcheck)
+          }
+        }
+      });
+    });
+    return { editor };
+  }
+});
 </script>
-
-<template>
-  <div class="grid flex-grow card bg-base-300 rounded-box place-items-center">
-    <div>
-      <FileTools v-if="editor" :editor="editor" />
-    </div>
-    <EditorContent :editor="editor" class="my-2" />
-  </div>
-</template>
-
-<style scoped>
- .ProseMirror {
-  word-wrap: break-word;
-  white-space: pre-wrap;
-  white-space: break-spaces;
-  -webkit-font-variant-ligatures: none;
-  font-variant-ligatures: none;
-  font-feature-settings: 'liga' 0; /* the above doesn't seem to work in Edge */
-}
-
-.ProseMirror pre {
-  white-space: pre-wrap;
-}
-</style>
+<style scoped></style>

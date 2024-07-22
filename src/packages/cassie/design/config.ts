@@ -1,102 +1,102 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import * as dft from './default'
+// @ts-ignore
+import * as dft from "./default";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import * as styleFormConfig from './style-form-config'
+// @ts-ignore
+import * as styleFormConfig from "./style-form-config";
 
-export interface WidgetOptions {
-  id: number
-  x: number
-  y: number
-  focused: boolean
-  type: string
-  component: string
-  label: string
-  w: number
-  h: number
-  value: any
-  styles: any
-  styleForm: any
-  handles: [any]
-}
+export type WidgetOptions = {
+  id: number;
+  x: number;
+  y: number;
+  focused: boolean;
+  type: string;
+  component: string;
+  label: string;
+  w: number;
+  h: number;
+  value: any;
+  styles: any;
+  styleForm: any;
+  handles: [any];
+};
 
 // 组件列表的配置项
 export const WIDGET_BASE_LIST = [
   {
-    type: 'logo',
-    component: 'custom-logo',
-    label: 'logo',
+    type: "logo",
+    component: "custom-logo",
+    label: "logo",
     default: {
       w: 50,
       h: 50,
-      value: '',
+      value: ""
     },
     styles: {},
-    styleForm: {},
+    styleForm: {}
   },
   {
-    type: 'text',
-    component: 'page-count',
-    label: '页码',
+    type: "text",
+    component: "page-count",
+    label: "页码",
     default: dft.PAGE_COUNT_DATA,
     styles: dft.TEXT_STYLE,
-    styleForm: styleFormConfig.TEXT,
+    styleForm: styleFormConfig.TEXT
   },
   {
-    type: 'text',
-    component: 'custom-text',
-    label: '文字',
+    type: "text",
+    component: "custom-text",
+    label: "文字",
     default: dft.TEXT_DATA,
     styles: dft.TEXT_STYLE,
-    styleForm: styleFormConfig.TEXT,
+    styleForm: styleFormConfig.TEXT
   },
   {
-    type: 'select',
-    component: 'custom-select',
-    label: '下拉',
+    type: "select",
+    component: "custom-select",
+    label: "下拉",
     default: {
       w: 100,
       h: 32,
-      value: '',
+      value: "Option1"
     },
     styles: {},
-    styleForm: {},
+    styleForm: {}
   },
   {
-    type: 'image',
-    component: 'custom-image',
-    label: '图片',
+    type: "image",
+    component: "custom-image",
+    label: "图片",
     default: {
       w: 50,
       h: 50,
-      value: '',
+      value: ""
     },
     styles: {},
-    styleForm: {},
+    styleForm: {}
   },
 
   {
-    type: 'hline',
-    component: 'custom-hline',
-    label: '横线',
+    type: "hline",
+    component: "custom-hline",
+    label: "横线",
     default: {
       w: 100,
-      h: 4,
+      h: 4
     },
     styles: {},
-    styleForm: [],
+    styleForm: []
   },
   {
-    type: 'vline',
-    component: 'custom-vline',
-    label: '竖线',
+    type: "vline",
+    component: "custom-vline",
+    label: "竖线",
     default: {
       w: 4,
       h: 100,
-      value: '',
+      value: ""
     },
     styles: {},
-    styleForm: [],
-  },
-]
+    styleForm: []
+  }
+];

@@ -1,68 +1,94 @@
+<template>
+  <div class="grid grid-cols-4 gap-4">
+    <div class="bg-base-300 col-span-3 grid justify-items-center">
+      <div class="bars">
+        <FileTools :editor="editor"></FileTools>
+      </div>
+      <editor-content class="my-2" :editor="editor" />
+      <BubbleMenu v-if="editor" :tippy-options="{ duration: 100, placement: 'bottom' }" :editor="editor" :should-show="({ editor }) => isCommentModeOn && !editor.state.selection.empty && !activeCommentsInstance.uuid" class="card bg-base-100 shadow-xl">
+        <div class="card items-center text-center border border-indigo-600">
+          <h2 class="card-title">评论</h2>
+          <div class="card-body" style="padding: 15px">
+            <textarea class="textarea textarea-bordered" v-model="commentText" cols="30" rows="4" placeholder="添加新的批注" @keypress.enter.stop.prevent="() => setComment()" />
+          </div>
+
+          <div class="card-actions">
+            <button class="btn btn-outline btn-xs" @click="() => setComment()">添加</button>
+            <button class="btn btn-outline btn-xs" @click="() => (commentText = '')">清空</button>
+          </div>
+        </div>
+      </BubbleMenu>
+    </div>
+    <div class="card bg-base-300 rounded-box">
+      <OuterCommentVue :active-comments-instance="activeCommentsInstance" :all-comments="allComments" :format-date="formatDate" :focus-content="focusContent" :is-comment-mode-on="isCommentModeOn" @set-comment="setComment" />
+    </div>
+  </div>
+</template>
+
 <script lang="ts">
-import { BubbleMenu, Editor, EditorContent } from '@tiptap/vue-3'
-import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import type { Editor as E } from '@tiptap/core'
+import OuterCommentVue from "./OuterComment.vue";
+import { CassieKit, Comment } from "@/extension";
+import { Editor, EditorContent, BubbleMenu } from "@tiptap/vue-3";
+import { onBeforeUnmount, onMounted, reactive, ref, shallowRef } from "vue";
+import { Editor as E } from "@tiptap/core";
+import { UnitConversion } from "@/extension/page/core";
+import { pageContentHtml, headerlist, footerlist } from "./content";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import { v4 as uuidv4 } from 'uuid'
+// @ts-ignore
+import { v4 as uuidv4 } from "uuid";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import format from 'date-fns/format'
-import { footerlist, headerlist, pageContentHtml } from './content'
-import OuterCommentVue from './OuterComment.vue'
-import { UnitConversion } from '@/extension/page/core'
-import { CassieKit, Comment } from '@/extension'
-import { DiffExtension } from '@/extension/track'
+// @ts-ignore
+import format from "date-fns/format";
+import { DiffExtension } from "@/extension/track";
 
-import FileTools from '@/views/filetools/FileTools.vue'
-
-const unitConversion = new UnitConversion()
+import FileTools from "@/views/filetools/FileTools.vue";
+const unitConversion = new UnitConversion();
 export default {
   components: {
     FileTools,
     EditorContent,
     BubbleMenu,
-    OuterCommentVue,
+    OuterCommentVue
   },
   setup() {
-    const w = unitConversion.mmConversionPx(210)
-    const h = unitConversion.mmConversionPx(297)
-    const dateTimeFormat = 'yyyy.MM.dd HH:mm'
+    let w = unitConversion.mmConversionPx(210);
+    let h = unitConversion.mmConversionPx(297);
+    const dateTimeFormat = "yyyy.MM.dd HH:mm";
 
-    const formatDate = (d: any) => (d ? format(new Date(d), dateTimeFormat) : null)
-    const currentUserName = ref('黄医生')
+    const formatDate = (d: any) => (d ? format(new Date(d), dateTimeFormat) : null);
+    const currentUserName = ref("黄医生");
 
-    const commentText = ref('')
+    const commentText = ref("");
 
-    const showCommentMenu = ref(false)
+    const showCommentMenu = ref(false);
 
-    const isCommentModeOn = ref(false)
+    const isCommentModeOn = ref(false);
 
-    const isTextSelected = ref(false)
+    const isTextSelected = ref(false);
 
-    const showAddCommentSection = ref(true)
+    const showAddCommentSection = ref(true);
 
     interface CommentInstance {
-      uuid?: string
-      comments?: any[]
+      uuid?: string;
+      comments?: any[];
     }
 
-    const activeCommentsInstance = ref<CommentInstance>({})
+    const activeCommentsInstance = ref<CommentInstance>({});
 
-    const allComments = ref<any[]>([])
+    const allComments = ref<any[]>([]);
 
     const findCommentsAndStoreValues = (editor: E) => {
-      const tempComments: any[] = []
+      const tempComments: any[] = [];
 
       editor.state.doc.descendants((node, pos) => {
-        const { marks } = node
+        const { marks } = node;
 
         marks.forEach((mark) => {
-          if (mark.type.name === 'comment') {
-            const markComments = mark.attrs.comment
+          if (mark.type.name === "comment") {
+            const markComments = mark.attrs.comment;
 
-            const jsonComments = markComments ? JSON.parse(markComments) : null
+            const jsonComments = markComments ? JSON.parse(markComments) : null;
 
             if (jsonComments !== null) {
               tempComments.push({
@@ -70,121 +96,117 @@ export default {
                 jsonComments,
                 from: pos,
                 to: pos + (node.text?.length || 0),
-                text: node.text,
-              })
+                text: node.text
+              });
             }
           }
-        })
-      })
+        });
+      });
 
-      allComments.value = tempComments
-    }
+      allComments.value = tempComments;
+    };
 
-    const { log } = console
+    const { log } = console;
 
     const setCurrentComment = (editor: E) => {
-      const newVal = editor.isActive('comment')
+      const newVal = editor.isActive("comment");
 
       if (newVal) {
-        setTimeout(() => (showCommentMenu.value = newVal), 50)
+        setTimeout(() => (showCommentMenu.value = newVal), 50);
 
-        showAddCommentSection.value = !editor.state.selection.empty
+        showAddCommentSection.value = !editor.state.selection.empty;
 
-        const parsedComment = JSON.parse(editor.getAttributes('comment').comment)
+        const parsedComment = JSON.parse(editor.getAttributes("comment").comment);
 
-        parsedComment.comment = typeof parsedComment.comments === 'string' ? JSON.parse(parsedComment.comments) : parsedComment.comments
+        parsedComment.comment = typeof parsedComment.comments === "string" ? JSON.parse(parsedComment.comments) : parsedComment.comments;
 
-        activeCommentsInstance.value = parsedComment
+        activeCommentsInstance.value = parsedComment;
+      } else {
+        activeCommentsInstance.value = {};
       }
-      else {
-        activeCommentsInstance.value = {}
-      }
-    }
+    };
 
-    const getIsCommentModeOn = () => isCommentModeOn.value
-    const editor = shallowRef<Editor>()
+    const getIsCommentModeOn = () => isCommentModeOn.value;
+    const editor = shallowRef<Editor>();
     const setComment = (val?: string) => {
-      const localVal = val || commentText.value
+      const localVal = val || commentText.value;
 
-      if (!localVal.trim().length)
-        return
+      if (!localVal.trim().length) return;
 
-      const activeCommentInstance: CommentInstance = JSON.parse(JSON.stringify(activeCommentsInstance.value))
-      const commentsArray = typeof activeCommentInstance.comments === 'string' ? JSON.parse(activeCommentInstance.comments) : activeCommentInstance.comments
+      const activeCommentInstance: CommentInstance = JSON.parse(JSON.stringify(activeCommentsInstance.value));
+      const commentsArray = typeof activeCommentInstance.comments === "string" ? JSON.parse(activeCommentInstance.comments) : activeCommentInstance.comments;
 
       if (commentsArray) {
         commentsArray.push({
           userName: currentUserName.value,
           time: Date.now(),
-          content: localVal,
-        })
+          content: localVal
+        });
 
         const commentWithUuid = JSON.stringify({
           uuid: activeCommentsInstance.value.uuid || uuidv4(),
-          comments: commentsArray,
-        })
-        editor.value?.chain().setComment(commentWithUuid).run()
-      }
-      else {
+          comments: commentsArray
+        });
+        editor.value?.chain().setComment(commentWithUuid).run();
+      } else {
         const commentWithUuid = JSON.stringify({
           uuid: uuidv4(),
           comments: [
             {
               userName: currentUserName.value,
               time: Date.now(),
-              content: localVal,
-            },
-          ],
-        })
-        editor.value?.chain().setComment(commentWithUuid).run()
+              content: localVal
+            }
+          ]
+        });
+        editor.value?.chain().setComment(commentWithUuid).run();
       }
 
-      setTimeout(() => (commentText.value = ''), 50)
-    }
+      setTimeout(() => (commentText.value = ""), 50);
+    };
 
     const toggleCommentMode = () => {
-      isCommentModeOn.value = !isCommentModeOn.value
-      if (isCommentModeOn.value)
-        editor.value?.setEditable(false)
-      else editor.value?.setEditable(true)
-    }
+      isCommentModeOn.value = !isCommentModeOn.value;
+      if (isCommentModeOn.value) editor.value?.setEditable(false);
+      else editor.value?.setEditable(true);
+    };
 
-    const focusContent = ({ from, to }: { from: number, to: number }) => {
-      editor.value?.chain().setTextSelection({ from, to }).run()
-    }
+    const focusContent = ({ from, to }: { from: number; to: number }) => {
+      editor.value?.chain().setTextSelection({ from, to }).run();
+    };
     onBeforeUnmount(() => {
-      editor.value?.destroy()
-    })
+      editor.value?.destroy();
+    });
     onMounted(() => {
-      toggleCommentMode()
-      // 编辑器实例
+      toggleCommentMode();
+      //编辑器实例
       editor.value = new Editor({
         onUpdate({ editor }) {
-          findCommentsAndStoreValues(editor)
-          setCurrentComment(editor)
+          findCommentsAndStoreValues(editor);
+          setCurrentComment(editor);
         },
         onSelectionUpdate({ editor }) {
-          setCurrentComment(editor)
-          isTextSelected.value = !!editor.state.selection.content().size
+          setCurrentComment(editor);
+          isTextSelected.value = !!editor.state.selection.content().size;
         },
 
         onCreate({ editor }) {
-          findCommentsAndStoreValues(editor)
+          findCommentsAndStoreValues(editor);
         },
         editorProps: {
           attributes: {
-            class: 'divide-y divide-black-600',
-          },
+            class: "divide-y divide-black-600"
+          }
         },
-        content: pageContentHtml, // 初始化编辑器内容
+        content: pageContentHtml, //初始化编辑器内容
         injectCSS: false,
         extensions: [
           CassieKit.configure({
-            textAlign: { types: ['heading', 'paragraph'] },
+            textAlign: { types: ["heading", "paragraph"] },
             mention: {
               HTMLAttributes: {
-                class: 'bg-gray-300',
-              },
+                class: "bg-gray-300"
+              }
             },
             page: {
               bodyPadding: 10,
@@ -193,15 +215,15 @@ export default {
               footerHeight: 60,
               bodyHeight: h,
               headerData: headerlist,
-              footerData: footerlist,
+              footerData: footerlist
             },
-            focus: false,
+            focus: false
           }),
           DiffExtension,
-          Comment.configure({ isCommentModeOn: getIsCommentModeOn }),
-        ],
-      })
-    })
+          Comment.configure({ isCommentModeOn: getIsCommentModeOn })
+        ]
+      });
+    });
     return {
       editor,
       focusContent,
@@ -214,45 +236,11 @@ export default {
       isCommentModeOn,
       activeCommentsInstance,
       allComments,
-      formatDate,
-    }
-  },
-}
+      formatDate
+    };
+  }
+};
 </script>
-
-<template>
-  <div class="grid grid-cols-4 gap-4">
-    <div class="bg-base-300 col-span-3 grid justify-items-center">
-      <div class="bars">
-        <FileTools :editor="editor" />
-      </div>
-      <EditorContent class="my-2" :editor="editor" />
-      <BubbleMenu v-if="editor" :tippy-options="{ duration: 100, placement: 'bottom' }" :editor="editor" :should-show="({ editor }) => isCommentModeOn && !editor.state.selection.empty && !activeCommentsInstance.uuid" class="card bg-base-100 shadow-xl">
-        <div class="card items-center text-center border border-indigo-600">
-          <h2 class="card-title">
-            评论
-          </h2>
-          <div class="card-body" style="padding: 15px">
-            <textarea v-model="commentText" class="textarea textarea-bordered" cols="30" rows="4" placeholder="添加新的批注" @keypress.enter.stop.prevent="() => setComment()" />
-          </div>
-
-          <div class="card-actions">
-            <button class="btn btn-outline btn-xs" @click="() => setComment()">
-              添加
-            </button>
-            <button class="btn btn-outline btn-xs" @click="() => (commentText = '')">
-              清空
-            </button>
-          </div>
-        </div>
-      </BubbleMenu>
-    </div>
-    <div class="card bg-base-300 rounded-box">
-      <OuterCommentVue :active-comments-instance="activeCommentsInstance" :all-comments="allComments" :format-date="formatDate" :focus-content="focusContent" :is-comment-mode-on="isCommentModeOn" @set-comment="setComment" />
-    </div>
-  </div>
-</template>
-
 <style>
 .ProseMirror-focused {
 }

@@ -1,178 +1,241 @@
+<template>
+  <div class="flex place-content-center bg-gray-200">
+    <v-contextmenu ref="contextmenu">
+      <v-contextmenu-item v-for="(widget, index) in wlist" :key="index" @click="(e: any) => menuclick(e, widget)">
+        {{ widget.label }}
+      </v-contextmenu-item>
+      <v-contextmenu-divider />
+      <v-contextmenu-item v-if="currentindex < 10000" @click="onLayerRemove()">删除</v-contextmenu-item>
+    </v-contextmenu>
+    <v-contextmenu ref="componetmenu">
+      <v-contextmenu-divider />
+    </v-contextmenu>
+    <div class="my-1">
+      <div class="bg-white shadow p-2 divide-y divide-gray-400 bars">
+        <vue-file-toolbar-menu v-for="(content, index) in menus" :key="'bar-' + index" :content="content" />
+      </div>
+      <div class="Page text-editor my-2" :style="{ width: bodyWidth + 'px' }">
+        <div class="relative header" @mousedown.stop="unFocus(true)" v-contextmenu:contextmenu :style="{ height: headerHeight + 'px' }">
+          <Vue3DraggableResizable
+            v-for="(item, i) in headerlist"
+            :key="i"
+            :initW="item.w"
+            :initH="item.h"
+            :x="item.x"
+            :y="item.y"
+            :w="item.w"
+            :h="item.h"
+            :active="item.focused"
+            :parent="true"
+            :draggable="true"
+            :resizable="true"
+            @mousedown.stop="onFocus(i, true)"
+            @dragging="(e) => onDragStartCallback(e, item)"
+            @resizing="(e) => onResize(e, item)"
+          >
+            <component class="min-w-full min-h-full" :is="item.component" :value="item.value" @inpuvalue="(v: any) => updateValue(item, v)" :styles="item.styles" />
+          </Vue3DraggableResizable>
+        </div>
+        <editor-content :editor="editor" />
+        <div class="relative footer" @mousedown.stop="unFocus(false)" v-contextmenu:contextmenu :style="{ height: footerHeight + 'px' }">
+          <Vue3DraggableResizable
+            v-for="(item, i) in footerlist"
+            :key="i"
+            :initW="item.w"
+            :initH="item.h"
+            :x="item.x"
+            :y="item.y"
+            :w="item.w"
+            :h="item.h"
+            :active="item.focused"
+            :parent="true"
+            :draggable="true"
+            :resizable="true"
+            @mousedown.stop="onFocus(i, false)"
+            @dragging="(e) => onDragStartCallback(e, item)"
+            @resizing="(e) => onResize(e, item)"
+          >
+            <component class="min-w-full min-h-full" :is="item.component" :value="item.value" @inpuvalue="(v: any) => updateValue(item, v)" :styles="item.styles" />
+          </Vue3DraggableResizable>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script lang="ts">
-import { CassieKit } from '@/extension/CassieKit'
+import { CassieKit } from "@/extension/CassieKit";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import { EditorContent, useEditor } from '@tiptap/vue-3'
-import { BuildRender } from '../demo/clickSuggestion'
+// @ts-ignore
+import { useEditor, EditorContent } from "@tiptap/vue-3";
+import { BuildRender } from "../demo/clickSuggestion";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import Vue3DraggableResizable from 'vue3-draggable-resizable'
+// @ts-ignore
+import Vue3DraggableResizable from "vue3-draggable-resizable";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import VueFileToolbarMenu from 'vue-file-toolbar-menu'
-import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
+// @ts-ignore
+import VueFileToolbarMenu from "vue-file-toolbar-menu";
+import "vue3-draggable-resizable/dist/Vue3DraggableResizable.css";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import { Contextmenu, ContextmenuDivider, ContextmenuItem, ContextmenuSubmenu, directive } from 'v-contextmenu'
-import 'v-contextmenu/dist/themes/default.css'
+// @ts-ignore
+import { directive, Contextmenu, ContextmenuItem, ContextmenuDivider, ContextmenuSubmenu } from "v-contextmenu";
+import "v-contextmenu/dist/themes/default.css";
 
-import { defineComponent, defineExpose, reactive, ref } from 'vue'
+import { onBeforeUnmount, reactive, ref, defineComponent, PropType, defineExpose } from "vue";
 
-let currentId = 1
+let currentId = 1;
 export default defineComponent({
-  name: 'CassieDesignEditor',
+  name: "CassieDesignEditor",
   directives: {
-    contextmenu: directive,
+    contextmenu: directive
   },
   components: {
     EditorContent,
-
+    // eslint-disable-next-line vue/no-unused-components
     VueFileToolbarMenu,
-
+    // eslint-disable-next-line vue/no-unused-components
     Vue3DraggableResizable,
     [Contextmenu.name]: Contextmenu,
     [ContextmenuItem.name]: ContextmenuItem,
     [ContextmenuSubmenu.name]: ContextmenuSubmenu,
-    [ContextmenuDivider.name]: ContextmenuDivider,
+    [ContextmenuDivider.name]: ContextmenuDivider
   },
   props: {
     content: {
       type: Object,
-      default: undefined,
+      default: undefined
     },
     footerHeight: {
       type: Number,
-      default: 100,
+      default: 100
     },
     headerHeight: {
       type: Number,
-      default: 100,
+      default: 100
     },
     bodyHeight: {
       type: Number,
-      default: 400,
+      default: 700
     },
     bodyWidth: {
       type: Number,
-      default: 800,
+      default: 800
     },
     bodyPadding: {
       type: Number,
-      default: 10,
+      default: 10
     },
     isPaging: {
       type: Boolean,
-      default: false,
+      default: false
     },
     headerData: {
       type: Array,
       // eslint-disable-next-line vue/require-valid-default-prop
-      default: [],
+      default: []
     },
     footerData: {
       type: Array,
       // eslint-disable-next-line vue/require-valid-default-prop
-      default: [],
+      default: []
     },
     output: {
       type: String,
-      default: 'json',
+      default: "json"
     },
     widgetList: {
       type: Array,
-      default: undefined,
-    },
+      default: undefined
+    }
   },
   setup(props, { emit }) {
-    const header = ref(true)
-    const currentindex = ref(0)
-    // 页眉data
-    const headerlist: any[] = reactive(props.headerData)
-    // 页脚
-    const footerlist: any[] = reactive(props.footerData)
-    // 编辑器实例
-    const editor = reactive(
+    let header = ref(true);
+    let currentindex = ref(0);
+    //页眉data
+    let headerlist: any[] = reactive(props.headerData);
+    //页脚
+    let footerlist: any[] = reactive(props.footerData);
+    //编辑器实例
+    let editor = reactive(
       useEditor({
         onUpdate({ editor }) {
-          let output
-          if (props.output === 'html') {
-            output = editor.getHTML()
+          let output;
+          if (props.output === "html") {
+            output = editor.getHTML();
+          } else {
+            output = editor.getJSON();
           }
-          else {
-            output = editor.getJSON()
-          }
-          emit('update:content', output)
-          emit('onUpdate', output, editor)
+          emit("update:content", output);
+          emit("onUpdate", output, editor);
         },
         editorProps: {
           attributes: {
-            class: 'divide-y divide-black-600',
-          },
+            class: "divide-y divide-black-600"
+          }
         },
-        content: props.content, // 初始化编辑器内容
+        content: props.content, //初始化编辑器内容
         injectCSS: false,
         extensions: [
           CassieKit.configure({
-            textAlign: { types: ['heading', 'paragraph'] },
+            textAlign: { types: ["heading", "paragraph"] },
             mention: {
               HTMLAttributes: {
-                class: 'bg-gray-300',
+                class: "bg-gray-300"
               },
-              clickSuggestion: BuildRender({}),
+              clickSuggestion: BuildRender({})
             },
             page: {
-              design: true,
-              ...props,
+              mode: 3,
+              ...props
             },
-            focus: false,
-          }),
-        ],
-      }),
-    )
+            focus: false
+          })
+        ]
+      })
+    );
 
-    // 子组件更新属性
+    //子组件更新属性
     function updateValue(item: any, v: any) {
-      item.value = v
+      item.value = v;
     }
 
-    // 失去焦点处理
+    //失去焦点处理
     function unFocus(h: boolean) {
-      header.value = h
-      currentindex.value = 10000
+      header.value = h;
+      currentindex.value = 10000;
     }
 
-    // 删除组画布上的组件
+    //删除组画布上的组件
     function onLayerRemove() {
       if (header.value) {
-        headerlist.splice(currentindex.value)
+        headerlist.splice(currentindex.value);
+      } else {
+        footerlist.splice(currentindex.value);
       }
-      else {
-        footerlist.splice(currentindex.value)
-      }
-      unFocus(header.value)
+      unFocus(header.value);
     }
 
-    // 选中组件
+    //选中组件
     function onFocus(c: number, h: boolean) {
-      header.value = h
-      currentindex.value = c
+      header.value = h;
+      currentindex.value = c;
     }
 
-    // TODO 改变组件大小方法
+    //TODO 改变组件大小方法
     function onResize(e: any, item: any) {
-      item.x = e.x
-      item.y = e.y
-      item.w = e.w
-      item.h = e.h
+      item.x = e.x;
+      item.y = e.y;
+      item.w = e.w;
+      item.h = e.h;
     }
 
-    // TODO 组件拖拽方法
+    //TODO 组件拖拽方法
     function onDragStartCallback(e: any, item: any) {
-      item.x = e.x
-      item.y = e.y
+      item.x = e.x;
+      item.y = e.y;
     }
 
-    // 右键菜单点击按钮
+    //右键菜单点击按钮
     function menuclick(e: any, currentWidget: any) {
       const newItem = {
         id: currentId++,
@@ -183,40 +246,39 @@ export default defineComponent({
         focused: false,
         component: currentWidget.component, // 新增的组件名
         type: currentWidget.type, // 新增组件的类型
-        styles: {}, // 新增组件的类型
-      }
+        styles: {} // 新增组件的类型
+      };
       if (header.value) {
-        headerlist.push(newItem)
-      }
-      else {
-        footerlist.push(newItem)
+        headerlist.push(newItem);
+      } else {
+        footerlist.push(newItem);
       }
     }
 
     const getHeaderAndFooter = () => {
-      return { headerlist, footerlist }
-    }
+      return { headerlist, footerlist };
+    };
     defineExpose({
-      getHeaderAndFooter,
-    })
-    // 系统组件相关
-    let widgetList: any[] = reactive([])
+      getHeaderAndFooter
+    });
+    //系统组件相关
+    let widgetList: any[] = reactive([]);
     if (props.widgetList) {
-      widgetList = reactive(props.widgetList)
+      widgetList = reactive(props.widgetList);
     }
 
     const menus = reactive([
       [
         {
-          icon: 'save',
-          text: '保存',
-          title: '保存页眉页脚',
+          icon: "save",
+          text: "保存",
+          title: "保存页眉页脚",
           click() {
-            console.log(getHeaderAndFooter())
-          },
-        },
-      ],
-    ])
+            console.log(getHeaderAndFooter());
+          }
+        }
+      ]
+    ]);
     return {
       wlist: widgetList,
       header,
@@ -231,79 +293,11 @@ export default defineComponent({
       onResize,
       onDragStartCallback,
       menuclick,
-      menus,
-    }
-  },
-})
+      menus
+    };
+  }
+});
 </script>
-
-<template>
-  <div class="flex place-content-center bg-gray-200">
-    <v-contextmenu ref="contextmenu">
-      <v-contextmenu-item v-for="(widget, index) in wlist" :key="index" @click="(e: any) => menuclick(e, widget)">
-        {{ widget.label }}
-      </v-contextmenu-item>
-      <v-contextmenu-divider />
-      <v-contextmenu-item v-if="currentindex < 10000" @click="onLayerRemove()">
-        删除
-      </v-contextmenu-item>
-    </v-contextmenu>
-    <v-contextmenu ref="componetmenu">
-      <v-contextmenu-divider />
-    </v-contextmenu>
-    <div class="my-1">
-      <div class="bg-white shadow p-2 divide-y divide-gray-400 bars">
-        <VueFileToolbarMenu v-for="(content, index) in menus" :key="`bar-${index}`" :content="content" />
-      </div>
-      <div class="Page text-editor my-2" :style="{ width: `${bodyWidth}px` }">
-        <div v-contextmenu:contextmenu class="relative header" :style="{ height: `${headerHeight}px` }" @mousedown.stop="unFocus(true)">
-          <Vue3DraggableResizable
-            v-for="(item, i) in headerlist"
-            :key="i"
-            :init-w="item.w"
-            :init-h="item.h"
-            :x="item.x"
-            :y="item.y"
-            :w="item.w"
-            :h="item.h"
-            :active="item.focused"
-            :parent="true"
-            :draggable="true"
-            :resizable="true"
-            @mousedown.stop="onFocus(i, true)"
-            @dragging="(e) => onDragStartCallback(e, item)"
-            @resizing="(e) => onResize(e, item)"
-          >
-            <component :is="item.component" class="min-w-full min-h-full" :value="item.value" :styles="item.styles" @inpuvalue="(v: any) => updateValue(item, v)" />
-          </Vue3DraggableResizable>
-        </div>
-        <EditorContent :editor="editor" />
-        <div v-contextmenu:contextmenu class="relative footer" :style="{ height: `${footerHeight}px` }" @mousedown.stop="unFocus(false)">
-          <Vue3DraggableResizable
-            v-for="(item, i) in footerlist"
-            :key="i"
-            :init-w="item.w"
-            :init-h="item.h"
-            :x="item.x"
-            :y="item.y"
-            :w="item.w"
-            :h="item.h"
-            :active="item.focused"
-            :parent="true"
-            :draggable="true"
-            :resizable="true"
-            @mousedown.stop="onFocus(i, false)"
-            @dragging="(e) => onDragStartCallback(e, item)"
-            @resizing="(e) => onResize(e, item)"
-          >
-            <component :is="item.component" class="min-w-full min-h-full" :value="item.value" :styles="item.styles" @inpuvalue="(v: any) => updateValue(item, v)" />
-          </Vue3DraggableResizable>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <style scoped>
 .ProseMirror-focused {
 }

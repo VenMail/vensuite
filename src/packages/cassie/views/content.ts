@@ -1,639 +1,732 @@
-export const signContent = '这是一个签名示例 请右键插入操作'
+export const signContent={
+  "type": "doc",
+  "content": [
+    {
+      "type": "page",
+      "attrs": {
+        "HTMLAttributes": null,
+        "pageNumber": 1,
+      },
+      "content": [
+        {
+          "type": "heading",
+          "attrs": {
+            "textAlign": "start",
+            "level": 3,
+            "extend": false,
+            "group": null
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "What problem are you facing?"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "attrs": {
+            "textAlign": "start",
+            "extend": false,
+            "group": null
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "当我将内容复制到 tiptap 时，很多格式似乎都丢失了。例如，如果我从 intellij 等 IDE 复制代码块，大多数所见即所得的编辑器（如 ckeditor、tinymce 等）都能够保留格式，包括突出显示背景颜色等代码。但是，我无法使用 tiptap 完成。我浏览了所有文档，甚至 github 问题，但找不到任何解决方案。"
+            },
+            {
+              "type": "hardBreak"
+            },
+            {
+              "type": "text",
+              "text": "我不太明白我是否在这里遗漏了什么，因为我希望这会起作用。我真的很想使用 TipTap，因为我发现 API 非常直观，但是在将内容复制到 tiptap 时，我非常依赖不丢失格式。"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "textAlign": "start",
+            "level": 3,
+            "extend": false,
+            "group": null
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "What’s the solution you would like to see?"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "attrs": {
+            "textAlign": "start",
+            "extend": false,
+            "group": null
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "Easy way to be able to preserve content format when copying content into TipTap."
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "attrs": {
+            "textAlign": "start",
+            "level": 3,
+            "extend": false,
+            "group": null
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "What alternatives did you consider?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
 
-export const pageContentHtml = ``
+export const pageContentHtml = `<page pagenumber="1"><p></p></page>`;
 export const pageContent = {
-  type: 'doc',
+  type: "doc",
   content: [
     {
-      type: 'page',
+      type: "page",
       attrs: {
         HTMLAttributes: null,
         pageNumber: 1,
-        id: '6759fec0-05b7-4a5b-ae04-16bfb6fba9bc',
+        id: "6759fec0-05b7-4a5b-ae04-16bfb6fba9bc"
       },
       content: [
         {
-          type: 'paragraph',
+          type: "paragraph",
           attrs: {
-            textAlign: 'left',
-            extend: 'false',
-            group: 'bb',
+            textAlign: "left",
+            extend: false,
+            group: "bb"
           },
           content: [
             {
-              type: 'text',
-              text: '3气管哮喘病史否认支,按国家计划接种',
+              type: "text",
+              text: "3气管哮喘病史否认支,按国家计划接种"
             },
             {
-              type: 'text',
-              text: '卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗.',
-            },
-          ],
+              type: "text",
+              text: "卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗."
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_352165982dd',
+            id: "pid_352165982dd",
             title: null,
-            group: 'title',
+            group: "title"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '0b4e04a4-51ea-47e7-ba20-a5042663c729',
-                extend: 'false',
-                group: 'p1',
+                textAlign: "left",
+                id: "0b4e04a4-51ea-47e7-ba20-a5042663c729",
+                extend: false,
+                group: "p1"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '记录时间： 日期',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "记录时间： 日期"
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_3954397982',
-            title: '既往史',
-            group: 'body_before',
+            id: "pid_3954397982",
+            title: "既往史",
+            group: "body_before"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'fea620f0-dd3c-4ab5-8c85-752b51996a98',
-                extend: 'false',
-                group: 'p2',
+                textAlign: "left",
+                id: "fea620f0-dd3c-4ab5-8c85-752b51996a98",
+                extend: false,
+                group: "p2"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '气管哮喘病史否认支,按国家计划接种',
+                  type: "text",
+                  text: "气管哮喘病史否认支,按国家计划接种"
                 },
                 {
-                  type: 'text',
-                  text: '卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗.',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗."
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_3521659828',
-            title: '诊断结果',
-            group: 'body_result',
+            id: "pid_3521659828",
+            title: "诊断结果",
+            group: "body_result"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'bb1a5ec3-88ca-4a64-b69c-4a0361f5e434',
-                extend: 'false',
-                group: 'p3',
+                textAlign: "left",
+                id: "bb1a5ec3-88ca-4a64-b69c-4a0361f5e434",
+                extend: false,
+                group: "p3"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '诊断结果正常 ,我是过渡语句 测试 日期 测试2',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "诊断结果正常 ,我是过渡语句 测试 日期 测试2"
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_3808237023',
-            title: '体格检查',
-            group: 'body_check',
+            id: "pid_3808237023",
+            title: "体格检查",
+            group: "body_check"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'c5ae0525-bcaf-4117-8208-804f46612574',
-                extend: 'false',
-                group: 'p4',
+                textAlign: "left",
+                id: "c5ae0525-bcaf-4117-8208-804f46612574",
+                extend: false,
+                group: "p4"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '发育正常，营养良好，神志清楚，主动体位，查体合作,步态正常，正常面容。',
-                },
-              ],
+                  type: "text",
+                  text: "发育正常，营养良好，神志清楚，主动体位，查体合作,步态正常，正常面容。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'c576357a-1eeb-49f3-8d12-ec214049ed83',
-                extend: 'false',
-                group: 'p5',
+                textAlign: "left",
+                id: "c576357a-1eeb-49f3-8d12-ec214049ed83",
+                extend: false,
+                group: "p5"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '全身皮肤黏膜无黄染、无水肿，未见出血点、未见蜘蛛痣，全身浅',
+                  type: "text",
+                  text: "全身皮肤黏膜无黄染、无水肿，未见出血点、未见蜘蛛痣，全身浅"
                 },
                 {
-                  type: 'mention',
+                  type: "mention",
                   attrs: {
-                    classify: 'radio',
+                    classify: "radio",
                     id: null,
-                    delete: 'true',
-                    label: '单选2',
-                  },
+                    delete: "true",
+                    label: "单选2"
+                  }
                 },
                 {
-                  type: 'text',
-                  text: ' 表淋巴结未扪及肿大， 未见瘘管。',
-                },
-              ],
+                  type: "text",
+                  text: " 表淋巴结未扪及肿大， 未见瘘管。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '04f2c624-b004-46ac-a5c0-4d3b02abc2e3',
-                extend: 'false',
-                group: 'p6',
+                textAlign: "left",
+                id: "04f2c624-b004-46ac-a5c0-4d3b02abc2e3",
+                extend: false,
+                group: "p6"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '头颅形态大小无畸形，畸形颅,无压痛,无肿块。',
-                },
-              ],
+                  type: "text",
+                  text: "头颅形态大小无畸形，畸形颅,无压痛,无肿块。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'bed29b51-a49d-4ed4-866d-d35a42b472d8',
-                extend: 'false',
-                group: 'p7',
+                textAlign: "left",
+                id: "bed29b51-a49d-4ed4-866d-d35a42b472d8",
+                extend: false,
+                group: "p7"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '颜面及眼睑无浮肿，双侧瞳孔等大同圆直径约3mm，对光反应灵敏。',
-                },
-              ],
+                  type: "text",
+                  text: "颜面及眼睑无浮肿，双侧瞳孔等大同圆直径约3mm，对光反应灵敏。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '20acbf06-1e2d-47c0-943b-262d5b33b3b0',
-                extend: 'false',
-                group: 'p8',
+                textAlign: "left",
+                id: "20acbf06-1e2d-47c0-943b-262d5b33b3b0",
+                extend: false,
+                group: "p8"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '口腔无异味，口唇红润光泽，黏膜正常，伸舌居中,无震颤。 耳鼻喉科情况详见专科检查。',
-                },
-              ],
+                  type: "text",
+                  text: "口腔无异味，口唇红润光泽，黏膜正常，伸舌居中,无震颤。 耳鼻喉科情况详见专科检查。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '04d77859-c088-4c4f-af8b-17500c235e97',
-                extend: 'false',
-                group: 'p9',
+                textAlign: "left",
+                id: "04d77859-c088-4c4f-af8b-17500c235e97",
+                extend: false,
+                group: "p9"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '胸廓双侧对称正常，胸壁无压痛。呼吸运动自如，语音震颤双侧对称，胸壁无压痛。',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "胸廓双侧对称正常，胸壁无压痛。呼吸运动自如，语音震颤双侧对称，胸壁无压痛。"
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'paragraph',
+          type: "paragraph",
           attrs: {
-            textAlign: 'left',
-            extend: 'false',
-            group: 'p21',
+            textAlign: "left",
+            extend: false,
+            group: "p21"
           },
           content: [
             {
-              type: 'text',
-              text: '1气管哮喘病史否认支,按国家计划接种',
+              type: "text",
+              text: "1气管哮喘病史否认支,按国家计划接种"
             },
             {
-              type: 'text',
-              text: '卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗.',
-            },
-          ],
+              type: "text",
+              text: "卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗."
+            }
+          ]
         },
         {
-          type: 'paragraph',
+          type: "paragraph",
           attrs: {
-            textAlign: 'left',
-            extend: 'false',
-            group: 'aa',
+            textAlign: "left",
+            extend: false,
+            group: "aa"
           },
           content: [
             {
-              type: 'text',
-              text: '2气管哮喘病史否认支,按国家计划接种',
+              type: "text",
+              text: "2气管哮喘病史否认支,按国家计划接种"
             },
             {
-              type: 'text',
-              text: '卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗.',
-            },
-          ],
-        },
-      ],
-    },
-  ],
-}
+              type: "text",
+              text: "卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
 
 export const newContent = {
-  type: 'doc',
+  type: "doc",
   content: [
     {
-      type: 'page',
+      type: "page",
       attrs: {
         HTMLAttributes: null,
         pageNumber: 1,
-        id: '6759fec0-05b7-4a5b-ae04-16bfb6fba9bc',
+        id: "6759fec0-05b7-4a5b-ae04-16bfb6fba9bc"
       },
       content: [
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_352165982dd',
+            id: "pid_352165982dd",
             title: null,
-            group: 'title',
+            group: "title"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '0b4e04a4-51ea-47e7-ba20-a5042663c729',
-                group: 'p1',
+                textAlign: "left",
+                id: "0b4e04a4-51ea-47e7-ba20-a5042663c729",
+                group: "p1"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '记录时间： 日期',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "记录时间： 日期"
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_3954397982',
-            title: '既往史',
-            group: 'body_before',
+            id: "pid_3954397982",
+            title: "既往史",
+            group: "body_before"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'fea620f0-dd3c-4ab5-8c85-752b51996a98',
-                group: 'p2',
+                textAlign: "left",
+                id: "fea620f0-dd3c-4ab5-8c85-752b51996a98",
+                group: "p2"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '气管哮喘病史否认支,按国家计划接种',
+                  type: "text",
+                  text: "气管哮喘病史否认支,按国家计划接种"
                 },
                 {
-                  type: 'text',
-                  text: '卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗.',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "卡介苗、乙肝、脊髓灰质炎、百白破、麻疹及乙脑疫苗."
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_3521659828',
-            title: '诊断结果',
-            group: 'body_result',
+            id: "pid_3521659828",
+            title: "诊断结果",
+            group: "body_result"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'bb1a5ec3-88ca-4a64-b69c-4a0361f5e434',
-                group: 'p3',
+                textAlign: "left",
+                id: "bb1a5ec3-88ca-4a64-b69c-4a0361f5e434",
+                group: "p3"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '诊断结果正常 ,我是过渡语句 测试 日期 测试2',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "诊断结果正常 ,我是过渡语句 测试 日期 测试2"
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_3808237023',
-            title: '体格检查',
-            group: 'body_check',
+            id: "pid_3808237023",
+            title: "体格检查",
+            group: "body_check"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'c5ae0525-bcaf-4117-8208-804f46612574',
-                group: 'p4',
+                textAlign: "left",
+                id: "c5ae0525-bcaf-4117-8208-804f46612574",
+                group: "p4"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '发育正常，营养良好，神志清楚，主动体位，查体合作,步态正常，正常面容。',
-                },
-              ],
+                  type: "text",
+                  text: "发育正常，营养良好，神志清楚，主动体位，查体合作,步态正常，正常面容。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'c576357a-1eeb-49f3-8d12-ec214049ed83',
-                group: 'p5',
+                textAlign: "left",
+                id: "c576357a-1eeb-49f3-8d12-ec214049ed83",
+                group: "p5"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '全身皮肤黏膜无黄染、无水肿，未见出血点、未见蜘蛛痣， 未见瘘管。',
-                },
-              ],
+                  type: "text",
+                  text: "全身皮肤黏膜无黄染、无水肿，未见出血点、未见蜘蛛痣， 未见瘘管。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '04f2c624-b004-46ac-a5c0-4d3b02abc2e3',
-                group: 'p6',
+                textAlign: "left",
+                id: "04f2c624-b004-46ac-a5c0-4d3b02abc2e3",
+                group: "p6"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '头颅形态大小无畸形，无肿块。',
-                },
-              ],
+                  type: "text",
+                  text: "头颅形态大小无畸形，无肿块。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'bed29b51-a49d-4ed4-866d-d35a42b472d8',
-                group: 'p7',
+                textAlign: "left",
+                id: "bed29b51-a49d-4ed4-866d-d35a42b472d8",
+                group: "p7"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '颜面及眼睑无浮肿，双侧瞳孔等大同圆直径约3mm，对光反应灵敏。',
-                },
-              ],
+                  type: "text",
+                  text: "颜面及眼睑无浮肿，双侧瞳孔等大同圆直径约3mm，对光反应灵敏。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '20acbf06-1e2d-47c0-943b-262d5b33b3b0',
-                group: 'p8',
+                textAlign: "left",
+                id: "20acbf06-1e2d-47c0-943b-262d5b33b3b0",
+                group: "p8"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '口腔无异味，口唇红润光泽，黏膜正常，伸舌居中,无震颤。 耳鼻喉科情况详见专科检查。',
-                },
-              ],
+                  type: "text",
+                  text: "口腔无异味，口唇红润光泽，黏膜正常，伸舌居中,无震颤。 耳鼻喉科情况详见专科检查。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '04d77859-c088-4c4f-af8b-17500c235e97',
-                group: 'p9',
+                textAlign: "left",
+                id: "04d77859-c088-4c4f-af8b-17500c235e97",
+                group: "p9"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '胸廓双侧对称正常，胸壁无压痛。呼吸运动自如，语音震颤双侧对称，胸壁无压痛。',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-}
+                  type: "text",
+                  text: "胸廓双侧对称正常，胸壁无压痛。呼吸运动自如，语音震颤双侧对称，胸壁无压痛。"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
 
 export const pageOldContent = {
-  type: 'doc',
+  type: "doc",
   content: [
     {
-      type: 'page',
+      type: "page",
       attrs: {
         HTMLAttributes: null,
         pageNumber: 1,
-        id: '6759fec0-05b7-4a5b-ae04-16bfb6fba9bc',
+        id: "6759fec0-05b7-4a5b-ae04-16bfb6fba9bc"
       },
       content: [
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_352165982dd',
+            id: "pid_352165982dd",
             title: null,
-            group: 'title',
+            group: "title"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '0b4e04a4-51ea-47e7-ba20-a5042663c729',
-                group: 'p1',
+                textAlign: "left",
+                id: "0b4e04a4-51ea-47e7-ba20-a5042663c729",
+                group: "p1"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '记录时间： 日期',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "记录时间： 日期"
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_3954397982',
-            title: '既往史',
-            group: 'body_before',
+            id: "pid_3954397982",
+            title: "既往史",
+            group: "body_before"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'fea620f0-dd3c-4ab5-8c85-752b51996a98',
-                group: 'p2',
+                textAlign: "left",
+                id: "fea620f0-dd3c-4ab5-8c85-752b51996a98",
+                group: "p2"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '气管哮喘病史否认支,按国家计划接种',
+                  type: "text",
+                  text: "气管哮喘病史否认支,按国家计划接种"
                 },
                 {
-                  type: 'text',
-                  text: '卡介苗、乙肝、脊髓灰质炎.',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "卡介苗、乙肝、脊髓灰质炎."
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_3521659828',
-            title: '诊断结果',
-            group: 'body_result',
+            id: "pid_3521659828",
+            title: "诊断结果",
+            group: "body_result"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'bb1a5ec3-88ca-4a64-b69c-4a0361f5e434',
-                group: 'p3',
+                textAlign: "left",
+                id: "bb1a5ec3-88ca-4a64-b69c-4a0361f5e434",
+                group: "p3"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '诊断结果正常 ,我是过渡语句 测试 日期 测试2',
-                },
-              ],
-            },
-          ],
+                  type: "text",
+                  text: "诊断结果正常 ,我是过渡语句 测试 日期 测试2"
+                }
+              ]
+            }
+          ]
         },
         {
-          type: 'Node',
+          type: "Node",
           attrs: {
-            id: 'pid_3808237023',
-            title: '体格检查',
-            group: 'body_check',
+            id: "pid_3808237023",
+            title: "体格检查",
+            group: "body_check"
           },
           content: [
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'c5ae0525-bcaf-4117-8208-804f46612574',
-                group: 'p4',
+                textAlign: "left",
+                id: "c5ae0525-bcaf-4117-8208-804f46612574",
+                group: "p4"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '发育正常，营养良好，神志清楚，主动体位，查体合作,步态正常，正常面容。',
-                },
-              ],
+                  type: "text",
+                  text: "发育正常，营养良好，神志清楚，主动体位，查体合作,步态正常，正常面容。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'c576357a-1eeb-49f3-8d12-ec214049ed83',
-                group: 'p5',
+                textAlign: "left",
+                id: "c576357a-1eeb-49f3-8d12-ec214049ed83",
+                group: "p5"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '全身皮肤黏膜无黄染、无水肿，未见出血点、未见蜘蛛痣，全身浅表淋巴结未扪及肿大， 未见瘘管。',
-                },
-              ],
+                  type: "text",
+                  text: "全身皮肤黏膜无黄染、无水肿，未见出血点、未见蜘蛛痣，全身浅表淋巴结未扪及肿大， 未见瘘管。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '04f2c624-b004-46ac-a5c0-4d3b02abc2e3',
-                group: 'p6',
+                textAlign: "left",
+                id: "04f2c624-b004-46ac-a5c0-4d3b02abc2e3",
+                group: "p6"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '头颅形态大小无畸形，畸形颅,无压痛,无肿块。',
-                },
-              ],
+                  type: "text",
+                  text: "头颅形态大小无畸形，畸形颅,无压痛,无肿块。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: 'bed29b51-a49d-4ed4-866d-d35a42b472d8',
-                group: 'p7',
+                textAlign: "left",
+                id: "bed29b51-a49d-4ed4-866d-d35a42b472d8",
+                group: "p7"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '颜面及眼睑无浮肿，双侧瞳孔等大同圆直径约3mm，对光反应灵敏。',
-                },
-              ],
+                  type: "text",
+                  text: "颜面及眼睑无浮肿，双侧瞳孔等大同圆直径约3mm，对光反应灵敏。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '20acbf06-1e2d-47c0-943b-262d5b33b3b0',
-                group: 'p8',
+                textAlign: "left",
+                id: "20acbf06-1e2d-47c0-943b-262d5b33b3b0",
+                group: "p8"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '口腔无异味，口唇红润光泽，黏膜正常，伸舌居中,无震颤。 耳鼻喉科情况详见专科检查。',
-                },
-              ],
+                  type: "text",
+                  text: "口腔无异味，口唇红润光泽，黏膜正常，伸舌居中,无震颤。 耳鼻喉科情况详见专科检查。"
+                }
+              ]
             },
             {
-              type: 'paragraph',
+              type: "paragraph",
               attrs: {
-                textAlign: 'left',
-                id: '04d77859-c088-4c4f-af8b-17500c235e97',
-                group: 'p9',
+                textAlign: "left",
+                id: "04d77859-c088-4c4f-af8b-17500c235e97",
+                group: "p9"
               },
               content: [
                 {
-                  type: 'text',
-                  text: '胸廓双侧对称正常，呼吸运动自如，语音震颤双侧对称，胸壁无压痛。',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-}
+                  type: "text",
+                  text: "胸廓双侧对称正常，呼吸运动自如，语音震颤双侧对称，胸壁无压痛。"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
 
 export const headerlist = [
   {
@@ -643,16 +736,16 @@ export const headerlist = [
     w: 180,
     h: 26,
     focused: false,
-    value: 'XXXXXXXXXXXXX',
-    label: '文字',
-    component: 'custom-text',
-    type: 'text',
+    value: "XXXXXXXXXXXXX",
+    label: "文字",
+    component: "custom-text",
+    type: "text",
     styles: {
-      color: '#000000',
-      fontSize: '18px',
-      fontWeight: 'bold',
+      color: "#000000",
+      fontSize: "18px",
+      fontWeight: "bold"
     },
-    handles: ['mr', 'bm'],
+    handles: ["mr", "bm"]
   },
   {
     id: 1,
@@ -660,12 +753,12 @@ export const headerlist = [
     y: 68,
     w: 215,
     h: 25,
-    value: '卡号：51132219980423191',
-    label: '文字',
+    value: "卡号：51132219980423191",
+    label: "文字",
     focused: false,
-    component: 'custom-text',
-    type: 'text',
-    styles: {},
+    component: "custom-text",
+    type: "text",
+    styles: {}
   },
   {
     id: 2,
@@ -673,12 +766,12 @@ export const headerlist = [
     y: 69,
     w: 130,
     h: 25,
-    value: '姓名：王一火',
-    label: '文字',
+    value: "姓名：王一火",
+    label: "文字",
     focused: false,
-    component: 'custom-text',
-    type: 'text',
-    styles: {},
+    component: "custom-text",
+    type: "text",
+    styles: {}
   },
   {
     id: 3,
@@ -686,12 +779,12 @@ export const headerlist = [
     y: 70,
     w: 81,
     h: 25,
-    value: '性别：男',
-    label: '文字',
+    value: "性别：男",
+    label: "文字",
     focused: false,
-    component: 'custom-text',
-    type: 'text',
-    styles: {},
+    component: "custom-text",
+    type: "text",
+    styles: {}
   },
   {
     id: 4,
@@ -699,15 +792,15 @@ export const headerlist = [
     y: 69,
     w: 89,
     h: 25,
-    value: '年龄：24',
-    label: '文字',
+    value: "年龄：24",
+    label: "文字",
     focused: false,
-    component: 'custom-text',
-    type: 'text',
-    styles: {},
-  },
-]
-// 页脚
+    component: "custom-text",
+    type: "text",
+    styles: {}
+  }
+];
+//页脚
 export const footerlist = [
   {
     id: 3,
@@ -716,14 +809,14 @@ export const footerlist = [
     w: 100,
     h: 26,
     focused: false,
-    value: '科室：牙周科',
-    label: '文字',
-    component: 'custom-text',
-    type: 'text',
+    value: "科室：牙周科",
+    label: "文字",
+    component: "custom-text",
+    type: "text",
     styles: {
-      color: '#000000',
-      fontSize: 18,
-    },
+      color: "#000000",
+      fontSize: 18
+    }
   },
   {
     id: 4,
@@ -732,14 +825,14 @@ export const footerlist = [
     w: 100,
     h: 26,
     focused: false,
-    value: '第一页',
-    label: '页码',
-    component: 'page-count',
-    type: 'text',
+    value: "第一页",
+    label: "页码",
+    component: "page-count",
+    type: "text",
     styles: {
-      color: '#000000',
-      fontSize: 18,
-    },
+      color: "#000000",
+      fontSize: 18
+    }
   },
   {
     id: 1,
@@ -747,12 +840,12 @@ export const footerlist = [
     y: 5,
     w: 131,
     h: 30,
-    value: '医生：_____',
-    label: '文字',
+    value: "医生：_____",
+    label: "文字",
     focused: false,
-    component: 'custom-text',
-    type: 'text',
-    styles: {},
+    component: "custom-text",
+    type: "text",
+    styles: {}
   },
   {
     id: 2,
@@ -760,12 +853,12 @@ export const footerlist = [
     y: 8,
     w: 113,
     h: 25,
-    value: '护士：魏晨曦',
-    label: '文字',
+    value: "护士：魏晨曦",
+    label: "文字",
     focused: false,
-    component: 'custom-text',
-    type: 'text',
-    styles: {},
+    component: "custom-text",
+    type: "text",
+    styles: {}
   },
   {
     id: 4,
@@ -773,11 +866,11 @@ export const footerlist = [
     y: 9,
     w: 202,
     h: 25,
-    value: '时间：2023-03-27',
-    label: '文字',
+    value: "时间：2023-03-27",
+    label: "文字",
     focused: false,
-    component: 'custom-text',
-    type: 'text',
-    styles: {},
-  },
-]
+    component: "custom-text",
+    type: "text",
+    styles: {}
+  }
+];

@@ -1,172 +1,111 @@
+<template>
+  <div class="grid flex-grow card bg-base-300 rounded-box place-items-center">
+    <div>
+      <FileTools :editor="editor" v-if="editor"></FileTools>
+    </div>
+    <editor-content class="my-2" :editor="editor" />
+  </div>
+</template>
+
 <script lang="ts">
-import { Editor, EditorContent } from '@tiptap/vue-3'
-import { onBeforeUnmount, onMounted, shallowRef } from 'vue'
-import { footerlist, headerlist, pageContent, pageContentHtml } from './content'
-import { BuildRender } from './../default'
-import FileTools from './filetools/FileTools.vue'
-import { UnitConversion } from '@/extension/page/core'
-import { CassieKit } from '@/extension'
-
-const unitConversion = new UnitConversion()
-
+import { pageContent, headerlist, footerlist, pageContentHtml } from "./content";
+import { UnitConversion } from "@/extension/page/core";
+import { EditorContent, Editor } from "@tiptap/vue-3";
+import { onBeforeUnmount, onMounted, PropType, reactive, ref, shallowRef, unref, watchEffect } from "vue";
+import { BuildRender, ContextMenuOptions } from "../default";
+import { CassieKit } from "@/extension";
+import FileTools from "./filetools/FileTools.vue";
+const unitConversion = new UnitConversion();
 export default {
   components: {
     EditorContent,
-    FileTools,
+    FileTools
   },
   setup() {
-    const bodyWidth = unitConversion.mmConversionPx(210)
-    const pageHeight = unitConversion.mmConversionPx(297)
-
+    let bodyWidth = unitConversion.mmConversionPx(180);
+    let h = unitConversion.mmConversionPx(180);
     const menulist = [
-      { classify: 'radio', label: 'Single Choice', value: 'radio' },
-      { classify: 'checkbox', label: 'Multiple Choice', value: 'checkbox' },
-      { classify: 'date', label: 'Date', value: 'date' },
-    ]
-
-    const editor = shallowRef<Editor>()
-
+      { classify: "radio", label: "单选", value: "radio" },
+      {
+        classify: "checkbox",
+        label: "多选",
+        value: "checkbox"
+      },
+      {
+        classify: "date",
+        label: "日期",
+        value: "date"
+      }
+    ];
+    const onUpdate = (output: any, editor: any) => {};
+    const onCreate = (option: any) => {
+      console.log(option);
+    };
+    const editor = shallowRef<Editor>();
     onMounted(() => {
+      //如果是协作模式 设置 content需要滞后 否则会重复添加
       editor.value = new Editor({
         onUpdate({ editor }) {
-          // Handle update
+          //console.log(editor.getHTML());
         },
         editable: true,
         content: pageContentHtml,
         editorProps: {
           attributes: {
-            class: '',
-          },
+            class: ""
+          }
         },
         injectCSS: false,
         extensions: [
           CassieKit.configure({
-            textAlign: { types: ['heading', 'paragraph'] },
+            textAlign: { types: ["heading", "paragraph"] },
             mention: {
-              clickSuggestion: BuildRender(menulist), // Editor context menu
+              clickSuggestion: BuildRender(menulist) //编辑器右键菜单
             },
             highlight: {
-              multicolor: true,
+              multicolor: true
             },
             table: {
-              resizable: true,
               HTMLAttributes: {
-                class: 'border-collapse border border-slate-400',
-              },
+                class: "border-collapse border border-slate-400"
+              }
             },
             tableCell: {
               HTMLAttributes: {
-                class: 'border border-slate-300',
-              },
+                class: "border border-slate-300"
+              }
             },
             tableHeader: {
               HTMLAttributes: {
-                class: 'border border-slate-300',
-              },
+                class: "border border-slate-300"
+              }
             },
             page: {
               bodyPadding: 10,
-              bodyWidth,
+              bodyWidth: bodyWidth,
               headerHeight: 100,
               footerHeight: 60,
-              bodyHeight: pageHeight - 100,
+              bodyHeight: h - 100,
               headerData: headerlist,
               footerData: footerlist,
-              isPaging: true,
+              isPaging: true
             },
-            focus: false, // Selection style
-            history: false, // Disable history in collaborative mode
-          }),
-        ],
-      })
-
+            focus: false, //选中样式
+            history: false //历史记录回退 协作模式禁止开启
+          })
+        ]
+      });
       setTimeout(() => {
-        editor.value?.view.dispatch(editor.value?.state.tr.setMeta('splitPage', true))
-      }, 1000)
-    })
+        editor.value?.view.dispatch(editor.value?.state.tr.setMeta("splitPage", true));
+      }, 1000);
+      //applyDevTools(editor.value.view);
+    });
 
     onBeforeUnmount(() => {
-      editor.value?.destroy()
-    })
-
-    return { pageContent, menulist, headerlist, footerlist, editor, bodyWidth }
-  },
-}
-</script>
-
-<template>
-  <div class="grid flex-grow card bg-base-300 rounded-box place-items-center">
-    <div>
-      <FileTools v-if="editor" :editor="editor" />
-    </div>
-    <EditorContent class="my-2" :editor="editor" />
-  </div>
-</template>
-
-<style scoped>
-.tiptap {
-  table {
-    border-collapse: collapse;
-    table-layout: fixed;
-    width: 100%;
-    margin: 0;
-    overflow: hidden;
-
-    td,
-    th {
-      min-width: 1em;
-      border: 2px solid #ced4da;
-      padding: 3px 5px;
-      vertical-align: top;
-      box-sizing: border-box;
-      position: relative;
-
-      > * {
-        margin-bottom: 0;
-      }
-    }
-
-    th {
-      font-weight: bold;
-      text-align: left;
-      background-color: #f1f3f5;
-    }
-
-    .selectedCell:after {
-      z-index: 2;
-      position: absolute;
-      content: '';
-      left: 0;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      background: rgba(200, 200, 255, 0.4);
-      pointer-events: none;
-    }
-
-    .column-resize-handle {
-      position: absolute;
-      right: -2px;
-      top: 0;
-      bottom: -2px;
-      width: 4px;
-      background-color: #adf;
-      pointer-events: none;
-    }
-
-    p {
-      margin: 0;
-    }
+      editor.value?.destroy();
+    });
+    return { pageContent, menulist, headerlist, footerlist, onUpdate, onCreate, editor, bodyWidth };
   }
-}
-
-.tableWrapper {
-  padding: 1rem 0;
-  overflow-x: auto;
-}
-
-.resize-cursor {
-  cursor: ew-resize;
-  cursor: col-resize;
-}
-</style>
+};
+</script>
+<style scoped></style>
