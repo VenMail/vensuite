@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
 
 const router = useRouter()
-const authBase = 'http://localhost:8000/'
+const authBase = 'http://localhost:8001/'
 
 // Function to get a cookie value by name
 function getCookie(name: string): string | undefined {
