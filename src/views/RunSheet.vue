@@ -12,6 +12,7 @@ import type { IWorkbookData, Univer } from '@univerjs/core'
 import { useRoute, useRouter } from 'vue-router'
 import SheetMenu from '@/components/menu/SheetMenu.vue'
 import { useFileStore } from '@/store/files'
+import { sluggify } from '@/utils/lib'
 
 // Router setup
 const router = useRouter()
@@ -35,8 +36,8 @@ function onUniverRefChange(childUniverRef: Univer | null) {
 // Load data function
 async function loadData(id: string) {
   try {
-    const loadedData = await fileStore.loadFromCacheOrAPI(id, 'xlsx')
-    return loadedData?.content ? JSON.parse(loadedData.content) : DEFAULT_WORKBOOK_DATA
+    const loadedData = await fileStore.loadDocument(id, 'xlsx')
+    return loadedData?.contents ? JSON.parse(loadedData.contents) : DEFAULT_WORKBOOK_DATA
   } catch (error) {
     console.error('Error loading data:', error)
     return DEFAULT_WORKBOOK_DATA
@@ -52,7 +53,7 @@ async function updateData(newData: IWorkbookData) {
       title: title.value,
       file_name: `${title.value}.xlsx`,
       file_type: 'xlsx',
-      content: JSON.stringify(newData),
+      contents: JSON.stringify(newData),
       last_viewed: new Date()
     })
   }
@@ -83,9 +84,9 @@ async function saveTitle() {
     await fileStore.saveDocument({
       id: route.params.id as string,
       title: title.value,
-      file_name: `${title.value}.xlsx`,
+      file_name: `${sluggify(title.value)}.xlsx`,
       file_type: 'xlsx',
-      content: JSON.stringify(data.value),
+      contents: JSON.stringify(data.value),
       last_viewed: new Date()
     })
   }
@@ -106,11 +107,9 @@ onMounted(() => {
       console.log('effect change', route.params.id)
       // Load data after route is initialized
       data.value = await loadData(route.params.id as string)
+      console.log('id:', route.params.id)
+      console.log('data:', data.value)
 
-      const sheetId = data.value?.id
-      if (route.params.id !== sheetId) {
-        router.replace({ path: `/sheets/${sheetId}` })
-      }
       document.title = data.value?.name || 'New Spreadsheet'
       title.value = document.title
 
@@ -125,10 +124,12 @@ onMounted(() => {
 <template>
   <div id="app" class="h-screen flex flex-col">
     <div class="flex items-center gap-2 pl-2">
-      <defaultIcons.IconMicrosoftExcel
+      <router-link to="/">
+        <defaultIcons.IconMicrosoftExcel
         ref="iconRef" class="w-[1.5rem] h-[3rem] text-green-600"
         xmlns="http://www.w3.org/2000/svg"
-      />
+        />
+      </router-link>
       <div class="flex flex-col">
         <div class="flex" @mouseover="togglePencil(true)" @mouseleave="togglePencil(false)">
           <div
@@ -141,7 +142,7 @@ onMounted(() => {
           </div>
           <PencilIcon v-if="isTitleEdit" class="mt-3.5 ml-2 h-3 w-3" />
         </div>
-        <SheetMenu :univer-ref="univerRef" :core-ref="univerCoreRef as Univer | null" @update-data="updateData" />
+        <SheetMenu :univer-ref="univerRef" :core-ref="univerCoreRef as Univer | null" :file-id="route.params.id as string" @update-data="updateData" />
       </div>
     </div>
     <UniverSheet id="sheet" ref="univerRef" :data="(data as any)" @univer-ref-change="onUniverRefChange" />

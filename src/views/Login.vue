@@ -18,7 +18,8 @@ function loginWithVenmail() {
 }
 
 onMounted(async () => {
-  const token = route.query.token as string
+  const token = authStore.getToken() || route.query.token as string
+  console.log("Tok", token)
   if (token) {
     await authStore.login(token) // Use the store's login method
     const redirect = localStorage.getItem('loginRedirect') || '/'
@@ -36,7 +37,7 @@ onMounted(async () => {
         Login with Venmail
       </Button>
       <p class="text-sm text-muted-foreground mt-4 text-center">
-        Login to manage your documents and spreadsheets on Venmail.
+        Login to manage your files and folders on Venmail.
       </p>
     </div>
   </div>

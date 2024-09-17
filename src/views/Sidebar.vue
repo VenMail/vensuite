@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineProps, defineEmits } from 'vue'
 import { useRoute } from 'vue-router'
 import { Home, FolderTree, FileText, Table, Image, File, Menu } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
@@ -13,18 +13,24 @@ const items = [
   { name: 'Others', icon: File, route: '/others' },
 ]
 
+// Props to control visibility from parent
+const props = defineProps({
+  isVisible: {
+    type: Boolean,
+    default: true,
+  }
+})
+
+// Emit event to toggle visibility
+const emit = defineEmits(['toggle'])
+
 const activeItem = ref('Home')
-const isSidebarVisible = ref(false)
 const isMobile = ref(false)
-const route = useRoute()
 
 // Toggle sidebar visibility for mobile
 const toggleSidebar = () => {
-  isSidebarVisible.value = !isSidebarVisible.value
+  emit('toggle')
 }
-
-// Hide the sidebar on non-home routes
-const shouldAutohideSidebar = computed(() => route.name !== 'home')
 
 const setActiveItem = (item: string) => {
   activeItem.value = item
@@ -39,24 +45,18 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
 })
 
-// Auto-hide sidebar on non-home routes
+// Sidebar classes
 const sidebarClasses = computed(() =>
   cn(
-    'fixed top-0 left-0 h-full w-64 bg-white bg-opacity-50 backdrop-blur-lg border-r border-gray-200 p-4 transition-transform transform',
-    shouldAutohideSidebar.value ? '-translate-x-full' : '',
-    isSidebarVisible.value ? 'translate-x-0' : '',
-    isMobile.value ? 'z-50' : 'hover:translate-x-0'
+    'h-full w-64 bg-white bg-opacity-50 backdrop-blur-lg border-r border-gray-200 p-4 transition-transform',
+    props.isVisible ? 'translate-x-0' : '-translate-x-full',
+    isMobile.value ? 'fixed top-0 left-0 z-50' : ''
   )
 )
 </script>
 
 <template>
   <div>
-    <!-- Mobile Hamburger Icon -->
-    <button v-if="isMobile" @click="toggleSidebar" class="fixed top-4 left-4 z-50 p-2 rounded-md bg-white bg-opacity-50 backdrop-blur-lg">
-      <Menu class="h-6 w-6 text-gray-900" />
-    </button>
-
     <!-- Sidebar -->
     <div :class="sidebarClasses">
       <nav class="space-y-2">
@@ -77,12 +77,17 @@ const sidebarClasses = computed(() =>
         </a>
       </nav>
     </div>
+
+    <!-- Mobile Hamburger Icon -->
+    <button v-if="isMobile" @click="toggleSidebar" class="fixed top-4 left-4 z-50 p-2 rounded-md bg-white bg-opacity-50 backdrop-blur-lg">
+      <Menu class="h-6 w-6 text-gray-900" />
+    </button>
   </div>
 </template>
 
 <style scoped>
 /* Add a smooth transition effect to the sidebar */
-.fixed {
+.transition-transform {
   transition: transform 0.3s ease;
 }
 </style>

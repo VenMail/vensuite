@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineEmits, defineProps, onMounted, ref, watchEffect } from 'vue'
+import { computed, defineEmits, defineProps, onMounted, ref, watchEffect } from 'vue'
 import {
   BoldIcon,
   ClipboardPasteIcon,
@@ -46,24 +46,19 @@ import {
   MenubarTrigger,
 } from '@/components/ui/menubar'
 import UniverSheet from './components/UniverSheet.vue'
+import { FileData } from '@/types'
+import { useFileStore } from '@/store/files'
 
-
-interface FileData {
-  id: string
-  name: string
-  file_type?: string
-  file_size?: string
-}
 
 interface Props {
+  fileId: string | null | undefined
   univerRef: InstanceType<typeof UniverSheet> | null
   coreRef: InstanceType<typeof Univer> | null
 }
 
+const fileStore = useFileStore()
 const props = defineProps<Props>()
 const emit = defineEmits(['updateData'])
-const recentFiles = ref<FileData[]>([])
-const storageKey = 'VENX_RecentFiles'
 const router = useRouter()
 
 let facadeAPI: FUniver | null = null
@@ -74,83 +69,49 @@ onMounted(() => {
     if (props.coreRef && !facadeAPI) {
       facadeAPI = FUniver.newAPI(props.coreRef)
       disposable = facadeAPI.onBeforeCommandExecute((command) => {
-        console.log('logging', command)
+        // console.log('logging', command)
         // custom preprocessing logic before the command is executed
       })
     }
   })
+  console.log("pid", props.fileId)
 
-  loadRecentFiles()
+  fileStore.loadRecentFiles()
 })
 
-function saveRecentFiles(files: FileData[]) {
-  localStorage.setItem(storageKey, JSON.stringify(files))
-}
-
-function loadRecentFiles() {
-  const storedFiles = localStorage.getItem(storageKey)
-  if (storedFiles) {
-    recentFiles.value = JSON.parse(storedFiles)
-  }
-}
-
-function updateRecentFiles(file: FileData) {
-  const existingFileIndex = recentFiles.value.findIndex(f => f.id === file.id)
-  if (existingFileIndex !== -1) {
-    recentFiles.value.splice(existingFileIndex, 1)
-  }
-  recentFiles.value.unshift(file)
-  if (recentFiles.value.length > 10) {
-    recentFiles.value.pop()
-  }
-  saveRecentFiles(recentFiles.value)
-}
-
-// Function to send changes to the backend
-async function sendChangesToBackend(changes: any) {
-  try {
-    await fetch('https://app.venmail.io/api/v1/office/sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(changes),
-    })
-    console.log('Changes sent to the backend')
-  }
-  catch (error) {
-    console.error('Failed to send changes to the backend', error)
-  }
-}
+const recentFiles = computed(() => {
+  return fileStore.recentFiles.filter((f) => f.file_type == "xlsx")
+})
 
 function saveData(data: IWorkbookData) {
   // todo: we probably want to use our own custom ID
   // also show modal to set spreadsheet name
-  const oldData = localStorage.getItem(data.id)
-  if (oldData && props.univerRef) {
-    const oldValue = JSON.parse(oldData)
-    const differences = diff(data, oldValue)
-    sendChangesToBackend(JSON.stringify(differences))
-    console.log('diff', differences)
+  const doc = {
+    title: data.name,
+    contents: JSON.stringify(data),
+    file_type: "xlsx",
+    file_name: data.id,
+  } as FileData
+  if (props.fileId) {
+    doc.id = props.fileId
   }
-
-  localStorage.setItem(data.id, JSON.stringify(data))
-  console.log('saved.. ', data.id)
-  router.replace({ path: `/sheets/${data.id}` })
-
-  updateRecentFiles({ id: data.id, name: data.name || 'New Spreadsheet', file_type: "application/vnd.ms-excel" })
+  fileStore.saveDocument(doc)
 }
 
-function loadData(KEY: string) {
-  const savedData = localStorage.getItem(KEY)
-  return savedData ? JSON.parse(savedData) : DEFAULT_WORKBOOK_DATA
+async function loadData(id: string) {
+  const savedData = await fileStore.loadDocument(id, "xlsx")
+  if (savedData?.contents) {
+    return JSON.parse(savedData.contents)
+  }
+  return DEFAULT_WORKBOOK_DATA
 }
 
 function handleNew() {
-  window.location.href = '/sheets'
+  router.push('/sheets')
 }
 
-function handleLoad(id: string) {
+function handleLoad(id?: string) {
+  if (!id) return;
   const data = loadData(id)
   emit('updateData', data)
 }
@@ -529,8 +490,8 @@ function about() {
             Recent Files...
           </MenubarSubTrigger>
           <MenubarSubContent>
-            <MenubarItem v-for="file in recentFiles" :key="file.id" @click="handleLoad(file.id)">
-              {{ file.name }}
+            <MenubarItem v-for="file in recentFiles" :key="file.id || file.title" @click="handleLoad(file.id)">
+              {{ file.title }}
             </MenubarItem>
           </MenubarSubContent>
         </MenubarSub>

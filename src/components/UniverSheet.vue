@@ -58,7 +58,6 @@ function setupUniver(data = {}) {
   univer.registerPlugin(UniverSheetsFormulaPlugin)
   univer.registerPlugin(UniverSheetsNumfmtPlugin)
   univer.registerPlugin(UniverSheetsZenEditorPlugin)
-  console.log('data', data)
   const initData = data || {};
 
 workBook.value = univer.createUnit<IWorkbookData, Workbook & UnitModel>(UniverInstanceType.UNIVER_SHEET, initData);
@@ -97,22 +96,6 @@ watch(dataRef, (newValue, oldValue) => {
     console.log("diff", differences);
   }
 });
-
-// Function to send changes to the backend
-const sendChangesToBackend = async (changes: any) => {
-  try {
-    await fetch('https://app.venmail.io/api/v1/office/sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(changes)
-    });
-    console.log('Changes sent to the backend');
-  } catch (error) {
-    console.error('Failed to send changes to the backend', error);
-  }
-};
 
 onMounted(() => {
   init(props.data);

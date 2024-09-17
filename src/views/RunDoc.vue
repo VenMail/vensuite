@@ -29,7 +29,7 @@ const options = ref({
     },
     enableSpellcheck: true,
     enableMarkdown: true,
-    enableBubbleMenu: true,    
+    enableBubbleMenu: true,
     enableBlockMenu: true,
     readOnly: false,
     autofocus: true,
@@ -56,7 +56,7 @@ const options = ref({
 
 // Load data function
 async function loadData(id: string) {
-  const savedData = await docStore.loadFromCacheOrAPI(id, "docx")
+  const savedData = await docStore.loadDocument(id, "docx")
   if (savedData) {
     console.log('Loaded doc', savedData)
     options.value.document = {
@@ -90,7 +90,7 @@ function editTitle() {
 function updateTitle(event: Event) {
   const target = event.target as HTMLElement
   title.value = target.innerText
-  
+
   // Clear existing timeout and set a new one
   if (titleEditTimeout.value) {
     clearTimeout(titleEditTimeout.value)
@@ -102,7 +102,7 @@ function saveTitle() {
   isTitleEdit.value = false
   document.title = title.value || 'New Document'
   options.value.document.title = document.title;
-  
+
   // Clear the timeout
   if (titleEditTimeout.value) {
     clearTimeout(titleEditTimeout.value)
@@ -139,23 +139,15 @@ onMounted(() => {
 <template>
   <div id="app" class="h-screen flex flex-col">
     <div class="flex items-center gap-2 pl-2">
-      <defaultIcons.IconMicrosoftWord
-        ref="iconRef" class="w-[1.5rem] h-[3rem] text-blue-600"
-        xmlns="http://www.w3.org/2000/svg"
-      />
+      <router-link to="/">
+        <defaultIcons.IconMicrosoftWord ref="iconRef" class="w-[1.5rem] h-[3rem] text-blue-600"
+          xmlns="http://www.w3.org/2000/svg" />
+      </router-link>
       <div class="flex flex-col">
         <div class="flex">
-          <div
-            id="docHead"
-            :contenteditable="isTitleEdit"
-            ref="titleRef"
-            class="mt-2 ml-3 font-bold border-b border-dotted border-gray-300"
-            :class="{ 'cursor-text': isTitleEdit }"
-            @input="updateTitle"
-            @blur="saveTitle"
-            @keydown.enter.prevent="saveTitle"
-            @click="startEditing"
-          >
+          <div id="docHead" :contenteditable="isTitleEdit" ref="titleRef"
+            class="mt-2 ml-3 font-bold border-b border-dotted border-gray-300" :class="{ 'cursor-text': isTitleEdit }"
+            @input="updateTitle" @blur="saveTitle" @keydown.enter.prevent="saveTitle" @click="startEditing">
             {{ title }}
           </div>
           <PencilIcon v-if="!isTitleEdit" @click="startEditing" class="mt-3.5 ml-2 h-3 w-3 cursor-pointer" />
@@ -183,7 +175,7 @@ body {
   flex: 1;
 }
 
-#docHead > [contenteditable='true'] {
+#docHead>[contenteditable='true'] {
   outline: 2px dotted #1e3a8a;
 }
 </style>
