@@ -1,12 +1,13 @@
 import { createApp, h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia } from 'pinia'
+//@ts-ignore
 import { useUmoEditor } from '@umoteam/editor'
 import { createI18n } from 'vue-i18n'
 
 import App from './App.vue'
 import { useAuthStore } from './store/auth'
-import { useDocumentStore } from './store/document'
+import { useFileStore } from './store/files'
 
 // Routes
 import Home from './views/Home.vue'
@@ -15,6 +16,7 @@ import RunDoc from './views/RunDoc.vue'
 import Login from './views/Login.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
+import { sluggify } from './utils/lib'
 
 const routes = [
   { 
@@ -61,7 +63,7 @@ const authStore = useAuthStore(pinia) // Use the store after Pinia is registered
 authStore.setupAxiosInterceptor() // Now you can call setupAxiosInterceptor
 authStore.setRouter(router) // Now you can call setupAxiosInterceptor
 
-const documentStore = useDocumentStore(pinia)
+const documentStore = useFileStore(pinia)
 
 // Router guard
 router.beforeEach(async (to, from, next) => {
@@ -84,6 +86,7 @@ app.use(useUmoEditor, {
     return await documentStore.saveDocument({
       id: router.currentRoute.value.params?.id as string,
       title: document.title || 'New Document',
+      file_name: sluggify(document.title),
       contents: content.html,
       file_type: "docx"
     })

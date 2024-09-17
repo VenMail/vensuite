@@ -6,12 +6,13 @@ import '@/assets/index.css'
 import { PencilIcon } from 'lucide-vue-next'
 import { useFavicon } from '@vueuse/core'
 import { useRoute } from 'vue-router'
+//@ts-ignore 
 import { UmoEditor } from '@umoteam/editor'
-import { useDocumentStore } from '@/store/document'
+import { useFileStore } from '@/store/files'
 
 // Router setup
 const route = useRoute()
-const docStore = useDocumentStore()
+const docStore = useFileStore()
 
 // Reactive references
 
@@ -24,7 +25,7 @@ const options = ref({
     title: 'Untitled Document',
     content: '',
     placeholder: {
-      en_US: 'Please enter the document content...',
+      en_US: 'Write something...',
     },
     enableSpellcheck: true,
     enableMarkdown: true,
@@ -37,10 +38,6 @@ const options = ref({
     editorProps: {},
     parseOptions: {
       preserveWhitespace: 'full',
-    },
-    autoSave: {
-      enabled: true,
-      interval: 300000,
     },
   },
   locale: 'en-US',
@@ -59,10 +56,16 @@ const options = ref({
 
 // Load data function
 async function loadData(id: string) {
-  const savedData = await docStore.loadFromCacheOrAPI(id)
+  const savedData = await docStore.loadFromCacheOrAPI(id, "docx")
   if (savedData) {
     console.log('Loaded doc', savedData)
-    editorRef.value?.setContent(savedData?.contents);
+    options.value.document = {
+      ...options.value.document,
+      content: savedData.contents || savedData.content || "",
+      title: savedData.title || ""
+    }
+    editorRef.value?.setDocument(options.value.document);
+    editorRef.value?.setContent(savedData?.contents || savedData?.content);
     title.value = savedData?.title
     saveTitle()
     return savedData

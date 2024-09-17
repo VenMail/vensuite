@@ -11,10 +11,14 @@ import { useFavicon } from '@vueuse/core'
 import type { IWorkbookData, Univer } from '@univerjs/core'
 import { useRoute, useRouter } from 'vue-router'
 import SheetMenu from '@/components/menu/SheetMenu.vue'
+import { useFileStore } from '@/store/files'
 
 // Router setup
 const router = useRouter()
 const route = useRoute()
+
+// Filestore setup
+const fileStore = useFileStore()
 
 // Reactive references
 const data = ref<Partial<IWorkbookData> | null>(null)
@@ -29,14 +33,29 @@ function onUniverRefChange(childUniverRef: Univer | null) {
 }
 
 // Load data function
-function loadData(id: string) {
-  const savedData = localStorage.getItem(id)
-  return savedData ? JSON.parse(savedData) : DEFAULT_WORKBOOK_DATA
+async function loadData(id: string) {
+  try {
+    const loadedData = await fileStore.loadFromCacheOrAPI(id, 'xlsx')
+    return loadedData?.content ? JSON.parse(loadedData.content) : DEFAULT_WORKBOOK_DATA
+  } catch (error) {
+    console.error('Error loading data:', error)
+    return DEFAULT_WORKBOOK_DATA
+  }
 }
 
 // Update data handler
-function updateData(newData: IWorkbookData) {
+async function updateData(newData: IWorkbookData) {
   data.value = newData
+  if (route.params.id) {
+    await fileStore.saveDocument({
+      id: route.params.id as string,
+      title: title.value,
+      file_name: `${title.value}.xlsx`,
+      file_type: 'xlsx',
+      content: JSON.stringify(newData),
+      last_viewed: new Date()
+    })
+  }
 }
 
 const titleRef = ref<HTMLElement | null>(null)
@@ -56,10 +75,20 @@ function updateTitle(event: Event) {
   title.value = target.innerText
 }
 
-function saveTitle() {
+async function saveTitle() {
   isTitleEdit.value = false
   document.title = title.value || 'New Spreadsheet'
   univerRef.value?.setName?.(title.value)
+  if (route.params.id) {
+    await fileStore.saveDocument({
+      id: route.params.id as string,
+      title: title.value,
+      file_name: `${title.value}.xlsx`,
+      file_type: 'xlsx',
+      content: JSON.stringify(data.value),
+      last_viewed: new Date()
+    })
+  }
 }
 
 function togglePencil(v: boolean) {
@@ -72,11 +101,11 @@ function togglePencil(v: boolean) {
 // Icon reference and favicon setup
 const iconRef = ref<HTMLElement | null>(null)
 onMounted(() => {
-  watchEffect(() => {
+  watchEffect(async () => {
     if (route.params.id && title.value == 'New Spreadsheet') {
-      console.log('efffect change', route.params.id)
+      console.log('effect change', route.params.id)
       // Load data after route is initialized
-      data.value = loadData(route.params.id as string)
+      data.value = await loadData(route.params.id as string)
 
       const sheetId = data.value?.id
       if (route.params.id !== sheetId) {

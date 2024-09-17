@@ -4,6 +4,8 @@ export interface FileData {
     file_name: string
     file_type?: string
     file_size?: string
-    created_at?: string
+    last_viewed?: Date
+    created_at?: Date
     contents?: string
+    content?: string
 }
