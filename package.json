@@ -88,7 +88,6 @@
     "@univerjs/slides": "^0.2.4",
     "@univerjs/slides-ui": "^0.2.4",
     "@univerjs/ui": "^0.2.4",
-    "@vueup/vue-quill": "^1.2.0",
     "@vueuse/core": "^10.11.0",
     "@wendellhu/redi": "^0.16.0",
     "axios": "^1.7.2",
@@ -106,16 +105,11 @@
     "microdiff": "^1.4.0",
     "mitt": "^3.0.1",
     "paginate-dom": "^1.0.2",
+    "pinia": "^2.2.2",
     "print-js": "^1.6.0",
     "prosemirror-state": "^1.4.3",
     "prosemirror-view": "^1.33.9",
     "prosemirror-virtual-cursor": "^0.4.2",
-    "quill": "^2.0.2",
-    "quill-better-table": "github:encontact/quill-better-table#typescript",
-    "quill-blot-formatter-mobile": "^1.1.2",
-    "quill-cursors": "^4.0.3",
-    "quill-image-uploader": "^1.3.0",
-    "quill-magic-url": "^4.2.0",
     "radix-vue": "^1.9.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -137,7 +131,7 @@
     "vue": "^3.4.33",
     "vue-class-component": "8.0.0-rc.1",
     "vue-file-toolbar-menu": "github:xwiz/vue-file-toolbar-menu",
-    "vue-i18n": "^9.13.1",
+    "vue-i18n": "^10.0.1",
     "vue-inline-svg": "^2.1.4",
     "vue-loader": "^17.4.2",
     "vue-router": "^4.4.0",
@@ -155,6 +149,7 @@
     "@types/file-saver": "^2.0.7",
     "@types/json-diff": "^1.0.3",
     "@types/node": "^20.14.11",
+    "@types/uuid": "^10.0.0",
     "@univerjs/esbuild-plugin": "^0.5.0",
     "@univerjs/vite-plugin": "^0.4.4",
     "@vitejs/plugin-vue": "^5.0.5",
@@ -163,17 +158,13 @@
     "@vue/cli-plugin-typescript": "~5.0.8",
     "@vue/compiler-sfc": "^3.4.33",
     "autoprefixer": "^10.4.19",
+    "eslint": "^9.10.0",
+    "eslint-plugin-vue": "^9.28.0",
     "prosemirror-dev-tools": "^4.1.0",
     "sass": "^1.77.8",
     "tailwindcss": "^3.4.6",
     "typescript": "^5.5.3",
     "vite": "^5.3.4",
-    "volar-service-prettyhtml": "^0.0.47",
-    "vue-tsc": "^2.0.26"
-  },
-  "overrides": {
-    "quill-image-uploader": {
-      "quill": "^2.0.2"
-    }
+    "volar-service-prettyhtml": "^0.0.47"
   }
 }
