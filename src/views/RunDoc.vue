@@ -41,6 +41,12 @@ const options = ref({
     },
   },
   locale: 'en-US',
+  translations: {
+    "base": {
+      "color": "Font Colour",
+      "bgColor": "Font Background",
+    }
+  },
   toolbar: {
     defaultMode: 'ribbon',
     enableSourceEditor: true,
