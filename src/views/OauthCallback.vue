@@ -3,7 +3,8 @@ import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
 
 const router = useRouter()
-const authBase = 'http://localhost:8001/'
+const API_BASE_URI =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
 
 // Function to get a cookie value by name
 function getCookie(name: string): string | undefined {
@@ -15,7 +16,7 @@ function getCookie(name: string): string | undefined {
 
 // Function to authenticate using a cookie
 function authenticateWithCookie(authCookie: string) {
-  fetch(`${authBase}api/v1/login`, {
+  fetch(`${API_BASE_URI}/login`, {
     headers: {
       'Authorization': `Bearer ${authCookie}`,
       'Content-Type': 'application/json',
@@ -38,7 +39,7 @@ function authenticateWithCookie(authCookie: string) {
 
 // Function to authenticate using an OAuth code
 function authenticateWithCode(code: string) {
-  fetch(`${authBase}api/v1/login`, {
+  fetch(`${API_BASE_URI}/login`, {
     method: 'POST',
     headers: {
       'X-Auth-Init': code,

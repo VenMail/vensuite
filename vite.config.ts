@@ -17,6 +17,10 @@ export default defineConfig({
     vue(),
     univerPlugin(),
   ],
+  define: {
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL),
+    'import.meta.env.VITE_AUTH_URL': JSON.stringify(process.env.VITE_AUTH_URL),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

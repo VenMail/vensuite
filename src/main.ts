@@ -49,8 +49,6 @@ const router = createRouter({
 const i18n = createI18n({
   // something vue-i18n options here ...
 })
-const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"
-const FILES_ENDPOINT = `${API_BASE_URI}/app-files`
 
 const app = createApp(App)
 const pinia = createPinia()

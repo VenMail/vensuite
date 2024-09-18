@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  vensuite-app:
+    image: node:18
+    container_name: vensuite-builder
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./var/www/vensuite:/usr/src/app/dist #var/www/vensuite on host
+    command: sh -c "pnpm install && pnpm run build"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_BASE_URL=https://app.venmail.io/api/v1
+      - VITE_AUTH_URL=https://app.venmail.io/auth/oauth
