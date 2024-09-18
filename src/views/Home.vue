@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, watch, nextTick, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   SearchIcon,
@@ -11,6 +11,10 @@ import {
   FolderOpen,
   Upload,
   FolderPlusIcon,
+  Trash2,
+  Edit,
+  Download,
+  Share2,
 } from "lucide-vue-next";
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
 import { storeToRefs } from "pinia";
@@ -51,6 +55,8 @@ const sortBy = ref("name");
 const groupByFileType = ref(false);
 const currentFolderId = ref<string | null>(null);
 
+const showContextMenu = ref(false);
+
 let debounceTimer: NodeJS.Timeout;
 const debouncedSearch = ref(searchValue.value);
 
@@ -85,10 +91,18 @@ function loginWithVenmail() {
 }
 
 onMounted(async () => {
+  document.addEventListener('click', handleOutsideClick);
+  document.addEventListener('keydown', handleEscapeKey);
+
   if (authStore.getToken() && fileStore.allFiles.length == 0) {
     await fileStore.loadDocuments();
   }
   document.title = "Home";
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick);
+  document.removeEventListener('keydown', handleEscapeKey);
 });
 
 const selectedFiles = computed(() => {
@@ -149,6 +163,11 @@ async function openFolder(id: string) {
   } catch (error) {
     console.error("Error opening folder:", error);
   }
+}
+
+function handleSelect(id: string) {
+  selectedFile.value = id
+  showContextMenu.value = true
 }
 
 function openFile(id: string) {
@@ -225,23 +244,65 @@ function formatGroupName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1).replace("_", " ");
 }
 
+// Update the contextMenuActions computed property
 const contextMenuActions = computed(() => {
   if (!selectedFile.value) return [];
+  const file = fileStore.allFiles.find(f => f.id === selectedFile.value);
+  const isFolder = file?.is_folder;
+  
   return [
-    { label: "Open", action: () => openFile(selectedFile.value!) },
-    { label: "Rename", action: () => {
-      const fileItemElement = document.getElementById(`fileItem-${selectedFile.value}`);
-      if (fileItemElement) {
-        const renameEvent = new CustomEvent('start-rename');
-        fileItemElement.dispatchEvent(renameEvent);
+    { 
+      label: "Open", 
+      icon: FolderOpen, 
+      action: () => openFile(selectedFile.value!)
+    },
+    { 
+      label: "Rename", 
+      icon: Edit,
+      action: () => {
+        const fileItemElement = document.getElementById(`fileItem-${selectedFile.value}`);
+        if (fileItemElement) {
+          const renameEvent = new CustomEvent('start-rename');
+          fileItemElement.dispatchEvent(renameEvent);
+        }
       }
-    }},
-    { label: "Delete", action: () => fileStore.deleteFile(selectedFile.value!) },
-    { label: "Download", action: () => console.log("Download") },
-    { label: "Share", action: () => console.log("Share") },
+    },
+    { 
+      label: "Delete", 
+      icon: Trash2,
+      action: () => fileStore.deleteFile(selectedFile.value!) 
+    },
+    ...(isFolder ? [] : [
+      { 
+        label: "Download", 
+        icon: Download,
+        action: () => console.log("Download") 
+      },
+      { 
+        label: "Share", 
+        icon: Share2,
+        action: () => console.log("Share") 
+      },
+    ]),
   ];
 });
+
+function handleOutsideClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.file-item') && !target.closest('.context-menu')) {
+    selectedFile.value = null;
+    showContextMenu.value = false;
+  }
+}
+
+function handleEscapeKey(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    selectedFile.value = null;
+    showContextMenu.value = false;
+  }
+}
 </script>
+
 
 <template>
   <div v-if="isAuthenticated" class="flex h-screen bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900">
@@ -260,10 +321,11 @@ const contextMenuActions = computed(() => {
           </div>
         </div>
         <!-- Context-aware menu -->
-        <div v-if="selectedFile"
-          class="bg-white bg-opacity-50 backdrop-blur-sm border-b border-gray-200 p-2 flex items-center space-x-2">
+        <div v-if="showContextMenu && selectedFile"
+          class="context-menu bg-white bg-opacity-50 backdrop-blur-sm border border-gray-200 rounded-lg p-2 flex items-center space-x-2">
           <Button v-for="action in contextMenuActions" :key="action.label" variant="ghost" size="sm"
-            @click="action.action">
+            @click="action.action" class="flex items-center">
+            <component :is="action.icon" class="mr-2 h-4 w-4" />
             {{ action.label }}
           </Button>
         </div>
@@ -376,7 +438,7 @@ const contextMenuActions = computed(() => {
                 'space-y-2': viewMode === 'list',
               }">
                 <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
-                  :isSelected="selectedFile === item.id" @select-file="(id) => selectedFile = id"
+                  :isSelected="selectedFile === item.id" @select-file="handleSelect"
                   @open-file="openFile" />
               </div>
             </template>

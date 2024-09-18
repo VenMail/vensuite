@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils'
 const items = [
   { name: 'Home', icon: Home, route: '/' },
   { name: 'Browse', icon: FolderTree, route: '/browse' },
-  { name: 'Documents', icon: FileText, route: '/documents' },
-  { name: 'Spreadsheets', icon: Table, route: '/spreadsheets' },
+  { name: 'Documents', icon: FileText, route: '/docs' },
+  { name: 'Spreadsheets', icon: Table, route: '/sheets' },
   { name: 'Media Files', icon: Image, route: '/media' },
   { name: 'Others', icon: File, route: '/others' },
 ]
