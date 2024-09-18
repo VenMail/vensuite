@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, defineProps, defineEmits } from 'vue'
-import { Home, FolderTree, FileText, Table, Image, File, Menu } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, Menu } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 
 const items = [
   { name: 'Home', icon: Home, route: '/' },
-  { name: 'Browse', icon: FolderTree, route: '/browse' },
-  { name: 'Documents', icon: FileText, route: '/docs' },
-  { name: 'Spreadsheets', icon: Table, route: '/sheets' },
-  { name: 'Media Files', icon: Image, route: '/media' },
-  { name: 'Others', icon: File, route: '/others' },
+  { name: 'New Document', icon: FileText, route: '/docs' },
+  { name: 'New Spreadsheet', icon: Table, route: '/sheets' },
+  { name: 'Browse Media', icon: Image, route: '/media' },
 ]
 
 // Props to control visibility from parent

@@ -167,14 +167,14 @@ async function openFolder(id: string) {
   }
 }
 
-watch(selectedFile, (newValue) => {
-  console.log("selectedFile changed to:", newValue);
-  if (newValue) {
-    nextTick(() => {
-      console.log("After nextTick, selectedFile is still:", selectedFile.value);
-    });
-  }
-});
+// watch(selectedFile, (newValue) => {
+//   console.log("selectedFile changed to:", newValue);
+//   if (newValue) {
+//     nextTick(() => {
+//       console.log("After nextTick, selectedFile is still:", selectedFile.value);
+//     });
+//   }
+// });
 
 function handleSelect(id: string | undefined, event: Event) {
   console.log("handleSelect called with id:", id);
