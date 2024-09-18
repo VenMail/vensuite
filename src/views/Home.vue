@@ -244,6 +244,16 @@ function formatGroupName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1).replace("_", " ");
 }
 
+function handleRename() {
+  if (selectedFile.value) {
+    const fileItemElement = document.getElementById(`fileItem-${selectedFile.value}`);
+    if (fileItemElement) {
+      const renameEvent = new CustomEvent('start-rename');
+      fileItemElement.dispatchEvent(renameEvent);
+    }
+  }
+}
+
 // Update the contextMenuActions computed property
 const contextMenuActions = computed(() => {
   if (!selectedFile.value) return [];
@@ -259,13 +269,7 @@ const contextMenuActions = computed(() => {
     { 
       label: "Rename", 
       icon: Edit,
-      action: () => {
-        const fileItemElement = document.getElementById(`fileItem-${selectedFile.value}`);
-        if (fileItemElement) {
-          const renameEvent = new CustomEvent('start-rename');
-          fileItemElement.dispatchEvent(renameEvent);
-        }
-      }
+      action: handleRename
     },
     { 
       label: "Delete", 
@@ -299,6 +303,9 @@ function handleEscapeKey(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     selectedFile.value = null;
     showContextMenu.value = false;
+  } else if (event.key === 'F2') {
+    event.preventDefault();
+    handleRename();
   }
 }
 </script>

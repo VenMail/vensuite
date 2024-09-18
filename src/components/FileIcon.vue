@@ -54,8 +54,7 @@ const iconClass = computed(() => `w-[3rem] h-[3rem] ${iconColor.value}`);
 <template>
   <!-- Render the dynamic icon component with dynamic classes -->
   <component :is="iconComponent" :class="iconClass" v-bind="attrs" />
-  <div class="hidden">
-    <div class="text-green-500 text-red-500 text-blue-500 text-gray-500 text-color-[#f7b84b] text-slate-500"></div>
+  <div class="text-green-500 text-red-500 text-blue-500 text-gray-500 text-color-[#f7b84b] text-slate-500 hidden">
   </div>
 </template>
 
