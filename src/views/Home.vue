@@ -259,7 +259,15 @@ const contextMenuActions = computed(() => {
             <Input v-model="searchValue" placeholder="Search files..." class="pl-8 w-64" />
           </div>
         </div>
-        <div class="flex items-center space-x-4">
+        <!-- Context-aware menu -->
+        <div v-if="selectedFile"
+          class="bg-white bg-opacity-50 backdrop-blur-sm border-b border-gray-200 p-2 flex items-center space-x-2">
+          <Button v-for="action in contextMenuActions" :key="action.label" variant="ghost" size="sm"
+            @click="action.action">
+            {{ action.label }}
+          </Button>
+        </div>
+        <div v-else class="flex items-center space-x-4">
           <Button variant="outline" @click="createNewFolder">
             <FolderPlusIcon class="mr-2 h-4 w-4" />
             New Folder
@@ -319,15 +327,6 @@ const contextMenuActions = computed(() => {
             <Settings class="h-4 w-4" />
           </Button>
         </div>
-      </div>
-
-      <!-- Context-aware menu -->
-      <div v-if="selectedFile"
-        class="bg-white bg-opacity-50 backdrop-blur-sm border-b border-gray-200 p-2 flex items-center space-x-2">
-        <Button v-for="action in contextMenuActions" :key="action.label" variant="ghost" size="sm"
-          @click="action.action">
-          {{ action.label }}
-        </Button>
       </div>
 
       <!-- File browser -->

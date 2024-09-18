@@ -43,8 +43,12 @@ const options = ref({
   locale: 'en-US',
   translations: {
     "base": {
-      "color": "Font Colour",
-      "bgColor": "Font Background",
+      "color": {
+        text: "Font Colour",
+      },
+      "bgColor": {
+        text: "Font Background",
+      }
     }
   },
   toolbar: {
