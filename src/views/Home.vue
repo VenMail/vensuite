@@ -41,6 +41,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileData } from "@/types";
 import FileItem from "@/components/FileItem.vue";
 import { sluggify } from "@/utils/lib";
+import { useFavicon } from "@vueuse/core";
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -55,7 +56,7 @@ const sortBy = ref("name");
 const groupByFileType = ref(false);
 const currentFolderId = ref<string | null>(null);
 
-const showContextMenu = ref(false);
+const showContextMenu = computed(() => !!selectedFile.value);
 
 let debounceTimer: NodeJS.Timeout;
 const debouncedSearch = ref(searchValue.value);
@@ -98,6 +99,7 @@ onMounted(async () => {
     await fileStore.loadDocuments();
   }
   document.title = "Home";
+  useFavicon("/logo.png")
 });
 
 onUnmounted(() => {
@@ -165,9 +167,22 @@ async function openFolder(id: string) {
   }
 }
 
-function handleSelect(id: string) {
-  selectedFile.value = id
-  showContextMenu.value = true
+watch(selectedFile, (newValue) => {
+  console.log("selectedFile changed to:", newValue);
+  if (newValue) {
+    nextTick(() => {
+      console.log("After nextTick, selectedFile is still:", selectedFile.value);
+    });
+  }
+});
+
+function handleSelect(id: string | undefined, event: Event) {
+  console.log("handleSelect called with id:", id);
+  event.stopPropagation(); // Prevent event from bubbling up
+  if (id) selectedFile.value = id;
+  nextTick(() => {
+    console.log("After setting, selectedFile is:", selectedFile.value);
+  });
 }
 
 function openFile(id: string) {
@@ -295,14 +310,12 @@ function handleOutsideClick(event: MouseEvent) {
   const target = event.target as HTMLElement;
   if (!target.closest('.file-item') && !target.closest('.context-menu')) {
     selectedFile.value = null;
-    showContextMenu.value = false;
   }
 }
 
 function handleEscapeKey(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     selectedFile.value = null;
-    showContextMenu.value = false;
   } else if (event.key === 'F2') {
     event.preventDefault();
     handleRename();
@@ -328,7 +341,7 @@ function handleEscapeKey(event: KeyboardEvent) {
           </div>
         </div>
         <!-- Context-aware menu -->
-        <div v-if="showContextMenu && selectedFile"
+        <div v-if="showContextMenu"
           class="context-menu bg-white bg-opacity-50 backdrop-blur-sm border border-gray-200 rounded-lg p-2 flex items-center space-x-2">
           <Button v-for="action in contextMenuActions" :key="action.label" variant="ghost" size="sm"
             @click="action.action" class="flex items-center">
@@ -445,7 +458,8 @@ function handleEscapeKey(event: KeyboardEvent) {
                 'space-y-2': viewMode === 'list',
               }">
                 <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
-                  :isSelected="selectedFile === item.id" @select-file="handleSelect"
+                  :isSelected="selectedFile === item.id"
+                  @click.stop="handleSelect(item.id, $event)"
                   @open-file="openFile" />
               </div>
             </template>

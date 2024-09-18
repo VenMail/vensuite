@@ -134,7 +134,7 @@ const finishRenaming = async () => {
   if (newTitle.value && newTitle.value !== title) {
     isLoading.value = true;
     try {
-      const updatedFile = await fileStore.saveDocument({ ...props.file, title: newTitle.value });
+      const updatedFile = await fileStore.saveDocument({ ...props.file, title: newTitle.value }, true);
       emit('update-file', updatedFile);
     } catch (error) {
       console.error('Error renaming file:', error);

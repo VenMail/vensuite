@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, defineProps, useAttrs } from 'vue';
 import * as defaultIcons from '@iconify-prerendered/vue-file-icons';
-import { FolderIcon } from 'lucide-vue-next';
+import { Folder } from 'lucide-vue-next';
 
 // Props definition
 const props = defineProps<{
@@ -19,43 +19,41 @@ const iconComponents: Record<string, any> = {
   'png': defaultIcons.IconImage,
   'jpg': defaultIcons.IconImage,
   'webp': defaultIcons.IconImage,
-  'folder': FolderIcon,
-  null: FolderIcon,
+  'folder': Folder,
+  null: Folder,
   // ... other mappings
 };
 
 const iconComponent = computed(() => iconComponents[props.fileType || ""] || defaultIcons.IconDefault);
 
-// Improved color selection (Apple-inspired subtle colors)
-const iconColor = computed(() => {
+// Define color using inline styles for all cases
+const iconStyle = computed(() => {
   switch (props.fileType) {
     case "xlsx":
-      return 'text-green-500';
+      return { color: '#10b981' }; // Tailwind 'text-green-500'
     case "pdf":
-      return 'text-red-500';
+      return { color: '#ef4444' }; // Tailwind 'text-red-500'
     case "docx":
-      return 'text-blue-500';
+      return { color: '#3b82f6' }; // Tailwind 'text-blue-500'
     case "png":
     case "jpg":
     case "webp":
-      return 'text-gray-500';
+      return { color: '#6b7280' }; // Tailwind 'text-gray-500'
     case "folder":
     case null:
-      return 'text-color-[#f7b84b]';
+      return { color: '#47484b' }; // Custom color
     default:
-      return 'text-slate-500';
+      return { color: '#64748b' }; // Tailwind 'text-slate-500'
   }
 });
 
-// Icon class with dynamic coloring
-const iconClass = computed(() => `w-[3rem] h-[3rem] ${iconColor.value}`);
+// Icon class for size
+const iconClass = 'w-[3rem] h-[3rem]';
 </script>
 
 <template>
-  <!-- Render the dynamic icon component with dynamic classes -->
-  <component :is="iconComponent" :class="iconClass" v-bind="attrs" />
-  <div class="text-green-500 text-red-500 text-blue-500 text-gray-500 text-color-[#f7b84b] text-slate-500 hidden">
-  </div>
+  <!-- Render the dynamic icon component with inline styles for colors -->
+  <component :is="iconComponent" :class="iconClass" :style="iconStyle" v-bind="attrs" />
 </template>
 
 <style scoped>
