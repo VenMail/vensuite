@@ -120,7 +120,8 @@ function startEditing() {
 const iconRef = ref<HTMLElement | null>(null)
 
 onMounted(() => {
-  console.log("mounted", route.params)
+  editorRef.value?.setLocale("en-US")
+  console.log("options", editorRef.value?.getOptions())
   watchEffect(async () => {
     if (route.params.id && title.value == "New Document") {
       console.log('effect change', route.params.id)
