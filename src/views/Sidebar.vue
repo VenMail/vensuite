@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, defineProps, defineEmits } from 'vue'
-import { useRoute } from 'vue-router'
 import { Home, FolderTree, FileText, Table, Image, File, Menu } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 

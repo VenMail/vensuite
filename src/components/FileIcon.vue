@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineProps, defineEmits, useAttrs } from 'vue';
+import { computed, defineProps, useAttrs } from 'vue';
 import * as defaultIcons from '@iconify-prerendered/vue-file-icons';
 import { FolderIcon } from 'lucide-vue-next';
 

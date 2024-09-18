@@ -9,13 +9,12 @@ import '@/assets/index.css'
 import { PencilIcon } from 'lucide-vue-next'
 import { useFavicon } from '@vueuse/core'
 import type { IWorkbookData, Univer } from '@univerjs/core'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import SheetMenu from '@/components/menu/SheetMenu.vue'
 import { useFileStore } from '@/store/files'
 import { sluggify } from '@/utils/lib'
 
 // Router setup
-const router = useRouter()
 const route = useRoute()
 
 // Filestore setup

@@ -64,7 +64,7 @@ authStore.setRouter(router) // Now you can call setupAxiosInterceptor
 const documentStore = useFileStore(pinia)
 
 // Router guard
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!authStore.isAuthenticated) {
       next({ name: 'login', query: { redirect: to.fullPath } })

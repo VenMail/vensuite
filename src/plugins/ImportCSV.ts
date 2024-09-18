@@ -114,7 +114,7 @@ class ImportCSVButtonPlugin extends Plugin {
       group: MenuGroup.CONTEXT_MENU_DATA,
       positions: [MenuPosition.TOOLBAR_START],
     }
-    this.menuService.addMenuItem(menuItem)
+    this.menuService.addMenuItem(menuItem, {})
 
     const command = {
       type: CommandType.OPERATION,

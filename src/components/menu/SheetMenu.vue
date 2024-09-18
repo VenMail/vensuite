@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineEmits, defineProps, onMounted, ref, watchEffect } from 'vue'
+import { computed, defineEmits, defineProps, onMounted, watchEffect } from 'vue'
 import {
   BoldIcon,
   ClipboardPasteIcon,
@@ -32,7 +32,6 @@ import { Univer } from '@univerjs/core'
 import { FUniver } from '@univerjs/facade'
 import type { ICellData, IWorkbookData } from '@univerjs/core'
 import { useRouter } from 'vue-router'
-import diff from 'microdiff'
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data'
 import {
   Menubar,
@@ -62,16 +61,16 @@ const emit = defineEmits(['updateData'])
 const router = useRouter()
 
 let facadeAPI: FUniver | null = null
-let disposable = null
+// let disposable = null
 
 onMounted(() => {
   watchEffect(() => {
     if (props.coreRef && !facadeAPI) {
       facadeAPI = FUniver.newAPI(props.coreRef)
-      disposable = facadeAPI.onBeforeCommandExecute((command) => {
+      // disposable = facadeAPI.onBeforeCommandExecute((command) => {
         // console.log('logging', command)
         // custom preprocessing logic before the command is executed
-      })
+      // })
     }
   })
   console.log("pid", props.fileId)

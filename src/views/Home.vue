@@ -10,7 +10,6 @@ import {
   ChevronDown,
   FolderOpen,
   Upload,
-  Folder,
   FolderPlusIcon,
 } from "lucide-vue-next";
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
