@@ -30,6 +30,9 @@ jobs:
 
       # 5. Build the project
       - name: Build project
+        env:
+            VITE_API_BASE_URL: https://app.venmail.io/api/v1
+            VITE_AUTH_URL: https://app.venmail.io/auth/oauth
         run: pnpm run build
 
       # 6. Copy files to the server using SCP
