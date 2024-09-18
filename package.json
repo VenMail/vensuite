@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -178,7 +178,6 @@
     "@types/trusted-types": "^2.0.7",
     "@types/unist": "^3.0.3",
     "@types/uuid": "^10.0.0",
-    "@types/vfile": "^4.0.0",
     "@types/web-bluetooth": "^0.0.20",
     "@types/webpack-env": "^1.18.5",
     "@univerjs/esbuild-plugin": "^0.5.0",
@@ -196,6 +195,7 @@
     "tailwindcss": "^3.4.6",
     "typescript": "^5.5.3",
     "vite": "^5.3.4",
-    "volar-service-prettyhtml": "^0.0.47"
+    "volar-service-prettyhtml": "^0.0.47",
+    "vue-tsc": "^2.1.6"
   }
 }
