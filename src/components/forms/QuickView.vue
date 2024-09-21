@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,6 @@ const responseData = ref<FormResponseData | null>(null);
 const statistics = ref<Record<string, QuestionStatistics>>({});
 const loadingResponses = ref<boolean>(false);
 const errorMessage = ref<string | null>(null);
-const showModal = ref<boolean>(false);
 
 const fetchFormResponses = async () => {
   try {
@@ -78,114 +78,78 @@ const chartOptions = {
   },
 };
 
-const openModal = () => {
-  showModal.value = true;
-};
-
 const launchEditor = () => {
   router.push(`/forms/${props.form.id}`);
 };
 
-const closeModal = () => {
-  showModal.value = false;
-};
 </script>
 
 <template>
   <div
-    class="bg-white shadow-lg rounded-lg p-6 transform transition duration-300 hover:scale-105 hover:shadow-2xl"
-  >
-    <h2 class="text-2xl font-semibold mb-2 text-gray-900">{{ form.title }}</h2>
-    <p class="text-sm text-gray-500 mb-2">
-      Created:
-      {{
-        form.created_at ? new Date(form.created_at).toLocaleDateString() : "N/A"
-      }}
+    class="bg-white shadow-lg rounded-xl p-6 transform transition duration-300 hover:scale-105 hover:shadow-2xl space-y-4">
+    <h2 class="text-3xl font-semibold text-gray-900">{{ form.title }}</h2>
+    <p class="text-sm text-gray-500">
+      Created: {{ form.created_at ? new Date(form.created_at).toLocaleDateString() : "N/A" }}
     </p>
-    <p class="text-sm text-gray-500 mb-4">
-      Last Viewed:
-      {{
-        form.last_view_date
-          ? new Date(form.last_view_date).toLocaleDateString()
-          : "N/A"
-      }}
+    <p class="text-sm text-gray-500">
+      Last Viewed: {{ form.last_view_date ? new Date(form.last_view_date).toLocaleDateString() : "N/A" }}
     </p>
 
-    <div class="mb-4">
-      <p class="text-lg font-bold">
-        {{ responseData?.meta.total_responses || 0 }} Total Responses
-      </p>
+    <div class="space-y-1">
+      <p class="text-lg font-semibold">{{ responseData?.meta.total_responses || 0 }} Total Responses</p>
       <p class="text-sm text-gray-600">
-        Completed: {{ responseData?.meta.completed_responses || 0 }} |
-        Incomplete: {{ responseData?.meta.incomplete_responses || 0 }}
+        Completed: {{ responseData?.meta.completed_responses || 0 }} | Incomplete: {{
+          responseData?.meta.incomplete_responses || 0 }}
       </p>
     </div>
 
-    <div v-if="loadingResponses" class="text-center">
-      <span class="text-gray-600">Loading responses...</span>
-    </div>
-    <div v-if="errorMessage" class="text-red-500 text-center">
-      {{ errorMessage }}
+    <div v-if="loadingResponses" class="text-center text-gray-500">Loading responses...</div>
+    <div v-if="errorMessage" class="text-center text-red-500">{{ errorMessage }}</div>
+
+    <div v-if="statistics['completion']">
+      <h3 class="text-lg font-semibold mb-2">Completion Statistics</h3>
+      <pie :data="statistics['completion'].chart_data.data" :options="chartOptions"></pie>
     </div>
 
-    <div v-if="!loadingResponses && statistics">
-      <div v-if="statistics['completion']">
-        <h3 class="text-lg font-semibold mb-2">Completion Statistics</h3>
-        <pie
-          :data="statistics['completion'].chart_data.data"
-          :options="chartOptions"
-        ></pie>
-      </div>
-    </div>
-
-    <div v-if="statistics && Object.keys(statistics).length > 0" class="mt-4">
-      <div
-        v-for="(stat, questionId) in statistics"
-        :key="questionId"
-        class="mt-6"
-      >
-        <h3 class="text-lg font-semibold text-gray-800">
-          Question ID: {{ questionId }}
-        </h3>
-        <bar
-          v-if="stat.chart_data.data.labels.length > 6"
-          :data="stat.chart_data.data"
-        ></bar>
+    <div v-if="statistics && Object.keys(statistics).length > 0" class="space-y-6 mt-6">
+      <div v-for="(stat, questionId) in statistics" :key="questionId">
+        <h3 class="text-lg font-medium text-gray-800">Question ID: {{ questionId }}</h3>
+        <bar v-if="stat.chart_data.data.labels.length > 6" :data="stat.chart_data.data"></bar>
         <pie v-else :data="stat.chart_data.data" :options="chartOptions"></pie>
       </div>
     </div>
 
-    <Button variant="outline" class="mt-4" @click="launchEditor"
-      >Edit Form</Button
-    >
-    <Button variant="outline" class="mt-4" @click="openModal"
-      >View Responses</Button
-    >
+    <div class="flex space-x-4 mt-6">
+      <Button variant="outline" @click="launchEditor">Edit Form</Button>
 
-    <Dialog v-model:open="showModal" @close="closeModal">
-      <DialogHeader>
-        <DialogTitle>Form Responses</DialogTitle>
-      </DialogHeader>
-      <DialogContent>
-        <div v-if="loadingResponses">
-          <p>Loading responses...</p>
-        </div>
-        <div v-else>
-          <div v-if="responseData">
-            <div
-              v-for="(response, index) in responseData.responses"
-              :key="index"
-              class="mb-4"
-            >
+      <!-- Modal -->
+      <Dialog>
+        <DialogTrigger>
+          <Button variant="outline">View Responses</Button>
+        </DialogTrigger>
+
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Form Responses</DialogTitle>
+          </DialogHeader>
+
+          <!-- Dialog content goes here -->
+          <div v-if="loadingResponses" class="text-center">
+            Loading responses...
+          </div>
+          <div v-else-if="responseData" class="space-y-4">
+            <div v-for="(response, index) in responseData.responses" :key="index">
               <p>{{ response.question_id }}: {{ response.value }}</p>
             </div>
           </div>
-        </div>
-      </DialogContent>
-      <DialogFooter>
-        <Button variant="outline" @click="closeModal">Close</Button>
-      </DialogFooter>
-    </Dialog>
+
+          <DialogFooter>
+            <Button variant="outline">Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+
   </div>
 </template>
 
@@ -196,6 +160,7 @@ const closeModal = () => {
   transition: all 0.3s ease-in-out;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
+
 .hover\:scale-105:hover {
   transform: scale(1.05);
 }

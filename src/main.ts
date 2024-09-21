@@ -35,13 +35,13 @@ const routes = [
     path: '/',
     component: AuthenticatedLayout,
     children: [
-      { path: '', name: 'home', component: Home },
       { path: 'sheets', name: 'sheets', component: RunSheet },
       { path: 'sheets/:id', name: 'sheet', component: RunSheet },
       { path: 'docs', name: 'docs', component: RunDoc },
       { path: 'docs/:id', name: 'doc', component: RunDoc },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },
+      { path: '', name: 'home', component: Home },
     ]
   }
 ]
