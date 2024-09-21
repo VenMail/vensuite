@@ -24,7 +24,7 @@ onMounted(async () => {
   console.log("Tok", token)
   if (token) {
     await authStore.login(token) // Use the store's login method
-    const redirect = localStorage.getItem('loginRedirect') || '/'
+    const redirect = route.query.redirect as string || localStorage.getItem('loginRedirect') || '/'
     localStorage.removeItem('loginRedirect')
     await router.push(redirect)
   }
