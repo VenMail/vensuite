@@ -1,5 +1,16 @@
 <template>
-  <div :id="`fileItem-${file.id}`" :class="fileItemClass" @click="selectFile" @dblclick="openFile" draggable="true" @dragstart="onDragStart" @dragend="onDragEnd" ref="fileItemRef">
+  <div :id="`fileItem-${file.id}`" 
+       :class="[fileItemClass, { 'drop-target': isDropTarget }]" 
+       @click="selectFile" 
+       @dblclick="openFile" 
+       draggable="true" 
+       @dragstart="onDragStart" 
+       @dragend="onDragEnd"
+       @dragover="onDragOver"
+       @dragleave="onDragLeave"
+       @drop="onDrop"
+       ref="fileItemRef">
+
     <!-- Thumbnail and Grid Views -->
     <div v-if="isThumbnailOrGrid" class="file-item-wrapper">
       <div v-show="isRenaming" class="w-full flex items-center">
@@ -84,6 +95,8 @@ const props = defineProps({
   }
 });
 
+const isDropTarget = ref(false);
+
 const emit = defineEmits(['select-file', 'open-file', 'update-file', 'delete-file']);
 
 const { id, title, is_folder, file_type, created_at, file_url } = props.file;
@@ -103,16 +116,17 @@ const fileType = computed(() => (is_folder ? 'folder' : file_type));
 const fileItemClass = computed(() => {
   const baseClass = 'p-1 transition-all duration-200 cursor-pointer';
   const selectedClass = props.isSelected ? 'ring-2 ring-slate-400 bg-slate-50' : 'hover:bg-gray-100';
+  const dropTargetClass = props.file.is_folder ? 'drop-zone' : '';
 
   switch (props.viewMode) {
     case 'grid':
-      return `${baseClass} ${selectedClass} w-full rounded-md m-2 flex flex-col`;
+      return `${baseClass} ${selectedClass} ${dropTargetClass} w-full rounded-md m-2 flex flex-col`;
     case 'thumbnail':
-      return `${baseClass} ${selectedClass} w-full rounded-md m-2 flex flex-col shadow-sm relative`;
+      return `${baseClass} ${selectedClass} ${dropTargetClass} w-full rounded-md m-2 flex flex-col shadow-sm relative`;
     case 'tree':
-      return `${baseClass} ${selectedClass} w-full py-1`;
+      return `${baseClass} ${selectedClass} ${dropTargetClass} w-full py-1`;
     default:
-      return `${baseClass} ${selectedClass} w-full flex items-center justify-between`;
+      return `${baseClass} ${selectedClass} ${dropTargetClass} w-full flex items-center justify-between`;
   }
 });
 
@@ -120,6 +134,40 @@ const formattedDate = computed(() => (created_at ? new Date(created_at).toLocale
 
 const selectFile = () => emit('select-file', id);
 const openFile = () => emit('open-file', id);
+
+const onDragOver = (event: DragEvent) => {
+  if (props.file.is_folder) {
+    event.preventDefault();
+    event.dataTransfer!.dropEffect = 'move';
+    isDropTarget.value = true;
+  }
+};
+
+const onDragLeave = () => {
+  isDropTarget.value = false;
+};
+
+const onDrop = async (event: DragEvent) => {
+  event.preventDefault();
+  isDropTarget.value = false;
+
+  if (!props.file.is_folder) return;
+
+  const droppedFileId = event.dataTransfer!.getData('text/plain');
+  if (!droppedFileId || droppedFileId === props.file.id) return;
+
+  isLoading.value = true;
+  try {
+    if (props.file.id) {
+      await fileStore.moveFile(droppedFileId, props.file.id);
+      emit('update-file', droppedFileId);
+    }
+  } catch (error) {
+    console.error('Error moving file:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const startRenaming = () => {
   isRenaming.value = true;
@@ -178,6 +226,28 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.drop-zone {
+  position: relative;
+}
+
+.drop-zone::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 2px dashed #3b82f6;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.drop-target::after {
+  opacity: 1;
+}
 .file-item-wrapper {
   position: relative;
   width: 100%;

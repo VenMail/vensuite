@@ -478,15 +478,15 @@ function handleEscapeKey(event: KeyboardEvent) {
             </p>
             <div class="flex space-x-4">
               <Button @click="createNewFile('document')">
-                <Plus class="mr-2 h-4 w-4" />
+                <Plus class="mr-2 h-12 w-12" />
                 New Document
               </Button>
               <Button @click="createNewFile('spreadsheet')">
-                <Plus class="mr-2 h-4 w-4" />
+                <Plus class="mr-2 h-12 w-12" />
                 New Spreadsheet
               </Button>
               <Button variant="outline">
-                <Upload class="mr-2 h-4 w-4" />
+                <Upload class="mr-2 h-12 w-12" />
                 Upload File
               </Button>
             </div>

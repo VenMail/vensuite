@@ -92,6 +92,7 @@
     "@wendellhu/redi": "^0.16.0",
     "axios": "^1.7.2",
     "buffer-image-size": "^0.6.4",
+    "chart.js": "^4.4.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "core-js": "^3.37.1",
@@ -129,6 +130,7 @@
     "vite-plugin-wasm": "^3.3.0",
     "vite-svg-loader": "^5.1.0",
     "vue": "^3.4.33",
+    "vue-chartjs": "^5.3.1",
     "vue-class-component": "8.0.0-rc.1",
     "vue-file-toolbar-menu": "github:xwiz/vue-file-toolbar-menu",
     "vue-i18n": "^10.0.1",
@@ -197,5 +199,6 @@
     "vite": "^5.3.4",
     "volar-service-prettyhtml": "^0.0.47",
     "vue-tsc": "^2.1.6"
-  }
+  },
+  "packageManager": "pnpm@9.10.0+sha512.73a29afa36a0d092ece5271de5177ecbf8318d454ecd701343131b8ebc0c1a91c487da46ab77c8e596d6acf1461e3594ced4becedf8921b074fbd8653ed7051c"
 }

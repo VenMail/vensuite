@@ -12,7 +12,7 @@ const fileStore = useFileStore()
 const { isAuthenticated } = storeToRefs(authStore)
 const route = useRoute()
 
-const isSidebarVisible = ref(route.name === 'home')
+const isSidebarVisible = ref(route.name === 'home' || route.name === 'forms')
 
 onMounted(async () => {
   if (isAuthenticated.value) {
@@ -35,7 +35,7 @@ watch(isAuthenticated, async (newValue) => {
 })
 
 watch(() => route.name, (newRouteName) => {
-    isSidebarVisible.value = (newRouteName === 'home')
+    isSidebarVisible.value = (newRouteName === 'home' || newRouteName === 'forms')
   }
 )
 

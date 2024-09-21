@@ -2,11 +2,13 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth' // Import the store
-import Button from '@/components/ui/button/Button.vue'
+import { Button } from '@/components/ui/button'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore() // Use the store
+
+// authStore.setRouter(router)
 
 const redirectUri = `${window.location.origin}/oauth/callback`
 const authUrl = ref(authStore.getAuthUrl(redirectUri)) // Use the store's getAuthUrl method
@@ -32,6 +34,7 @@ onMounted(async () => {
 <template>
   <div class="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
     <div class="bg-white bg-opacity-50 backdrop-blur-lg p-8 rounded-lg shadow-xl">
+      <img src="/logo.png" class="h-12 w-12 mx-auto" />
       <h2 class="text-2xl font-bold mb-4 text-center">Welcome to Venmail File Manager</h2>
       <Button class="w-full" @click="loginWithVenmail">
         Login with Venmail

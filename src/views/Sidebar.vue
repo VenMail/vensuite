@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, defineProps, defineEmits } from 'vue'
-import { Home, FileText, Table, Image, Menu } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, Menu, FormInput } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
+import { router } from '@/main';
 
 const items = [
   { name: 'Home', icon: Home, route: '/' },
   { name: 'New Document', icon: FileText, route: '/docs' },
   { name: 'New Spreadsheet', icon: Table, route: '/sheets' },
+  { name: 'Forms and Surveys', icon: FormInput, route: '/forms' },
   { name: 'Browse Media', icon: Image, route: '/media' },
 ]
 
@@ -29,8 +31,9 @@ const toggleSidebar = () => {
   emit('toggle')
 }
 
-const setActiveItem = (item: string) => {
+const setActiveItem = (item: string, route: string) => {
   activeItem.value = item
+  router.push(route)
 }
 
 // Detect mobile screen size
@@ -61,7 +64,7 @@ const sidebarClasses = computed(() =>
           v-for="item in items"
           :key="item.name"
           :href="item.route"
-          @click.prevent="setActiveItem(item.name)"
+          @click.prevent="setActiveItem(item.name, item.route)"
           :class="cn(
             'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
             activeItem === item.name

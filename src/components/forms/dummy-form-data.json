@@ -1,0 +1,128 @@
+{
+  "id": "sample",
+  "metadata": {
+    "theme": {
+      "primaryColor": "#904803",
+      "secondaryColor": "#570ba4",
+      "fontFamily": "sans-serif"
+    },
+    "title": "Customer Feedback Survey",
+    "description": "We value your opinion! Please take a moment to fill out this survey about your recent experience.",
+    "logo": {
+      "url": "https://v0.dev/public/placeholder-logo.svg"
+    },
+    "footer": {
+      "text": "Thank you for taking the time to complete this survey!"
+    },
+    "successMessage": "Your feedback has been successfully submitted. We appreciate your input!"
+  },
+  "settings": {
+    "progressBar": {
+      "show": "true",
+      "type": "percentage"
+    },
+    "navigation": {
+      "allowBack": true,
+      "allowSkip": true
+    },
+    "autoFocus": true
+  },
+  "fields": [
+    {
+      "id": "name",
+      "type": "text",
+      "category": "text",
+      "question": "Full Name",
+      "placeholder": "Enter your full name",
+      "required": true
+    },
+    {
+      "id": "email",
+      "type": "email",
+      "category": "text",
+      "question": "Email Address",
+      "validation": "email",
+      "prefix": "",
+      "suffix": "domain.com",
+      "placeholder": "Your email address @domain.com",
+      "required": true
+    },
+    {
+      "id": "satisfaction",
+      "type": "select",
+      "category": "choice",
+      "question": "How satisfied were you with our service?",
+      "options": [
+        { "1": "Very Satisfied" },
+        { "2": "Satisfied" },
+        { "3": "Neutral" },
+        { "4": "Dissatisfied" },
+        { "5": "Very Dissatisfied" }
+      ],
+      "logic": {
+        "if": "1",
+        "matchType": "equal",
+        "value": "4",
+        "jump": "5"
+      },
+      "required": true
+    },
+    {
+      "id": "improvements",
+      "type": "tags",
+      "category": "choices",
+      "supports_new": true,
+      "question": "Which areas could we improve? (Select all that apply)",
+      "options": [
+        "Customer Service",
+        "Product Quality",
+        "Website Usability",
+        "Delivery Speed",
+        "Price"
+      ],
+      "required": false
+    },
+    {
+      "id": "comments",
+      "type": "long",
+      "category": "text",
+      "question": "Additional Comments",
+      "placeholder": "Please share any additional feedback you have",
+      "required": false
+    },
+    {
+      "id": "rating",
+      "type": "rating",
+      "category": "rating",
+      "iconType": "star",
+      "question": "How likely are you to recommend us to a friend or colleague?",
+      "min": 1,
+      "max": 5,
+      "required": true
+    },
+    {
+      "id": "help",
+      "type": "checkbox",
+      "category": "choices",
+      "support_new": false,
+      "question": "What made you so disappointed in our product?",
+      "options": [
+        "Customer Service",
+        "Product Quality",
+        "Website Usability",
+        "Delivery Speed",
+        "Price"
+      ],
+      "condition": { "satisfaction": "5" },
+      "required": false
+    },
+    {
+      "id": "attachments",
+      "type": "file",
+      "category": "file",
+      "question": "Upload any relevant files",
+      "required": false,
+      "multiple": true
+    }
+  ]
+}

@@ -25,6 +25,7 @@ function authenticateWithCookie(authCookie: string) {
     .then(response => response.json())
     .then((data) => {
       if (data.success) {
+        console.log("setting token", data)
         localStorage.setItem('venAuthToken', data.token)
         router.push('/')
       }
@@ -49,6 +50,7 @@ function authenticateWithCode(code: string) {
     .then(response => response.json())
     .then((data) => {
       if (data.success) {
+        console.log("Auth suc", data)
         // todo: also store expiry time of tokens
         document.cookie = `venAuthToken=${data.token}; path=/`
         localStorage.setItem('venAuthToken', data.token)

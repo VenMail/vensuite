@@ -20,6 +20,9 @@ export const useAuthStore = defineStore('auth', {
     getToken(): string | null {
       if (!this.token) {
         this.token = localStorage.getItem("venAuthToken")
+        if (!this.token) {
+          this.handleTokenExpiration()
+        }
       }
       return this.token
     },
@@ -43,7 +46,8 @@ export const useAuthStore = defineStore('auth', {
     async handleTokenExpiration() {
       await this.logout();
       if (this.router) {
-        const currentPath = this.router.currentRoute.value.fullPath;
+        console.log("current", this.router.currentRoute)
+        const currentPath = this.router.currentRoute.fullPath;
         await this.router.push({
           name: 'login',
           query: { redirect: currentPath },

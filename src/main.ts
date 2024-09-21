@@ -17,6 +17,8 @@ import Login from './views/Login.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
 import { sluggify } from './utils/lib'
+import Editor from './components/forms/Editor.vue'
+import Forms from './views/Forms.vue'
 
 const routes = [
   { 
@@ -38,6 +40,8 @@ const routes = [
       { path: 'sheets/:id', name: 'sheet', component: RunSheet },
       { path: 'docs', name: 'docs', component: RunDoc },
       { path: 'docs/:id', name: 'doc', component: RunDoc },
+      { path: 'forms', name: 'forms', component: Forms },
+      { path: 'forms/:id', name: 'form', component: Editor },
     ]
   }
 ]
@@ -57,9 +61,9 @@ app.use(pinia)
 app.use(router)
 app.use(i18n)
 
-const authStore = useAuthStore(pinia) // Use the store after Pinia is registered
-authStore.setupAxiosInterceptor() // Now you can call setupAxiosInterceptor
-authStore.setRouter(router) // Now you can call setupAxiosInterceptor
+const authStore = useAuthStore(pinia)
+authStore.setRouter(router)
+authStore.setupAxiosInterceptor()
 
 const documentStore = useFileStore(pinia)
 

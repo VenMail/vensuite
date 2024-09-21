@@ -6,13 +6,25 @@ import { useAuthStore } from "./auth";
 const API_BASE_URI =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
+const UPLOAD_ENDPOINT = `${API_BASE_URI}/app-files/upload`;
 
-export const useFileStore = defineStore("document", {
+export const useFileStore = defineStore("files", {
   state: () => ({
     allFiles: [] as FileData[],
     recentFiles: [] as FileData[],
+    token: localStorage.getItem("venAuthToken") as string
   }),
   actions: {
+    getToken() {
+      if (!this.token) {
+        const authStore = useAuthStore();
+        const token = authStore.getToken();
+        if (token) {
+          this.token = token;
+        }
+      }
+      return this.token   
+    },
     async saveDocument(document: FileData, noLoad?: boolean) {
       //any use to use noLoad to determine authStore need et al?
       const authStore = useAuthStore();
@@ -25,7 +37,7 @@ export const useFileStore = defineStore("document", {
           const response = await axios.post(FILES_ENDPOINT, document, {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${authStore.getToken()}`,
+              Authorization: `Bearer ${this.getToken()}`,
             },
           });
 
@@ -67,6 +79,56 @@ export const useFileStore = defineStore("document", {
         return true;
       }
     },
+    async moveFile(fileId: string, newFolderId: string) {
+      try {
+        const fileToMove = this.allFiles.find(f => f.id === fileId);
+        if (!fileToMove) throw new Error('File not found');
+
+        fileToMove.folder_id = newFolderId;
+
+        const result = await this.saveDocument(fileToMove);
+        
+        return result;
+      } catch (error) {
+        console.error('Error moving file:', error);
+        return false;
+      }
+    },
+    async uploadFile(file: File, onProgress: (progress: number) => void): Promise<boolean> {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+    
+        const response = await axios.post(UPLOAD_ENDPOINT, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${this.getToken()}`,
+          },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent?.total) {
+              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              onProgress(progress);
+            }
+          },
+        });
+    
+        if (response.status === 200 || response.status === 201) {
+          // Update the document with the data returned from the API
+          const uploadedData = response.data.data as FileData;
+    
+          this.saveToLocalCache(uploadedData);
+          this.updateRecentFiles(uploadedData);
+    
+          return true;
+        } else {
+          console.error('Failed to upload file:', response);
+          return false;
+        }
+      } catch (error) {
+        console.error('Error uploading file to API:', error);
+        return false;
+      }
+    },    
     async makeFolder(folder: FileData) : Promise<FileData | null> {
       folder.last_viewed = new Date();
 
@@ -75,7 +137,7 @@ export const useFileStore = defineStore("document", {
           const response = await axios.post(FILES_ENDPOINT, folder, {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("venAuthToken")}`,
+              Authorization: `Bearer ${this.getToken()}`,
             },
           });
 
@@ -112,7 +174,7 @@ export const useFileStore = defineStore("document", {
         const response = await axios.get(`${FILES_ENDPOINT}`, {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("venAuthToken")}`,
+            Authorization: `Bearer ${this.getToken()}`,
           },
         });
         const apiData = response.data?.data;
@@ -130,7 +192,7 @@ export const useFileStore = defineStore("document", {
         const response = await axios.delete(`${FILES_ENDPOINT}/${id}`, {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("venAuthToken")}`,
+            Authorization: `Bearer ${this.getToken()}`,
           },
         });
     
@@ -199,7 +261,7 @@ export const useFileStore = defineStore("document", {
         const response = await axios.get(`${FILES_ENDPOINT}/${id}`, {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("venAuthToken")}`,
+            Authorization: `Bearer ${this.getToken()}`,
           },
         });
         const apiData = response.data?.data;
@@ -218,7 +280,7 @@ export const useFileStore = defineStore("document", {
         const response = await axios.get(`${FILES_ENDPOINT}/${id}/files`, {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("venAuthToken")}`,
+            Authorization: `Bearer ${this.getToken()}`,
           },
         });
         const apiData = response.data?.data;
