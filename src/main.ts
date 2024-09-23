@@ -41,6 +41,7 @@ const routes = [
       { path: 'docs/:id', name: 'doc', component: RunDoc },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },
+      { path: 'import/:id', name: 'import', component: Home },
       { path: '', name: 'home', component: Home },
     ]
   }

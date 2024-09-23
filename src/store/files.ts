@@ -267,6 +267,27 @@ export const useFileStore = defineStore("files", {
         const apiData = response.data?.data;
         const doc = apiData as FileData;
         doc.last_viewed = new Date();
+        this.allFiles = [doc, ...this.allFiles];
+        this.saveToLocalCache(doc);
+        this.updateRecentFiles(doc);
+        return doc;
+      } catch (error) {
+        console.error("Error fetching document from API:", error);
+        return null;
+      }
+    },
+    async importAttachment(id: string): Promise<FileData | null> {
+      try {
+        const response = await axios.get(`${FILES_ENDPOINT}/${id}/import`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.getToken()}`,
+          },
+        });
+        const apiData = response.data?.data;
+        const doc = apiData as FileData;
+        doc.last_viewed = new Date();
+        this.allFiles = [doc, ...this.allFiles];
         this.saveToLocalCache(doc);
         this.updateRecentFiles(doc);
         return doc;

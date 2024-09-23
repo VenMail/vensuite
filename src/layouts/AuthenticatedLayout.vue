@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
 import Sidebar from '@/views/Sidebar.vue'
 import { useFileStore } from '@/store/files'
+import { ToastProvider } from '@/components/ui/toast'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -46,13 +47,15 @@ const mainContentClasses = computed(() =>
 </script>
 
 <template>
-  <div class="flex h-screen bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900">
-    <!-- Sidebar with dynamic visibility -->
-    <Sidebar v-if="isSidebarVisible" />
-
-    <!-- Main content area with dynamic margin -->
-    <div :class="mainContentClasses">
-      <router-view />
+  <ToastProvider>
+    <div class="flex h-screen bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900">
+      <!-- Sidebar with dynamic visibility -->
+      <Sidebar v-if="isSidebarVisible" />
+      
+      <!-- Main content area with dynamic margin -->
+      <div :class="mainContentClasses">
+        <router-view />
+      </div>
     </div>
-  </div>
+  </ToastProvider>
 </template>

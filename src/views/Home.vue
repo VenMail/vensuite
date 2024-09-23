@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick, onUnmounted } from "vue";
+import { ref, computed, onMounted, watch, nextTick, onUnmounted, watchEffect } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   SearchIcon,
@@ -42,6 +42,7 @@ import { FileData } from "@/types";
 import FileItem from "@/components/FileItem.vue";
 import { sluggify } from "@/utils/lib";
 import { useFavicon } from "@vueuse/core";
+import { toast, useToast } from "@/components/ui/toast";
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -92,6 +93,23 @@ function loginWithVenmail() {
 }
 
 onMounted(async () => {
+  watchEffect(async () => {
+    if (route.params.id) {
+      console.log('importing..', route.params.id)
+      // Load data after route is initialized
+      const attachId = route.params?.id as string
+      const doc = await fileStore.importAttachment(attachId)
+      //redirect to home after successful import
+      const toast = useToast()
+      if (doc) {
+        toast.toast({
+          description: doc.file_name + " imported successfully"
+        })
+      }
+      router.replace("/")
+    }
+  })
+
   document.addEventListener('click', handleOutsideClick);
   document.addEventListener('keydown', handleEscapeKey);
 
