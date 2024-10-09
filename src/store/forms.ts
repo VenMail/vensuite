@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import axios from "axios";
-import { AppForm, FormData, FormResponse, FormResponseData } from "@/types";
+import { AppForm, FormResponse, FormResponseData } from "@/types";
 import { useAuthStore } from "./auth";
 
 const API_BASE_URI =
