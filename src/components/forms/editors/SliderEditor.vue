@@ -32,7 +32,7 @@
   
   <script lang="ts">
   import { defineComponent, PropType, computed } from 'vue';
-  import { SliderQuestion, Option } from '@/types';
+  import { SliderQuestion } from '@/types';
   
   export default defineComponent({
     name: 'SliderEditor',

@@ -2,15 +2,15 @@
     <div class="wizard-form">
       <!-- Display Form Metadata -->
       <header>
-        <img v-if="metadata.logo" :src="metadata.logo.url" :alt="metadata.logo.altText" class="form-logo" />
-        <h1>{{ metadata.title }}</h1>
-        <p>{{ metadata.description }}</p>
+        <img v-if="metadata?.logo" :src="metadata?.logo?.url" :alt="metadata?.logo?.altText" class="form-logo" />
+        <h1>{{ metadata?.title }}</h1>
+        <p>{{ metadata?.description }}</p>
       </header>
   
       <!-- Progress Bar -->
-      <div v-if="settings.progressBar.show === true" class="progress-bar">
+      <div v-if="settings?.progressBar?.show === true" class="progress-bar">
         <div class="progress" :style="progressBarStyle"></div>
-        <p v-if="settings.progressBar.type === 'percentage'">{{ progressPercentage }}%</p>
+        <p v-if="settings?.progressBar?.type === 'percentage'">{{ progressPercentage }}%</p>
       </div>
   
       <!-- Display Current Field -->
@@ -53,7 +53,7 @@
   
         <!-- Navigation Buttons -->
         <div class="navigation-buttons">
-          <button v-if="settings.navigation.allowBack && currentStep > 0" @click="prevField">Back</button>
+          <button v-if="settings?.navigation?.allowBack && currentStep > 0" @click="prevField">Back</button>
           <button v-if="canSkip" @click="nextField">Skip</button>
           <button v-else @click="nextField" :disabled="!canProceed">Next</button>
         </div>
@@ -61,12 +61,12 @@
   
       <!-- Success Message -->
       <div v-if="formCompleted" class="success-message">
-        <p>{{ metadata.completion?.successMessage }}</p>
+        <p>{{ metadata?.completion?.successMessage }}</p>
       </div>
     </div>
 
     <footer class="mt-8 text-center text-sm text-gray-600">
-      <p>{{ metadata.footer?.text }}</p>
+      <p>{{ metadata?.footer?.text }}</p>
     </footer>
 
   </template>
@@ -108,7 +108,7 @@ import { defineComponent, ref, computed, watch } from "vue";
       });
   
       const canSkip = computed(() => {
-        return settings.navigation.allowSkip && !currentField.value.required;
+        return settings?.navigation?.allowSkip && !currentField.value.required;
       });
   
       const nextField = () => {
@@ -126,7 +126,7 @@ import { defineComponent, ref, computed, watch } from "vue";
       };
   
       const focusField = () => {
-        if (settings.autoFocus) {
+        if (settings?.autoFocus) {
           const input = document.querySelector<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>('input, select, textarea');
           input?.focus();
         }

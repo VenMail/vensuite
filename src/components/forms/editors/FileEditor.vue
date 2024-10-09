@@ -29,9 +29,9 @@
       },
     },
     emits: ['update:modelValue'],
-    setup(props, { emit }) {
-      // Watchers or methods to emit updates can be added here if needed
-    },
+    // setup(props, { emit }) {
+    //   // Watchers or methods to emit updates can be added here if needed
+    // },
   });
   </script>
   

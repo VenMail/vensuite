@@ -42,7 +42,7 @@ import { FileData } from "@/types";
 import FileItem from "@/components/FileItem.vue";
 import { sluggify } from "@/utils/lib";
 import { useFavicon } from "@vueuse/core";
-import { toast, useToast } from "@/components/ui/toast";
+import { toast } from 'vue-sonner'
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -100,9 +100,8 @@ onMounted(async () => {
       const attachId = route.params?.id as string
       const doc = await fileStore.importAttachment(attachId)
       //redirect to home after successful import
-      const toast = useToast()
       if (doc) {
-        toast.toast({
+        toast({
           description: doc.file_name + " imported successfully"
         })
       }
