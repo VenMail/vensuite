@@ -10,49 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      # 2. Set up Node.js
+      - name: Set up Node.js 18
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'pnpm'
 
+      # 3. Install pnpm
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
+        run: npm install -g pnpm
 
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
+      # 4. Install dependencies
       - name: Install dependencies
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm add -D vue-tsc
+        run: pnpm install
 
-      - name: Verify vue-tsc availability
-        run: |
-          if ! command -v vue-tsc &> /dev/null; then
-            echo "vue-tsc is not available. Installing..."
-            pnpm add -D vue-tsc
-          else
-            echo "vue-tsc is available."
-          fi
-          vue-tsc --version
-
+      # 5. Build the project with increased memory allocation
       - name: Build project
         env:
           VITE_API_BASE_URL: https://app.venmail.io/api/v1
@@ -60,18 +36,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
         run: pnpm run build
 
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            rm -rf /var/www/vensuite/dist_old
-            mv /var/www/vensuite/dist /var/www/vensuite/dist_old
-            mkdir -p /var/www/vensuite/dist
-
+      # 6. Copy files to the server using SCP
       - name: Copy files via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -80,16 +45,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           source: "dist/*"
-          target: "/var/www/vensuite/dist"
-          strip_components: 1
-
-      - name: Finalize Deployment
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            rm -rf /var/www/vensuite/dist_old
-            # Add any additional commands needed to restart your server or clear caches
+          target: "/var/www/vensuite"
