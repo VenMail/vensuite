@@ -1,4 +1,4 @@
-import { createApp, h } from 'vue'
+import { createApp, defineComponent, h, VNode } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia } from 'pinia'
 //@ts-ignore
@@ -97,11 +97,11 @@ app.use(useUmoEditor, {
 })
 
 // Custom component for style tags
-app.component('v-style', {
-  render: function() {
-    return h('style', {}, this.$slots.default())
+app.component('v-style', defineComponent({
+  render: function(): VNode { // Specify the return type as VNode
+    return h('style', {}, this.$slots.default ? this.$slots.default() : []); // Check if $slots.default exists
   },
-})
+}))
 
 app.mount('#app')
 
