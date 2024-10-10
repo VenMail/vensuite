@@ -24,18 +24,32 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
-      # 4. Install dependencies
+      # 4. Cache pnpm store
+      - name: Cache pnpm store
+        uses: actions/cache@v3
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      # 5. Install dependencies
       - name: Install dependencies
         run: pnpm install
 
-      # 5. Build the project
+      # 6. Prune unnecessary dependencies (optional)
+      - name: Prune unnecessary dependencies
+        run: pnpm prune --prod
+
+      # 7. Build the project with increased memory limit and reduced parallelism
       - name: Build project
         env:
-            VITE_API_BASE_URL: https://app.venmail.io/api/v1
-            VITE_AUTH_URL: https://app.venmail.io/auth/oauth
-        run: pnpm run build
+          NODE_OPTIONS: --max-old-space-size=4096
+          VITE_API_BASE_URL: https://app.venmail.io/api/v1
+          VITE_AUTH_URL: https://app.venmail.io/auth/oauth
+        run: pnpm run build --max-workers=2
 
-      # 6. Copy files to the server using SCP
+      # 8. Copy files to the server using SCP
       - name: Copy files via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -45,4 +59,3 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           source: "dist/*"
           target: "/var/www/vensuite"
-
