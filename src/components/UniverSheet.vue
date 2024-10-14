@@ -3,13 +3,11 @@
 </template>
 
 <script setup lang="ts">
-
 import "@univerjs/design/lib/index.css";
 import "@univerjs/ui/lib/index.css";
 import "@univerjs/docs-ui/lib/index.css";
 import "@univerjs/sheets-ui/lib/index.css";
 import "@univerjs/sheets-formula/lib/index.css";
-import diff from "microdiff";
 import { IWorkbookData, LocaleType, UnitModel, Univer, UniverInstanceType, Workbook } from '@univerjs/core'
 import { defaultTheme } from '@univerjs/design'
 import { UniverDocsPlugin } from '@univerjs/docs'
@@ -24,76 +22,115 @@ import { UniverUIPlugin } from '@univerjs/ui'
 import { UniverSheetsZenEditorPlugin } from '@univerjs/sheets-zen-editor'
 import { FUniver } from '@univerjs/facade'
 import { enUS } from 'univer:locales'
-//import { setupComment } from './setups/setupComment'
-import { onBeforeUnmount, onMounted, ref, toRaw, toRef, watch } from "vue";
+import { onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
+import { DEFAULT_WORKBOOK_DATA } from "@/assets/default-workbook-data";
+import { IWebsocketService } from "@/lib/wsService";
 
 const univerRef = ref<Univer | null>(null);
 const workBook = ref<Workbook | null>(null);
 const container = ref<HTMLElement | null>(null);
-
-function setupUniver(data = {}) {
-  const univer = new Univer({
-    theme: defaultTheme,
-    locale: LocaleType.EN_US,
-    locales: {
-      [LocaleType.EN_US]: enUS,
-    },
-  })
-  univerRef.value = univer;
-
-  univer.registerPlugin(UniverRenderEnginePlugin)
-  univer.registerPlugin(UniverFormulaEnginePlugin)
-  univer.registerPlugin(UniverUIPlugin, {
-    container: container.value!,
-    header: true,
-    footer: true,
-  })
-  univer.registerPlugin(UniverDocsPlugin, {
-    hasScroll: false,
-  })
-  univer.registerPlugin(UniverDocsUIPlugin)
-
-  univer.registerPlugin(UniverSheetsPlugin)
-  univer.registerPlugin(UniverSheetsUIPlugin)
-  univer.registerPlugin(UniverSheetsFormulaPlugin)
-  univer.registerPlugin(UniverSheetsNumfmtPlugin)
-  univer.registerPlugin(UniverSheetsZenEditorPlugin)
-  const initData = data || {};
-
-workBook.value = univer.createUnit<IWorkbookData, Workbook & UnitModel>(UniverInstanceType.UNIVER_SHEET, initData);
-
-  // In version v0.1.15, please register the comment plugin after calling univer.createUnit.
-  // setupComment(univer)
-
-  return FUniver.newAPI(univer)
-}
+const fUniver = ref<FUniver | null>(null);
 
 const props = defineProps({
-  // workbook data
   data: {
-    type: Object,
-    default: () => ({}),
+    type: Object as () => IWorkbookData,
+    required: true,
+  },
+  ws: {
+    type: Object as () => IWebsocketService,
+    required: true,
+  },
+  changesPending: {
+    type: Boolean,
+    required: true,
+  },
+  sheetId: {
+    type: String,
+    required: true,
+  },
+  userId: {
+    type: String,
+    required: true,
+  },
+  userName: {
+    type: String,
+    required: true,
   },
 });
 
 const emit = defineEmits(['univerRefChange']);
 
-watch(univerRef, (newValue) => {
-  emit('univerRefChange', newValue);
-});
+function setupUniver(data: IWorkbookData) {
+  try {
+    const univer = new Univer({
+      theme: defaultTheme,
+      locale: LocaleType.EN_US,
+      locales: {
+        [LocaleType.EN_US]: enUS,
+      },
+    })
+    univerRef.value = univer;
 
-const dataRef = toRef(props, 'data');
+    univer.registerPlugin(UniverRenderEnginePlugin)
+    univer.registerPlugin(UniverFormulaEnginePlugin)
+    univer.registerPlugin(UniverUIPlugin, {
+      container: container.value!,
+      header: true,
+      footer: true,
+    })
+    univer.registerPlugin(UniverDocsPlugin, {
+      hasScroll: false,
+    })
+    univer.registerPlugin(UniverDocsUIPlugin)
+    univer.registerPlugin(UniverSheetsPlugin)
+    univer.registerPlugin(UniverSheetsUIPlugin)
+    univer.registerPlugin(UniverSheetsFormulaPlugin)
+    univer.registerPlugin(UniverSheetsNumfmtPlugin)
+    univer.registerPlugin(UniverSheetsZenEditorPlugin)
 
-watch(dataRef, (newValue, oldValue) => {
-  if (oldValue == null || newValue.id !== oldValue.id) {
-    console.log("Data value changed")
-    // Reinitialize with the new data
+    workBook.value = univer.createUnit<IWorkbookData, Workbook & UnitModel>(
+      UniverInstanceType.UNIVER_SHEET,
+      data || DEFAULT_WORKBOOK_DATA
+    );
+
+    fUniver.value = FUniver.newAPI(univer);
+
+    setupCollaboration();
+
+    return fUniver.value;
+  } catch (error) {
+    console.error('Error setting up Univer:', error);
+    return null;
+  }
+}
+
+function setupCollaboration() {
+  if (!props.ws || !fUniver.value) return;
+
+  fUniver.value.onCommandExecuted((command) => {
+    if (props.changesPending) return
+    if (command.id.startsWith('sheet.mutation')) {
+      console.log("Command executed:", command)
+      props.ws?.sendMessage(props.sheetId, 'change', { command }, props.userId, props.userName);
+    }
+  });
+
+  fUniver.value.getActiveWorkbook()?.onSelectionChange((selection: any) => {
+    props.ws?.sendMessage(props.sheetId,
+      'cursor', {
+      userId: props.userId,
+      userName: props.userName,
+      selection,
+    },
+      props.userId,
+      props.userName
+    )
+  });
+}
+
+watch(() => props.data, (newValue) => {
+  if (newValue && (!workBook.value || newValue.id !== workBook.value.getUnitId())) {
     init(newValue);
-  } else {
-    console.log(oldValue);
-    //sync changes probably
-    const differences = diff(newValue, oldValue);
-    console.log("diff", differences);
   }
 });
 
@@ -105,64 +142,75 @@ onBeforeUnmount(() => {
   destroyUniver();
 });
 
-/**
- * Initialize univer instance and workbook instance
- * @param data {IWorkbookData} document see https://univer.work/api/core/interfaces/IWorkbookData.html
- */
-const init = (data = {}) => {
-  setupUniver(data);
+const init = (data: IWorkbookData) => {
+  try {
+    const api = setupUniver(data);
+    if (api) {
+      emit('univerRefChange', api);
+    } else {
+      console.error('Failed to initialize Univer');
+    }
+  } catch (error) {
+    console.error('Error initializing Univer:', error);
+  }
 };
 
-/**
- * Destroy univer instance and workbook instance
- */
 const destroyUniver = () => {
-  if (workBook.value) {
-    toRaw(univerRef.value)?.dispose();
-    univerRef.value = null;
-    workBook.value = null
+  try {
+    if (workBook.value) {
+      toRaw(univerRef.value)?.dispose();
+      univerRef.value = null;
+      workBook.value = null;
+      fUniver.value = null;
+    }
+  } catch (error) {
+    console.error('Error destroying Univer:', error);
   }
 };
 
-/**
- * Get workbook data
- */
 const getData = () => {
-  if (!univerRef.value) {
-    throw new Error('Workbook is not initialized');
+  try {
+    return workBook.value?.getSnapshot();
+  } catch (error) {
+    console.error('Error getting data:', error);
+    return null;
   }
-  return workBook.value?.getSnapshot();
 };
 
-/**
- * Set workbook data
- */
 const setData = (data: IWorkbookData) => {
-  if (!workBook.value) {
-    throw new Error('Workbook is not initialized');
+  try {
+    if (!workBook.value) {
+      throw new Error('Workbook is not initialized');
+    }
+    workBook.value.load(data);
+    return workBook.value.getSnapshot();
+  } catch (error) {
+    console.error('Error setting data:', error);
+    return null;
   }
-  workBook.value.load(data);
-  return workBook.value.getSnapshot();
 };
 
 const setName = (n: string) => {
-  if (!workBook.value) {
-    throw new Error('Workbook is not initialized');
+  try {
+    if (!workBook.value) {
+      throw new Error('Workbook is not initialized');
+    }
+    workBook.value.setName(n);
+    return n;
+  } catch (error) {
+    console.error('Error setting name:', error);
+    return null;
   }
-  workBook.value.setName(n);
-  return n;
 };
 
-// Expose methods for use in parent components
 defineExpose({
   getData,
   setName,
   setData,
-  univerRef,
+  fUniver,
 });
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 .univer-container {
   width: 100%;
@@ -170,6 +218,7 @@ defineExpose({
   overflow: hidden;
 }
 
-/* Also hide the menubar */
-:global(.univer-menubar) {}
+:global(.univer-menubar) {
+  display: none;
+}
 </style>

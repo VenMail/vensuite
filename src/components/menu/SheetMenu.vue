@@ -52,12 +52,12 @@ import { useFileStore } from '@/store/files'
 interface Props {
   fileId: string | null | undefined
   univerRef: InstanceType<typeof UniverSheet> | null
-  coreRef: InstanceType<typeof Univer> | null
+  coreRef?: InstanceType<typeof Univer> | null
 }
 
 const fileStore = useFileStore()
 const props = defineProps<Props>()
-const emit = defineEmits(['updateData'])
+const emit = defineEmits(['updateData', 'toggleChat'])
 const router = useRouter()
 
 let facadeAPI: FUniver | null = null
@@ -66,7 +66,7 @@ let facadeAPI: FUniver | null = null
 onMounted(() => {
   watchEffect(() => {
     if (props.coreRef && !facadeAPI) {
-      facadeAPI = FUniver.newAPI(props.coreRef)
+      //facadeAPI = FUniver.newAPI(props.coreRef)
       // disposable = facadeAPI.onBeforeCommandExecute((command) => {
         // console.log('logging', command)
         // custom preprocessing logic before the command is executed
@@ -75,7 +75,7 @@ onMounted(() => {
   })
   console.log("pid", props.fileId)
 
-  fileStore.loadRecentFiles()
+  // fileStore.loadRecentFiles()
 })
 
 const recentFiles = computed(() => {
@@ -99,6 +99,7 @@ function saveData(data: IWorkbookData) {
 
 async function loadData(id: string) {
   const savedData = await fileStore.loadDocument(id, "xlsx")
+  console.log('saved', savedData)
   if (savedData?.contents) {
     return JSON.parse(savedData.contents)
   }
@@ -113,6 +114,11 @@ function handleLoad(id?: string) {
   if (!id) return;
   const data = loadData(id)
   emit('updateData', data)
+}
+
+
+function toggleChat() {
+  emit('toggleChat')
 }
 
 function handleLoadDialog() {
@@ -441,7 +447,7 @@ function about() {
 </script>
 
 <template>
-  <Menubar class="border-none ml-0 pl-0">
+  <Menubar class="border-none ml-0 pl-0 bg-transparent">
     <!-- File Menu -->
     <MenubarMenu>
       <MenubarTrigger>File</MenubarTrigger>
@@ -606,7 +612,19 @@ function about() {
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
-
+    <MenubarMenu>
+      <MenubarTrigger class="text-sm font-medium text-gray-700 hover:text-gray-900">Collaboration</MenubarTrigger>
+      <MenubarContent>
+        <MenubarItem @click="toggleChat">
+          <MessageCircleIcon class="h-4 w-4 mr-2" />
+          Toggle Chat
+        </MenubarItem>
+        <MenubarItem>
+          <UsersIcon class="h-4 w-4 mr-2" />
+          View Collaborators
+        </MenubarItem>
+      </MenubarContent>
+    </MenubarMenu>
     <!-- Help Menu -->
     <MenubarMenu>
       <MenubarTrigger>Help</MenubarTrigger>

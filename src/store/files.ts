@@ -12,7 +12,8 @@ export const useFileStore = defineStore("files", {
   state: () => ({
     allFiles: [] as FileData[],
     recentFiles: [] as FileData[],
-    token: localStorage.getItem("venAuthToken") as string
+    token: localStorage.getItem("venAuthToken") as string,
+    cachedDocuments: new Map<string, { data: FileData; timestamp: number }>(),
   }),
   actions: {
     getToken() {
@@ -23,7 +24,7 @@ export const useFileStore = defineStore("files", {
           this.token = token;
         }
       }
-      return this.token   
+      return this.token;
     },
     async saveDocument(document: FileData, noLoad?: boolean) {
       //any use to use noLoad to determine authStore need et al?
@@ -51,9 +52,24 @@ export const useFileStore = defineStore("files", {
             };
 
             this.saveToLocalCache(updatedDocument);
-            this.updateRecentFiles(updatedDocument);
 
-            if (!noLoad && router.currentRoute.params.id !== updatedDocument.id && !updatedDocument.is_folder) {
+            this.addToAllFiles(updatedDocument);
+            this.recentFiles = [
+              updatedDocument,
+              ...this.recentFiles.filter(
+                (file) => file.id !== updatedDocument.id
+              ),
+            ].slice(0, 10);
+            localStorage.setItem(
+              "VENX_RECENT",
+              JSON.stringify(this.recentFiles.map((file) => file.id))
+            );
+
+            if (
+              !noLoad &&
+              router.currentRoute.params.id !== updatedDocument.id &&
+              !updatedDocument.is_folder
+            ) {
               router.replace(this.getRouteForDocument(updatedDocument));
             }
 
@@ -72,7 +88,11 @@ export const useFileStore = defineStore("files", {
 
         console.warn("Document saved locally. Will sync when online.");
 
-        if (!noLoad && router.currentRoute.params.id !== document.id && !document.is_folder) {
+        if (
+          !noLoad &&
+          router.currentRoute.params.id !== document.id &&
+          !document.is_folder
+        ) {
           router.replace(this.getRouteForDocument(document));
         }
 
@@ -81,55 +101,60 @@ export const useFileStore = defineStore("files", {
     },
     async moveFile(fileId: string, newFolderId: string) {
       try {
-        const fileToMove = this.allFiles.find(f => f.id === fileId);
-        if (!fileToMove) throw new Error('File not found');
+        const fileToMove = this.allFiles.find((f) => f.id === fileId);
+        if (!fileToMove) throw new Error("File not found");
 
         fileToMove.folder_id = newFolderId;
 
         const result = await this.saveDocument(fileToMove);
-        
+
         return result;
       } catch (error) {
-        console.error('Error moving file:', error);
+        console.error("Error moving file:", error);
         return false;
       }
     },
-    async uploadFile(file: File, onProgress: (progress: number) => void): Promise<boolean> {
+    async uploadFile(
+      file: File,
+      onProgress: (progress: number) => void
+    ): Promise<boolean> {
       try {
         const formData = new FormData();
-        formData.append('file', file);
-    
+        formData.append("file", file);
+
         const response = await axios.post(UPLOAD_ENDPOINT, formData, {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${this.getToken()}`,
           },
           onUploadProgress: (progressEvent) => {
             if (progressEvent?.total) {
-              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              const progress = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
               onProgress(progress);
             }
           },
         });
-    
+
         if (response.status === 200 || response.status === 201) {
           // Update the document with the data returned from the API
           const uploadedData = response.data.data as FileData;
-    
+
           this.saveToLocalCache(uploadedData);
           this.updateRecentFiles(uploadedData);
-    
+
           return true;
         } else {
-          console.error('Failed to upload file:', response);
+          console.error("Failed to upload file:", response);
           return false;
         }
       } catch (error) {
-        console.error('Error uploading file to API:', error);
+        console.error("Error uploading file to API:", error);
         return false;
       }
-    },    
-    async makeFolder(folder: FileData) : Promise<FileData | null> {
+    },
+    async makeFolder(folder: FileData): Promise<FileData | null> {
       folder.last_viewed = new Date();
 
       if (navigator.onLine) {
@@ -141,7 +166,7 @@ export const useFileStore = defineStore("files", {
             },
           });
 
-          const apiData = response.data.data as FileData
+          const apiData = response.data.data as FileData;
 
           const existingIndex = this.allFiles.findIndex(
             (file) => file.id === apiData.id
@@ -165,6 +190,89 @@ export const useFileStore = defineStore("files", {
         return folder;
       }
     },
+    async loadDocument(
+      id: string,
+      fileType?: string
+    ): Promise<FileData | null> {
+      console.log("Loading document:", id, fileType);
+
+      // Check if the document is already in allFiles
+      const existingDoc = this.allFiles.find((file) => file.id === id);
+      if (existingDoc) {
+        console.log("Returning existing document:", existingDoc);
+        return existingDoc;
+      }
+
+      // Check if the document is in the cache and not expired
+      const cachedDoc = this.getCachedDocument(id);
+      if (cachedDoc) {
+        console.log("Returning cached document:", cachedDoc);
+        return cachedDoc;
+      }
+
+      // If not in cache, try to load from API
+      try {
+        const apiDoc = await this.loadFromAPI(id);
+        if (apiDoc) {
+          console.log("Returning API document:", apiDoc);
+          this.cacheDocument(apiDoc);
+          this.addToAllFiles(apiDoc);
+          return apiDoc;
+        }
+      } catch (error) {
+        console.error("Error loading document from API:", error);
+      }
+
+      // If API fails, try to load from local storage
+      const localDoc = this.loadFromLocalStorage(id, fileType);
+      if (localDoc) {
+        console.log("Returning local storage document:", localDoc);
+        this.addToAllFiles(localDoc);
+        return localDoc;
+      }
+
+      console.log("Document not found");
+      return null;
+    },
+    addToAllFiles(document: FileData) {
+      const existingIndex = this.allFiles.findIndex(
+        (file) => file.id === document.id
+      );
+      if (existingIndex !== -1) {
+        // Update existing file in allFiles
+        this.allFiles[existingIndex] = document;
+      } else {
+        // Add new file to allFiles
+        this.allFiles.push(document);
+      }
+    },
+    getCachedDocument(id: string): FileData | null {
+      const cachedItem = this.cachedDocuments.get(id);
+      if (cachedItem && Date.now() - cachedItem.timestamp < 5 * 60 * 1000) {
+        // 5 minutes cache
+        return cachedItem.data;
+      }
+      return null;
+    },
+
+    cacheDocument(document: FileData) {
+      if (document.id) {
+        this.cachedDocuments.set(document.id, {
+          data: document,
+          timestamp: Date.now(),
+        });
+      }
+    },
+
+    loadFromLocalStorage(id: string, fileType?: string): FileData | null {
+      const storageKey = this.getStorageKeyForDocument({
+        id,
+        file_type: fileType,
+      } as FileData);
+      const item = localStorage.getItem(storageKey);
+      return item ? JSON.parse(item) : null;
+    },
+
     saveToLocalCache(document: FileData) {
       const storageKey = this.getStorageKeyForDocument(document);
       localStorage.setItem(storageKey, JSON.stringify(document));
@@ -195,12 +303,13 @@ export const useFileStore = defineStore("files", {
             Authorization: `Bearer ${this.getToken()}`,
           },
         });
-    
+
         if (response.status === 200 || response.status === 204) {
           // Remove where necessary
           this.allFiles = this.allFiles.filter((file) => file.id !== id);
           this.recentFiles = this.recentFiles.filter((file) => file.id !== id);
-          const storageKey = this.getStoragePrefixForFileType(fileType) + `_${id}`;
+          const storageKey =
+            this.getStoragePrefixForFileType(fileType) + `_${id}`;
           localStorage.removeItem(storageKey);
 
           // Update the recent files in localStorage
@@ -208,7 +317,7 @@ export const useFileStore = defineStore("files", {
             "VENX_RECENT",
             JSON.stringify(this.recentFiles.map((file) => file.id))
           );
-    
+
           return true;
         } else {
           console.error("Failed to delete file:", response);
@@ -218,24 +327,6 @@ export const useFileStore = defineStore("files", {
         console.error("Error deleting file:", error);
         return false;
       }
-    },    
-    async loadDocument(
-      id: string,
-      fileType?: string
-    ): Promise<FileData | null> {
-      // Try to load from cache first
-      const cachedDoc = this.loadFromCache(id, fileType);
-      console.log("load: ", id);
-      if (cachedDoc) {
-        console.log("cache: ", cachedDoc);
-        cachedDoc.last_viewed = new Date();
-        this.saveToLocalCache(cachedDoc);
-        this.updateRecentFiles(cachedDoc);
-        return cachedDoc;
-      }
-
-      // If not in cache, try to load from API
-      return await this.loadFromAPI(id);
     },
     loadFromCache(id: string, fileType?: string): FileData | null {
       if (fileType) {
@@ -267,9 +358,7 @@ export const useFileStore = defineStore("files", {
         const apiData = response.data?.data;
         const doc = apiData as FileData;
         doc.last_viewed = new Date();
-        this.allFiles = [doc, ...this.allFiles];
         this.saveToLocalCache(doc);
-        this.updateRecentFiles(doc);
         return doc;
       } catch (error) {
         console.error("Error fetching document from API:", error);
@@ -329,16 +418,7 @@ export const useFileStore = defineStore("files", {
       );
 
       // Update allFiles
-      const existingIndex = this.allFiles.findIndex(
-        (file) => file.id === document.id
-      );
-      if (existingIndex !== -1) {
-        // Update existing file in allFiles
-        this.allFiles[existingIndex] = document;
-      } else {
-        // Add new file to allFiles
-        this.allFiles.push(document);
-      }
+      this.addToAllFiles(document);
     },
     loadRecentFiles() {
       const recentFiles = localStorage.getItem("VENX_RECENT");
@@ -349,6 +429,7 @@ export const useFileStore = defineStore("files", {
             this.recentFiles = files.filter(
               (file) => file !== null
             ) as FileData[];
+            // Don't call updateRecentFiles here to avoid recursive calls
           }
         );
       }

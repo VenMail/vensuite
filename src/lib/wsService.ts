@@ -1,4 +1,4 @@
-import { ref, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import type { Ref } from 'vue'
 
 export interface User {
@@ -8,109 +8,176 @@ export interface User {
 }
 
 export interface Message {
-  type: 'chat' | 'cursor' | 'change'
+  messages?: Message[]
+  id: string
+  type: 'chat' | 'cursor' | 'change' | 'title' | 'join' | 'leave'
+  sheetId: string
   user: User
   content: any
   timestamp: number
+  replyTo?: string
 }
 
-export class WebSocketService {
-  private socket: WebSocket | null = null
+export type MessageListener = (message: Message) => void
+
+export interface IWebsocketService {
+  connect(): void
+  disconnect(): void
+  joinSheet(sheetId: string, listener: MessageListener): boolean
+  leaveSheet(sheetId: string): void
+  sendMessage(sheetId: string, type: Message['type'], content: any, userId: string, userName: string, replyTo?: string): void
+}
+
+export class WebSocketService implements IWebsocketService {
+  private static socket: WebSocket | null = null
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
   private reconnectInterval = 3000
+  private reconnectTimeoutId: number | null = null
 
-  public isConnected: Ref<boolean> = ref(false)
-  public messages: Ref<Message[]> = ref([])
+  public static messages: Ref<Message[]> = ref([])
+  private static activeSheets: Map<string, MessageListener> = new Map()
+  public static isConnected: Ref<boolean> = ref(false)
 
-  constructor(private url: string, private userId: string, private userName: string) {}
+  public constructor(private url: string) {}
 
   connect() {
-    const fullUrl = `${this.url}?userId=${encodeURIComponent(this.userId)}&userName=${encodeURIComponent(this.userName)}`;
-    this.socket = new WebSocket(fullUrl)
+    if (WebSocketService.socket) {
+      return // Already connected or connecting
+    }
 
-    this.socket.onopen = this.onOpen.bind(this)
-    this.socket.onmessage = this.onMessage.bind(this)
-    this.socket.onclose = this.onClose.bind(this)
-    this.socket.onerror = this.onError.bind(this)
+    WebSocketService.socket = new WebSocket(this.url)
+    WebSocketService.socket.onopen = this.onOpen.bind(this)
+    WebSocketService.socket.onmessage = this.onMessage.bind(this)
+    WebSocketService.socket.onclose = this.onClose.bind(this)
+    WebSocketService.socket.onerror = this.onError.bind(this)
   }
 
   private onOpen() {
     console.log('WebSocket connected')
-    this.isConnected.value = true
+    WebSocketService.isConnected.value = true
     this.reconnectAttempts = 0
+    if (this.reconnectTimeoutId !== null) {
+      clearTimeout(this.reconnectTimeoutId)
+      this.reconnectTimeoutId = null
+    }
+    // Rejoin all active sheets
+    WebSocketService.activeSheets.forEach((listener, sheetId) => {
+      this.joinSheet(sheetId, listener)
+    })
   }
 
   private onMessage(event: MessageEvent) {
-    const message: Message = JSON.parse(event.data)
-    this.messages.value.push(message)
+    try {
+      const message: Message = JSON.parse(event.data)
+      console.log('Received message:', message)
+      WebSocketService.messages.value.push(message)
+      
+      // Notify sheet-specific listeners
+      const listenerNode = WebSocketService.activeSheets.get(message.sheetId)
+      listenerNode?.(message)
+    } catch (error) {
+      console.error('Error parsing WebSocket message:', error)
+    }
   }
 
-  private onClose() {
-    console.log('WebSocket disconnected')
-    this.isConnected.value = false
+  private onClose(event: CloseEvent) {
+    console.log('WebSocket disconnected', event.code, event.reason)
+    WebSocketService.isConnected.value = false
+    if (WebSocketService?.socket) {
+      WebSocketService.socket = null
+    }
     this.reconnect()
   }
 
   private onError(error: Event) {
     console.error('WebSocket error:', error)
+    WebSocketService.isConnected.value = false
   }
 
   private reconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`)
-      setTimeout(() => this.connect(), this.reconnectInterval)
+      const delay = Math.min(30000, this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1))
+      console.log(`Attempting to reconnect in ${delay}ms (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`)
+      this.reconnectTimeoutId = window.setTimeout(() => this.connect(), delay)
     } else {
       console.error('Max reconnection attempts reached')
     }
   }
 
-  sendMessage(type: 'chat' | 'cursor' | 'change', content: any) {
-    if (this.isConnected.value) {
+  sendMessage(sheetId: string, type: Message['type'], content: any, userId: string, userName: string, replyTo?: string) {
+    if (WebSocketService?.socket?.readyState === WebSocket.OPEN) {
       const message: Message = {
+        id: `${userId}-${Date.now()}`,
         type,
+        sheetId,
         user: {
-          id: this.userId,
-          name: this.userName,
+          id: userId,
+          name: userName,
         },
         content,
         timestamp: Date.now(),
+        replyTo,
       }
-      this.socket?.send(JSON.stringify(message))
+      WebSocketService.socket?.send(JSON.stringify(message))
     } else {
       console.error('Cannot send message: WebSocket is not connected')
     }
   }
 
-  disconnect() {
-    this.socket?.close()
-  }
-}
-
-export function useWebSocket() {
-  const wsService: Ref<WebSocketService | null> = ref(null)
-
-  async function initializeWebSocket(sheetId: string, userId: string, userName: string) {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/collab/${sheetId}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch WebSocket endpoint')
+  public joinSheet(sheetId: string, listener: MessageListener) {
+    if (!WebSocketService.activeSheets.has(sheetId)) {
+      WebSocketService.activeSheets.set(sheetId, listener)
+      if (WebSocketService?.socket?.readyState === WebSocket.OPEN) {
+        this.sendMessage(sheetId, 'join', {}, 'system', 'System')
+        return true;
       }
-      const { url } = await response.json()
-      wsService.value = new WebSocketService(url, userId, userName)
-      wsService.value.connect()
-    } catch (error) {
-      console.error('Error initializing WebSocket:', error)
+    }
+    return false;
+  }
+
+  public leaveSheet(sheetId: string) {
+    if (WebSocketService.activeSheets.has(sheetId)) {
+      if (WebSocketService?.socket?.readyState === WebSocket.OPEN) {
+        this.sendMessage(sheetId, 'leave', {}, 'system', 'System')
+      }
+      WebSocketService.activeSheets.delete(sheetId)
     }
   }
 
-  onUnmounted(() => {
-    wsService.value?.disconnect()
-  })
+  public disconnect() {
+    if (this.reconnectTimeoutId !== null) {
+      clearTimeout(this.reconnectTimeoutId)
+      this.reconnectTimeoutId = null
+    }
+    if (WebSocketService?.socket) {
+      WebSocketService.socket.onopen = null
+      WebSocketService.socket.onmessage = null
+      WebSocketService.socket.onclose = null
+      WebSocketService.socket.onerror = null
+      if (WebSocketService.socket.readyState === WebSocket.OPEN) {
+        WebSocketService.socket.close()
+      }
+      WebSocketService.socket = null
+    }
+    WebSocketService.isConnected.value = false
+    WebSocketService.activeSheets.clear()
+  }
+}
+
+let globalWsService: WebSocketService | null = null
+
+export function useWebSocket() {
+  function initializeWebSocket(url: string) {
+    if (!globalWsService) {
+      globalWsService = new WebSocketService(url)
+      globalWsService.connect()
+    }
+    return globalWsService
+  }
 
   return {
-    wsService,
     initializeWebSocket,
   }
 }
