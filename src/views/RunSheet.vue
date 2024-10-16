@@ -299,9 +299,11 @@ function saveData() {
   // todo: we probably want to use our own custom ID
   // also show modal to set spreadsheet name
   if (univerRef.value){
+    const name = title.value || "New Spreadsheet"
+    univerRef.value.setName(name)
 
     const doc = {
-      title: title.value || "New Spreadsheet",
+      title: name,
       contents: JSON.stringify(univerRef.value.getData()),
       file_type: "xlsx",
       file_name: title.value?.toLowerCase() || "spreadsheet",
