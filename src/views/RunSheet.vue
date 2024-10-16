@@ -14,6 +14,7 @@ import { useFileStore } from '@/store/files'
 import { sluggify } from '@/utils/lib'
 import { FUniver } from '@univerjs/facade'
 import { IWebsocketService, Message, useWebSocket, WebSocketService } from '@/lib/wsService'
+import { FileData } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -294,6 +295,24 @@ function togglePencil(v: boolean) {
 //   // Implement cursor display logic here
 // }
 
+function saveData() {
+  // todo: we probably want to use our own custom ID
+  // also show modal to set spreadsheet name
+  if (univerRef.value){
+
+    const doc = {
+      title: title.value || "New Spreadsheet",
+      contents: JSON.stringify(univerRef.value.getData()),
+      file_type: "xlsx",
+      file_name: title.value?.toLowerCase() || "spreadsheet",
+    } as FileData
+    if (route.params.id) {
+      doc.id = route.params.id as string
+    }
+    fileStore.saveDocument(doc)
+  }
+}
+
 function handleChatMessage(messageInfo: Message) {
   chatMessages.value.push(messageInfo)
   scrollToBottom()
@@ -382,6 +401,8 @@ const iconRef = ref<HTMLElement | null>(null)
         <SheetMenu
           :univer-ref="univerRef"
           :file-id="route.params.id as string"
+          @toggle-chat="toggleChat"
+          @save="saveData"
           @update-data="updateData"
         />
       </div>

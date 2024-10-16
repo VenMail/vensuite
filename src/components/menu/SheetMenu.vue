@@ -45,7 +45,6 @@ import {
   MenubarTrigger,
 } from '@/components/ui/menubar'
 import UniverSheet from './components/UniverSheet.vue'
-import { FileData } from '@/types'
 import { useFileStore } from '@/store/files'
 
 
@@ -57,7 +56,7 @@ interface Props {
 
 const fileStore = useFileStore()
 const props = defineProps<Props>()
-const emit = defineEmits(['updateData', 'toggleChat'])
+const emit = defineEmits(['updateData', 'toggleChat', 'save'])
 const router = useRouter()
 
 let facadeAPI: FUniver | null = null
@@ -82,20 +81,6 @@ const recentFiles = computed(() => {
   return fileStore.recentFiles.filter((f) => f.file_type == "xlsx")
 })
 
-function saveData(data: IWorkbookData) {
-  // todo: we probably want to use our own custom ID
-  // also show modal to set spreadsheet name
-  const doc = {
-    title: data.name,
-    contents: JSON.stringify(data),
-    file_type: "xlsx",
-    file_name: data.id,
-  } as FileData
-  if (props.fileId) {
-    doc.id = props.fileId
-  }
-  fileStore.saveDocument(doc)
-}
 
 async function loadData(id: string) {
   const savedData = await fileStore.loadDocument(id, "xlsx")
@@ -126,14 +111,7 @@ function handleLoadDialog() {
 }
 
 function handleSave() {
-  const univerSheetInstance = props.univerRef
-  if (univerSheetInstance) {
-    const result = univerSheetInstance.getData()
-    saveData(result)
-  }
-  else {
-    console.error('UniverSheet reference is null')
-  }
+ emit("save")
 }
 
 function exportAs(format: string) {
