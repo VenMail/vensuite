@@ -119,9 +119,11 @@ function updateTitleRemote(newTitle: string) {
   title.value = newTitle
 }
 
+const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || "ws://app.venmail.io:8443";
+
 onMounted(async () => {
   if (route.params.id) {
-    wsService.value = initializeWebSocket('ws://127.0.0.1:9088?sheetId=' + route.params.id
+    wsService.value = initializeWebSocket(SOCKET_URI + '?sheetId=' + route.params.id
       + '&userName=' + userName.value
       + '&userId=' + userId.value
     )
@@ -139,7 +141,7 @@ onMounted(async () => {
 
 function initializeWebSocketAndJoinSheet() {
   if (route.params.id && !wsService.value) {
-    wsService.value = initializeWebSocket(`ws://127.0.0.1:9088?sheetId=${route.params.id}&userName=${userName.value}&userId=${userId.value}`)
+    wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${route.params.id}&userName=${userName.value}&userId=${userId.value}`)
     joinSheet()
   }
 }
