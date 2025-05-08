@@ -1,32 +1,52 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, defineProps, defineEmits } from 'vue'
-import { Home, FileText, Table, Image, Menu, FormInput } from 'lucide-vue-next'
+import { ref, computed, onMounted, watch } from 'vue'
+import { Home, FileText, Table, Image, FormInput, Menu, ChevronLeft, ChevronRight, Plus, LogOut } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
-import { router } from '@/main';
+import { router } from '@/main'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import * as defaultIcons from '@iconify-prerendered/vue-file-icons'
 
-const items = [
-  { name: 'Home', icon: Home, route: '/' },
-  { name: 'New Document', icon: FileText, route: '/docs' },
-  { name: 'New Spreadsheet', icon: Table, route: '/sheets' },
-  { name: 'Forms and Surveys', icon: FormInput, route: '/forms' },
-  { name: 'Browse Media', icon: Image, route: '/media' },
-]
-
-// Props to control visibility from parent
 const props = defineProps({
   isVisible: {
     type: Boolean,
-    default: true,
+    default: true
+  },
+  isCollapsed: {
+    type: Boolean,
+    default: false
   }
 })
 
-// Emit event to toggle visibility
-const emit = defineEmits(['toggle'])
+const emit = defineEmits(['toggle', 'collapse'])
+
+const items = [
+  { name: 'Home', icon: Home, route: '/' },
+  { name: 'Documents', icon: FileText, route: '/docs' },
+  { name: 'Spreadsheets', icon: Table, route: '/sheets' },
+  { name: 'Forms', icon: FormInput, route: '/forms' },
+  { name: 'Media', icon: Image, route: '/media' }
+]
 
 const activeItem = ref('Home')
 const isMobile = ref(false)
+const collapsed = ref(props.isCollapsed)
 
-// Toggle sidebar visibility for mobile
+watch(() => props.isCollapsed, (value) => {
+  collapsed.value = value
+})
+
+const toggleCollapse = () => {
+  collapsed.value = !collapsed.value
+  emit('collapse', collapsed.value)
+}
+
 const toggleSidebar = () => {
   emit('toggle')
 }
@@ -40,6 +60,9 @@ const setActiveItem = (item: string, route: string) => {
 onMounted(() => {
   const handleResize = () => {
     isMobile.value = window.innerWidth < 768
+    if (isMobile.value) {
+      collapsed.value = true
+    }
   }
   handleResize()
   window.addEventListener('resize', handleResize)
@@ -48,46 +71,132 @@ onMounted(() => {
 // Sidebar classes
 const sidebarClasses = computed(() =>
   cn(
-    'h-full w-64 bg-white bg-opacity-50 backdrop-blur-lg border-r border-gray-200 p-4 transition-transform',
+    'h-full border-r transition-all duration-200',
+    'bg-white dark:bg-gray-900',
+    'border-gray-200 dark:border-gray-800',
     props.isVisible ? 'translate-x-0' : '-translate-x-full',
-    isMobile.value ? 'fixed top-0 left-0 z-50' : ''
+    collapsed.value ? 'w-16' : 'w-64',
+    isMobile.value ? 'fixed top-0 left-0 z-40' : ''
   )
 )
+
+const templates = {
+  Documents: [
+    { name: "Blank Document", icon: defaultIcons.IconMicrosoftWord },
+    { name: "Resume", icon: defaultIcons.IconMicrosoftWord },
+    { name: "Letter", icon: defaultIcons.IconMicrosoftWord },
+  ],
+  Spreadsheets: [
+    { name: "Blank Spreadsheet", icon: defaultIcons.IconMicrosoftExcel },
+    { name: "Budget", icon: defaultIcons.IconMicrosoftExcel },
+    { name: "Invoice", icon: defaultIcons.IconMicrosoftExcel },
+  ],
+}
+
+function createNewFile(type: string, template?: string) {
+  if (type === "Spreadsheets") {
+    if (template?.toLowerCase().includes("blank")) {
+      router.push("/sheets")
+    } else {
+      router.push("/sheets/t/" + template)
+    }
+  } else if (type === "Documents") {
+    if (template?.toLowerCase().includes("blank")) {
+      router.push("/docs")
+    } else {
+      router.push("/docs/t/" + template)
+    }
+  }
+}
 </script>
 
 <template>
   <div>
-    <!-- Sidebar -->
+    <!-- Collapsed Sidebar -->
     <div :class="sidebarClasses">
-      <nav class="space-y-2">
-        <a
-          v-for="item in items"
-          :key="item.name"
-          :href="item.route"
-          @click.prevent="setActiveItem(item.name, item.route)"
-          :class="cn(
-            'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
-            activeItem === item.name
-              ? 'bg-gray-100 text-gray-900'
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-          )"
-        >
-          <component :is="item.icon" class="h-5 w-5 mr-3" />
-          {{ item.name }}
-        </a>
-      </nav>
+      <div class="flex flex-col h-full">
+        <!-- Top Section with New Button and Collapse Toggle -->
+        <div class="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                class="flex items-center justify-center rounded-sm bg-primary-600 text-white hover:bg-primary-700 transition-colors py-2"
+                :class="collapsed ? 'w-8 -ml-2' : 'w-full'"
+              >
+                <Plus class="h-5 w-5" :class="collapsed ? 'w-7' : 'mr-2'" />
+                <span v-if="!collapsed">New</span>
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Choose a Template</DialogTitle>
+              </DialogHeader>
+              <Tabs default-value="Documents">
+                <TabsList>
+                  <TabsTrigger v-for="category in Object.keys(templates)" :key="category" :value="category">
+                    {{ category }}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent v-for="(items, category) in templates" :key="category" :value="category">
+                  <div class="grid grid-cols-2 gap-4">
+                    <button v-for="template in items" :key="template.name"
+                      class="h-24 flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 hover:border-primary-500 transition-colors"
+                      @click="createNewFile(category, template.name)">
+                      <component :is="template.icon" class="w-8 h-8" />
+                      <span class="mt-2 text-sm">{{ template.name }}</span>
+                    </button>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </DialogContent>
+          </Dialog>
+          
+          <button v-if="!isMobile" @click="toggleCollapse" :class="cn(
+            'p-1 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800',
+            collapsed ? 'w-6' : 'ml-2'
+          )">
+            <ChevronLeft v-if="!collapsed" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            <ChevronRight v-else class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+          </button>
+        </div>
+
+        <!-- File Navigation -->
+        <div class="px-2 flex-1 py-4">
+          <nav class="space-y-1">
+            <a
+              v-for="item in items"
+              :key="item.name"
+              :href="item.route"
+              @click.prevent="setActiveItem(item.name, item.route)"
+              :class="cn(
+                'flex items-center rounded-sm transition-colors',
+                collapsed ? 'justify-center py-3 px-2' : 'px-3 py-2',
+                activeItem === item.name
+                  ? 'bg-gray-100 dark:bg-gray-800 text-primary-600 dark:text-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+              )"
+            >
+              <component :is="item.icon" class="h-5 w-5" :class="collapsed ? '' : 'mr-3'" />
+              <span v-if="!collapsed">{{ item.name }}</span>
+            </a>
+          </nav>
+        </div>
+
+        <!-- User Profile Area -->
+        <div class="p-4 border-t border-gray-200 dark:border-gray-800">
+          <div class="flex items-center" :class="collapsed ? 'justify-center' : ''">
+            <LogOut class="h-5 w-5" />
+            <div v-if="!collapsed" class="ml-3">
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Logout</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Mobile Hamburger Icon -->
-    <button v-if="isMobile" @click="toggleSidebar" class="fixed top-4 left-4 z-50 p-2 rounded-md bg-white bg-opacity-50 backdrop-blur-lg">
-      <Menu class="h-6 w-6 text-gray-900" />
+    <button v-if="isMobile && !props.isVisible" @click="toggleSidebar" class="fixed top-4 left-4 z-50 p-2 rounded-sm bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-lg">
+      <Menu class="h-5 w-5 text-gray-900 dark:text-gray-100" />
     </button>
   </div>
 </template>
-
-<style scoped>
-/* Add a smooth transition effect to the sidebar */
-.transition-transform {
-  transition: transform 0.3s ease;
-}
-</style>

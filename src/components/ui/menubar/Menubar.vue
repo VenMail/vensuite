@@ -13,7 +13,6 @@ const emits = defineEmits<MenubarRootEmits>()
 
 const delegatedProps = computed(() => {
   const { class: _, ...delegated } = props
-
   return delegated
 })
 
@@ -25,8 +24,10 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     v-bind="forwarded"
     :class="
       cn(
-        'flex h-9 items-center space-x-1 rounded-md border bg-background p-1 shadow-sm',
-        props.class,
+        'flex h-9 items-center space-x-1 rounded-sm border border-gray-200 dark:border-gray-800',
+        'bg-white dark:bg-gray-900',
+        'p-1 shadow-sm',
+        props.class
       )
     "
   >

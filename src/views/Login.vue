@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/store/auth' // Import the store
+import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/button'
+import { LoaderCircle } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
-const authStore = useAuthStore() // Use the store
-
-// authStore.setRouter(router)
+const authStore = useAuthStore()
+const processing = ref(false)
 
 const redirectUri = `${window.location.origin}/oauth/callback`
-const authUrl = ref(authStore.getAuthUrl(redirectUri)) // Use the store's getAuthUrl method
+const authUrl = ref(authStore.getAuthUrl(redirectUri))
 
 function loginWithVenmail() {
+  processing.value = true
   const currentPath = route.query.redirect as string || '/'
   localStorage.setItem('loginRedirect', currentPath)
   window.location.href = authUrl.value
@@ -21,9 +22,8 @@ function loginWithVenmail() {
 
 onMounted(async () => {
   const token = authStore.getToken() || route.query.token as string
-  console.log("Tok", token)
   if (token) {
-    await authStore.login(token) // Use the store's login method
+    await authStore.login(token)
     const redirect = route.query.redirect as string || localStorage.getItem('loginRedirect') || '/'
     localStorage.removeItem('loginRedirect')
     await router.push(redirect)
@@ -32,16 +32,47 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-    <div class="bg-white bg-opacity-50 backdrop-blur-lg p-8 rounded-lg shadow-xl">
-      <img src="/logo.png" class="h-12 w-12 mx-auto" />
-      <h2 class="text-2xl font-bold mb-4 text-center">Welcome to Venmail File Manager</h2>
-      <Button class="w-full" @click="loginWithVenmail">
+  <div class="min-h-screen flex flex-col justify-between items-center bg-white text-black">
+    <!-- Logo header -->
+    <div class="flex items-center justify-between w-full border-b border-[#A9C9D64D] p-6">
+      <div class="w-[150px]">
+        <img src="/logo.png" alt="VenMail Logo" class="h-6" />
+      </div>
+      <div class="w-[150px] flex justify-end">
+        <!-- Globe icon could go here if needed -->
+      </div>
+    </div>
+    
+    <!-- Main content -->
+    <div class="relative w-full max-w-md overflow-hidden p-8">
+      <div class="mb-8 text-center">
+        <h2 class="mb-4 text-[40px] text-black font-semibold leading-normal">
+          Welcome
+        </h2>
+        <p class="text-black mb-6">
+          Login to manage your files and folders on Venmail
+        </p>
+      </div>
+
+      <Button 
+        class="w-full bg-primary-600 py-3 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+        @click="loginWithVenmail"
+        :disabled="processing"
+      >
+        <LoaderCircle v-if="processing" class="h-5 w-5 animate-spin mr-2" />
         Login with Venmail
       </Button>
-      <p class="text-sm text-muted-foreground mt-4 text-center">
-        Login to manage your files and folders on Venmail.
-      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-base text-center text-black my-6 space-x-2">
+      <a href="https://venmail.io/resources/privacy-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Privacy & terms</a>
+      <span>•</span>
+      <a href="https://venmail.io/resources/cookie-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Cookie policy</a>
+      <span>•</span>
+      <a href="https://venmail.io/resources/cookie_ccpa-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Cookie & CCPA preferences</a>
+      <span>•</span>
+      <a href="https://venmail.io/resources/ai-principles" target="_blank" rel="noopener noreferrer" class="hover:underline">AI Principles</a>
     </div>
   </div>
 </template>

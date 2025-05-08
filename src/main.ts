@@ -19,6 +19,7 @@ import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
 import { sluggify } from './utils/lib'
 import Editor from './components/forms/Editor.vue'
 import Forms from './views/Forms.vue'
+import { FileData } from './types'
 
 const routes = [
   { 
@@ -37,8 +38,8 @@ const routes = [
     children: [
       { path: 'sheets', name: 'sheets', component: RunSheet },
       { path: 'sheets/:id', name: 'sheet', component: RunSheet },
-      { path: 'docs', name: 'docs', component: RunDoc },
-      { path: 'docs/:id', name: 'doc', component: RunDoc },
+      { path: 'docs', name: 'docs', component: RunDoc, meta: { hideLayout: true } },
+      { path: 'docs/:id', name: 'doc', component: RunDoc, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },
       { path: 'import/:id', name: 'import', component: Home },
@@ -83,18 +84,26 @@ router.beforeEach(async (to, _from, next) => {
 
 // UmoEditor setup
 app.use(useUmoEditor, {
-  onSave: async (content: {html: string, json: string, text: string}, page: any, doc: any) => {
-    console.log('doc', doc)
-    console.log('page', page)
-    return await documentStore.saveDocument({
-      id: router.currentRoute.value.params?.id as string,
-      title: document.title || 'New Document',
-      file_name: sluggify(document.title),
-      contents: content.html,
-      file_type: "docx"
-    })
-  }
-})
+  onSave: async (content: { html: string }, page: any, doc: any) => {
+    const routeId = router.currentRoute.value.params.id as string;
+    let currentDoc = routeId && routeId !== "undefined" ? await documentStore.loadDocument(routeId) : null;
+    console.log('currentDoc:', currentDoc);
+    console.log('current content length:', content.html.length);
+
+    const updatedDoc: FileData = currentDoc
+      ? { ...currentDoc, title: doc?.title || currentDoc.title, content: content.html, last_viewed: new Date() }
+      : { id: undefined, title: doc?.title || "New Document", content: content.html, file_type: "docx", last_viewed: new Date(), isNew: true };
+
+    console.log('updatedDoc:', updatedDoc);
+    const saved = await documentStore.saveDocument(updatedDoc);
+    console.log('saved:', saved);
+    if (saved.id !== routeId) {
+      console.log('redirecting to:', `/docs/${saved.id}`);
+      router.replace(`/docs/${saved.id}`);
+    }
+    return { success: !!saved, offline: !navigator.onLine, error: documentStore.lastError };
+  },
+});
 
 // Custom component for style tags
 app.component('v-style', defineComponent({

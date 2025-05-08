@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, watch, nextTick, onUnmounted, watchEffect } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
-  SearchIcon,
   Grid,
   List,
   Plus,
@@ -49,26 +48,15 @@ const authStore = useAuthStore();
 const fileStore = useFileStore();
 const { isAuthenticated } = storeToRefs(authStore);
 
-const searchValue = ref("");
 const viewMode = ref<"grid"|"tree"|"thumbnail"|"list">("grid");
 const selectedFile = ref<string | null>(null);
 const showRecentFiles = ref(false);
 const sortBy = ref("name");
 const groupByFileType = ref(false);
 const currentFolderId = ref<string | null>(null);
+const searchValue = ref('');
 
 const showContextMenu = computed(() => !!selectedFile.value);
-
-let debounceTimer: NodeJS.Timeout;
-const debouncedSearch = ref(searchValue.value);
-
-// Watcher for debouncing the search input
-watch(searchValue, (newValue) => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    debouncedSearch.value = newValue;
-  }, 300);
-});
 
 const templates = {
   Documents: [
@@ -96,10 +84,8 @@ onMounted(async () => {
   watchEffect(async () => {
     if (route.params.id) {
       console.log('importing..', route.params.id)
-      // Load data after route is initialized
       const attachId = route.params?.id as string
       const doc = await fileStore.importAttachment(attachId)
-      //redirect to home after successful import
       if (doc) {
         toast({
           description: doc.file_name + " imported successfully"
@@ -112,9 +98,18 @@ onMounted(async () => {
   document.addEventListener('click', handleOutsideClick);
   document.addEventListener('keydown', handleEscapeKey);
 
-  if (authStore.getToken() && fileStore.allFiles.length == 0) {
-    await fileStore.loadDocuments();
+  if (authStore.getToken()) {
+    // Load offline documents first
+    const offlineDocs = fileStore.loadOfflineDocuments();
+    fileStore.allFiles = offlineDocs;
+
+    // If online, load online documents and merge
+    if (fileStore.isOnline) {
+      const onlineDocs = await fileStore.loadDocuments();
+      fileStore.allFiles = fileStore.mergeDocuments(onlineDocs, offlineDocs);
+    }
   }
+  
   document.title = "Home";
   useFavicon("/logo.png")
 });
@@ -125,20 +120,31 @@ onUnmounted(() => {
 });
 
 const selectedFiles = computed(() => {
-  let files = showRecentFiles.value ? fileStore.recentFiles : fileStore.allFiles;
+  const uniqueFiles = new Map<string, FileData>();
   
-  // Filter by current folder if set
-  if (currentFolderId.value) {
-    files = files.filter(file => file.folder_id === currentFolderId.value);
-  } else {
-    files = files.filter(file => !file.folder_id); // Show only root-level files/folders
-  }
+  // Process both recent and all files
+  const sourceFiles = showRecentFiles.value 
+    ? fileStore.recentFiles 
+    : fileStore.allFiles;
 
-  // Filter files based on search value
-  return files.filter((file) => {
-    const fileName = file.title?.toLowerCase() || "";
-    const search = debouncedSearch.value?.toLowerCase() || "";
-    return fileName.includes(search);
+  // Deduplicate files by ID
+  sourceFiles.forEach(file => {
+    if (file.id && !uniqueFiles.has(file.id)) {
+      uniqueFiles.set(file.id, file);
+    }
+  });
+
+  // Apply folder filtering
+  return Array.from(uniqueFiles.values()).filter(file => {
+    const folderMatch = currentFolderId.value 
+      ? file.folder_id === currentFolderId.value
+      : !file.folder_id;
+    
+    const searchMatch = !searchValue.value ||
+      file.title?.toLowerCase().includes(searchValue.value.toLowerCase()) ||
+      file.file_name?.toLowerCase().includes(searchValue.value.toLowerCase());
+
+    return folderMatch && searchMatch;
   });
 });
 
@@ -183,15 +189,6 @@ async function openFolder(id: string) {
     console.error("Error opening folder:", error);
   }
 }
-
-// watch(selectedFile, (newValue) => {
-//   console.log("selectedFile changed to:", newValue);
-//   if (newValue) {
-//     nextTick(() => {
-//       console.log("After nextTick, selectedFile is still:", selectedFile.value);
-//     });
-//   }
-// });
 
 function handleSelect(id: string | undefined, event: Event) {
   console.log("handleSelect called with id:", id);
@@ -342,102 +339,65 @@ function handleEscapeKey(event: KeyboardEvent) {
 
 
 <template>
-  <div v-if="isAuthenticated" class="flex h-screen bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900">
+  <div v-if="isAuthenticated" class="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900">
     <!-- Main content -->
     <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- Top menubar -->
-      <div
-        class="bg-white bg-opacity-50 backdrop-blur-lg border-b border-gray-200 p-4 flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-          <Button variant="outline" size="icon" @click="currentFolderId = null">
-            <ChevronDown class="h-4 w-4" />
-          </Button>
-          <div class="relative">
-            <SearchIcon class="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
-            <Input v-model="searchValue" placeholder="Search files..." class="pl-8 w-64" />
-          </div>
-        </div>
-        <!-- Context-aware menu -->
-        <div v-if="showContextMenu"
-          class="context-menu bg-white bg-opacity-50 backdrop-blur-sm border border-gray-200 rounded-lg p-2 flex items-center space-x-2">
-          <Button v-for="action in contextMenuActions" :key="action.label" variant="ghost" size="sm"
-            @click="action.action" class="flex items-center">
-            <component :is="action.icon" class="mr-2 h-4 w-4" />
-            {{ action.label }}
-          </Button>
-        </div>
-        <div v-else class="flex items-center space-x-4">
-          <Button variant="outline" @click="createNewFolder">
-            <FolderPlusIcon class="mr-2 h-4 w-4" />
-            New Folder
-          </Button>
-          <Button variant="outline" @click="openUploadDialog">
-            <Upload class="mr-2 h-4 w-4" />
-            Upload
-          </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus class="mr-2 h-4 w-4" />
-                New from Template
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Choose a Template</DialogTitle>
-              </DialogHeader>
-              <Tabs default-value="Documents">
-                <TabsList>
-                  <TabsTrigger v-for="category in Object.keys(templates)" :key="category" :value="category">
-                    {{ category }}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent v-for="(items, category) in templates" :key="category" :value="category">
-                  <div class="grid grid-cols-2 gap-4">
-                    <Button v-for="template in items" :key="template.name" variant="outline"
-                      class="h-24 flex flex-col items-center justify-center"
-                      @click="createNewFile(category?.toLowerCase(), template.name)">
-                      <component :is="template.icon" class="w-8 h-8" />
-                      <span class="mt-2 text-sm">{{ template.name }}</span>
-                    </Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </DialogContent>
-          </Dialog>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <component :is="viewMode === 'grid' ? Grid : List" class="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem @click="viewMode = 'grid'">
-                <Grid class="mr-2 h-4 w-4" />
-                Grid View
-              </DropdownMenuItem>
-              <DropdownMenuItem @click="viewMode = 'list'">
-                <List class="mr-2 h-4 w-4" />
-                List View
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button variant="ghost" size="icon">
-            <Settings class="h-4 w-4" />
-          </Button>
-        </div>
+      <!-- Loading bar -->
+      <div v-if="fileStore.isSyncing" class="loading-bar">
+        <div class="loading-progress"></div>
       </div>
 
       <!-- File browser -->
       <div class="flex-1 p-6 overflow-hidden">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-2xl font-semibold">
-            {{ showRecentFiles ? "Recent Files" : "All Files" }}
-          </h2>
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center space-x-4">
+            <h2 class="text-2xl font-semibold text-gray-800">
+              {{ showRecentFiles ? "Recent Files" : "All Files" }}
+            </h2>
+            <Button variant="outline" class="border-primary-400 hover:border-primary-500" @click="createNewFolder">
+              <FolderPlusIcon class="mr-2 h-4 w-4 text-primary-600" />
+              New Folder
+            </Button>
+            <Button variant="outline" class="border-primary-400 hover:border-primary-500" @click="openUploadDialog">
+              <Upload class="mr-2 h-4 w-4 text-primary-600" />
+              Upload
+            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" class="border-primary-400 hover:border-primary-500">
+                  <Plus class="mr-2 h-4 w-4 text-primary-600" />
+                  New from Template
+                </Button>
+              </DialogTrigger>
+              <DialogContent class="bg-white rounded-lg shadow-2xl border border-gray-200">
+                <DialogHeader>
+                  <DialogTitle class="text-xl font-semibold text-gray-800">Choose a Template</DialogTitle>
+                </DialogHeader>
+                <Tabs default-value="Documents">
+                  <TabsList class="bg-gray-100">
+                    <TabsTrigger v-for="category in Object.keys(templates)" :key="category" :value="category"
+                      class="data-[state=active]:bg-white data-[state=active]:text-primary-600">
+                      {{ category }}
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent v-for="(items, category) in templates" :key="category" :value="category">
+                    <div class="grid grid-cols-2 gap-4 p-2">
+                      <Button v-for="template in items" :key="template.name" variant="outline"
+                        class="h-24 flex flex-col items-center justify-center hover:bg-gray-50 hover:border-primary-400 transition-all"
+                        @click="createNewFile(category?.toLowerCase(), template.name)">
+                        <component :is="template.icon" class="w-8 h-8 text-primary-600" />
+                        <span class="mt-2 text-sm font-medium">{{ template.name }}</span>
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </DialogContent>
+            </Dialog>
+          </div>
           <div class="flex items-center space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" class="border-gray-300">
                   Sort by: {{ sortBy === "name" ? "Name" : "Date" }}
                   <ChevronDown class="ml-2 h-4 w-4" />
                 </Button>
@@ -452,58 +412,103 @@ function handleEscapeKey(event: KeyboardEvent) {
               </DropdownMenuContent>
             </DropdownMenu>
             <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-500">Group by File Type</span>
+              <span class="text-sm text-gray-600">Group by Type</span>
               <Switch v-model="groupByFileType" />
             </div>
             <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-500">Show Recent Files</span>
+              <span class="text-sm text-gray-600">Recent Files</span>
               <Switch v-model="showRecentFiles" />
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" class="border-gray-300">
+                  <component :is="viewMode === 'grid' ? Grid : List" class="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem @click="viewMode = 'grid'">
+                  <Grid class="mr-2 h-4 w-4" />
+                  Grid View
+                </DropdownMenuItem>
+                <DropdownMenuItem @click="viewMode = 'list'">
+                  <List class="mr-2 h-4 w-4" />
+                  List View
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-        <ScrollArea class="h-[calc(100vh-280px)]">
-          <div v-if="Object.keys(groupedItems).length > 0">
+
+        <!-- Search input -->
+        <!-- <div class="relative mb-6">
+          <Input v-model="searchValue" placeholder="Search files and folders..." 
+            class="bg-white border-gray-300 focus:border-primary-500 focus:ring-primary-400 pr-10" />
+          <div v-if="searchValue" 
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
+            @click="searchValue = ''">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500 hover:text-gray-700">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+        </div> -->
+
+        <!-- Loading state -->
+        <div v-if="fileStore.isSyncing && Object.keys(groupedItems).length === 0" class="loading-state">
+          <div class="loading-spinner"></div>
+          <p class="loading-text">Loading your files...</p>
+        </div>
+
+        <!-- Content area -->
+        <ScrollArea class="h-[calc(100vh-280px)] bg-white rounded-lg shadow-sm border border-gray-200">
+          <div v-if="Object.keys(groupedItems).length > 0 && sortedItems.length > 0">
             <template v-for="(items, groupName) in groupedItems" :key="groupName">
-              <h3 v-if="groupByFileType" class="text-lg font-semibold text-gray-800 mb-2">
-                {{ formatGroupName(groupName) }}
-              </h3>
-              <div v-if="items.length === 0" class="text-center text-sm text-gray-500 mb-4">
-                No items available in this category.
-              </div>
-              <div :class="{
-                'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4': viewMode === 'grid',
-                'space-y-2': viewMode === 'list',
-              }">
-                <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
-                  :isSelected="selectedFile === item.id"
-                  @click.stop="handleSelect(item.id, $event)"
-                  @open-file="openFile" />
+              <div class="p-4">
+                <h3 v-if="groupByFileType" class="text-base font-semibold text-gray-700 mb-3 px-2">
+                  {{ formatGroupName(groupName) }}
+                </h3>
+                <div v-if="items.length === 0" class="text-center text-sm text-gray-500 py-4">
+                  No items available in this category.
+                </div>
+                <div :class="{
+                  'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4': viewMode === 'grid',
+                  'space-y-2': viewMode === 'list',
+                }">
+                  <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
+                    :isSelected="selectedFile === item.id"
+                    @click.stop="handleSelect(item.id, $event)"
+                    @open-file="openFile" />
+                </div>
               </div>
             </template>
           </div>
-          <div v-else class="flex flex-col items-center justify-center h-full">
-            <FolderOpen class="w-16 h-16 text-gray-400 mb-4" />
-            <h3 class="text-2xl font-bold tracking-tight mb-2">
-              No files found
+
+          <!-- Empty state -->
+          <div v-else-if="!fileStore.isSyncing || (fileStore.isSyncing && Object.keys(groupedItems).length === 0)" 
+            class="empty-state">
+            <div class="empty-icon-wrapper">
+              <FolderOpen class="empty-icon" />
+            </div>
+            <h3 class="empty-title">
+              {{ searchValue ? "No matching files found" : "No files found" }}
             </h3>
-            <p class="text-sm text-muted-foreground mb-4">
+            <p class="empty-description">
               {{
                 searchValue
                   ? "Try adjusting your search or filters."
                   : "Get started by creating a new file or uploading an existing one."
               }}
             </p>
-            <div class="flex space-x-4">
-              <Button @click="createNewFile('document')">
-                <Plus class="mr-2 h-12 w-12" />
+            <div class="empty-actions">
+              <Button @click="createNewFile('documents')" class="bg-primary-600 hover:bg-primary-700">
+                <Plus class="mr-2 h-4 w-4" />
                 New Document
               </Button>
-              <Button @click="createNewFile('spreadsheet')">
-                <Plus class="mr-2 h-12 w-12" />
+              <Button @click="createNewFile('spreadsheets')" class="bg-green-600 hover:bg-green-700">
+                <Plus class="mr-2 h-4 w-4" />
                 New Spreadsheet
               </Button>
-              <Button variant="outline">
-                <Upload class="mr-2 h-12 w-12" />
+              <Button variant="outline" class="border-gray-300 hover:border-gray-400">
+                <Upload class="mr-2 h-4 w-4" />
                 Upload File
               </Button>
             </div>
@@ -513,15 +518,18 @@ function handleEscapeKey(event: KeyboardEvent) {
     </div>
   </div>
   <div v-else
-    class="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-    <div class="bg-white bg-opacity-50 backdrop-blur-lg p-8 rounded-lg shadow-xl">
-      <h2 class="text-2xl font-bold mb-4 text-center">
+    class="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+    <div class="bg-white backdrop-filter backdrop-blur-lg p-10 rounded-lg shadow-xl border border-gray-200">
+      <div class="flex items-center justify-center mb-6">
+        <img src="/logo.png" alt="Venmail Logo" class="h-12" />
+      </div>
+      <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">
         Welcome to Venmail File Manager
       </h2>
-      <Button class="w-full" @click="loginWithVenmail">
+      <Button class="w-full bg-primary-600 hover:bg-primary-700" @click="loginWithVenmail">
         Login with Venmail
       </Button>
-      <p class="text-sm text-muted-foreground mt-4 text-center">
+      <p class="text-sm text-gray-500 mt-4 text-center">
         Login to manage your files and folders on Venmail.
       </p>
     </div>
@@ -529,5 +537,72 @@ function handleEscapeKey(event: KeyboardEvent) {
 </template>
 
 <style scoped>
-/* Add any component-specific styles here */
+.loading-bar {
+  @apply fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden;
+}
+
+.loading-progress {
+  @apply h-full bg-primary-600;
+  width: 30%;
+  animation: loading 2s infinite ease-in-out;
+}
+
+.loading-state {
+  @apply flex flex-col items-center justify-center p-16;
+}
+
+.loading-spinner {
+  @apply w-12 h-12 border-4 border-gray-300 rounded-full;
+  border-top-color: #4d7cfe;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  @apply mt-4 text-gray-600 font-medium;
+}
+
+.empty-state {
+  @apply flex flex-col items-center justify-center p-16 text-center;
+}
+
+.empty-icon-wrapper {
+  @apply flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6;
+}
+
+.empty-icon {
+  @apply w-10 h-10 text-primary-600;
+}
+
+.empty-title {
+  @apply text-xl font-bold text-gray-800 mb-2;
+}
+
+.empty-description {
+  @apply text-sm text-gray-500 mb-8 max-w-md;
+}
+
+.empty-actions {
+  @apply flex flex-wrap gap-4 justify-center;
+}
+
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 </style>
