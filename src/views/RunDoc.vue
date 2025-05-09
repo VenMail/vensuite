@@ -48,6 +48,7 @@ const isTitleEdit = ref(false);
 const titleEditTimeout = ref<NodeJS.Timeout | null>(null);
 const isAutoSaving = ref(false);
 const isSyncing = ref(false);
+const isLoading = ref(false);
 const isOffline = ref(!navigator.onLine);
 const hasUnsavedChanges = ref(false);
 const currentDoc = ref<any>(null);
@@ -210,110 +211,118 @@ function editTitle() {
 
 async function loadData(id: string) {
   console.log(`Loading document with ID: ${id}`);
+  isLoading.value = true;
 
-  let serverId = null;
-  let localId = id;
+  try {
+    let serverId = null;
+    let localId = id;
 
-  // Check if this is a server ID and we have a local mapping
-  if (/^\d+-/.test(id)) {
-    serverId = id;
-    localId = localStorage.getItem(`server_id_map_${id}`) || id;
-    console.log(`Server ID detected (${id}). Mapped local ID: ${localId}`);
-  } else {
-    // If this is a local ID, check if we have a server ID mapping
-    const serverIdMapping = Object.keys(localStorage)
-      .filter((key) => key.startsWith("server_id_map_"))
-      .find((key) => localStorage.getItem(key) === id);
+    // Check if this is a server ID and we have a local mapping
+    if (/^\d+-/.test(id)) {
+      serverId = id;
+      localId = localStorage.getItem(`server_id_map_${id}`) || id;
+      console.log(`Server ID detected (${id}). Mapped local ID: ${localId}`);
+    } else {
+      // If this is a local ID, check if we have a server ID mapping
+      const serverIdMapping = Object.keys(localStorage)
+        .filter((key) => key.startsWith("server_id_map_"))
+        .find((key) => localStorage.getItem(key) === id);
 
-    if (serverIdMapping) {
-      serverId = serverIdMapping.replace("server_id_map_", "");
-      console.log(`Local ID detected (${id}). Found server ID mapping: ${serverId}`);
-    }
-  }
-
-  const doc = await fileStore.loadDocument(id, "docx");
-  console.log("Document loaded:", doc);
-
-  if (doc) {
-    // Create a clean document object with normalized fields
-    currentDoc.value = {
-      ...doc,
-      content: doc.content || doc.contents, // Normalize to use content field
-      contents: undefined, // Remove contents to avoid duplication
-    };
-
-    // Update title references
-    title.value = doc.title || "Untitled Document";
-    document.title = title.value;
-
-    // Ensure we have content to display
-    const contentToDisplay = currentDoc.value.content || "";
-    console.log(`Setting editor content, length: ${contentToDisplay.length}`);
-
-    // Force editor refresh with a slight delay to ensure it's ready
-    nextTick(() => {
-      if (editorRef.value) {
-        editorRef.value.setDocument({
-          content: contentToDisplay,
-          title: title.value,
-        });
-
-        editorRef.value.setContent(contentToDisplay);
-
-        console.log("Editor content set", {
-          contentLength: contentToDisplay.length,
-          title: title.value,
-        });
-      } else {
-        console.error("Editor reference not available");
+      if (serverIdMapping) {
+        serverId = serverIdMapping.replace("server_id_map_", "");
+        console.log(`Local ID detected (${id}). Found server ID mapping: ${serverId}`);
       }
-    });
-
-    console.log(
-      `Document loaded successfully. Title: ${title.value}, Content length: ${
-        currentDoc.value.content?.length || 0
-      }`
-    );
-
-    // URL handling - prefer server ID in URL
-    if (serverId && route.params.id !== serverId) {
-      console.log(`Updating URL to use server ID: ${serverId}`);
-      router.replace(`/docs/${serverId}`);
-    } else if (doc.remote_id && doc.remote_id !== route.params.id) {
-      console.log(`Updating URL to use document's server ID: ${doc.remote_id}`);
-      router.replace(`/docs/${doc.remote_id}`);
-    } else if (!serverId && doc.id !== route.params.id) {
-      // No server ID available, fallback to local ID
-      console.log(`No server ID available. Using local ID in URL: ${doc.id}`);
-      router.replace(`/docs/${doc.id}`);
     }
-  } else {
-    console.log(`No document found with ID: ${id}. Creating new document.`);
-    // Handle new document case
-    const newId = uuidv4();
-    currentDoc.value = {
-      id: newId,
-      title: "New Document",
-      file_type: "docx",
-      isNew: true,
-    };
-    title.value = "New Document";
-    document.title = "New Document";
 
-    // Set empty document in editor
-    nextTick(() => {
-      if (editorRef.value) {
-        editorRef.value.setDocument({
-          content: "",
-          title: "New Document",
-        });
-        editorRef.value.setContent("");
+    const doc = await fileStore.loadDocument(id, "docx");
+    console.log("Document loaded:", doc);
+
+    if (doc) {
+      // Create a clean document object with normalized fields
+      currentDoc.value = {
+        ...doc,
+        content: doc.content || doc.contents, // Normalize to use content field
+        contents: undefined, // Remove contents to avoid duplication
+      };
+
+      // Update title references
+      title.value = doc.title || "Untitled Document";
+      document.title = title.value;
+
+      // Ensure we have content to display
+      const contentToDisplay = currentDoc.value.content || "";
+      console.log(`Setting editor content, length: ${contentToDisplay.length}`);
+
+      // Force editor refresh with a slight delay to ensure it's ready
+      nextTick(() => {
+        if (editorRef.value) {
+          editorRef.value.setDocument({
+            content: contentToDisplay,
+            title: title.value,
+          });
+
+          editorRef.value.setContent(contentToDisplay);
+
+          console.log("Editor content set", {
+            contentLength: contentToDisplay.length,
+            title: title.value,
+          });
+        } else {
+          console.error("Editor reference not available");
+        }
+      });
+
+      console.log(
+        `Document loaded successfully. Title: ${title.value}, Content length: ${
+          currentDoc.value.content?.length || 0
+        }`
+      );
+
+      // URL handling - prefer server ID in URL
+      if (serverId && route.params.id !== serverId) {
+        console.log(`Updating URL to use server ID: ${serverId}`);
+        router.replace(`/docs/${serverId}`);
+      } else if (doc.remote_id && doc.remote_id !== route.params.id) {
+        console.log(`Updating URL to use document's server ID: ${doc.remote_id}`);
+        router.replace(`/docs/${doc.remote_id}`);
+      } else if (!serverId && doc.id !== route.params.id) {
+        // No server ID available, fallback to local ID
+        console.log(`No server ID available. Using local ID in URL: ${doc.id}`);
+        router.replace(`/docs/${doc.id}`);
       }
-    });
+    } else {
+      console.log(`No document found with ID: ${id}. Creating new document.`);
+      // Handle new document case
+      const newId = uuidv4();
+      currentDoc.value = {
+        id: newId,
+        title: "New Document",
+        file_type: "docx",
+        isNew: true,
+      };
+      title.value = "New Document";
+      document.title = "New Document";
 
-    router.replace(`/docs/${newId}`);
+      // Set empty document in editor
+      nextTick(() => {
+        if (editorRef.value) {
+          editorRef.value.setDocument({
+            content: "",
+            title: "New Document",
+          });
+          editorRef.value.setContent("");
+        }
+      });
+
+      router.replace(`/docs/${newId}`);
+    }
+    hasUnsavedChanges.value = false;
+  } catch (error) {
+    console.error("Failed to load document:", error);
+    toast.error("Failed to load document");
+  } finally {
+    isLoading.value = false;
   }
-  hasUnsavedChanges.value = false;
 }
 
 async function syncChanges() {
@@ -436,6 +445,11 @@ function shareDocument() {
 
 <template>
   <div id="app" class="h-screen flex flex-col">
+    <!-- Loading bar -->
+    <div v-if="isLoading" class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+
     <!-- Header -->
     <div
       class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
@@ -628,5 +642,27 @@ body {
 .sync-status.saved {
   color: #10b981;
   background-color: #ecfdf5;
+}
+
+.loading-bar {
+  @apply fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden;
+}
+
+.loading-progress {
+  @apply h-full bg-primary-600;
+  width: 30%;
+  animation: loading 2s infinite ease-in-out;
+}
+
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
 }
 </style>

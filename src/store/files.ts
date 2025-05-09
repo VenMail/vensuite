@@ -304,6 +304,22 @@ export const useFileStore = defineStore("files", {
       }
     },
 
+    async moveFile(fileId: string, newFolderId: string) {
+      try {
+        const fileToMove = this.allFiles.find((f) => f.id === fileId);
+        if (!fileToMove) throw new Error("File not found");
+
+        fileToMove.folder_id = newFolderId;
+
+        const result = await this.saveDocument(fileToMove);
+
+        return result;
+      } catch (error) {
+        console.error("Error moving file:", error);
+        return false;
+      }
+    },
+
     /** Load all offline documents from localStorage */
     loadOfflineDocuments(): FileData[] {
       const offlineDocs: FileData[] = [];

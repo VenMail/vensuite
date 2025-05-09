@@ -49,14 +49,14 @@ const fileStore = useFileStore();
 const { isAuthenticated } = storeToRefs(authStore);
 
 const viewMode = ref<"grid"|"tree"|"thumbnail"|"list">("grid");
-const selectedFile = ref<string | null>(null);
+const selectedFiles = ref<Set<string>>(new Set());
 const showRecentFiles = ref(false);
 const sortBy = ref("name");
 const groupByFileType = ref(false);
 const currentFolderId = ref<string | null>(null);
 const searchValue = ref('');
 
-const showContextMenu = computed(() => !!selectedFile.value);
+const showContextMenu = computed(() => selectedFiles.value.size > 0);
 
 const templates = {
   Documents: [
@@ -119,7 +119,7 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleEscapeKey);
 });
 
-const selectedFiles = computed(() => {
+const selectedFilesList = computed(() => {
   const uniqueFiles = new Map<string, FileData>();
   
   // Process both recent and all files
@@ -149,11 +149,11 @@ const selectedFiles = computed(() => {
 });
 
 const folders = computed(() => {
-  return selectedFiles.value.filter(file => file.is_folder);
+  return selectedFilesList.value.filter(file => file.is_folder);
 });
 
 const files = computed(() => {
-  return selectedFiles.value.filter(file => !file.is_folder);
+  return selectedFilesList.value.filter(file => !file.is_folder);
 });
 
 const sortedItems = computed(() => {
@@ -190,13 +190,47 @@ async function openFolder(id: string) {
   }
 }
 
-function handleSelect(id: string | undefined, event: Event) {
-  console.log("handleSelect called with id:", id);
-  event.stopPropagation(); // Prevent event from bubbling up
-  if (id) selectedFile.value = id;
-  nextTick(() => {
-    console.log("After setting, selectedFile is:", selectedFile.value);
-  });
+function handleSelect(id: string | undefined, event?: MouseEvent) {
+  console.log('handleSelect', id, event)
+  if (!id) return;
+  
+  // If event is from checkbox click, handle single selection
+  if (event?.target && (event.target as HTMLElement).closest('.w-5.h-5, .w-4.h-4')) {
+    if (selectedFiles.value.has(id)) {
+      selectedFiles.value.delete(id);
+    } else {
+      selectedFiles.value.add(id);
+    }
+    return;
+  }
+  
+  // Handle multi-select with Ctrl/Cmd key
+  if (event?.ctrlKey || event?.metaKey) {
+    if (selectedFiles.value.has(id)) {
+      selectedFiles.value.delete(id);
+    } else {
+      selectedFiles.value.add(id);
+    }
+  }
+  // Handle range select with Shift key
+  else if (event?.shiftKey && selectedFiles.value.size > 0) {
+    const allFiles = sortedItems.value;
+    const lastSelectedIndex = allFiles.findIndex(f => f.id === Array.from(selectedFiles.value).pop());
+    const currentIndex = allFiles.findIndex(f => f.id === id);
+    
+    if (lastSelectedIndex !== -1 && currentIndex !== -1) {
+      const start = Math.min(lastSelectedIndex, currentIndex);
+      const end = Math.max(lastSelectedIndex, currentIndex);
+      
+      allFiles.slice(start, end + 1).forEach(f => {
+        if (f.id) selectedFiles.value.add(f.id);
+      });
+    }
+  }
+  // Normal single select
+  else {
+    selectedFiles.value = new Set([id]);
+  }
 }
 
 function openFile(id: string) {
@@ -230,7 +264,7 @@ async function createNewFolder() {
     };
     const result = await fileStore.makeFolder(folder);
     if (result && result.id) {
-      selectedFile.value = result.id;
+      selectedFiles.value = new Set([result.id]);
       // Trigger rename mode in FileItem component
       nextTick(() => {
         const fileItemElement = document.getElementById(`fileItem-${result.id}`);
@@ -274,8 +308,8 @@ function formatGroupName(name: string) {
 }
 
 function handleRename() {
-  if (selectedFile.value) {
-    const fileItemElement = document.getElementById(`fileItem-${selectedFile.value}`);
+  if (selectedFiles.value.size === 1) {
+    const fileItemElement = document.getElementById(`fileItem-${Array.from(selectedFiles.value)[0]}`);
     if (fileItemElement) {
       const renameEvent = new CustomEvent('start-rename');
       fileItemElement.dispatchEvent(renameEvent);
@@ -285,54 +319,81 @@ function handleRename() {
 
 // Update the contextMenuActions computed property
 const contextMenuActions = computed(() => {
-  if (!selectedFile.value) return [];
-  const file = fileStore.allFiles.find(f => f.id === selectedFile.value);
-  const isFolder = file?.is_folder;
+  const numSelected = selectedFiles.value.size;
+  if (numSelected === 0) return [];
+  
+  const selectedFilesList = Array.from(selectedFiles.value).map(id => 
+    fileStore.allFiles.find(f => f.id === id)
+  ).filter(Boolean);
+  
+  const hasFiles = selectedFilesList.some(f => !f?.is_folder);
+  const hasFolders = selectedFilesList.some(f => f?.is_folder);
   
   return [
-    { 
-      label: "Open", 
-      icon: FolderOpen, 
-      action: () => openFile(selectedFile.value!)
+    ...(numSelected === 1 ? [{
+      label: "Open",
+      icon: FolderOpen,
+      action: () => openFile(Array.from(selectedFiles.value)[0])
+    }] : []),
+    {
+      label: `Delete ${numSelected > 1 ? `(${numSelected})` : ''}`,
+      icon: Trash2,
+      action: handleBulkDelete
     },
-    { 
-      label: "Rename", 
+    ...(numSelected === 1 ? [{
+      label: "Rename",
       icon: Edit,
       action: handleRename
-    },
-    { 
-      label: "Delete", 
-      icon: Trash2,
-      action: () => fileStore.deleteFile(selectedFile.value!) 
-    },
-    ...(isFolder ? [] : [
-      { 
-        label: "Download", 
-        icon: Download,
-        action: () => console.log("Download") 
-      },
-      { 
-        label: "Share", 
-        icon: Share2,
-        action: () => console.log("Share") 
-      },
-    ]),
+    }] : []),
+    ...(hasFiles ? [{
+      label: `Download ${numSelected > 1 ? `(${numSelected})` : ''}`,
+      icon: Download,
+      action: handleBulkDownload
+    }] : []),
+    ...(numSelected === 1 ? [{
+      label: "Share",
+      icon: Share2,
+      action: () => console.log("Share")
+    }] : [])
   ];
 });
+
+async function handleBulkDelete() {
+  try {
+    const promises = Array.from(selectedFiles.value).map(id => fileStore.deleteFile(id));
+    await Promise.all(promises);
+    selectedFiles.value.clear();
+    toast.success(`Successfully deleted ${promises.length} item${promises.length > 1 ? 's' : ''}`);
+  } catch (error) {
+    console.error('Error deleting files:', error);
+    toast.error('Failed to delete some items');
+  }
+}
+
+function handleBulkDownload() {
+  const selectedFilesList = Array.from(selectedFiles.value)
+    .map(id => fileStore.allFiles.find(f => f.id === id))
+    .filter(f => f && !f.is_folder);
+  
+  // Implement download logic here
+  console.log('Downloading files:', selectedFilesList);
+}
 
 function handleOutsideClick(event: MouseEvent) {
   const target = event.target as HTMLElement;
   if (!target.closest('.file-item') && !target.closest('.context-menu')) {
-    selectedFile.value = null;
+    selectedFiles.value.clear();
   }
 }
 
 function handleEscapeKey(event: KeyboardEvent) {
   if (event.key === 'Escape') {
-    selectedFile.value = null;
-  } else if (event.key === 'F2') {
+    selectedFiles.value.clear();
+  } else if (event.key === 'F2' && selectedFiles.value.size === 1) {
     event.preventDefault();
     handleRename();
+  } else if (event.key === 'Delete' && selectedFiles.value.size > 0) {
+    handleBulkDelete();
   }
 }
 </script>
@@ -394,49 +455,86 @@ function handleEscapeKey(event: KeyboardEvent) {
               </DialogContent>
             </Dialog>
           </div>
+          <!-- Right sort actions / Selection actions -->
           <div class="flex items-center space-x-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="border-gray-300">
-                  Sort by: {{ sortBy === "name" ? "Name" : "Date" }}
-                  <ChevronDown class="ml-2 h-4 w-4" />
+            <template v-if="selectedFiles.size > 0">
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-medium text-gray-700">{{ selectedFiles.size }} selected</span>
+                <div class="h-4 w-px bg-gray-300"></div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm" @click="openFile(Array.from(selectedFiles)[0])">
+                  <FolderOpen class="h-4 w-4 mr-2" />
+                  Open
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem @click="sortBy = 'name'">
-                  Sort by Name
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="sortBy = 'date'">
-                  Sort by Date
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-600">Group by Type</span>
-              <Switch v-model="groupByFileType" />
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="text-sm text-gray-600">Recent Files</span>
-              <Switch v-model="showRecentFiles" />
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="border-gray-300">
-                  <component :is="viewMode === 'grid' ? Grid : List" class="h-4 w-4" />
+                <Button variant="ghost" size="sm" @click="handleBulkDelete">
+                  <Trash2 class="h-4 w-4 mr-2" />
+                  Delete
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem @click="viewMode = 'grid'">
-                  <Grid class="mr-2 h-4 w-4" />
-                  Grid View
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="viewMode = 'list'">
-                  <List class="mr-2 h-4 w-4" />
-                  List View
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm" @click="handleRename">
+                  <Edit class="h-4 w-4 mr-2" />
+                  Rename
+                </Button>
+                <Button variant="ghost" size="sm" @click="handleBulkDownload">
+                  <Download class="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm">
+                  <Share2 class="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+                <Button variant="ghost" size="sm" class="!ml-2" @click="selectedFiles.clear()">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </Button>
+              </div>
+            </template>
+            <template v-else>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" class="border-gray-300">
+                    Sort by: {{ sortBy === "name" ? "Name" : "Date" }}
+                    <ChevronDown class="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem @click="sortBy = 'name'">
+                    Sort by Name
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="sortBy = 'date'">
+                    Sort by Date
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-600">Group by Type</span>
+                <Switch v-model="groupByFileType" />
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-600">Recent Files</span>
+                <Switch v-model="showRecentFiles" />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" class="border-gray-300">
+                    <component :is="viewMode === 'grid' ? Grid : List" class="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem @click="viewMode = 'grid'">
+                    <Grid class="mr-2 h-4 w-4" />
+                    Grid View
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="viewMode = 'list'">
+                    <List class="mr-2 h-4 w-4" />
+                    List View
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </template>
           </div>
+          <!-- End of right sort actions / Selection actions -->
         </div>
 
         <!-- Search input -->
@@ -474,8 +572,9 @@ function handleEscapeKey(event: KeyboardEvent) {
                   'space-y-2': viewMode === 'list',
                 }">
                   <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
-                    :isSelected="selectedFile === item.id"
+                    :isSelected="selectedFiles.has(item.id || item.local_id || '')"
                     @click.stop="handleSelect(item.id, $event)"
+                    @select-file="handleSelect"
                     @open-file="openFile" />
                 </div>
               </div>
@@ -534,6 +633,17 @@ function handleEscapeKey(event: KeyboardEvent) {
       </p>
     </div>
   </div>
+
+  <!-- Add context menu -->
+  <DropdownMenu v-if="showContextMenu">
+    <DropdownMenuContent class="w-48">
+      <DropdownMenuItem v-for="action in contextMenuActions" :key="action.label"
+        @click="action.action">
+        <component :is="action.icon" class="mr-2 h-4 w-4" />
+        {{ action.label }}
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
 </template>
 
 <style scoped>

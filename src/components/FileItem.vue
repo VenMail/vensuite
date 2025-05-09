@@ -1,26 +1,28 @@
 <template>
-  <div :id="`fileItem-${file.id}`" 
-       :class="[fileItemClass, { 'drop-target': isDropTarget }]" 
-       @click="selectFile" 
-       @dblclick="openFile" 
-       draggable="true" 
-       @dragstart="onDragStart" 
-       @dragend="onDragEnd"
-       @dragover="onDragOver"
-       @dragleave="onDragLeave"
-       @drop="onDrop"
-       ref="fileItemRef">
+  <div :id="`fileItem-${file.id}`" :class="[fileItemClass, { 'drop-target': isDropTarget }]" @click="handleClick"
+    @dblclick="openFile" draggable="true" @dragstart="onDragStart" @dragend="onDragEnd" @dragover="onDragOver"
+    @dragleave="onDragLeave" @drop="onDrop" @mouseenter="showCheckbox = true" @mouseleave="showCheckbox = false"
+    ref="fileItemRef">
 
     <!-- Thumbnail and Grid Views -->
     <div v-if="isThumbnailOrGrid" class="file-item-wrapper">
       <div v-show="isRenaming" class="w-full flex items-center">
-        <Input v-model="newTitle" @keyup.enter="finishRenaming" @blur="finishRenaming" ref="renameInput" class="w-full" />
+        <Input v-model="newTitle" @keyup.enter="finishRenaming" @blur="finishRenaming" ref="renameInput"
+          class="w-full" />
         <Loader v-if="isLoading" class="h-4 w-4 animate-spin text-gray-600 ml-2" />
       </div>
 
-      <!-- File Icon and Title/Date Section -->
       <div class="flex items-center gap-4" v-show="!isRenaming">
-        <FileIcon :fileType="fileType" class="w-12 h-12 text-gray-600" />
+        <!-- File Icon and Title/Date Section -->
+        <div v-if="showCheckbox || isSelected"
+          class="w-5 h-5 z-10 bg-white border border-gray-300 flex items-center justify-center transition-all duration-200 cursor-pointer"
+          @click.stop="$emit('select-file', id, $event)">
+          <CheckIcon v-if="isSelected" class="w-3 h-3 text-primary-600" />
+        </div>
+
+        <div class="relative">
+          <FileIcon :fileType="fileType" class="w-12 h-12 text-gray-600" />
+        </div>
         <div class="flex flex-col flex-grow">
           <h3 class="text-sm font-medium truncate text-gray-800">{{ file.title }}</h3>
           <p class="text-xs text-gray-500">{{ formattedDate }}</p>
@@ -28,20 +30,30 @@
       </div>
 
       <!-- Preview Image (Bottom Right) -->
-      <img v-if="isImageFile" :src="file.file_url" :alt="file.title" class="absolute bottom-2 right-2 w-10 h-10 object-cover rounded-md shadow-md" />
+      <img v-if="isImageFile" :src="file.file_url" :alt="file.title"
+        class="absolute bottom-2 right-2 w-10 h-10 object-cover rounded-md shadow-md" />
 
       <!-- File Type Ribbon (Top Right) -->
-      <div v-if="!file.is_folder" class="absolute top-2 right-2 bg-slate-500 text-white text-xs px-2 py-0.5 rounded-lg shadow">
+      <div v-if="!file.is_folder"
+        class="absolute top-2 right-2 bg-slate-500 text-white text-xs px-2 py-0.5 rounded-lg shadow">
         {{ file.file_type?.toUpperCase() }}
       </div>
     </div>
 
     <!-- Tree View and List View -->
     <div v-else class="file-item-other-views">
-      <FileIcon :fileType="fileType" class="w-6 h-6 text-gray-500 mr-4" />
+      <div class="relative">
+        <FileIcon :fileType="fileType" class="w-6 h-6 text-gray-500 mr-4" />
+        <div v-if="showCheckbox || isSelected"
+          class="absolute bottom-0 right-0 w-4 h-4 bg-white rounded-full border border-gray-300 flex items-center justify-center transition-all duration-200 cursor-pointer"
+          @click.stop="$emit('select-file', id, $event)">
+          <CheckIcon v-if="isSelected" class="w-2.5 h-2.5 text-primary-600" />
+        </div>
+      </div>
       <div class="flex-grow min-w-0">
         <div v-show="isRenaming" class="w-full flex items-center">
-          <Input v-model="newTitle" @keyup.enter="finishRenaming" @blur="finishRenaming" ref="renameInput" class="w-full" />
+          <Input v-model="newTitle" @keyup.enter="finishRenaming" @blur="finishRenaming" ref="renameInput"
+            class="w-full" />
           <Loader v-if="isLoading" class="h-4 w-4 animate-spin text-gray-600 ml-2" />
         </div>
         <template v-if="!isRenaming">
@@ -71,7 +83,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, PropType, onMounted } from 'vue';
-import { Settings, Loader } from 'lucide-vue-next';
+import { Settings, Loader, CheckIcon } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import FileIcon from './FileIcon.vue';
 import { Input } from '@/components/ui/input';
@@ -96,6 +108,7 @@ const props = defineProps({
 });
 
 const isDropTarget = ref(false);
+const showCheckbox = ref(false);
 
 const emit = defineEmits(['select-file', 'open-file', 'update-file', 'delete-file']);
 
@@ -115,7 +128,7 @@ const fileType = computed(() => (is_folder ? 'folder' : file_type));
 
 const fileItemClass = computed(() => {
   const baseClass = 'p-1 transition-all duration-200 cursor-pointer';
-  const selectedClass = props.isSelected ? 'ring-2 ring-slate-400 bg-slate-50' : 'hover:bg-gray-100';
+  const selectedClass = props.isSelected ? 'ring-2 ring-primary-400 bg-primary-50' : 'hover:bg-gray-100';
   const dropTargetClass = props.file.is_folder ? 'drop-zone' : '';
 
   switch (props.viewMode) {
@@ -132,7 +145,14 @@ const fileItemClass = computed(() => {
 
 const formattedDate = computed(() => (created_at ? new Date(created_at).toLocaleDateString() : 'N/A'));
 
-const selectFile = () => emit('select-file', id);
+const handleClick = (event: MouseEvent) => {
+  console.log('handleClick', event);
+  // Don't trigger selection if clicking on buttons or inputs
+  if (!(event.target as HTMLElement).closest('button, input')) {
+    emit('select-file', id);
+  }
+};
+
 const openFile = () => emit('open-file', id);
 
 const onDragOver = (event: DragEvent) => {
@@ -182,7 +202,7 @@ const finishRenaming = async () => {
   if (newTitle.value && newTitle.value !== title) {
     isLoading.value = true;
     try {
-      const updatedFile = await fileStore.saveDocument({ ...props.file, title: newTitle.value }, true);
+      const updatedFile = await fileStore.saveDocument({ ...props.file, title: newTitle.value });
       emit('update-file', updatedFile);
     } catch (error) {
       console.error('Error renaming file:', error);
@@ -248,6 +268,7 @@ onMounted(() => {
 .drop-target::after {
   opacity: 1;
 }
+
 .file-item-wrapper {
   position: relative;
   width: 100%;
