@@ -17,6 +17,108 @@ export default defineConfig({
     vue(),
     univerPlugin(),
   ],
+  build: {
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 2000,
+    // Use a more modern target that supports BigInt
+    target: 'es2020',
+    // Optimize memory usage during build
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        // Reduce memory usage
+        keep_infinity: true,
+        passes: 1
+      }
+    },
+    // Split chunks more intelligently based on app structure
+    rollupOptions: {
+      output: {
+        // Ensure entry chunks are reasonably sized
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        // Optimize chunking strategy
+        manualChunks: (id) => {
+          // App code
+          if (id.includes('/src/views/')) {
+            return 'views';
+          }
+          if (id.includes('/src/components/')) {
+            return 'components';
+          }
+          if (id.includes('/src/store/')) {
+            return 'store';
+          }
+          if (id.includes('/src/plugins/')) {
+            return 'plugins';
+          }
+          
+          // Node modules
+          if (id.includes('node_modules')) {
+            // Split Univer.js packages by functionality
+            if (id.includes('@univerjs')) {
+              if (id.includes('@univerjs/sheets')) {
+                return 'vendor-univerjs-sheets';
+              }
+              if (id.includes('@univerjs/docs')) {
+                return 'vendor-univerjs-docs';
+              }
+              if (id.includes('@univerjs/slides')) {
+                return 'vendor-univerjs-slides';
+              }
+              if (id.includes('@univerjs/engine')) {
+                return 'vendor-univerjs-engine';
+              }
+              if (id.includes('@univerjs/ui')) {
+                return 'vendor-univerjs-ui';
+              }
+              if (id.includes('@univerjs/core')) {
+                return 'vendor-univerjs-core';
+              }
+              // Other Univer packages
+              return 'vendor-univerjs-other';
+            }
+            
+            // Split TipTap packages
+            if (id.includes('@tiptap')) {
+              if (id.includes('@tiptap/extension')) {
+                return 'vendor-tiptap-extensions';
+              }
+              if (id.includes('@tiptap/vue-3')) {
+                return 'vendor-tiptap-vue';
+              }
+              return 'vendor-tiptap-core';
+            }
+            
+            // Split Vue ecosystem
+            if (id.includes('vue') || id.includes('pinia') || id.includes('router')) {
+              return 'vendor-vue';
+            }
+            
+            // Split UI components
+            if (id.includes('lucide') || id.includes('radix') || id.includes('tailwind')) {
+              return 'vendor-ui';
+            }
+            
+            // Other large dependencies
+            if (id.includes('chart.js')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('exceljs') || id.includes('docx')) {
+              return 'vendor-office-formats';
+            }
+            if (id.includes('yjs') || id.includes('hocuspocus')) {
+              return 'vendor-collaboration';
+            }
+            
+            // Other dependencies
+            return 'vendor';
+          }
+        }
+      }
+    }
+  },
   define: {
     'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL),
     'import.meta.env.VITE_AUTH_URL': JSON.stringify(process.env.VITE_AUTH_URL),
