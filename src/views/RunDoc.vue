@@ -12,7 +12,6 @@ import {
   User,
   Wifi,
   WifiOff,
-  Save,
 } from "lucide-vue-next";
 import { useDebounceFn, useFavicon } from "@vueuse/core";
 import { useRoute, useRouter } from "vue-router";

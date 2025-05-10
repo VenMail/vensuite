@@ -24,6 +24,32 @@ export const useFileStore = defineStore("files", {
   }),
 
   actions: {
+    /** Upload a file to the server with progress tracking */
+    async uploadFile(file: File, onProgress?: (progress: number) => void): Promise<boolean> {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await axios.post(UPLOAD_ENDPOINT, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${this.getToken()}`
+          },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total && onProgress) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              onProgress(percentCompleted);
+            }
+          }
+        });
+        
+        return response.status === 200 || response.status === 201;
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        this.lastError = 'Failed to upload file';
+        return false;
+      }
+    },
     /** Get authentication token from auth store or localStorage */
     getToken() {
       const authStore = useAuthStore();

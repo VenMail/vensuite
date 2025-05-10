@@ -14,3 +14,4 @@ services:
       - NODE_ENV=production
       - VITE_API_BASE_URL=https://app.venmail.io/api/v1
       - VITE_AUTH_URL=https://app.venmail.io/auth/oauth
+      - SOCKET_BASE_URL=wss://app.venmail.io:8443

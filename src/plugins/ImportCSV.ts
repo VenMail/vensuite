@@ -1,33 +1,32 @@
-import type {
-  ICellData,
-  Workbook,
-} from '@univerjs/core'
 import {
   CommandType,
+  ICellData,
+  ICommand,
   ICommandService,
   IUniverInstanceService,
+  Inject,
+  Injector,
   Plugin,
   UniverInstanceType,
+  Workbook,
 } from '@univerjs/core'
 import { SetRangeValuesCommand } from '@univerjs/sheets'
 import {
   ComponentManager,
-  IMenuService,
-  MenuGroup,
+  IMenuManagerService,
   MenuItemType,
-  MenuPosition,
+  RibbonStartGroup,
 } from '@univerjs/ui'
-import type { IAccessor } from '@wendellhu/redi'
-import { Inject, Injector } from '@wendellhu/redi'
 import { FolderSingle } from '@univerjs/icons'
+
 /**
  * wait user select csv file
  */
-function waitUserSelectCSVFile(onSelect: (data: {
+const waitUserSelectCSVFile = (onSelect: (data: {
   data: string[][]
   colsCount: number
   rowsCount: number
-}) => void) {
+}) => void) => {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = '.csv'
@@ -64,7 +63,7 @@ function waitUserSelectCSVFile(onSelect: (data: {
  * @param csv
  * @returns { v: string }[][]
  */
-function parseCSV2UniverData(csv: string[][]): ICellData[][] {
+const parseCSV2UniverData = (csv: string[][]): ICellData[][] => {
   return csv.map((row) => {
     return row.map((cell) => {
       return {
@@ -79,20 +78,20 @@ function parseCSV2UniverData(csv: string[][]): ICellData[][] {
  * A simple Plugin example, show how to write a plugin.
  */
 class ImportCSVButtonPlugin extends Plugin {
-  static override pluginName = 'import-csv-plugin'
-  constructor(
-      // inject injector, required
-      @Inject(Injector) override readonly _injector: Injector,
-      // inject menu service, to add toolbar button
-      @Inject(IMenuService) private menuService: IMenuService,
-      // inject command service, to register command handler
-      @Inject(ICommandService) private readonly commandService: ICommandService,
-      // inject component manager, to register icon component
-      @Inject(ComponentManager) private readonly componentManager: ComponentManager,
+  static pluginName = 'import-csv-plugin'
+  constructor (
+    _config: null,
+    // inject injector, required
+    @Inject(Injector) readonly _injector: Injector,
+    // inject menu service, to add toolbar button
+    @Inject(IMenuManagerService) private readonly menuManagerService: IMenuManagerService,
+    // inject command service, to register command handler
+    @Inject(ICommandService) private readonly commandService: ICommandService,
+    // inject component manager, to register icon component
+    @Inject(ComponentManager) private readonly componentManager: ComponentManager,
   ) {
-    super()
+    super();
   }
-
   /**
    * The first lifecycle of the plugin mounted on the Univer instance,
    * the Univer business instance has not been created at this time.
@@ -102,24 +101,30 @@ class ImportCSVButtonPlugin extends Plugin {
   onStarting() {
     // register icon component
     this.componentManager.register('FolderSingle', FolderSingle)
-
+    
     const buttonId = 'import-csv-button'
-
-    const menuItem = {
+    
+    const menuItemFactory = () => ({
       id: buttonId,
       title: 'Import CSV',
       tooltip: 'Import CSV',
       icon: 'FolderSingle', // icon name
       type: MenuItemType.BUTTON,
-      group: MenuGroup.CONTEXT_MENU_DATA,
-      positions: [MenuPosition.TOOLBAR_START],
-    }
-    this.menuService.addMenuItem(menuItem, {})
-
-    const command = {
+    })
+    
+    this.menuManagerService.mergeMenu({
+      [RibbonStartGroup.OTHERS]: {
+        [buttonId]: {
+          order: 10,
+          menuItemFactory
+        }
+      },
+    })
+    
+    const command: ICommand = {
       type: CommandType.OPERATION,
       id: buttonId,
-      handler: (accessor: IAccessor) => {
+      handler: (accessor) => {
         // inject univer instance service
         const univer = accessor.get(IUniverInstanceService)
         const commandService = accessor.get(ICommandService)

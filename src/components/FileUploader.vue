@@ -22,8 +22,8 @@
           Drag and drop files or folders here, or
         </p>
         <div class="flex justify-center space-x-4">
-          <Button @click="$refs.fileInput.click()">Select Files</Button>
-          <Button @click="$refs.folderInput.click()">Select Folder</Button>
+          <Button @click="fileInput?.click()">Select Files</Button>
+          <Button @click="folderInput?.click()">Select Folder</Button>
         </div>
         <input
           ref="fileInput"
@@ -155,6 +155,8 @@ const fileStore = useFileStore();
 const emit = defineEmits(["close", "upload"]);
 
 const isDragging = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
+const folderInput = ref<HTMLInputElement | null>(null);
 const files = ref<FileData[]>([]);
 const isUploading = ref(false);
 

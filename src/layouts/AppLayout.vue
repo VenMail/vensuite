@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import Sidebar from './Sidebar.vue'
-import { Menu, Globe, Search, Filter, Moon, Sun, Plus } from 'lucide-vue-next'
+import { Menu, Search, Filter, Moon, Sun, Plus } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 
-const props = defineProps({
+defineProps({
   title: {
     type: String,
     default: 'VenMail'

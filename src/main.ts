@@ -16,7 +16,7 @@ import RunDoc from './views/RunDoc.vue'
 import Login from './views/Login.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
-import { sluggify } from './utils/lib'
+// Import utils as needed
 import Editor from './components/forms/Editor.vue'
 import Forms from './views/Forms.vue'
 import { FileData } from './types'
@@ -84,7 +84,7 @@ router.beforeEach(async (to, _from, next) => {
 
 // UmoEditor setup
 app.use(useUmoEditor, {
-  onSave: async (content: { html: string }, page: any, doc: any) => {
+  onSave: async (content: { html: string }, _page: any, doc: any) => {
     const routeId = router.currentRoute.value.params.id as string;
     let currentDoc = routeId && routeId !== "undefined" ? await documentStore.loadDocument(routeId) : null;
     console.log('currentDoc:', currentDoc);

@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick, onUnmounted, watchEffect } from "vue";
+import { ref, computed, onMounted, nextTick, onUnmounted, watchEffect } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   Grid,
   List,
   Plus,
-  Settings,
   ChevronDown,
   FolderOpen,
   Upload,
@@ -15,11 +14,9 @@ import {
   Download,
   Share2,
 } from "lucide-vue-next";
-import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/store/auth";
 import { useFileStore } from "@/store/files";
-import Input from "@/components/ui/input/Input.vue";
 import Button from "@/components/ui/button/Button.vue";
 import Switch from "@/components/ui/switch/Switch.vue";
 import {
@@ -60,14 +57,14 @@ const showContextMenu = computed(() => selectedFiles.value.size > 0);
 
 const templates = {
   Documents: [
-    { name: "Blank Document", icon: defaultIcons.IconMicrosoftWord },
-    { name: "Resume", icon: defaultIcons.IconMicrosoftWord },
-    { name: "Letter", icon: defaultIcons.IconMicrosoftWord },
+    { name: "Blank Document", icon: "IconMicrosoftWord" },
+    { name: "Resume", icon: "IconMicrosoftWord" },
+    { name: "Letter", icon: "IconMicrosoftWord" },
   ],
   Spreadsheets: [
-    { name: "Blank Spreadsheet", icon: defaultIcons.IconMicrosoftExcel },
-    { name: "Budget", icon: defaultIcons.IconMicrosoftExcel },
-    { name: "Invoice", icon: defaultIcons.IconMicrosoftExcel },
+    { name: "Blank Spreadsheet", icon: "IconMicrosoftExcel" },
+    { name: "Budget", icon: "IconMicrosoftExcel" },
+    { name: "Invoice", icon: "IconMicrosoftExcel" },
   ],
 };
 
@@ -327,7 +324,8 @@ const contextMenuActions = computed(() => {
   ).filter(Boolean);
   
   const hasFiles = selectedFilesList.some(f => !f?.is_folder);
-  const hasFolders = selectedFilesList.some(f => f?.is_folder);
+  // Check for folders if needed in the future
+  // const hasFolders = selectedFilesList.some(f => f?.is_folder);
   
   return [
     ...(numSelected === 1 ? [{
