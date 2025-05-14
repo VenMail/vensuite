@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 import { Router } from 'vue-router'
 
-const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8001/auth/oauth'
+const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/auth/oauth'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({

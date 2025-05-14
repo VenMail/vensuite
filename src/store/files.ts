@@ -4,7 +4,7 @@ import { useAuthStore } from "./auth";
 import { FileData } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
-const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
+const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
 const UPLOAD_ENDPOINT = `${API_BASE_URI}/app-files/upload`;
 

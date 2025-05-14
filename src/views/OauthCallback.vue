@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
+import { LoaderCircle } from 'lucide-vue-next'
 
 const router = useRouter()
 const API_BASE_URI =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 
 // Function to get a cookie value by name
 function getCookie(name: string): string | undefined {
@@ -83,7 +84,39 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <p>Finishing authentication...</p>
+  <div class="min-h-screen flex flex-col justify-between items-center bg-white text-black">
+    <!-- Logo header -->
+    <div class="flex items-center justify-between w-full border-b border-[#A9C9D64D] p-6">
+      <div class="w-[150px]">
+        <img src="/logo.png" alt="VenMail Logo" class="h-6" />
+      </div>
+      <div class="w-[150px] flex justify-end">
+        <!-- Consistent empty space for layout balance -->
+      </div>
+    </div>
+    
+    <!-- Main content -->
+    <div class="relative w-full max-w-md overflow-hidden p-8 text-center">
+      <div class="mb-8">
+        <h2 class="mb-4 text-[40px] text-black font-semibold leading-normal">
+          Completing Authentication
+        </h2>
+        <div class="flex flex-col items-center justify-center space-y-4">
+          <LoaderCircle class="h-8 w-8 animate-spin text-primary-600" />
+          <p class="text-gray-600">Securely connecting to Venmail services...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consistent footer -->
+    <div class="text-base text-center text-black my-6 space-x-2">
+      <a href="https://venmail.io/resources/privacy-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Privacy & terms</a>
+      <span>•</span>
+      <a href="https://venmail.io/resources/cookie-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Cookie policy</a>
+      <span>•</span>
+      <a href="https://venmail.io/resources/cookie_ccpa-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Cookie & CCPA preferences</a>
+      <span>•</span>
+      <a href="https://venmail.io/resources/ai-principles" target="_blank" rel="noopener noreferrer" class="hover:underline">AI Principles</a>
+    </div>
   </div>
 </template>

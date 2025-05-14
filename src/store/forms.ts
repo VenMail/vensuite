@@ -4,7 +4,7 @@ import { AppForm, FormResponse, FormResponseData } from "@/types";
 import { useAuthStore } from "./auth";
 
 const API_BASE_URI =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 const FORMS_ENDPOINT = `${API_BASE_URI}/app-forms`;
 
 export const useFormStore = defineStore("forms", {
