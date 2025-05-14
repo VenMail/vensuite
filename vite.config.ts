@@ -40,19 +40,6 @@ export default defineConfig({
         assetFileNames: 'assets/[name]-[hash].[ext]',
         // Optimize chunking strategy
         manualChunks: (id) => {
-          // App code
-          if (id.includes('/src/views/')) {
-            return 'views';
-          }
-          if (id.includes('/src/components/')) {
-            return 'components';
-          }
-          if (id.includes('/src/store/')) {
-            return 'store';
-          }
-          if (id.includes('/src/plugins/')) {
-            return 'plugins';
-          }
           
           // Node modules
           if (id.includes('node_modules')) {
@@ -79,28 +66,7 @@ export default defineConfig({
               // Other Univer packages
               return 'vendor-univerjs-other';
             }
-                        
-            // Split Vue ecosystem
-            if (id.includes('vue') || id.includes('pinia') || id.includes('router')) {
-              return 'vendor-vue';
-            }
-            
-            // Split UI components
-            if (id.includes('lucide') || id.includes('radix') || id.includes('tailwind')) {
-              return 'vendor-ui';
-            }
-            
-            // Other large dependencies
-            if (id.includes('chart.js')) {
-              return 'vendor-charts';
-            }
-            if (id.includes('exceljs') || id.includes('docx')) {
-              return 'vendor-office-formats';
-            }
-            if (id.includes('yjs') || id.includes('hocuspocus')) {
-              return 'vendor-collaboration';
-            }
-            
+
             // Other dependencies
             return 'vendor';
           }
