@@ -79,18 +79,7 @@ export default defineConfig({
               // Other Univer packages
               return 'vendor-univerjs-other';
             }
-            
-            // Split TipTap packages
-            if (id.includes('@tiptap')) {
-              if (id.includes('@tiptap/extension')) {
-                return 'vendor-tiptap-extensions';
-              }
-              if (id.includes('@tiptap/vue-3')) {
-                return 'vendor-tiptap-vue';
-              }
-              return 'vendor-tiptap-core';
-            }
-            
+                        
             // Split Vue ecosystem
             if (id.includes('vue') || id.includes('pinia') || id.includes('router')) {
               return 'vendor-vue';
