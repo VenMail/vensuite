@@ -56,6 +56,8 @@ const lastSaveResult = ref<{
   offline: boolean;
   error: string | null;
 } | null>(null);
+const translationsLoaded = ref(false);
+const editorInitialized = ref(false);
 
 // Computed properties
 const syncStatus = computed(() => {
@@ -150,7 +152,7 @@ const debouncedSave = useDebounceFn(
   { maxWait: 5000 }
 );
 
-const options = ref({
+const options = computed(() => ({
   document: {
     title: "Untitled Document",
     content: "",
@@ -171,7 +173,7 @@ const options = ref({
     },
   },
   locale: "en-US",
-  translations: {
+  translations: translationsLoaded.value ? {
     base: {
       color: {
         text: "Font Colour",
@@ -180,7 +182,8 @@ const options = ref({
         text: "Font Background",
       },
     },
-  },
+  } : {},
+  welcome: "Careful! Only open dev console if you know what you are doing",
   toolbar: {
     defaultMode: "ribbon",
     enableSourceEditor: true,
@@ -192,7 +195,7 @@ const options = ref({
       useCustomMethod: false,
     },
   },
-});
+}));
 
 const titleRef = ref<HTMLElement | null>(null);
 const editorRef = ref<any>(null);
@@ -383,17 +386,19 @@ function startEditing() {
 // Icon reference and favicon setup
 const iconRef = ref<HTMLElement | null>(null);
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener("online", updateOnlineStatus);
   window.addEventListener("offline", updateOnlineStatus);
 
   console.log("RunDoc component mounted, initializing editor");
 
-  // Initialize the editor
-  nextTick(() => {
+  // Initialize editor after loading translations
+  nextTick(async () => {
     if (editorRef.value) {
-      editorRef.value.setLocale("en-US");
-      console.log("Editor initialized");
+      await editorRef.value.setLocale("en-US");
+      translationsLoaded.value = true;
+      editorInitialized.value = true;
+      console.log("Editor initialized with translations");
     }
   });
 
@@ -555,11 +560,17 @@ function shareDocument() {
       </div>
     </div>
     <umo-editor
+      v-if="editorInitialized && translationsLoaded"
       ref="editorRef"
       v-bind="options"
       @saved="handleSavedEvent"
       @created="handleEditorCreated"
     />
+    <div v-else class="flex-1 flex items-center justify-center">
+      <div class="animate-pulse text-gray-500">
+        Loading editor...
+      </div>
+    </div>
   </div>
 </template>
 
