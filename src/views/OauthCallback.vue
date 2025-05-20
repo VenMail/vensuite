@@ -84,7 +84,7 @@ onMounted(() => {
     <!-- Logo header -->
     <div class="flex items-center justify-between w-full border-b border-[#A9C9D64D] p-6">
       <div class="w-[150px]">
-        <img src="/logo.png" alt="VenMail Logo" class="h-6" />
+        <img src="/logo-black.png" alt="VenMail Logo" class="h-8 w-full" />
       </div>
       <div class="w-[150px] flex justify-end">
         <!-- Consistent empty space for layout balance -->

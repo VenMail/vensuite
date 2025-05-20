@@ -36,7 +36,7 @@ onMounted(async () => {
     <!-- Logo header -->
     <div class="flex items-center justify-between w-full border-b border-[#A9C9D64D] p-6">
       <div class="w-[150px]">
-        <img src="/logo.png" alt="VenMail Logo" class="h-6" />
+        <img src="/logo-black.png" alt="VenMail Logo" class="h-8 w-full" />
       </div>
       <div class="w-[150px] flex justify-end">
         <!-- Globe icon could go here if needed -->
@@ -44,10 +44,10 @@ onMounted(async () => {
     </div>
     
     <!-- Main content -->
-    <div class="relative w-full max-w-md overflow-hidden p-8">
+    <div class="relative w-full max-w-lg overflow-hidden p-8">
       <div class="mb-8 text-center">
-        <h2 class="mb-4 text-[40px] text-black font-semibold leading-normal">
-          Welcome
+        <h2 class="mb-4 text-4xl text-black font-semibold leading-normal">
+          Welcome to Venmail Files
         </h2>
         <p class="text-black mb-6">
           Login to manage your files and folders on Venmail
@@ -55,9 +55,10 @@ onMounted(async () => {
       </div>
 
       <Button 
-        class="w-full bg-primary-600 py-3 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+        class="w-full bg-primary-600 py-4 rounded-sm text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
         @click="loginWithVenmail"
         :disabled="processing"
+        size="lg"
       >
         <LoaderCircle v-if="processing" class="h-5 w-5 animate-spin mr-2" />
         Login with Venmail

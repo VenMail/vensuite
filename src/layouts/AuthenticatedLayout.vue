@@ -144,7 +144,7 @@ const mainContentClasses = computed(() =>
               'flex items-center',
               isMobile ? '!ml-[-4px] scale-90' : 'mr-[158px]'
             )">
-              <img src="/logo.png" alt="VDrive Logo" class="h-8" /> VCloud
+              <img src="/logo-black.png" alt="VenMail Logo" class="h-8 w-full" />
             </div>
 
             <!-- Search Bar -->

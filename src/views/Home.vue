@@ -108,7 +108,7 @@ onMounted(async () => {
   }
   
   document.title = "Home";
-  useFavicon("/logo.png")
+  useFavicon("/logo-black.png")
 });
 
 onUnmounted(() => {
@@ -618,7 +618,7 @@ function handleEscapeKey(event: KeyboardEvent) {
     class="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
     <div class="bg-white backdrop-filter backdrop-blur-lg p-10 rounded-lg shadow-xl border border-gray-200">
       <div class="flex items-center justify-center mb-6">
-        <img src="/logo.png" alt="Venmail Logo" class="h-12" />
+        <img src="/logo-black.png" alt="VenMail Logo" class="h-8 w-full" />
       </div>
       <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">
         Welcome to Venmail File Manager
