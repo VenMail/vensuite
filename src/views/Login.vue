@@ -9,24 +9,35 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const processing = ref(false)
+const error = ref<string | null>(null)
 
 const redirectUri = `${window.location.origin}/oauth/callback`
 const authUrl = ref(authStore.getAuthUrl(redirectUri))
 
 function loginWithVenmail() {
   processing.value = true
+  error.value = null
   const currentPath = route.query.redirect as string || '/'
-  localStorage.setItem('loginRedirect', currentPath)
+  // Don't redirect back to login page
+  const redirectPath = currentPath === '/login' ? '/' : currentPath
+  localStorage.setItem('loginRedirect', redirectPath)
   window.location.href = authUrl.value
 }
 
 onMounted(async () => {
-  const token = authStore.getToken() || route.query.token as string
-  if (token) {
+  try {
+    const token = authStore.getToken() || route.query.token as string
+    if (!token) return
+
     await authStore.login(token)
     const redirect = route.query.redirect as string || localStorage.getItem('loginRedirect') || '/'
     localStorage.removeItem('loginRedirect')
     await router.push(redirect)
+  } catch (err) {
+    error.value = 'Failed to authenticate. Please try again.'
+    console.error('Login error:', err)
+  } finally {
+    processing.value = false
   }
 })
 </script>
@@ -54,6 +65,10 @@ onMounted(async () => {
         </p>
       </div>
 
+      <div v-if="error" class="mb-4 p-3 bg-red-50 text-red-600 rounded-sm text-sm">
+        {{ error }}
+      </div>
+
       <Button 
         class="w-full bg-primary-600 py-4 rounded-sm text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
         @click="loginWithVenmail"
@@ -61,7 +76,7 @@ onMounted(async () => {
         size="lg"
       >
         <LoaderCircle v-if="processing" class="h-5 w-5 animate-spin mr-2" />
-        Login with Venmail
+        {{ processing ? 'Logging in...' : 'Login with Venmail' }}
       </Button>
     </div>
 

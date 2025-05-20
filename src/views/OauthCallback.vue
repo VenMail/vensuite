@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { onMounted } from "vue";
-import { LoaderCircle } from "lucide-vue-next";
+import { onMounted, ref } from "vue";
+import { LoaderCircle, AlertCircle } from "lucide-vue-next";
+import { Button } from '@/components/ui/button';
 
 const router = useRouter();
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+const error = ref<string | null>(null);
+const isLoading = ref(true);
 
 // Function to get a cookie value by name
 function getCookie(name: string): string | undefined {
@@ -28,11 +31,14 @@ function authenticateWithCookie(authCookie: string) {
         localStorage.setItem("venAuthToken", data.token);
         router.push("/");
       } else {
-        console.error("Authentication failed:", data.message);
+        error.value = data.message || "Authentication failed. Please try again.";
+        isLoading.value = false;
       }
     })
     .catch((error) => {
       console.error("Error during authentication with cookie:", error);
+      error.value = "Failed to connect to authentication service. Please try again.";
+      isLoading.value = false;
     });
 }
 
@@ -49,17 +55,23 @@ function authenticateWithCode(code: string) {
     .then((data) => {
       if (data.success) {
         console.log("Auth suc", data);
-        // todo: also store expiry time of tokens
         document.cookie = `venAuthToken=${data.token}; path=/`;
         localStorage.setItem("venAuthToken", data.token);
         router.push("/");
       } else {
-        console.error("Authentication failed:", data.message);
+        error.value = data.message || "Authentication failed. Please try again.";
+        isLoading.value = false;
       }
     })
     .catch((error) => {
       console.error("Error during authentication with code:", error);
+      error.value = "Failed to connect to authentication service. Please try again.";
+      isLoading.value = false;
     });
+}
+
+function returnToLogin() {
+  router.push('/login');
 }
 
 // Process OAuth callback on mount
@@ -72,7 +84,8 @@ onMounted(() => {
   } else if (code) {
     authenticateWithCode(code);
   } else {
-    console.error("No code or cookie found in callback");
+    error.value = "No authentication code or cookie found. Please try logging in again.";
+    isLoading.value = false;
   }
 });
 </script>
@@ -92,14 +105,25 @@ onMounted(() => {
     </div>
 
     <!-- Main content -->
-    <div class="relative w-full max-w-md overflow-hidden p-8 text-center">
+    <div class="relative w-full max-w-lg overflow-hidden p-8 text-center">
       <div class="mb-8">
         <h2 class="mb-4 text-[40px] text-black font-semibold leading-normal">
-          Completing Authentication
+          {{ error ? `Oops! Login Failed` : 'Completing Authentication' }}
         </h2>
         <div class="flex flex-col items-center justify-center space-y-4">
-          <LoaderCircle class="h-8 w-8 animate-spin text-primary-600" />
-          <p class="text-gray-600">Securely connecting to Venmail services...</p>
+          <template v-if="isLoading">
+            <LoaderCircle class="h-8 w-8 animate-spin text-primary-600" />
+            <p class="text-gray-600">Securely connecting to Venmail services...</p>
+          </template>
+          <template v-else-if="error">
+            <p class="text-red-600 mb-4">We're sorry, an error has occured and we're unable to log you in. Please try again.</p>
+            <Button 
+              @click="returnToLogin"
+              class="bg-primary-600 text-white px-6 py-2 rounded-sm hover:bg-primary-700"
+            >
+              Return to Login
+            </Button>
+          </template>
         </div>
       </div>
     </div>
