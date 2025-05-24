@@ -136,7 +136,6 @@ onMounted(async () => {
     
     const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, '#38a169').replace(/1em/g, '')
     const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || '')}`
-    useFavicon(iconDataURL)
   }
 })
 
@@ -176,7 +175,6 @@ onMounted(async () => {
 
     const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, '#38a169').replace(/1em/g, '')
     const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || '')}`
-    useFavicon(iconDataURL)
   }
 })
 

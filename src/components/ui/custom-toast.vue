@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle, Loader2 } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import type { Component } from 'vue'
 
 const props = defineProps<{
@@ -19,6 +19,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
+
+const theme = inject('theme') as { isDark: { value: boolean } }
 
 const variantIcon = computed<Component | null>(() => {
   switch (props.variant) {
@@ -40,24 +42,29 @@ const variantIcon = computed<Component | null>(() => {
 const variantColor = computed(() => {
   switch (props.variant) {
     case 'success':
-      return 'text-green-500'
+      return 'text-green-500 dark:text-green-400'
     case 'error':
-      return 'text-red-500'
+      return 'text-red-500 dark:text-red-400'
     case 'info':
-      return 'text-blue-500'
+      return 'text-blue-500 dark:text-blue-400'
     case 'warning':
-      return 'text-yellow-500'
+      return 'text-yellow-500 dark:text-yellow-400'
     case 'promise':
-      return 'text-gray-500'
+      return 'text-blue-500 dark:text-blue-400'
     default:
       return ''
   }
 })
+
+const toastClasses = computed(() => cn(
+  'relative flex min-w-[350px] items-center rounded-t-none rounded-b-sm p-4 shadow overflow-hidden',
+  'bg-white dark:bg-gray-800',
+  'border border-gray-200 dark:border-gray-700'
+))
 </script>
 
 <template>
-  <div class="relative flex min-w-[350px] items-center rounded-t-none rounded-b-sm bg-white p-4 shadow overflow-hidden"
-  >
+  <div :class="toastClasses">
     <div class="flex flex-1 items-center justify-between gap-x-4">
       <div class="flex items-center space-x-3 min-w-0">
         <component
@@ -65,11 +72,11 @@ const variantColor = computed(() => {
           :is="variantIcon"
           :class="['h-5 w-5', variantColor, props.class]"
         />
-        <p class="text-sm text-neutral-900 whitespace-normal">{{ message }}</p>
+        <p class="text-sm text-gray-900 dark:text-gray-100 whitespace-normal">{{ message }}</p>
         <button
           v-if="action"
           @click="action.onClick"
-          class="shrink-0 text-sm font-medium text-primary-600 hover:text-primary-700"
+          class="shrink-0 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
         >
           {{ action.label }}
         </button>
@@ -78,18 +85,18 @@ const variantColor = computed(() => {
         @click="onClose"
         class="shrink-0 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       >
-        <X class="h-4 w-4 text-neutral-400" />
+        <X class="h-4 w-4 text-gray-400 dark:text-gray-500" />
         <span class="sr-only">Close</span>
       </button>
     </div>
     <div class="absolute bottom-0 left-0 h-0.5 w-full overflow-hidden">
       <div
         v-if="progress === undefined"
-        class="animate-progress h-full bg-primary-600"
+        class="animate-progress h-full bg-primary-600 dark:bg-primary-500"
       />
       <div
         v-else
-        class="h-full bg-primary-600 transition-all duration-300"
+        class="h-full bg-primary-600 dark:bg-primary-500 transition-all duration-300"
         :style="{ width: `${progress}%` }"
       />
     </div>

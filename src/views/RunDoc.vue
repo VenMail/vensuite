@@ -419,7 +419,6 @@ onMounted(async () => {
         .replace(/currentColor/g, "#4d7cfe")
         .replace(/1em/g, "");
       const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || "")}`;
-      useFavicon(iconDataURL);
     }
   });
 });
