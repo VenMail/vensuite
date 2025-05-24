@@ -37,7 +37,7 @@ const menuItems = [
 
 <template>
   <div :class="cn(
-    'flex items-center',
+    'flex items-center ml-auto',
     props.isMobile ? 'ml-1' : 'space-x-4 ml-auto'
   )">
     <button

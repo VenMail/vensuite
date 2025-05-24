@@ -46,7 +46,7 @@ const fileStore = useFileStore();
 const { isAuthenticated } = storeToRefs(authStore);
 const theme = inject('theme') as { isDark: { value: boolean } };
 
-const viewMode = ref<"grid"|"tree"|"thumbnail"|"list">("grid");
+const viewMode = ref<"grid" | "tree" | "thumbnail" | "list">("grid");
 const selectedFiles = ref<Set<string>>(new Set());
 const showRecentFiles = ref(false);
 const sortBy = ref("name");
@@ -85,15 +85,13 @@ onMounted(async () => {
       const attachId = route.params?.id as string
       const doc = await fileStore.importAttachment(attachId)
       if (doc) {
-        toast({
-          description: doc.file_name + " imported successfully"
-        })
+        toast.info(doc.file_name + " imported successfully")
       }
       router.replace("/")
     }
   })
 
-  document.addEventListener('click', handleOutsideClick);
+  document.addEventListener('click', handleOutsideClick); 
   document.addEventListener('keydown', handleEscapeKey);
 
   if (authStore.getToken()) {
@@ -107,7 +105,7 @@ onMounted(async () => {
       fileStore.allFiles = fileStore.mergeDocuments(onlineDocs, offlineDocs);
     }
   }
-  
+
   document.title = "Home";
 });
 
@@ -118,10 +116,10 @@ onUnmounted(() => {
 
 const selectedFilesList = computed(() => {
   const uniqueFiles = new Map<string, FileData>();
-  
+
   // Process both recent and all files
-  const sourceFiles = showRecentFiles.value 
-    ? fileStore.recentFiles 
+  const sourceFiles = showRecentFiles.value
+    ? fileStore.recentFiles
     : fileStore.allFiles;
 
   // Deduplicate files by ID
@@ -133,10 +131,10 @@ const selectedFilesList = computed(() => {
 
   // Apply folder filtering
   return Array.from(uniqueFiles.values()).filter(file => {
-    const folderMatch = currentFolderId.value 
+    const folderMatch = currentFolderId.value
       ? file.folder_id === currentFolderId.value
       : !file.folder_id;
-    
+
     const searchMatch = !searchValue.value ||
       file.title?.toLowerCase().includes(searchValue.value.toLowerCase()) ||
       file.file_name?.toLowerCase().includes(searchValue.value.toLowerCase());
@@ -190,7 +188,7 @@ async function openFolder(id: string) {
 function handleSelect(id: string | undefined, event?: MouseEvent) {
   console.log('handleSelect', id, event)
   if (!id) return;
-  
+
   // If event is from checkbox click, handle single selection
   if (event?.target && (event.target as HTMLElement).closest('.w-5.h-5, .w-4.h-4')) {
     if (selectedFiles.value.has(id)) {
@@ -200,7 +198,7 @@ function handleSelect(id: string | undefined, event?: MouseEvent) {
     }
     return;
   }
-  
+
   // Handle multi-select with Ctrl/Cmd key
   if (event?.ctrlKey || event?.metaKey) {
     if (selectedFiles.value.has(id)) {
@@ -214,11 +212,11 @@ function handleSelect(id: string | undefined, event?: MouseEvent) {
     const allFiles = sortedItems.value;
     const lastSelectedIndex = allFiles.findIndex(f => f.id === Array.from(selectedFiles.value).pop());
     const currentIndex = allFiles.findIndex(f => f.id === id);
-    
+
     if (lastSelectedIndex !== -1 && currentIndex !== -1) {
       const start = Math.min(lastSelectedIndex, currentIndex);
       const end = Math.max(lastSelectedIndex, currentIndex);
-      
+
       allFiles.slice(start, end + 1).forEach(f => {
         if (f.id) selectedFiles.value.add(f.id);
       });
@@ -318,15 +316,15 @@ function handleRename() {
 const contextMenuActions = computed(() => {
   const numSelected = selectedFiles.value.size;
   if (numSelected === 0) return [];
-  
-  const selectedFilesList = Array.from(selectedFiles.value).map(id => 
+
+  const selectedFilesList = Array.from(selectedFiles.value).map(id =>
     fileStore.allFiles.find(f => f.id === id)
   ).filter(Boolean);
-  
+
   const hasFiles = selectedFilesList.some(f => !f?.is_folder);
   // Check for folders if needed in the future
   // const hasFolders = selectedFilesList.some(f => f?.is_folder);
-  
+
   return [
     ...(numSelected === 1 ? [{
       label: "Open",
@@ -372,7 +370,7 @@ function handleBulkDownload() {
   const selectedFilesList = Array.from(selectedFiles.value)
     .map(id => fileStore.allFiles.find(f => f.id === id))
     .filter(f => f && !f.is_folder);
-  
+
   // Implement download logic here
   console.log('Downloading files:', selectedFilesList);
 }
@@ -398,14 +396,12 @@ function handleEscapeKey(event: KeyboardEvent) {
 
 
 <template>
-  <div v-if="isAuthenticated" 
-    :class="[
-      'flex h-screen text-gray-900 transition-colors duration-200',
-      theme.isDark.value 
-        ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
-        : 'bg-gradient-to-br from-gray-50 to-gray-100'
-    ]"
-  >
+  <div v-if="isAuthenticated" :class="[
+    'flex h-screen text-gray-900 transition-colors duration-200',
+    theme.isDark.value
+      ? 'bg-gradient-to-br from-gray-900 to-gray-800'
+      : 'bg-gradient-to-br from-gray-50 to-gray-100'
+  ]">
     <!-- Main content -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Loading bar -->
@@ -423,92 +419,95 @@ function handleEscapeKey(event: KeyboardEvent) {
             ]">
               {{ showRecentFiles ? "Recent Files" : "All Files" }}
             </h2>
-            <Button variant="outline" 
-              :class="[
-                'border-primary-400 hover:border-primary-500',
-                theme.isDark.value ? 'text-gray-100' : ''
-              ]" 
-              @click="createNewFolder"
-            >
-              <FolderPlusIcon class="mr-2 h-4 w-4 text-primary-600" />
-              New Folder
-            </Button>
-            <Button variant="outline" 
-              :class="[
-                'border-primary-400 hover:border-primary-500',
-                theme.isDark.value ? 'text-gray-100' : ''
-              ]" 
-              @click="openUploadDialog"
-            >
-              <Upload class="mr-2 h-4 w-4 text-primary-600" />
-              Upload
-            </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" 
-                  :class="[
-                    'border-primary-400 hover:border-primary-500',
-                    theme.isDark.value ? 'text-gray-100' : ''
-                  ]"
-                >
-                  <Plus class="mr-2 h-4 w-4 text-primary-600" />
-                  New from Template
-                </Button>
-              </DialogTrigger>
-              <DialogContent :class="[
-                'rounded-lg shadow-2xl border',
-                theme.isDark.value 
-                  ? 'bg-gray-800 border-gray-700' 
-                  : 'bg-white border-gray-200'
-              ]">
-                <DialogHeader>
-                  <DialogTitle :class="[
-                    'text-xl font-semibold',
-                    theme.isDark.value ? 'text-gray-100' : 'text-gray-800'
-                  ]">
-                    Choose a Template
-                  </DialogTitle>
-                </DialogHeader>
-                <Tabs default-value="Documents">
-                  <TabsList :class="[
-                    theme.isDark.value ? 'bg-gray-700' : 'bg-gray-100'
-                  ]">
-                    <TabsTrigger 
-                      v-for="category in Object.keys(templates)" 
-                      :key="category" 
-                      :value="category"
-                      :class="[
+            <div class="flex items-center space-x-2">
+              <Button variant="ghost" size="icon" 
+                :class="[
+                  'relative group rounded-full transition-all duration-200',
+                  theme.isDark.value 
+                    ? 'hover:bg-gray-700' 
+                    : 'hover:bg-gray-100'
+                ]"
+                @click="createNewFolder">
+                <FolderPlusIcon class="h-5 w-5 text-primary-600" />
+                <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap"
+                  :class="theme.isDark.value ? 'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-100'">
+                  New Folder
+                </span>
+              </Button>
+              <Button variant="ghost" size="icon"
+                :class="[
+                  'relative group rounded-full transition-all duration-200',
+                  theme.isDark.value 
+                    ? 'hover:bg-gray-700' 
+                    : 'hover:bg-gray-100'
+                ]"
+                @click="openUploadDialog">
+                <Upload class="h-5 w-5 text-primary-600" />
+                <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap"
+                  :class="theme.isDark.value ? 'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-100'">
+                  Upload Files
+                </span>
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon"
+                    :class="[
+                      'relative group rounded-full transition-all duration-200',
+                      theme.isDark.value 
+                        ? 'hover:bg-gray-700' 
+                        : 'hover:bg-gray-100'
+                    ]">
+                    <Plus class="h-5 w-5 text-primary-600" />
+                    <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap"
+                      :class="theme.isDark.value ? 'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-100'">
+                      New from Template
+                    </span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent :class="[
+                  'rounded-lg shadow-2xl border',
+                  theme.isDark.value
+                    ? 'bg-gray-800 border-gray-700'
+                    : 'bg-white border-gray-200'
+                ]">
+                  <DialogHeader>
+                    <DialogTitle :class="[
+                      'text-xl font-semibold',
+                      theme.isDark.value ? 'text-gray-100' : 'text-gray-800'
+                    ]">
+                      Choose a Template
+                    </DialogTitle>
+                  </DialogHeader>
+                  <Tabs default-value="Documents">
+                    <TabsList :class="[
+                      theme.isDark.value ? 'bg-gray-700' : 'bg-gray-100'
+                    ]">
+                      <TabsTrigger v-for="category in Object.keys(templates)" :key="category" :value="category" :class="[
                         'data-[state=active]:text-primary-600',
-                        theme.isDark.value 
-                          ? 'data-[state=active]:bg-gray-800' 
+                        theme.isDark.value
+                          ? 'data-[state=active]:bg-gray-800'
                           : 'data-[state=active]:bg-white'
-                      ]"
-                    >
-                      {{ category }}
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent v-for="(items, category) in templates" :key="category" :value="category">
-                    <div class="grid grid-cols-2 gap-4 p-2">
-                      <Button 
-                        v-for="template in items" 
-                        :key="template.name" 
-                        variant="outline"
-                        :class="[
+                      ]">
+                        {{ category }}
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent v-for="(items, category) in templates" :key="category" :value="category">
+                      <div class="grid grid-cols-2 gap-4 p-2">
+                        <Button v-for="template in items" :key="template.name" variant="outline" :class="[
                           'h-24 flex flex-col items-center justify-center transition-all',
-                          theme.isDark.value 
-                            ? 'hover:bg-gray-700 hover:border-primary-400' 
+                          theme.isDark.value
+                            ? 'hover:bg-gray-700 hover:border-primary-400'
                             : 'hover:bg-gray-50 hover:border-primary-400'
-                        ]"
-                        @click="createNewFile(category?.toLowerCase(), template.name)"
-                      >
-                        <component :is="template.icon" class="w-8 h-8 text-primary-600" />
-                        <span class="mt-2 text-sm font-medium">{{ template.name }}</span>
-                      </Button>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </DialogContent>
-            </Dialog>
+                        ]" @click="createNewFile(category?.toLowerCase(), template.name)">
+                          <component :is="template.icon" class="w-8 h-8 text-primary-600" />
+                          <span class="mt-2 text-sm font-medium">{{ template.name }}</span>
+                        </Button>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
           <!-- Right sort actions / Selection actions -->
           <div class="flex items-center space-x-4">
@@ -526,7 +525,8 @@ function handleEscapeKey(event: KeyboardEvent) {
                 ]"></div>
               </div>
               <div class="flex items-center space-x-2">
-                <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm" @click="openFile(Array.from(selectedFiles)[0])">
+                <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm"
+                  @click="openFile(Array.from(selectedFiles)[0])">
                   <FolderOpen class="h-4 w-4 mr-2" />
                   Open
                 </Button>
@@ -547,7 +547,8 @@ function handleEscapeKey(event: KeyboardEvent) {
                   Share
                 </Button>
                 <Button variant="ghost" size="sm" class="!ml-2" @click="selectedFiles.clear()">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </Button>
@@ -556,13 +557,11 @@ function handleEscapeKey(event: KeyboardEvent) {
             <template v-else>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" 
-                    :class="[
-                      theme.isDark.value 
-                        ? 'border-gray-600 text-gray-100' 
-                        : 'border-gray-300'
-                    ]"
-                  >
+                  <Button variant="outline" :class="[
+                    theme.isDark.value
+                      ? 'border-gray-600 text-gray-100'
+                      : 'border-gray-300'
+                  ]">
                     Sort by: {{ sortBy === "name" ? "Name" : "Date" }}
                     <ChevronDown class="ml-2 h-4 w-4" />
                   </Button>
@@ -576,33 +575,50 @@ function handleEscapeKey(event: KeyboardEvent) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div class="flex items-center space-x-2">
-                <span :class="[
-                  'text-sm',
-                  theme.isDark.value ? 'text-gray-300' : 'text-gray-600'
-                ]">
-                  Group by Type
-                </span>
-                <Switch v-model="groupByFileType" />
-              </div>
-              <div class="flex items-center space-x-2">
-                <span :class="[
-                  'text-sm',
-                  theme.isDark.value ? 'text-gray-300' : 'text-gray-600'
-                ]">
-                  Recent Files
-                </span>
-                <Switch v-model="showRecentFiles" />
-              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" 
-                    :class="[
-                      theme.isDark.value 
-                        ? 'border-gray-600 text-gray-100' 
-                        : 'border-gray-300'
-                    ]"
-                  >
+                  <Button variant="outline" :class="[
+                    theme.isDark.value
+                      ? 'border-gray-600 text-gray-100'
+                      : 'border-gray-300'
+                  ]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <div class="px-2 py-1.5">
+                    <div class="flex items-center justify-between space-x-2">
+                      <span :class="[
+                        'text-sm',
+                        theme.isDark.value ? 'text-gray-300' : 'text-gray-600'
+                      ]">
+                        Group by Type
+                      </span>
+                      <Switch v-model="groupByFileType" />
+                    </div>
+                  </div>
+                  <div class="px-2 py-1.5">
+                    <div class="flex items-center justify-between space-x-2">
+                      <span :class="[
+                        'text-sm',
+                        theme.isDark.value ? 'text-gray-300' : 'text-gray-600'
+                      ]">
+                        Recent Files
+                      </span>
+                      <Switch v-model="showRecentFiles" />
+                    </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" :class="[
+                    theme.isDark.value
+                      ? 'border-gray-600 text-gray-100'
+                      : 'border-gray-300'
+                  ]">
                     <component :is="viewMode === 'grid' ? Grid : List" class="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -644,8 +660,8 @@ function handleEscapeKey(event: KeyboardEvent) {
         <!-- Content area -->
         <ScrollArea :class="[
           'h-[calc(100vh-280px)] rounded-lg shadow-sm border',
-          theme.isDark.value 
-            ? 'bg-gray-800 border-gray-700' 
+          theme.isDark.value
+            ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         ]">
           <div v-if="Object.keys(groupedItems).length > 0 && sortedItems.length > 0">
@@ -663,16 +679,14 @@ function handleEscapeKey(event: KeyboardEvent) {
                 }">
                   <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
                     :isSelected="selectedFiles.has(item.id || item.local_id || '')"
-                    @click.stop="handleSelect(item.id, $event)"
-                    @select-file="handleSelect"
-                    @open-file="openFile" />
+                    @click.stop="handleSelect(item.id, $event)" @select-file="handleSelect" @open-file="openFile" />
                 </div>
               </div>
             </template>
           </div>
 
           <!-- Empty state -->
-          <div v-else-if="!fileStore.isSyncing || (fileStore.isSyncing && Object.keys(groupedItems).length === 0)" 
+          <div v-else-if="!fileStore.isSyncing || (fileStore.isSyncing && Object.keys(groupedItems).length === 0)"
             class="empty-state">
             <div class="empty-icon-wrapper">
               <FolderOpen class="empty-icon" />
@@ -706,26 +720,20 @@ function handleEscapeKey(event: KeyboardEvent) {
       </div>
     </div>
   </div>
-  <div v-else
-    :class="[
-      'h-screen w-full flex flex-col items-center justify-center transition-colors duration-200',
-      theme.isDark.value 
-        ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
-        : 'bg-gradient-to-br from-gray-50 to-gray-100'
-    ]"
-  >
+  <div v-else :class="[
+    'h-screen w-full flex flex-col items-center justify-center transition-colors duration-200',
+    theme.isDark.value
+      ? 'bg-gradient-to-br from-gray-900 to-gray-800'
+      : 'bg-gradient-to-br from-gray-50 to-gray-100'
+  ]">
     <div :class="[
       'backdrop-filter backdrop-blur-lg p-10 rounded-lg shadow-xl border',
-      theme.isDark.value 
-        ? 'bg-gray-800 border-gray-700' 
+      theme.isDark.value
+        ? 'bg-gray-800 border-gray-700'
         : 'bg-white border-gray-200'
     ]">
       <div class="flex items-center justify-center mb-6">
-        <img 
-          :src="theme.isDark.value ? '/logo-white.png' : '/logo-black.png'" 
-          alt="VenMail Logo" 
-          class="h-6 w-full" 
-        />
+        <img :src="theme.isDark.value ? '/logo-white.png' : '/logo-black.png'" alt="VenMail Logo" class="h-6 w-full" />
       </div>
       <h2 :class="[
         'text-2xl font-bold mb-6 text-center',
@@ -748,8 +756,7 @@ function handleEscapeKey(event: KeyboardEvent) {
   <!-- Add context menu -->
   <DropdownMenu v-if="showContextMenu">
     <DropdownMenuContent class="w-48">
-      <DropdownMenuItem v-for="action in contextMenuActions" :key="action.label"
-        @click="action.action">
+      <DropdownMenuItem v-for="action in contextMenuActions" :key="action.label" @click="action.action">
         <component :is="action.icon" class="mr-2 h-4 w-4" />
         {{ action.label }}
       </DropdownMenuItem>
@@ -816,9 +823,11 @@ function handleEscapeKey(event: KeyboardEvent) {
   0% {
     transform: translateX(-100%);
   }
+
   50% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(300%);
   }
@@ -828,6 +837,7 @@ function handleEscapeKey(event: KeyboardEvent) {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
