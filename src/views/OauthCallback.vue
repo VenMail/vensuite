@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 
 const router = useRouter();
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
-const error = ref<string | null>(null);
+const errorMessage = ref<string | null>(null);
 const isLoading = ref(true);
 
 // Function to get a cookie value by name
@@ -31,13 +31,16 @@ function authenticateWithCookie(authCookie: string) {
         localStorage.setItem("venAuthToken", data.token);
         router.push("/");
       } else {
-        error.value = data.message || "Authentication failed. Please try again.";
+        console.log("Auth failed with cookie:", data);
+        errorMessage.value = data.message || "Authentication failed. Please try again.";
+        console.log("Error value set to:", errorMessage.value);
         isLoading.value = false;
       }
     })
     .catch((error) => {
       console.error("Error during authentication with cookie:", error);
-      error.value = "Failed to connect to authentication service. Please try again.";
+      errorMessage.value = "Failed to connect to authentication service. Please try again.";
+      console.log("Error value set to:", errorMessage.value);
       isLoading.value = false;
     });
 }
@@ -59,13 +62,15 @@ function authenticateWithCode(code: string) {
         localStorage.setItem("venAuthToken", data.token);
         router.push("/");
       } else {
-        error.value = data.message || "Authentication failed. Please try again.";
+        console.log("Auth failed with code:", data);
+        errorMessage.value = data.message || "Authentication failed. Please try again.";
+        console.log("Error value set to:", errorMessage.value);
         isLoading.value = false;
       }
     })
     .catch((error) => {
       console.error("Error during authentication with code:", error);
-      error.value = "Failed to connect to authentication service. Please try again.";
+      errorMessage.value = "Failed to connect to authentication service. Please try again.";
       isLoading.value = false;
     });
 }
@@ -84,7 +89,7 @@ onMounted(() => {
   } else if (code) {
     authenticateWithCode(code);
   } else {
-    error.value = "No authentication code or cookie found. Please try logging in again.";
+    errorMessage.value = "No authentication code or cookie found. Please try logging in again.";
     isLoading.value = false;
   }
 });
@@ -97,7 +102,7 @@ onMounted(() => {
     <!-- Logo header -->
     <div class="flex items-center justify-between w-full border-b border-[#A9C9D64D] p-6">
       <div class="w-[150px]">
-        <img src="/logo-black.png" alt="VenMail Logo" class="h-8 w-full" />
+        <img src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full" />
       </div>
       <div class="w-[150px] flex justify-end">
         <!-- Consistent empty space for layout balance -->
@@ -108,14 +113,14 @@ onMounted(() => {
     <div class="relative w-full max-w-lg overflow-hidden p-8 text-center">
       <div class="mb-8">
         <h2 class="mb-4 text-[40px] text-black font-semibold leading-normal">
-          {{ error ? `Oops! Login Failed` : 'Completing Authentication' }}
+          {{ errorMessage ? "Oops! Login Failed" : "Completing Authentication" }}
         </h2>
         <div class="flex flex-col items-center justify-center space-y-4">
           <template v-if="isLoading">
             <LoaderCircle class="h-8 w-8 animate-spin text-primary-600" />
             <p class="text-gray-600">Securely connecting to Venmail services...</p>
           </template>
-          <template v-else-if="error">
+          <template v-else>
             <p class="text-red-600 mb-4">We're sorry, an error has occured and we're unable to log you in. Please try again.</p>
             <Button 
               @click="returnToLogin"

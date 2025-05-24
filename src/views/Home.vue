@@ -38,7 +38,8 @@ import { FileData } from "@/types";
 import FileItem from "@/components/FileItem.vue";
 import { sluggify } from "@/utils/lib";
 import { useFavicon } from "@vueuse/core";
-import { toast } from 'vue-sonner'
+import { toast } from "@/composables/useToast";
+
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
@@ -618,7 +619,7 @@ function handleEscapeKey(event: KeyboardEvent) {
     class="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
     <div class="bg-white backdrop-filter backdrop-blur-lg p-10 rounded-lg shadow-xl border border-gray-200">
       <div class="flex items-center justify-center mb-6">
-        <img src="/logo-black.png" alt="VenMail Logo" class="h-8 w-full" />
+        <img src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full" />
       </div>
       <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">
         Welcome to Venmail File Manager

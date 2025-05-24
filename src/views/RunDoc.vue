@@ -32,7 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { toast } from "vue-sonner";
+import { toast } from "@/composables/useToast";
 
 // Router setup
 const route = useRoute();
