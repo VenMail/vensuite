@@ -89,7 +89,7 @@ onMounted(() => {
             'flex items-center',
             isMobile ? '!ml-[-4px] scale-90' : 'mr-20'
           )">
-            <img src="/logo-black.png" alt="VenMail Logo" class="h-8 w-full" />
+            <img src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full" />
           </div>
 
           <!-- Search Bar -->
