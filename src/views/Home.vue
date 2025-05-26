@@ -13,6 +13,10 @@ import {
   Edit,
   Download,
   Share2,
+  X,
+  FileText,
+  FileImage,
+  FileCode,
 } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/store/auth";
@@ -38,6 +42,7 @@ import { FileData } from "@/types";
 import FileItem from "@/components/FileItem.vue";
 import { sluggify } from "@/utils/lib";
 import { toast } from "@/composables/useToast";
+import { useDropzone } from "vue-dropzone";
 
 const router = useRouter();
 const route = useRoute();
@@ -53,6 +58,10 @@ const sortBy = ref("name");
 const groupByFileType = ref(false);
 const currentFolderId = ref<string | null>(null);
 const searchValue = ref('');
+const isUploadDialogOpen = ref(false);
+const filesList = ref<File[]>([]);
+const isDragging = ref(false);
+const fileInputRef = ref<HTMLInputElement | null>(null);
 
 const showContextMenu = computed(() => selectedFiles.value.size > 0);
 
@@ -294,7 +303,55 @@ function createNewFile(type: string, template?: string) {
 
 // uploader
 function openUploadDialog() {
-  //todo: launch a modal powered dropzone implemented via shadcn UI apple ui inspired
+  isUploadDialogOpen.value = true;
+}
+
+function onDrop(event: DragEvent) {
+  const files = event.dataTransfer?.files;
+  if (files) {
+    filesList.value = [...filesList.value, ...Array.from(files)];
+  }
+  isDragging.value = false;
+}
+
+function onFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (input.files) {
+    filesList.value = [...filesList.value, ...Array.from(input.files)];
+  }
+}
+
+async function handleUpload() {
+  try {
+    // Implement your file upload logic here
+    console.log('Uploading files:', filesList.value);
+    
+    // After successful upload
+    isUploadDialogOpen.value = false;
+    filesList.value = [];
+    toast.success('Files uploaded successfully');
+  } catch (error) {
+    toast.error('Failed to upload files');
+  }
+}
+
+function onDragEnter() {
+  isDragging.value = true;
+}
+
+function onDragLeave() {
+  isDragging.value = false;
+}
+
+function removeFile(index: number) {
+  filesList.value.splice(index, 1);
+}
+
+function getFileIcon(file: File) {
+  const type = file.type;
+  if (type.includes('image')) return FileImage;
+  if (type.includes('text') || type.includes('document')) return FileText;
+  return FileCode;
 }
 
 // Format group names for display
@@ -762,6 +819,90 @@ function handleEscapeKey(event: KeyboardEvent) {
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
+
+  <Dialog v-model:open="isUploadDialogOpen">
+    <DialogContent class="sm:max-w-[600px]">
+      <DialogHeader>
+        <DialogTitle class="text-xl font-semibold">Upload Files</DialogTitle>
+      </DialogHeader>
+      
+      <div
+        class="mt-4 border-2 border-dashed rounded-lg p-8 transition-colors cursor-pointer hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-950/50"
+        :class="{
+          'border-primary-500 bg-primary-50 dark:bg-primary-950': isDragging,
+          'border-gray-200 dark:border-gray-800': !isDragging
+        }"
+        @dragenter.prevent="onDragEnter"
+        @dragleave.prevent="onDragLeave"
+        @dragover.prevent
+        @drop.prevent="onDrop"
+        @click="fileInputRef?.click()"
+      >
+        <div class="flex flex-col items-center justify-center text-center">
+          <Upload class="w-12 h-12 text-gray-400 mb-4" />
+          <h3 class="text-lg font-medium mb-2">Drag and drop your files here</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            or click anywhere in this area to browse files
+          </p>
+          <input
+            ref="fileInputRef"
+            type="file"
+            multiple
+            class="hidden"
+            @change="onFileSelect"
+          />
+        </div>
+      </div>
+
+      <!-- File List -->
+      <div v-if="filesList.length > 0" class="mt-6">
+        <h4 class="text-sm font-medium mb-3">Selected Files</h4>
+        <div class="space-y-2">
+          <div
+            v-for="(file, index) in filesList"
+            :key="index"
+            class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
+          >
+            <div class="flex items-center space-x-3">
+              <component
+                :is="getFileIcon(file)"
+                class="w-5 h-5 text-gray-500"
+              />
+              <div>
+                <p class="text-sm font-medium">{{ file.name }}</p>
+                <p class="text-xs text-gray-500">
+                  {{ (file.size / 1024).toFixed(1) }} KB
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              @click="removeFile(index)"
+            >
+              <X class="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end space-x-3">
+          <Button
+            variant="outline"
+            @click="isUploadDialogOpen = false"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="default"
+            :disabled="filesList.length === 0"
+            @click="handleUpload"
+          >
+            Upload {{ filesList.length }} file{{ filesList.length !== 1 ? 's' : '' }}
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <style scoped>
