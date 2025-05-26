@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
-import { nextTick, onMounted, ref, watchEffect, computed, onUnmounted } from "vue";
+import { nextTick, onMounted, ref, watchEffect, computed, onUnmounted,watch } from "vue";
 import { v4 as uuidv4 } from "uuid";
 
 import "@/assets/index.css";
@@ -58,6 +58,7 @@ const lastSaveResult = ref<{
 } | null>(null);
 const translationsLoaded = ref(false);
 const editorInitialized = ref(false);
+const isInitializing = ref(false);
 
 // Computed properties
 const syncStatus = computed(() => {
@@ -173,7 +174,7 @@ const options = computed(() => ({
     },
   },
   locale: "en-US",
-  translations: translationsLoaded.value ? {
+  translations: {
     base: {
       color: {
         text: "Font Colour",
@@ -182,7 +183,7 @@ const options = computed(() => ({
         text: "Font Background",
       },
     },
-  } : {},
+  },
   welcome: "Careful! Only open dev console if you know what you are doing",
   toolbar: {
     defaultMode: "ribbon",
@@ -199,6 +200,34 @@ const options = computed(() => ({
 
 const titleRef = ref<HTMLElement | null>(null);
 const editorRef = ref<any>(null);
+
+// Remove the watcher and handle initialization directly
+async function initializeEditor() {
+  if (isInitializing.value) {
+    console.log("Editor initialization already in progress");
+    return;
+  }
+
+  try {
+    isInitializing.value = true;
+    console.log("Initializing editor");
+    if (editorRef.value) {
+      console.log("Setting up editor locale");
+      await editorRef.value.setLocale("en-US");
+      translationsLoaded.value = true;
+      console.log("Translations loaded");
+      editorInitialized.value = true;
+      console.log("Editor initialized");
+    } else {
+      console.error("Editor ref not available during initialization");
+    }
+  } catch (error) {
+    console.error("Failed to initialize editor:", error);
+    toast.error("Failed to initialize editor");
+  } finally {
+    isInitializing.value = false;
+  }
+}
 
 function editTitle() {
   isTitleEdit.value = true;
@@ -390,17 +419,11 @@ onMounted(async () => {
   window.addEventListener("online", updateOnlineStatus);
   window.addEventListener("offline", updateOnlineStatus);
 
-  console.log("RunDoc component mounted, initializing editor");
-
-  // Initialize editor after loading translations
-  nextTick(async () => {
-    if (editorRef.value) {
-      await editorRef.value.setLocale("en-US");
-      translationsLoaded.value = true;
-      editorInitialized.value = true;
-      console.log("Editor initialized with translations");
-    }
-  });
+  console.log("RunDoc component mounted");
+  
+  // Initialize editor after a short delay to ensure DOM is ready
+  await nextTick();
+  await initializeEditor();
 
   // Listen to route changes and load document
   watchEffect(async () => {
@@ -414,11 +437,6 @@ onMounted(async () => {
         console.error("Failed to load document:", error);
         toast.error("Failed to load document");
       }
-
-      const iconHTML = iconRef.value?.outerHTML
-        .replace(/currentColor/g, "#4d7cfe")
-        .replace(/1em/g, "");
-      const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || "")}`;
     }
   });
 });
@@ -558,14 +576,16 @@ function shareDocument() {
         </DropdownMenu>
       </div>
     </div>
-    <umo-editor
-      v-if="editorInitialized && translationsLoaded"
-      ref="editorRef"
-      v-bind="options"
-      @saved="handleSavedEvent"
-      @created="handleEditorCreated"
-    />
-    <div v-else class="flex-1 flex items-center justify-center">
+    <div v-show="editorInitialized && translationsLoaded" class="flex-1">
+      <umo-editor
+        ref="editorRef"
+        v-bind="options"
+        @saved="handleSavedEvent"
+        @created="handleEditorCreated"
+        class="h-full"
+      />
+    </div>
+    <div v-show="!(editorInitialized && translationsLoaded)" class="flex-1 flex items-center justify-center">
       <div class="animate-pulse text-gray-500">
         Loading editor...
       </div>
