@@ -36,8 +36,8 @@ const routes = [
     path: '/',
     component: AuthenticatedLayout,
     children: [
-      { path: 'sheets', name: 'sheets', component: RunSheet },
-      { path: 'sheets/:id', name: 'sheet', component: RunSheet },
+      { path: 'sheets', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
+      { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
       { path: 'docs', name: 'docs', component: RunDoc, meta: { hideLayout: true } },
       { path: 'docs/:id', name: 'doc', component: RunDoc, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },

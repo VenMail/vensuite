@@ -1,7 +1,7 @@
 <template>
   <Dialog :open="true" @update:open="$emit('close')">
     <DialogContent
-      class="sm:max-w-[700px] bg-background/80 backdrop-blur-xl border border-border/50"
+      class="sm:max-w-[700px] bg-white dark:bg-gray-900 border border-border/50"
     >
       <DialogHeader>
         <DialogTitle class="text-2xl">Upload Files</DialogTitle>
@@ -10,20 +10,32 @@
         </DialogDescription>
       </DialogHeader>
       <div
-        class="border-2 border-dashed border-muted rounded-xl p-8 text-center mb-6 transition-all duration-300"
-        :class="{ 'bg-muted': isDragging }"
+        class="border-2 border-dashed border-muted rounded-xl p-8 text-center mb-6 transition-all duration-300 cursor-pointer hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-950/50"
+        :class="{ 'border-primary-500 bg-primary-50 dark:bg-primary-950': isDragging }"
         @dragenter.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @dragover.prevent
         @drop.prevent="onDrop"
+        @click="fileInput?.click()"
       >
         <UploadCloud class="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
         <p class="mb-2 text-muted-foreground">
-          Drag and drop files or folders here, or
+          Drag and drop files or folders here, or click to browse
         </p>
-        <div class="flex justify-center space-x-4">
-          <Button @click="fileInput?.click()">Select Files</Button>
-          <Button @click="folderInput?.click()">Select Folder</Button>
+        <div class="flex items-center justify-center space-x-2 text-sm">
+          <button 
+            class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+            @click.stop="fileInput?.click()"
+          >
+            Select Files
+          </button>
+          <span class="text-muted-foreground">or</span>
+          <button 
+            class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+            @click.stop="folderInput?.click()"
+          >
+            Select Folder
+          </button>
         </div>
         <input
           ref="fileInput"
@@ -43,7 +55,7 @@
         />
       </div>
 
-      <ScrollArea v-if="files.length > 0" class="h-[300px] rounded-md border">
+      <ScrollArea v-if="files.length > 0" class="h-[200px] rounded-md border">
         <div class="p-4 space-y-4">
           <div
             v-for="file in files"
@@ -75,26 +87,35 @@
                 ></div>
               </div>
             </div>
-            <Button
-              v-if="file.progress && file.progress < 100"
-              variant="ghost"
-              size="icon"
-              @click="cancelUpload(file)"
-            >
-              <X class="w-4 h-4" />
-            </Button>
-            <CheckCircle2
-              v-else-if="file.progress === 100"
-              class="w-5 h-5 text-primary"
-            />
-            <Button
-              v-if="file.error"
-              variant="ghost"
-              size="icon"
-              @click="retryUpload(file)"
-            >
-              <RefreshCw class="w-4 h-4 text-error" />
-            </Button>
+            <div class="flex items-center space-x-2">
+              <Button
+                v-if="file.progress && file.progress < 100"
+                variant="ghost"
+                size="icon"
+                @click="cancelUpload(file)"
+              >
+                <X class="w-4 h-4" />
+              </Button>
+              <CheckCircle2
+                v-else-if="file.progress === 100"
+                class="w-5 h-5 text-primary"
+              />
+              <Button
+                v-if="file.error"
+                variant="ghost"
+                size="icon"
+                @click="retryUpload(file)"
+              >
+                <RefreshCw class="w-4 h-4 text-error" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                @click="removeFile(file)"
+              >
+                <X class="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </ScrollArea>
@@ -266,12 +287,16 @@ const totalSize = computed(() => {
   return files.value.reduce((total, file) => total + (file.file_size || 0), 0);
 });
 
-const cancelUpload = (file: FileData) => {
-  // Cancel logic for ongoing uploads
+const removeFile = (file: FileData) => {
   const index = files.value.findIndex((f) => f.id === file.id);
   if (index !== -1) {
     files.value.splice(index, 1);
   }
+};
+
+const cancelUpload = (file: FileData) => {
+  // Cancel logic for ongoing uploads
+  removeFile(file);
 };
 
 const retryUpload = (file: FileData) => {
@@ -302,3 +327,35 @@ const uploadFile = async (file: FileData) => {
   }
 };
 </script>
+
+<style scoped>
+.scroll-area {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dark .scroll-area::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark .scroll-area::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+</style>

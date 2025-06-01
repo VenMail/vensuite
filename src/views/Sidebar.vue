@@ -30,7 +30,7 @@ const items = [
   { name: 'Home', icon: Home, route: '/' },
   { name: 'Documents', icon: FileText, route: '/docs' },
   { name: 'Spreadsheets', icon: Table, route: '/sheets' },
-  { name: 'Forms', icon: FormInput, route: '/forms' },
+  // { name: 'Forms', icon: FormInput, route: '/forms' },
   { name: 'Media', icon: Image, route: '/media' }
 ]
 
@@ -180,16 +180,6 @@ function createNewFile(type: string, template?: string) {
               <span v-if="!collapsed">{{ item.name }}</span>
             </a>
           </nav>
-        </div>
-
-        <!-- User Profile Area -->
-        <div class="p-4 border-t border-gray-200 dark:border-gray-800">
-          <div class="flex items-center" :class="collapsed ? 'justify-center' : ''">
-            <LogOut class="h-5 w-5" />
-            <div v-if="!collapsed" class="ml-3">
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Logout</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
