@@ -8,9 +8,12 @@ export interface FileData {
   file_size?: string;
   file_url?: string;
   remote_id?: string;
+  is_template?: boolean;
+  employee_id?: string;
   folder_id?: string | null;
   last_viewed?: Date;
   created_at?: Date | string;
+  updated_at?: Date | string;
   is_folder?: boolean;
   contents?: string;
   content?: string;

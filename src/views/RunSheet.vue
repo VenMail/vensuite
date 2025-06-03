@@ -31,6 +31,8 @@ const title = ref('New Spreadsheet')
 const isTitleEdit = ref(false)
 const userId = ref(`user-${Math.random().toString(36).substr(2, 9)}`)
 const userName = ref(`User ${Math.floor(Math.random() * 1000)}`)
+const editableTitle = ref(title.value)
+const isSettingCursor = ref(false)
 
 const wsService = ref<IWebsocketService | null>(null)
 const isConnected = computed(() => WebSocketService?.isConnected.value)
@@ -87,6 +89,7 @@ async function updateData(newData: IWorkbookData) {
 
 function editTitle() {
   isTitleEdit.value = true
+  editableTitle.value = title.value
   nextTick(() => {
     const titleEl = titleRef.value
     if (titleEl) {
@@ -121,23 +124,6 @@ function updateTitleRemote(newTitle: string) {
 
 const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || "ws://app.venmail.io:8443";
 
-onMounted(async () => {
-  if (route.params.id) {
-    wsService.value = initializeWebSocket(SOCKET_URI + '?sheetId=' + route.params.id
-      + '&userName=' + userName.value
-      + '&userId=' + userId.value
-    )
-
-    isJoined.value = wsService.value?.joinSheet(route.params.id as string, handleIncomingMessage)
-
-    // Load data after route is initialized
-    data.value = await loadData(route.params.id as string)
-    
-    // const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, '#38a169').replace(/1em/g, '')
-    // const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || '')}`
-  }
-})
-
 function initializeWebSocketAndJoinSheet() {
   if (route.params.id && !wsService.value) {
     wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${route.params.id}&userName=${userName.value}&userId=${userId.value}`)
@@ -171,9 +157,6 @@ onMounted(async () => {
       console.error('Failed to load sheet data')
       // Handle the error (e.g., show an error message to the user)
     }
-
-    // const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, '#38a169').replace(/1em/g, '')
-    // const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || '')}`
   }
 })
 
@@ -275,9 +258,49 @@ function sendChatMessage() {
 const debouncedHandleTitleChange = debounce(handleTitleChange, 300)
 
 function updateTitle(event: Event) {
+  if (isSettingCursor.value) return
+
   const target = event.target as HTMLElement
-  title.value = target.innerText
+  const newText = target.innerText.trim()
+
+  // Skip if no actual change
+  if (editableTitle.value === newText) return
+
+  editableTitle.value = newText
+  title.value = newText
+
+  // Save cursor position
+  const selection = window.getSelection()
+  const range = selection?.getRangeAt(0)
+  const offset = range?.startOffset
+
+  // Queue microtask to restore cursor after Vue update
+  nextTick(() => {
+    isSettingCursor.value = true
+    restoreCursorPosition(target, offset ?? newText.length)
+    isSettingCursor.value = false
+  })
+
   debouncedHandleTitleChange()
+}
+
+function restoreCursorPosition(element: HTMLElement, offset: number) {
+  const range = document.createRange()
+  const selection = window.getSelection()
+
+  if (element.childNodes[0]) {
+    range.setStart(
+      element.childNodes[0],
+      Math.min(offset, element.textContent?.length ?? 0)
+    )
+  } else {
+    range.selectNodeContents(element)
+    range.collapse(false)
+  }
+
+  range.collapse(true)
+  selection?.removeAllRanges()
+  selection?.addRange(range)
 }
 
 function togglePencil(v: boolean) {

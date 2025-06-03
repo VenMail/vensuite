@@ -13,7 +13,7 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-vue-next";
-import { useDebounceFn } from "@vueuse/core";
+import { useDebounceFn, useFavicon } from "@vueuse/core";
 import { useRoute, useRouter } from "vue-router";
 //@ts-ignore
 import { UmoEditor } from "@umoteam/editor";
@@ -32,7 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { toast } from "@/composables/useToast";
+import { toast } from "vue-sonner";
 
 // Router setup
 const route = useRoute();
@@ -56,9 +56,6 @@ const lastSaveResult = ref<{
   offline: boolean;
   error: string | null;
 } | null>(null);
-const translationsLoaded = ref(false);
-const editorInitialized = ref(false);
-const isInitializing = ref(false);
 
 // Computed properties
 const syncStatus = computed(() => {
@@ -153,7 +150,7 @@ const debouncedSave = useDebounceFn(
   { maxWait: 5000 }
 );
 
-const options = computed(() => ({
+const options = ref({
   document: {
     title: "Untitled Document",
     content: "",
@@ -184,7 +181,6 @@ const options = computed(() => ({
       },
     },
   },
-  welcome: "Careful! Only open dev console if you know what you are doing",
   toolbar: {
     defaultMode: "ribbon",
     enableSourceEditor: true,
@@ -196,38 +192,10 @@ const options = computed(() => ({
       useCustomMethod: false,
     },
   },
-}));
+});
 
 const titleRef = ref<HTMLElement | null>(null);
 const editorRef = ref<any>(null);
-
-// Remove the watcher and handle initialization directly
-async function initializeEditor() {
-  if (isInitializing.value) {
-    console.log("Editor initialization already in progress");
-    return;
-  }
-
-  try {
-    isInitializing.value = true;
-    console.log("Initializing editor");
-    if (editorRef.value) {
-      console.log("Setting up editor locale");
-      await editorRef.value.setLocale("en-US");
-      translationsLoaded.value = true;
-      console.log("Translations loaded");
-      editorInitialized.value = true;
-      console.log("Editor initialized");
-    } else {
-      console.error("Editor ref not available during initialization");
-    }
-  } catch (error) {
-    console.error("Failed to initialize editor:", error);
-    toast.error("Failed to initialize editor");
-  } finally {
-    isInitializing.value = false;
-  }
-}
 
 function editTitle() {
   isTitleEdit.value = true;
@@ -415,15 +383,19 @@ function startEditing() {
 // Icon reference and favicon setup
 const iconRef = ref<HTMLElement | null>(null);
 
-onMounted(async () => {
+onMounted(() => {
   window.addEventListener("online", updateOnlineStatus);
   window.addEventListener("offline", updateOnlineStatus);
 
-  console.log("RunDoc component mounted");
-  
-  // Initialize editor after a short delay to ensure DOM is ready
-  await nextTick();
-  await initializeEditor();
+  console.log("RunDoc component mounted, initializing editor");
+
+  // Initialize the editor
+  nextTick(() => {
+    if (editorRef.value) {
+      editorRef.value.setLocale("en-US");
+      console.log("Editor initialized");
+    }
+  });
 
   // Listen to route changes and load document
   watchEffect(async () => {
@@ -437,6 +409,12 @@ onMounted(async () => {
         console.error("Failed to load document:", error);
         toast.error("Failed to load document");
       }
+
+      const iconHTML = iconRef.value?.outerHTML
+        .replace(/currentColor/g, "#4d7cfe")
+        .replace(/1em/g, "");
+      const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || "")}`;
+      useFavicon(iconDataURL);
     }
   });
 });
@@ -576,20 +554,12 @@ function shareDocument() {
         </DropdownMenu>
       </div>
     </div>
-    <div v-show="editorInitialized && translationsLoaded" class="flex-1">
-      <umo-editor
-        ref="editorRef"
-        v-bind="options"
-        @saved="handleSavedEvent"
-        @created="handleEditorCreated"
-        class="h-full"
-      />
-    </div>
-    <div v-show="!(editorInitialized && translationsLoaded)" class="flex-1 flex items-center justify-center">
-      <div class="animate-pulse text-gray-500">
-        Loading editor...
-      </div>
-    </div>
+    <umo-editor
+      ref="editorRef"
+      v-bind="options"
+      @saved="handleSavedEvent"
+      @created="handleEditorCreated"
+    />
   </div>
 </template>
 
