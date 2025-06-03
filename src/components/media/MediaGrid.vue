@@ -2,9 +2,11 @@
   <div class="flex-1 overflow-hidden">
     <!-- Grid View -->
     <div v-if="viewMode === 'grid'" :class="cn(
-      'grid gap-4 p-6 overflow-y-auto',
-      'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8'
-    )">
+      'grid gap-4 p-6 overflow-y-auto min-h-0',
+      gridSize === 'small' ? 'grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12' :
+      gridSize === 'medium' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' :
+      'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+    )" style="height: calc(100vh - 200px);">
       <MediaPreview
         v-for="file in mediaFiles"
         :key="file.id"

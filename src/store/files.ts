@@ -133,18 +133,39 @@ export const useFileStore = defineStore("files", {
 
     /** Check if a file is a media file */
     isMediaFile(file: FileData): boolean {
-      if (!file.file_type) return false;
+      // First check file_type
+      if (file.file_type) {
+        const mediaTypes = [
+          // Images
+          'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp',
+          // Videos
+          'mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'mkv',
+          // Audio
+          'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'
+        ];
+        
+        if (mediaTypes.includes(file.file_type.toLowerCase())) {
+          return true;
+        }
+      }
       
-      const mediaTypes = [
-        // Images
-        'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp',
-        // Videos
-        'mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'mkv',
-        // Audio
-        'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'
-      ];
+      // Fallback: check file extension from file_name
+      if (file.file_name) {
+        const extension = file.file_name.split('.').pop()?.toLowerCase();
+        if (extension) {
+          const mediaTypes = [
+            // Images
+            'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp',
+            // Videos
+            'mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'mkv',
+            // Audio
+            'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'
+          ];
+          return mediaTypes.includes(extension);
+        }
+      }
       
-      return mediaTypes.includes(file.file_type.toLowerCase());
+      return false;
     },
 
     /** Update recent files list */
@@ -694,30 +715,31 @@ export const useFileStore = defineStore("files", {
     /** Load only media files from API */
     async loadMediaFiles(): Promise<FileData[]> {
       try {
-        const response = await axios.get(`${FILES_ENDPOINT}?media_only=true`, {
+        // First try to load all documents since API may not support media_only
+        const response = await axios.get(FILES_ENDPOINT, {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        const processedDocs = docs
-          .filter(doc => this.isMediaFile(doc))
-          .map((doc) => ({ 
-            ...doc, 
-            id: doc.id, // Use server ID directly
-            content: doc.content || this.getDefaultContent(doc.file_type),
-            title: doc.title || doc.file_name || 'Untitled',
-            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
-            isNew: false,
-            isDirty: false
-          }));
+        const processedDocs = docs.map((doc) => ({ 
+          ...doc, 
+          id: doc.id, // Use server ID directly
+          content: doc.content || this.getDefaultContent(doc.file_type),
+          title: doc.title || doc.file_name || 'Untitled',
+          file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+          isNew: false,
+          isDirty: false
+        }));
         
-        // Update store with processed media files
-        const mediaFileIds = new Set(processedDocs.map(doc => doc.id));
-        this.allFiles = [
-          ...processedDocs,
-          ...this.allFiles.filter(file => !mediaFileIds.has(file.id) || !this.isMediaFile(file))
-        ];
+        // Filter for media files only
+        const mediaFiles = processedDocs.filter(doc => this.isMediaFile(doc));
         
-        return processedDocs;
+        // Update store with all processed documents
+        this.allFiles = processedDocs;
+        
+        console.log('Loaded media files:', mediaFiles.length, 'out of', processedDocs.length, 'total files');
+        console.log('Media files found:', mediaFiles.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name })));
+        console.log('All files found:', processedDocs.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name, is_folder: f.is_folder })));
+        return mediaFiles;
       } catch (error) {
         console.error("Error loading media files:", error);
         this.lastError = "Failed to load media files";

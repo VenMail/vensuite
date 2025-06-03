@@ -4,7 +4,7 @@
     'bg-gray-50 dark:bg-gray-800',
     'border-gray-200 dark:border-gray-700',
     isSelected ? 'ring-2 ring-primary-500 bg-primary-50 dark:bg-primary-950/20' : 'hover:border-gray-300 dark:hover:border-gray-600',
-    size === 'small' ? 'aspect-square w-24' : size === 'medium' ? 'aspect-square w-48' : 'aspect-video w-full max-w-md'
+    size === 'small' ? 'aspect-square w-16 h-16' : size === 'medium' ? 'aspect-square w-full' : 'aspect-square w-full'
   )">
     <!-- Selection Checkbox -->
     <div v-if="showCheckbox || isSelected" 
