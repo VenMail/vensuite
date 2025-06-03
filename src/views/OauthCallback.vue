@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
-import { LoaderCircle, AlertCircle } from "lucide-vue-next";
+import { LoaderCircle } from "lucide-vue-next";
 import { Button } from '@/components/ui/button';
 
 const router = useRouter();

@@ -6,7 +6,6 @@ import { nextTick, onMounted, ref, computed, onUnmounted, watch, shallowRef } fr
 
 import '@/assets/index.css'
 import { PencilIcon, MessageSquareIcon, XIcon } from 'lucide-vue-next'
-import { useFavicon } from '@vueuse/core'
 import { debounce, type IWorkbookData } from '@univerjs/core'
 import { useRoute, useRouter } from 'vue-router'
 import SheetMenu from '@/components/menu/SheetMenu.vue'
@@ -135,7 +134,7 @@ onMounted(async () => {
     data.value = await loadData(route.params.id as string)
     
     const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, '#38a169').replace(/1em/g, '')
-    const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || '')}`
+    // const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || '')}`
   }
 })
 
@@ -173,8 +172,8 @@ onMounted(async () => {
       // Handle the error (e.g., show an error message to the user)
     }
 
-    const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, '#38a169').replace(/1em/g, '')
-    const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || '')}`
+    // const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, '#38a169').replace(/1em/g, '')
+    // const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || '')}`
   }
 })
 

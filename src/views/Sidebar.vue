@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Home, FileText, Table, Image, FormInput, Menu, ChevronLeft, ChevronRight, Plus, LogOut } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { router } from '@/main'
 import {

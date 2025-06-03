@@ -19,7 +19,7 @@ const isMobile = ref(false)
 const isDark = ref(false)
 const sidebarVisible = ref(true)
 const sidebarCollapsed = ref(false)
-const searchValue = ref("")
+// const searchValue = ref("")
 
 // Get hideLayout from route meta
 const hideLayout = computed(() => route.meta.hideLayout === true)
@@ -37,14 +37,14 @@ const toggleCollapse = (collapsed: boolean) => {
   sidebarCollapsed.value = collapsed
 }
 
-const toggleDarkMode = () => {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-}
+// const toggleDarkMode = () => {
+//   isDark.value = !isDark.value
+//   document.documentElement.classList.toggle('dark', isDark.value)
+// }
 
-const navigateToRoute = (route: string) => {
-  router.push(route)
-}
+// const navigateToRoute = (route: string) => {
+//   router.push(route)
+// }
 
 onMounted(async () => {
   // Handle authentication

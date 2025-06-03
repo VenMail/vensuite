@@ -16,12 +16,6 @@ const props = defineProps<{
   onClose?: () => void
 }>()
 
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
-
-const theme = inject('theme') as { isDark: { value: boolean } }
-
 const variantIcon = computed<Component | null>(() => {
   switch (props.variant) {
     case 'success':

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
-import { nextTick, onMounted, ref, watchEffect, computed, onUnmounted,watch } from "vue";
+import { nextTick, onMounted, ref, watchEffect, computed, onUnmounted } from "vue";
 import { v4 as uuidv4 } from "uuid";
 
 import "@/assets/index.css";
@@ -13,7 +13,7 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-vue-next";
-import { useDebounceFn, useFavicon } from "@vueuse/core";
+import { useDebounceFn } from "@vueuse/core";
 import { useRoute, useRouter } from "vue-router";
 //@ts-ignore
 import { UmoEditor } from "@umoteam/editor";

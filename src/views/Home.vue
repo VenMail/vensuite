@@ -13,10 +13,6 @@ import {
   Edit,
   Download,
   Share2,
-  X,
-  FileText,
-  FileImage,
-  FileCode,
 } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/store/auth";
@@ -308,13 +304,13 @@ function handleUploadComplete(files: any[]) {
   toast.success(`Successfully uploaded ${files.length} file${files.length !== 1 ? 's' : ''}`);
 }
 
-function onDragEnter() {
-  // isDragging.value = true;
-}
+// function onDragEnter() {
+//   // isDragging.value = true;
+// }
 
-function onDragLeave() {
-  // isDragging.value = false;
-}
+// function onDragLeave() {
+//   // isDragging.value = false;
+// }
 
 // Format group names for display
 function formatGroupName(name: string) {
