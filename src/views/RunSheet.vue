@@ -133,7 +133,7 @@ onMounted(async () => {
     // Load data after route is initialized
     data.value = await loadData(route.params.id as string)
     
-    const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, '#38a169').replace(/1em/g, '')
+    // const iconHTML = iconRef.value?.outerHTML.replace(/currentColor/g, '#38a169').replace(/1em/g, '')
     // const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || '')}`
   }
 })
