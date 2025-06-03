@@ -14,6 +14,10 @@ import { sluggify } from '@/utils/lib'
 import { FUniver } from '@univerjs/facade'
 import { IWebsocketService, Message, useWebSocket, WebSocketService } from '@/lib/wsService'
 import { FileData } from '@/types'
+import { toast } from '@/composables/useToast'
+import { useFavicon } from '@vueuse/core'
+import { DEFAULT_WORKBOOK_DATA, BUDGET_TEMPLATE_DATA, INVOICE_TEMPLATE_DATA } from '@/assets/default-workbook-data'
+import { v4 as uuidv4 } from 'uuid'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,6 +37,8 @@ const userId = ref(`user-${Math.random().toString(36).substr(2, 9)}`)
 const userName = ref(`User ${Math.floor(Math.random() * 1000)}`)
 const editableTitle = ref(title.value)
 const isSettingCursor = ref(false)
+const isSaving = ref(false)
+const isLoading = ref(false)
 
 const wsService = ref<IWebsocketService | null>(null)
 const isConnected = computed(() => WebSocketService?.isConnected.value)
@@ -48,6 +54,9 @@ const chatMessagesContainer = ref<HTMLElement | null>(null)
 const replyingTo = ref<Message | null>(null)
 const titleRef = ref<HTMLElement | null>(null)
 
+// Icon reference and favicon setup
+const iconRef = ref<HTMLElement | null>(null)
+
 // Handler for univerRefChange event
 function onUniverRefChange(childUniverRef: FUniver | null) {
   univerCoreRef.value = childUniverRef
@@ -55,35 +64,107 @@ function onUniverRefChange(childUniverRef: FUniver | null) {
 
 // Load data function
 async function loadData(id: string) {
+  isLoading.value = true
   try {
+    console.log("Loading spreadsheet data for ID:", id)
     const loadedData = await fileStore.loadDocument(id, 'xlsx')
     if (!loadedData) {
       console.error('Failed to load document:', id)
+      toast.error('Failed to load spreadsheet')
       router.push('/') // Redirect to home if document not found
       return null
     }
+    
+    // Set title from the loaded FileData object first
     if (loadedData?.title) {
       updateTitleRemote(loadedData.title)
+      console.log("Set title from loaded document:", loadedData.title)
     }
-    return loadedData.contents ? JSON.parse(loadedData.contents) : null
-  } catch (error) {
-    console.error('Error loading data:', error)
+    
+    // Parse and validate the contents to restore all formatting
+    if (loadedData.content) {
+      try {
+        const contentString = loadedData.content
+        if (!contentString) {
+          console.log("Content string is empty, will use default structure")
+          return null
+        }
+        
+        const parsedData = JSON.parse(contentString)
+        
+        // Validate that this is a proper workbook data structure
+        if (parsedData && typeof parsedData === 'object') {
+          // Ensure it has the minimum required structure for UniverSheet
+          if (!parsedData.id) {
+            parsedData.id = id // Use the route ID
+          }
+          if (!parsedData.name && loadedData.title) {
+            parsedData.name = loadedData.title
+          }
+          
+          console.log("Successfully parsed spreadsheet data:", {
+            hasId: !!parsedData.id,
+            hasSheets: !!parsedData.sheets,
+            hasName: !!parsedData.name,
+            dataSize: contentString.length,
+            title: loadedData.title
+          })
+          
+          return parsedData
+        } else {
+          console.warn("Parsed data is not a valid object, using default structure")
+          return null
+        }
+      } catch (parseError) {
+        console.error("Error parsing spreadsheet contents:", parseError)
+        toast.error('Document data appears to be corrupted. Loading with default structure.')
+        return null
+      }
+    }
+    
+    // If we have a document but no contents, it might be a new document
+    // Still set the title if available
+    console.log("No contents found for existing document, will use default structure but keep title")
     return null
+  } catch (error) {
+    console.error('Error loading spreadsheet data:', error)
+    toast.error('Failed to load spreadsheet')
+    return null
+  } finally {
+    isLoading.value = false
   }
 }
 
 // Update data handler
 async function updateData(newData: IWorkbookData) {
-  data.value = newData
-  if (route.params.id) {
-    await fileStore.saveDocument({
-      id: route.params.id as string,
-      title: title.value,
-      file_name: `${title.value}.xlsx`,
-      file_type: 'xlsx',
-      contents: JSON.stringify(newData),
-      last_viewed: new Date()
-    })
+  try {
+    // Ensure the data maintains the correct ID from the route
+    if (route.params.id) {
+      newData.id = route.params.id as string
+    }
+    
+    // Update the local data reference
+    data.value = newData
+    
+    // Auto-save for local changes (only if not already saving)
+    if (route.params.id && newData.id && !isSaving.value) {
+      const doc = {
+        id: route.params.id as string,
+        title: title.value,
+        file_name: `${title.value}.xlsx`,
+        file_type: 'xlsx',
+        content: JSON.stringify(newData),
+        last_viewed: new Date()
+      } as FileData
+      
+      // Note: This auto-save might be too aggressive for real-time editing
+      // Consider debouncing this or removing it if it causes performance issues
+      await fileStore.saveDocument(doc)
+      console.log("Auto-saved document data")
+    }
+  } catch (error) {
+    console.error("Error updating document data:", error)
+    // Don't show toast for auto-save failures to avoid spam
   }
 }
 
@@ -98,21 +179,35 @@ function editTitle() {
   })
 }
 
-function handleTitleChange() {
+async function handleTitleChange() {
   const newTitle = title.value.trim()
   if (newTitle && newTitle !== document.title) {
     document.title = newTitle
-    if (route.params.id) {
-      fileStore.saveDocument({
-        id: route.params.id as string,
-        title: newTitle,
-        file_name: `${sluggify(newTitle)}.xlsx`,
-        file_type: 'xlsx',
-        contents: JSON.stringify(data.value),
-        last_viewed: new Date()
-      })
-      console.log("Sending ", newTitle);
-      wsService.value?.sendMessage(route.params.id as string, 'title', { title: newTitle }, userId.value, userName.value)
+    if (route.params.id && !isSaving.value) {
+      try {
+        const doc = {
+          id: route.params.id as string,
+          title: newTitle,
+          file_name: `${sluggify(newTitle)}.xlsx`,
+          file_type: 'xlsx',
+          content: JSON.stringify(data.value),
+          last_viewed: new Date()
+        } as FileData
+        
+        const result = await fileStore.saveDocument(doc)
+        console.log("Title saved:", newTitle)
+        
+        // Send WebSocket message for real-time collaboration
+        wsService.value?.sendMessage(route.params.id as string, 'title', { title: newTitle }, userId.value, userName.value)
+        
+        // Handle redirect for documents that got new server IDs
+        if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
+          console.log("Document got new server ID after title change, redirecting to:", result.redirectId)
+          await router.replace(`/sheets/${result.redirectId}`)
+        }
+      } catch (error) {
+        console.error("Error saving title:", error)
+      }
     }
   }
 }
@@ -143,20 +238,130 @@ function joinSheet() {
   }
 }
 
-onMounted(async () => {
-  if (route.params.id) {
-    initializeWebSocketAndJoinSheet()
+// Helper function to create workbook data from template
+function createWorkbookFromTemplate(templateData: any): IWorkbookData {
+  return {
+    ...templateData,
+    sheets: templateData.sheets as any
+  } as IWorkbookData
+}
 
-    // Load data after route is initialized
-    const loadedData = await loadData(route.params.id as string)
-    if (loadedData) {
-      data.value = loadedData
-      document.title = loadedData.name || 'New Spreadsheet'
+onMounted(async () => {
+  isLoading.value = true
+  
+  try {
+    // Handle template-based new documents first
+    if (route.params.template) {
+      const templateName = route.params.template as string
+      
+      let templateData: IWorkbookData = DEFAULT_WORKBOOK_DATA
+      let docTitle = 'New Spreadsheet'
+      
+      if (templateName.toLowerCase().includes('budget')) {
+        templateData = createWorkbookFromTemplate(BUDGET_TEMPLATE_DATA)
+        docTitle = 'Budget'
+      } else if (templateName.toLowerCase().includes('invoice')) {
+        templateData = createWorkbookFromTemplate(INVOICE_TEMPLATE_DATA)
+        docTitle = 'Invoice'
+      }
+      
+      console.log('Creating new document from template:', templateName)
+      
+      // Create the document using the store's new method
+      const newDoc = await fileStore.createNewDocument('xlsx', docTitle)
+      
+      const newDocData = {
+        ...templateData,
+        id: newDoc.id,
+        name: docTitle
+      }
+      
+      data.value = newDocData
+      document.title = docTitle
       title.value = document.title
-    } else {
-      console.error('Failed to load sheet data')
-      // Handle the error (e.g., show an error message to the user)
+      
+      // Navigate to the proper sheet URL with the new ID
+      await router.replace(`/sheets/${newDoc.id}`)
+      
+      // Initialize WebSocket after navigation
+      initializeWebSocketAndJoinSheet()
     }
+    // Handle existing document with ID
+    else if (route.params.id) {
+      // Check if document already exists in store and set title immediately
+      const existingDoc = fileStore.allFiles.find(doc => doc.id === route.params.id);
+      if (existingDoc && existingDoc.title) {
+        title.value = existingDoc.title;
+        document.title = existingDoc.title;
+        console.log("Set title from existing store data:", existingDoc.title);
+      }
+
+      initializeWebSocketAndJoinSheet()
+
+      // Load data after route is initialized
+      const loadedData = await loadData(route.params.id as string)
+      if (loadedData) {
+        // Ensure the loaded data has proper structure
+        data.value = loadedData
+        // Title should already be set by loadData function, but ensure it's correct
+        const finalTitle = title.value || loadedData.name || loadedData.title || 'New Spreadsheet'
+        document.title = finalTitle
+        title.value = finalTitle
+        console.log("Loaded existing document:", {
+          id: loadedData.id,
+          name: loadedData.name,
+          title: finalTitle,
+          hasSheets: !!loadedData.sheets
+        })
+      } else {
+        // For new documents, create a basic structure with the route ID
+        // But preserve any title that might have been set during the load attempt
+        console.log('Creating new document with ID:', route.params.id)
+        const currentTitle = title.value || 'New Spreadsheet'
+        const newDocData = {
+          ...DEFAULT_WORKBOOK_DATA,
+          id: route.params.id as string,
+          name: currentTitle
+        }
+        data.value = newDocData
+        document.title = currentTitle
+        title.value = currentTitle
+      }
+    }
+    // Handle completely new document without ID (route: /sheets)
+    else {
+      console.log('Creating completely new document')
+      
+      // Create the document using the store's new method
+      const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
+      
+      const newDocData = {
+        ...DEFAULT_WORKBOOK_DATA,
+        id: newDoc.id,
+        name: 'New Spreadsheet'
+      }
+      
+      data.value = newDocData
+      document.title = 'New Spreadsheet'
+      title.value = document.title
+      
+      // Navigate to the proper sheet URL with the new ID
+      await router.replace(`/sheets/${newDoc.id}`)
+      
+      // Initialize WebSocket after navigation
+      initializeWebSocketAndJoinSheet()
+    }
+
+    // Set up favicon with Excel icon
+    nextTick(() => {
+      const iconHTML = iconRef.value?.outerHTML
+      if (iconHTML) {
+        const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML.replace(/currentColor/g, '#38a169'))}`
+        useFavicon(iconDataURL)
+      }
+    })
+  } finally {
+    isLoading.value = false
   }
 })
 
@@ -315,23 +520,69 @@ function togglePencil(v: boolean) {
 //   // Implement cursor display logic here
 // }
 
-function saveData() {
-  // todo: we probably want to use our own custom ID
-  // also show modal to set spreadsheet name
-  if (univerRef.value){
+async function saveData() {
+  if (!univerRef.value || !route.params.id) {
+    console.warn("Cannot save: univerRef or route.params.id is missing")
+    toast.error("Cannot save: Missing document reference or ID")
+    return
+  }
+
+  // Prevent multiple concurrent saves
+  if (isSaving.value) {
+    console.log("Save already in progress, skipping")
+    return
+  }
+
+  isSaving.value = true
+
+  try {
     const name = title.value || "New Spreadsheet"
     univerRef.value.setName(name)
 
-    const doc = {
-      title: name,
-      contents: JSON.stringify(univerRef.value.getData()),
-      file_type: "xlsx",
-      file_name: title.value?.toLowerCase() || "spreadsheet",
-    } as FileData
-    if (route.params.id) {
-      doc.id = route.params.id as string
+    // Use the UniverSheet's getData method to get the complete snapshot
+    const completeData = univerRef.value.getData()
+    if (!completeData) {
+      throw new Error("Failed to capture spreadsheet data")
     }
-    fileStore.saveDocument(doc)
+
+    // Ensure the data has the correct ID from the route
+    completeData.id = route.params.id as string
+    completeData.name = name
+
+    const doc = {
+      id: route.params.id as string,
+      title: name,
+      content: JSON.stringify(completeData), // This preserves all formatting and styles
+      file_type: "xlsx",
+      file_name: `${name.toLowerCase().replace(/\s+/g, '-')}.xlsx`,
+      last_viewed: new Date()
+    } as FileData
+    
+    console.log("Saving document with complete data:", {
+      id: doc.id,
+      title: doc.title,
+      dataSize: doc.content?.length || 0,
+      hasSheets: !!completeData.sheets
+    })
+    
+    const result = await fileStore.saveDocument(doc)
+    console.log('saveResult', result)
+    
+    // Handle redirect for documents that got new server IDs
+    if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
+      console.log("Document got new server ID, redirecting to:", result.redirectId)
+      await router.replace(`/sheets/${result.redirectId}`)
+      toast.success("Document saved and synced successfully")
+    } else {
+      toast.success("Document saved successfully")
+    }
+    
+    console.log("Document saved successfully")
+  } catch (error) {
+    console.error("Error saving document:", error)
+    toast.error("Failed to save document. Please try again.")
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -385,13 +636,15 @@ function toggleChat() {
 
 // Avatar letter placeholder
 const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
-
-// Icon reference and favicon setup
-const iconRef = ref<HTMLElement | null>(null)
 </script>
 
 <template>
   <div id="app" class="h-screen flex flex-col">
+    <!-- Loading bar -->
+    <div v-if="isLoading" class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+
     <div class="flex items-center gap-4 pl-4 py-3 bg-gray-50 border-b border-gray-200">
       <router-link to="/" class="flex-shrink-0">
         <defaultIcons.IconMicrosoftExcel
@@ -429,6 +682,18 @@ const iconRef = ref<HTMLElement | null>(null)
         />
       </div>
       <div class="ml-auto mr-4 flex items-center gap-2">
+        <!-- Saving indicator -->
+        <div v-if="isSaving" class="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-600">
+          <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+          <span>Saving</span>
+        </div>
+        
+        <!-- Connection status indicator -->
+        <div v-else-if="!isConnected" class="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded text-xs text-red-600">
+          <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          <span>Offline</span>
+        </div>
+        
         <button @click="toggleChat" class="p-2 rounded-full hover:bg-gray-200">
           <MessageSquareIcon class="h-6 w-6 text-gray-600" />
         </button>
@@ -507,9 +772,6 @@ const iconRef = ref<HTMLElement | null>(null)
         </form>
       </div>
     </div>
-    <div v-if="!isConnected" class="fixed bottom-4 right-4 z-50 bg-red-500 text-white px-4 py-2 rounded">
-      Disconnected. Attempting to reconnect...
-    </div>
   </div>
 </template>
 
@@ -538,5 +800,29 @@ body {
 .chat-input {
   min-height: 40px;
   max-height: 150px;
+}
+
+.loading-bar {
+  @apply fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden;
+}
+
+.loading-progress {
+  @apply h-full bg-primary-600;
+  width: 30%;
+  animation: loading 2s infinite ease-in-out;
+}
+
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(300%);
+  }
 }
 </style>

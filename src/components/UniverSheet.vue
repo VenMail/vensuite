@@ -33,8 +33,9 @@ const fUniver = ref<FUniver | null>(null);
 
 const props = defineProps({
   data: {
-    type: Object as () => IWorkbookData,
-    required: true,
+    type: Object as () => IWorkbookData | null,
+    required: false,
+    default: null,
   },
   ws: {
     type: Object as () => IWebsocketService,
@@ -128,32 +129,69 @@ function setupCollaboration() {
   });
 }
 
-watch(() => props.data, (newValue) => {
-  if (newValue && (!workBook.value || newValue.id !== workBook.value.getUnitId())) {
-    init(newValue);
+watch(() => props.data, (newValue, oldValue) => {
+  // Handle initialization when data becomes available
+  if (newValue && !oldValue) {
+    console.log('Data became available, initializing UniverSheet')
+    init(newValue)
+    return
   }
-});
+  
+  // Handle data updates with different IDs
+  if (newValue && (!workBook.value || newValue.id !== workBook.value.getUnitId())) {
+    console.log('Data ID changed, reinitializing UniverSheet')
+    init(newValue)
+    return
+  }
+  
+  // Handle case where data becomes null (shouldn't happen normally)
+  if (!newValue && oldValue) {
+    console.log('Data became null, using default data')
+    init(DEFAULT_WORKBOOK_DATA)
+  }
+}, { immediate: false })
 
 onMounted(() => {
-  init(props.data);
-});
+  // Initialize with provided data or wait for data to be provided
+  if (props.data) {
+    console.log('UniverSheet: Initializing with provided data')
+    init(props.data)
+  } else {
+    console.log('UniverSheet: No initial data, will wait for data prop to be set')
+    // The watch will handle initialization when data becomes available
+  }
+})
 
 onBeforeUnmount(() => {
   destroyUniver();
 });
 
-const init = (data: IWorkbookData) => {
+const init = (data: IWorkbookData | null) => {
   try {
-    const api = setupUniver(data);
+    // Clean up any existing instance first
+    if (workBook.value) {
+      destroyUniver()
+    }
+    
+    // Use provided data or fall back to default
+    const workbookData = data || DEFAULT_WORKBOOK_DATA
+    console.log('Initializing UniverSheet with data:', {
+      hasData: !!data,
+      dataId: workbookData.id,
+      dataName: workbookData.name,
+      hasSheets: !!workbookData.sheets
+    })
+    
+    const api = setupUniver(workbookData)
     if (api) {
-      emit('univerRefChange', api);
+      emit('univerRefChange', api)
     } else {
-      console.error('Failed to initialize Univer');
+      console.error('Failed to initialize Univer')
     }
   } catch (error) {
-    console.error('Error initializing Univer:', error);
+    console.error('Error initializing Univer:', error)
   }
-};
+}
 
 const destroyUniver = () => {
   try {

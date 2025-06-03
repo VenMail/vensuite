@@ -1,13 +1,11 @@
 export interface FileData {
-  id?: string;
-  local_id?: string;
-  redirect_server_id?: string;
+  id?: string;              // Primary ID - either local UUID or server ID
+  server_id?: string;       // Server ID (only present for documents that exist on server)
   title: string;
   file_name?: string;
   file_type?: string | null;
   file_size?: string;
   file_url?: string;
-  remote_id?: string;
   is_template?: boolean;
   employee_id?: string;
   folder_id?: string | null;
@@ -15,10 +13,9 @@ export interface FileData {
   created_at?: Date | string;
   updated_at?: Date | string;
   is_folder?: boolean;
-  contents?: string;
-  content?: string;
-  isNew?: boolean;
-  isDirty?: boolean;
+  content?: string;          // Normalized content field
+  isNew?: boolean;          // Local flag for new documents
+  isDirty?: boolean;        // Local flag for unsaved changes
 }
 
 export interface FormData {

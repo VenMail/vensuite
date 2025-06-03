@@ -101,10 +101,31 @@ onMounted(async () => {
     const offlineDocs = fileStore.loadOfflineDocuments();
     fileStore.allFiles = offlineDocs;
 
-    // If online, load online documents and merge
+    // If online, load online documents and merge with offline
     if (fileStore.isOnline) {
       const onlineDocs = await fileStore.loadDocuments();
-      fileStore.allFiles = fileStore.mergeDocuments(onlineDocs, offlineDocs);
+      
+      // Simple merge: prefer offline documents if they're dirty, otherwise use online
+      const mergedFiles = new Map<string, FileData>();
+      
+      // Add offline documents first
+      offlineDocs.forEach(doc => {
+        if (doc.id) {
+          mergedFiles.set(doc.id, doc);
+        }
+      });
+      
+      // Add online documents, but only if no dirty offline version exists
+      onlineDocs.forEach(doc => {
+        if (doc.id) {
+          const offlineDoc = mergedFiles.get(doc.id);
+          if (!offlineDoc || !offlineDoc.isDirty) {
+            mergedFiles.set(doc.id, doc);
+          }
+        }
+      });
+      
+      fileStore.allFiles = Array.from(mergedFiles.values());
     }
   }
 
@@ -693,7 +714,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                   'space-y-2': viewMode === 'list',
                 }">
                   <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
-                    :isSelected="selectedFiles.has(item.id || item.local_id || '')"
+                    :isSelected="selectedFiles.has(item.id || '')"
                     @click.stop="handleSelect(item.id, $event)" @select-file="handleSelect" @open-file="openFile" />
                 </div>
               </div>

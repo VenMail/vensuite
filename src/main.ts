@@ -38,7 +38,9 @@ const routes = [
     children: [
       { path: 'sheets', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
       { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
+      { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },
       { path: 'docs', name: 'docs', component: RunDoc, meta: { hideLayout: true } },
+      { path: 'docs/t/:template', name: 'doc-template', component: RunDoc, meta: { hideLayout: true } },
       { path: 'docs/:id', name: 'doc', component: RunDoc, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },
@@ -97,9 +99,9 @@ app.use(useUmoEditor, {
     console.log('updatedDoc:', updatedDoc);
     const saved = await documentStore.saveDocument(updatedDoc);
     console.log('saved:', saved);
-    if (saved.id !== routeId) {
-      console.log('redirecting to:', `/docs/${saved.id}`);
-      router.replace(`/docs/${saved.id}`);
+    if (saved.document.id !== routeId) {
+      console.log('redirecting to:', `/docs/${saved.document.id}`);
+      router.replace(`/docs/${saved.document.id}`);
     }
     return { success: !!saved, offline: !navigator.onLine, error: documentStore.lastError };
   },

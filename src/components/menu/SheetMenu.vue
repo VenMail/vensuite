@@ -25,6 +25,7 @@ import {
   TrashIcon,
   UnderlineIcon,
   UndoIcon,
+  UsersIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from 'lucide-vue-next'
@@ -85,8 +86,8 @@ const recentFiles = computed(() => {
 async function loadData(id: string) {
   const savedData = await fileStore.loadDocument(id, "xlsx")
   console.log('saved', savedData)
-  if (savedData?.contents) {
-    return JSON.parse(savedData.contents)
+  if (savedData && savedData.content) {
+    return JSON.parse(savedData.content)
   }
   return DEFAULT_WORKBOOK_DATA
 }

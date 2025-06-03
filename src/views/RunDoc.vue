@@ -18,6 +18,7 @@ import { useRoute, useRouter } from "vue-router";
 //@ts-ignore
 import { UmoEditor } from "@umoteam/editor";
 import { useFileStore } from "@/store/files";
+import { FileData } from "@/types";
 import Button from "@/components/ui/button/Button.vue";
 import {
   DropdownMenu,
@@ -33,6 +34,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "vue-sonner";
+import { RESUME_TEMPLATE, LETTER_TEMPLATE } from "@/assets/doc-data";
 
 // Router setup
 const route = useRoute();
@@ -51,6 +53,8 @@ const isLoading = ref(false);
 const isOffline = ref(!navigator.onLine);
 const hasUnsavedChanges = ref(false);
 const currentDoc = ref<any>(null);
+const editorReady = ref(false);
+const isInitializing = ref(false);
 const lastSaveResult = ref<{
   success: boolean;
   offline: boolean;
@@ -66,6 +70,8 @@ const syncStatus = computed(() => {
 });
 
 const syncStatusText = computed(() => {
+  if (isInitializing.value) return "Setting up document...";
+  if (!editorReady.value) return "Loading editor..."; 
   if (lastSaveResult.value?.error) return `Error: ${lastSaveResult.value.error}`;
   switch (syncStatus.value) {
     case "offline":
@@ -197,6 +203,48 @@ const options = ref({
 const titleRef = ref<HTMLElement | null>(null);
 const editorRef = ref<any>(null);
 
+// Safe method to set editor content - waits for editor to be ready
+async function setEditorContent(content: string, title: string) {
+  // Wait for editor to be ready with timeout
+  let attempts = 0;
+  const maxAttempts = 50; // 2.5 seconds maximum wait
+  
+  while (!editorReady.value && attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 50));
+    attempts++;
+  }
+  
+  if (editorRef.value) {
+    await nextTick();
+    try {
+      editorRef.value.setDocument({
+        content,
+        title,
+      });
+      editorRef.value.setContent(content);
+      console.log("Editor content set safely", {
+        contentLength: content.length,
+        title,
+      });
+    } catch (error) {
+      console.error("Error setting editor content:", error);
+      // Fallback: try again after a delay
+      setTimeout(() => {
+        try {
+          if (editorRef.value) {
+            editorRef.value.setDocument({ content, title });
+            editorRef.value.setContent(content);
+          }
+        } catch (retryError) {
+          console.error("Retry failed:", retryError);
+        }
+      }, 500);
+    }
+  } else {
+    console.error("Editor reference not available");
+  }
+}
+
 function editTitle() {
   isTitleEdit.value = true;
   editableTitle.value = title.value;
@@ -213,107 +261,47 @@ async function loadData(id: string) {
   isLoading.value = true;
 
   try {
-    let serverId = null;
-    let localId = id;
-
-    // Check if this is a server ID and we have a local mapping
-    if (/^\d+-/.test(id)) {
-      serverId = id;
-      localId = localStorage.getItem(`server_id_map_${id}`) || id;
-      console.log(`Server ID detected (${id}). Mapped local ID: ${localId}`);
-    } else {
-      // If this is a local ID, check if we have a server ID mapping
-      const serverIdMapping = Object.keys(localStorage)
-        .filter((key) => key.startsWith("server_id_map_"))
-        .find((key) => localStorage.getItem(key) === id);
-
-      if (serverIdMapping) {
-        serverId = serverIdMapping.replace("server_id_map_", "");
-        console.log(`Local ID detected (${id}). Found server ID mapping: ${serverId}`);
-      }
-    }
-
     const doc = await fileStore.loadDocument(id, "docx");
     console.log("Document loaded:", doc);
 
     if (doc) {
-      // Create a clean document object with normalized fields
-      currentDoc.value = {
-        ...doc,
-        content: doc.content || doc.contents, // Normalize to use content field
-        contents: undefined, // Remove contents to avoid duplication
-      };
+      // Use the document as-is from the simplified store
+      currentDoc.value = doc;
 
       // Update title references
       title.value = doc.title || "Untitled Document";
       document.title = title.value;
 
       // Ensure we have content to display
-      const contentToDisplay = currentDoc.value.content || "";
+      const contentToDisplay = doc.content || "";
       console.log(`Setting editor content, length: ${contentToDisplay.length}`);
 
-      // Force editor refresh with a slight delay to ensure it's ready
-      nextTick(() => {
-        if (editorRef.value) {
-          editorRef.value.setDocument({
-            content: contentToDisplay,
-            title: title.value,
-          });
-
-          editorRef.value.setContent(contentToDisplay);
-
-          console.log("Editor content set", {
-            contentLength: contentToDisplay.length,
-            title: title.value,
-          });
-        } else {
-          console.error("Editor reference not available");
-        }
-      });
+      // Use safe method to set editor content
+      await setEditorContent(contentToDisplay, title.value);
 
       console.log(
-        `Document loaded successfully. Title: ${title.value}, Content length: ${
-          currentDoc.value.content?.length || 0
+        `Document loaded successfully. Title: ${title.value}, Content length: ${doc.content?.length || 0
         }`
       );
 
-      // URL handling - prefer server ID in URL
-      if (serverId && route.params.id !== serverId) {
-        console.log(`Updating URL to use server ID: ${serverId}`);
-        router.replace(`/docs/${serverId}`);
-      } else if (doc.remote_id && doc.remote_id !== route.params.id) {
-        console.log(`Updating URL to use document's server ID: ${doc.remote_id}`);
-        router.replace(`/docs/${doc.remote_id}`);
-      } else if (!serverId && doc.id !== route.params.id) {
-        // No server ID available, fallback to local ID
-        console.log(`No server ID available. Using local ID in URL: ${doc.id}`);
+      // Update URL if document ID doesn't match route (shouldn't happen with simplified approach)
+      if (doc.id !== route.params.id) {
+        console.log(`Updating URL to use document ID: ${doc.id}`);
         router.replace(`/docs/${doc.id}`);
       }
     } else {
       console.log(`No document found with ID: ${id}. Creating new document.`);
-      // Handle new document case
-      const newId = uuidv4();
-      currentDoc.value = {
-        id: newId,
-        title: "New Document",
-        file_type: "docx",
-        isNew: true,
-      };
-      title.value = "New Document";
-      document.title = "New Document";
 
-      // Set empty document in editor
-      nextTick(() => {
-        if (editorRef.value) {
-          editorRef.value.setDocument({
-            content: "",
-            title: "New Document",
-          });
-          editorRef.value.setContent("");
-        }
-      });
+      // Create new document using the store's method
+      const newDoc = await fileStore.createNewDocument("docx", "New Document");
+      currentDoc.value = newDoc;
+      title.value = newDoc.title || "New Document";
+      document.title = title.value;
 
-      router.replace(`/docs/${newId}`);
+      // Set empty document in editor using safe method
+      await setEditorContent("", title.value);
+
+      router.replace(`/docs/${newDoc.id}`);
     }
     hasUnsavedChanges.value = false;
   } catch (error) {
@@ -329,7 +317,34 @@ async function syncChanges() {
   isSyncing.value = true;
   try {
     console.log("Saving content");
-    editorRef.value?.saveContent(false);
+
+    // Get content from editor and save
+    const content = editorRef.value?.getContent() || "";
+    const docToSave = {
+      ...currentDoc.value,
+      content: content,
+      title: title.value,
+      last_viewed: new Date()
+    } as FileData;
+
+    const result = await fileStore.saveDocument(docToSave);
+
+    // Handle redirect for local documents that got server IDs
+    if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
+      console.log("Document got new server ID, redirecting to:", result.redirectId);
+      await router.replace(`/docs/${result.redirectId}`);
+      // Update current doc reference
+      currentDoc.value = result.document;
+    } else {
+      currentDoc.value = result.document;
+    }
+
+    hasUnsavedChanges.value = false;
+    lastSaveResult.value = {
+      success: true,
+      offline: !fileStore.isOnline,
+      error: null
+    };
   } catch (error) {
     console.error("Sync error:", error);
     lastSaveResult.value = {
@@ -383,7 +398,41 @@ function startEditing() {
 // Icon reference and favicon setup
 const iconRef = ref<HTMLElement | null>(null);
 
-onMounted(() => {
+// Helper function to get template content
+function getTemplateContent(templateName: string): string {
+  const name = templateName.toLowerCase();
+  if (name.includes('resume')) return RESUME_TEMPLATE;
+  if (name.includes('letter')) return LETTER_TEMPLATE;
+  return ''; // Blank document
+}
+
+// Helper function to get template title
+function getTemplateTitle(templateName: string): string {
+  const name = templateName.toLowerCase();
+  if (name.includes('resume')) return 'Resume';
+  if (name.includes('letter')) return 'Letter';
+  return 'New Document';
+}
+
+onMounted(async () => {
+  // Suppress UmoEditor console messages
+  const originalConsoleLog = console.log;
+  console.log = (...args) => {
+    // Filter out the unwanted UmoEditor message
+    const message = args.join(' ');
+    if (message.includes('Thanks for using Umo Editor') || 
+        message.includes('Current version:') || 
+        message.includes('More info: https://editor.umodoc.com')) {
+      return; // Suppress these messages
+    }
+    originalConsoleLog.apply(console, args);
+  };
+  
+  // Restore original console.log after a delay (after editor initialization)
+  setTimeout(() => {
+    console.log = originalConsoleLog;
+  }, 3000);
+
   window.addEventListener("online", updateOnlineStatus);
   window.addEventListener("offline", updateOnlineStatus);
 
@@ -397,30 +446,101 @@ onMounted(() => {
     }
   });
 
-  // Listen to route changes and load document
-  watchEffect(async () => {
-    if (route.params.id) {
-      const docId = route.params.id as string;
-      console.log("Route changed, loading document with ID:", docId);
+  // Handle template-based new documents first
+  if (route.params.template) {
+    isInitializing.value = true;
+    const templateName = route.params.template as string;
+    console.log('Creating new document from template:', templateName);
 
-      try {
-        await loadData(docId);
-      } catch (error) {
-        console.error("Failed to load document:", error);
-        toast.error("Failed to load document");
-      }
+    const docTitle = getTemplateTitle(templateName);
+    const templateContent = getTemplateContent(templateName);
 
-      const iconHTML = iconRef.value?.outerHTML
-        .replace(/currentColor/g, "#4d7cfe")
-        .replace(/1em/g, "");
-      const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || "")}`;
-      useFavicon(iconDataURL);
+    // Create the document using the store's new method
+    const newDoc = await fileStore.createNewDocument('docx', docTitle);
+
+    // Update the document with template content
+    if (templateContent) {
+      newDoc.content = templateContent;
+      // Save the document with template content
+      const result = await fileStore.saveDocument(newDoc);
+      currentDoc.value = result.document;
+    } else {
+      currentDoc.value = newDoc;
     }
-  });
+
+    title.value = docTitle;
+    document.title = docTitle;
+
+    // Use safe method to set editor content
+    await setEditorContent(templateContent, docTitle);
+
+    // Navigate to the proper doc URL with the new ID
+    await router.replace(`/docs/${newDoc.id}`);
+    isInitializing.value = false;
+  }
+  // Handle existing document with ID or new blank document
+  else {
+    // Check if document already exists in store and set title immediately
+    if (route.params.id) {
+      const existingDoc = fileStore.allFiles.find(doc => doc.id === route.params.id);
+      if (existingDoc && existingDoc.title) {
+        title.value = existingDoc.title;
+        document.title = existingDoc.title;
+        console.log("Set title from existing store data:", existingDoc.title);
+      }
+    }
+
+    // Listen to route changes and load document
+    watchEffect(async () => {
+      // Skip if we're initializing (prevents double execution during template creation)
+      if (isInitializing.value) return;
+      
+      if (route.params.id) {
+        const docId = route.params.id as string;
+        console.log("Route changed, loading document with ID:", docId);
+
+        try {
+          await loadData(docId);
+        } catch (error) {
+          console.error("Failed to load document:", error);
+          toast.error("Failed to load document");
+        }
+
+        const iconHTML = iconRef.value?.outerHTML
+          .replace(/currentColor/g, "#4d7cfe")
+          .replace(/1em/g, "");
+        const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || "")}`;
+        useFavicon(iconDataURL);
+      }
+      // Handle completely new document without ID (route: /docs)
+      else if (route.path === '/docs') {
+        console.log('Creating completely new blank document');
+
+        // Create the document using the store's new method
+        const newDoc = await fileStore.createNewDocument('docx', 'New Document');
+        currentDoc.value = newDoc;
+        title.value = 'New Document';
+        document.title = title.value;
+
+        // Set empty document in editor using safe method
+        await setEditorContent("", title.value);
+
+        // Navigate to the proper doc URL with the new ID
+        await router.replace(`/docs/${newDoc.id}`);
+      }
+    });
+  }
 });
 
 function handleEditorCreated() {
   console.log("Editor component created");
+  // Give the editor a moment to fully initialize before marking as ready
+  nextTick(() => {
+    setTimeout(() => {
+      editorReady.value = true;
+      console.log("Editor marked as ready");
+    }, 100);
+  });
 }
 
 onUnmounted(() => {
@@ -451,54 +571,35 @@ function shareDocument() {
 
     <!-- Header -->
     <div
-      class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
-    >
+      class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
       <div class="flex items-center gap-4">
         <Button variant="ghost" size="icon" @click="router.push('/')">
           <ArrowLeft class="h-5 w-5" />
         </Button>
         <router-link to="/">
-          <defaultIcons.IconMicrosoftWord
-            ref="iconRef"
-            class="w-[1.5rem] h-[3rem] text-blue-600"
-            xmlns="http://www.w3.org/2000/svg"
-          />
+          <defaultIcons.IconMicrosoftWord ref="iconRef" class="w-[1.5rem] h-[3rem] text-blue-600"
+            xmlns="http://www.w3.org/2000/svg" />
         </router-link>
         <div class="flex flex-col">
           <div class="flex items-center gap-2">
-            <div
-              id="docHead"
-              :contenteditable="isTitleEdit"
-              ref="titleRef"
-              class="font-bold border-b border-dotted border-gray-300 min-w-[100px] px-2 py-1 relative"
-              :class="{
+            <div id="docHead" :contenteditable="isTitleEdit" ref="titleRef"
+              class="font-bold border-b border-dotted border-gray-300 min-w-[100px] px-2 py-1 relative" :class="{
                 'cursor-text': isTitleEdit,
                 'hover:bg-gray-100': !isTitleEdit,
-              }"
-              @click="startEditing"
-              @input="updateTitle"
-              @blur="saveTitle"
-              @keydown.enter.prevent="saveTitle"
-            >
+              }" @click="startEditing" @input="updateTitle" @blur="saveTitle" @keydown.enter.prevent="saveTitle">
               {{ title }}
             </div>
             <div class="flex items-center gap-2">
-              <PencilIcon
-                v-if="!isTitleEdit"
-                @click="startEditing"
-                class="h-3 w-3 cursor-pointer hover:text-primary-600"
-              />
+              <PencilIcon v-if="!isTitleEdit" @click="startEditing"
+                class="h-3 w-3 cursor-pointer hover:text-primary-600" />
               <div class="flex items-center gap-1 text-sm">
                 <WifiOff v-if="isOffline" class="h-4 w-4 text-yellow-500" />
                 <Wifi v-else class="h-4 w-4 text-green-500" />
-                <span
-                  :class="{
-                    'text-yellow-500': isOffline,
-                    'text-green-500': !isOffline && !hasUnsavedChanges,
-                    'text-blue-500': isSyncing || hasUnsavedChanges,
-                  }"
-                  >{{ syncStatusText }}</span
-                >
+                <span :class="{
+                  'text-yellow-500': isOffline,
+                  'text-green-500': !isOffline && !hasUnsavedChanges,
+                  'text-blue-500': isSyncing || hasUnsavedChanges,
+                }">{{ syncStatusText }}</span>
               </div>
             </div>
           </div>
@@ -518,9 +619,7 @@ function shareDocument() {
               <DialogTitle>Choose a Template</DialogTitle>
             </DialogHeader>
             <div class="grid grid-cols-2 gap-4">
-              <button
-                v-for="template in templates.Documents"
-                :key="template.name"
+              <button v-for="template in templates.Documents" :key="template.name"
                 class="h-24 flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 hover:border-primary-500 transition-colors"
                 @click="
                   router.push(
@@ -528,8 +627,7 @@ function shareDocument() {
                       ? '/docs'
                       : `/docs/t/${template.name}`
                   )
-                "
-              >
+                  ">
                 <component :is="template.icon" class="w-8 h-8" />
                 <span class="mt-2 text-sm">{{ template.name }}</span>
               </button>
@@ -554,11 +652,11 @@ function shareDocument() {
         </DropdownMenu>
       </div>
     </div>
-    <umo-editor
-      ref="editorRef"
-      v-bind="options"
-      @saved="handleSavedEvent"
-      @created="handleEditorCreated"
+    <umo-editor 
+      ref="editorRef" 
+      v-bind="options" 
+      @saved="handleSavedEvent" 
+      @created="handleEditorCreated" 
     />
   </div>
 </template>
@@ -657,9 +755,11 @@ body {
   0% {
     transform: translateX(-100%);
   }
+
   50% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(300%);
   }

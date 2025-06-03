@@ -18,6 +18,7 @@ export const useFileStore = defineStore("files", {
     recentFiles: [] as FileData[],
     cachedDocuments: new Map<string, { data: FileData; timestamp: number }>(),
     pendingChanges: new Map<string, { data: FileData; attempts: number }>(),
+    syncStatus: new Map<string, 'pending' | 'syncing' | 'failed' | 'synced'>(),
     isOnline: navigator.onLine,
     isSyncing: false,
     lastError: null as string | null,
@@ -50,81 +51,163 @@ export const useFileStore = defineStore("files", {
         return false;
       }
     },
+
     /** Get authentication token from auth store or localStorage */
     getToken() {
       const authStore = useAuthStore();
       return authStore.getToken() || localStorage.getItem("venAuthToken");
     },
 
-    /** Save a document, handling offline and online scenarios */
-    async saveDocument(document: FileData): Promise<FileData> {
-      // Generate a local ID if none exists
-      if (!document.id) {
-        document.id = uuidv4();
-        document.isNew = true;
-      }
+    /** Create a new document - tries online first, falls back to local */
+    async createNewDocument(fileType: string = "docx", title: string = "Untitled"): Promise<FileData> {
+      const newDoc = {
+        title,
+        file_name: `${title}.${fileType}`,
+        file_type: fileType,
+        content: "",
+        last_viewed: new Date(),
+      };
 
-      // Handle server IDs by mapping to local IDs
-      if (/^\d+-/.test(document.id) && !document.remote_id) {
-        document.remote_id = document.id;
-        document.id = uuidv4();
-        localStorage.setItem(`server_id_map_${document.remote_id}`, document.id);
-      }
-
-      document.last_viewed = new Date();
-      
-      // Normalize content field
-      if (document.contents && !document.content) {
-        document.content = document.contents;
-      }
-      
-      this.saveToLocalCache(document);
-
+      // Try to create online first
       if (this.isOnline) {
-        const saved = await this.saveToAPI(document);
-        if (saved) {
-          this.pendingChanges.delete(document.id);
-          
-          // If this is a new document that received a server ID,
-          // indicate redirection is needed through the redirect_server_id field
-          if (document.isNew && saved.remote_id && !document.remote_id) {
-            saved.redirect_server_id = saved.remote_id;
+        try {
+          const response = await axios.post(FILES_ENDPOINT, newDoc, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.getToken()}`,
+            },
+          });
+
+          if (response.status === 200 || response.status === 201) {
+            const serverDoc = response.data.data;
+            const createdDoc: FileData = {
+              ...serverDoc,
+              id: serverDoc.id, // Use server ID directly
+              content: serverDoc.content || serverDoc.contents || "",
+              isNew: false,
+              isDirty: false,
+            };
+            
+            this.cacheDocument(createdDoc);
+            this.updateFiles(createdDoc);
+            console.log("Created new document online:", createdDoc.id);
+            return createdDoc;
           }
-          
-          return saved;
+        } catch (error) {
+          console.error("Failed to create document online:", error);
         }
       }
 
-      // Offline or failed save: mark as dirty and queue for sync
-      document.isDirty = true;
-      this.queueForSync(document);
-      return document;
+      // Fallback to local creation
+      const localDoc: FileData = {
+        ...newDoc,
+        id: uuidv4(),
+        isNew: true,
+        isDirty: true,
+      };
+      
+      this.saveToLocalCache(localDoc);
+      this.updateFiles(localDoc);
+      console.log("Created new document locally:", localDoc.id);
+      return localDoc;
+    },
+
+    /** Check if a document ID is a local UUID */
+    isLocalDocument(id: string): boolean {
+      // UUIDs have a specific format, server IDs typically don't
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return uuidRegex.test(id);
+    },
+
+    /** Delete a local document from storage */
+    deleteLocalDocument(id: string) {
+      // Remove from localStorage
+      const prefixes = ["document", "sheet", "file"];
+      prefixes.forEach(prefix => {
+        const key = `${prefix}_${id}`;
+        localStorage.removeItem(key);
+      });
+
+      // Remove from cache
+      this.cachedDocuments.delete(id);
+      
+      // Remove from pending changes and sync status
+      this.pendingChanges.delete(id);
+      this.syncStatus.delete(id);
+      
+      // Remove from state arrays
+      this.allFiles = this.allFiles.filter(f => f.id !== id);
+      this.recentFiles = this.recentFiles.filter(f => f.id !== id);
+    },
+
+    /** Save a document - local-first with robust sync */
+    async saveDocument(document: FileData): Promise<{
+      document: FileData;
+      shouldRedirect?: boolean;
+      redirectId?: string;
+    }> {
+      document.last_viewed = new Date();
+      
+      // Save locally first for immediate responsiveness
+      this.saveToLocalCache(document);
+      this.updateFiles(document);
+      
+      // Then attempt online sync if connected
+      if (this.isOnline) {
+        const isLocalDoc = this.isLocalDocument(document.id!);
+        const saveResult = await this.saveToAPI(document);
+        
+        if (saveResult) {
+          // Save was successful online
+          if (isLocalDoc) {
+            // This was a local document that now has a server ID
+            // Delete the local version and return redirect info
+            this.deleteLocalDocument(document.id!);
+            console.log("Local document saved online, redirecting from", document.id, "to", saveResult.id);
+            
+            return {
+              document: saveResult,
+              shouldRedirect: true,
+              redirectId: saveResult.id
+            };
+          } else {
+            // This was already a server document, just update cache
+            this.cacheDocument(saveResult);
+            this.updateFiles(saveResult);
+            return { document: saveResult };
+          }
+        } else {
+          // Online save failed - mark as dirty for later sync
+          document.isDirty = true;
+          this.queueForSync(document);
+        }
+      } else {
+        // Offline - mark as dirty for later sync
+        document.isDirty = true;
+        this.queueForSync(document);
+      }
+      
+      return { document };
     },
 
     /** Save document to the API */
     async saveToAPI(document: FileData): Promise<FileData | null> {
       try {
-        // Create a new object to avoid modifying the original
-        const data = { ...document };
+        const payload = { ...document };
         
-        // Handle content/contents field consistency
-        if (data.content && !data.contents) {
-          data.contents = data.content;
-        }
+        // Clean up local-only fields systematically
+        const localOnlyFields: (keyof FileData)[] = ['isNew', 'isDirty'];
+        localOnlyFields.forEach(field => delete payload[field]);
         
-        // Clean up unnecessary fields
-        delete data.isNew;
-        delete data.isDirty;
+        // Use proper HTTP methods: PUT for updates, POST for creates
+        const isUpdate = !this.isLocalDocument(document.id!) && document.id;
+        const url = isUpdate ? `${FILES_ENDPOINT}/${document.id}` : FILES_ENDPOINT;
+        const method = isUpdate ? 'put' : 'post';
         
-        // Handle ID mapping for API
-        const isNew = !data.remote_id;
-        if (isNew) {
-          delete data.id; // Remove local ID for new documents
-        } else {
-          data.id = data.remote_id; // Use server_id as id for API
-        }
-
-        const response = await axios.post(FILES_ENDPOINT, data, {
+        const response = await axios({
+          method,
+          url,
+          data: payload,
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${this.getToken()}`,
@@ -134,25 +217,17 @@ export const useFileStore = defineStore("files", {
         if (response.status === 200 || response.status === 201) {
           const serverData = response.data.data;
           
-          // Handle content/contents field from server response
-          const content = serverData.content || serverData.contents;
-          
-          // Create an updated document with normalized fields
-          const updated = {
-            ...document,
+          const savedDoc: FileData = {
             ...serverData,
-            id: document.id, // Maintain local ID
-            server_id: serverData.id,
-            content: content, // Consistent field name
-            contents: undefined, // Remove to avoid duplication
+            id: serverData.id, // Always use server ID
+            content: serverData.content || serverData.contents || "",
             isNew: false,
             isDirty: false,
           };
           
-          localStorage.setItem(`server_id_map_${serverData.id}`, updated.id);
-          this.saveToLocalCache(updated);
-          this.updateFiles(updated);
-          return updated;
+          this.cacheDocument(savedDoc);
+          this.updateFiles(savedDoc);
+          return savedDoc;
         }
         return null;
       } catch (error) {
@@ -164,55 +239,28 @@ export const useFileStore = defineStore("files", {
 
     /** Load a document by ID */
     async loadDocument(id: string, fileType = "docx"): Promise<FileData | null> {
-      let localId = id;
-      let serverId: string | undefined;
-      
-      // Check if this is a server ID format
-      if (/^\d+-/.test(id)) {
-        serverId = id;
-        // Get mapped local ID or generate new one
-        localId = localStorage.getItem(`server_id_map_${id}`) || uuidv4();
-        localStorage.setItem(`server_id_map_${id}`, localId);
-        
-        // Try to load from API first since we have a server ID
-        if (this.isOnline) {
-          const apiDoc = await this.loadFromAPI(serverId);
-          if (apiDoc) {
-            this.cacheDocument(apiDoc);
-            this.updateFiles(apiDoc);
-            return apiDoc;
-          }
-        }
-      }
-
       // Try loading from cache first
-      const cached = this.cachedDocuments.get(localId)?.data;
-      if (cached && Date.now() - this.cachedDocuments.get(localId)!.timestamp < CACHE_DURATION) {
+      const cached = this.cachedDocuments.get(id)?.data;
+      if (cached && Date.now() - this.cachedDocuments.get(id)!.timestamp < CACHE_DURATION) {
         return cached;
       }
 
-      // Try loading from local storage
-      const local = this.loadFromLocalStorage(localId, fileType);
-      if (local) {
-        this.cacheDocument(local);
-        this.updateFiles(local);
-        
-        // If we have a server ID but loaded from local, and local isn't dirty,
-        // refresh from server in background (don't await)
-        if (this.isOnline && serverId && !local.isDirty) {
-          this.refreshFromServer(serverId, localId);
-        }
-        return local;
-      }
-
-      // Last resort - try API with the ID we have
-      if (this.isOnline && !serverId) {
+      // Try loading from API if online
+      if (this.isOnline) {
         const apiDoc = await this.loadFromAPI(id);
         if (apiDoc) {
           this.cacheDocument(apiDoc);
           this.updateFiles(apiDoc);
           return apiDoc;
         }
+      }
+
+      // Try loading from local storage
+      const local = this.loadFromLocalStorage(id, fileType);
+      if (local) {
+        this.cacheDocument(local);
+        this.updateFiles(local);
+        return local;
       }
       
       return null;
@@ -225,24 +273,16 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const data = response.data.data;
-        const localId = localStorage.getItem(`server_id_map_${data.id}`) || uuidv4();
         
-        // Handle content/contents field mismatch
-        const content = data.content || data.contents;
-        
-        // Create normalized document with consistent field names
-        const doc = { 
+        const doc: FileData = { 
           ...data, 
-          id: localId, 
-          server_id: data.id, 
-          content: content, // Normalize as 'content'
-          contents: undefined, // Remove 'contents' to avoid duplication
+          id: data.id, // Use server ID directly
+          content: data.content || data.contents || "",
+          title: data.title || data.file_name || 'Untitled',
           isNew: false, 
           isDirty: false 
         };
         
-        localStorage.setItem(`server_id_map_${data.id}`, localId);
-        this.saveToLocalCache(doc);
         return doc;
       } catch (error) {
         console.error("Error loading from API:", error);
@@ -250,40 +290,49 @@ export const useFileStore = defineStore("files", {
       }
     },
 
-    /** Refresh document from server if not dirty */
-    async refreshFromServer(serverId: string, localId: string) {
-      const local = this.loadFromLocalStorage(localId);
-      if (local?.isDirty) return; // Don't override dirty local changes
-      
-      const apiDoc = await this.loadFromAPI(serverId);
-      if (apiDoc) {
-        // Make sure we maintain local ID
-        apiDoc.id = localId;
-        apiDoc.remote_id = serverId;
-        this.cacheDocument(apiDoc);
-        this.updateFiles(apiDoc);
-      }
-    },
-
     /** Queue document for sync */
     queueForSync(document: FileData) {
       this.pendingChanges.set(document.id!, { data: document, attempts: 0 });
+      this.syncStatus.set(document.id!, 'pending');
     },
 
-    /** Sync pending changes */
+    /** Sync pending changes with enhanced status tracking */
     async syncPendingChanges() {
       if (!this.isOnline || this.isSyncing || !this.pendingChanges.size) return;
+      
       this.isSyncing = true;
+      
       for (const [id, { data, attempts }] of this.pendingChanges.entries()) {
         if (attempts >= MAX_RETRIES) {
           this.pendingChanges.delete(id);
+          this.syncStatus.set(id, 'failed');
           continue;
         }
+        
+        this.syncStatus.set(id, 'syncing');
+        
         const saved = await this.saveToAPI(data);
-        if (saved) this.pendingChanges.delete(id);
-        else this.pendingChanges.set(id, { data, attempts: attempts + 1 });
-        await new Promise(resolve => setTimeout(resolve, 5000 * (attempts + 1)));
+        if (saved) {
+          this.pendingChanges.delete(id);
+          this.syncStatus.set(id, 'synced');
+          
+          // If this was a local document that got saved online, clean up local version
+          if (this.isLocalDocument(id)) {
+            this.deleteLocalDocument(id);
+            // Remove from sync status since the document ID has changed
+            this.syncStatus.delete(id);
+          }
+        } else {
+          this.pendingChanges.set(id, { data, attempts: attempts + 1 });
+          this.syncStatus.set(id, 'pending');
+        }
+        
+        // Exponential backoff for failed attempts
+        if (!saved && attempts > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts)));
+        }
       }
+      
       this.isSyncing = false;
     },
 
@@ -364,31 +413,6 @@ export const useFileStore = defineStore("files", {
       return offlineDocs;
     },
 
-    /** Merge online and offline documents */
-    mergeDocuments(onlineDocs: FileData[], offlineDocs: FileData[]): FileData[] {
-      const merged = new Map<string, FileData>();
-
-      // Add offline documents first
-      offlineDocs.forEach((offline) => {
-        if (offline.id) {
-          merged.set(offline.id, offline);
-        }
-      });
-
-      // Add online documents, but only if no offline version exists or if offline is not dirty
-      onlineDocs.forEach((online) => {
-        const localId = localStorage.getItem(`server_id_map_${online.remote_id}`) || online.id;
-        if (localId) {
-          const offlineDoc = merged.get(localId);
-          if (!offlineDoc || !offlineDoc.isDirty) {
-            merged.set(localId, { ...online, id: localId });
-          }
-        }
-      });
-
-      return Array.from(merged.values());
-    },
-
     /** Load all documents from API */
     async loadDocuments(): Promise<FileData[]> {
       try {
@@ -396,14 +420,14 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        return docs.map((doc) => {
-          let localId = localStorage.getItem(`server_id_map_${doc.id}`);
-          if (!localId) {
-            localId = uuidv4();
-            localStorage.setItem(`server_id_map_${doc.id}`, localId);
-          }
-          return { ...doc, id: localId, server_id: doc.id };
-        });
+        return docs.map((doc) => ({ 
+          ...doc, 
+          id: doc.id, // Use server ID directly
+          content: doc.content || "",
+          title: doc.title || doc.file_name || 'Untitled',
+          isNew: false,
+          isDirty: false
+        }));
       } catch (error) {
         console.error("Error loading documents:", error);
         this.lastError = "Failed to load documents";
@@ -422,14 +446,14 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        return docs.map((doc) => {
-          let localId = localStorage.getItem(`server_id_map_${doc.id}`);
-          if (!localId) {
-            localId = uuidv4();
-            localStorage.setItem(`server_id_map_${doc.id}`, localId);
-          }
-          return { ...doc, id: localId, server_id: doc.id };
-        });
+        return docs.map((doc) => ({ 
+          ...doc, 
+          id: doc.id, // Use server ID directly
+          content: doc.content || "",
+          title: doc.title || doc.file_name || 'Untitled',
+          isNew: false,
+          isDirty: false
+        }));
       } catch (error) {
         console.error("Error fetching files:", error);
         this.lastError = "Failed to fetch files";
@@ -443,9 +467,11 @@ export const useFileStore = defineStore("files", {
       if (docIndex === -1) return false;
 
       const doc = this.allFiles[docIndex];
-      if (this.isOnline && doc.remote_id) {
+      
+      // If it's an online document (not local UUID), delete from API
+      if (this.isOnline && !this.isLocalDocument(id)) {
         try {
-          await axios.delete(`${FILES_ENDPOINT}/${doc.remote_id}`, {
+          await axios.delete(`${FILES_ENDPOINT}/${id}`, {
             headers: { Authorization: `Bearer ${this.getToken()}` },
           });
         } catch (error) {
@@ -460,37 +486,50 @@ export const useFileStore = defineStore("files", {
       localStorage.removeItem(key);
       this.allFiles.splice(docIndex, 1);
       this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
+      
+      // Remove from cache and pending changes
+      this.cachedDocuments.delete(id);
+      this.pendingChanges.delete(id);
+      
       return true;
     },
 
     /** Create a new folder */
     async makeFolder(folder: FileData): Promise<FileData | null> {
-      folder.id = uuidv4();
       folder.is_folder = true;
       folder.last_viewed = new Date();
 
+      // Try to create online first
       if (this.isOnline) {
         try {
           const response = await axios.post(FILES_ENDPOINT, folder, {
             headers: { Authorization: `Bearer ${this.getToken()}` },
           });
           const saved = response.data.data as FileData;
-          localStorage.setItem(`server_id_map_${saved.id}`, folder.id!);
-          saved.id = folder.id;
-          saved.remote_id = saved.id;
-          this.saveToLocalCache(saved);
-          this.updateFiles(saved);
-          return saved;
+          const serverFolder: FileData = {
+            ...saved,
+            id: saved.id, // Use server ID directly
+            isNew: false,
+            isDirty: false,
+          };
+          this.cacheDocument(serverFolder);
+          this.updateFiles(serverFolder);
+          return serverFolder;
         } catch (error) {
           console.error("Error creating folder on API:", error);
         }
       }
 
-      // Save locally if offline
-      folder.isDirty = true;
-      this.saveToLocalCache(folder);
-      this.updateFiles(folder);
-      return folder;
+      // Fallback to local creation
+      const localFolder: FileData = {
+        ...folder,
+        id: uuidv4(),
+        isDirty: true,
+        isNew: true,
+      };
+      this.saveToLocalCache(localFolder);
+      this.updateFiles(localFolder);
+      return localFolder;
     },
 
     /** Import an attachment as a new document */
