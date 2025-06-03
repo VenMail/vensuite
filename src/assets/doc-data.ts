@@ -535,3 +535,67 @@ export const LETTER_TEMPLATE = `
 </body>
 </html>
 `
+
+export const DEFAULT_BLANK_DOCUMENT_TEMPLATE = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+        
+        page {
+            display: block;
+            width: 8.5in;
+            min-height: 11in;
+            padding: 1in;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-sizing: border-box;
+            page-break-after: always;
+        }
+        
+        page:last-child {
+            page-break-after: avoid;
+        }
+        
+        .content {
+            min-height: 100px;
+        }
+        
+        p {
+            margin: 0 0 12pt 0;
+        }
+        
+        @media print {
+            page {
+                margin: 0;
+                box-shadow: none;
+            }
+        }
+        
+        @page {
+            size: letter;
+            margin: 1in;
+        }
+    </style>
+</head>
+<body>
+    <page>
+        <div class="content">
+            <p></p>
+        </div>
+    </page>
+</body>
+</html>
+`

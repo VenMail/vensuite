@@ -307,23 +307,62 @@ const retryUpload = (file: FileData) => {
 const uploadFiles = async () => {
   isUploading.value = true;
   const uploadPromises = files.value.map((file) => uploadFile(file));
-  await Promise.all(uploadPromises);
+  const results = await Promise.allSettled(uploadPromises);
+  
+  // Get successfully uploaded files
+  const uploadedFiles = results
+    .map((result) => result.status === 'fulfilled' ? result.value : null)
+    .filter(Boolean);
+  
   isUploading.value = false;
-  emit("upload", files.value);
+  emit("upload", uploadedFiles);
 };
 
-const uploadFile = async (file: FileData) => {
-  if (!file.file) return;
+const uploadFile = async (file: FileData): Promise<FileData | null> => {
+  if (!file.file) return null;
+  
   try {
-    await fileStore.uploadFile(file.file, (progress: number) => {
+    const uploadedFile = await fileStore.uploadFile(file.file, (progress: number) => {
       const index = files.value.findIndex((f) => f.id === file.id);
       if (index !== -1) {
         files.value[index].progress = progress;
       }
     });
+    
+    if (uploadedFile) {
+      // Mark as completed in UI
+      const index = files.value.findIndex((f) => f.id === file.id);
+      if (index !== -1) {
+        files.value[index].progress = 100;
+        files.value[index].error = false;
+      }
+      
+      // Create a proper FileData object that matches our local interface
+      const processedFile: FileData = {
+        id: uploadedFile.id || file.id,
+        title: uploadedFile.title,
+        file_name: uploadedFile.file_name,
+        file_type: uploadedFile.file_type,
+        file_size: typeof uploadedFile.file_size === 'string' ? parseInt(uploadedFile.file_size) : uploadedFile.file_size,
+        file_url: uploadedFile.file_url,
+        progress: 100,
+        preview: file.preview, // Keep the original preview
+        file: undefined, // Clear the file reference as it's now uploaded
+        error: false
+      };
+      
+      return processedFile;
+    }
+    
+    return null;
   } catch (error) {
     console.error(`Error uploading file ${file.title}:`, error);
-    file.error = true;
+    const index = files.value.findIndex((f) => f.id === file.id);
+    if (index !== -1) {
+      files.value[index].error = true;
+      files.value[index].progress = 0;
+    }
+    return null;
   }
 };
 </script>

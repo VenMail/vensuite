@@ -44,6 +44,7 @@ const routes = [
       { path: 'docs/:id', name: 'doc', component: RunDoc, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },
+      { path: 'media', name: 'media', component: () => import('./views/Media.vue') },
       { path: 'import/:id', name: 'import', component: Home },
       { path: '', name: 'home', component: Home },
     ]

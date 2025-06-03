@@ -17,7 +17,6 @@ import { FileData } from '@/types'
 import { toast } from '@/composables/useToast'
 import { useFavicon } from '@vueuse/core'
 import { DEFAULT_WORKBOOK_DATA, BUDGET_TEMPLATE_DATA, INVOICE_TEMPLATE_DATA } from '@/assets/default-workbook-data'
-import { v4 as uuidv4 } from 'uuid'
 
 const route = useRoute()
 const router = useRouter()

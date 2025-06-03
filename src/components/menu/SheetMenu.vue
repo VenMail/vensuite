@@ -47,6 +47,7 @@ import {
 } from '@/components/ui/menubar'
 import UniverSheet from './components/UniverSheet.vue'
 import { useFileStore } from '@/store/files'
+import { ExportService, ExportFormat, PDFEngine, type IExportOptions } from '@/plugins/ExportPlugin'
 
 
 interface Props {
@@ -61,21 +62,15 @@ const emit = defineEmits(['updateData', 'toggleChat', 'save'])
 const router = useRouter()
 
 let facadeAPI: FUniver | null = null
-// let disposable = null
+const exportService = new ExportService()
 
 onMounted(() => {
   watchEffect(() => {
     if (props.coreRef && !facadeAPI) {
-      //facadeAPI = FUniver.newAPI(props.coreRef)
-      // disposable = facadeAPI.onBeforeCommandExecute((command) => {
-        // console.log('logging', command)
-        // custom preprocessing logic before the command is executed
-      // })
+      facadeAPI = FUniver.newAPI(props.coreRef)
     }
   })
   console.log("pid", props.fileId)
-
-  // fileStore.loadRecentFiles()
 })
 
 const recentFiles = computed(() => {
@@ -115,13 +110,25 @@ function handleSave() {
  emit("save")
 }
 
-function exportAs(format: string) {
-  if (facadeAPI) {
-    facadeAPI.getActiveWorkbook()?.getSnapshot()
-    switch (format) {
+async function exportAs(format: string) {
+  if (!facadeAPI) {
+    console.error('FUniver facade API not available')
+    return
+  }
 
+  try {
+    const exportOptions: IExportOptions = {
+      format: format as ExportFormat,
+      filename: `sheet-export-${Date.now()}.${format}`,
+      includeStyles: true,
+      includeFormulas: true,
+      includeHeaders: true,
+      pdfEngine: format === 'pdf' ? PDFEngine.JSPDF : undefined
     }
-    // todo send data to remote API
+
+    await exportService.export(facadeAPI, exportOptions)
+  } catch (error) {
+    console.error(`Export failed for format ${format}:`, error)
   }
 }
 
@@ -426,7 +433,7 @@ function about() {
 </script>
 
 <template>
-  <Menubar class="border-none ml-0 pl-0 bg-transparent">
+  <Menubar class="border-none ml-0 pl-0">
     <!-- File Menu -->
     <MenubarMenu>
       <MenubarTrigger>File</MenubarTrigger>

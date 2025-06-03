@@ -37,8 +37,8 @@ const menuItems = [
 
 <template>
   <div :class="cn(
-    'flex items-center ml-auto',
-    props.isMobile ? 'ml-1' : 'space-x-4 ml-auto'
+    'flex items-center',
+    props.isMobile ? 'ml-1' : 'space-x-4'
   )">
     <button
       v-if="!props.isMobile"

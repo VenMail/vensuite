@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
 import { nextTick, onMounted, ref, watchEffect, computed, onUnmounted } from "vue";
-import { v4 as uuidv4 } from "uuid";
 
 import "@/assets/index.css";
 import {
@@ -34,7 +33,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "vue-sonner";
-import { RESUME_TEMPLATE, LETTER_TEMPLATE } from "@/assets/doc-data";
+import { RESUME_TEMPLATE, LETTER_TEMPLATE, DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
 
 // Router setup
 const route = useRoute();
@@ -159,7 +158,7 @@ const debouncedSave = useDebounceFn(
 const options = ref({
   document: {
     title: "Untitled Document",
-    content: "",
+    content: DEFAULT_BLANK_DOCUMENT_TEMPLATE,
     placeholder: {
       en_US: "Write something...",
     },
@@ -272,8 +271,8 @@ async function loadData(id: string) {
       title.value = doc.title || "Untitled Document";
       document.title = title.value;
 
-      // Ensure we have content to display
-      const contentToDisplay = doc.content || "";
+      // Ensure we have content to display - use default template if empty
+      const contentToDisplay = doc.content || DEFAULT_BLANK_DOCUMENT_TEMPLATE;
       console.log(`Setting editor content, length: ${contentToDisplay.length}`);
 
       // Use safe method to set editor content
@@ -298,8 +297,8 @@ async function loadData(id: string) {
       title.value = newDoc.title || "New Document";
       document.title = title.value;
 
-      // Set empty document in editor using safe method
-      await setEditorContent("", title.value);
+      // Set default template in editor using safe method instead of empty string
+      await setEditorContent(DEFAULT_BLANK_DOCUMENT_TEMPLATE, title.value);
 
       router.replace(`/docs/${newDoc.id}`);
     }
@@ -403,7 +402,7 @@ function getTemplateContent(templateName: string): string {
   const name = templateName.toLowerCase();
   if (name.includes('resume')) return RESUME_TEMPLATE;
   if (name.includes('letter')) return LETTER_TEMPLATE;
-  return ''; // Blank document
+  return DEFAULT_BLANK_DOCUMENT_TEMPLATE; // Use proper default template instead of empty string
 }
 
 // Helper function to get template title
@@ -522,8 +521,8 @@ onMounted(async () => {
         title.value = 'New Document';
         document.title = title.value;
 
-        // Set empty document in editor using safe method
-        await setEditorContent("", title.value);
+        // Set default template in editor using safe method instead of empty string
+        await setEditorContent(DEFAULT_BLANK_DOCUMENT_TEMPLATE, title.value);
 
         // Navigate to the proper doc URL with the new ID
         await router.replace(`/docs/${newDoc.id}`);

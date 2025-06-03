@@ -3,10 +3,15 @@ import axios from "axios";
 import { useAuthStore } from "./auth";
 import { FileData } from "@/types";
 import { v4 as uuidv4 } from "uuid";
+import { DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
 
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
 const UPLOAD_ENDPOINT = `${API_BASE_URI}/app-files/upload`;
+
+// Extract base URL for constructing full URLs from relative paths
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const BASE_URL = API_BASE_URL.replace('/api/v1', '');
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const SYNC_INTERVAL = 30 * 1000; // 30 seconds
@@ -25,8 +30,50 @@ export const useFileStore = defineStore("files", {
   }),
 
   actions: {
+    /** Construct full URL from relative path */
+    constructFullUrl(filePath: string): string {
+      if (!filePath) return '';
+      
+      // If it's already a full URL, return as is
+      if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+        return filePath;
+      }
+      
+      // If it's a relative path, prepend the base URL
+      if (filePath.startsWith('/')) {
+        return `${BASE_URL}${filePath}`;
+      }
+      
+      // If it doesn't start with /, add it
+      return `${BASE_URL}/${filePath}`;
+    },
+
+    /** Process uploaded file data from API response */
+    processUploadedFile(responseData: any): FileData {
+      const file: FileData = {
+        id: responseData.id,
+        title: responseData.title || responseData.file_name?.replace(/\.[^/.]+$/, "") || 'Untitled',
+        file_name: responseData.file_name,
+        file_type: responseData.file_type,
+        file_size: responseData.file_size,
+        file_url: this.constructFullUrl(responseData.file_url),
+        folder_id: responseData.folder_id,
+        is_folder: responseData.is_folder || false,
+        is_template: responseData.is_template || false,
+        employee_id: responseData.employee_id,
+        content: responseData.content || responseData.contents || '',
+        created_at: responseData.created_at,
+        updated_at: responseData.updated_at,
+        last_viewed: new Date(),
+        isNew: false,
+        isDirty: false
+      };
+      
+      return file;
+    },
+
     /** Upload a file to the server with progress tracking */
-    async uploadFile(file: File, onProgress?: (progress: number) => void): Promise<boolean> {
+    async uploadFile(file: File, onProgress?: (progress: number) => void): Promise<FileData | null> {
       try {
         const formData = new FormData();
         formData.append('file', file);
@@ -44,11 +91,73 @@ export const useFileStore = defineStore("files", {
           }
         });
         
-        return response.status === 200 || response.status === 201;
+        if (response.status === 200 || response.status === 201) {
+          const uploadedFile = this.processUploadedFile(response.data.data);
+          
+          // Add to store immediately for instant visibility
+          this.addFile(uploadedFile);
+          
+          console.log('File uploaded successfully:', uploadedFile);
+          return uploadedFile;
+        }
+        
+        return null;
       } catch (error) {
         console.error('Error uploading file:', error);
         this.lastError = 'Failed to upload file';
-        return false;
+        throw error;
+      }
+    },
+
+    /** Add a file to the store */
+    addFile(file: FileData) {
+      // Check if file already exists
+      const existingIndex = this.allFiles.findIndex(f => f.id === file.id);
+      
+      if (existingIndex !== -1) {
+        // Update existing file
+        this.allFiles[existingIndex] = file;
+      } else {
+        // Add new file
+        this.allFiles.unshift(file); // Add to beginning for newest first
+      }
+      
+      // Update recent files if it's a media file
+      if (this.isMediaFile(file)) {
+        this.updateRecentFiles(file);
+      }
+      
+      // Cache the file
+      this.cacheDocument(file);
+    },
+
+    /** Check if a file is a media file */
+    isMediaFile(file: FileData): boolean {
+      if (!file.file_type) return false;
+      
+      const mediaTypes = [
+        // Images
+        'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp',
+        // Videos
+        'mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'mkv',
+        // Audio
+        'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'
+      ];
+      
+      return mediaTypes.includes(file.file_type.toLowerCase());
+    },
+
+    /** Update recent files list */
+    updateRecentFiles(file: FileData) {
+      // Remove if already in recent files
+      this.recentFiles = this.recentFiles.filter(f => f.id !== file.id);
+      
+      // Add to beginning
+      this.recentFiles.unshift(file);
+      
+      // Keep only last 10
+      if (this.recentFiles.length > 10) {
+        this.recentFiles = this.recentFiles.slice(0, 10);
       }
     },
 
@@ -60,11 +169,14 @@ export const useFileStore = defineStore("files", {
 
     /** Create a new document - tries online first, falls back to local */
     async createNewDocument(fileType: string = "docx", title: string = "Untitled"): Promise<FileData> {
+      // Use proper default content based on file type
+      const defaultContent = fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE : "";
+      
       const newDoc = {
         title,
         file_name: `${title}.${fileType}`,
         file_type: fileType,
-        content: "",
+        content: defaultContent,
         last_viewed: new Date(),
       };
 
@@ -83,7 +195,7 @@ export const useFileStore = defineStore("files", {
             const createdDoc: FileData = {
               ...serverDoc,
               id: serverDoc.id, // Use server ID directly
-              content: serverDoc.content || serverDoc.contents || "",
+              content: serverDoc.content || serverDoc.contents || defaultContent,
               isNew: false,
               isDirty: false,
             };
@@ -190,6 +302,20 @@ export const useFileStore = defineStore("files", {
       return { document };
     },
 
+    /** Get storage prefix based on file type */
+    getPrefix(fileType: string): string {
+      switch (fileType.toLowerCase()) {
+        case "docx": return "document";
+        case "xlsx": return "sheet";
+        default: return "file";
+      }
+    },
+
+    /** Get default content based on file type */
+    getDefaultContent(fileType?: string | null): string {
+      return fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE : "";
+    },
+
     /** Save document to the API */
     async saveToAPI(document: FileData): Promise<FileData | null> {
       try {
@@ -220,7 +346,7 @@ export const useFileStore = defineStore("files", {
           const savedDoc: FileData = {
             ...serverData,
             id: serverData.id, // Always use server ID
-            content: serverData.content || serverData.contents || "",
+            content: serverData.content || serverData.contents || this.getDefaultContent(serverData.file_type),
             isNew: false,
             isDirty: false,
           };
@@ -277,7 +403,7 @@ export const useFileStore = defineStore("files", {
         const doc: FileData = { 
           ...data, 
           id: data.id, // Use server ID directly
-          content: data.content || data.contents || "",
+          content: data.content || data.contents || this.getDefaultContent(data.file_type),
           title: data.title || data.file_name || 'Untitled',
           isNew: false, 
           isDirty: false 
@@ -370,15 +496,6 @@ export const useFileStore = defineStore("files", {
       localStorage.setItem("VENX_RECENT", JSON.stringify(this.recentFiles.map(f => f.id)));
     },
 
-    /** Get storage prefix based on file type */
-    getPrefix(fileType: string): string {
-      switch (fileType.toLowerCase()) {
-        case "docx": return "document";
-        case "xlsx": return "sheet";
-        default: return "file";
-      }
-    },
-
     async moveFile(fileId: string, newFolderId: string) {
       try {
         const fileToMove = this.allFiles.find((f) => f.id === fileId);
@@ -420,18 +537,28 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        return docs.map((doc) => ({ 
+        const processedDocs = docs.map((doc) => ({ 
           ...doc, 
           id: doc.id, // Use server ID directly
-          content: doc.content || "",
+          content: doc.content || this.getDefaultContent(doc.file_type),
           title: doc.title || doc.file_name || 'Untitled',
+          file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
           isNew: false,
           isDirty: false
         }));
+        
+        // Update store with processed documents
+        this.allFiles = processedDocs;
+        
+        return processedDocs;
       } catch (error) {
         console.error("Error loading documents:", error);
         this.lastError = "Failed to load documents";
-        return [];
+        
+        // Load offline documents if online fetch fails
+        const offlineDocs = this.loadOfflineDocuments();
+        this.allFiles = offlineDocs;
+        return offlineDocs;
       }
     },
 
@@ -446,14 +573,17 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        return docs.map((doc) => ({ 
+        const processedDocs = docs.map((doc) => ({ 
           ...doc, 
           id: doc.id, // Use server ID directly
-          content: doc.content || "",
+          content: doc.content || this.getDefaultContent(doc.file_type),
           title: doc.title || doc.file_name || 'Untitled',
+          file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
           isNew: false,
           isDirty: false
         }));
+        
+        return processedDocs;
       } catch (error) {
         console.error("Error fetching files:", error);
         this.lastError = "Failed to fetch files";
@@ -559,6 +689,43 @@ export const useFileStore = defineStore("files", {
       });
       window.addEventListener("offline", () => (this.isOnline = false));
       setInterval(() => this.isOnline && this.syncPendingChanges(), SYNC_INTERVAL);
+    },
+
+    /** Load only media files from API */
+    async loadMediaFiles(): Promise<FileData[]> {
+      try {
+        const response = await axios.get(`${FILES_ENDPOINT}?media_only=true`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+        const docs = response.data.data as FileData[];
+        const processedDocs = docs
+          .filter(doc => this.isMediaFile(doc))
+          .map((doc) => ({ 
+            ...doc, 
+            id: doc.id, // Use server ID directly
+            content: doc.content || this.getDefaultContent(doc.file_type),
+            title: doc.title || doc.file_name || 'Untitled',
+            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+            isNew: false,
+            isDirty: false
+          }));
+        
+        // Update store with processed media files
+        const mediaFileIds = new Set(processedDocs.map(doc => doc.id));
+        this.allFiles = [
+          ...processedDocs,
+          ...this.allFiles.filter(file => !mediaFileIds.has(file.id) || !this.isMediaFile(file))
+        ];
+        
+        return processedDocs;
+      } catch (error) {
+        console.error("Error loading media files:", error);
+        this.lastError = "Failed to load media files";
+        
+        // Fallback to filtering existing files
+        const mediaFiles = this.allFiles.filter(file => this.isMediaFile(file));
+        return mediaFiles;
+      }
     },
   },
 });
