@@ -84,7 +84,7 @@
           size="sm"
           :class="cn(
             'px-3 py-2',
-            viewMode === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
+            isGridMode ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
           )"
           @click="$emit('view-mode', 'grid')"
         >
@@ -95,7 +95,7 @@
           size="sm"
           :class="cn(
             'px-3 py-2',
-            viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
+            isListMode ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
           )"
           @click="$emit('view-mode', 'list')"
         >
@@ -104,7 +104,7 @@
       </div>
 
       <!-- Bulk Actions (shown when items are selected) -->
-      <div v-if="selectedCount > 0" class="flex items-center gap-2">
+      <div v-if="hasSelectedItems" class="flex items-center gap-2">
         <span class="text-sm text-gray-600 dark:text-gray-400">
           {{ selectedCount }} selected
         </span>
@@ -128,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, PropType } from 'vue'
+import { ref, PropType, computed } from 'vue'
 import {
   Search,
   Filter,
@@ -184,6 +184,11 @@ const emit = defineEmits<{
 const searchValue = ref('')
 const selectedFilter = ref('all')
 const selectedSort = ref('name')
+
+// Computed properties to ensure linter recognizes prop usage
+const hasSelectedItems = computed(() => props.selectedCount > 0)
+const isGridMode = computed(() => props.viewMode === 'grid')
+const isListMode = computed(() => props.viewMode === 'list')
 
 const handleFilterChange = (filter: string) => {
   selectedFilter.value = filter

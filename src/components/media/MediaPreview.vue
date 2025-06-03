@@ -9,7 +9,7 @@
     <!-- Selection Checkbox -->
     <div v-if="showCheckbox || isSelected" 
       class="absolute top-2 left-2 z-10 w-5 h-5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded flex items-center justify-center cursor-pointer shadow-sm"
-      @click.stop="$emit('select', file.id)">
+      @click.stop="emit('select', file.id)">
       <CheckIcon v-if="isSelected" class="w-3 h-3 text-primary-600" />
     </div>
 
@@ -29,7 +29,7 @@
         :src="file.file_url" 
         :alt="file.title"
         class="w-full h-full object-cover cursor-pointer"
-        @click="$emit('preview', file)"
+        @click="emit('preview', file)"
         @error="handleImageError"
         @load="handleImageLoad"
       />
@@ -43,7 +43,7 @@
       <video 
         :src="file.file_url"
         class="w-full h-full object-cover cursor-pointer"
-        @click="$emit('preview', file)"
+        @click="emit('preview', file)"
         preload="metadata"
         muted
       >
@@ -57,7 +57,7 @@
     </div>
 
     <!-- Audio Preview -->
-    <div v-else-if="isAudio" class="w-full h-full flex flex-col items-center justify-center p-4 cursor-pointer" @click="$emit('preview', file)">
+    <div v-else-if="isAudio" class="w-full h-full flex flex-col items-center justify-center p-4 cursor-pointer" @click="emit('preview', file)">
       <Volume2 class="w-8 h-8 text-gray-400 mb-2" />
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center truncate w-full">
         {{ file.title }}
@@ -68,7 +68,7 @@
     </div>
 
     <!-- Unsupported/Other Files -->
-    <div v-else class="w-full h-full flex flex-col items-center justify-center p-4 cursor-pointer" @click="$emit('preview', file)">
+    <div v-else class="w-full h-full flex flex-col items-center justify-center p-4 cursor-pointer" @click="emit('preview', file)">
       <FileIcon class="w-8 h-8 text-gray-400 mb-2" />
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center truncate w-full">
         {{ file.title }}
