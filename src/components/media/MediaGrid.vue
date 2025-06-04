@@ -181,6 +181,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { FileData } from '@/types'
+import { useMediaTypes } from '@/composables/useMediaTypes'
 import MediaPreview from './MediaPreview.vue'
 
 const props = defineProps({
@@ -218,6 +219,8 @@ const emit = defineEmits<{
 
 const showCheckboxes = ref(false)
 
+const { formatFileSize, formatDate } = useMediaTypes()
+
 const allSelected = computed(() => {
   return props.mediaFiles.length > 0 && props.mediaFiles.every(file => 
     props.selectedFiles.has(file.id || '')
@@ -251,25 +254,5 @@ const handleDelete = (file: FileData) => {
 const handleSelectAll = (event: Event) => {
   const target = event.target as HTMLInputElement
   emit('select-all', target.checked)
-}
-
-const formatFileSize = (bytes: number | string | undefined): string => {
-  if (!bytes) return 'Unknown size'
-  const size = typeof bytes === 'string' ? parseInt(bytes) : bytes
-  if (size === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(size) / Math.log(k))
-  return parseFloat((size / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
-}
-
-const formatDate = (date: Date | string | undefined): string => {
-  if (!date) return 'Unknown date'
-  const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
 }
 </script> 

@@ -197,6 +197,7 @@ export const useFileStore = defineStore("files", {
         title,
         file_name: `${title}.${fileType}`,
         file_type: fileType,
+        is_folder: false, // Explicitly ensure it's not a folder
         content: defaultContent,
         last_viewed: new Date(),
       };
@@ -216,6 +217,8 @@ export const useFileStore = defineStore("files", {
             const createdDoc: FileData = {
               ...serverDoc,
               id: serverDoc.id, // Use server ID directly
+              file_type: fileType, // Explicitly ensure file_type is preserved
+              is_folder: false, // Explicitly ensure it's not marked as folder
               content: serverDoc.content || serverDoc.contents || defaultContent,
               isNew: false,
               isDirty: false,
@@ -367,6 +370,8 @@ export const useFileStore = defineStore("files", {
           const savedDoc: FileData = {
             ...serverData,
             id: serverData.id, // Always use server ID
+            file_type: document.file_type || serverData.file_type, // Preserve file_type
+            is_folder: document.is_folder ?? serverData.is_folder ?? false, // Preserve is_folder
             content: serverData.content || serverData.contents || this.getDefaultContent(serverData.file_type),
             isNew: false,
             isDirty: false,
@@ -541,6 +546,20 @@ export const useFileStore = defineStore("files", {
           try {
             const item = JSON.parse(localStorage.getItem(key) || "{}");
             if (item && item.id) {
+              // Ensure file_type is properly set based on storage key prefix if missing
+              if (!item.file_type) {
+                if (key.startsWith("document_")) {
+                  item.file_type = "docx";
+                } else if (key.startsWith("sheet_")) {
+                  item.file_type = "xlsx";
+                }
+              }
+              
+              // Ensure is_folder is properly set if missing
+              if (item.is_folder === undefined) {
+                item.is_folder = false;
+              }
+              
               offlineDocs.push(item);
             }
           } catch (error) {

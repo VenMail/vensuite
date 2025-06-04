@@ -129,6 +129,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useFileStore } from '@/store/files'
 import { FileData } from '@/types'
 import { toast } from '@/composables/useToast'
+import { useMediaTypes } from '@/composables/useMediaTypes'
 import MediaToolbar from '@/components/media/MediaToolbar.vue'
 import MediaGrid from '@/components/media/MediaGrid.vue'
 import MediaViewer from '@/components/media/MediaViewer.vue'
@@ -146,6 +147,7 @@ import {
 } from '@/components/ui/dialog'
 
 const fileStore = useFileStore()
+const { isMediaFile, isViewable, isImage, isVideo, isAudio, formatFileSize } = useMediaTypes()
 
 // State
 const selectedFiles = ref<Set<string>>(new Set())
@@ -177,17 +179,7 @@ const filesToDelete = ref<FileData[]>([])
 const mediaFiles = computed(() => {
   return fileStore.allFiles.filter(file => {
     if (file.is_folder) return false
-    
-    const mediaTypes = [
-      // Images
-      'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp',
-      // Videos
-      'mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'mkv',
-      // Audio
-      'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'
-    ]
-    
-    return mediaTypes.includes(file.file_type?.toLowerCase() || '')
+    return isMediaFile(file.file_type)
   })
 })
 
@@ -206,14 +198,13 @@ const filteredMediaFiles = computed(() => {
   // Apply type filter
   if (currentFilter.value !== 'all') {
     files = files.filter(file => {
-      const fileType = file.file_type?.toLowerCase() || ''
       switch (currentFilter.value) {
         case 'images':
-          return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(fileType)
+          return isImage(file.file_type)
         case 'videos':
-          return ['mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'mkv'].includes(fileType)
+          return isVideo(file.file_type)
         case 'audio':
-          return ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'].includes(fileType)
+          return isAudio(file.file_type)
         default:
           return true
       }
@@ -244,10 +235,7 @@ const filteredMediaFiles = computed(() => {
 })
 
 const viewableFiles = computed(() => {
-  return filteredMediaFiles.value.filter(file => {
-    const viewableTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'mp4', 'webm', 'ogg', 'avi', 'mov', 'mp3', 'wav', 'aac', 'flac', 'm4a']
-    return viewableTypes.includes(file.file_type?.toLowerCase() || '')
-  })
+  return filteredMediaFiles.value.filter(file => isViewable(file.file_type))
 })
 
 const totalSize = computed(() => {
@@ -416,14 +404,6 @@ const handleUploadComplete = (uploadedFiles: FileData[]) => {
   toast.success(`Uploaded ${uploadedFiles.length} file(s)`)
   closeUploadDialog()
   // Files are already added to the store by the upload process, no need to reload all documents
-}
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
 // Lifecycle

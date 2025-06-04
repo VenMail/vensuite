@@ -1,6 +1,7 @@
 import { createApp, defineComponent, h, VNode } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia } from 'pinia'
+
 //@ts-ignore
 import { useUmoEditor } from '@umoteam/editor'
 import { createI18n } from 'vue-i18n'
@@ -13,6 +14,8 @@ import { useFileStore } from './store/files'
 import Home from './views/Home.vue'
 import RunSheet from './views/RunSheet.vue'
 import RunDoc from './views/RunDoc.vue'
+import Sheets from './views/Sheets.vue'
+import Documents from './views/Documents.vue'
 import Login from './views/Login.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
@@ -36,10 +39,12 @@ const routes = [
     path: '/',
     component: AuthenticatedLayout,
     children: [
-      { path: 'sheets', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
+      { path: 'sheets', name: 'sheets-view', component: Sheets },
+      { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
       { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
       { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },
-      { path: 'docs', name: 'docs', component: RunDoc, meta: { hideLayout: true } },
+      { path: 'docs', name: 'docs-view', component: Documents },
+      { path: 'docs/new', name: 'docs', component: RunDoc, meta: { hideLayout: true } },
       { path: 'docs/t/:template', name: 'doc-template', component: RunDoc, meta: { hideLayout: true } },
       { path: 'docs/:id', name: 'doc', component: RunDoc, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },

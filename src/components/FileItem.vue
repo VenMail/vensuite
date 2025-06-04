@@ -1,7 +1,17 @@
 <template>
-  <div :id="`fileItem-${file.id}`" :class="[fileItemClass, { 'drop-target': isDropTarget }]" @click="handleClick"
-    @dblclick="openFile" draggable="true" @dragstart="onDragStart" @dragend="onDragEnd" @dragover="onDragOver"
-    @dragleave="onDragLeave" @drop="onDrop" @mouseenter="showCheckbox = true" @mouseleave="showCheckbox = false"
+  <div
+    :id="`fileItem-${file.id}`"
+    :class="[fileItemClass, { 'drop-target': isDropTarget }]"
+    @click="handleClick"
+    @dblclick="openFile"
+    draggable="true"
+    @dragstart="onDragStart"
+    @dragend="onDragEnd"
+    @dragover="onDragOver"
+    @dragleave="onDragLeave"
+    @drop="onDrop"
+    @mouseenter="showCheckbox = true"
+    @mouseleave="showCheckbox = false"
     ref="fileItemRef">
 
     <!-- Thumbnail and Grid Views -->
@@ -21,17 +31,13 @@
         </div>
 
         <div class="relative">
-          <FileIcon :fileType="fileType" class="w-12 h-12 text-gray-600" />
+          <FileIcon :fileType="fileType" :fileData="file" class="w-12 h-12 text-gray-600" />
         </div>
         <div class="flex flex-col flex-grow">
           <h3 class="text-sm font-medium truncate text-gray-800">{{ file.title }}</h3>
           <p class="text-xs text-gray-500">{{ formattedDate }}</p>
         </div>
       </div>
-
-      <!-- Preview Image (Bottom Right) -->
-      <img v-if="isImageFile" :src="file.file_url" :alt="file.title"
-        class="absolute bottom-2 right-2 w-10 h-10 object-cover rounded-md shadow-md" />
 
       <!-- File Type Ribbon (Top Right) -->
       <div v-if="!file.is_folder"
@@ -43,7 +49,7 @@
     <!-- Tree View and List View -->
     <div v-else class="file-item-other-views">
       <div class="relative">
-        <FileIcon :fileType="fileType" class="w-6 h-6 text-gray-500 mr-4" />
+        <FileIcon :fileType="fileType" :fileData="file" class="w-6 h-6 text-gray-500 mr-4" />
         <div v-if="showCheckbox || isSelected"
           class="absolute bottom-0 right-0 w-4 h-4 bg-white rounded-full border border-gray-300 flex items-center justify-center transition-all duration-200 cursor-pointer"
           @click.stop="$emit('select-file', id, $event)">
@@ -112,7 +118,7 @@ const showCheckbox = ref(false);
 
 const emit = defineEmits(['select-file', 'open-file', 'update-file', 'delete-file']);
 
-const { id, title, is_folder, file_type, created_at, file_url } = props.file;
+const { id, title, is_folder, file_type, created_at } = props.file;
 
 const fileStore = useFileStore();
 
@@ -123,7 +129,6 @@ const fileItemRef = ref<HTMLDivElement | null>(null);
 const renameInput = ref<HTMLInputElement | null>(null);
 
 const isThumbnailOrGrid = computed(() => props.viewMode === 'thumbnail' || props.viewMode === 'grid');
-const isImageFile = computed(() => file_type && ['jpg', 'png'].includes(file_type) && file_url);
 const fileType = computed(() => (is_folder ? 'folder' : file_type));
 
 const fileItemClass = computed(() => {

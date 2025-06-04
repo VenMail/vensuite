@@ -100,6 +100,17 @@ onMounted(async () => {
     // Load offline documents first
     const offlineDocs = fileStore.loadOfflineDocuments();
     fileStore.allFiles = offlineDocs;
+    
+    // Debug logging for file types (development only)
+    if (import.meta.env.DEV) {
+      const filesWithMissingTypes = offlineDocs.filter(doc => !doc.file_type && !doc.is_folder);
+      if (filesWithMissingTypes.length > 0) {
+        console.warn('Home: Found files with missing file_type:', filesWithMissingTypes.map(doc => ({ 
+          id: doc.id, 
+          title: doc.title 
+        })));
+      }
+    }
 
     // If online, load online documents and merge with offline
     if (fileStore.isOnline) {
@@ -126,6 +137,17 @@ onMounted(async () => {
       });
       
       fileStore.allFiles = Array.from(mergedFiles.values());
+      
+      // Debug logging for final merged files (development only)
+      if (import.meta.env.DEV) {
+        const finalFilesWithMissingTypes = fileStore.allFiles.filter(doc => !doc.file_type && !doc.is_folder);
+        if (finalFilesWithMissingTypes.length > 0) {
+          console.warn('Home: Final files with missing file_type:', finalFilesWithMissingTypes.map(doc => ({ 
+            id: doc.id, 
+            title: doc.title 
+          })));
+        }
+      }
     }
   }
 

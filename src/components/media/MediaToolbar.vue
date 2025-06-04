@@ -173,8 +173,8 @@ const props = defineProps({
 
 const emit = defineEmits<{
   search: [query: string]
-  filter: [type: string]
-  sort: [field: string]
+  filter: [filter: string]
+  sort: [sort: string]
   'view-mode': [mode: 'grid' | 'list']
   upload: []
   'bulk-download': []
