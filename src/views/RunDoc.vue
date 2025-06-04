@@ -323,6 +323,8 @@ async function syncChanges() {
       ...currentDoc.value,
       content: content,
       title: title.value,
+      file_type: "docx", // Explicitly ensure file type is preserved
+      is_folder: false, // Explicitly ensure it's not marked as folder
       last_viewed: new Date()
     } as FileData;
 
@@ -373,8 +375,13 @@ async function saveTitle() {
     console.log("current doc:", currentDoc.value);
     // Only mark as having unsaved changes if title actually changed
     if (currentDoc.value.title !== title.value) {
-      // Update document title
-      currentDoc.value.title = title.value;
+      // Update document title with explicit file properties
+      currentDoc.value = {
+        ...currentDoc.value,
+        title: title.value,
+        file_type: "docx", // Explicitly ensure file type is preserved
+        is_folder: false // Explicitly ensure it's not marked as folder
+      };
       hasUnsavedChanges.value = true;
 
       // Also update the editor's title to stay in sync
@@ -414,22 +421,21 @@ function getTemplateTitle(templateName: string): string {
 }
 
 onMounted(async () => {
-  // Suppress UmoEditor console messages
-  const originalConsoleLog = console.log;
-  console.log = (...args) => {
-    // Filter out the unwanted UmoEditor message
+  // Suppress unwanted console messages
+  const originalConsoleLog = console.info;
+  console.info = (...args) => {
     const message = args.join(' ');
     if (message.includes('Thanks for using Umo Editor') || 
         message.includes('Current version:') || 
-        message.includes('More info: https://editor.umodoc.com')) {
+        message.includes('More info: ')) {
       return; // Suppress these messages
     }
     originalConsoleLog.apply(console, args);
   };
   
-  // Restore original console.log after a delay (after editor initialization)
+  // Restore original console.info after a delay (after editor initialization)
   setTimeout(() => {
-    console.log = originalConsoleLog;
+    console.info = originalConsoleLog;
   }, 3000);
 
   window.addEventListener("online", updateOnlineStatus);

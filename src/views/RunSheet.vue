@@ -152,6 +152,7 @@ async function updateData(newData: IWorkbookData) {
         title: title.value,
         file_name: `${title.value}.xlsx`,
         file_type: 'xlsx',
+        is_folder: false, // Explicitly ensure it's not marked as folder
         content: JSON.stringify(newData),
         last_viewed: new Date()
       } as FileData
@@ -189,6 +190,7 @@ async function handleTitleChange() {
           title: newTitle,
           file_name: `${sluggify(newTitle)}.xlsx`,
           file_type: 'xlsx',
+          is_folder: false,
           content: JSON.stringify(data.value),
           last_viewed: new Date()
         } as FileData
@@ -553,6 +555,7 @@ async function saveData() {
       title: name,
       content: JSON.stringify(completeData), // This preserves all formatting and styles
       file_type: "xlsx",
+      is_folder: false, // Explicitly ensure it's not marked as folder
       file_name: `${name.toLowerCase().replace(/\s+/g, '-')}.xlsx`,
       last_viewed: new Date()
     } as FileData
