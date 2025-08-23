@@ -30,6 +30,28 @@ export const useFileStore = defineStore("files", {
   }),
 
   actions: {
+    /** Derive a human title from server data safely */
+    computeTitle(serverData: any): string {
+      const rawTitle = serverData?.title
+      if (rawTitle && typeof rawTitle === 'string' && rawTitle.trim().length) return rawTitle
+      // Try to extract from content JSON (e.g., spreadsheets store name inside JSON)
+      const rawContent = serverData?.content || serverData?.contents
+      if (rawContent && typeof rawContent === 'string') {
+        try {
+          const parsed = JSON.parse(rawContent)
+          if (parsed && typeof parsed === 'object' && typeof parsed.name === 'string' && parsed.name.trim().length) {
+            return parsed.name
+          }
+        } catch {}
+      }
+      // Fallback to file_name without extension
+      const fileName = serverData?.file_name
+      if (fileName && typeof fileName === 'string') {
+        const noExt = fileName.replace(/\.[^/.]+$/, '')
+        if (noExt.trim().length) return noExt
+      }
+      return 'Untitled'
+    },
     /** Construct full URL from relative path */
     constructFullUrl(filePath: string): string {
       if (!filePath) return '';
@@ -430,7 +452,7 @@ export const useFileStore = defineStore("files", {
           ...data, 
           id: data.id, // Use server ID directly
           content: data.content || data.contents || this.getDefaultContent(data.file_type),
-          title: data.title || data.file_name || 'Untitled',
+          title: this.computeTitle(data),
           isNew: false, 
           isDirty: false 
         };
@@ -571,7 +593,7 @@ export const useFileStore = defineStore("files", {
     },
 
     /** Load all documents from API */
-    async loadDocuments(): Promise<FileData[]> {
+    async loadDocuments(doNotMutateStore: boolean = false): Promise<FileData[]> {
       try {
         const response = await axios.get(FILES_ENDPOINT, {
           headers: { Authorization: `Bearer ${this.getToken()}` },
@@ -581,14 +603,16 @@ export const useFileStore = defineStore("files", {
           ...doc, 
           id: doc.id, // Use server ID directly
           content: doc.content || this.getDefaultContent(doc.file_type),
-          title: doc.title || doc.file_name || 'Untitled',
+          title: this.computeTitle(doc),
           file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
           isNew: false,
           isDirty: false
         }));
         
-        // Update store with processed documents
-        this.allFiles = processedDocs;
+        // Optionally update store with processed documents
+        if (!doNotMutateStore) {
+          this.allFiles = processedDocs;
+        }
         
         return processedDocs;
       } catch (error) {

@@ -8,7 +8,7 @@ import '@/assets/index.css'
 import { PencilIcon, MessageSquareIcon, XIcon, ArrowLeft, Share2 } from 'lucide-vue-next'
 
 import { debounce, type IWorkbookData } from '@univerjs/core'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import SheetMenu from '@/components/menu/SheetMenu.vue'
 import { useFileStore } from '@/store/files'
 import { sluggify } from '@/utils/lib'
@@ -509,6 +509,35 @@ function sendChatMessage() {
 }
 
 const debouncedHandleTitleChange = debounce(saveTitle, 300)
+
+// Page unload and route leave guards to force a save before navigation
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  try {
+    if (univerRef.value && route.params.id) {
+      // Trigger a save; browser may show a confirmation dialog if we set returnValue
+      // We don't await here to avoid blocking the unload
+      saveData()
+      e.preventDefault()
+      e.returnValue = ''
+    }
+  } catch {}
+}
+
+onMounted(() => {
+  window.addEventListener('beforeunload', handleBeforeUnload)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+})
+
+onBeforeRouteLeave(async () => {
+  try {
+    if (univerRef.value && route.params.id) {
+      await saveData()
+    }
+  } catch {}
+})
 
 function updateTitle(event: Event) {
   if (isSettingCursor.value) return

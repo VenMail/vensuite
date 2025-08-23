@@ -114,8 +114,9 @@ onMounted(async () => {
 
     // If online, load online documents and merge with offline
     if (fileStore.isOnline) {
-      const onlineDocs = await fileStore.loadDocuments();
-      
+      // Do not mutate store yet to avoid flicker
+      const onlineDocs = await fileStore.loadDocuments(true);
+
       // Simple merge: prefer offline documents if they're dirty, otherwise use online
       const mergedFiles = new Map<string, FileData>();
       
@@ -131,7 +132,12 @@ onMounted(async () => {
         if (doc.id) {
           const offlineDoc = mergedFiles.get(doc.id);
           if (!offlineDoc || !offlineDoc.isDirty) {
-            mergedFiles.set(doc.id, doc);
+            // Prefer an offline non-default title if online looks default
+            if (offlineDoc && offlineDoc.title && doc.title && /^(Untitled|New Document|New Spreadsheet)$/i.test(doc.title)) {
+              mergedFiles.set(doc.id, { ...doc, title: offlineDoc.title });
+            } else {
+              mergedFiles.set(doc.id, doc);
+            }
           }
         }
       });
