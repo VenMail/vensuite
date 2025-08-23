@@ -56,13 +56,10 @@ const setActiveItem = (item: string, route: string) => {
   router.push(route)
 }
 
-// Detect mobile screen size
+// Detect mobile screen size (do not auto-collapse; only change layout classes)
 onMounted(() => {
   const handleResize = () => {
     isMobile.value = window.innerWidth < 768
-    if (isMobile.value) {
-      collapsed.value = true
-    }
   }
   handleResize()
   window.addEventListener('resize', handleResize)

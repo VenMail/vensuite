@@ -8,6 +8,7 @@ import { useFileStore } from '@/store/files'
 import { ToastProvider } from '@/components/ui/toast'
 import TopNav from '@/components/layout/TopNav.vue'
 import { cn } from '@/lib/utils'
+import { useSidebarStore } from '@/store/sidebar'
 
 const route = useRoute()
 const router = useRouter()
@@ -17,8 +18,8 @@ const { isAuthenticated } = storeToRefs(authStore)
 
 const isMobile = ref(false)
 const isDark = ref(false)
-const sidebarVisible = ref(true)
-const sidebarCollapsed = ref(false)
+const sidebarStore = useSidebarStore()
+const { isVisible, isCollapsed } = storeToRefs(sidebarStore)
 // const searchValue = ref("")
 
 // Get hideLayout from route meta
@@ -26,15 +27,16 @@ const hideLayout = computed(() => route.meta.hideLayout === true)
 
 // Show sidebar on specific routes
 watch(() => route.name, (newRouteName) => {
-  sidebarVisible.value = (newRouteName === 'home' || newRouteName === 'forms' || newRouteName === 'media' || newRouteName === 'docs-view' || newRouteName === 'sheets-view')
+  const show = (newRouteName === 'home' || newRouteName === 'forms' || newRouteName === 'media' || newRouteName === 'docs-view' || newRouteName === 'sheets-view')
+  sidebarStore.setVisible(show)
 })
 
 const toggleSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value
+  sidebarStore.toggleVisible()
 }
 
 const toggleCollapse = (collapsed: boolean) => {
-  sidebarCollapsed.value = collapsed
+  sidebarStore.setCollapsed(collapsed)
 }
 
 // const toggleDarkMode = () => {
@@ -61,9 +63,6 @@ onMounted(async () => {
   // Handle responsive design
   const handleResize = () => {
     isMobile.value = window.innerWidth < 768
-    if (isMobile.value) {
-      sidebarCollapsed.value = true
-    }
   }
   handleResize()
   window.addEventListener('resize', handleResize)
@@ -84,12 +83,7 @@ watch(isAuthenticated, async (newValue) => {
   }
 })
 
-// Watch for hideLayout changes to collapse sidebar
-watch(hideLayout, (newValue) => {
-  if (newValue) {
-    sidebarCollapsed.value = true
-  }
-})
+// Do not auto-collapse based on hideLayout; collapse only on explicit user action
 
 // Dynamic class for the main content area
 const mainContentClasses = computed(() =>
@@ -115,8 +109,8 @@ const mainContentClasses = computed(() =>
       <div class="flex flex-1 overflow-hidden">
         <Sidebar 
           v-if="!hideLayout"
-          :isVisible="sidebarVisible" 
-          :isCollapsed="sidebarCollapsed"
+          :isVisible="isVisible" 
+          :isCollapsed="isCollapsed"
           @toggle="toggleSidebar"
           @collapse="toggleCollapse"
         />

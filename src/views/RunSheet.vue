@@ -5,7 +5,8 @@ import type { Ref } from 'vue'
 import { nextTick, onMounted, ref, computed, onUnmounted, watch, shallowRef } from 'vue'
 
 import '@/assets/index.css'
-import { PencilIcon, MessageSquareIcon, XIcon } from 'lucide-vue-next'
+import { PencilIcon, MessageSquareIcon, XIcon, ArrowLeft, Share2 } from 'lucide-vue-next'
+
 import { debounce, type IWorkbookData } from '@univerjs/core'
 import { useRoute, useRouter } from 'vue-router'
 import SheetMenu from '@/components/menu/SheetMenu.vue'
@@ -13,10 +14,12 @@ import { useFileStore } from '@/store/files'
 import { sluggify } from '@/utils/lib'
 import { FUniver } from '@univerjs/facade'
 import { IWebsocketService, Message, useWebSocket, WebSocketService } from '@/lib/wsService'
-import { FileData } from '@/types'
 import { toast } from '@/composables/useToast'
 import { useFavicon } from '@vueuse/core'
 import { DEFAULT_WORKBOOK_DATA, BUDGET_TEMPLATE_DATA, INVOICE_TEMPLATE_DATA } from '@/assets/default-workbook-data'
+import Button from '@/components/ui/button/Button.vue'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import type { FileData } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -38,6 +41,10 @@ const editableTitle = ref(title.value)
 const isSettingCursor = ref(false)
 const isSaving = ref(false)
 const isLoading = ref(false)
+const lastSavedAt = ref<Date | null>(null)
+const visibility = ref<'private' | 'link' | 'public'>('private')
+// privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
+const privacyType = ref<number>(7)
 
 const wsService = ref<IWebsocketService | null>(null)
 const isConnected = computed(() => WebSocketService?.isConnected.value)
@@ -55,6 +62,29 @@ const titleRef = ref<HTMLElement | null>(null)
 
 // Icon reference and favicon setup
 const iconRef = ref<HTMLElement | null>(null)
+
+// Unified sync status text similar to RunDoc
+const syncStatusText = computed(() => {
+  if (!isConnected.value) return 'Offline'
+  if (isSaving.value) return 'Saving...'
+  return 'All changes saved'
+})
+
+const lastSavedText = computed(() => {
+  if (!lastSavedAt.value) return 'Never saved'
+  const d = lastSavedAt.value
+  const hh = d.getHours().toString().padStart(2, '0')
+  const mm = d.getMinutes().toString().padStart(2, '0')
+  return `Last saved at ${hh}:${mm}`
+})
+
+const shareLinkSheet = computed(() => {
+  const id = route.params.id as string
+  if (!id) return ''
+  return `${window.location.origin}/sheets/${id}`
+})
+
+// Removed New Spreadsheet dialog to unify header UI
 
 // Handler for univerRefChange event
 function onUniverRefChange(childUniverRef: FUniver | null) {
@@ -179,12 +209,18 @@ function editTitle() {
   })
 }
 
-async function handleTitleChange() {
+// Unified title commit similar to RunDoc's saveTitle
+async function saveTitle() {
   const newTitle = title.value.trim()
   if (newTitle && newTitle !== document.title) {
     document.title = newTitle
     if (route.params.id && !isSaving.value) {
       try {
+        // Keep Univer workbook name and local data snapshot in sync with title
+        try { univerRef.value?.setName(newTitle) } catch {}
+        if (data.value && typeof data.value === 'object') {
+          ;(data.value as any).name = newTitle
+        }
         const doc = {
           id: route.params.id as string,
           title: newTitle,
@@ -216,6 +252,11 @@ async function handleTitleChange() {
 function updateTitleRemote(newTitle: string) {
   document.title = newTitle
   title.value = newTitle
+  // Keep local workbook snapshot aligned when remote title changes
+  try { univerRef.value?.setName(newTitle) } catch {}
+  if (data.value && typeof data.value === 'object') {
+    ;(data.value as any).name = newTitle
+  }
 }
 
 const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || "ws://app.venmail.io:8443";
@@ -409,7 +450,10 @@ function handleIncomingMessage(message: Message) {
 //      handleCursorChange(message.content)
       break
     case 'title':
-      updateTitleRemote(message.content.title)
+      // Ignore echo messages from self to prevent overwriting local rename
+      if (message.user?.id !== userId.value) {
+        updateTitleRemote(message.content.title)
+      }
       break
     // Handle other message types as needed
   }
@@ -443,7 +487,10 @@ watch(() => WebSocketService.messages, (newMessages) => {
         // handleCursorChange(message.content)
         break
       case 'title':
-        updateTitleRemote(message.content.title)
+        // Ignore echo messages from self to prevent overwriting local rename
+        if (message.user?.id !== userId.value) {
+          updateTitleRemote(message.content.title)
+        }
         break
     }
   })
@@ -461,7 +508,7 @@ function sendChatMessage() {
   }
 }
 
-const debouncedHandleTitleChange = debounce(handleTitleChange, 300)
+const debouncedHandleTitleChange = debounce(saveTitle, 300)
 
 function updateTitle(event: Event) {
   if (isSettingCursor.value) return
@@ -509,12 +556,7 @@ function restoreCursorPosition(element: HTMLElement, offset: number) {
   selection?.addRange(range)
 }
 
-function togglePencil(v: boolean) {
-  isTitleEdit.value = v
-  if (v) {
-    editTitle()
-  }
-}
+// removed togglePencil (no longer used)
 
 // function handleCursorChange(cursorInfo: any) {
 //   // console.log('Cursor changed:', cursorInfo)
@@ -578,6 +620,7 @@ async function saveData() {
     } else {
       toast.success("Document saved successfully")
     }
+    lastSavedAt.value = new Date()
     
     console.log("Document saved successfully")
   } catch (error) {
@@ -586,6 +629,32 @@ async function saveData() {
   } finally {
     isSaving.value = false
   }
+}
+
+function copyShareLink() {
+  const id = (route.params.id as string)
+  if (!id) return
+  const url = `${window.location.origin}/sheets/${id}`
+  navigator.clipboard.writeText(url).then(() => toast.success('Link copied'))
+}
+
+async function updateVisibility(newVis: number) {
+  visibility.value = (newVis === 3 || newVis === 4) ? 'link' : 'private'
+  if (!route.params.id) return
+  const name = title.value || 'New Spreadsheet'
+  const contentJson = univerRef.value?.getData ? JSON.stringify(univerRef.value.getData()) : (data.value ? JSON.stringify(data.value) : undefined)
+  const doc: FileData = {
+    id: route.params.id as string,
+    title: name,
+    content: contentJson,
+    file_type: 'xlsx',
+    is_folder: false,
+    file_name: `${name.toLowerCase().replace(/\s+/g, '-')}.xlsx`,
+    last_viewed: new Date(),
+    privacy_type: newVis,
+  }
+  const result = await fileStore.saveDocument(doc)
+  if (result?.document) toast.success('Visibility updated')
 }
 
 function handleChatMessage(messageInfo: Message) {
@@ -642,39 +711,75 @@ const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
 
 <template>
   <div id="app" class="h-screen flex flex-col">
+
     <!-- Loading bar -->
-    <div v-if="isLoading" class="loading-bar">
-      <div class="loading-progress"></div>
+    <div v-if="isLoading" class="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden">
+      <div class="h-full bg-primary-600 w-1/3 animate-pulse"></div>
     </div>
 
-    <div class="flex items-center gap-4 pl-4 py-3 bg-gray-50 border-b border-gray-200">
-      <router-link to="/" class="flex-shrink-0">
-        <defaultIcons.IconMicrosoftExcel
-          ref="iconRef"
-          class="w-8 h-8 text-green-600"
-          xmlns="http://www.w3.org/2000/svg"
-        />
-      </router-link>
-      <div class="flex flex-col">
-        <div
-          class="flex items-center gap-2"
-          @mouseover="togglePencil(true)"
-          @mouseleave="togglePencil(false)"
-        >
-          <div
-            :contenteditable="isTitleEdit"
-            ref="titleRef"
-            class="text-xl font-semibold text-gray-800 border-b-2 border-transparent hover:border-gray-300 transition-colors duration-200"
-            :class="{ 'cursor-text': isTitleEdit, 'border-gray-300': isTitleEdit }"
-            @input="updateTitle"
-            @blur="handleTitleChange"
-            @keydown.enter.prevent="handleTitleChange"
-            @click="editTitle"
-          >
-            {{ title }}
+    <!-- Unified Header similar to RunDoc -->
+    <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <div class="flex items-center gap-4">
+        <button class="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800" @click="router.push('/')">
+          <ArrowLeft class="h-5 w-5" />
+        </button>
+        <router-link to="/">
+          <defaultIcons.IconMicrosoftExcel ref="iconRef" class="w-[1.5rem] h-[3rem] text-green-600" xmlns="http://www.w3.org/2000/svg" />
+        </router-link>
+        <div class="flex flex-col">
+          <div class="flex items-center gap-2">
+            <div
+              :contenteditable="isTitleEdit"
+              ref="titleRef"
+              class="font-bold border-b border-dotted border-gray-300 min-w-[100px] px-2 py-1 relative"
+              :class="{ 'cursor-text': isTitleEdit, 'hover:bg-gray-100': !isTitleEdit }"
+              @click="editTitle"
+              @input="updateTitle"
+              @blur="saveTitle"
+              @keydown.enter.prevent="saveTitle"
+            >
+              {{ title }}
+            </div>
+            <div class="flex items-center gap-2">
+              <PencilIcon v-if="!isTitleEdit" @click="editTitle" class="h-3 w-3 cursor-pointer hover:text-primary-600" />
+              <div class="flex items-center gap-3 text-sm">
+                <span :class="{
+                  'text-yellow-500': !isConnected,
+                  'text-green-500': isConnected && !isSaving,
+                  'text-blue-500': isSaving,
+                }">{{ syncStatusText }}</span>
+                <span class="text-gray-500 cursor-pointer" title="Click to save now" @click="saveData">{{ lastSavedText }}</span>
+              </div>
+            </div>
           </div>
-          <PencilIcon v-if="isTitleEdit" class="h-4 w-4 text-gray-500" />
         </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Share2 class="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Share settings</DialogTitle>
+            </DialogHeader>
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <button class="px-3 py-1 rounded border" :class="privacyType===7 ? 'bg-gray-100' : ''" @click="updateVisibility(7)">Private</button>
+                <button class="px-3 py-1 rounded border" :class="privacyType===3 ? 'bg-gray-100' : ''" @click="updateVisibility(3)">Anyone with link (view)</button>
+                <button class="px-3 py-1 rounded border" :class="privacyType===4 ? 'bg-gray-100' : ''" @click="updateVisibility(4)">Anyone with link (edit)</button>
+              </div>
+              <div class="flex gap-2">
+                <input class="flex-1 border rounded px-2 py-1" :value="shareLinkSheet" readonly />
+                <Button variant="secondary" @click="copyShareLink">Copy Link</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
         <SheetMenu
           :univer-ref="univerRef"
           :file-id="route.params.id as string"
@@ -682,29 +787,15 @@ const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
           @save="saveData"
           @update-data="updateData"
         />
-      </div>
-      <div class="ml-auto mr-4 flex items-center gap-2">
-        <!-- Saving indicator -->
-        <div v-if="isSaving" class="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-600">
-          <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-          <span>Saving</span>
-        </div>
-        
-        <!-- Connection status indicator -->
-        <div v-else-if="!isConnected" class="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded text-xs text-red-600">
-          <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-          <span>Offline</span>
-        </div>
-        
         <button @click="toggleChat" class="p-2 rounded-full hover:bg-gray-200">
           <MessageSquareIcon class="h-6 w-6 text-gray-600" />
         </button>
-
         <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
           {{ avatarLetter }}
         </div>
       </div>
     </div>
+
     <UniverSheet
       id="sheet"
       ref="univerRef"
@@ -804,27 +895,5 @@ body {
   max-height: 150px;
 }
 
-.loading-bar {
-  @apply fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden;
-}
 
-.loading-progress {
-  @apply h-full bg-primary-600;
-  width: 30%;
-  animation: loading 2s infinite ease-in-out;
-}
-
-@keyframes loading {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  50% {
-    transform: translateX(100%);
-  }
-
-  100% {
-    transform: translateX(300%);
-  }
-}
 </style>

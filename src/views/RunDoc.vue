@@ -6,9 +6,7 @@ import "@/assets/index.css";
 import {
   PencilIcon,
   ArrowLeft,
-  Plus,
   Share2,
-  User,
   Wifi,
   WifiOff,
 } from "lucide-vue-next";
@@ -19,12 +17,6 @@ import { UmoEditor } from "@umoteam/editor";
 import { useFileStore } from "@/store/files";
 import { FileData } from "@/types";
 import Button from "@/components/ui/button/Button.vue";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +46,10 @@ const hasUnsavedChanges = ref(false);
 const currentDoc = ref<any>(null);
 const editorReady = ref(false);
 const isInitializing = ref(false);
+const lastSavedAt = ref<Date | null>(null);
+const shareOpen = ref(false);
+// privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
+const privacyType = ref<number>(7);
 const lastSaveResult = ref<{
   success: boolean;
   offline: boolean;
@@ -82,6 +78,20 @@ const syncStatusText = computed(() => {
     case "saved":
       return "All changes saved";
   }
+});
+
+const lastSavedText = computed(() => {
+  if (!lastSavedAt.value) return "Never saved";
+  const d = lastSavedAt.value;
+  const hh = d.getHours().toString().padStart(2, "0");
+  const mm = d.getMinutes().toString().padStart(2, "0");
+  return `Last saved at ${hh}:${mm}`;
+});
+
+const shareLinkDoc = computed(() => {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (!id) return "";
+  return `${window.location.origin}/docs/${id}`;
 });
 
 // Network status handlers
@@ -346,6 +356,7 @@ async function syncChanges() {
       offline: !fileStore.isOnline,
       error: null
     };
+    lastSavedAt.value = new Date();
   } catch (error) {
     console.error("Sync error:", error);
     lastSaveResult.value = {
@@ -362,6 +373,7 @@ function handleSavedEvent(result: any) {
   console.log("result:", result);
   lastSaveResult.value = result;
   console.log("last save result:", lastSaveResult.value);
+  lastSavedAt.value = new Date();
 }
 
 async function saveTitle() {
@@ -553,25 +565,44 @@ onUnmounted(() => {
   window.removeEventListener("offline", updateOnlineStatus);
 });
 
-const templates = {
-  Documents: [
-    { name: "Blank Document", icon: defaultIcons.IconMicrosoftWord },
-    { name: "Resume", icon: defaultIcons.IconMicrosoftWord },
-    { name: "Letter", icon: defaultIcons.IconMicrosoftWord },
-  ],
-};
+// Removed templates and New Document dialog to unify header
 
 function shareDocument() {
-  // Implement share functionality
-  console.log("Share document");
+  if (currentDoc.value && typeof currentDoc.value.privacy_type === 'number') {
+    privacyType.value = currentDoc.value.privacy_type as number;
+  } else {
+    privacyType.value = 7;
+  }
+  shareOpen.value = true;
+}
+
+function copyShareLink() {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (!id) return;
+  const url = `${window.location.origin}/docs/${id}`;
+  navigator.clipboard.writeText(url).then(() => toast.success("Link copied"));
+}
+
+async function updateVisibility(newVis: number) {
+  privacyType.value = newVis;
+  if (!currentDoc.value) return;
+  const updated: FileData = {
+    ...currentDoc.value,
+    privacy_type: newVis,
+    file_type: "docx",
+    is_folder: false,
+  } as FileData;
+  const result = await fileStore.saveDocument(updated);
+  currentDoc.value = result.document;
+  toast.success("Visibility updated");
 }
 </script>
 
 <template>
   <div id="app" class="h-screen flex flex-col">
     <!-- Loading bar -->
-    <div v-if="isLoading" class="loading-bar">
-      <div class="loading-progress"></div>
+    <div v-if="isLoading" class="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden">
+      <div class="h-full bg-primary-600 w-1/3 animate-pulse"></div>
     </div>
 
     <!-- Header -->
@@ -611,50 +642,32 @@ function shareDocument() {
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <Dialog>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-600 cursor-pointer" title="Click to save now" @click="syncChanges">{{ lastSavedText }}</span>
+        <Dialog v-model:open="shareOpen">
           <DialogTrigger asChild>
-            <Button variant="outline">
-              <Plus class="h-4 w-4 mr-2" />
-              New Document
+            <Button variant="outline" @click="shareDocument">
+              <Share2 class="h-4 w-4 mr-2" />
+              Share
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Choose a Template</DialogTitle>
+              <DialogTitle>Share settings</DialogTitle>
             </DialogHeader>
-            <div class="grid grid-cols-2 gap-4">
-              <button v-for="template in templates.Documents" :key="template.name"
-                class="h-24 flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 hover:border-primary-500 transition-colors"
-                @click="
-                  router.push(
-                    template.name.toLowerCase().includes('blank')
-                      ? '/docs'
-                      : `/docs/t/${template.name}`
-                  )
-                  ">
-                <component :is="template.icon" class="w-8 h-8" />
-                <span class="mt-2 text-sm">{{ template.name }}</span>
-              </button>
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <button class="px-3 py-1 rounded border" :class="privacyType===7 ? 'bg-gray-100' : ''" @click="updateVisibility(7)">Private</button>
+                <button class="px-3 py-1 rounded border" :class="privacyType===3 ? 'bg-gray-100' : ''" @click="updateVisibility(3)">Anyone with link (view)</button>
+                <button class="px-3 py-1 rounded border" :class="privacyType===4 ? 'bg-gray-100' : ''" @click="updateVisibility(4)">Anyone with link (edit)</button>
+              </div>
+              <div class="flex gap-2">
+                <input class="flex-1 border rounded px-2 py-1" :value="shareLinkDoc" readonly />
+                <Button variant="secondary" @click="copyShareLink">Copy Link</Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
-        <Button variant="outline" @click="shareDocument">
-          <Share2 class="h-4 w-4 mr-2" />
-          Share
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <User class="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </div>
     <umo-editor 
@@ -689,9 +702,6 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 300px;
-  -webkit-user-modify: read-write;
-  -moz-user-modify: read-write;
-  user-modify: read-write;
 }
 
 #docHead[contenteditable="true"] {
@@ -746,15 +756,7 @@ body {
   background-color: #ecfdf5;
 }
 
-.loading-bar {
-  @apply fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden;
-}
-
-.loading-progress {
-  @apply h-full bg-primary-600;
-  width: 30%;
-  animation: loading 2s infinite ease-in-out;
-}
+/* Removed @apply rules; using inline classes in template for loading bar */
 
 @keyframes loading {
   0% {
