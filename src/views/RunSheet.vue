@@ -9,7 +9,7 @@ import { PencilIcon, MessageSquareIcon, XIcon, ArrowLeft, Share2 } from 'lucide-
 
 import { debounce, type IWorkbookData } from '@univerjs/core'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
-import SheetMenu from '@/components/menu/SheetMenu.vue'
+import UnifiedMenubar from '@/components/menu/UnifiedMenubar.vue'
 import { useFileStore } from '@/store/files'
 import { sluggify } from '@/utils/lib'
 import { FUniver } from '@univerjs/facade'
@@ -20,6 +20,7 @@ import { DEFAULT_WORKBOOK_DATA, BUDGET_TEMPLATE_DATA, INVOICE_TEMPLATE_DATA } fr
 import Button from '@/components/ui/button/Button.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import type { FileData } from '@/types'
+import { ExportService, ExportFormat, PDFEngine, type IExportOptions } from '@/plugins/ExportPlugin'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,6 +63,7 @@ const titleRef = ref<HTMLElement | null>(null)
 
 // Icon reference and favicon setup
 const iconRef = ref<HTMLElement | null>(null)
+const exportService = new ExportService()
 
 // Unified sync status text similar to RunDoc
 const syncStatusText = computed(() => {
@@ -164,39 +166,7 @@ async function loadData(id: string) {
   }
 }
 
-// Update data handler
-async function updateData(newData: IWorkbookData) {
-  try {
-    // Ensure the data maintains the correct ID from the route
-    if (route.params.id) {
-      newData.id = route.params.id as string
-    }
-    
-    // Update the local data reference
-    data.value = newData
-    
-    // Auto-save for local changes (only if not already saving)
-    if (route.params.id && newData.id && !isSaving.value) {
-      const doc = {
-        id: route.params.id as string,
-        title: title.value,
-        file_name: `${title.value}.xlsx`,
-        file_type: 'xlsx',
-        is_folder: false, // Explicitly ensure it's not marked as folder
-        content: JSON.stringify(newData),
-        last_viewed: new Date()
-      } as FileData
-      
-      // Note: This auto-save might be too aggressive for real-time editing
-      // Consider debouncing this or removing it if it causes performance issues
-      await fileStore.saveDocument(doc)
-      console.log("Auto-saved document data")
-    }
-  } catch (error) {
-    console.error("Error updating document data:", error)
-    // Don't show toast for auto-save failures to avoid spam
-  }
-}
+// (removed) updateData handler was unused after Menubar unification
 
 function editTitle() {
   isTitleEdit.value = true
@@ -510,6 +480,36 @@ function sendChatMessage() {
 
 const debouncedHandleTitleChange = debounce(saveTitle, 300)
 
+// Export handler for UnifiedMenubar
+async function handleExport(format: string) {
+  try {
+    if (!univerCoreRef.value) {
+      toast.error('Export is not available yet')
+      return
+    }
+    const exportOptions: IExportOptions = {
+      format: format as ExportFormat,
+      filename: `${(title.value || 'sheet-export')}.${format}`,
+      includeStyles: true,
+      includeFormulas: true,
+      includeHeaders: true,
+      pdfEngine: format === 'pdf' ? PDFEngine.JSPDF : undefined,
+    }
+    await exportService.export(univerCoreRef.value as any, exportOptions)
+  } catch (err) {
+    console.error('Export failed', err)
+    toast.error('Export failed')
+  }
+}
+
+function handleUndo() {
+  try { univerCoreRef.value?.undo() } catch {}
+}
+
+function handleRedo() {
+  try { univerCoreRef.value?.redo() } catch {}
+}
+
 // Page unload and route leave guards to force a save before navigation
 function handleBeforeUnload(e: BeforeUnloadEvent) {
   try {
@@ -809,13 +809,7 @@ const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
             </div>
           </DialogContent>
         </Dialog>
-        <SheetMenu
-          :univer-ref="univerRef"
-          :file-id="route.params.id as string"
-          @toggle-chat="toggleChat"
-          @save="saveData"
-          @update-data="updateData"
-        />
+        
         <button @click="toggleChat" class="p-2 rounded-full hover:bg-gray-200">
           <MessageSquareIcon class="h-6 w-6 text-gray-600" />
         </button>
@@ -824,6 +818,16 @@ const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
         </div>
       </div>
     </div>
+
+    <UnifiedMenubar
+      :file-id="route.params.id as string"
+      mode="sheet"
+      @toggle-chat="toggleChat"
+      @save="saveData"
+      @export="handleExport"
+      @undo="handleUndo"
+      @redo="handleRedo"
+    />
 
     <UniverSheet
       id="sheet"
