@@ -36,9 +36,11 @@ import {
 } from '@/components/ui/menubar'
 import { useFileStore } from '@/store/files'
 
+interface Collaborator { name: string; selection?: any; ts?: number }
 interface Props {
   fileId?: string | null
   mode: 'sheet' | 'doc'
+  collaborators?: Record<string, Collaborator>
 }
 
 const props = defineProps<Props>()
@@ -86,10 +88,19 @@ function handleRedo() {
 function toggleChat() {
   emit('toggleChat')
 }
+
+// Deterministic color picker for user IDs
+function colorForUser(uid: string) {
+  const palette = ['#2563EB', '#9333EA', '#16A34A', '#DC2626', '#F59E0B', '#0EA5E9', '#7C3AED', '#059669', '#D97706', '#DB2777']
+  let hash = 0
+  for (let i = 0; i < uid.length; i++) hash = ((hash << 5) - hash) + uid.charCodeAt(i)
+  const idx = Math.abs(hash) % palette.length
+  return palette[idx]
+}
 </script>
 
 <template>
-  <Menubar class="border-none ml-0 pl-0">
+  <Menubar class="border-none ml-0 pl-0 flex items-center gap-2 w-full">
     <!-- File Menu -->
     <MenubarMenu>
       <MenubarTrigger>File</MenubarTrigger>
@@ -237,5 +248,14 @@ function toggleChat() {
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
+    <!-- Right aligned collaborator badges -->
+    <div class="ml-auto flex items-center gap-2 pr-2" v-if="props.collaborators && Object.keys(props.collaborators).length">
+      <div v-for="(c, uid) in props.collaborators" :key="uid" class="flex items-center gap-1 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800 rounded-full px-2 py-1 shadow text-xs">
+        <div class="w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center" :style="{ backgroundColor: colorForUser(uid) }">
+          {{ (c.name || '?').charAt(0).toUpperCase() }}
+        </div>
+        <span class="max-w-[120px] truncate" :title="c.name">{{ c.name }}</span>
+      </div>
+    </div>
   </Menubar>
 </template>
