@@ -60,6 +60,7 @@ const chatInput = ref<HTMLTextAreaElement | null>(null)
 const chatMessagesContainer = ref<HTMLElement | null>(null)
 const replyingTo = ref<Message | null>(null)
 const titleRef = ref<HTMLElement | null>(null)
+const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({})
 
 // Icon reference and favicon setup
 const iconRef = ref<HTMLElement | null>(null)
@@ -417,7 +418,13 @@ function handleIncomingMessage(message: Message) {
       changesPending.value = true
       break
     case 'cursor':
-//      handleCursorChange(message.content)
+      if (message.user?.id && message.user?.name) {
+        collaborators.value[message.user.id] = {
+          name: message.user.name,
+          selection: (message as any).content?.selection,
+          ts: Date.now()
+        }
+      }
       break
     case 'title':
       // Ignore echo messages from self to prevent overwriting local rename
@@ -429,42 +436,7 @@ function handleIncomingMessage(message: Message) {
   }
 }
 
-watch(() => WebSocketService.messages, (newMessages) => {
-  console.log('nm', newMessages)
-  newMessages?.value?.forEach(message => {
-    if (message.sheetId !== route.params.id) return // Ignore messages for other sheets
-
-    if (message.messages) {
-      //init chat messages
-      message.messages.forEach(handleIncomingMessage)
-      return
-    }
-
-    switch (message.type) {
-      case 'chat':
-        handleChatMessage(message)
-        break
-      case 'change':
-        if (!changesPending.value) {
-          changesPending.value = true
-          univerCoreRef.value?.executeCommand(message.content.command.id, message.content.command.params)
-          nextTick(() => {
-            changesPending.value = false
-          })
-        }
-        break
-      case 'cursor':
-        // handleCursorChange(message.content)
-        break
-      case 'title':
-        // Ignore echo messages from self to prevent overwriting local rename
-        if (message.user?.id !== userId.value) {
-          updateTitleRemote(message.content.title)
-        }
-        break
-    }
-  })
-}, { deep: true })
+// Removed global WebSocketService.messages watcher to avoid duplicate handling.
 
 function sendChatMessage() {
   if (route.params.id) {
@@ -708,7 +680,7 @@ function scrollToBottom() {
 }
 
 function formatDate(timestamp: number) {
-  new Date(timestamp).toTimeString()
+  try { return new Date(timestamp).toLocaleTimeString() } catch { return '' }
 }
 
 function replyToMessage(message: Message) {
@@ -736,6 +708,18 @@ function toggleChat() {
 
 // Avatar letter placeholder
 const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
+
+// Deterministic color picker for user IDs
+function colorForUser(uid: string) {
+  const palette = [
+    '#2563EB', '#9333EA', '#16A34A', '#DC2626', '#F59E0B',
+    '#0EA5E9', '#7C3AED', '#059669', '#D97706', '#DB2777'
+  ]
+  let hash = 0
+  for (let i = 0; i < uid.length; i++) hash = ((hash << 5) - hash) + uid.charCodeAt(i)
+  const idx = Math.abs(hash) % palette.length
+  return palette[idx]
+}
 </script>
 
 <template>
@@ -828,18 +812,47 @@ const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
       @undo="handleUndo"
       @redo="handleRedo"
     />
+    <!-- Top-right collaborators badges -->
+    <div class="fixed top-2 right-2 z-40 flex gap-2">
+      <div v-for="(c, uid) in collaborators" :key="uid" class="flex items-center gap-1 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800 rounded-full px-2 py-1 shadow text-xs">
+        <div class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] flex items-center justify-center">
+          {{ c.name.charAt(0).toUpperCase() }}
+        </div>
+        <span class="max-w-[120px] truncate" :title="c.name">{{ c.name }}</span>
+      </div>
+    </div>
 
-    <UniverSheet
-      id="sheet"
-      ref="univerRef"
-      :data="data as IWorkbookData"
-      :changes-pending="changesPending"
-      :sheet-id="route.params.id as string"
-      :user-id="userId"
-      :user-name="userName"
-      :ws="wsService as IWebsocketService"
-      @univer-ref-change="onUniverRefChange"
-    />
+    <div class="relative w-full h-full">
+      <!-- Inline collaborator overlays (top-left inside editor) -->
+      <div class="absolute top-2 left-2 z-30 flex flex-col gap-1 pointer-events-none">
+        <div v-for="(c, uid) in collaborators" :key="uid" class="px-2 py-0.5 rounded-full text-xs text-white font-medium shadow"
+             :style="{ backgroundColor: colorForUser(uid) }">
+          {{ c.name }}
+        </div>
+      </div>
+      <UniverSheet
+        id="sheet"
+        ref="univerRef"
+        :data="data as IWorkbookData"
+        :changes-pending="changesPending"
+        :sheet-id="route.params.id as string"
+        :user-id="userId"
+        :user-name="userName"
+        :ws="wsService as IWebsocketService"
+        @univer-ref-change="onUniverRefChange"
+      />
+    </div>
+    <!-- Collaborators Panel -->
+    <div class="fixed bottom-4 left-4 z-40 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800 rounded shadow px-3 py-2 text-sm">
+      <div class="font-semibold mb-1">Collaborators</div>
+      <div v-if="Object.keys(collaborators).length === 0" class="text-gray-500">No one else here</div>
+      <ul v-else class="space-y-1 max-h-40 overflow-auto">
+        <li v-for="(c, uid) in collaborators" :key="uid" class="flex items-center gap-2">
+          <div class="w-5 h-5 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center">{{ c.name.charAt(0).toUpperCase() }}</div>
+          <span class="truncate max-w-[140px]" :title="c.name">{{ c.name }}</span>
+        </li>
+      </ul>
+    </div>
     <div v-if="isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">
       <div class="flex justify-between items-center p-3 border-b border-gray-200">
         <h3 class="font-semibold">Chat</h3>

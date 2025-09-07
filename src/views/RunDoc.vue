@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
-import { nextTick, onMounted, ref, watchEffect, computed, onUnmounted } from "vue";
+import { nextTick, onMounted, ref, watchEffect, computed, onUnmounted, watch } from "vue";
 
 import "@/assets/index.css";
 import {
@@ -17,6 +17,8 @@ import { UmoEditor } from "@umoteam/editor";
 import { useFileStore } from "@/store/files";
 import { FileData } from "@/types";
 import Button from "@/components/ui/button/Button.vue";
+import UnifiedMenubar from "@/components/menu/UnifiedMenubar.vue";
+import { createYSocketProvider } from "@/lib/yProviderCustom";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "vue-sonner";
 import { RESUME_TEMPLATE, LETTER_TEMPLATE, DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
+import { IWebsocketService, Message, useWebSocket, WebSocketService } from "@/lib/wsService";
 
 // Router setup
 const route = useRoute();
@@ -56,6 +59,22 @@ const lastSaveResult = ref<{
   error: string | null;
 } | null>(null);
 
+// Collaboration state (harmonized with RunSheet)
+const { initializeWebSocket } = useWebSocket();
+const wsService = ref<IWebsocketService | null>(null);
+const isConnected = computed(() => WebSocketService?.isConnected.value);
+const isJoined = ref(false);
+const userId = ref(`user-${Math.random().toString(36).substr(2, 9)}`);
+const userName = ref(`User ${Math.floor(Math.random() * 1000)}`);
+const chatMessages = ref<Message[]>([]);
+const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({});
+const isChatOpen = ref(false);
+const newChatMessage = ref("");
+const chatInput = ref<HTMLTextAreaElement | null>(null);
+const chatMessagesContainer = ref<HTMLElement | null>(null);
+const replyingTo = ref<Message | null>(null);
+const textareaHeight = ref("40px");
+
 // Computed properties
 const syncStatus = computed(() => {
   if (isOffline.value) return "offline";
@@ -80,6 +99,18 @@ const syncStatusText = computed(() => {
   }
 });
 
+// Deterministic color picker for user IDs (shared approach with sheets)
+function colorForUser(uid: string) {
+  const palette = [
+    '#2563EB', '#9333EA', '#16A34A', '#DC2626', '#F59E0B',
+    '#0EA5E9', '#7C3AED', '#059669', '#D97706', '#DB2777'
+  ]
+  let hash = 0
+  for (let i = 0; i < uid.length; i++) hash = ((hash << 5) - hash) + uid.charCodeAt(i)
+  const idx = Math.abs(hash) % palette.length
+  return palette[idx]
+}
+
 const lastSavedText = computed(() => {
   if (!lastSavedAt.value) return "Never saved";
   const d = lastSavedAt.value;
@@ -92,6 +123,132 @@ const shareLinkDoc = computed(() => {
   const id = (route.params.id as string) || currentDoc.value?.id;
   if (!id) return "";
   return `${window.location.origin}/docs/${id}`;
+});
+
+// Socket base URL (same as RunSheet)
+const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || "ws://app.venmail.io:8443";
+
+function initializeWebSocketAndJoinRoom() {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (id && !wsService.value) {
+    wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${id}&userName=${userName.value}&userId=${userId.value}`);
+    joinRoom();
+  }
+}
+
+// Collaboration: handle incoming messages and chat helpers
+function handleIncomingMessage(message: Message) {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (!id || message.sheetId !== id) return;
+
+  if ((message as any).messages) {
+    // init bundle
+    return (message as any).messages?.forEach(handleIncomingMessage);
+  }
+
+  switch (message.type) {
+    case 'chat':
+      handleChatMessage(message);
+      break;
+    case 'cursor':
+      if (message.user?.id && message.user?.name) {
+        collaborators.value[message.user.id] = {
+          name: message.user.name,
+          selection: (message as any).content?.selection,
+          ts: Date.now()
+        };
+      }
+      break;
+    case 'title':
+      // Ignore echo from self
+      if (message.user?.id !== userId.value && typeof (message as any).content?.title === 'string') {
+        const t = (message as any).content.title as string;
+        title.value = t;
+        document.title = t;
+        try { editorRef.value?.setDocument?.({ title: t }); } catch {}
+      }
+      break;
+  }
+}
+
+// Removed global WebSocketService.messages watcher to avoid duplicate handling; we rely on joinSheet listener.
+
+function sendChatMessage() {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (!id) return;
+  const msg = newChatMessage.value;
+  if (msg.trim()) {
+    wsService.value?.sendMessage(id, 'chat', { message: msg }, userId.value, userName.value);
+    adjustTextareaHeight();
+    replyingTo.value = null;
+    newChatMessage.value = '';
+  }
+}
+
+function handleChatMessage(messageInfo: Message) {
+  chatMessages.value.push(messageInfo);
+  scrollToBottom();
+}
+
+function adjustTextareaHeight() {
+  if (chatInput.value) {
+    chatInput.value.style.height = '40px';
+    chatInput.value.style.height = `${Math.min(chatInput.value.scrollHeight, 150)}px`;
+    textareaHeight.value = chatInput.value.style.height;
+  }
+}
+
+function scrollToBottom() {
+  nextTick(() => {
+    if (chatMessagesContainer.value) {
+      chatMessagesContainer.value.scrollTop = chatMessagesContainer.value.scrollHeight;
+    }
+  });
+}
+
+function formatDate(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString();
+}
+
+function replyToMessage(message: Message) {
+  replyingTo.value = message;
+  chatInput.value?.focus();
+}
+
+function cancelReply() {
+  replyingTo.value = null;
+}
+
+function getReplyUserName(replyId: string) {
+  const replyMessage = chatMessages.value.find(msg => (msg as any).id === replyId) as any;
+  return replyMessage ? replyMessage.user.name : 'Unknown User';
+}
+
+function getReplyContent(replyId: string) {
+  const replyMessage = chatMessages.value.find(msg => (msg as any).id === replyId) as any;
+  return replyMessage ? replyMessage.content.message : '';
+}
+
+function joinRoom() {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (isJoined.value || !id) return;
+  if (wsService.value) {
+    try {
+      isJoined.value = wsService.value.joinSheet(id, handleIncomingMessage);
+      // console.log('Joined room:', id)
+    } catch (error) {
+      console.error('Error joining room:', error);
+    }
+  }
+}
+
+// Watch for connection status to re-join if needed
+watch(isConnected, (newVal) => {
+  if (newVal) {
+    joinRoom();
+  } else {
+    isJoined.value = false;
+  }
 });
 
 // Network status handlers
@@ -211,6 +368,58 @@ const options = ref({
 
 const titleRef = ref<HTMLElement | null>(null);
 const editorRef = ref<any>(null);
+// Yjs collaboration (optional)
+const yProviderRef = ref<any>(null);
+const yDocRef = ref<any>(null);
+const yTextRef = ref<any>(null);
+let isApplyingRemote = false;
+let presenceIntervalId: any = null; // reserved if needed later
+let pushIntervalId: any = null;
+let domObserver: MutationObserver | null = null;
+let mutationScheduled = false;
+
+// Debounced presence emitter
+const emitPresence = useDebounceFn(() => {
+  try {
+    const idNow = (route.params.id as string) || currentDoc.value?.id;
+    if (!idNow) return;
+    wsService.value?.sendMessage(idNow, 'cursor', { selection: null }, userId.value, userName.value);
+  } catch {}
+}, 200, { maxWait: 1000 });
+
+// Hoisted helper: push local editor content into Yjs doc (guarded)
+function pushLocalToY() {
+  try {
+    if (!editorRef.value || !yTextRef.value) return;
+    if (isApplyingRemote) return; // avoid echo
+    const content = editorRef.value?.getContent?.() || '';
+    const cur = yTextRef.value.toString();
+    if (content !== cur) {
+      yTextRef.value.delete(0, cur.length);
+      yTextRef.value.insert(0, content);
+    }
+  } catch {}
+}
+
+function setupDomObserver() {
+  try {
+    if (domObserver) {
+      try { domObserver.disconnect(); } catch {}
+      domObserver = null;
+    }
+    const hostEl: any = editorRef.value?.$el || (document.querySelector('umo-editor') as HTMLElement | null);
+    if (!hostEl) return;
+    domObserver = new MutationObserver(() => {
+      if (mutationScheduled) return;
+      mutationScheduled = true;
+      setTimeout(() => {
+        mutationScheduled = false;
+        pushLocalToY();
+      }, 200);
+    });
+    domObserver.observe(hostEl, { childList: true, characterData: true, subtree: true });
+  } catch {}
+}
 
 // Safe method to set editor content - waits for editor to be ready
 async function setEditorContent(content: string, title: string) {
@@ -405,6 +614,16 @@ async function saveTitle() {
       syncChanges();
     }
   }
+
+  // Broadcast title change for collaboration
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (id) {
+    try {
+      wsService.value?.sendMessage(id, 'title', { title: title.value }, userId.value, userName.value);
+    } catch (e) {
+      // non-blocking
+    }
+  }
 }
 
 function startEditing() {
@@ -523,6 +742,47 @@ onMounted(async () => {
           toast.error("Failed to load document");
         }
 
+        // Initialize and join collaboration room after data load
+        initializeWebSocketAndJoinRoom();
+
+        // Custom Yjs transport over uWebSockets: always enabled for docs
+        try {
+          // @ts-ignore -- dynamic import, types optional
+          const Y = await import('yjs');
+          yDocRef.value = new Y.Doc();
+          yTextRef.value = yDocRef.value.getText(`doc:${docId}`);
+          const binaryUrl = `${SOCKET_URI}?sheetId=${docId}&userName=${encodeURIComponent(userName.value)}&userId=${encodeURIComponent(userId.value)}`;
+          yProviderRef.value = createYSocketProvider({ url: binaryUrl, doc: yDocRef.value });
+
+          // Apply remote updates to editor when Y.Text changes
+          yTextRef.value.observe(() => {
+            if (!editorRef.value) return;
+            if (isApplyingRemote) return;
+            isApplyingRemote = true;
+            try {
+              const text = yTextRef.value.toString();
+              const current = editorRef.value?.getContent?.() || '';
+              if (typeof text === 'string' && text !== current) {
+                editorRef.value.setContent(text);
+              }
+            } finally {
+              setTimeout(() => { isApplyingRemote = false; }, 0);
+            }
+          });
+
+          // Push local edits to Yjs (basic handler)
+          try {
+            editorRef.value?.on?.('update', pushLocalToY);
+            // Also emit lightweight presence on updates (debounced)
+            editorRef.value?.on?.('update', () => emitPresence());
+          } catch {}
+          pushIntervalId = setInterval(pushLocalToY, 1000);
+          // DOM observer fallback to detect content changes without using editor APIs
+          setupDomObserver();
+        } catch (e) {
+          console.warn('Custom Yjs transport failed to initialize:', e);
+        }
+
         const iconHTML = iconRef.value?.outerHTML
           .replace(/currentColor/g, "#4d7cfe")
           .replace(/1em/g, "");
@@ -544,6 +804,9 @@ onMounted(async () => {
 
         // Navigate to the proper doc URL with the new ID
         await router.replace(`/docs/${newDoc.id}`);
+
+        // Initialize and join collaboration room
+        initializeWebSocketAndJoinRoom();
       }
     });
   }
@@ -563,6 +826,25 @@ function handleEditorCreated() {
 onUnmounted(() => {
   window.removeEventListener("online", updateOnlineStatus);
   window.removeEventListener("offline", updateOnlineStatus);
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (wsService.value && id) {
+    try { wsService.value.leaveSheet(id); } catch {}
+  }
+  // Yjs cleanup
+  try { yProviderRef.value?.destroy?.(); } catch {}
+  try { yDocRef.value?.destroy?.(); } catch {}
+  if (presenceIntervalId) {
+    try { clearInterval(presenceIntervalId); } catch {}
+    presenceIntervalId = null;
+  }
+  if (pushIntervalId) {
+    try { clearInterval(pushIntervalId); } catch {}
+    pushIntervalId = null;
+  }
+  if (domObserver) {
+    try { domObserver.disconnect(); } catch {}
+    domObserver = null;
+  }
 });
 
 // Removed templates and New Document dialog to unify header
@@ -595,6 +877,33 @@ async function updateVisibility(newVis: number) {
   const result = await fileStore.saveDocument(updated);
   currentDoc.value = result.document;
   toast.success("Visibility updated");
+}
+
+// Menubar handlers (Docs)
+function toggleChat() {
+  isChatOpen.value = !isChatOpen.value;
+}
+
+function handleUndo() {
+  try { editorRef.value?.undo?.() } catch {}
+}
+
+function handleRedo() {
+  try { editorRef.value?.redo?.() } catch {}
+}
+
+async function handleExport(format: string) {
+  try {
+    // Attempt editor-provided export if available
+    if (editorRef.value?.export) {
+      await editorRef.value.export({ format });
+      return;
+    }
+    toast.error("Export is not available in this editor");
+  } catch (err) {
+    console.error("Doc export failed", err);
+    toast.error("Export failed");
+  }
 }
 </script>
 
@@ -670,12 +979,109 @@ async function updateVisibility(newVis: number) {
         </Dialog>
       </div>
     </div>
-    <umo-editor 
-      ref="editorRef" 
-      v-bind="options" 
-      @saved="handleSavedEvent" 
-      @created="handleEditorCreated" 
+    
+    <UnifiedMenubar
+      :file-id="route.params.id as string"
+      mode="doc"
+      @toggle-chat="toggleChat"
+      @save="syncChanges"
+      @export="handleExport"
+      @undo="handleUndo"
+      @redo="handleRedo"
     />
+    <!-- Top-right collaborators badges -->
+    <div class="fixed top-2 right-2 z-40 flex gap-2">
+      <div v-for="(c, uid) in collaborators" :key="uid" class="flex items-center gap-1 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800 rounded-full px-2 py-1 shadow text-xs">
+        <div class="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] flex items-center justify-center">
+          {{ c.name.charAt(0).toUpperCase() }}
+        </div>
+        <span class="max-w-[120px] truncate" :title="c.name">{{ c.name }}</span>
+      </div>
+    </div>
+    <div class="relative w-full h-full">
+      <!-- Inline collaborator overlays (top-left inside editor) -->
+      <div class="absolute top-2 left-2 z-30 flex flex-col gap-1 pointer-events-none">
+        <div v-for="(c, uid) in collaborators" :key="uid" class="px-2 py-0.5 rounded-full text-xs text-white font-medium shadow"
+             :style="{ backgroundColor: colorForUser(uid) }">
+          {{ c.name }}
+        </div>
+      </div>
+      <umo-editor 
+        ref="editorRef" 
+        v-bind="options" 
+        @saved="handleSavedEvent" 
+        @created="handleEditorCreated" 
+      />
+    </div>
+    <!-- Collaborators Panel -->
+    <div class="fixed bottom-4 left-4 z-40 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800 rounded shadow px-3 py-2 text-sm">
+      <div class="font-semibold mb-1">Collaborators</div>
+      <div v-if="Object.keys(collaborators).length === 0" class="text-gray-500">No one else here</div>
+      <ul v-else class="space-y-1 max-h-40 overflow-auto">
+        <li v-for="(c, uid) in collaborators" :key="uid" class="flex items-center gap-2">
+          <div class="w-5 h-5 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center">{{ c.name.charAt(0).toUpperCase() }}</div>
+          <span class="truncate max-w-[140px]" :title="c.name">{{ c.name }}</span>
+        </li>
+      </ul>
+    </div>
+    <div v-if="isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">
+      <div class="flex justify-between items-center p-3 border-b border-gray-200">
+        <h3 class="font-semibold">Chat</h3>
+        <button @click="toggleChat" class="p-1 rounded-full hover:bg-gray-200">
+          <Share2 class="h-4 w-4 text-gray-600" />
+        </button>
+      </div>
+      <div class="flex-grow overflow-y-auto p-3" ref="chatMessagesContainer">
+        <div v-for="message in chatMessages" :key="(message as any).id" class="mb-4">
+          <div v-if="(message as any).replyTo" class="ml-4 mb-1 p-2 bg-gray-100 rounded text-sm">
+            <span class="font-semibold">{{ getReplyUserName((message as any).replyTo as any) }}:</span>
+            {{ getReplyContent((message as any).replyTo as any) }}
+          </div>
+          <div class="flex items-start">
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white font-semibold mr-2">
+              {{ (message as any).user.name.charAt(0).toUpperCase() }}
+            </div>
+            <div>
+              <div class="flex items-baseline">
+                <span class="font-semibold mr-2">{{ (message as any).user.name }}</span>
+                <span class="text-xs text-gray-500">{{ formatDate((message as any).timestamp as any) }}</span>
+              </div>
+              <div class="mt-1">{{ (message as any).content.message }}</div>
+              <button @click="replyToMessage(message)" class="text-sm text-blue-500 mt-1">Reply</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-3 border-t border-gray-200">
+        <form @submit.prevent="sendChatMessage" class="flex flex-col">
+          <div v-if="replyingTo" class="mb-2 p-2 bg-gray-100 rounded flex justify-between items-start">
+            <div class="text-sm">
+              <span class="font-semibold">Replying to {{ (replyingTo as any).user.name }}:</span>
+              {{ (replyingTo as any).content.message }}
+            </div>
+            <button @click="cancelReply" class="text-gray-500 hover:text-gray-700">
+              ✕
+            </button>
+          </div>
+          <div class="flex">
+            <textarea
+              v-model="newChatMessage"
+              placeholder="Type a message..."
+              class="flex-grow border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+              :style="{ height: textareaHeight }"
+              @input="adjustTextareaHeight"
+              ref="chatInput"
+            ></textarea>
+            <button
+              type="submit"
+              class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              Send
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
