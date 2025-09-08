@@ -99,7 +99,10 @@ onMounted(async () => {
   if (authStore.getToken()) {
     // Load offline documents first
     const offlineDocs = fileStore.loadOfflineDocuments();
-    fileStore.allFiles = offlineDocs;
+    // Avoid flicker: only assign immediately if we are offline; otherwise, wait until merge completes
+    if (!fileStore.isOnline) {
+      fileStore.allFiles = offlineDocs;
+    }
     
     // Debug logging for file types (development only)
     if (import.meta.env.DEV) {
@@ -294,6 +297,7 @@ function openFile(id: string) {
           break;
         default:
           router.push(`/files/${id}`);
+          break;
       }
     }
   }
@@ -743,7 +747,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                 }">
                   <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
                     :isSelected="selectedFiles.has(item.id || '')"
-                    @click.stop="handleSelect(item.id, $event)" @select-file="handleSelect" @open-file="openFile" />
+                    @select-file="handleSelect" @open-file="openFile" />
                 </div>
               </div>
             </template>

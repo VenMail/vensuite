@@ -17,8 +17,10 @@ import { UmoEditor } from "@umoteam/editor";
 import { useFileStore } from "@/store/files";
 import { FileData } from "@/types";
 import Button from "@/components/ui/button/Button.vue";
+import UserProfile from "@/components/layout/UserProfile.vue";
 import UnifiedMenubar from "@/components/menu/UnifiedMenubar.vue";
 import { createYSocketProvider } from "@/lib/yProviderCustom";
+import { useAuthStore } from "@/store/auth";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +36,7 @@ import { IWebsocketService, Message, useWebSocket, WebSocketService } from "@/li
 const route = useRoute();
 const router = useRouter();
 const fileStore = useFileStore();
+const authStore = useAuthStore();
 
 // Reactive references
 const title = ref("New Document");
@@ -68,12 +71,34 @@ const userId = ref(`user-${Math.random().toString(36).substr(2, 9)}`);
 const userName = ref(`User ${Math.floor(Math.random() * 1000)}`);
 const chatMessages = ref<Message[]>([]);
 const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({});
+
+// Filter out stale collaborators (>20s inactivity)
+const filteredCollaborators = computed(() => {
+  const result: Record<string, { name: string; selection: any; ts: number }> = {};
+  const now = Date.now();
+  Object.entries(collaborators.value).forEach(([uid, c]) => {
+    if (!c?.ts || now - c.ts <= 20000) result[uid] = c;
+  });
+  return result;
+});
 const isChatOpen = ref(false);
 const newChatMessage = ref("");
 const chatInput = ref<HTMLTextAreaElement | null>(null);
 const chatMessagesContainer = ref<HTMLElement | null>(null);
 const replyingTo = ref<Message | null>(null);
 const textareaHeight = ref("40px");
+
+// Public access / interstitial state
+const accessDenied = ref(false);
+const requestEmail = ref("");
+const accessLevel = ref<'v'|'c'|'e'>("v");
+const requestMessage = ref("");
+const requestSubmitting = ref(false);
+const requestSuccess = ref<string | null>(null);
+
+function goToLogin() {
+  router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } });
+}
 
 // Computed properties
 const syncStatus = computed(() => {
@@ -99,6 +124,37 @@ const syncStatusText = computed(() => {
   }
 });
 
+// Request access API call
+async function submitAccessRequest() {
+  if (!route.params.id) return;
+  requestSubmitting.value = true;
+  requestSuccess.value = null;
+  try {
+    const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+    const res = await fetch(`${API_BASE_URI}/app-files/${route.params.id}/request-access`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: requestEmail.value,
+        access_level: accessLevel.value,
+        message: requestMessage.value || undefined,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && (data?.requested || data?.success)) {
+      requestSuccess.value = 'Access request sent. You will receive an email when approved.';
+      toast.success('Access request sent');
+    } else {
+      requestSuccess.value = data?.message || 'Request sent (if the email is valid).';
+      toast.message(requestSuccess.value || '');
+    }
+  } catch (e) {
+    requestSuccess.value = 'Request submitted. Please check your email later.';
+    toast.message(requestSuccess.value || '');
+  } finally {
+    requestSubmitting.value = false;
+  }
+}
 
 const lastSavedText = computed(() => {
   if (!lastSavedAt.value) return "Never saved";
@@ -497,18 +553,24 @@ async function loadData(id: string) {
         router.replace(`/docs/${doc.id}`);
       }
     } else {
-      console.log(`No document found with ID: ${id}. Creating new document.`);
-
-      // Create new document using the store's method
-      const newDoc = await fileStore.createNewDocument("docx", "New Document");
-      currentDoc.value = newDoc;
-      title.value = newDoc.title || "New Document";
-      document.title = title.value;
-
-      // Set default template in editor using safe method instead of empty string
-      await setEditorContent(DEFAULT_BLANK_DOCUMENT_TEMPLATE, title.value);
-
-      router.replace(`/docs/${newDoc.id}`);
+      // If unauthenticated and no document is available, show access request interstitial instead of creating a new doc
+      if (!authStore.isAuthenticated) {
+        accessDenied.value = true;
+        requestEmail.value = authStore.email || "";
+        return;
+      } else {
+        // Authenticated but not found: fall back to new doc flow
+        console.log("Document not found, creating new document");
+        const newDoc = await fileStore.createNewDocument("docx", "New Document");
+        currentDoc.value = newDoc;
+        title.value = newDoc.title || "New Document";
+        document.title = title.value;
+  
+        // Set default template in editor using safe method instead of empty string
+        await setEditorContent(DEFAULT_BLANK_DOCUMENT_TEMPLATE, title.value);
+  
+        router.replace(`/docs/${newDoc.id}`);
+      }
     }
     hasUnsavedChanges.value = false;
   } catch (error) {
@@ -740,7 +802,7 @@ onMounted(async () => {
           const Y = await import('yjs');
           yDocRef.value = new Y.Doc();
           yTextRef.value = yDocRef.value.getText(`doc:${docId}`);
-          const binaryUrl = `${SOCKET_URI}?sheetId=${docId}&userName=${encodeURIComponent(userName.value)}&userId=${encodeURIComponent(userId.value)}`;
+          const binaryUrl = `${SOCKET_URI}?sheetId=${docId}&userName=${encodeURIComponent(userName.value)}&userId=${encodeURIComponent(userId.value)}&channel=crdt`;
           yProviderRef.value = createYSocketProvider({ url: binaryUrl, doc: yDocRef.value });
 
           // Apply remote updates to editor when Y.Text changes
@@ -966,20 +1028,60 @@ async function handleExport(format: string) {
             </div>
           </DialogContent>
         </Dialog>
+        <UserProfile :isMobile="false" />
       </div>
     </div>
     
     <UnifiedMenubar
       :file-id="route.params.id as string"
       mode="doc"
-      :collaborators="collaborators"
+      :collaborators="filteredCollaborators"
       @toggle-chat="toggleChat"
       @save="syncChanges"
       @export="handleExport"
       @undo="handleUndo"
       @redo="handleRedo"
     />
-    <div class="relative w-full h-full">
+    <!-- Access request interstitial for unauthenticated private docs -->
+    <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">
+      <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
+        <div class="mb-4">
+          <h2 class="text-lg font-semibold">Request access to this document</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">This document is private. Enter your email to request access from the owner.</p>
+        </div>
+        <form @submit.prevent="submitAccessRequest" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input v-model="requestEmail" type="email" required class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Requested access</label>
+            <select v-model="accessLevel" class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700">
+              <option value="v">View</option>
+              <option value="c">Comment</option>
+              <option value="e">Edit</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Message (optional)</label>
+            <textarea v-model="requestMessage" rows="3" class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700" placeholder="Add a note to the owner"></textarea>
+          </div>
+          <div class="flex items-center justify-between pt-2">
+            <Button type="submit" :disabled="requestSubmitting || !requestEmail" variant="default">
+              <span v-if="!requestSubmitting">Request access</span>
+              <span v-else>Sending...</span>
+            </Button>
+            <div class="flex items-center gap-3">
+              <span v-if="requestSuccess" class="text-sm text-green-600">{{ requestSuccess }}</span>
+              <Button type="button" variant="outline" @click="goToLogin">Sign in</Button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Editor when access is allowed -->
+    <div v-else class="relative w-full h-full">
       <umo-editor 
         ref="editorRef" 
         v-bind="options" 
@@ -987,7 +1089,7 @@ async function handleExport(format: string) {
         @created="handleEditorCreated" 
       />
     </div>
-    <div v-if="isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">
+    <div v-if="!accessDenied && isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">
       <div class="flex justify-between items-center p-3 border-b border-gray-200">
         <h3 class="font-semibold">Chat</h3>
         <button @click="toggleChat" class="p-1 rounded-full hover:bg-gray-200">

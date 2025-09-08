@@ -30,6 +30,39 @@ export const useFileStore = defineStore("files", {
   }),
 
   actions: {
+    /** Normalize/derive file_type safely from API data */
+    normalizeFileType(file_type?: any, file_name?: string | null): string | undefined {
+      const raw = typeof file_type === 'string' ? file_type : (file_type?.toString?.() ?? '')
+      let ft = (raw || '').trim().toLowerCase()
+      if (!ft || ft === '0' || ft === 'null' || ft === 'undefined') {
+        const ext = (file_name || '').split('.').pop()?.toLowerCase() || ''
+        if (ext) {
+          // Map common aliases
+          if (['doc', 'docx'].includes(ext)) return 'docx'
+          if (['xls', 'xlsx'].includes(ext)) return 'xlsx'
+          if (['ppt', 'pptx'].includes(ext)) return 'pptx'
+          return ext
+        }
+        return undefined
+      }
+      // Map numeric codes if any future variants appear
+      if (ft === '1') return 'docx'
+      if (ft === '2') return 'xlsx'
+      if (ft === '3') return 'pptx'
+      return ft
+    },
+
+    /** Ensure is_folder is a boolean and file_type is normalized */
+    normalizeDocumentShape(doc: any): FileData {
+      const normalizedType = this.normalizeFileType(doc?.file_type, doc?.file_name)
+      const isFolder = !!doc?.is_folder
+      return {
+        ...doc,
+        id: doc.id,
+        file_type: normalizedType,
+        is_folder: isFolder,
+      } as FileData
+    },
     /** Derive a human title from server data safely */
     computeTitle(serverData: any): string {
       const rawTitle = serverData?.title
@@ -76,11 +109,11 @@ export const useFileStore = defineStore("files", {
         id: responseData.id,
         title: responseData.title || responseData.file_name?.replace(/\.[^/.]+$/, "") || 'Untitled',
         file_name: responseData.file_name,
-        file_type: responseData.file_type,
+        file_type: this.normalizeFileType(responseData.file_type, responseData.file_name),
         file_size: responseData.file_size,
         file_url: this.constructFullUrl(responseData.file_url),
         folder_id: responseData.folder_id,
-        is_folder: responseData.is_folder || false,
+        is_folder: !!responseData.is_folder,
         is_template: responseData.is_template || false,
         employee_id: responseData.employee_id,
         content: responseData.content || responseData.contents || '',
@@ -447,14 +480,16 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const data = response.data.data;
-        
-        const doc: FileData = { 
-          ...data, 
+        const normalizedType = this.normalizeFileType(data.file_type, data.file_name)
+        const doc: FileData = {
+          ...data,
           id: data.id, // Use server ID directly
-          content: data.content || data.contents || this.getDefaultContent(data.file_type),
+          file_type: normalizedType,
+          is_folder: !!data.is_folder,
+          content: data.content || data.contents || this.getDefaultContent(normalizedType),
           title: this.computeTitle(data),
-          isNew: false, 
-          isDirty: false 
+          isNew: false,
+          isDirty: false
         };
         
         return doc;
@@ -599,15 +634,20 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        const processedDocs = docs.map((doc) => ({ 
-          ...doc, 
-          id: doc.id, // Use server ID directly
-          content: doc.content || this.getDefaultContent(doc.file_type),
-          title: this.computeTitle(doc),
-          file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
-          isNew: false,
-          isDirty: false
-        }));
+        const processedDocs = docs.map((doc) => {
+          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name)
+          return {
+            ...doc,
+            id: doc.id, // Use server ID directly
+            file_type: normalizedType,
+            is_folder: !!doc.is_folder,
+            content: doc.content || this.getDefaultContent(normalizedType),
+            title: this.computeTitle(doc),
+            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+            isNew: false,
+            isDirty: false
+          }
+        });
         
         // Optionally update store with processed documents
         if (!doNotMutateStore) {

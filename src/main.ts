@@ -14,6 +14,7 @@ import { useFileStore } from './store/files'
 import Home from './views/Home.vue'
 import RunSheet from './views/RunSheet.vue'
 import RunDoc from './views/RunDoc.vue'
+import MediaViewer from './views/MediaViewer.vue'
 import Sheets from './views/Sheets.vue'
 import Documents from './views/Documents.vue'
 import Login from './views/Login.vue'
@@ -47,6 +48,7 @@ const routes = [
       { path: 'docs/new', name: 'docs', component: RunDoc, meta: { hideLayout: true } },
       { path: 'docs/t/:template', name: 'doc-template', component: RunDoc, meta: { hideLayout: true } },
       { path: 'docs/:id', name: 'doc', component: RunDoc, meta: { hideLayout: true } },
+      { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },
       { path: 'media', name: 'media', component: () => import('./views/Media.vue') },
@@ -74,20 +76,34 @@ app.use(i18n)
 const authStore = useAuthStore(pinia)
 authStore.setRouter(router)
 authStore.setupAxiosInterceptor()
+authStore.hydrate()
 
 const documentStore = useFileStore(pinia)
 
 // Router guard
 router.beforeEach(async (to, _from, next) => {
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!authStore.isAuthenticated) {
-      next({ name: 'login', query: { redirect: to.fullPath } })
-    } else {
-      next()
-    }
-  } else {
-    next()
+  // Allow unauthenticated viewing of public docs/sheets by direct link
+  const isPublicViewer = (
+    (to.name === 'doc' && typeof to.params.id === 'string' && to.params.id !== 'new') ||
+    (to.name === 'sheet' && typeof to.params.id === 'string' && to.params.id !== 'new') ||
+    (to.name === 'file' && typeof to.params.id === 'string')
+  )
+
+  if (isPublicViewer) {
+    return next()
   }
+
+  // Always allow login and oauth callback routes
+  if (to.name === 'login' || to.name === 'oauthCallback') {
+    return next()
+  }
+
+  // For all other routes, require authentication if not already authenticated
+  if (!authStore.isAuthenticated) {
+    return next({ name: 'login', query: { redirect: to.fullPath } })
+  }
+
+  next()
 })
 
 // UmoEditor setup

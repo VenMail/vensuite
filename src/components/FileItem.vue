@@ -151,11 +151,21 @@ const fileItemClass = computed(() => {
 const formattedDate = computed(() => (created_at ? new Date(created_at).toLocaleDateString() : 'N/A'));
 
 const handleClick = (event: MouseEvent) => {
-  console.log('handleClick', event);
-  // Don't trigger selection if clicking on buttons or inputs
-  if (!(event.target as HTMLElement).closest('button, input')) {
-    emit('select-file', id);
+  const target = event.target as HTMLElement
+  // If clicking on checkbox, toggle selection only
+  if (target.closest('.w-5.h-5, .w-4.h-4')) {
+    emit('select-file', id, event)
+    return
   }
+  // Ignore clicks on buttons/inputs within the item
+  if (target.closest('button, input')) return
+  // With modifier keys, perform selection
+  if (event.ctrlKey || event.metaKey || event.shiftKey) {
+    emit('select-file', id, event)
+    return
+  }
+  // Default: open file on single click
+  openFile()
 };
 
 const openFile = () => emit('open-file', id);

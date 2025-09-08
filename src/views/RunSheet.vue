@@ -17,13 +17,16 @@ import { IWebsocketService, Message, useWebSocket, WebSocketService } from '@/li
 import { toast } from '@/composables/useToast'
 import { useFavicon } from '@vueuse/core'
 import { DEFAULT_WORKBOOK_DATA, BUDGET_TEMPLATE_DATA, INVOICE_TEMPLATE_DATA } from '@/assets/default-workbook-data'
+import UserProfile from '@/components/layout/UserProfile.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import type { FileData } from '@/types'
 import { ExportService, ExportFormat, PDFEngine, type IExportOptions } from '@/plugins/ExportPlugin'
+import { useAuthStore } from '@/store/auth'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 const { initializeWebSocket } = useWebSocket()
 
@@ -61,6 +64,14 @@ const chatMessagesContainer = ref<HTMLElement | null>(null)
 const replyingTo = ref<Message | null>(null)
 const titleRef = ref<HTMLElement | null>(null)
 const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({})
+
+// Public access / interstitial state for private sheets
+const accessDenied = ref(false)
+const requestEmail = ref('')
+const accessLevel = ref<'v' | 'c' | 'e'>('v')
+const requestMessage = ref('')
+const requestSubmitting = ref(false)
+const requestSuccess = ref<string | null>(null)
 
 // Icon reference and favicon setup
 const iconRef = ref<HTMLElement | null>(null)
@@ -154,8 +165,13 @@ async function loadData(id: string) {
       }
     }
     
-    // If we have a document but no contents, it might be a new document
-    // Still set the title if available
+    // If we have a document but no contents, it might be a new document or a private file
+    // For unauthenticated users landing on an existing id, show access request interstitial
+    if (!authStore.isAuthenticated) {
+      accessDenied.value = true
+      requestEmail.value = authStore.email || ''
+      return null
+    }
     console.log("No contents found for existing document, will use default structure but keep title")
     return null
   } catch (error) {
@@ -164,6 +180,35 @@ async function loadData(id: string) {
     return null
   } finally {
     isLoading.value = false
+  }
+}
+
+// Request access API call (sheets)
+async function submitAccessRequestSheet() {
+  if (!route.params.id) return
+  requestSubmitting.value = true
+  requestSuccess.value = null
+  try {
+    const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+    const res = await fetch(`${API_BASE_URI}/app-files/${route.params.id}/request-access`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: requestEmail.value,
+        access_level: accessLevel.value,
+        message: requestMessage.value || undefined,
+      }),
+    })
+    const data = await res.json()
+    if (res.ok && (data?.requested || data?.success)) {
+      requestSuccess.value = 'Access request sent. You will receive an email when approved.'
+    } else {
+      requestSuccess.value = data?.message || 'Request sent (if the email is valid).'
+    }
+  } catch (e) {
+    requestSuccess.value = 'Request submitted. Please check your email later.'
+  } finally {
+    requestSubmitting.value = false
   }
 }
 
@@ -706,8 +751,7 @@ function toggleChat() {
   isChatOpen.value = !isChatOpen.value
 }
 
-// Avatar letter placeholder
-const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
+// Avatar dropdown handled by UserProfile component
 
 </script>
 
@@ -786,9 +830,7 @@ const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
         <button @click="toggleChat" class="p-2 rounded-full hover:bg-gray-200">
           <MessageSquareIcon class="h-6 w-6 text-gray-600" />
         </button>
-        <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-          {{ avatarLetter }}
-        </div>
+        <UserProfile :isMobile="false" />
       </div>
     </div>
 
@@ -803,7 +845,43 @@ const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
       @redo="handleRedo"
     />
 
-    <div class="relative w-full h-full">
+    <!-- Access request interstitial for unauthenticated private sheets -->
+    <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">
+      <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
+        <div class="mb-4">
+          <h2 class="text-lg font-semibold">Request access to this sheet</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">This sheet is private. Enter your email to request access from the owner.</p>
+        </div>
+        <form @submit.prevent="submitAccessRequestSheet" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input v-model="requestEmail" type="email" required class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Requested access</label>
+            <select v-model="accessLevel" class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700">
+              <option value="v">View</option>
+              <option value="c">Comment</option>
+              <option value="e">Edit</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Message (optional)</label>
+            <textarea v-model="requestMessage" rows="3" class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700" placeholder="Add a note to the owner"></textarea>
+          </div>
+          <div class="flex items-center justify-between pt-2">
+            <Button type="submit" :disabled="requestSubmitting || !requestEmail" variant="default">
+              <span v-if="!requestSubmitting">Request access</span>
+              <span v-else>Sending...</span>
+            </Button>
+            <span v-if="requestSuccess" class="text-sm text-green-600">{{ requestSuccess }}</span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Sheet when access is allowed -->
+    <div v-else class="relative w-full h-full">
       <UniverSheet
         id="sheet"
         ref="univerRef"
@@ -816,7 +894,7 @@ const avatarLetter = computed(() => userName.value.charAt(0).toUpperCase())
         @univer-ref-change="onUniverRefChange"
       />
     </div>
-    <div v-if="isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">
+    <div v-if="!accessDenied && isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">
       <div class="flex justify-between items-center p-3 border-b border-gray-200">
         <h3 class="font-semibold">Chat</h3>
         <button @click="toggleChat" class="p-1 rounded-full hover:bg-gray-200">

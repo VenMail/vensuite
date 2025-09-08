@@ -6,7 +6,10 @@ const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/auth/oa
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    isAuthenticated: false,
+    firstName: localStorage.getItem('venUserFirstName') || "",
+    lastName: localStorage.getItem('venUserLastName') || "",
+    email: localStorage.getItem('venUserEmail') || "",
+    isAuthenticated: !!localStorage.getItem('venAuthToken'),
     token: localStorage.getItem('venAuthToken') || null,
     router: null as Router | any, // Add router to state
   }),
@@ -26,6 +29,28 @@ export const useAuthStore = defineStore('auth', {
       }
       return this.token
     },
+    async setUserInfo(user: any) {
+      this.firstName = user.first_name || "";
+      this.lastName = user.last_name || "";
+      this.email = user.email || "";
+      localStorage.setItem('venUserFirstName', this.firstName);
+      localStorage.setItem('venUserLastName', this.lastName);
+      localStorage.setItem('venUserEmail', this.email);
+    },
+    hydrate() {
+      this.token = localStorage.getItem('venAuthToken');
+      this.isAuthenticated = !!this.token;
+      this.firstName = localStorage.getItem('venUserFirstName') || this.firstName;
+      this.lastName = localStorage.getItem('venUserLastName') || this.lastName;
+      this.email = localStorage.getItem('venUserEmail') || this.email;
+    },
+    async getUserInfo() {
+      return {
+        firstName: this.firstName,
+        lastName: this.lastName,
+        email: this.email
+      }
+    },
     async login(token: string) {
       this.token = token;
       localStorage.setItem('venAuthToken', token);
@@ -36,6 +61,12 @@ export const useAuthStore = defineStore('auth', {
       this.token = null;
       localStorage.removeItem('venAuthToken');
       this.isAuthenticated = false;
+      this.firstName = "";
+      this.lastName = "";
+      this.email = "";
+      localStorage.removeItem('venUserFirstName');
+      localStorage.removeItem('venUserLastName');
+      localStorage.removeItem('venUserEmail');
       if (this.router) {
         await this.router.push({ name: 'login' });
       }
