@@ -85,8 +85,13 @@ const syncStatusText = computed(() => {
 })
 
 const lastSavedText = computed(() => {
-  if (!lastSavedAt.value) return 'Never saved'
-  const d = lastSavedAt.value
+  const d = lastSavedAt.value || (() => {
+    const id = route.params.id as string
+    const doc = id ? fileStore.allFiles.find(f => f.id === id) : null
+    const ts = (doc as any)?.updated_at || (doc as any)?.created_at
+    return ts ? new Date(ts) : null
+  })()
+  if (!d) return 'Never saved'
   const hh = d.getHours().toString().padStart(2, '0')
   const mm = d.getMinutes().toString().padStart(2, '0')
   return `Last saved at ${hh}:${mm}`
@@ -123,6 +128,11 @@ async function loadData(id: string) {
       updateTitleRemote(loadedData.title)
       console.log("Set title from loaded document:", loadedData.title)
     }
+    // Initialize lastSavedAt from server timestamps for existing documents
+    try {
+      const ts = (loadedData as any).updated_at || (loadedData as any).created_at
+      if (ts) lastSavedAt.value = new Date(ts)
+    } catch {}
     
     // Parse and validate the contents to restore all formatting
     if (loadedData.content) {

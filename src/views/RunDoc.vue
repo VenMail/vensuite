@@ -157,8 +157,8 @@ async function submitAccessRequest() {
 }
 
 const lastSavedText = computed(() => {
-  if (!lastSavedAt.value) return "Never saved";
-  const d = lastSavedAt.value;
+  const d = lastSavedAt.value || (currentDoc.value?.updated_at ? new Date(currentDoc.value.updated_at as any) : null);
+  if (!d) return "Never saved";
   const hh = d.getHours().toString().padStart(2, "0");
   const mm = d.getMinutes().toString().padStart(2, "0");
   return `Last saved at ${hh}:${mm}`;
@@ -530,6 +530,12 @@ async function loadData(id: string) {
     if (doc) {
       // Use the document as-is from the simplified store
       currentDoc.value = doc;
+
+      // Initialize lastSavedAt from server timestamps for existing documents
+      try {
+        const ts = (doc as any).updated_at || (doc as any).created_at;
+        if (ts) lastSavedAt.value = new Date(ts);
+      } catch {}
 
       // Update title references
       title.value = doc.title || "Untitled Document";
