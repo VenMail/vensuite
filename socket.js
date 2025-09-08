@@ -130,8 +130,7 @@ function createWebSocketApp() {
       const guestName = req.getQuery("name");
       
       if (!meetingCode) {
-        res.writeStatus("400 Bad Request").end("Missing meeting code");
-        return;
+        return res.cork(() => res.writeStatus("400 Bad Request").end("Missing meeting code"));
       }
       
       res.upgrade(
@@ -576,10 +575,10 @@ function handleMeetingNotification(res, data) {
     logger.info('Received meeting notification', { type: data.type });
     
     if (!data || !data.type) {
-      res.writeStatus('400 Bad Request').end(JSON.stringify({
+      res.cork(() => res.writeStatus('400 Bad Request').end(JSON.stringify({
         success: false,
         message: 'Invalid notification format'
-      }));
+      })));
       return;
     }
     
@@ -633,20 +632,20 @@ function handleMeetingNotification(res, data) {
     
     // Handle other meeting notification types here
     
-    res.writeStatus('200 OK').end(JSON.stringify({
+    res.cork(() => res.writeStatus('200 OK').end(JSON.stringify({
       success: true,
       message: 'Notification processed'
-    }));
+    })));
   } catch (error) {
     logger.error('Error processing meeting notification', {
       error: error.message,
       stack: error.stack
     });
     
-    res.writeStatus('500 Internal Server Error').end(JSON.stringify({
+    res.cork(() => res.writeStatus('500 Internal Server Error').end(JSON.stringify({
       success: false,
       message: 'Error processing notification'
-    }));
+    })));
   }
 }
 
