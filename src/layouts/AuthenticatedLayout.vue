@@ -51,8 +51,18 @@ const toggleCollapse = (collapsed: boolean) => {
 onMounted(async () => {
   // Handle authentication
   console.log('hideLayout', hideLayout.value)
+  const name = router.currentRoute.value.name as string | undefined
+  const params: any = router.currentRoute.value.params
+  const isPublicViewer = (
+    (name === 'doc' && typeof params.id === 'string') ||
+    (name === 'sheet' && typeof params.id === 'string') ||
+    (name === 'file' && typeof params.id === 'string')
+  )
+
   if (isAuthenticated.value) {
     await fileStore.loadDocuments()
+  } else if (isPublicViewer) {
+    // Allow unauthenticated users to view public/link-access items without redirecting
   } else {
     await router.push({
       name: 'login',
@@ -76,10 +86,19 @@ onMounted(async () => {
 
 watch(isAuthenticated, async (newValue) => {
   if (!newValue) {
-    await router.push({
-      name: 'login',
-      query: { redirect: router.currentRoute.value.fullPath }
-    })
+    const name = router.currentRoute.value.name as string | undefined
+    const params: any = router.currentRoute.value.params
+    const isPublicViewer = (
+      (name === 'doc' && typeof params.id === 'string') ||
+      (name === 'sheet' && typeof params.id === 'string') ||
+      (name === 'file' && typeof params.id === 'string')
+    )
+    if (!isPublicViewer) {
+      await router.push({
+        name: 'login',
+        query: { redirect: router.currentRoute.value.fullPath }
+      })
+    }
   }
 })
 

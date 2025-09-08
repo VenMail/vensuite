@@ -247,6 +247,7 @@ export const useFileStore = defineStore("files", {
     async createNewDocument(fileType: string = "docx", title: string = "Untitled"): Promise<FileData> {
       // Use proper default content based on file type
       const defaultContent = fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE : "";
+      const auth = useAuthStore();
       
       const newDoc = {
         title,
@@ -255,6 +256,7 @@ export const useFileStore = defineStore("files", {
         is_folder: false, // Explicitly ensure it's not a folder
         content: defaultContent,
         last_viewed: new Date(),
+        employee_id: auth?.employeeId || undefined,
       };
 
       // Try to create online first
@@ -398,7 +400,14 @@ export const useFileStore = defineStore("files", {
     /** Save document to the API */
     async saveToAPI(document: FileData): Promise<FileData | null> {
       try {
-        const payload = { ...document };
+        const payload = { ...document } as any;
+        // Ensure ownership set if available
+        try {
+          const auth = useAuthStore();
+          if (!payload.employee_id && auth?.employeeId) {
+            payload.employee_id = auth.employeeId;
+          }
+        } catch {}
         
         // Clean up local-only fields systematically
         const localOnlyFields: (keyof FileData)[] = ['isNew', 'isDirty'];
@@ -432,7 +441,8 @@ export const useFileStore = defineStore("files", {
             isDirty: false,
           };
           
-          this.cacheDocument(savedDoc);
+          // Persist refreshed version locally so offline cache always has latest server ID
+          this.saveToLocalCache(savedDoc);
           this.updateFiles(savedDoc);
           return savedDoc;
         }
@@ -476,8 +486,11 @@ export const useFileStore = defineStore("files", {
     /** Load from API */
     async loadFromAPI(id: string): Promise<FileData | null> {
       try {
+        const token = this.getToken();
+        const headers: Record<string, string> = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
         const response = await axios.get(`${FILES_ENDPOINT}/${id}`, {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
+          headers,
         });
         const data = response.data.data;
         const normalizedType = this.normalizeFileType(data.file_type, data.file_name)
@@ -491,6 +504,11 @@ export const useFileStore = defineStore("files", {
           isNew: false,
           isDirty: false
         };
+        // Attach large-file hints for front-end handling without breaking types
+        (doc as any).is_large = !!data.is_large;
+        if ((data as any).file_url) {
+          (doc as any).download_url = `${FILES_ENDPOINT}/${data.id}/download`;
+        }
         
         return doc;
       } catch (error) {
@@ -653,7 +671,11 @@ export const useFileStore = defineStore("files", {
         if (!doNotMutateStore) {
           this.allFiles = processedDocs;
         }
-        
+        // After fetching server files, reconcile any offline-local files not present on server
+        try {
+          const serverIds = processedDocs.map(d => d.id!).filter((id): id is string => typeof id === 'string' && id.length > 0);
+          await this.reconcileOfflineDocuments(serverIds);
+        } catch {}
         return processedDocs;
       } catch (error) {
         console.error("Error loading documents:", error);
@@ -663,6 +685,36 @@ export const useFileStore = defineStore("files", {
         const offlineDocs = this.loadOfflineDocuments();
         this.allFiles = offlineDocs;
         return offlineDocs;
+      }
+    },
+
+    /** Reconcile offline local documents: push any local-only docs to server and replace IDs */
+    async reconcileOfflineDocuments(serverIds: string[]): Promise<void> {
+      try {
+        const offlineDocs = this.loadOfflineDocuments();
+        const serverIdSet = new Set(serverIds);
+        const auth = useAuthStore();
+        const currentEmployee = auth?.employeeId || '';
+        for (const doc of offlineDocs) {
+          // If this is a purely local document (UUID) or missing on server, try to push it
+          const isLocal = this.isLocalDocument(doc.id!);
+          const missingOnServer = !serverIdSet.has(doc.id!);
+          const ownedByUser = !doc.employee_id || doc.employee_id === currentEmployee;
+          if ((isLocal || missingOnServer) && ownedByUser) {
+            // Ensure employee_id ownership when pushing
+            if (!doc.employee_id && currentEmployee) {
+              doc.employee_id = currentEmployee as any;
+            }
+            const saved = await this.saveToAPI(doc);
+            if (saved && saved.id !== doc.id) {
+              // Clean up the old local id cache and state
+              this.deleteLocalDocument(doc.id!);
+              // New saved doc already persisted by saveToAPI via saveToLocalCache/updateFiles
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Reconcile offline documents failed:', e);
       }
     },
 

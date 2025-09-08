@@ -50,6 +50,8 @@ const visibility = ref<'private' | 'link' | 'public'>('private')
 // privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
 const privacyType = ref<number>(7)
 
+// Note: editing restricted to authenticated users; guards are applied in save handlers
+
 const wsService = ref<IWebsocketService | null>(null)
 const isConnected = computed(() => WebSocketService?.isConnected.value)
 const isJoined = ref(false)
@@ -64,6 +66,10 @@ const chatMessagesContainer = ref<HTMLElement | null>(null)
 const replyingTo = ref<Message | null>(null)
 const titleRef = ref<HTMLElement | null>(null)
 const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({})
+
+// Large-file handling
+const isLarge = ref(false)
+const downloadUrl = ref<string | null>(null)
 
 // Public access / interstitial state for private sheets
 const accessDenied = ref(false)
@@ -122,7 +128,18 @@ async function loadData(id: string) {
       router.push('/') // Redirect to home if document not found
       return null
     }
-    
+    // Handle large files: backend suppresses inline content; offer download instead
+    try {
+      const ld: any = loadedData
+      if (ld?.is_large) {
+        isLarge.value = true
+        const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+        downloadUrl.value = ld.download_url || (ld.file_url ? `${API_BASE_URI}/app-files/${id}/download` : null)
+        // For large files, do not attempt to render in Univer
+        return null
+      }
+    } catch {}
+
     // Set title from the loaded FileData object first
     if (loadedData?.title) {
       updateTitleRemote(loadedData.title)
@@ -175,15 +192,34 @@ async function loadData(id: string) {
       }
     }
     
-    // If we have a document but no contents, it might be a new document or a private file
-    // For unauthenticated users landing on an existing id, show access request interstitial
+    // If we have a document but no contents, it might be a new document or a file without inline content
+    // Respect privacy settings: allow guests to view if everyone or link access (1,2,3,4)
+    const priv = Number((loadedData as any)?.privacy_type ?? (loadedData as any)?.privacyType)
     if (!authStore.isAuthenticated) {
-      accessDenied.value = true
-      requestEmail.value = authStore.email || ''
-      return null
+      if ([1,2,3,4].includes(priv)) {
+        // Allow viewing by initializing a blank workbook with correct id and title
+        const fallback = {
+          ...DEFAULT_WORKBOOK_DATA,
+          id,
+          name: loadedData.title || 'Spreadsheet'
+        }
+        // Initialize title immediately
+        updateTitleRemote(loadedData.title || 'Spreadsheet')
+        console.log('Public link access: initializing viewer with default structure')
+        return fallback as any
+      } else {
+        // Private: show access interstitial
+        accessDenied.value = true
+        requestEmail.value = authStore.email || ''
+        return null
+      }
     }
-    console.log("No contents found for existing document, will use default structure but keep title")
-    return null
+    console.log("No contents found for existing document (authenticated), will use default structure but keep title")
+    return {
+      ...DEFAULT_WORKBOOK_DATA,
+      id,
+      name: loadedData.title || 'Spreadsheet'
+    } as any
   } catch (error) {
     console.error('Error loading spreadsheet data:', error)
     toast.error('Failed to load spreadsheet')
@@ -240,6 +276,8 @@ async function saveTitle() {
   const newTitle = title.value.trim()
   if (newTitle && newTitle !== document.title) {
     document.title = newTitle
+    // Only allow saving title when authenticated
+    if (!authStore.isAuthenticated) return
     if (route.params.id && !isSaving.value) {
       try {
         // Keep Univer workbook name and local data snapshot in sync with title
@@ -288,6 +326,8 @@ function updateTitleRemote(newTitle: string) {
 const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || "ws://app.venmail.io:8443";
 
 function initializeWebSocketAndJoinSheet() {
+  // Do not initialize collaboration for guests
+  if (!authStore.isAuthenticated) return
   if (route.params.id && !wsService.value) {
     wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${route.params.id}&userName=${userName.value}&userId=${userId.value}`)
     joinSheet()
@@ -352,7 +392,8 @@ onMounted(async () => {
       await router.replace(`/sheets/${newDoc.id}`)
       
       // Initialize WebSocket after navigation
-      initializeWebSocketAndJoinSheet()
+      // Only initialize collaboration when authenticated
+      if (authStore.isAuthenticated) initializeWebSocketAndJoinSheet()
     }
     // Handle existing document with ID
     else if (route.params.id) {
@@ -364,7 +405,7 @@ onMounted(async () => {
         console.log("Set title from existing store data:", existingDoc.title);
       }
 
-      initializeWebSocketAndJoinSheet()
+      if (authStore.isAuthenticated) initializeWebSocketAndJoinSheet()
 
       // Load data after route is initialized
       const loadedData = await loadData(route.params.id as string)
@@ -551,16 +592,21 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 }
 
 onMounted(() => {
-  window.addEventListener('beforeunload', handleBeforeUnload)
+  // Only warn to save changes for authenticated users
+  if (authStore.isAuthenticated) {
+    window.addEventListener('beforeunload', handleBeforeUnload)
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('beforeunload', handleBeforeUnload)
+  if (authStore.isAuthenticated) {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+  }
 })
 
 onBeforeRouteLeave(async () => {
   try {
-    if (univerRef.value && route.params.id) {
+    if (authStore.isAuthenticated && univerRef.value && route.params.id) {
       await saveData()
     }
   } catch {}
@@ -620,6 +666,10 @@ function restoreCursorPosition(element: HTMLElement, offset: number) {
 // }
 
 async function saveData() {
+  // Do not attempt to save when not authenticated (guest viewers)
+  if (!authStore.isAuthenticated) {
+    return
+  }
   if (!univerRef.value || !route.params.id) {
     console.warn("Cannot save: univerRef or route.params.id is missing")
     toast.error("Cannot save: Missing document reference or ID")
@@ -636,13 +686,15 @@ async function saveData() {
 
   try {
     const name = title.value || "New Spreadsheet"
-    univerRef.value.setName(name)
 
     // Use the UniverSheet's getData method to get the complete snapshot
     const completeData = univerRef.value.getData()
     if (!completeData) {
       throw new Error("Failed to capture spreadsheet data")
     }
+
+    // Now that workbook is ready, set the name safely
+    try { univerRef.value.setName(name) } catch {}
 
     // Ensure the data has the correct ID from the route
     completeData.id = route.params.id as string
@@ -692,6 +744,15 @@ function copyShareLink() {
   if (!id) return
   const url = `${window.location.origin}/sheets/${id}`
   navigator.clipboard.writeText(url).then(() => toast.success('Link copied'))
+}
+
+// Large file download helper
+function downloadFile() {
+  if (downloadUrl.value) {
+    try {
+      window.open(downloadUrl.value, '_blank')
+    } catch {}
+  }
 }
 
 async function updateVisibility(newVis: number) {
@@ -891,6 +952,13 @@ function toggleChat() {
     </div>
 
     <!-- Sheet when access is allowed -->
+    <div v-else-if="isLarge" class="flex-1 flex items-center justify-center p-6">
+      <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 text-center">
+        <h2 class="text-lg font-semibold mb-2">This spreadsheet is large</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">The file is too large to preview online. You can download it to view locally.</p>
+        <Button variant="default" @click="downloadFile" :disabled="!downloadUrl">Download file</Button>
+      </div>
+    </div>
     <div v-else class="relative w-full h-full">
       <UniverSheet
         id="sheet"

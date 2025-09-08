@@ -88,6 +88,10 @@ const chatMessagesContainer = ref<HTMLElement | null>(null);
 const replyingTo = ref<Message | null>(null);
 const textareaHeight = ref("40px");
 
+// Large-file handling (docs)
+const isLarge = ref(false);
+const downloadUrl = ref<string | null>(null);
+
 // Public access / interstitial state
 const accessDenied = ref(false);
 const requestEmail = ref("");
@@ -174,6 +178,8 @@ const shareLinkDoc = computed(() => {
 const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || "ws://app.venmail.io:8443";
 
 function initializeWebSocketAndJoinRoom() {
+  // Do not initialize collaboration for guests
+  if (!authStore.isAuthenticated) return;
   const id = (route.params.id as string) || currentDoc.value?.id;
   if (id && !wsService.value) {
     wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${id}&userName=${userName.value}&userId=${userId.value}`);
@@ -531,6 +537,16 @@ async function loadData(id: string) {
       // Use the document as-is from the simplified store
       currentDoc.value = doc;
 
+      // Large-file handling: when backend flags is_large, offer download instead of preview
+      try {
+        const anyDoc: any = doc;
+        if (anyDoc?.is_large) {
+          isLarge.value = true;
+          const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+          downloadUrl.value = anyDoc.download_url || (anyDoc.file_url ? `${API_BASE_URI}/app-files/${id}/download` : null);
+        }
+      } catch {}
+
       // Initialize lastSavedAt from server timestamps for existing documents
       try {
         const ts = (doc as any).updated_at || (doc as any).created_at;
@@ -541,12 +557,14 @@ async function loadData(id: string) {
       title.value = doc.title || "Untitled Document";
       document.title = title.value;
 
-      // Ensure we have content to display - use default template if empty
-      const contentToDisplay = doc.content || DEFAULT_BLANK_DOCUMENT_TEMPLATE;
-      console.log(`Setting editor content, length: ${contentToDisplay.length}`);
+      if (!isLarge.value) {
+        // Ensure we have content to display - use default template if empty
+        const contentToDisplay = doc.content || DEFAULT_BLANK_DOCUMENT_TEMPLATE;
+        console.log(`Setting editor content, length: ${contentToDisplay.length}`);
 
-      // Use safe method to set editor content
-      await setEditorContent(contentToDisplay, title.value);
+        // Use safe method to set editor content
+        await setEditorContent(contentToDisplay, title.value);
+      }
 
       console.log(
         `Document loaded successfully. Title: ${title.value}, Content length: ${doc.content?.length || 0
@@ -799,11 +817,14 @@ onMounted(async () => {
           toast.error("Failed to load document");
         }
 
-        // Initialize and join collaboration room after data load
-        initializeWebSocketAndJoinRoom();
+        // Initialize and join collaboration room after data load (authenticated only)
+        if (authStore.isAuthenticated && !isLarge.value) {
+          initializeWebSocketAndJoinRoom();
+        }
 
-        // Custom Yjs transport over uWebSockets: always enabled for docs
+        // Custom Yjs transport over uWebSockets: enable only when not large
         try {
+          if (isLarge.value) throw new Error('skip-yjs-for-large');
           // @ts-ignore -- dynamic import, types optional
           const Y = await import('yjs');
           yDocRef.value = new Y.Doc();
@@ -862,8 +883,8 @@ onMounted(async () => {
         // Navigate to the proper doc URL with the new ID
         await router.replace(`/docs/${newDoc.id}`);
 
-        // Initialize and join collaboration room
-        initializeWebSocketAndJoinRoom();
+        // Initialize and join collaboration room (authenticated only)
+        if (authStore.isAuthenticated) initializeWebSocketAndJoinRoom();
       }
     });
   }
@@ -960,6 +981,15 @@ async function handleExport(format: string) {
   } catch (err) {
     console.error("Doc export failed", err);
     toast.error("Export failed");
+  }
+}
+
+// Large file download helper (docs)
+function downloadFile() {
+  if (downloadUrl.value) {
+    try {
+      window.open(downloadUrl.value, '_blank');
+    } catch {}
   }
 }
 </script>
@@ -1083,6 +1113,15 @@ async function handleExport(format: string) {
             </div>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Large file panel -->
+    <div v-else-if="isLarge" class="flex-1 flex items-center justify-center p-6">
+      <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 text-center">
+        <h2 class="text-lg font-semibold mb-2">This document is large</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">The file is too large to preview online. You can download it to view locally.</p>
+        <Button variant="default" @click="downloadFile" :disabled="!downloadUrl">Download file</Button>
       </div>
     </div>
 

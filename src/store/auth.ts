@@ -9,6 +9,8 @@ export const useAuthStore = defineStore('auth', {
     firstName: localStorage.getItem('venUserFirstName') || "",
     lastName: localStorage.getItem('venUserLastName') || "",
     email: localStorage.getItem('venUserEmail') || "",
+    userId: localStorage.getItem('venUserId') || "",
+    employeeId: localStorage.getItem('venEmployeeId') || "",
     isAuthenticated: !!localStorage.getItem('venAuthToken'),
     token: localStorage.getItem('venAuthToken') || null,
     router: null as Router | any, // Add router to state
@@ -23,9 +25,8 @@ export const useAuthStore = defineStore('auth', {
     getToken(): string | null {
       if (!this.token) {
         this.token = localStorage.getItem("venAuthToken")
-        if (!this.token) {
-          this.handleTokenExpiration()
-        }
+        // If no token, simply return null. Do not force redirect here.
+        // Redirects should be handled by route guards or 401 interceptors.
       }
       return this.token
     },
@@ -33,9 +34,13 @@ export const useAuthStore = defineStore('auth', {
       this.firstName = user.first_name || "";
       this.lastName = user.last_name || "";
       this.email = user.email || "";
+      this.userId = (user.id ?? user.user_id ?? user.uuid ?? "") + "";
+      this.employeeId = (user.employee_id ?? user.employeeId ?? "") + "";
       localStorage.setItem('venUserFirstName', this.firstName);
       localStorage.setItem('venUserLastName', this.lastName);
       localStorage.setItem('venUserEmail', this.email);
+      if (this.userId) localStorage.setItem('venUserId', this.userId);
+      if (this.employeeId) localStorage.setItem('venEmployeeId', this.employeeId);
     },
     hydrate() {
       this.token = localStorage.getItem('venAuthToken');
@@ -43,6 +48,8 @@ export const useAuthStore = defineStore('auth', {
       this.firstName = localStorage.getItem('venUserFirstName') || this.firstName;
       this.lastName = localStorage.getItem('venUserLastName') || this.lastName;
       this.email = localStorage.getItem('venUserEmail') || this.email;
+      this.userId = localStorage.getItem('venUserId') || this.userId;
+      this.employeeId = localStorage.getItem('venEmployeeId') || this.employeeId;
     },
     async getUserInfo() {
       return {
