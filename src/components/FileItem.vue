@@ -4,6 +4,7 @@
     :class="[fileItemClass, { 'drop-target': isDropTarget }]"
     @click="handleClick"
     @dblclick="openFile"
+    @contextmenu.prevent.stop="handleContextMenu"
     draggable="true"
     @dragstart="onDragStart"
     @dragend="onDragEnd"
@@ -116,7 +117,7 @@ const props = defineProps({
 const isDropTarget = ref(false);
 const showCheckbox = ref(false);
 
-const emit = defineEmits(['select-file', 'open-file', 'update-file', 'delete-file']);
+const emit = defineEmits(['select-file', 'open-file', 'update-file', 'delete-file', 'contextmenu-file']);
 
 const { id, title, is_folder, file_type, created_at } = props.file;
 
@@ -157,6 +158,8 @@ const handleClick = (event: MouseEvent) => {
     emit('select-file', id, event)
     return
   }
+  // Ignore right-click here; handled via contextmenu
+  if (event.button === 2) return
   // Ignore clicks on buttons/inputs within the item
   if (target.closest('button, input')) return
   // With modifier keys, perform selection
@@ -166,6 +169,11 @@ const handleClick = (event: MouseEvent) => {
   }
   // Default: open file on single click
   openFile()
+};
+
+const handleContextMenu = (event: MouseEvent) => {
+  // Emit to parent with coordinates and this file id
+  emit('contextmenu-file', { id, x: event.clientX, y: event.clientY });
 };
 
 const openFile = () => emit('open-file', id);
@@ -217,8 +225,10 @@ const finishRenaming = async () => {
   if (newTitle.value && newTitle.value !== title) {
     isLoading.value = true;
     try {
-      const updatedFile = await fileStore.saveDocument({ ...props.file, title: newTitle.value });
-      emit('update-file', updatedFile);
+      if (id) {
+        const updatedFile = await fileStore.renameItem(id, newTitle.value);
+        emit('update-file', updatedFile);
+      }
     } catch (error) {
       console.error('Error renaming file:', error);
     } finally {

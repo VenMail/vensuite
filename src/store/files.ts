@@ -7,7 +7,11 @@ import { DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
 
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
-const UPLOAD_ENDPOINT = `${API_BASE_URI}/app-files/upload`;
+const FOLDERS_ENDPOINT = `${API_BASE_URI}/app-files/folders`;
+const UPLOAD_BASE = `${API_BASE_URI}/app-files/upload`;
+const UPLOAD_INIT = `${UPLOAD_BASE}/initiate`;
+const UPLOAD_CHUNK = `${UPLOAD_BASE}/chunk`;
+const UPLOAD_COMPLETE = `${UPLOAD_BASE}/complete`;
 
 // Extract base URL for constructing full URLs from relative paths
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -127,13 +131,14 @@ export const useFileStore = defineStore("files", {
       return file;
     },
 
-    /** Upload a file to the server with progress tracking */
-    async uploadFile(file: File, onProgress?: (progress: number) => void): Promise<FileData | null> {
+    /** Simple upload (legacy). Prefer uploadChunked for large files. Optionally accepts folderId */
+    async uploadFile(file: File, onProgress?: (progress: number) => void, folderId?: string | null): Promise<FileData | null> {
       try {
         const formData = new FormData();
         formData.append('file', file);
+        if (folderId) formData.append('folder_id', folderId);
         
-        const response = await axios.post(UPLOAD_ENDPOINT, formData, {
+        const response = await axios.post(`${UPLOAD_BASE}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${this.getToken()}`
@@ -161,6 +166,58 @@ export const useFileStore = defineStore("files", {
         console.error('Error uploading file:', error);
         this.lastError = 'Failed to upload file';
         throw error;
+      }
+    },
+
+    /** Chunked upload flow compatible with backend endpoints. Pass folderId and privacy if needed. */
+    async uploadChunked(file: File, opts?: { folderId?: string | null; privacy_type?: number; onProgress?: (p: number) => void }): Promise<FileData | null> {
+      const filename = file.name;
+      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE) || 1;
+      try {
+        // 1) initiate
+        const initRes = await axios.post(UPLOAD_INIT, {
+          filename,
+          total_size: file.size,
+          total_chunks: totalChunks,
+          folder_id: opts?.folderId || null,
+          privacy_type: opts?.privacy_type || undefined,
+        }, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        const upload_id = initRes.data?.data?.upload_id;
+        if (!upload_id) throw new Error('Failed to initiate upload');
+
+        // 2) upload chunks
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, file.size);
+          const blob = file.slice(start, end);
+          const fd = new FormData();
+          fd.append('upload_id', upload_id);
+          fd.append('index', String(i));
+          fd.append('chunk', new File([blob], `${filename}.part`));
+          await axios.post(UPLOAD_CHUNK, fd, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${this.getToken()}`
+            }
+          });
+          const progress = Math.round(((i + 1) / totalChunks) * 100);
+          opts?.onProgress?.(progress);
+        }
+
+        // 3) complete
+        const completeRes = await axios.post(UPLOAD_COMPLETE, { upload_id }, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        const saved = this.processUploadedFile(completeRes.data.data);
+        this.addFile(saved);
+        return saved;
+      } catch (e) {
+        console.error('Chunked upload failed', e);
+        this.lastError = 'Failed to upload file';
+        throw e;
       }
     },
 
@@ -599,17 +656,49 @@ export const useFileStore = defineStore("files", {
 
     async moveFile(fileId: string, newFolderId: string) {
       try {
-        const fileToMove = this.allFiles.find((f) => f.id === fileId);
-        if (!fileToMove) throw new Error("File not found");
+        if (!fileId) throw new Error('Invalid file id');
+        // Call backend move endpoint
+        await axios.patch(`${FILES_ENDPOINT}/${fileId}/move`, {
+          destination_folder_id: newFolderId || null,
+        }, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
 
-        fileToMove.folder_id = newFolderId;
-
-        const result = await this.saveDocument(fileToMove);
-
-        return result;
+        // Update local state
+        const idx = this.allFiles.findIndex(f => f.id === fileId);
+        if (idx !== -1) {
+          this.allFiles[idx] = { ...this.allFiles[idx], folder_id: newFolderId } as FileData;
+        }
+        const cached = this.cachedDocuments.get(fileId)?.data;
+        if (cached) {
+          cached.folder_id = newFolderId as any;
+          this.cacheDocument(cached);
+        }
+        return true;
       } catch (error) {
-        console.error("Error moving file:", error);
+        console.error('Error moving file:', error);
+        this.lastError = 'Failed to move item';
         return false;
+      }
+    },
+
+    async renameItem(fileId: string, name: string): Promise<FileData | null> {
+      try {
+        const res = await axios.patch(`${FILES_ENDPOINT}/${fileId}/rename`, { name }, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+        const data = res.data?.data;
+        if (!data) return null;
+        const updated = this.normalizeDocumentShape({ ...data });
+        updated.title = this.computeTitle(data);
+        // Update state
+        this.updateFiles(updated);
+        this.cacheDocument(updated);
+        return updated;
+      } catch (e) {
+        console.error('Error renaming item:', e);
+        this.lastError = 'Failed to rename item';
+        return null;
       }
     },
 
@@ -729,15 +818,20 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        const processedDocs = docs.map((doc) => ({ 
-          ...doc, 
-          id: doc.id, // Use server ID directly
-          content: doc.content || this.getDefaultContent(doc.file_type),
-          title: doc.title || doc.file_name || 'Untitled',
-          file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
-          isNew: false,
-          isDirty: false
-        }));
+        const processedDocs = docs.map((doc) => {
+          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name)
+          return {
+            ...doc,
+            id: doc.id, // Use server ID directly
+            file_type: normalizedType,
+            is_folder: !!doc.is_folder,
+            content: doc.content || this.getDefaultContent(normalizedType),
+            title: this.computeTitle(doc),
+            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+            isNew: false,
+            isDirty: false
+          }
+        });
         
         return processedDocs;
       } catch (error) {
@@ -782,22 +876,26 @@ export const useFileStore = defineStore("files", {
 
     /** Create a new folder */
     async makeFolder(folder: FileData): Promise<FileData | null> {
+      // Ensure folder shape
       folder.is_folder = true;
       folder.last_viewed = new Date();
 
-      // Try to create online first
       if (this.isOnline) {
         try {
-          const response = await axios.post(FILES_ENDPOINT, folder, {
+          // API expects { name, parent_id }
+          const payload = {
+            name: folder.title || folder.file_name || 'New Folder',
+            parent_id: folder.folder_id || null,
+            privacy_type: (folder as any).privacy_type || undefined,
+          };
+          const response = await axios.post(FOLDERS_ENDPOINT, payload, {
             headers: { Authorization: `Bearer ${this.getToken()}` },
           });
           const saved = response.data.data as FileData;
-          const serverFolder: FileData = {
+          const serverFolder: FileData = this.normalizeDocumentShape({
             ...saved,
-            id: saved.id, // Use server ID directly
-            isNew: false,
-            isDirty: false,
-          };
+            is_folder: true,
+          });
           this.cacheDocument(serverFolder);
           this.updateFiles(serverFolder);
           return serverFolder;
@@ -838,7 +936,7 @@ export const useFileStore = defineStore("files", {
     },
 
     /** Initialize sync handlers */
-    initialize() {
+    async initialize() {
       window.addEventListener("online", () => {
         this.isOnline = true;
         this.syncPendingChanges();

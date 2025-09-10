@@ -53,10 +53,13 @@ const showRecentFiles = ref(false);
 const sortBy = ref("name");
 const groupByFileType = ref(false);
 const currentFolderId = ref<string | null>(null);
+const currentFolderTitle = ref<string>("");
+const breadcrumbs = ref<Array<{ id: string | null; title: string }>>([
+  { id: null, title: "All Files" }
+]);
 const searchValue = ref('');
 const isUploadDialogOpen = ref(false);
 
-const showContextMenu = computed(() => selectedFiles.value.size > 0);
 
 const templates = {
   Documents: [
@@ -232,8 +235,25 @@ const groupedItems = computed(() => {
 
 async function openFolder(id: string) {
   try {
-    await fileStore.fetchFiles(id)
+    const docs = await fileStore.fetchFiles(id)
+    // Replace list with the folder's contents
+    fileStore.allFiles = docs
     currentFolderId.value = id;
+    // Update current folder title (try from store; if not found, load by id)
+    const existing = fileStore.allFiles.find(f => f.id === id && f.is_folder);
+    if (existing && existing.title) {
+      currentFolderTitle.value = existing.title;
+    } else {
+      try {
+        const folderDoc = await fileStore.loadFromAPI(id);
+        currentFolderTitle.value = folderDoc?.title || currentFolderTitle.value || 'Folder';
+      } catch {}
+    }
+    // Update breadcrumbs
+    const last = breadcrumbs.value[breadcrumbs.value.length - 1];
+    if (!last || last.id !== id) {
+      breadcrumbs.value.push({ id, title: currentFolderTitle.value || 'Folder' });
+    }
   } catch (error) {
     console.error("Error opening folder:", error);
   }
@@ -352,9 +372,37 @@ function openUploadDialog() {
   isUploadDialogOpen.value = true;
 }
 
-function handleUploadComplete(files: any[]) {
+async function handleUploadComplete(files: any[]) {
   console.log('Upload completed:', files);
   toast.success(`Successfully uploaded ${files.length} file${files.length !== 1 ? 's' : ''}`);
+  // Refresh the current folder or all documents
+  try {
+    if (currentFolderId.value) {
+      const docs = await fileStore.fetchFiles(currentFolderId.value)
+      fileStore.allFiles = docs
+    } else {
+      await fileStore.loadDocuments()
+    }
+  } catch (e) {
+    console.warn('Failed to refresh after upload', e)
+  }
+  isUploadDialogOpen.value = false
+}
+
+function navigateToBreadcrumb(index: number) {
+  // Navigate to selected breadcrumb level
+  const target = breadcrumbs.value[index];
+  breadcrumbs.value = breadcrumbs.value.slice(0, index + 1);
+  if (!target.id) {
+    // Root
+    currentFolderId.value = null;
+    currentFolderTitle.value = '';
+    fileStore.loadDocuments().then(docs => {
+      fileStore.allFiles = docs;
+    });
+  } else {
+    openFolder(target.id);
+  }
 }
 
 // function onDragEnter() {
@@ -381,6 +429,18 @@ function handleRename() {
 }
 
 // Update the contextMenuActions computed property
+const contextMenuState = ref<{ visible: boolean; x: number; y: number; targetId: string | null }>({ visible: false, x: 0, y: 0, targetId: null });
+
+function openContextMenu(payload: { id: string; x: number; y: number }) {
+  // select the right-clicked file
+  selectedFiles.value = new Set([payload.id]);
+  contextMenuState.value = { visible: true, x: payload.x, y: payload.y, targetId: payload.id };
+}
+
+function closeContextMenu() {
+  contextMenuState.value.visible = false;
+}
+
 const contextMenuActions = computed(() => {
   const numSelected = selectedFiles.value.size;
   if (numSelected === 0) return [];
@@ -390,34 +450,32 @@ const contextMenuActions = computed(() => {
   ).filter(Boolean);
 
   const hasFiles = selectedFilesList.some(f => !f?.is_folder);
-  // Check for folders if needed in the future
-  // const hasFolders = selectedFilesList.some(f => f?.is_folder);
 
   return [
     ...(numSelected === 1 ? [{
       label: "Open",
       icon: FolderOpen,
-      action: () => openFile(Array.from(selectedFiles.value)[0])
+      action: () => { openFile(Array.from(selectedFiles.value)[0]); closeContextMenu(); }
     }] : []),
-    {
-      label: `Delete ${numSelected > 1 ? `(${numSelected})` : ''}`,
-      icon: Trash2,
-      action: handleBulkDelete
-    },
     ...(numSelected === 1 ? [{
       label: "Rename",
       icon: Edit,
-      action: handleRename
+      action: () => { handleRename(); closeContextMenu(); }
     }] : []),
     ...(hasFiles ? [{
       label: `Download ${numSelected > 1 ? `(${numSelected})` : ''}`,
       icon: Download,
-      action: handleBulkDownload
+      action: () => { handleBulkDownload(); closeContextMenu(); }
     }] : []),
+    {
+      label: `Delete ${numSelected > 1 ? `(${numSelected})` : ''}`,
+      icon: Trash2,
+      action: () => { handleBulkDelete(); closeContextMenu(); }
+    },
     ...(numSelected === 1 ? [{
       label: "Share",
       icon: Share2,
-      action: () => console.log("Share")
+      action: () => { console.log("Share"); closeContextMenu(); }
     }] : [])
   ];
 });
@@ -447,6 +505,10 @@ function handleOutsideClick(event: MouseEvent) {
   const target = event.target as HTMLElement;
   if (!target.closest('.file-item') && !target.closest('.context-menu')) {
     selectedFiles.value.clear();
+  }
+  // also close context menu if clicking anywhere else
+  if (!target.closest('#context-menu')) {
+    closeContextMenu();
   }
 }
 
@@ -481,6 +543,16 @@ function handleEscapeKey(event: KeyboardEvent) {
       <div class="flex-1 p-6 overflow-hidden">
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center space-x-4">
+            <!-- Breadcrumbs and current folder title -->
+            <div class="flex items-center space-x-2">
+              <nav aria-label="Breadcrumb" class="flex items-center text-sm">
+                <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.id ?? 'root'">
+                  <button class="text-primary-600 hover:underline" @click="navigateToBreadcrumb(idx)">{{ crumb.title }}</button>
+                  <span v-if="idx < breadcrumbs.length - 1" class="mx-2 text-gray-400">/</span>
+                </template>
+              </nav>
+              <span v-if="currentFolderTitle" class="ml-2 text-gray-500">(in {{ currentFolderTitle }})</span>
+            </div>
             <h2 :class="[
               'text-2xl font-semibold',
               theme.isDark.value ? 'text-gray-100' : 'text-gray-800'
@@ -747,7 +819,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                 }">
                   <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
                     :isSelected="selectedFiles.has(item.id || '')"
-                    @select-file="handleSelect" @open-file="openFile" />
+                    @select-file="handleSelect" @open-file="openFile" @contextmenu-file="openContextMenu" />
                 </div>
               </div>
             </template>
@@ -821,20 +893,21 @@ function handleEscapeKey(event: KeyboardEvent) {
     </div>
   </div>
 
-  <!-- Add context menu -->
-  <DropdownMenu v-if="showContextMenu">
-    <DropdownMenuContent class="w-48">
-      <DropdownMenuItem v-for="action in contextMenuActions" :key="action.label" @click="action.action">
-        <component :is="action.icon" class="mr-2 h-4 w-4" />
-        {{ action.label }}
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
+  <!-- Custom context menu at cursor position -->
+  <div v-if="contextMenuState.visible" id="context-menu" class="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg context-menu" :style="{ left: contextMenuState.x + 'px', top: contextMenuState.y + 'px' }">
+    <ul class="py-1">
+      <li v-for="action in contextMenuActions" :key="action.label" class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center space-x-2" @click="action.action">
+        <component :is="action.icon" class="h-4 w-4" />
+        <span>{{ action.label }}</span>
+      </li>
+    </ul>
+  </div>
 
   <FileUploader
     v-if="isUploadDialogOpen"
     @close="isUploadDialogOpen = false"
     @upload="handleUploadComplete"
+    :folderId="currentFolderId"
   />
 </template>
 

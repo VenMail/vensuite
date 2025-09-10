@@ -174,6 +174,7 @@ interface FileData {
 
 const fileStore = useFileStore();
 const emit = defineEmits(["close", "upload"]);
+const props = defineProps<{ folderId?: string | null }>();
 
 const isDragging = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -322,12 +323,17 @@ const uploadFile = async (file: FileData): Promise<FileData | null> => {
   if (!file.file) return null;
   
   try {
-    const uploadedFile = await fileStore.uploadFile(file.file, (progress: number) => {
+    const useChunked = (file.file.size || 0) > 5 * 1024 * 1024; // >5MB
+    const progressCb = (progress: number) => {
       const index = files.value.findIndex((f) => f.id === file.id);
       if (index !== -1) {
         files.value[index].progress = progress;
       }
-    });
+    };
+
+    const uploadedFile = useChunked
+      ? await fileStore.uploadChunked(file.file, { folderId: props.folderId || null, onProgress: progressCb })
+      : await fileStore.uploadFile(file.file, progressCb, props.folderId || null);
     
     if (uploadedFile) {
       // Mark as completed in UI
