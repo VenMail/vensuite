@@ -5,7 +5,7 @@
     @click="handleClick"
     @dblclick="openFile"
     @contextmenu.prevent.stop="handleContextMenu"
-    draggable="true"
+    :draggable="!isRenaming"
     @dragstart="onDragStart"
     @dragend="onDragEnd"
     @dragover="onDragOver"
@@ -20,6 +20,7 @@
       <div v-show="isRenaming" class="w-full flex items-center">
         <Input v-model="newTitle" @keyup.enter="finishRenaming" @blur="finishRenaming" ref="renameInput"
           class="w-full" />
+        <span v-if="!isLoading" class="ml-2 px-2 py-0.5 text-[10px] font-medium rounded border bg-amber-50 text-amber-700 border-amber-200">Renaming…</span>
         <Loader v-if="isLoading" class="h-4 w-4 animate-spin text-gray-600 dark:text-gray-300 ml-2" />
       </div>
 
@@ -61,6 +62,7 @@
         <div v-show="isRenaming" class="w-full flex items-center">
           <Input v-model="newTitle" @keyup.enter="finishRenaming" @blur="finishRenaming" ref="renameInput"
             class="w-full" />
+          <span v-if="!isLoading" class="ml-2 px-2 py-0.5 text-[10px] font-medium rounded border bg-amber-50 text-amber-700 border-amber-200">Renaming…</span>
           <Loader v-if="isLoading" class="h-4 w-4 animate-spin text-gray-600 ml-2" />
         </div>
         <template v-if="!isRenaming">
@@ -153,13 +155,15 @@ const formattedDate = computed(() => (props.file.created_at ? new Date(props.fil
 
 const handleClick = (event: MouseEvent) => {
   const target = event.target as HTMLElement
+  // If currently renaming, ignore clicks to avoid unintended actions
+  if (isRenaming.value) return
   // If clicking on checkbox, toggle selection only
   if (target.closest('.w-5.h-5, .w-4.h-4')) {
     emit('select-file', props.file.id, event)
     return
   }
-  // Ignore right-click here; handled via contextmenu
-  if (event.button === 2) return
+  // Only handle left-clicks; right/middle clicks are ignored here and handled elsewhere
+  if (event.button !== 0) return
   // Ignore clicks on buttons/inputs within the item
   if (target.closest('button, input')) return
   // Always perform selection on single click. Parent will manage multi-select via modifiers.
@@ -167,13 +171,24 @@ const handleClick = (event: MouseEvent) => {
 };
 
 const handleContextMenu = (event: MouseEvent) => {
+  // If currently renaming, suppress context menu to avoid interruptions
+  if (isRenaming.value) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
   // Emit to parent with coordinates and this file id
   emit('contextmenu-file', { id: props.file.id, x: event.clientX, y: event.clientY });
 };
 
-const openFile = () => emit('open-file', props.file.id);
+const openFile = () => {
+  // Prevent opening while renaming
+  if (isRenaming.value) return;
+  emit('open-file', props.file.id);
+};
 
 const onDragOver = (event: DragEvent) => {
+  if (isRenaming.value) return;
   if (props.file.is_folder) {
     event.preventDefault();
     event.dataTransfer!.dropEffect = 'move';
@@ -189,6 +204,7 @@ const onDrop = async (event: DragEvent) => {
   event.preventDefault();
   isDropTarget.value = false;
 
+  if (isRenaming.value) return;
   if (!props.file.is_folder) return;
 
   const droppedFileId = event.dataTransfer!.getData('text/plain');
@@ -247,6 +263,7 @@ const deleteFile = async () => {
 };
 
 const onDragStart = (event: DragEvent) => {
+  if (isRenaming.value) return;
   if (event.dataTransfer && props.file.id) {
     event.dataTransfer?.setData('text/plain', props.file.id);
     event.dataTransfer.effectAllowed = 'move';
@@ -255,6 +272,7 @@ const onDragStart = (event: DragEvent) => {
 };
 
 const onDragEnd = () => {
+  if (isRenaming.value) return;
   if (fileItemRef.value) fileItemRef.value.style.opacity = '1';
 };
 
