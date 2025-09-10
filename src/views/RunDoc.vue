@@ -31,6 +31,7 @@ import {
 import { toast } from "vue-sonner";
 import { RESUME_TEMPLATE, LETTER_TEMPLATE, DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
 import { IWebsocketService, Message, useWebSocket, WebSocketService } from "@/lib/wsService";
+ 
 
 // Router setup
 const route = useRoute();
@@ -87,6 +88,12 @@ const chatInput = ref<HTMLTextAreaElement | null>(null);
 const chatMessagesContainer = ref<HTMLElement | null>(null);
 const replyingTo = ref<Message | null>(null);
 const textareaHeight = ref("40px");
+
+// Layout/formatting toggles (toolbar hooks or keyboard shortcuts)
+const showFormattingMarks = ref(false);
+
+// Track last loaded document id to avoid duplicate reloads that may trigger large-file fallback
+const lastLoadedId = ref<string | null>(null);
 
 // Large-file handling (docs)
 const isLarge = ref(false);
@@ -208,6 +215,8 @@ function handleIncomingMessage(message: Message) {
           selection: (message as any).content?.selection,
           ts: Date.now()
         };
+      } else {
+        // When large, skip setting editor content to prevent unnecessary re-render loops
       }
       break;
     case 'title':
@@ -374,6 +383,12 @@ const debouncedSave = useDebounceFn(
 );
 
 const options = ref({
+  // v8+ configuration per docs
+  // https://dev.umodoc.com/en/docs/next/changelog (v8.0+)
+  // https://editor.umodoc.com/en/docs/options (toolbar keys removed/changed)
+  extensions: [],
+  // Match previous behavior by disabling legacy items formerly in toolbar.disableMenuItems
+  disableExtensions: ['chineseDate', 'chinese-case', 'break-marks', 'line-breaks'],
   document: {
     title: "Untitled Document",
     content: DEFAULT_BLANK_DOCUMENT_TEMPLATE,
@@ -404,18 +419,21 @@ const options = ref({
       },
     },
   },
-  toolbar: {
-    defaultMode: "ribbon",
-    enableSourceEditor: true,
-    menus: ["base", "table", "tools", "page", "export"],
-    disableMenuItems: ["chineseDate", "chineseCase"],
-    importWord: {
-      enabled: true,
-      options: {},
-      useCustomMethod: false,
-    },
-  },
+  // toolbar removed for v8.1.0 compatibility; re-add with supported keys after confirming docs
 });
+
+// Formatting marks toggle via editor commands
+function toggleFormattingMarks() {
+  showFormattingMarks.value = !showFormattingMarks.value;
+  try {
+    const ed: any = editorRef.value?.editor || editorRef.value;
+    if (showFormattingMarks.value) {
+      ed?.commands?.showInvisibleCharacters?.();
+    } else {
+      ed?.commands?.hideInvisibleCharacters?.();
+    }
+  } catch {}
+}
 
 const titleRef = ref<HTMLElement | null>(null);
 const editorRef = ref<any>(null);
@@ -537,13 +555,19 @@ async function loadData(id: string) {
       // Use the document as-is from the simplified store
       currentDoc.value = doc;
 
-      // Large-file handling: when backend flags is_large, offer download instead of preview
+      // Large-file handling: respect backend flag but avoid flipping if we already have rendered content
       try {
         const anyDoc: any = doc;
-        if (anyDoc?.is_large) {
+        const reportedLarge = !!anyDoc?.is_large;
+        const contentLen = (doc.content?.length || 0);
+        // Only treat as large if backend flagged AND there is no real content to render
+        // Allow preview when content is present (e.g., after import or cached HTML)
+        if (reportedLarge && contentLen < 1024) {
           isLarge.value = true;
           const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
           downloadUrl.value = anyDoc.download_url || (anyDoc.file_url ? `${API_BASE_URI}/app-files/${id}/download` : null);
+        } else {
+          isLarge.value = false;
         }
       } catch {}
 
@@ -564,6 +588,8 @@ async function loadData(id: string) {
 
         // Use safe method to set editor content
         await setEditorContent(contentToDisplay, title.value);
+      } else {
+        // When large, skip setting editor content to prevent unnecessary re-render loops
       }
 
       console.log(
@@ -576,6 +602,14 @@ async function loadData(id: string) {
         console.log(`Updating URL to use document ID: ${doc.id}`);
         router.replace(`/docs/${doc.id}`);
       }
+
+      // Permission handling for public shares (view/edit without auth)
+      try {
+        const priv = Number((doc as any)?.privacy_type ?? (doc as any)?.privacyType);
+        const unauth = !authStore.isAuthenticated;
+        const canEdit = !unauth || [2,4].includes(priv); // 2=everyone_edit,4=link_edit
+        options.value.document.readOnly = !canEdit;
+      } catch {}
     } else {
       // If unauthenticated and no document is available, show access request interstitial instead of creating a new doc
       if (!authStore.isAuthenticated) {
@@ -606,6 +640,7 @@ async function loadData(id: string) {
 }
 
 async function syncChanges() {
+  if (options.value.document.readOnly) return;
   if (!currentDoc.value || isSyncing.value) return;
   isSyncing.value = true;
   try {
@@ -661,6 +696,7 @@ function handleSavedEvent(result: any) {
 }
 
 async function saveTitle() {
+  if (options.value.document.readOnly) return;
   const newTitle = editableTitle.value.trim();
   title.value = newTitle || "New Document";
   document.title = title.value;
@@ -668,6 +704,7 @@ async function saveTitle() {
   editorRef.value?.setDocument({ title: title.value });
 
   if (currentDoc.value) {
+    if (options.value.document.readOnly) return;
     console.log("current doc:", currentDoc.value);
     // Only mark as having unsaved changes if title actually changed
     if (currentDoc.value.title !== title.value) {
@@ -693,6 +730,7 @@ async function saveTitle() {
   // Broadcast title change for collaboration
   const id = (route.params.id as string) || currentDoc.value?.id;
   if (id) {
+    if (options.value.document.readOnly) return;
     try {
       wsService.value?.sendMessage(id, 'title', { title: title.value }, userId.value, userName.value);
     } catch (e) {
@@ -702,6 +740,8 @@ async function saveTitle() {
 }
 
 function startEditing() {
+  // Disallow editing title in readOnly
+  if (options.value.document.readOnly) return;
   if (!isTitleEdit.value) {
     editTitle();
   }
@@ -754,6 +794,11 @@ onMounted(async () => {
     if (editorRef.value) {
       editorRef.value.setLocale("en-US");
       console.log("Editor initialized");
+      // Ensure formatting marks are hidden by default via command API
+      try {
+        const ed: any = editorRef.value?.editor || editorRef.value;
+        ed?.commands?.hideInvisibleCharacters?.();
+      } catch {}
     }
   });
 
@@ -808,13 +853,20 @@ onMounted(async () => {
       
       if (route.params.id) {
         const docId = route.params.id as string;
+        if (lastLoadedId.value === docId && currentDoc.value) {
+          // Already loaded this doc; avoid redundant reload that can flip UI state
+          return;
+        }
         console.log("Route changed, loading document with ID:", docId);
 
         try {
+          lastLoadedId.value = docId;
+          if (isLoading.value) return; // guard against concurrent loads
           await loadData(docId);
         } catch (error) {
           console.error("Failed to load document:", error);
           toast.error("Failed to load document");
+          lastLoadedId.value = null; // allow retry
         }
 
         // Initialize and join collaboration room after data load (authenticated only)
@@ -1077,6 +1129,7 @@ function downloadFile() {
       @export="handleExport"
       @undo="handleUndo"
       @redo="handleRedo"
+      @toggle-formatting-marks="toggleFormattingMarks"
     />
     <!-- Access request interstitial for unauthenticated private docs -->
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">
@@ -1195,6 +1248,17 @@ function downloadFile() {
   </div>
 </template>
 
+<style>
+/* Page break visuals disabled */
+.umo-page-break { display: none !important; }
+.umo-page-footer { display: none !important; }
+
+/* Print pagination */
+@media print {
+  .umo-page-break { display: none !important; }
+  .umo-page-footer { display: none !important; }
+}
+</style>
 <style>
 html,
 body {

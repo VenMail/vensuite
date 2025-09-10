@@ -44,7 +44,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits(['save', 'toggleChat', 'export', 'undo', 'redo'])
+const emit = defineEmits(['save', 'toggleChat', 'export', 'undo', 'redo', 'toggle-page-layout', 'toggle-page-numbers', 'toggle-formatting-marks'])
 
 const router = useRouter()
 const fileStore = useFileStore()
@@ -219,6 +219,24 @@ function colorForUser(uid: string) {
           <MenubarItem>
             <GroupIcon class="h-4 w-4 mr-2" />
             Group
+          </MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+    </template>
+
+    <!-- Doc-only Page menu -->
+    <template v-else>
+      <MenubarMenu>
+        <MenubarTrigger>Page</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem @click="emit('toggle-page-layout')">
+            Page Layout
+          </MenubarItem>
+          <MenubarItem @click="emit('toggle-page-numbers')">
+            Page Numbers
+          </MenubarItem>
+          <MenubarItem @click="emit('toggle-formatting-marks')">
+            Formatting Marks
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>

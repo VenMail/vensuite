@@ -4,6 +4,11 @@ import { createPinia } from 'pinia'
 
 //@ts-ignore
 import { useUmoEditor } from '@umoteam/editor'
+// Load mammoth browser build as a script asset (works reliably with Umo Editor v8)
+// Vite will emit a URL for the browser build; we inject it before initializing the editor
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - vite url import
+import mammothUrl from 'mammoth/mammoth.browser.min.js?url'
 import { createI18n } from 'vue-i18n'
 
 import App from './App.vue'
@@ -106,7 +111,52 @@ router.beforeEach(async (to, _from, next) => {
   next()
 })
 
+// Ensure mammoth is loaded globally before initializing the editor plugin
+function ensureMammoth(): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((window as any).mammoth) return Promise.resolve()
+  return new Promise<void>((resolve, reject) => {
+    const s = document.createElement('script')
+    s.src = mammothUrl as string
+    s.async = true
+    s.onload = () => resolve()
+    s.onerror = (e) => reject(e)
+    document.head.appendChild(s)
+  })
+}
+
+// Suppress Umo Editor banner logs globally during initialization
+const __originalConsoleInfo = console.info;
+console.info = (...args: any[]) => {
+  const msg = args.join(' ');
+  if (msg.includes('Thanks for using Umo Editor') || msg.includes('Current version:') || msg.includes('More info:')) {
+    return;
+  }
+  __originalConsoleInfo.apply(console, args);
+};
+
 // UmoEditor setup
+// Define hooks separately to ensure proper function identity
+function onFileDelete(fileInfo: any): void {
+  try {
+    let id: string | undefined = fileInfo?.id;
+    const url: string | undefined = fileInfo?.url || fileInfo?.src;
+    if (!id && typeof url === 'string') {
+      const match = url.match(/\/app-files\/([\w-]+)/);
+      if (match && match[1]) id = match[1];
+    }
+    if (id) {
+      // fire and forget to avoid returning a promise
+      documentStore.deleteFile(id).catch((e: any) => console.warn('onFileDelete delete failed:', e));
+    }
+  } catch (e) {
+    console.warn('onFileDelete failed:', e);
+  }
+}
+
+// Wait for mammoth to be available before installing the editor plugin
+await ensureMammoth()
+
 app.use(useUmoEditor, {
   onSave: async (content: { html: string }, _page: any, doc: any) => {
     const routeId = router.currentRoute.value.params.id as string;
@@ -127,6 +177,8 @@ app.use(useUmoEditor, {
     }
     return { success: !!saved, offline: !navigator.onLine, error: documentStore.lastError };
   },
+  // v8+: ensure server-side deletion of assets when editor removes/replaces them
+  onFileDelete,
 });
 
 // Custom component for style tags
@@ -137,5 +189,10 @@ app.component('v-style', defineComponent({
 }))
 
 app.mount('#app')
+
+// Restore console.info after initialization (2s buffer)
+setTimeout(() => {
+  console.info = __originalConsoleInfo;
+}, 2000);
 
 export { router }

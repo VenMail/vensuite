@@ -20,19 +20,19 @@
       <div v-show="isRenaming" class="w-full flex items-center">
         <Input v-model="newTitle" @keyup.enter="finishRenaming" @blur="finishRenaming" ref="renameInput"
           class="w-full" />
-        <Loader v-if="isLoading" class="h-4 w-4 animate-spin text-gray-600 ml-2" />
+        <Loader v-if="isLoading" class="h-4 w-4 animate-spin text-gray-600 dark:text-gray-300 ml-2" />
       </div>
 
       <div class="flex items-center gap-4" v-show="!isRenaming">
         <!-- File Icon and Title/Date Section -->
         <div v-if="showCheckbox || isSelected"
-          class="w-5 h-5 z-10 bg-white border border-gray-300 flex items-center justify-center transition-all duration-200 cursor-pointer"
-          @click.stop="$emit('select-file', id, $event)">
+          class="w-5 h-5 z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-sm flex items-center justify-center transition-all duration-200 cursor-pointer"
+          @click.stop="$emit('select-file', file.id, $event)">
           <CheckIcon v-if="isSelected" class="w-3 h-3 text-primary-600" />
         </div>
 
         <div class="relative">
-          <FileIcon :fileType="fileType" :fileData="file" class="w-12 h-12 text-gray-600" />
+          <FileIcon :fileType="fileType" :fileData="file" class="w-12 h-12 text-gray-600 dark:text-gray-300" />
         </div>
         <div class="flex flex-col flex-grow">
           <h3 class="text-sm font-medium truncate text-gray-800">{{ file.title }}</h3>
@@ -50,10 +50,10 @@
     <!-- Tree View and List View -->
     <div v-else class="file-item-other-views">
       <div class="relative">
-        <FileIcon :fileType="fileType" :fileData="file" class="w-6 h-6 text-gray-500 mr-4" />
+        <FileIcon :fileType="fileType" :fileData="file" class="w-6 h-6 text-gray-500 dark:text-gray-300 mr-4" />
         <div v-if="showCheckbox || isSelected"
-          class="absolute bottom-0 right-0 w-4 h-4 bg-white rounded-full border border-gray-300 flex items-center justify-center transition-all duration-200 cursor-pointer"
-          @click.stop="$emit('select-file', id, $event)">
+          class="absolute bottom-0 right-0 w-4 h-4 bg-white dark:bg-gray-800 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center transition-all duration-200 cursor-pointer"
+          @click.stop="$emit('select-file', file.id, $event)">
           <CheckIcon v-if="isSelected" class="w-2.5 h-2.5 text-primary-600" />
         </div>
       </div>
@@ -119,22 +119,22 @@ const showCheckbox = ref(false);
 
 const emit = defineEmits(['select-file', 'open-file', 'update-file', 'delete-file', 'contextmenu-file']);
 
-const { id, title, is_folder, file_type, created_at } = props.file;
-
 const fileStore = useFileStore();
 
 const isRenaming = ref(false);
-const newTitle = ref(title);
+const newTitle = ref(props.file.title);
 const isLoading = ref(false);
 const fileItemRef = ref<HTMLDivElement | null>(null);
 const renameInput = ref<HTMLInputElement | null>(null);
 
 const isThumbnailOrGrid = computed(() => props.viewMode === 'thumbnail' || props.viewMode === 'grid');
-const fileType = computed(() => (is_folder ? 'folder' : file_type));
+const fileType = computed(() => (props.file.is_folder ? 'folder' : (props.file.file_type || '') ));
 
 const fileItemClass = computed(() => {
   const baseClass = 'p-1 transition-all duration-200 cursor-pointer';
-  const selectedClass = props.isSelected ? 'ring-2 ring-primary-400 bg-primary-50' : 'hover:bg-gray-100';
+  const selectedClass = props.isSelected
+    ? 'ring-2 ring-primary-400 bg-primary-50 dark:bg-gray-700'
+    : 'hover:bg-gray-100 dark:hover:bg-gray-700';
   const dropTargetClass = props.file.is_folder ? 'drop-zone' : '';
 
   switch (props.viewMode) {
@@ -149,34 +149,29 @@ const fileItemClass = computed(() => {
   }
 });
 
-const formattedDate = computed(() => (created_at ? new Date(created_at).toLocaleDateString() : 'N/A'));
+const formattedDate = computed(() => (props.file.created_at ? new Date(props.file.created_at as any).toLocaleDateString() : 'N/A'));
 
 const handleClick = (event: MouseEvent) => {
   const target = event.target as HTMLElement
   // If clicking on checkbox, toggle selection only
   if (target.closest('.w-5.h-5, .w-4.h-4')) {
-    emit('select-file', id, event)
+    emit('select-file', props.file.id, event)
     return
   }
   // Ignore right-click here; handled via contextmenu
   if (event.button === 2) return
   // Ignore clicks on buttons/inputs within the item
   if (target.closest('button, input')) return
-  // With modifier keys, perform selection
-  if (event.ctrlKey || event.metaKey || event.shiftKey) {
-    emit('select-file', id, event)
-    return
-  }
-  // Default: open file on single click
-  openFile()
+  // Always perform selection on single click. Parent will manage multi-select via modifiers.
+  emit('select-file', props.file.id, event)
 };
 
 const handleContextMenu = (event: MouseEvent) => {
   // Emit to parent with coordinates and this file id
-  emit('contextmenu-file', { id, x: event.clientX, y: event.clientY });
+  emit('contextmenu-file', { id: props.file.id, x: event.clientX, y: event.clientY });
 };
 
-const openFile = () => emit('open-file', id);
+const openFile = () => emit('open-file', props.file.id);
 
 const onDragOver = (event: DragEvent) => {
   if (props.file.is_folder) {
@@ -214,7 +209,7 @@ const onDrop = async (event: DragEvent) => {
 
 const startRenaming = () => {
   isRenaming.value = true;
-  newTitle.value = title;
+  newTitle.value = props.file.title;
   nextTick(() => {
     renameInput.value?.focus?.();
     renameInput.value?.select?.();
@@ -222,11 +217,11 @@ const startRenaming = () => {
 };
 
 const finishRenaming = async () => {
-  if (newTitle.value && newTitle.value !== title) {
+  if (newTitle.value && newTitle.value !== props.file.title) {
     isLoading.value = true;
     try {
-      if (id) {
-        const updatedFile = await fileStore.renameItem(id, newTitle.value);
+      if (props.file.id) {
+        const updatedFile = await fileStore.renameItem(props.file.id, newTitle.value);
         emit('update-file', updatedFile);
       }
     } catch (error) {
@@ -241,9 +236,9 @@ const finishRenaming = async () => {
 const deleteFile = async () => {
   isLoading.value = true;
   try {
-    if (!id) return;
-    await fileStore.deleteFile(id);
-    emit('delete-file', id);
+    if (!props.file.id) return;
+    await fileStore.deleteFile(props.file.id);
+    emit('delete-file', props.file.id);
   } catch (error) {
     console.error('Error deleting file:', error);
   } finally {
@@ -252,8 +247,8 @@ const deleteFile = async () => {
 };
 
 const onDragStart = (event: DragEvent) => {
-  if (event.dataTransfer && id) {
-    event.dataTransfer?.setData('text/plain', id);
+  if (event.dataTransfer && props.file.id) {
+    event.dataTransfer?.setData('text/plain', props.file.id);
     event.dataTransfer.effectAllowed = 'move';
     if (fileItemRef.value) fileItemRef.value.style.opacity = '0.5';
   }

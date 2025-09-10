@@ -21,10 +21,29 @@ import { UniverSheetsUIPlugin } from '@univerjs/sheets-ui'
 import { UniverUIPlugin } from '@univerjs/ui'
 import { UniverSheetsZenEditorPlugin } from '@univerjs/sheets-zen-editor'
 import { FUniver } from '@univerjs/facade'
-import { enUS } from 'univer:locales'
 import { onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
 import { DEFAULT_WORKBOOK_DATA } from "@/assets/default-workbook-data";
 import { IWebsocketService } from "@/lib/wsService";
+
+// Univer 0.10 locale modules: import from each package under /locale/en-US
+import designEnUs from '@univerjs/design/locale/en-US'
+import uiEnUs from '@univerjs/ui/locale/en-US'
+import docsUiEnUs from '@univerjs/docs-ui/locale/en-US'
+import sheetsUiEnUs from '@univerjs/sheets-ui/locale/en-US'
+import sheetsEnUs from '@univerjs/sheets/locale/en-US'
+import sheetsFormulaEnUs from '@univerjs/sheets-formula/locale/en-US'
+import zenEditorEnUs from '@univerjs/sheets-zen-editor/locale/en-US'
+
+// Merge EN US locales; cast to any to satisfy ILanguagePack typing differences across packages
+const enLocales: any = {
+  ...designEnUs,
+  ...uiEnUs,
+  ...docsUiEnUs,
+  ...sheetsUiEnUs,
+  ...sheetsEnUs,
+  ...sheetsFormulaEnUs,
+  ...zenEditorEnUs,
+}
 
 const univerRef = ref<Univer | null>(null);
 const workBook = ref<Workbook | null>(null);
@@ -67,7 +86,7 @@ function setupUniver(data: IWorkbookData) {
       theme: defaultTheme,
       locale: LocaleType.EN_US,
       locales: {
-        [LocaleType.EN_US]: enUS,
+        [LocaleType.EN_US]: enLocales,
       },
     })
     univerRef.value = univer;
@@ -94,7 +113,9 @@ function setupUniver(data: IWorkbookData) {
       data || DEFAULT_WORKBOOK_DATA
     );
 
-    fUniver.value = FUniver.newAPI(univer);
+    // Prefer the indirect approach: pass injector to facade to avoid direct Univer type coupling
+    // fUniver.value = FUniver.newAPI(univer);
+    fUniver.value = (FUniver as any).newAPI((univer as any).__getInjector()) as any
 
     setupCollaboration();
 

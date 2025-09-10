@@ -8,11 +8,12 @@ import {
   ChevronDown,
   FolderOpen,
   Upload,
-  FolderPlusIcon,
+  FolderPlus as FolderPlusIcon,
   Trash2,
   Edit,
   Download,
   Share2,
+  ArrowUp,
 } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/store/auth";
@@ -405,6 +406,12 @@ function navigateToBreadcrumb(index: number) {
   }
 }
 
+function goUpOneLevel() {
+  if (breadcrumbs.value.length > 1) {
+    navigateToBreadcrumb(breadcrumbs.value.length - 2);
+  }
+}
+
 // function onDragEnter() {
 //   // isDragging.value = true;
 // }
@@ -545,6 +552,19 @@ function handleEscapeKey(event: KeyboardEvent) {
           <div class="flex items-center space-x-4">
             <!-- Breadcrumbs and current folder title -->
             <div class="flex items-center space-x-2">
+              <!-- Up one level button -->
+              <button
+                class="inline-flex items-center justify-center h-8 w-8 rounded-md border transition-colors"
+                :class="[
+                  theme.isDark.value ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100',
+                  breadcrumbs.length > 1 ? 'opacity-100' : 'opacity-50 cursor-not-allowed'
+                ]"
+                :disabled="breadcrumbs.length <= 1"
+                aria-label="Up one level"
+                title="Up one level"
+                @click="goUpOneLevel">
+                <ArrowUp class="h-4 w-4 text-primary-600" />
+              </button>
               <nav aria-label="Breadcrumb" class="flex items-center text-sm">
                 <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.id ?? 'root'">
                   <button class="text-primary-600 hover:underline" @click="navigateToBreadcrumb(idx)">{{ crumb.title }}</button>
