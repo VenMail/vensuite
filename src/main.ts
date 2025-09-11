@@ -154,45 +154,54 @@ function onFileDelete(fileInfo: any): void {
   }
 }
 
-// Wait for mammoth to be available before installing the editor plugin
-await ensureMammoth()
+// Bootstrap app without top-level await
+async function bootstrap() {
+  try {
+    // Wait for mammoth to be available before installing the editor plugin
+    await ensureMammoth()
 
-app.use(useUmoEditor, {
-  onSave: async (content: { html: string }, _page: any, doc: any) => {
-    const routeId = router.currentRoute.value.params.id as string;
-    let currentDoc = routeId && routeId !== "undefined" ? await documentStore.loadDocument(routeId) : null;
-    console.log('currentDoc:', currentDoc);
-    console.log('current content length:', content.html.length);
+    app.use(useUmoEditor, {
+      onSave: async (content: { html: string }, _page: any, doc: any) => {
+        const routeId = router.currentRoute.value.params.id as string;
+        let currentDoc = routeId && routeId !== "undefined" ? await documentStore.loadDocument(routeId) : null;
+        console.log('currentDoc:', currentDoc);
+        console.log('current content length:', content.html.length);
 
-    const updatedDoc: FileData = currentDoc
-      ? { ...currentDoc, title: doc?.title || currentDoc.title, content: content.html, last_viewed: new Date() }
-      : { id: undefined, title: doc?.title || "New Document", content: content.html, file_type: "docx", last_viewed: new Date(), isNew: true };
+        const updatedDoc: FileData = currentDoc
+          ? { ...currentDoc, title: doc?.title || currentDoc.title, content: content.html, last_viewed: new Date() }
+          : { id: undefined, title: doc?.title || "New Document", content: content.html, file_type: "docx", last_viewed: new Date(), isNew: true };
 
-    console.log('updatedDoc:', updatedDoc);
-    const saved = await documentStore.saveDocument(updatedDoc);
-    console.log('saved:', saved);
-    if (saved.document.id !== routeId) {
-      console.log('redirecting to:', `/docs/${saved.document.id}`);
-      router.replace(`/docs/${saved.document.id}`);
-    }
-    return { success: !!saved, offline: !navigator.onLine, error: documentStore.lastError };
-  },
-  // v8+: ensure server-side deletion of assets when editor removes/replaces them
-  onFileDelete,
-});
+        console.log('updatedDoc:', updatedDoc);
+        const saved = await documentStore.saveDocument(updatedDoc);
+        console.log('saved:', saved);
+        if (saved.document.id !== routeId) {
+          console.log('redirecting to:', `/docs/${saved.document.id}`);
+          router.replace(`/docs/${saved.document.id}`);
+        }
+        return { success: !!saved, offline: !navigator.onLine, error: documentStore.lastError };
+      },
+      // v8+: ensure server-side deletion of assets when editor removes/replaces them
+      onFileDelete,
+    });
+  } catch (e) {
+    console.error('Failed to initialize editor dependencies:', e)
+  }
 
-// Custom component for style tags
-app.component('v-style', defineComponent({
-  render: function(): VNode { // Specify the return type as VNode
-    return h('style', {}, this.$slots.default ? this.$slots.default() : []); // Check if $slots.default exists
-  },
-}))
+  // Custom component for style tags
+  app.component('v-style', defineComponent({
+    render: function(): VNode { // Specify the return type as VNode
+      return h('style', {}, this.$slots.default ? this.$slots.default() : []); // Check if $slots.default exists
+    },
+  }))
 
-app.mount('#app')
+  app.mount('#app')
 
-// Restore console.info after initialization (2s buffer)
-setTimeout(() => {
-  console.info = __originalConsoleInfo;
-}, 2000);
+  // Restore console.info after initialization (2s buffer)
+  setTimeout(() => {
+    console.info = __originalConsoleInfo;
+  }, 2000);
+}
+
+void bootstrap();
 
 export { router }

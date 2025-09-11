@@ -1,4 +1,4 @@
-import type { FUniver } from '@univerjs/facade'
+import type { FUniver } from '@univerjs/core/facade'
 import type { IExportService, IExportOptions, ExportFormat, IExporter, PDFEngine } from '../types/export'
 import { CSVExporter } from '../exporters/CSVExporter'
 import { XLSXExporter } from '../exporters/XLSXExporter'

@@ -44,15 +44,13 @@ export const Pagination = Extension.create<PaginationOptions>({
     const opts = this.options
     let decorations: DecorationSet = DecorationSet.empty
     let frameWidth = 0
-    let pageHeight = 0
     // track height if needed for future optimizations
     let rafId: number | null = null
     let resizeObserver: ResizeObserver | null = null
     let debTimer: number | null = null
 
     const recalc = (view: EditorView) => {
-      const { width, height } = resolvePagePx(opts.size)
-      pageHeight = height
+      const { width } = resolvePagePx(opts.size)
       const marginsPx = {
         top: mmToPx(opts.marginsMM.top),
         right: mmToPx(opts.marginsMM.right),

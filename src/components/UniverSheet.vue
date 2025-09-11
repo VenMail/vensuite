@@ -7,7 +7,6 @@ import "@univerjs/design/lib/index.css";
 import "@univerjs/ui/lib/index.css";
 import "@univerjs/docs-ui/lib/index.css";
 import "@univerjs/sheets-ui/lib/index.css";
-import "@univerjs/sheets-formula/lib/index.css";
 import { IWorkbookData, LocaleType, UnitModel, Univer, UniverInstanceType, Workbook } from '@univerjs/core'
 import { defaultTheme } from '@univerjs/design'
 import { UniverDocsPlugin } from '@univerjs/docs'
@@ -20,7 +19,11 @@ import { UniverSheetsNumfmtPlugin } from '@univerjs/sheets-numfmt'
 import { UniverSheetsUIPlugin } from '@univerjs/sheets-ui'
 import { UniverUIPlugin } from '@univerjs/ui'
 import { UniverSheetsZenEditorPlugin } from '@univerjs/sheets-zen-editor'
-import { FUniver } from '@univerjs/facade'
+import { FUniver } from '@univerjs/core/facade'
+// Mount Facade implementations for plugins we use
+import '@univerjs/ui/facade'
+import '@univerjs/docs-ui/facade'
+import '@univerjs/sheets-ui/facade'
 import { onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
 import { DEFAULT_WORKBOOK_DATA } from "@/assets/default-workbook-data";
 import { IWebsocketService } from "@/lib/wsService";
@@ -113,9 +116,8 @@ function setupUniver(data: IWorkbookData) {
       data || DEFAULT_WORKBOOK_DATA
     );
 
-    // Prefer the indirect approach: pass injector to facade to avoid direct Univer type coupling
-    // fUniver.value = FUniver.newAPI(univer);
-    fUniver.value = (FUniver as any).newAPI((univer as any).__getInjector()) as any
+    // Create Facade API directly from Univer instance
+    fUniver.value = FUniver.newAPI(univer)
 
     setupCollaboration();
 

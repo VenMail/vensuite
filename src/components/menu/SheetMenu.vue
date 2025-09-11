@@ -30,7 +30,11 @@ import {
   ZoomOutIcon,
 } from 'lucide-vue-next'
 import { Univer } from '@univerjs/core'
-import { FUniver } from '@univerjs/facade'
+import { FUniver } from '@univerjs/core/facade'
+// Ensure Facade implementations are mounted for used plugins
+import '@univerjs/ui/facade'
+import '@univerjs/docs-ui/facade'
+import '@univerjs/sheets-ui/facade'
 import type { ICellData, IWorkbookData } from '@univerjs/core'
 import { useRouter } from 'vue-router'
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data'
