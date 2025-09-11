@@ -31,6 +31,8 @@ import {
 import { toast } from "vue-sonner";
 import { RESUME_TEMPLATE, LETTER_TEMPLATE, DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
 import { IWebsocketService, Message, useWebSocket, WebSocketService } from "@/lib/wsService";
+import ShareCard from '@/components/ShareCard.vue'
+import axios from 'axios'
  
 
 // Router setup
@@ -57,6 +59,8 @@ const lastSavedAt = ref<Date | null>(null);
 const shareOpen = ref(false);
 // privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
 const privacyType = ref<number>(7);
+// Share members state (can be hydrated from API later)
+const shareMembers = ref<Array<{ email: string; name?: string; avatarUrl?: string; permission: 'view' | 'comment' | 'edit' }>>([])
 const lastSaveResult = ref<{
   success: boolean;
   offline: boolean;
@@ -985,6 +989,8 @@ function shareDocument() {
   } else {
     privacyType.value = 7;
   }
+  // Hydrate sharing list from API when opening
+  fetchSharingInfo();
   shareOpen.value = true;
 }
 
@@ -1007,6 +1013,79 @@ async function updateVisibility(newVis: number) {
   const result = await fileStore.saveDocument(updated);
   currentDoc.value = result.document;
   toast.success("Visibility updated");
+}
+
+// --- Sharing API integration ---
+const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+const FILES_ENDPOINT = `${API_BASE_URI}/app-files`
+
+const permToApi: Record<'view'|'comment'|'edit', 'v'|'c'|'e'> = { view: 'v', comment: 'c', edit: 'e' }
+const apiToPerm: Record<'v'|'c'|'e', 'view'|'comment'|'edit'> = { v: 'view', c: 'comment', e: 'edit' }
+
+function parseSharingInfoString(info?: string | null) {
+  const list: Array<{ email: string; permission: 'view'|'comment'|'edit' }> = []
+  if (!info || typeof info !== 'string') return list
+  info.split(',').map(s => s.trim()).filter(Boolean).forEach(pair => {
+    const [email, access] = pair.split(':').map(x => (x || '').trim())
+    if (email && (access === 'v' || access === 'c' || access === 'e')) {
+      list.push({ email, permission: apiToPerm[access] })
+    }
+  })
+  return list
+}
+
+async function fetchSharingInfo() {
+  try {
+    const id = (route.params.id as string) || currentDoc.value?.id
+    if (!id) return
+    const token = fileStore.getToken?.()
+    const res = await axios.get(`${FILES_ENDPOINT}/${id}` , {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+    const data = res.data?.data || {}
+    const parsed = parseSharingInfoString(data.sharing_info)
+    shareMembers.value = parsed
+    if (typeof data.privacy_type === 'number') privacyType.value = Number(data.privacy_type)
+  } catch (e) {
+    // non-blocking
+  }
+}
+
+async function handleInviteMember(payload: { email: string; permission: 'view'|'comment'|'edit' }) {
+  try {
+    const id = (route.params.id as string) || currentDoc.value?.id
+    if (!id) return
+    const token = fileStore.getToken?.()
+    await axios.post(`${FILES_ENDPOINT}/${id}/share`, {
+      email: payload.email,
+      access_level: permToApi[payload.permission]
+    }, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+    await fetchSharingInfo()
+    toast.success('Shared successfully')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Failed to share')
+  }
+}
+
+async function handleUpdateMember(payload: { email: string; permission: 'view'|'comment'|'edit' }) {
+  // Backend share endpoint overwrites the level when called again
+  return handleInviteMember(payload)
+}
+
+async function handleRemoveMember(payload: { email: string }) {
+  try {
+    const id = (route.params.id as string) || currentDoc.value?.id
+    if (!id) return
+    const token = fileStore.getToken?.()
+    await axios.delete(`${FILES_ENDPOINT}/${id}/share`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      data: { email: payload.email }
+    })
+    await fetchSharingInfo()
+    toast.success('Removed access')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Failed to remove access')
+  }
 }
 
 // Menubar handlers (Docs)
@@ -1101,19 +1180,20 @@ function downloadFile() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Share settings</DialogTitle>
+              <DialogTitle>Share</DialogTitle>
             </DialogHeader>
-            <div class="space-y-4">
-              <div class="flex items-center gap-2">
-                <button class="px-3 py-1 rounded border" :class="privacyType===7 ? 'bg-gray-100' : ''" @click="updateVisibility(7)">Private</button>
-                <button class="px-3 py-1 rounded border" :class="privacyType===3 ? 'bg-gray-100' : ''" @click="updateVisibility(3)">Anyone with link (view)</button>
-                <button class="px-3 py-1 rounded border" :class="privacyType===4 ? 'bg-gray-100' : ''" @click="updateVisibility(4)">Anyone with link (edit)</button>
-              </div>
-              <div class="flex gap-2">
-                <input class="flex-1 border rounded px-2 py-1" :value="shareLinkDoc" readonly />
-                <Button variant="secondary" @click="copyShareLink">Copy Link</Button>
-              </div>
-            </div>
+            <ShareCard
+              mode="doc"
+              :share-link="shareLinkDoc"
+              :privacy-type="privacyType"
+              :members="shareMembers"
+              :can-edit-privacy="authStore.isAuthenticated"
+              @copy-link="copyShareLink"
+              @change-privacy="updateVisibility"
+              @invite="handleInviteMember"
+              @update-member="handleUpdateMember"
+              @remove-member="handleRemoveMember"
+            />
           </DialogContent>
         </Dialog>
         <UserProfile :isMobile="false" />
