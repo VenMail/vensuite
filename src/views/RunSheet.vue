@@ -809,9 +809,8 @@ async function handleRemoveMember(payload: { email: string }) {
     const id = route.params.id as string
     if (!id) return
     const token = fileStore.getToken?.()
-    await axios.delete(`${FILES_ENDPOINT}/${id}/share`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      data: { email: payload.email }
+    await axios.post(`${FILES_ENDPOINT}/${id}/unshare`, { email: payload.email }, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
     })
     await fetchSharingInfo()
     toast.success('Removed access')
