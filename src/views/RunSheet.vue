@@ -71,6 +71,7 @@ const replyingTo = ref<Message | null>(null)
 const titleRef = ref<HTMLElement | null>(null)
 const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({})
 
+const shareOpen = ref(false)
 // Large-file handling
 const isLarge = ref(false)
 const downloadUrl = ref<string | null>(null)
@@ -154,7 +155,7 @@ async function loadData(id: string) {
       const ts = (loadedData as any).updated_at || (loadedData as any).created_at
       if (ts) lastSavedAt.value = new Date(ts)
     } catch {}
-    
+
     // Parse and validate the contents to restore all formatting
     if (loadedData.content) {
       try {
@@ -163,9 +164,9 @@ async function loadData(id: string) {
           console.log("Content string is empty, will use default structure")
           return null
         }
-        
+
         const parsedData = JSON.parse(contentString)
-        
+
         // Validate that this is a proper workbook data structure
         if (parsedData && typeof parsedData === 'object') {
           // Ensure it has the minimum required structure for UniverSheet
@@ -175,7 +176,7 @@ async function loadData(id: string) {
           if (!parsedData.name && loadedData.title) {
             parsedData.name = loadedData.title
           }
-          
+
           console.log("Successfully parsed spreadsheet data:", {
             hasId: !!parsedData.id,
             hasSheets: !!parsedData.sheets,
@@ -183,7 +184,7 @@ async function loadData(id: string) {
             dataSize: contentString.length,
             title: loadedData.title
           })
-          
+
           return parsedData
         } else {
           console.warn("Parsed data is not a valid object, using default structure")
@@ -195,7 +196,7 @@ async function loadData(id: string) {
         return null
       }
     }
-    
+
     // If we have a document but no contents, it might be a new document or a file without inline content
     // Respect privacy settings: allow guests to view if everyone or link access (1,2,3,4)
     const priv = Number((loadedData as any)?.privacy_type ?? (loadedData as any)?.privacyType)
@@ -298,13 +299,13 @@ async function saveTitle() {
           content: JSON.stringify(data.value),
           last_viewed: new Date()
         } as FileData
-        
+
         const result = await fileStore.saveDocument(doc)
         console.log("Title saved:", newTitle)
-        
+
         // Send WebSocket message for real-time collaboration
         wsService.value?.sendMessage(route.params.id as string, 'title', { title: newTitle }, userId.value, userName.value)
-        
+
         // Handle redirect for documents that got new server IDs
         if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
           console.log("Document got new server ID after title change, redirecting to:", result.redirectId)
@@ -360,15 +361,15 @@ function createWorkbookFromTemplate(templateData: any): IWorkbookData {
 
 onMounted(async () => {
   isLoading.value = true
-  
+
   try {
     // Handle template-based new documents first
     if (route.params.template) {
       const templateName = route.params.template as string
-      
+
       let templateData: IWorkbookData = DEFAULT_WORKBOOK_DATA
       let docTitle = 'New Spreadsheet'
-      
+
       if (templateName.toLowerCase().includes('budget')) {
         templateData = createWorkbookFromTemplate(BUDGET_TEMPLATE_DATA)
         docTitle = 'Budget'
@@ -376,25 +377,25 @@ onMounted(async () => {
         templateData = createWorkbookFromTemplate(INVOICE_TEMPLATE_DATA)
         docTitle = 'Invoice'
       }
-      
+
       console.log('Creating new document from template:', templateName)
-      
+
       // Create the document using the store's new method
       const newDoc = await fileStore.createNewDocument('xlsx', docTitle)
-      
+
       const newDocData = {
         ...templateData,
         id: newDoc.id,
         name: docTitle
       }
-      
+
       data.value = newDocData
       document.title = docTitle
       title.value = document.title
-      
+
       // Navigate to the proper sheet URL with the new ID
       await router.replace(`/sheets/${newDoc.id}`)
-      
+
       // Initialize WebSocket after navigation
       // Only initialize collaboration when authenticated
       if (authStore.isAuthenticated) initializeWebSocketAndJoinSheet()
@@ -444,23 +445,23 @@ onMounted(async () => {
     // Handle completely new document without ID (route: /sheets)
     else {
       console.log('Creating completely new document')
-      
+
       // Create the document using the store's new method
       const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
-      
+
       const newDocData = {
         ...DEFAULT_WORKBOOK_DATA,
         id: newDoc.id,
         name: 'New Spreadsheet'
       }
-      
+
       data.value = newDocData
       document.title = 'New Spreadsheet'
       title.value = document.title
-      
+
       // Navigate to the proper sheet URL with the new ID
       await router.replace(`/sheets/${newDoc.id}`)
-      
+
       // Initialize WebSocket after navigation
       initializeWebSocketAndJoinSheet()
     }
@@ -713,17 +714,17 @@ async function saveData() {
       file_name: `${name.toLowerCase().replace(/\s+/g, '-')}.xlsx`,
       last_viewed: new Date()
     } as FileData
-    
+
     console.log("Saving document with complete data:", {
       id: doc.id,
       title: doc.title,
       dataSize: doc.content?.length || 0,
       hasSheets: !!completeData.sheets
     })
-    
+
     const result = await fileStore.saveDocument(doc)
     console.log('saveResult', result)
-    
+
     // Handle redirect for documents that got new server IDs
     if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
       console.log("Document got new server ID, redirecting to:", result.redirectId)
@@ -733,7 +734,7 @@ async function saveData() {
       toast.success("Document saved successfully")
     }
     lastSavedAt.value = new Date()
-    
+
     console.log("Document saved successfully")
   } catch (error) {
     console.error("Error saving document:", error)
@@ -900,25 +901,35 @@ function toggleChat() {
 }
 
 // Avatar dropdown handled by UserProfile component
-
 </script>
 
 <template>
   <div id="app" class="h-screen flex flex-col">
-
     <!-- Loading bar -->
-    <div v-if="isLoading" class="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden">
+    <div
+      v-if="isLoading"
+      class="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden"
+    >
       <div class="h-full bg-primary-600 w-1/3 animate-pulse"></div>
     </div>
 
     <!-- Unified Header similar to RunDoc -->
-    <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <div
+      class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+    >
       <div class="flex items-center gap-4">
-        <button class="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800" @click="router.push('/')">
+        <button
+          class="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+          @click="router.push('/')"
+        >
           <ArrowLeft class="h-5 w-5" />
         </button>
         <router-link to="/">
-          <defaultIcons.IconMicrosoftExcel ref="iconRef" class="w-[1.5rem] h-[3rem] text-green-600" xmlns="http://www.w3.org/2000/svg" />
+          <defaultIcons.IconMicrosoftExcel
+            ref="iconRef"
+            class="w-[1.5rem] h-[3rem] text-green-600"
+            xmlns="http://www.w3.org/2000/svg"
+          />
         </router-link>
         <div class="flex flex-col">
           <div class="flex items-center gap-2">
@@ -935,14 +946,26 @@ function toggleChat() {
               {{ title }}
             </div>
             <div class="flex items-center gap-2">
-              <PencilIcon v-if="!isTitleEdit" @click="editTitle" class="h-3 w-3 cursor-pointer hover:text-primary-600" />
+              <PencilIcon
+                v-if="!isTitleEdit"
+                @click="editTitle"
+                class="h-3 w-3 cursor-pointer hover:text-primary-600"
+              />
               <div class="flex items-center gap-3 text-sm">
-                <span :class="{
-                  'text-yellow-500': !isConnected,
-                  'text-green-500': isConnected && !isSaving,
-                  'text-blue-500': isSaving,
-                }">{{ syncStatusText }}</span>
-                <span class="text-gray-500 cursor-pointer" title="Click to save now" @click="saveData">{{ lastSavedText }}</span>
+                <span
+                  :class="{
+                    'text-yellow-500': !isConnected,
+                    'text-green-500': isConnected && !isSaving,
+                    'text-blue-500': isSaving,
+                  }"
+                  >{{ syncStatusText }}</span
+                >
+                <span
+                  class="text-gray-500 cursor-pointer"
+                  title="Click to save now"
+                  @click="saveData"
+                  >{{ lastSavedText }}</span
+                >
               </div>
             </div>
           </div>
@@ -950,7 +973,7 @@ function toggleChat() {
       </div>
 
       <div class="flex items-center gap-2">
-        <Dialog>
+        <Dialog v-model:open="shareOpen">
           <DialogTrigger asChild>
             <Button variant="outline" @click="openShareDialog">
               <Share2 class="h-4 w-4 mr-2" />
@@ -962,6 +985,7 @@ function toggleChat() {
               <DialogTitle>Share</DialogTitle>
             </DialogHeader>
             <ShareCard
+              @close="shareOpen = false"
               mode="sheet"
               :share-link="shareLinkSheet"
               :privacy-type="privacyType"
@@ -975,7 +999,7 @@ function toggleChat() {
             />
           </DialogContent>
         </Dialog>
-        
+
         <button @click="toggleChat" class="p-2 rounded-full hover:bg-gray-200">
           <MessageSquareIcon class="h-6 w-6 text-gray-600" />
         </button>
@@ -996,19 +1020,32 @@ function toggleChat() {
 
     <!-- Access request interstitial for unauthenticated private sheets -->
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">
-      <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
+      <div
+        class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6"
+      >
         <div class="mb-4">
           <h2 class="text-lg font-semibold">Request access to this sheet</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">This sheet is private. Enter your email to request access from the owner.</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            This sheet is private. Enter your email to request access from the owner.
+          </p>
         </div>
         <form @submit.prevent="submitAccessRequestSheet" class="space-y-3">
           <div>
             <label class="block text-sm font-medium mb-1">Email</label>
-            <input v-model="requestEmail" type="email" required class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700" placeholder="you@example.com" />
+            <input
+              v-model="requestEmail"
+              type="email"
+              required
+              class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+              placeholder="you@example.com"
+            />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Requested access</label>
-            <select v-model="accessLevel" class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700">
+            <select
+              v-model="accessLevel"
+              class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+            >
               <option value="v">View</option>
               <option value="c">Comment</option>
               <option value="e">Edit</option>
@@ -1016,14 +1053,25 @@ function toggleChat() {
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Message (optional)</label>
-            <textarea v-model="requestMessage" rows="3" class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700" placeholder="Add a note to the owner"></textarea>
+            <textarea
+              v-model="requestMessage"
+              rows="3"
+              class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+              placeholder="Add a note to the owner"
+            ></textarea>
           </div>
           <div class="flex items-center justify-between pt-2">
-            <Button type="submit" :disabled="requestSubmitting || !requestEmail" variant="default">
+            <Button
+              type="submit"
+              :disabled="requestSubmitting || !requestEmail"
+              variant="default"
+            >
               <span v-if="!requestSubmitting">Request access</span>
               <span v-else>Sending...</span>
             </Button>
-            <span v-if="requestSuccess" class="text-sm text-green-600">{{ requestSuccess }}</span>
+            <span v-if="requestSuccess" class="text-sm text-green-600">{{
+              requestSuccess
+            }}</span>
           </div>
         </form>
       </div>
@@ -1031,10 +1079,16 @@ function toggleChat() {
 
     <!-- Sheet when access is allowed -->
     <div v-else-if="isLarge" class="flex-1 flex items-center justify-center p-6">
-      <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 text-center">
+      <div
+        class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 text-center"
+      >
         <h2 class="text-lg font-semibold mb-2">This spreadsheet is large</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">The file is too large to preview online. You can download it to view locally.</p>
-        <Button variant="default" @click="downloadFile" :disabled="!downloadUrl">Download file</Button>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          The file is too large to preview online. You can download it to view locally.
+        </p>
+        <Button variant="default" @click="downloadFile" :disabled="!downloadUrl"
+          >Download file</Button
+        >
       </div>
     </div>
     <div v-else class="relative w-full h-full">
@@ -1050,7 +1104,10 @@ function toggleChat() {
         @univer-ref-change="onUniverRefChange"
       />
     </div>
-    <div v-if="!accessDenied && isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">
+    <div
+      v-if="!accessDenied && isChatOpen"
+      class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col"
+    >
       <div class="flex justify-between items-center p-3 border-b border-gray-200">
         <h3 class="font-semibold">Chat</h3>
         <button @click="toggleChat" class="p-1 rounded-full hover:bg-gray-200">
@@ -1064,23 +1121,32 @@ function toggleChat() {
             {{ getReplyContent(message.replyTo) }}
           </div>
           <div class="flex items-start">
-            <div class="w-8 h-8 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white font-semibold mr-2">
+            <div
+              class="w-8 h-8 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white font-semibold mr-2"
+            >
               {{ message.user.name.charAt(0).toUpperCase() }}
             </div>
             <div>
               <div class="flex items-baseline">
                 <span class="font-semibold mr-2">{{ message.user.name }}</span>
-                <span class="text-xs text-gray-500">{{ formatDate(message.timestamp) }}</span>
+                <span class="text-xs text-gray-500">{{
+                  formatDate(message.timestamp)
+                }}</span>
               </div>
               <div class="mt-1">{{ message.content.message }}</div>
-              <button @click="replyToMessage(message)" class="text-sm text-blue-500 mt-1">Reply</button>
+              <button @click="replyToMessage(message)" class="text-sm text-blue-500 mt-1">
+                Reply
+              </button>
             </div>
           </div>
         </div>
       </div>
       <div class="p-3 border-t border-gray-200">
         <form @submit.prevent="sendChatMessage" class="flex flex-col">
-          <div v-if="replyingTo" class="mb-2 p-2 bg-gray-100 rounded flex justify-between items-start">
+          <div
+            v-if="replyingTo"
+            class="mb-2 p-2 bg-gray-100 rounded flex justify-between items-start"
+          >
             <div class="text-sm">
               <span class="font-semibold">Replying to {{ replyingTo.user.name }}:</span>
               {{ replyingTo.content.message }}
@@ -1116,7 +1182,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 }
 
 #app {
@@ -1129,7 +1195,7 @@ body {
   flex: 1;
 }
 
-[contenteditable='true'] {
+[contenteditable="true"] {
   outline: none;
 }
 
@@ -1137,6 +1203,4 @@ body {
   min-height: 40px;
   max-height: 150px;
 }
-
-
 </style>
