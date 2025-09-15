@@ -266,7 +266,7 @@ function handleSettings() {
 
 function handleHelp() {
   // Open help in a new tab/window
-  window.open('https://support.google.com/docs/answer/2494893', '_blank')
+  window.open('/support', '_blank')
 }
 
 // Get status badge color
