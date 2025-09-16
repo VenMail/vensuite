@@ -22,6 +22,7 @@ import RunDoc from './views/RunDoc.vue'
 import MediaViewer from './views/MediaViewer.vue'
 import Sheets from './views/Sheets.vue'
 import Documents from './views/Documents.vue'
+import Bin from './views/Bin.vue'
 import Login from './views/Login.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
@@ -46,6 +47,7 @@ const routes = [
     component: AuthenticatedLayout,
     children: [
       { path: 'sheets', name: 'sheets-view', component: Sheets },
+      { path: 'bin', name: 'bin-view', component: Bin },
       { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
       { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
       { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },

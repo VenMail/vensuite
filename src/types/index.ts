@@ -23,6 +23,16 @@ export interface FileData {
   sharing_info?: string | null;
 }
 
+export interface AppForm {
+  id?: string;
+  title: string;
+  file_url?: string;
+  last_view_date?: Date;
+  created_at?: Date;
+  form?: FormData;
+  content?: string;
+}
+
 export interface FormData {
   id: string;
   fields: Question[];
@@ -349,15 +359,6 @@ export const typeToCategoryMap: Record<QuestionType, FieldCategory> = {
   rating: "rating",
   yesno: "switch",
 };
-export interface AppForm {
-  id?: string;
-  title: string;
-  file_url?: string;
-  last_view_date?: Date;
-  created_at?: Date;
-  form?: FormData;
-  content?: string;
-}
 
 export interface ResponseMeta {
   total_responses: number;
@@ -393,3 +394,7 @@ export interface FormResponseData {
   meta: ResponseMeta;
   statistics: Record<string, QuestionStatistics>;
 }
+
+export type DeletedItem = 
+  | (FileData & { source: 'Files'; deletedAt: string })
+  | (AppForm & { source: 'Forms'; deletedAt: string; file_type?: string; file_size?: string })
