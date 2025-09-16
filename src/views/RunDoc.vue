@@ -1182,6 +1182,7 @@ function downloadFile() {
               <DialogTitle>Share</DialogTitle>
             </DialogHeader>
             <ShareCard
+             @close="shareOpen = false" 
               mode="doc"
               :share-link="shareLinkDoc"
               :privacy-type="privacyType"
