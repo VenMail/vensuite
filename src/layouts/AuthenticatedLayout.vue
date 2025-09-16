@@ -27,7 +27,14 @@ const hideLayout = computed(() => route.meta.hideLayout === true)
 
 // Show sidebar on specific routes
 watch(() => route.name, (newRouteName) => {
-  const show = (newRouteName === 'home' || newRouteName === 'forms' || newRouteName === 'media' || newRouteName === 'docs-view' || newRouteName === 'sheets-view')
+  const show = (
+    newRouteName === 'home' ||
+    newRouteName === 'forms' ||
+    newRouteName === 'media' ||
+    newRouteName === 'docs-view' ||
+    newRouteName === 'sheets-view' ||
+    newRouteName === 'bin-view' // Add bin-view to keep sidebar visible
+  )
   sidebarStore.setVisible(show)
 })
 

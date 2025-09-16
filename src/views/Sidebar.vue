@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { router } from '@/main'
 import {
@@ -30,8 +30,8 @@ const items = [
   { name: 'Home', icon: Home, route: '/' },
   { name: 'Documents', icon: FileText, route: '/docs' },
   { name: 'Spreadsheets', icon: Table, route: '/sheets' },
-  // { name: 'Forms', icon: FormInput, route: '/forms' },
-  { name: 'Media', icon: Image, route: '/media' }
+  { name: 'Media', icon: Image, route: '/media' },
+  { name: 'Bin', icon: Trash2, route: '/bin' }
 ]
 
 const activeItem = ref('Home')
