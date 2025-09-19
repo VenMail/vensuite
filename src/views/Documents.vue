@@ -145,27 +145,43 @@
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="[
-                  theme.isDark.value
-                    ? 'border-gray-600 text-gray-100'
-                    : 'border-gray-300'
-                ]">
-                  <component :is="viewMode === 'grid' ? Grid : List" class="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem @click="viewMode = 'grid'">
-                  <Grid class="mr-2 h-4 w-4" />
-                  Grid View
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="viewMode = 'list'">
-                  <List class="mr-2 h-4 w-4" />
-                  List View
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            
+            <!-- Inline View Toggle (matching media toolbar style) -->
+            <div :class="[
+              'flex items-center rounded-lg p-1',
+              theme.isDark.value ? 'bg-gray-800' : 'bg-gray-100'
+            ]">
+              <Button
+                variant="ghost"
+                size="sm"
+                :class="[
+                  'px-3 py-2',
+                  viewMode === 'grid' 
+                    ? theme.isDark.value 
+                      ? 'bg-gray-700 shadow-sm' 
+                      : 'bg-white shadow-sm'
+                    : ''
+                ]"
+                @click="viewMode = 'grid'"
+              >
+                <Grid class="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                :class="[
+                  'px-3 py-2',
+                  viewMode === 'list' 
+                    ? theme.isDark.value 
+                      ? 'bg-gray-700 shadow-sm' 
+                      : 'bg-white shadow-sm'
+                    : ''
+                ]"
+                @click="viewMode = 'list'"
+              >
+                <List class="h-4 w-4" />
+              </Button>
+            </div>
           </template>
         </div>
       </div>
@@ -178,6 +194,26 @@
           : 'bg-white border-gray-200'
       ]">
         <div v-if="documentFiles.length > 0">
+          <!-- Select All header for list view -->
+          <div v-if="viewMode === 'list'" :class="[
+            'flex items-center gap-3 px-4 py-3 border-b',
+            theme.isDark.value ? 'border-gray-700' : 'border-gray-200'
+          ]">
+            <input
+              type="checkbox"
+              :checked="isAllSelected"
+              :indeterminate="isSomeSelected"
+              @change="toggleSelectAll"
+              class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            <span :class="[
+              'text-sm font-medium',
+              theme.isDark.value ? 'text-gray-300' : 'text-gray-700'
+            ]">
+              Select All
+            </span>
+          </div>
+          
           <div class="p-4">
             <div :class="{
               'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4': viewMode === 'grid',
@@ -218,6 +254,7 @@
     v-if="isUploadDialogOpen"
     @close="isUploadDialogOpen = false"
     @upload="handleUploadComplete"
+    :file-type-filter="'documents'"
   />
 </template>
 
@@ -296,6 +333,24 @@ const sortedDocuments = computed(() => {
   return [...documentFiles.value].sort(sortFn);
 });
 
+// Select all functionality
+const isAllSelected = computed(() => {
+  return documentFiles.value.length > 0 && 
+         documentFiles.value.every(file => selectedFiles.value.has(file.id || ''));
+});
+
+const isSomeSelected = computed(() => {
+  return selectedFiles.value.size > 0 && !isAllSelected.value;
+});
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    selectedFiles.value.clear();
+  } else {
+    selectedFiles.value = new Set(documentFiles.value.map(file => file.id || '').filter(Boolean));
+  }
+}
+
 function createNewDocument(template: string) {
   if (template.toLowerCase().includes("blank")) {
     router.push("/docs/new");
@@ -321,7 +376,7 @@ function handleUploadComplete(files: any[]) {
 function handleSelect(id: string | undefined, event?: MouseEvent) {
   if (!id) return;
 
-  // Handle multi-select with Ctrl/Cmd key
+  // If Ctrl/Cmd is held, toggle selection of this item
   if (event?.ctrlKey || event?.metaKey) {
     if (selectedFiles.value.has(id)) {
       selectedFiles.value.delete(id);
@@ -329,9 +384,18 @@ function handleSelect(id: string | undefined, event?: MouseEvent) {
       selectedFiles.value.add(id);
     }
   }
-  // Normal single select
+  // If Shift is held, select range (basic implementation)
+  else if (event?.shiftKey && selectedFiles.value.size > 0) {
+    // For now, just add to selection - you could implement range selection later
+    selectedFiles.value.add(id);
+  }
+  // Normal click - toggle individual selection (allows building selection)
   else {
-    selectedFiles.value = new Set([id]);
+    if (selectedFiles.value.has(id)) {
+      selectedFiles.value.delete(id);
+    } else {
+      selectedFiles.value.add(id);
+    }
   }
 }
 
@@ -376,41 +440,92 @@ onMounted(async () => {
 
 <style scoped>
 .loading-bar {
-  @apply fixed top-0 left-0 right-0 h-1 z-50 overflow-hidden;
-  @apply bg-gray-200 dark:bg-gray-700;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.25rem;
+  z-index: 50;
+  overflow: hidden;
+  background-color: rgb(229 231 235);
+}
+
+.dark .loading-bar {
+  background-color: rgb(55 65 81);
 }
 
 .loading-progress {
-  @apply h-full bg-primary-600 dark:bg-primary-500;
+  height: 100%;
+  background-color: rgb(37 99 235);
   width: 30%;
   animation: loading 2s infinite ease-in-out;
 }
 
+.dark .loading-progress {
+  background-color: rgb(59 130 246);
+}
+
 .empty-state {
-  @apply flex flex-col items-center justify-center p-16 text-center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  text-align: center;
 }
 
 .empty-icon-wrapper {
-  @apply flex items-center justify-center w-20 h-20 rounded-full mb-6;
-  @apply bg-gray-100 dark:bg-gray-700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 9999px;
+  margin-bottom: 1.5rem;
+  background-color: rgb(243 244 246);
+}
+
+.dark .empty-icon-wrapper {
+  background-color: rgb(55 65 81);
 }
 
 .empty-icon {
-  @apply w-10 h-10 text-primary-600 dark:text-primary-500;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: rgb(37 99 235);
+}
+
+.dark .empty-icon {
+  color: rgb(59 130 246);
 }
 
 .empty-title {
-  @apply text-xl font-bold mb-2;
-  @apply text-gray-800 dark:text-gray-100;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: rgb(17 24 39);
+}
+
+.dark .empty-title {
+  color: rgb(243 244 246);
 }
 
 .empty-description {
-  @apply text-sm mb-8 max-w-md;
-  @apply text-gray-500 dark:text-gray-400;
+  font-size: 0.875rem;
+  margin-bottom: 2rem;
+  max-width: 28rem;
+  color: rgb(107 114 128);
+}
+
+.dark .empty-description {
+  color: rgb(156 163 175);
 }
 
 .empty-actions {
-  @apply flex flex-wrap gap-4 justify-center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
 }
 
 @keyframes loading {
@@ -426,4 +541,4 @@ onMounted(async () => {
     transform: translateX(300%);
   }
 }
-</style> 
+</style>
