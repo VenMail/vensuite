@@ -14,6 +14,7 @@ import {
   Download,
   Share2,
   ArrowUp,
+  Filter,
 } from "lucide-vue-next";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/store/auth";
@@ -48,7 +49,7 @@ const fileStore = useFileStore();
 const { isAuthenticated } = storeToRefs(authStore);
 const theme = inject('theme') as { isDark: { value: boolean } };
 
-const viewMode = ref<"grid" | "tree" | "thumbnail" | "list">("grid");
+const viewMode = ref<"grid" | "list">("grid");
 const selectedFiles = ref<Set<string>>(new Set());
 const showRecentFiles = ref(false);
 const sortBy = ref("name");
@@ -60,7 +61,6 @@ const breadcrumbs = ref<Array<{ id: string | null; title: string }>>([
 ]);
 const searchValue = ref('');
 const isUploadDialogOpen = ref(false);
-
 
 const templates = {
   Documents: [
@@ -211,10 +211,27 @@ const files = computed(() => {
 
 const sortedItems = computed(() => {
   const sortFn = (a: FileData, b: FileData) => {
-    if (sortBy.value === "name" && a.title && b.title) {
-      return a.title.localeCompare(b.title);
-    } else if (sortBy.value === "date" && a.last_viewed && b.last_viewed) {
-      return new Date(b.last_viewed).getTime() - new Date(a.last_viewed).getTime();
+    switch (sortBy.value) {
+      case "name":
+        if (a.title && b.title) {
+          return a.title.localeCompare(b.title);
+        }
+        break;
+      case "date":
+        if (a.last_viewed && b.last_viewed) {
+          return new Date(b.last_viewed).getTime() - new Date(a.last_viewed).getTime();
+        }
+        break;
+      case "type":
+        const aType = a.is_folder ? "folder" : (a.file_type?.toLowerCase() || "unknown");
+        const bType = b.is_folder ? "folder" : (b.file_type?.toLowerCase() || "unknown");
+        return aType.localeCompare(bType);
+      case "size":
+        const aSize = typeof a.file_size === 'string' ? parseInt(a.file_size, 10) : (a.file_size || 0);
+        const bSize = typeof b.file_size === 'string' ? parseInt(b.file_size, 10) : (b.file_size || 0);
+        return bSize - aSize;
+      default:
+        return 0;
     }
     return 0;
   };
@@ -222,17 +239,89 @@ const sortedItems = computed(() => {
   return [...folders.value, ...files.value].sort(sortFn);
 });
 
-// Group files and folders based on file type
+// Improved grouping logic
 const groupedItems = computed(() => {
   if (!groupByFileType.value) return { "All Items": sortedItems.value };
 
-  return sortedItems.value.reduce((acc, item) => {
-    const key = item.is_folder ? "Folders" : (item.file_type?.toLowerCase() || "Other");
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
-    return acc;
-  }, {} as Record<string, FileData[]>);
+  const groups: Record<string, FileData[]> = {};
+  
+  sortedItems.value.forEach(item => {
+    let groupName: string;
+    
+    if (item.is_folder) {
+      groupName = "Folders";
+    } else {
+      const fileType = item.file_type?.toLowerCase();
+      switch (fileType) {
+        case "docx":
+        case "doc":
+        case "pdf":
+        case "txt":
+        case "rtf":
+          groupName = "Documents";
+          break;
+        case "xlsx":
+        case "xls":
+        case "csv":
+        case "ods":
+          groupName = "Spreadsheets";
+          break;
+        case "jpg":
+        case "jpeg":
+        case "png":
+        case "gif":
+        case "bmp":
+        case "svg":
+        case "webp":
+          groupName = "Images";
+          break;
+        case "mp4":
+        case "avi":
+        case "mkv":
+        case "mov":
+        case "wmv":
+        case "flv":
+          groupName = "Videos";
+          break;
+        case "mp3":
+        case "wav":
+        case "flac":
+        case "aac":
+        case "ogg":
+          groupName = "Audio";
+          break;
+        default:
+          groupName = "Other";
+          break;
+      }
+    }
+    
+    if (!groups[groupName]) {
+      groups[groupName] = [];
+    }
+    groups[groupName].push(item);
+  });
+
+  return groups;
 });
+
+// Select all functionality
+const isAllSelected = computed(() => {
+  return sortedItems.value.length > 0 && 
+         sortedItems.value.every(file => selectedFiles.value.has(file.id || ''));
+});
+
+const isSomeSelected = computed(() => {
+  return selectedFiles.value.size > 0 && !isAllSelected.value;
+});
+
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    selectedFiles.value.clear();
+  } else {
+    selectedFiles.value = new Set(sortedItems.value.map(file => file.id || '').filter(Boolean));
+  }
+}
 
 async function openFolder(id: string) {
   try {
@@ -261,20 +350,9 @@ async function openFolder(id: string) {
 }
 
 function handleSelect(id: string | undefined, event?: MouseEvent) {
-  console.log('handleSelect', id, event)
   if (!id) return;
 
-  // If event is from checkbox click, handle single selection
-  if (event?.target && (event.target as HTMLElement).closest('.w-5.h-5, .w-4.h-4')) {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
-    } else {
-      selectedFiles.value.add(id);
-    }
-    return;
-  }
-
-  // Handle multi-select with Ctrl/Cmd key
+  // If Ctrl/Cmd is held, toggle selection of this item
   if (event?.ctrlKey || event?.metaKey) {
     if (selectedFiles.value.has(id)) {
       selectedFiles.value.delete(id);
@@ -282,7 +360,7 @@ function handleSelect(id: string | undefined, event?: MouseEvent) {
       selectedFiles.value.add(id);
     }
   }
-  // Handle range select with Shift key
+  // If Shift is held, select range
   else if (event?.shiftKey && selectedFiles.value.size > 0) {
     const allFiles = sortedItems.value;
     const lastSelectedIndex = allFiles.findIndex(f => f.id === Array.from(selectedFiles.value).pop());
@@ -297,9 +375,13 @@ function handleSelect(id: string | undefined, event?: MouseEvent) {
       });
     }
   }
-  // Normal single select
+  // Normal click - toggle individual selection (allows building selection)
   else {
-    selectedFiles.value = new Set([id]);
+    if (selectedFiles.value.has(id)) {
+      selectedFiles.value.delete(id);
+    } else {
+      selectedFiles.value.add(id);
+    }
   }
 }
 
@@ -412,14 +494,6 @@ function goUpOneLevel() {
   }
 }
 
-// function onDragEnter() {
-//   // isDragging.value = true;
-// }
-
-// function onDragLeave() {
-//   // isDragging.value = false;
-// }
-
 // Format group names for display
 function formatGroupName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1).replace("_", " ");
@@ -531,7 +605,6 @@ function handleEscapeKey(event: KeyboardEvent) {
 }
 </script>
 
-
 <template>
   <div v-if="isAuthenticated" :class="[
     'flex h-screen text-gray-900 transition-colors duration-200',
@@ -547,14 +620,15 @@ function handleEscapeKey(event: KeyboardEvent) {
       </div>
 
       <!-- File browser -->
-      <div class="flex-1 p-6 overflow-hidden">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center space-x-4">
-            <!-- Breadcrumbs and current folder title -->
+      <div class="flex-1 p-4 sm:p-6 overflow-hidden">
+        <!-- Header with responsive layout -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <!-- Breadcrumbs and navigation -->
             <div class="flex items-center space-x-2">
               <!-- Up one level button -->
               <button
-                class="inline-flex items-center justify-center h-8 w-8 rounded-md border transition-colors"
+                class="inline-flex items-center justify-center h-8 w-8 rounded-md border transition-colors shrink-0"
                 :class="[
                   theme.isDark.value ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100',
                   breadcrumbs.length > 1 ? 'opacity-100' : 'opacity-50 cursor-not-allowed'
@@ -565,63 +639,54 @@ function handleEscapeKey(event: KeyboardEvent) {
                 @click="goUpOneLevel">
                 <ArrowUp class="h-4 w-4 text-primary-600" />
               </button>
-              <nav aria-label="Breadcrumb" class="flex items-center text-sm">
+              <!-- Breadcrumbs - hide on very small screens -->
+              <nav aria-label="Breadcrumb" class="hidden sm:flex items-center text-sm">
                 <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.id ?? 'root'">
                   <button class="text-primary-600 hover:underline" @click="navigateToBreadcrumb(idx)">{{ crumb.title }}</button>
                   <span v-if="idx < breadcrumbs.length - 1" class="mx-2 text-gray-400">/</span>
                 </template>
               </nav>
-              <span v-if="currentFolderTitle" class="ml-2 text-gray-500">(in {{ currentFolderTitle }})</span>
             </div>
+
             <h2 :class="[
-              'text-2xl font-semibold',
+              'text-xl sm:text-2xl font-semibold',
               theme.isDark.value ? 'text-gray-100' : 'text-gray-800'
             ]">
               {{ showRecentFiles ? "Recent Files" : "All Files" }}
             </h2>
+
+            <!-- Action buttons -->
             <div class="flex items-center space-x-2">
               <Button variant="ghost" size="icon" 
                 :class="[
-                  'relative group rounded-full transition-all duration-200',
+                  'relative group rounded-full transition-all duration-200 shrink-0',
                   theme.isDark.value 
                     ? 'hover:bg-gray-700' 
                     : 'hover:bg-gray-100'
                 ]"
                 @click="createNewFolder">
                 <FolderPlusIcon class="h-5 w-5 text-primary-600" />
-                <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap"
-                  :class="theme.isDark.value ? 'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-100'">
-                  New Folder
-                </span>
               </Button>
               <Button variant="ghost" size="icon"
                 :class="[
-                  'relative group rounded-full transition-all duration-200',
+                  'relative group rounded-full transition-all duration-200 shrink-0',
                   theme.isDark.value 
                     ? 'hover:bg-gray-700' 
                     : 'hover:bg-gray-100'
                 ]"
                 @click="openUploadDialog">
                 <Upload class="h-5 w-5 text-primary-600" />
-                <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap"
-                  :class="theme.isDark.value ? 'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-100'">
-                  Upload Files
-                </span>
               </Button>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="ghost" size="icon"
                     :class="[
-                      'relative group rounded-full transition-all duration-200',
+                      'relative group rounded-full transition-all duration-200 shrink-0',
                       theme.isDark.value 
                         ? 'hover:bg-gray-700' 
                         : 'hover:bg-gray-100'
                     ]">
                     <Plus class="h-5 w-5 text-primary-600" />
-                    <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap"
-                      :class="theme.isDark.value ? 'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-100'">
-                      New from Template
-                    </span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent :class="[
@@ -669,9 +734,11 @@ function handleEscapeKey(event: KeyboardEvent) {
               </Dialog>
             </div>
           </div>
-          <!-- Right sort actions / Selection actions -->
-          <div class="flex items-center space-x-4">
+
+          <!-- Right controls with responsive layout -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <template v-if="selectedFiles.size > 0">
+              <!-- Selection info -->
               <div class="flex items-center space-x-2">
                 <span :class="[
                   'text-sm font-medium',
@@ -684,29 +751,30 @@ function handleEscapeKey(event: KeyboardEvent) {
                   theme.isDark.value ? 'bg-gray-600' : 'bg-gray-300'
                 ]"></div>
               </div>
-              <div class="flex items-center space-x-2">
+              <!-- Selection actions with responsive wrapping -->
+              <div class="flex items-center flex-wrap gap-2">
                 <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm"
                   @click="openFile(Array.from(selectedFiles)[0])">
                   <FolderOpen class="h-4 w-4 mr-2" />
-                  Open
+                  <span class="hidden sm:inline">Open</span>
                 </Button>
                 <Button variant="ghost" size="sm" @click="handleBulkDelete">
                   <Trash2 class="h-4 w-4 mr-2" />
-                  Delete
+                  <span class="hidden sm:inline">Delete</span>
                 </Button>
                 <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm" @click="handleRename">
                   <Edit class="h-4 w-4 mr-2" />
-                  Rename
+                  <span class="hidden sm:inline">Rename</span>
                 </Button>
                 <Button variant="ghost" size="sm" @click="handleBulkDownload">
                   <Download class="h-4 w-4 mr-2" />
-                  Download
+                  <span class="hidden sm:inline">Download</span>
                 </Button>
                 <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm">
                   <Share2 class="h-4 w-4 mr-2" />
-                  Share
+                  <span class="hidden sm:inline">Share</span>
                 </Button>
-                <Button variant="ghost" size="sm" class="!ml-2" @click="selectedFiles.clear()">
+                <Button variant="ghost" size="sm" @click="selectedFiles.clear()">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -715,129 +783,163 @@ function handleEscapeKey(event: KeyboardEvent) {
               </div>
             </template>
             <template v-else>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="[
-                    theme.isDark.value
-                      ? 'border-gray-600 text-gray-100'
-                      : 'border-gray-300'
-                  ]">
-                    Sort by: {{ sortBy === "name" ? "Name" : "Date" }}
-                    <ChevronDown class="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="sortBy = 'name'">
-                    Sort by Name
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="sortBy = 'date'">
-                    Sort by Date
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="[
-                    theme.isDark.value
-                      ? 'border-gray-600 text-gray-100'
-                      : 'border-gray-300'
-                  ]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                    </svg>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <div class="px-2 py-1.5">
-                    <div class="flex items-center justify-between space-x-2">
-                      <span :class="[
-                        'text-sm',
-                        theme.isDark.value ? 'text-gray-300' : 'text-gray-600'
-                      ]">
-                        Group by Type
-                      </span>
-                      <Switch v-model="groupByFileType" />
+              <div class="flex items-center gap-3 w-full sm:w-auto">
+                <!-- Sort dropdown -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="[
+                      'flex-1 sm:flex-initial',
+                      theme.isDark.value
+                        ? 'border-gray-600 text-gray-100'
+                        : 'border-gray-300'
+                    ]">
+                      <span class="hidden sm:inline">Sort: </span>
+                      {{ sortBy === "name" ? "Name" : sortBy === "date" ? "Date" : sortBy === "type" ? "Type" : "Size" }}
+                      <ChevronDown class="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem @click="sortBy = 'name'">
+                      Sort by Name
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="sortBy = 'date'">
+                      Sort by Date
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="sortBy = 'type'">
+                      Sort by Type
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="sortBy = 'size'">
+                      Sort by Size
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <!-- Filter/Group dropdown -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="[
+                      'shrink-0',
+                      theme.isDark.value
+                        ? 'border-gray-600 text-gray-100'
+                        : 'border-gray-300'
+                    ]">
+                      <Filter class="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <div class="px-2 py-1.5">
+                      <div class="flex items-center justify-between space-x-2">
+                        <span :class="[
+                          'text-sm',
+                          theme.isDark.value ? 'text-gray-300' : 'text-gray-600'
+                        ]">
+                          Group by Type
+                        </span>
+                        <Switch v-model="groupByFileType" />
+                      </div>
                     </div>
-                  </div>
-                  <div class="px-2 py-1.5">
-                    <div class="flex items-center justify-between space-x-2">
-                      <span :class="[
-                        'text-sm',
-                        theme.isDark.value ? 'text-gray-300' : 'text-gray-600'
-                      ]">
-                        Recent Files
-                      </span>
-                      <Switch v-model="showRecentFiles" />
+                    <div class="px-2 py-1.5">
+                      <div class="flex items-center justify-between space-x-2">
+                        <span :class="[
+                          'text-sm',
+                          theme.isDark.value ? 'text-gray-300' : 'text-gray-600'
+                        ]">
+                          Recent Files
+                        </span>
+                        <Switch v-model="showRecentFiles" />
+                      </div>
                     </div>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="[
-                    theme.isDark.value
-                      ? 'border-gray-600 text-gray-100'
-                      : 'border-gray-300'
-                  ]">
-                    <component :is="viewMode === 'grid' ? Grid : List" class="h-4 w-4" />
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <!-- Inline View Toggle (matching other components) -->
+                <div :class="[
+                  'flex items-center rounded-lg p-1 shrink-0',
+                  theme.isDark.value ? 'bg-gray-800' : 'bg-gray-100'
+                ]">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    :class="[
+                      'px-3 py-2',
+                      viewMode === 'grid' 
+                        ? theme.isDark.value 
+                          ? 'bg-gray-700 shadow-sm' 
+                          : 'bg-white shadow-sm'
+                        : ''
+                    ]"
+                    @click="viewMode = 'grid'"
+                  >
+                    <Grid class="h-4 w-4" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="viewMode = 'grid'">
-                    <Grid class="mr-2 h-4 w-4" />
-                    Grid View
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="viewMode = 'list'">
-                    <List class="mr-2 h-4 w-4" />
-                    List View
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    :class="[
+                      'px-3 py-2',
+                      viewMode === 'list' 
+                        ? theme.isDark.value 
+                          ? 'bg-gray-700 shadow-sm' 
+                          : 'bg-white shadow-sm'
+                        : ''
+                    ]"
+                    @click="viewMode = 'list'"
+                  >
+                    <List class="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </template>
           </div>
-          <!-- End of right sort actions / Selection actions -->
-        </div>
-
-        <!-- Search input -->
-        <!-- <div class="relative mb-6">
-          <Input v-model="searchValue" placeholder="Search files and folders..." 
-            class="bg-white border-gray-300 focus:border-primary-500 focus:ring-primary-400 pr-10" />
-          <div v-if="searchValue" 
-            class="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
-            @click="searchValue = ''">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500 hover:text-gray-700">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-        </div> -->
-
-        <!-- Loading state -->
-        <div v-if="fileStore.isSyncing && Object.keys(groupedItems).length === 0" class="loading-state">
-          <div class="loading-spinner"></div>
-          <p class="loading-text">Loading your files...</p>
         </div>
 
         <!-- Content area -->
         <ScrollArea :class="[
-          'h-[calc(100vh-280px)] rounded-lg shadow-sm border',
+          'h-[calc(100vh-240px)] sm:h-[calc(100vh-280px)] rounded-lg shadow-sm border',
           theme.isDark.value
             ? 'bg-gray-800 border-gray-700'
             : 'bg-white border-gray-200'
         ]">
           <div v-if="Object.keys(groupedItems).length > 0 && sortedItems.length > 0">
             <template v-for="(items, groupName) in groupedItems" :key="groupName">
-              <div class="p-4">
-                <h3 v-if="groupByFileType" class="text-base font-semibold text-gray-700 mb-3 px-2">
+              <div class="p-2 sm:p-4">
+                <!-- Group header -->
+                <h3 v-if="groupByFileType" :class="[
+                  'text-base font-semibold mb-3 px-2',
+                  theme.isDark.value ? 'text-gray-100' : 'text-gray-700'
+                ]">
                   {{ formatGroupName(groupName) }}
                 </h3>
+
+                <!-- Select All header for list view -->
+                <div v-if="viewMode === 'list' && !groupByFileType" :class="[
+                  'flex items-center gap-3 px-4 py-3 border-b mb-2',
+                  theme.isDark.value ? 'border-gray-700' : 'border-gray-200'
+                ]">
+                  <input
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    :indeterminate="isSomeSelected"
+                    @change="toggleSelectAll"
+                    class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span :class="[
+                    'text-sm font-medium',
+                    theme.isDark.value ? 'text-gray-300' : 'text-gray-700'
+                  ]">
+                    Select All
+                  </span>
+                </div>
+
+                <!-- Items -->
                 <div v-if="items.length === 0" class="text-center text-sm text-gray-500 py-4">
                   No items available in this category.
                 </div>
                 <div :class="{
-                  'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4': viewMode === 'grid',
+                  'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4': viewMode === 'grid',
                   'space-y-2': viewMode === 'list',
                 }">
-                  <FileItem v-for="item in items" :file="item" :viewMode="viewMode"
+                  <FileItem v-for="item in items" :key="item.id" :file="item" :viewMode="viewMode"
                     :isSelected="selectedFiles.has(item.id || '')"
                     @select-file="handleSelect" @open-file="openFile" @contextmenu-file="openContextMenu" />
                 </div>
@@ -845,9 +947,14 @@ function handleEscapeKey(event: KeyboardEvent) {
             </template>
           </div>
 
+          <!-- Loading state -->
+          <div v-else-if="fileStore.isSyncing" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Loading your files...</p>
+          </div>
+
           <!-- Empty state -->
-          <div v-else-if="!fileStore.isSyncing || (fileStore.isSyncing && Object.keys(groupedItems).length === 0)"
-            class="empty-state">
+          <div v-else class="empty-state">
             <div class="empty-icon-wrapper">
               <FolderOpen class="empty-icon" />
             </div>
@@ -870,7 +977,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                 <Plus class="mr-2 h-4 w-4" />
                 New Spreadsheet
               </Button>
-              <Button variant="outline" class="border-gray-300 hover:border-gray-400">
+              <Button variant="outline" class="border-gray-300 hover:border-gray-400" @click="openUploadDialog">
                 <Upload class="mr-2 h-4 w-4" />
                 Upload File
               </Button>
@@ -880,6 +987,8 @@ function handleEscapeKey(event: KeyboardEvent) {
       </div>
     </div>
   </div>
+
+  <!-- Login screen -->
   <div v-else :class="[
     'h-screen w-full flex flex-col items-center justify-center transition-colors duration-200',
     theme.isDark.value
@@ -928,85 +1037,6 @@ function handleEscapeKey(event: KeyboardEvent) {
     @close="isUploadDialogOpen = false"
     @upload="handleUploadComplete"
     :folderId="currentFolderId"
+    :fileTypeFilter="'all'"
   />
 </template>
-
-<style scoped>
-.loading-bar {
-  @apply fixed top-0 left-0 right-0 h-1 z-50 overflow-hidden;
-  @apply bg-gray-200 dark:bg-gray-700;
-}
-
-.loading-progress {
-  @apply h-full bg-primary-600 dark:bg-primary-500;
-  width: 30%;
-  animation: loading 2s infinite ease-in-out;
-}
-
-.loading-state {
-  @apply flex flex-col items-center justify-center p-16;
-}
-
-.loading-spinner {
-  @apply w-12 h-12 border-4 rounded-full;
-  @apply border-gray-300 dark:border-gray-600;
-  border-top-color: theme('colors.primary.600');
-  animation: spin 1s linear infinite;
-}
-
-.loading-text {
-  @apply mt-4 font-medium;
-  @apply text-gray-600 dark:text-gray-400;
-}
-
-.empty-state {
-  @apply flex flex-col items-center justify-center p-16 text-center;
-}
-
-.empty-icon-wrapper {
-  @apply flex items-center justify-center w-20 h-20 rounded-full mb-6;
-  @apply bg-gray-100 dark:bg-gray-700;
-}
-
-.empty-icon {
-  @apply w-10 h-10 text-primary-600 dark:text-primary-500;
-}
-
-.empty-title {
-  @apply text-xl font-bold mb-2;
-  @apply text-gray-800 dark:text-gray-100;
-}
-
-.empty-description {
-  @apply text-sm mb-8 max-w-md;
-  @apply text-gray-500 dark:text-gray-400;
-}
-
-.empty-actions {
-  @apply flex flex-wrap gap-4 justify-center;
-}
-
-@keyframes loading {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  50% {
-    transform: translateX(100%);
-  }
-
-  100% {
-    transform: translateX(300%);
-  }
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-</style>

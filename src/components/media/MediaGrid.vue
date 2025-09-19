@@ -7,18 +7,22 @@
       gridSize === 'medium' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' :
       'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
     )" style="height: calc(100vh - 200px);">
-      <MediaPreview
+      <div
         v-for="file in mediaFiles"
         :key="file.id"
-        :file="file"
-        :size="gridSize"
-        :is-selected="selectedFiles.has(file.id || '')"
-        :show-checkbox="showCheckboxes || selectedFiles.has(file.id || '')"
-        @select="handleSelect"
-        @preview="handlePreview"
+        class="w-full min-w-0"
         @mouseenter="showCheckboxes = true"
         @mouseleave="showCheckboxes = false"
-      />
+      >
+        <MediaPreview
+          :file="file"
+          :size="gridSize"
+          :is-selected="selectedFiles.has(file.id || '')"
+          :show-checkbox="showCheckboxes || selectedFiles.has(file.id || '')"
+          @select="handleSelect"
+          @preview="handlePreview"
+        />
+      </div>
     </div>
 
     <!-- List View -->
@@ -66,7 +70,7 @@
 
           <!-- File Info -->
           <div class="col-span-6 flex items-center gap-3 min-w-0">
-            <div class="flex-shrink-0">
+            <div class="flex-shrink-0 w-10 h-10 overflow-hidden">
               <MediaPreview
                 :file="file"
                 size="small"
@@ -75,8 +79,8 @@
                 @preview="handlePreview"
               />
             </div>
-            <div class="min-w-0">
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" :title="file.title">
                 {{ file.title }}
               </p>
               <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -86,15 +90,15 @@
           </div>
 
           <!-- Size -->
-          <div class="col-span-2 flex items-center">
-            <span class="text-sm text-gray-600 dark:text-gray-400">
+          <div class="col-span-2 flex items-center min-w-0">
+            <span class="text-sm text-gray-600 dark:text-gray-400 truncate">
               {{ formatFileSize(file.file_size) }}
             </span>
           </div>
 
           <!-- Modified Date -->
-          <div class="col-span-2 flex items-center">
-            <span class="text-sm text-gray-600 dark:text-gray-400">
+          <div class="col-span-2 flex items-center min-w-0">
+            <span class="text-sm text-gray-600 dark:text-gray-400 truncate">
               {{ formatDate(file.updated_at || file.created_at) }}
             </span>
           </div>
@@ -255,4 +259,4 @@ const handleSelectAll = (event: Event) => {
   const target = event.target as HTMLInputElement
   emit('select-all', target.checked)
 }
-</script> 
+</script>

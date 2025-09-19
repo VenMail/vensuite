@@ -58,6 +58,7 @@
     <!-- Upload Dialog -->
     <FileUploader
       v-if="isUploadDialogOpen"
+      :file-type-filter="'media'" 
       @close="closeUploadDialog"
       @upload="handleUploadComplete"
     />
