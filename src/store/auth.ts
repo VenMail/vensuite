@@ -96,8 +96,12 @@ export const useAuthStore = defineStore('auth', {
       axios.interceptors.response.use(
         (response) => response,
         async (error) => {
-          if (error.response && error.response.status === 401) {
-            await this.handleTokenExpiration();
+          if (error.response) {
+            const status = error.response.status
+            if (status === 401 || status === 403) {
+              // Treat 403 (forbidden) similarly to 401, as MarketAuth may fail when user not found after fallback
+              await this.handleTokenExpiration();
+            }
           }
           return Promise.reject(error);
         }
