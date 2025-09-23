@@ -436,6 +436,28 @@ export const useFileStore = defineStore("files", {
       return authStore.getToken() || localStorage.getItem("venAuthToken");
     },
 
+    /** Clear all files state and offline caches (used during logout) */
+    clearAll() {
+      try {
+        this.allFiles = [] as FileData[];
+        this.recentFiles = [] as FileData[];
+        this.cachedDocuments.clear();
+        this.pendingChanges.clear();
+        this.syncStatus.clear();
+        this.isSyncing = false;
+        this.lastError = null;
+        // Remove offline caches and recent list
+        const keys = Object.keys(localStorage);
+        for (const k of keys) {
+          if (k.startsWith('document_') || k.startsWith('sheet_') || k.startsWith('file_') || k === 'VENX_RECENT') {
+            try { localStorage.removeItem(k); } catch {}
+          }
+        }
+      } catch (e) {
+        console.warn('files.clearAll failed:', e);
+      }
+    },
+
     /** Create a new document - tries online first, falls back to local */
     async createNewDocument(fileType: string = "docx", title: string = "Untitled"): Promise<FileData> {
       // Use proper default content based on file type

@@ -14,6 +14,8 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: !!localStorage.getItem('venAuthToken'),
     token: localStorage.getItem('venAuthToken') || null,
     router: null as Router | any, // Add router to state
+    // Track axios interceptors to avoid duplicates
+    _axiosInterceptorIds: { req: null as number | null, res: null as number | null },
   }),
   actions: {
     setRouter(router: any) {
@@ -62,20 +64,56 @@ export const useAuthStore = defineStore('auth', {
       this.token = token;
       localStorage.setItem('venAuthToken', token);
       this.isAuthenticated = true;
+      // Set default Authorization header for axios
+      try { (axios.defaults.headers as any).common = (axios.defaults.headers as any).common || {}; (axios.defaults.headers as any).common.Authorization = `Bearer ${token}`; } catch {}
       this.setupAxiosInterceptor();
     },
     async logout() {
-      this.token = null;
-      localStorage.removeItem('venAuthToken');
-      this.isAuthenticated = false;
-      this.firstName = "";
-      this.lastName = "";
-      this.email = "";
-      localStorage.removeItem('venUserFirstName');
-      localStorage.removeItem('venUserLastName');
-      localStorage.removeItem('venUserEmail');
-      if (this.router) {
-        await this.router.push({ name: 'login' });
+      try {
+        // Reset in-memory auth state
+        this.token = null;
+        this.isAuthenticated = false;
+        this.firstName = "";
+        this.lastName = "";
+        this.email = "";
+        this.userId = "";
+        this.employeeId = "";
+
+        // Remove persisted auth and user identifiers
+        try { localStorage.removeItem('venAuthToken'); } catch {}
+        try { localStorage.removeItem('venUserFirstName'); } catch {}
+        try { localStorage.removeItem('venUserLastName'); } catch {}
+        try { localStorage.removeItem('venUserEmail'); } catch {}
+        try { localStorage.removeItem('venUserId'); } catch {}
+        try { localStorage.removeItem('venEmployeeId'); } catch {}
+
+        // Eject axios interceptors and clear default Authorization header
+        try {
+          if (this._axiosInterceptorIds.req != null) axios.interceptors.request.eject(this._axiosInterceptorIds.req)
+          if (this._axiosInterceptorIds.res != null) axios.interceptors.response.eject(this._axiosInterceptorIds.res)
+          this._axiosInterceptorIds = { req: null, res: null }
+        } catch {}
+        try { delete (axios.defaults.headers as any)?.common?.Authorization; } catch {}
+
+        // Clear app caches (files, recent, offline).
+        // Use dynamic import to avoid potential circular dependency at module top-level
+        try {
+          const mod = await import('./files');
+          const fileStore = mod.useFileStore();
+          fileStore.clearAll();
+        } catch (e) {
+          console.warn('Failed to clear files store on logout:', e);
+        }
+
+        // Navigate to login
+        if (this.router) {
+          await this.router.push({ name: 'login' });
+        }
+      } catch (e) {
+        console.warn('Logout encountered an issue:', e);
+        if (this.router) {
+          await this.router.push({ name: 'login' });
+        }
       }
     },
     getAuthUrl(redirectUri: string) {
@@ -93,19 +131,41 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     setupAxiosInterceptor() {
-      axios.interceptors.response.use(
+      // Eject old interceptors first to avoid stacking
+      try {
+        if (this._axiosInterceptorIds.req != null) axios.interceptors.request.eject(this._axiosInterceptorIds.req)
+        if (this._axiosInterceptorIds.res != null) axios.interceptors.response.eject(this._axiosInterceptorIds.res)
+      } catch {}
+
+      // Request: attach Authorization if available
+      const reqId = axios.interceptors.request.use((config) => {
+        try {
+          const tok = this.getToken()
+          if (tok) {
+            config.headers = config.headers || {}
+            if (!('Authorization' in config.headers)) {
+              (config.headers as any).Authorization = `Bearer ${tok}`
+            }
+          }
+        } catch {}
+        return config
+      })
+
+      // Response: handle 401/403
+      const resId = axios.interceptors.response.use(
         (response) => response,
         async (error) => {
           if (error.response) {
             const status = error.response.status
             if (status === 401 || status === 403) {
-              // Treat 403 (forbidden) similarly to 401, as MarketAuth may fail when user not found after fallback
               await this.handleTokenExpiration();
             }
           }
           return Promise.reject(error);
         }
-      );
+      )
+
+      this._axiosInterceptorIds = { req: reqId, res: resId }
     }
   },
 });
