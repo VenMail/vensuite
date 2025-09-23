@@ -12,6 +12,7 @@ const UPLOAD_BASE = `${API_BASE_URI}/app-files/upload`;
 const UPLOAD_INIT = `${UPLOAD_BASE}/initiate`;
 const UPLOAD_CHUNK = `${UPLOAD_BASE}/chunk`;
 const UPLOAD_COMPLETE = `${UPLOAD_BASE}/complete`;
+const CONVERT_ENDPOINT = `${API_BASE_URI}/app-files/convert`;
 
 // Extract base URL for constructing full URLs from relative paths
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -131,6 +132,126 @@ export const useFileStore = defineStore("files", {
       return file;
     },
 
+    /**
+     * Convert an uploaded file (docx/xlsx) into app content usable by editors.
+     * Uses client-side conversion first (DOCX via mammoth, XLSX via xlsx),
+     * then falls back to backend /app-files/convert if client conversion fails.
+     */
+    async convertUploadedFile(options: { appFileId?: string; url?: string; target?: 'docx'|'xlsx' }): Promise<FileData | null> {
+      // Helper: load binary as ArrayBuffer from id or URL
+      const loadArrayBuffer = async (): Promise<{ buf: ArrayBuffer; meta?: FileData } | null> => {
+        try {
+          if (options.appFileId) {
+            const meta = await this.loadFromAPI(options.appFileId);
+            if (!meta) return null;
+            const downloadUrl = `${FILES_ENDPOINT}/${meta.id}/download`;
+            const buf = await axios.get(downloadUrl, {
+              responseType: 'arraybuffer',
+              headers: { Authorization: `Bearer ${this.getToken()}` },
+            }).then(r => r.data as ArrayBuffer);
+            return { buf, meta };
+          }
+          if (options.url) {
+            const buf = await axios.get(options.url, { responseType: 'arraybuffer' }).then(r => r.data as ArrayBuffer);
+            return { buf };
+          }
+        } catch (e) {
+          console.warn('Failed to load source binary for conversion', e);
+        }
+        return null;
+      };
+
+      // Client-side first
+      try {
+        const loaded = await loadArrayBuffer();
+        if (loaded?.buf) {
+          const meta = loaded.meta || (options.appFileId ? await this.loadFromAPI(options.appFileId) : null);
+          const lowerName = (meta?.file_name || '').toLowerCase();
+          const target = (options.target || (lowerName.endsWith('.docx') ? 'docx' : lowerName.endsWith('.xlsx') ? 'xlsx' : undefined)) as ('docx'|'xlsx'|undefined);
+
+        if (target === 'docx') {
+            // @ts-ignore mammoth is loaded globally in main.ts
+            const result = await (window as any).mammoth?.convertToHtml({ arrayBuffer: loaded.buf });
+            const html: string = result?.value || '';
+            if (html && (html.length > 0)) {
+              const base: FileData = meta || ({
+                id: options.appFileId,
+                file_type: 'docx',
+                file_name: 'document.docx',
+                title: 'Document',
+                is_folder: false,
+              } as unknown as FileData);
+              const saved = await this.saveToAPI({ ...base, content: html, file_type: 'docx', is_folder: false } as FileData);
+              if (saved) return saved;
+            }
+          } else if (target === 'xlsx') {
+            try {
+              // Prefer community univer import-export package LuckyExcel for full-fidelity import
+              // @ts-ignore - dynamic import; module may not exist until installed
+              const impMod: any = await import(/* @vite-ignore */ '@mertdeveci55/univer-import-export').catch(() => null);
+              if (impMod && impMod.LuckyExcel && typeof impMod.LuckyExcel.transformExcelToUniver === 'function') {
+                const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                const blob = new Blob([loaded.buf], { type: mime });
+                const name = (meta?.file_name && meta.file_name.toLowerCase().endsWith('.xlsx')) ? meta.file_name : (meta?.file_name || 'workbook.xlsx');
+                const file = new File([blob], name, { type: mime });
+                const workbookData: any = await new Promise((resolve, reject) => {
+                  try {
+                    impMod.LuckyExcel.transformExcelToUniver(
+                      file,
+                      (univerData: any) => resolve(univerData),
+                      (error: any) => reject(error)
+                    );
+                  } catch (err) {
+                    reject(err);
+                  }
+                });
+                if (workbookData) {
+                  if (!workbookData.id) workbookData.id = meta?.id || options.appFileId || (Math.random().toString(36).slice(2));
+                  if (!workbookData.name) workbookData.name = meta?.title || 'Sheet';
+                  const base: FileData = meta || ({
+                    id: options.appFileId,
+                    file_type: 'xlsx',
+                    file_name: name,
+                    title: workbookData.name,
+                    is_folder: false,
+                  } as unknown as FileData);
+                  const saved = await this.saveToAPI({ ...base, content: JSON.stringify(workbookData), file_type: 'xlsx', is_folder: false } as FileData);
+                  if (saved) return saved;
+                }
+              } else {
+                throw new Error('univer-import-export (LuckyExcel) not available');
+              }
+            } catch (xlsxErr) {
+              console.warn('Client-side XLSX conversion (LuckyExcel) failed:', xlsxErr);
+            }
+          }
+        }
+      } catch (clientErr) {
+        console.warn('Client-side conversion failed:', clientErr);
+      }
+
+      // Fallback: server-side conversion if available
+      try {
+        const payload: any = {};
+        if (options.appFileId) payload.app_file_id = options.appFileId;
+        if (options.url) payload.url = options.url;
+        if (options.target) payload.target = options.target;
+        const res = await axios.post(CONVERT_ENDPOINT, payload, { headers: { Authorization: `Bearer ${this.getToken()}` } });
+        const data = res.data?.data || res.data;
+        if (data?.id) {
+          const refreshed = this.normalizeDocumentShape(data);
+          refreshed.title = this.computeTitle(data);
+          this.cacheDocument(refreshed);
+          this.updateFiles(refreshed);
+          return refreshed;
+        }
+      } catch (e) {
+        console.warn('Server conversion failed or not available:', (e as any)?.response?.data || e);
+      }
+
+      return null;
+    },
+
     /** Simple upload (legacy). Prefer uploadChunked for large files. Optionally accepts folderId */
     async uploadFile(file: File, onProgress?: (progress: number) => void, folderId?: string | null): Promise<FileData | null> {
       try {
@@ -153,10 +274,17 @@ export const useFileStore = defineStore("files", {
         
         if (response.status === 200 || response.status === 201) {
           const uploadedFile = this.processUploadedFile(response.data.data);
-          
           // Add to store immediately for instant visibility
           this.addFile(uploadedFile);
-          
+
+          // Post-upload conversion for docx/xlsx
+          const ext = (uploadedFile.file_type || (uploadedFile.file_name || '').split('.').pop() || '').toLowerCase();
+          if (['docx', 'xlsx'].includes(ext) && uploadedFile.id) {
+            try {
+              const converted = await this.convertUploadedFile({ appFileId: uploadedFile.id, target: ext as any });
+              if (converted) return converted;
+            } catch {}
+          }
           console.log('File uploaded successfully:', uploadedFile);
           return uploadedFile;
         }
@@ -213,6 +341,14 @@ export const useFileStore = defineStore("files", {
         });
         const saved = this.processUploadedFile(completeRes.data.data);
         this.addFile(saved);
+        // Post-upload conversion for docx/xlsx
+        const ext = (saved.file_type || (saved.file_name || '').split('.').pop() || '').toLowerCase();
+        if (['docx', 'xlsx'].includes(ext) && saved.id) {
+          try {
+            const converted = await this.convertUploadedFile({ appFileId: saved.id, target: ext as any });
+            if (converted) return converted;
+          } catch {}
+        }
         return saved;
       } catch (e) {
         console.error('Chunked upload failed', e);

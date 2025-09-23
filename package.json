@@ -15,6 +15,7 @@
     "@hocuspocus/provider": "^2.15.2",
     "@iconify-prerendered/vue-file-icons": "^0.25.1721244157",
     "@manuscripts/prosemirror-recreate-steps": "^0.1.4",
+    "@mertdeveci55/univer-import-export": "^0.1.51",
     "@radix-icons/vue": "^1.0.0",
     "@tanstack/vue-table": "^8.21.3",
     "@tiptap/core": "^2.12.0",
