@@ -466,13 +466,13 @@ function createNewFile(type: string, template?: string) {
   console.log("template", template);
   if (type === "spreadsheets") {
     if (template?.toLowerCase().includes("blank")) {
-      router.push("/sheets");
+      router.push("/sheets/new");
     } else {
       router.push("/sheets/t/" + template);
     }
   } else if (type === "documents") {
     if (template?.toLowerCase().includes("blank")) {
-      router.push("/docs");
+      router.push("/docs/new");
     } else {
       router.push("/docs/t/" + template);
     }
