@@ -920,7 +920,7 @@ function toggleChat() {
       <div class="flex items-center gap-4">
         <button
           class="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-          @click="router.push('/')"
+          @click="router.back()"
         >
           <ArrowLeft class="h-5 w-5" />
         </button>

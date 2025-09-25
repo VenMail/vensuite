@@ -1132,6 +1132,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                     :file="item"
                     :viewMode="viewMode"
                     :isSelected="selectedFiles.has(item.id || '')"
+                    :showFileTypeTags="true"
                     @select-file="handleSelect"
                     @open-file="openFile"
                     @contextmenu-file="openContextMenu"
@@ -1146,8 +1147,6 @@ function handleEscapeKey(event: KeyboardEvent) {
             <div class="loading-spinner"></div>
             <p class="loading-text">Loading your files...</p>
           </div>
-
-          <!-- Empty state -->
 
           <!-- Empty state -->
           <div v-else class="flex flex-col items-center justify-center py-16 px-6">

@@ -194,7 +194,7 @@
           : 'bg-white border-gray-200'
       ]">
         <div v-if="documentFiles.length > 0">
-          <!-- Select All header for list view -->
+          <!-- Select All header for both grid and list views -->
           <div v-if="viewMode === 'list'" :class="[
             'flex items-center gap-3 px-4 py-3 border-b',
             theme.isDark.value ? 'border-gray-700' : 'border-gray-200'
@@ -210,7 +210,47 @@
               'text-sm font-medium',
               theme.isDark.value ? 'text-gray-300' : 'text-gray-700'
             ]">
-              Select All
+              {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+            </span>
+          </div>
+          
+          <!-- Select All button for grid view -->
+          <div v-else-if="viewMode === 'grid'" :class="[
+            'flex items-center justify-between px-4 py-3 border-b',
+            theme.isDark.value ? 'border-gray-700' : 'border-gray-200'
+          ]">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              @click="toggleSelectAll"
+              :class="[
+                'flex items-center gap-2',
+                theme.isDark.value 
+                  ? 'hover:bg-gray-700' 
+                  : 'hover:bg-gray-100'
+              ]"
+            >
+              <input
+                type="checkbox"
+                :checked="isAllSelected"
+                :indeterminate="isSomeSelected"
+                @click.stop
+                class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
+              />
+              <span :class="[
+                'text-sm font-medium',
+                theme.isDark.value ? 'text-gray-300' : 'text-gray-700'
+              ]">
+                {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+              </span>
+            </Button>
+            
+            <!-- Optional: Show count of total files -->
+            <span :class="[
+              'text-xs',
+              theme.isDark.value ? 'text-gray-400' : 'text-gray-500'
+            ]">
+              {{ documentFiles.length }} document{{ documentFiles.length !== 1 ? 's' : '' }}
             </span>
           </div>
           

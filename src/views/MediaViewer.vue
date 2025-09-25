@@ -28,7 +28,7 @@ const fileUrl = computed(() => file.value?.file_url || '')
 const title = computed(() => file.value?.title || file.value?.file_name || 'File')
 
 function goBack() {
-  router.push('/')
+  router.back()
 }
 
 function goToLogin() {

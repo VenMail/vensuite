@@ -39,6 +39,55 @@
 
     <!-- Main Content -->
     <div class="flex-1 overflow-hidden">
+      <!-- Select All Controls -->
+      <div v-if="filteredMediaFiles.length > 0" class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+        <!-- Select All header for list view -->
+        <div
+          v-if="viewMode === 'list'"
+          class="flex items-center gap-3 px-6 py-3"
+        >
+          <input
+            type="checkbox"
+            :checked="isAllSelected"
+            :indeterminate="isSomeSelected"
+            @change="handleSelectAll(!isAllSelected)"
+            class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+          </span>
+        </div>
+
+        <!-- Select All button for grid view -->
+        <div
+          v-else-if="viewMode === 'grid'"
+          class="flex items-center justify-between px-6 py-3"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            @click="handleSelectAll(!isAllSelected)"
+            class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <input
+              type="checkbox"
+              :checked="isAllSelected"
+              :indeterminate="isSomeSelected"
+              @click.stop
+              class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
+            />
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+            </span>
+          </Button>
+
+          <!-- Show count of total files -->
+          <span class="text-xs text-gray-500 dark:text-gray-400">
+            {{ filteredMediaFiles.length }} media file{{ filteredMediaFiles.length !== 1 ? 's' : '' }}
+          </span>
+        </div>
+      </div>
+
       <MediaGrid
         :media-files="filteredMediaFiles"
         :view-mode="viewMode"
@@ -247,6 +296,16 @@ const totalSize = computed(() => {
   return formatFileSize(bytes)
 })
 
+// Select all functionality - matching the sheets pattern
+const isAllSelected = computed(() => {
+  return filteredMediaFiles.value.length > 0 && 
+         filteredMediaFiles.value.every(file => selectedFiles.value.has(file.id || ''));
+});
+
+const isSomeSelected = computed(() => {
+  return selectedFiles.value.size > 0 && !isAllSelected.value;
+});
+
 // Methods
 const handleSearch = (query: string) => {
   searchQuery.value = query
@@ -265,13 +324,30 @@ const handleViewModeChange = (mode: 'grid' | 'list') => {
   viewMode.value = mode
 }
 
-const handleSelect = (id: string | undefined) => {
+// Updated handleSelect to match sheets pattern
+const handleSelect = (id: string | undefined, event?: MouseEvent) => {
   if (!id) return
   
-  if (selectedFiles.value.has(id)) {
-    selectedFiles.value.delete(id)
-  } else {
-    selectedFiles.value.add(id)
+  // If Ctrl/Cmd is held, toggle selection of this item
+  if (event?.ctrlKey || event?.metaKey) {
+    if (selectedFiles.value.has(id)) {
+      selectedFiles.value.delete(id);
+    } else {
+      selectedFiles.value.add(id);
+    }
+  }
+  // If Shift is held, select range (basic implementation for now)
+  else if (event?.shiftKey && selectedFiles.value.size > 0) {
+    // For now, just add to selection - you could implement range selection later
+    selectedFiles.value.add(id);
+  }
+  // Normal click - toggle individual selection (allows building selection)
+  else {
+    if (selectedFiles.value.has(id)) {
+      selectedFiles.value.delete(id);
+    } else {
+      selectedFiles.value.add(id);
+    }
   }
 }
 
@@ -419,4 +495,4 @@ onMounted(async () => {
     isLoading.value = false
   }
 })
-</script> 
+</script>
