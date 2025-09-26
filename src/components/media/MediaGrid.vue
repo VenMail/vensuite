@@ -194,8 +194,8 @@ const props = defineProps({
     required: true
   },
   viewMode: {
-    type: String as PropType<'grid' | 'list'>,
-    default: 'grid'
+    type: String as PropType<'thumbnail' | 'grid' | 'list'>, // Add 'thumbnail' here
+    required: true
   },
   selectedFiles: {
     type: Set as PropType<Set<string>>,

@@ -84,6 +84,17 @@
           size="sm"
           :class="cn(
             'px-3 py-2',
+            isThumbnailMode ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
+          )"
+          @click="$emit('view-mode', 'thumbnail')"
+        >
+          <LayoutGrid class="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          :class="cn(
+            'px-3 py-2',
             isGridMode ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
           )"
           @click="$emit('view-mode', 'grid')"
@@ -135,6 +146,7 @@ import {
   ChevronDown,
   ArrowUpDown,
   Grid,
+  LayoutGrid,
   List,
   Upload,
   Download,
@@ -166,8 +178,8 @@ const props = defineProps({
     default: 0
   },
   viewMode: {
-    type: String as PropType<'grid' | 'list'>,
-    default: 'grid'
+    type: String as PropType<'thumbnail' | 'grid' | 'list'>,
+    default: 'thumbnail'
   }
 })
 
@@ -175,7 +187,7 @@ const emit = defineEmits<{
   search: [query: string]
   filter: [filter: string]
   sort: [sort: string]
-  'view-mode': [mode: 'grid' | 'list']
+  'view-mode': [mode: 'thumbnail' | 'grid' | 'list']
   upload: []
   'bulk-download': []
   'bulk-delete': []
@@ -187,6 +199,7 @@ const selectedSort = ref('name')
 
 // Computed properties to ensure linter recognizes prop usage
 const hasSelectedItems = computed(() => props.selectedCount > 0)
+const isThumbnailMode = computed(() => props.viewMode === 'thumbnail')
 const isGridMode = computed(() => props.viewMode === 'grid')
 const isListMode = computed(() => props.viewMode === 'list')
 
@@ -199,4 +212,4 @@ const handleSortChange = (sort: string) => {
   selectedSort.value = sort
   emit('sort', sort)
 }
-</script> 
+</script>

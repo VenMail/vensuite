@@ -58,9 +58,9 @@
           </span>
         </div>
 
-        <!-- Select All button for grid view -->
+        <!-- Select All button for grid and thumbnail views -->
         <div
-          v-else-if="viewMode === 'grid'"
+          v-else-if="viewMode === 'grid' || viewMode === 'thumbnail'"
           class="flex items-center justify-between px-6 py-3"
         >
           <Button
@@ -201,7 +201,7 @@ const { isMediaFile, isViewable, isImage, isVideo, isAudio, formatFileSize } = u
 
 // State
 const selectedFiles = ref<Set<string>>(new Set())
-const viewMode = ref<'grid' | 'list'>('grid')
+const viewMode = ref<'thumbnail' | 'grid' | 'list'>('thumbnail')
 const gridSize = ref<'small' | 'medium' | 'large'>('medium')
 const searchQuery = ref('')
 const currentFilter = ref('all')
@@ -320,7 +320,7 @@ const handleSort = (sort: string) => {
   currentSort.value = sort
 }
 
-const handleViewModeChange = (mode: 'grid' | 'list') => {
+const handleViewModeChange = (mode: 'thumbnail' | 'grid' | 'list') => {
   viewMode.value = mode
 }
 

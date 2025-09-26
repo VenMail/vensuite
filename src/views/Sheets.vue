@@ -1,10 +1,12 @@
 <template>
-  <div :class="[
-    'h-full text-gray-900 transition-colors duration-200',
-    theme.isDark.value
-      ? 'bg-gradient-to-br from-gray-900 to-gray-800'
-      : 'bg-gradient-to-br from-gray-50 to-gray-100'
-  ]">
+  <div
+    :class="[
+      'h-full text-gray-900 transition-colors duration-200',
+      theme.isDark.value
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800'
+        : 'bg-gradient-to-br from-gray-50 to-gray-100',
+    ]"
+  >
     <!-- Loading bar -->
     <div v-if="fileStore.isSyncing" class="loading-bar">
       <div class="loading-progress"></div>
@@ -13,68 +15,85 @@
     <!-- File browser -->
     <div class="h-full p-4 sm:p-6 overflow-hidden">
       <!-- Header with responsive layout -->
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6">
+      <div
+        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6"
+      >
         <div class="flex items-center space-x-4">
-          <h2 :class="[
-            'text-2xl font-semibold',
-            theme.isDark.value ? 'text-gray-100' : 'text-gray-800'
-          ]">
+          <h2
+            :class="[
+              'text-2xl font-semibold',
+              theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
+            ]"
+          >
             Sheets
           </h2>
           <div class="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               :class="[
                 'relative group rounded-full transition-all duration-200',
-                theme.isDark.value 
-                  ? 'hover:bg-gray-700' 
-                  : 'hover:bg-gray-100'
+                theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
               ]"
-              @click="createNewFolder">
+              @click="createNewFolder"
+            >
               <FolderPlusIcon class="h-5 w-5 text-primary-600" />
             </Button>
-            <Button variant="ghost" size="icon"
+            <Button
+              variant="ghost"
+              size="icon"
               :class="[
                 'relative group rounded-full transition-all duration-200',
-                theme.isDark.value 
-                  ? 'hover:bg-gray-700' 
-                  : 'hover:bg-gray-100'
+                theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
               ]"
-              @click="openUploadDialog">
+              @click="openUploadDialog"
+            >
               <Upload class="h-5 w-5 text-primary-600" />
             </Button>
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon"
+                <Button
+                  variant="ghost"
+                  size="icon"
                   :class="[
                     'relative group rounded-full transition-all duration-200',
-                    theme.isDark.value 
-                      ? 'hover:bg-gray-700' 
-                      : 'hover:bg-gray-100'
-                  ]">
+                    theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
+                  ]"
+                >
                   <Plus class="h-5 w-5 text-primary-600" />
                 </Button>
               </DialogTrigger>
-              <DialogContent :class="[
-                'rounded-lg shadow-2xl border',
-                theme.isDark.value
-                  ? 'bg-gray-800 border-gray-700'
-                  : 'bg-white border-gray-200'
-              ]">
+              <DialogContent
+                :class="[
+                  'rounded-lg shadow-2xl border',
+                  theme.isDark.value
+                    ? 'bg-gray-800 border-gray-700'
+                    : 'bg-white border-gray-200',
+                ]"
+              >
                 <DialogHeader>
-                  <DialogTitle :class="[
-                    'text-xl font-semibold',
-                    theme.isDark.value ? 'text-gray-100' : 'text-gray-800'
-                  ]">
+                  <DialogTitle
+                    :class="[
+                      'text-xl font-semibold',
+                      theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
+                    ]"
+                  >
                     Create New Spreadsheet
                   </DialogTitle>
                 </DialogHeader>
                 <div class="grid grid-cols-2 gap-4 p-2">
-                  <Button v-for="template in spreadsheetTemplates" :key="template.name" variant="outline" :class="[
-                    'h-24 flex flex-col items-center justify-center transition-all',
-                    theme.isDark.value
-                      ? 'hover:bg-gray-700 hover:border-primary-400'
-                      : 'hover:bg-gray-50 hover:border-primary-400'
-                  ]" @click="createNewSpreadsheet(template.name)">
+                  <Button
+                    v-for="template in spreadsheetTemplates"
+                    :key="template.name"
+                    variant="outline"
+                    :class="[
+                      'h-24 flex flex-col items-center justify-center transition-all',
+                      theme.isDark.value
+                        ? 'hover:bg-gray-700 hover:border-primary-400'
+                        : 'hover:bg-gray-50 hover:border-primary-400',
+                    ]"
+                    @click="createNewSpreadsheet(template.name)"
+                  >
                     <component :is="template.icon" class="w-8 h-8 text-primary-600" />
                     <span class="mt-2 text-sm font-medium">{{ template.name }}</span>
                   </Button>
@@ -85,25 +104,32 @@
         </div>
 
         <!-- Right controls with responsive layout -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+        <div
+          class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto"
+        >
           <template v-if="selectedFiles.size > 0">
             <!-- Selection info -->
             <div class="flex items-center space-x-2">
-              <span :class="[
-                'text-sm font-medium',
-                theme.isDark.value ? 'text-gray-300' : 'text-gray-700'
-              ]">
+              <span
+                :class="[
+                  'text-sm font-medium',
+                  theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
+                ]"
+              >
                 {{ selectedFiles.size }} selected
               </span>
-              <div :class="[
-                'h-4 w-px',
-                theme.isDark.value ? 'bg-gray-600' : 'bg-gray-300'
-              ]"></div>
+              <div
+                :class="['h-4 w-px', theme.isDark.value ? 'bg-gray-600' : 'bg-gray-300']"
+              ></div>
             </div>
             <!-- Selection actions with responsive wrapping -->
             <div class="flex items-center flex-wrap gap-2">
-              <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm"
-                @click="openFile(Array.from(selectedFiles)[0])">
+              <Button
+                v-if="selectedFiles.size === 1"
+                variant="ghost"
+                size="sm"
+                @click="openFile(Array.from(selectedFiles)[0])"
+              >
                 <FolderOpen class="h-4 w-4 mr-2" />
                 <span class="hidden sm:inline">Open</span>
               </Button>
@@ -111,7 +137,12 @@
                 <Trash2 class="h-4 w-4 mr-2" />
                 <span class="hidden sm:inline">Delete</span>
               </Button>
-              <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm" @click="handleRename">
+              <Button
+                v-if="selectedFiles.size === 1"
+                variant="ghost"
+                size="sm"
+                @click="handleRename"
+              >
                 <Edit class="h-4 w-4 mr-2" />
                 <span class="hidden sm:inline">Rename</span>
               </Button>
@@ -120,9 +151,19 @@
                 <span class="hidden sm:inline">Download</span>
               </Button>
               <Button variant="ghost" size="sm" @click="selectedFiles.clear()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </Button>
             </div>
@@ -132,13 +173,17 @@
               <!-- Sort dropdown -->
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="[
-                    'flex-1 sm:flex-initial',
-                    theme.isDark.value
-                      ? 'border-gray-600 text-gray-100'
-                      : 'border-gray-300'
-                  ]">
-                    <span class="hidden sm:inline">Sort by: </span>{{ sortBy === "name" ? "Name" : "Date" }}
+                  <Button
+                    variant="outline"
+                    :class="[
+                      'flex-1 sm:flex-initial',
+                      theme.isDark.value
+                        ? 'border-gray-600 text-gray-100'
+                        : 'border-gray-300',
+                    ]"
+                  >
+                    <span class="hidden sm:inline">Sort by: </span
+                    >{{ sortBy === "name" ? "Name" : "Date" }}
                     <ChevronDown class="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -151,24 +196,27 @@
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              
+
               <!-- Inline View Toggle (matching media toolbar style) -->
-              <div :class="[
-                'flex items-center rounded-lg p-1 shrink-0',
-                theme.isDark.value ? 'bg-gray-800' : 'bg-gray-100'
-              ]">
+              <div
+                :class="[
+                  'flex items-center rounded-lg p-1',
+                  theme.isDark.value ? 'bg-gray-800' : 'bg-gray-100',
+                ]"
+              >
                 <Button
                   variant="ghost"
                   size="sm"
                   :class="[
-                    'px-3 py-2',
-                    viewMode === 'grid' 
-                      ? theme.isDark.value 
-                        ? 'bg-gray-700 shadow-sm' 
+                    'px-2 py-2',
+                    viewMode === 'grid'
+                      ? theme.isDark.value
+                        ? 'bg-gray-700 shadow-sm'
                         : 'bg-white shadow-sm'
-                      : ''
+                      : '',
                   ]"
                   @click="viewMode = 'grid'"
+                  title="Grid View"
                 >
                   <Grid class="h-4 w-4" />
                 </Button>
@@ -176,16 +224,44 @@
                   variant="ghost"
                   size="sm"
                   :class="[
-                    'px-3 py-2',
-                    viewMode === 'list' 
-                      ? theme.isDark.value 
-                        ? 'bg-gray-700 shadow-sm' 
+                    'px-2 py-2',
+                    viewMode === 'list'
+                      ? theme.isDark.value
+                        ? 'bg-gray-700 shadow-sm'
                         : 'bg-white shadow-sm'
-                      : ''
+                      : '',
                   ]"
                   @click="viewMode = 'list'"
+                  title="List View"
                 >
                   <List class="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  :class="[
+                    'px-2 py-2',
+                    viewMode === 'thumbnail'
+                      ? theme.isDark.value
+                        ? 'bg-gray-700 shadow-sm'
+                        : 'bg-white shadow-sm'
+                      : '',
+                  ]"
+                  @click="viewMode = 'thumbnail'"
+                  title="Thumbnail View"
+                >
+                  <svg
+                    class="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                  </svg>
                 </Button>
               </div>
             </div>
@@ -194,18 +270,21 @@
       </div>
 
       <!-- Content area -->
-      <ScrollArea :class="[
-        'h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)] rounded-lg shadow-sm border',
-        theme.isDark.value
-          ? 'bg-gray-800 border-gray-700'
-          : 'bg-white border-gray-200'
-      ]">
+      <ScrollArea
+        :class="[
+          'h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)] rounded-lg shadow-sm border',
+          theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
+        ]"
+      >
         <div v-if="spreadsheetFiles.length > 0">
-          <!-- Select All header for both grid and list views -->
-          <div v-if="viewMode === 'list'" :class="[
-            'flex items-center gap-3 px-4 py-3 border-b',
-            theme.isDark.value ? 'border-gray-700' : 'border-gray-200'
-          ]">
+          <!-- Select All header for list view -->
+          <div
+            v-if="viewMode === 'list'"
+            :class="[
+              'flex items-center gap-3 px-4 py-3 border-b',
+              theme.isDark.value ? 'border-gray-700' : 'border-gray-200',
+            ]"
+          >
             <input
               type="checkbox"
               :checked="isAllSelected"
@@ -213,28 +292,31 @@
               @change="toggleSelectAll"
               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
-            <span :class="[
-              'text-sm font-medium',
-              theme.isDark.value ? 'text-gray-300' : 'text-gray-700'
-            ]">
-              {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+            <span
+              :class="[
+                'text-sm font-medium',
+                theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
+              ]"
+            >
+              {{ isAllSelected ? "Deselect All" : "Select All" }}
             </span>
           </div>
-          
+
           <!-- Select All button for grid view -->
-          <div v-else-if="viewMode === 'grid'" :class="[
-            'flex items-center justify-between px-4 py-3 border-b',
-            theme.isDark.value ? 'border-gray-700' : 'border-gray-200'
-          ]">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+          <div
+            v-else-if="viewMode === 'grid'"
+            :class="[
+              'flex items-center justify-between px-4 py-3 border-b',
+              theme.isDark.value ? 'border-gray-700' : 'border-gray-200',
+            ]"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
               @click="toggleSelectAll"
               :class="[
                 'flex items-center gap-2',
-                theme.isDark.value 
-                  ? 'hover:bg-gray-700' 
-                  : 'hover:bg-gray-100'
+                theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
               ]"
             >
               <input
@@ -244,31 +326,46 @@
                 @click.stop
                 class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
               />
-              <span :class="[
-                'text-sm font-medium',
-                theme.isDark.value ? 'text-gray-300' : 'text-gray-700'
-              ]">
-                {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+              <span
+                :class="[
+                  'text-sm font-medium',
+                  theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
+                ]"
+              >
+                {{ isAllSelected ? "Deselect All" : "Select All" }}
               </span>
             </Button>
-            
+
             <!-- Optional: Show count of total files -->
-            <span :class="[
-              'text-xs',
-              theme.isDark.value ? 'text-gray-400' : 'text-gray-500'
-            ]">
-              {{ spreadsheetFiles.length }} spreadsheet{{ spreadsheetFiles.length !== 1 ? 's' : '' }}
+            <span
+              :class="['text-xs', theme.isDark.value ? 'text-gray-400' : 'text-gray-500']"
+            >
+              {{ spreadsheetFiles.length }} spreadsheet{{
+                spreadsheetFiles.length !== 1 ? "s" : ""
+              }}
             </span>
           </div>
-          
+
           <div class="p-2 sm:p-4">
-            <div :class="{
-              'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4': viewMode === 'grid',
-              'space-y-2': viewMode === 'list',
-            }">
-              <FileItem v-for="item in sortedSpreadsheets" :key="item.id" :file="item" :viewMode="viewMode"
+            <div
+              :class="{
+                'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4':
+                  viewMode === 'grid',
+                'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2':
+                  viewMode === 'thumbnail',
+                'space-y-1': viewMode === 'list',
+              }"
+            >
+              <FileItem
+                v-for="item in sortedSpreadsheets"
+                :key="item.id"
+                :file="item"
+                :viewMode="viewMode"
                 :isSelected="selectedFiles.has(item.id || '')"
-                @click.stop="handleSelect(item.id, $event)" @select-file="handleSelect" @open-file="openFile" />
+                @click.stop="handleSelect(item.id, $event)"
+                @select-file="handleSelect"
+                @open-file="openFile"
+              />
             </div>
           </div>
         </div>
@@ -283,11 +380,18 @@
             Get started by creating a new spreadsheet or uploading an existing one.
           </p>
           <div class="empty-actions">
-            <Button @click="createNewSpreadsheet('Blank Spreadsheet')" class="bg-primary-600 hover:bg-primary-700">
+            <Button
+              @click="createNewSpreadsheet('Blank Spreadsheet')"
+              class="bg-primary-600 hover:bg-primary-700"
+            >
               <Plus class="mr-2 h-4 w-4" />
               New Spreadsheet
             </Button>
-            <Button variant="outline" class="border-gray-300 hover:border-gray-400" @click="openUploadDialog">
+            <Button
+              variant="outline"
+              class="border-gray-300 hover:border-gray-400"
+              @click="openUploadDialog"
+            >
               <Upload class="mr-2 h-4 w-4" />
               Upload Spreadsheet
             </Button>
@@ -301,7 +405,7 @@
     v-if="isUploadDialogOpen"
     @close="isUploadDialogOpen = false"
     @upload="handleUploadComplete"
-    :file-type-filter="'spreadsheets'" 
+    :file-type-filter="'spreadsheets'"
   />
 </template>
 
@@ -344,9 +448,9 @@ import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
 
 const router = useRouter();
 const fileStore = useFileStore();
-const theme = inject('theme') as { isDark: { value: boolean } };
+const theme = inject("theme") as { isDark: { value: boolean } };
 
-const viewMode = ref<"grid" | "list">("grid");
+const viewMode = ref<"grid" | "list" | "thumbnail">("grid");
 const selectedFiles = ref<Set<string>>(new Set());
 const sortBy = ref("name");
 const isUploadDialogOpen = ref(false);
@@ -360,10 +464,10 @@ const spreadsheetTemplates = [
 
 // Filter spreadsheets (xlsx, xls, csv, etc.)
 const spreadsheetFiles = computed(() => {
-  return fileStore.allFiles.filter(file => {
+  return fileStore.allFiles.filter((file) => {
     if (file.is_folder) return false;
-    
-    const spreadsheetTypes = ['xlsx', 'xls', 'csv', 'ods', 'tsv', 'xlsm', 'xlsb'];
+
+    const spreadsheetTypes = ["xlsx", "xls", "csv", "ods", "tsv", "xlsm", "xlsb"];
     return file.file_type && spreadsheetTypes.includes(file.file_type.toLowerCase());
   });
 });
@@ -383,8 +487,10 @@ const sortedSpreadsheets = computed(() => {
 
 // Select all functionality
 const isAllSelected = computed(() => {
-  return spreadsheetFiles.value.length > 0 && 
-         spreadsheetFiles.value.every(file => selectedFiles.value.has(file.id || ''));
+  return (
+    spreadsheetFiles.value.length > 0 &&
+    spreadsheetFiles.value.every((file) => selectedFiles.value.has(file.id || ""))
+  );
 });
 
 const isSomeSelected = computed(() => {
@@ -395,7 +501,9 @@ function toggleSelectAll() {
   if (isAllSelected.value) {
     selectedFiles.value.clear();
   } else {
-    selectedFiles.value = new Set(spreadsheetFiles.value.map(file => file.id || '').filter(Boolean));
+    selectedFiles.value = new Set(
+      spreadsheetFiles.value.map((file) => file.id || "").filter(Boolean)
+    );
   }
 }
 
@@ -417,8 +525,10 @@ function openUploadDialog() {
 }
 
 function handleUploadComplete(files: any[]) {
-  console.log('Upload completed:', files);
-  toast.success(`Successfully uploaded ${files.length} file${files.length !== 1 ? 's' : ''}`);
+  console.log("Upload completed:", files);
+  toast.success(
+    `Successfully uploaded ${files.length} file${files.length !== 1 ? "s" : ""}`
+  );
 }
 
 function handleSelect(id: string | undefined, event?: MouseEvent) {
@@ -453,25 +563,33 @@ function openFile(id: string) {
 
 async function handleBulkDelete() {
   try {
-    const promises = Array.from(selectedFiles.value).map(id => fileStore.deleteFile(id));
+    const promises = Array.from(selectedFiles.value).map((id) =>
+      fileStore.deleteFile(id)
+    );
     await Promise.all(promises);
     selectedFiles.value.clear();
-    toast.success(`Successfully deleted ${promises.length} spreadsheet${promises.length > 1 ? 's' : ''}`);
+    toast.success(
+      `Successfully deleted ${promises.length} spreadsheet${
+        promises.length > 1 ? "s" : ""
+      }`
+    );
   } catch (error) {
-    console.error('Error deleting spreadsheets:', error);
-    toast.error('Failed to delete some spreadsheets');
+    console.error("Error deleting spreadsheets:", error);
+    toast.error("Failed to delete some spreadsheets");
   }
 }
 
 function handleBulkDownload() {
-  console.log('Download spreadsheets:', Array.from(selectedFiles.value));
+  console.log("Download spreadsheets:", Array.from(selectedFiles.value));
 }
 
 function handleRename() {
   if (selectedFiles.value.size === 1) {
-    const fileItemElement = document.getElementById(`fileItem-${Array.from(selectedFiles.value)[0]}`);
+    const fileItemElement = document.getElementById(
+      `fileItem-${Array.from(selectedFiles.value)[0]}`
+    );
     if (fileItemElement) {
-      const renameEvent = new CustomEvent('start-rename');
+      const renameEvent = new CustomEvent("start-rename");
       fileItemElement.dispatchEvent(renameEvent);
     }
   }
@@ -479,7 +597,7 @@ function handleRename() {
 
 onMounted(async () => {
   document.title = "Sheets";
-  
+
   if (fileStore.allFiles.length === 0) {
     await fileStore.loadDocuments();
   }

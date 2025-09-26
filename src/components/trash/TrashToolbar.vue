@@ -99,9 +99,20 @@
           size="sm"
           :class="cn(
             'px-3 py-2',
+            viewMode === 'thumbnail' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
+          )"
+          @click="$emit('update:viewMode', 'thumbnail')"
+        >
+          <Grid class="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          :class="cn(
+            'px-3 py-2',
             viewMode === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
           )"
-          @click="toggleViewMode"
+          @click="$emit('update:viewMode', 'grid')"
         >
           <LayoutGrid class="h-4 w-4" />
         </Button>
@@ -112,7 +123,7 @@
             'px-3 py-2',
             viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
           )"
-          @click="toggleViewMode"
+          @click="$emit('update:viewMode', 'list')"
         >
           <LayoutList class="h-4 w-4" />
         </Button>
@@ -146,7 +157,7 @@
         </DropdownMenu>
       </div>
 
-      <!-- Empty Bin Button (replaces Upload button position) -->
+      <!-- Empty Bin Button -->
       <Button
         variant="outline"
         class="shrink-0 text-white bg-red-600 hover:bg-red-700 dark:text-white dark:bg-red-600 dark:hover:bg-red-700"
@@ -170,6 +181,7 @@ import {
   FileType,
   FolderIcon,
   ArrowUpDown,
+  Grid,
   LayoutGrid,
   LayoutList,
   RefreshCw,
@@ -194,7 +206,7 @@ const props = defineProps<{
   searchQuery: string;
   filters: { type: string; source: string };
   sortValue: string;
-  viewMode: "list" | "grid";
+  viewMode: "thumbnail" | "list" | "grid";
   hasSelection: boolean;
   selectedCount: number;
   allTypes: string[];
@@ -207,7 +219,7 @@ const emit = defineEmits<{
   'update:searchQuery': [value: string]
   'update:filters': [value: { type: string; source: string }]
   'update:sortValue': [value: string]
-  'update:viewMode': [value: "list" | "grid"]
+  'update:viewMode': [value: "thumbnail" | "list" | "grid"]
   clearSelection: []
   bulkAction: [action: "restore" | "delete"]
   emptyBin: []
@@ -223,9 +235,5 @@ const updateFilters = (newFilters: { type: string; source: string }) => {
 
 const updateSortValue = (value: string) => {
   emit('update:sortValue', value);
-};
-
-const toggleViewMode = () => {
-  emit("update:viewMode", props.viewMode === "list" ? "grid" : "list");
 };
 </script>

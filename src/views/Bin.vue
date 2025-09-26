@@ -74,10 +74,176 @@
         </Button>
       </div>
 
-      <!-- Content Grid/List -->
+      <!-- Content Views -->
       <div v-else class="h-full overflow-auto">
+        <!-- Thumbnail View -->
+        <div v-if="viewMode === 'thumbnail'" class="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div
+            v-for="item in filteredAndSortedItems"
+            :key="item.id"
+            class="relative group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer"
+            @click="openDetails(item)"
+          >
+            <!-- Top Controls -->
+            <div class="flex items-center justify-between mb-3">
+              <Checkbox
+                :checked="selectedItems.has(item.id)"
+                @update:checked="() => toggleSelection(item.id)"
+                @click.stop
+                class="bg-white/80 backdrop-blur-sm"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 bg-white/90 backdrop-blur-sm"
+                    @click.stop
+                  >
+                    <MoreVertical class="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem @click.stop="restoreItem(item.id)" :disabled="loading">
+                    <RefreshCw class="h-4 w-4 mr-2" />
+                    Restore
+                  </DropdownMenuItem>
+                  <DropdownMenuItem v-if="!item.is_folder && item.file_url" @click.stop="previewItem(item)">
+                    <Eye class="h-4 w-4 mr-2" />
+                    Preview
+                  </DropdownMenuItem>
+                  <DropdownMenuItem v-if="!item.is_folder && item.file_url" @click.stop="downloadItem(item)">
+                    <Download class="h-4 w-4 mr-2" />
+                    Download
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    @click.stop="deletePermanently(item.id)"
+                    class="text-destructive focus:text-destructive"
+                    :disabled="loading"
+                  >
+                    <AlertCircle class="h-4 w-4 mr-2" />
+                    Delete Permanently
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <!-- File Icon and Title -->
+            <div class="flex flex-col items-center text-center mb-4">
+              <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-lg flex items-center justify-center mb-3">
+                <FolderIcon v-if="item.is_folder" class="h-8 w-8 text-blue-500" />
+                <FileIcon v-else class="h-8 w-8 text-gray-500" />
+              </div>
+              <h3 class="font-medium text-gray-900 dark:text-gray-100 text-sm truncate w-full" :title="item.title">
+                {{ item.title }}
+              </h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {{ item.file_type ?? (item.is_folder ? "Folder" : "Unknown") }}
+              </p>
+            </div>
+
+            <!-- File Info -->
+            <div class="space-y-2 text-xs text-gray-500 dark:text-gray-400">
+              <div class="flex justify-between items-center">
+                <span>Size:</span>
+                <span class="font-medium">{{ item.file_size ? formatFileSize(item.file_size) : "N/A" }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span>Deleted:</span>
+                <span class="font-medium">{{ formatDate(item.updated_at) }}</span>
+              </div>
+              <div class="flex justify-center">
+                <Badge variant="outline" class="text-xs">
+                  {{ item.source }}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid View -->
+        <div v-else-if="viewMode === 'grid'" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div
+            v-for="item in filteredAndSortedItems"
+            :key="item.id"
+            class="relative group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+            @click="openDetails(item)"
+          >
+            <div class="flex items-start justify-between mb-3">
+              <Checkbox
+                :checked="selectedItems.has(item.id)"
+                @update:checked="() => toggleSelection(item.id)"
+                @click.stop
+                class="mt-0.5"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                    @click.stop
+                  >
+                    <MoreVertical class="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem @click.stop="restoreItem(item.id)" :disabled="loading">
+                    <RefreshCw class="h-4 w-4 mr-2" />
+                    Restore
+                  </DropdownMenuItem>
+                  <DropdownMenuItem v-if="!item.is_folder && item.file_url" @click.stop="previewItem(item)">
+                    <Eye class="h-4 w-4 mr-2" />
+                    Preview
+                  </DropdownMenuItem>
+                  <DropdownMenuItem v-if="!item.is_folder && item.file_url" @click.stop="downloadItem(item)">
+                    <Download class="h-4 w-4 mr-2" />
+                    Download
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    @click.stop="deletePermanently(item.id)"
+                    class="text-destructive focus:text-destructive"
+                    :disabled="loading"
+                  >
+                    <AlertCircle class="h-4 w-4 mr-2" />
+                    Delete Permanently
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div class="flex items-center mb-2">
+              <FolderIcon v-if="item.is_folder" class="h-8 w-8 text-gray-400 mr-3 flex-shrink-0" />
+              <FileIcon v-else class="h-8 w-8 text-gray-400 mr-3 flex-shrink-0" />
+              <div class="min-w-0 flex-1">
+                <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">
+                  {{ item.title }}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                  {{ item.file_type ?? (item.is_folder ? "Folder" : "Unknown") }}
+                </p>
+              </div>
+            </div>
+
+            <div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
+              <div class="flex justify-between">
+                <span>Source:</span>
+                <span>{{ item.source }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Size:</span>
+                <span>{{ item.file_size ? formatFileSize(item.file_size) : "N/A" }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Deleted:</span>
+                <span>{{ formatDate(item.updated_at) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- List View (Table) -->
-        <div v-if="viewMode === 'list'" class="overflow-x-auto">
+        <div v-else-if="viewMode === 'list'" class="overflow-x-auto">
           <table class="w-full">
             <thead class="sticky top-0 bg-white dark:bg-gray-900 z-10">
               <tr class="border-b border-gray-200 dark:border-gray-800">
@@ -167,92 +333,10 @@
             </tbody>
           </table>
         </div>
-
-        <!-- Grid View -->
-        <div v-else class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <div
-            v-for="item in filteredAndSortedItems"
-            :key="item.id"
-            class="relative group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-            @click="openDetails(item)"
-          >
-            <div class="flex items-start justify-between mb-3">
-              <Checkbox
-                :checked="selectedItems.has(item.id)"
-                @update:checked="() => toggleSelection(item.id)"
-                @click.stop
-                class="mt-0.5"
-              />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-                    @click.stop
-                  >
-                    <MoreVertical class="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem @click.stop="restoreItem(item.id)" :disabled="loading">
-                    <RefreshCw class="h-4 w-4 mr-2" />
-                    Restore
-                  </DropdownMenuItem>
-                  <DropdownMenuItem v-if="!item.is_folder && item.file_url" @click.stop="previewItem(item)">
-                    <Eye class="h-4 w-4 mr-2" />
-                    Preview
-                  </DropdownMenuItem>
-                  <DropdownMenuItem v-if="!item.is_folder && item.file_url" @click.stop="downloadItem(item)">
-                    <Download class="h-4 w-4 mr-2" />
-                    Download
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    @click.stop="deletePermanently(item.id)"
-                    class="text-destructive focus:text-destructive"
-                    :disabled="loading"
-                  >
-                    <AlertCircle class="h-4 w-4 mr-2" />
-                    Delete Permanently
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <div class="flex items-center mb-2">
-              <FolderIcon v-if="item.is_folder" class="h-8 w-8 text-gray-400 mr-3 flex-shrink-0" />
-              <FileIcon v-else class="h-8 w-8 text-gray-400 mr-3 flex-shrink-0" />
-              <div class="min-w-0 flex-1">
-                <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {{ item.title }}
-                </h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                  {{ item.file_type ?? (item.is_folder ? "Folder" : "Unknown") }}
-                </p>
-              </div>
-            </div>
-
-            <div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
-              <div class="flex justify-between">
-                <span>Source:</span>
-                <span>{{ item.source }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span>Size:</span>
-                <span>{{ item.file_size ? formatFileSize(item.file_size) : "N/A" }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span>Deleted:</span>
-                <span>{{ formatDate(item.updated_at) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- Dialogs remain the same as your original implementation -->
-    <!-- Item Details Dialog -->
+    <!-- Dialogs -->
     <Dialog v-model:open="showDetailsDialog">
       <DialogContent>
         <DialogHeader>
@@ -382,7 +466,6 @@ interface DeletedItem {
   file_name?: string;
   source: 'Files' | 'Forms';
   file_size?: string;
-  deletedAt: string;
   updated_at: string;
   is_folder: boolean;
   folder_id?: string;
@@ -392,7 +475,7 @@ interface DeletedItem {
 
 const deletedItems = ref<DeletedItem[]>([]);
 const loading = ref(false);
-const viewMode = ref<"list" | "grid">("list");
+const viewMode = ref<"thumbnail" | "list" | "grid">("thumbnail");
 const selectedItems = ref<Set<string>>(new Set());
 const searchQuery = ref("");
 const filters = ref<{ type: string; source: string }>({ type: "all", source: "all" });
@@ -485,78 +568,7 @@ const handleBulkAction = (action: "restore" | "delete") => {
   showBulkConfirm.value = true;
 };
 
-// API Helper Functions
-async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    ...(authToken.value && { 'Authorization': `Bearer ${authToken.value}` }),
-    ...options.headers,
-  };
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    // Handle different error types gracefully
-    let errorMessage = 'Unknown error';
-    try {
-      const errorText = await response.text();
-      errorMessage = errorText || `HTTP ${response.status}`;
-    } catch {
-      errorMessage = `HTTP ${response.status}`;
-    }
-    
-    const error = new Error(errorMessage);
-    (error as any).status = response.status;
-    throw error;
-  }
-
-  return response.json();
-}
-
-async function fetchTrashItems() {
-  loading.value = true;
-  try {
-    // Get all user files to find trash folder
-    const userFiles = await apiRequest('');
-    
-    // Find the trash folder (marked with mime_type: 'application/vnd.trash' or title: 'Trash')
-    const trashFolder = userFiles.data?.find((file: any) => 
-      file.mime_type === 'application/vnd.trash' || file.title === 'Trash'
-    );
-    
-    if (trashFolder) {
-      // Get contents of trash folder using the show endpoint
-      const trashContents = await apiRequest(`/${trashFolder.id}`);
-      deletedItems.value = (trashContents.data || []).map((item: any) => ({
-        ...item,
-        deletedAt: formatDate(item.updated_at),
-        source: item.is_folder ? 'Forms' : 'Files', // Adjust based on your logic
-      }));
-    } else {
-      // No trash folder exists yet, so no items
-      deletedItems.value = [];
-    }
-  } catch (error: any) {
-    // Handle 404 gracefully - means no files exist yet or API not ready
-    if (error.status === 404) {
-      deletedItems.value = [];
-      // Don't show error toast for 404 - just means no trash folder exists yet
-      console.info('No trash folder found - trash is empty');
-    } else {
-      console.error('Failed to fetch trash items:', error);
-      toast.error('Failed to load trash items');
-      deletedItems.value = [];
-    }
-  } finally {
-    loading.value = false;
-  }
-}
-
+// Utility functions
 function formatDate(dateString: string): string {
   return new Date(dateString).toISOString().split('T')[0];
 }
@@ -596,17 +608,51 @@ function openDetails(item: DeletedItem) {
   showDetailsDialog.value = true;
 }
 
+async function fetchTrashItems() {
+  try {
+    loading.value = true;
+    const response = await fetch(`${API_BASE_URL}/trash`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authToken.value}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    deletedItems.value = (data.data || []).map((item: DeletedItem) => ({
+      ...item,
+      source: 'Files' as const,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch trash items:', error);
+    toast.error('Failed to load trash items');
+  } finally {
+    loading.value = false;
+  }
+}
+
 async function restoreItem(id: string) {
   try {
     loading.value = true;
-    await apiRequest(`/${id}/restore`, { method: 'PATCH' });
-    
+    const response = await fetch(`${API_BASE_URL}/${id}/restore`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${authToken.value}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const item = deletedItems.value.find((i) => i.id === id);
     if (item) {
       toast.success(`Restored ${item.title}`);
       deletedItems.value = deletedItems.value.filter((i) => i.id !== id);
-      selectedItems.value.delete(id);
     }
+    selectedItems.value.delete(id);
   } catch (error) {
     console.error('Failed to restore item:', error);
     toast.error('Failed to restore item');
@@ -618,14 +664,21 @@ async function restoreItem(id: string) {
 async function deletePermanently(id: string) {
   try {
     loading.value = true;
-    await apiRequest(`/${id}`, { method: 'DELETE' });
-    
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authToken.value}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const item = deletedItems.value.find((i) => i.id === id);
     if (item) {
       toast.success(`Permanently deleted ${item.title}`);
       deletedItems.value = deletedItems.value.filter((i) => i.id !== id);
-      selectedItems.value.delete(id);
     }
+    selectedItems.value.delete(id);
   } catch (error) {
     console.error('Failed to delete item permanently:', error);
     toast.error('Failed to delete item permanently');
@@ -645,14 +698,15 @@ function emptyBin() {
 async function confirmEmptyBin() {
   try {
     loading.value = true;
-    
-    // Delete all items in trash permanently
-    const deletePromises = deletedItems.value.map(item => 
-      apiRequest(`/${item.id}`, { method: 'DELETE' })
+    const promises = deletedItems.value.map((item) =>
+      fetch(`${API_BASE_URL}/${item.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${authToken.value}`,
+        },
+      })
     );
-    
-    await Promise.allSettled(deletePromises);
-    
+    await Promise.all(promises);
     deletedItems.value = [];
     selectedItems.value.clear();
     showEmptyConfirm.value = false;
@@ -669,23 +723,27 @@ async function performBulkAction() {
   try {
     loading.value = true;
     const itemIds = Array.from(selectedItems.value);
-    
-    if (bulkAction.value === "restore") {
-      const restorePromises = itemIds.map(id => 
-        apiRequest(`/${id}/restore`, { method: 'PATCH' })
-      );
-      await Promise.allSettled(restorePromises);
-      toast.success(`Restored ${itemIds.length} items`);
-    } else {
-      const deletePromises = itemIds.map(id => 
-        apiRequest(`/${id}`, { method: 'DELETE' })
-      );
-      await Promise.allSettled(deletePromises);
-      toast.success(`Permanently deleted ${itemIds.length} items`);
-    }
-    
-    // Remove items from local state
-    deletedItems.value = deletedItems.value.filter(item => !itemIds.includes(item.id));
+    const promises = itemIds.map((id) => {
+      if (bulkAction.value === "restore") {
+        return fetch(`${API_BASE_URL}/${id}/restore`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${authToken.value}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } else {
+        return fetch(`${API_BASE_URL}/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${authToken.value}`,
+          },
+        });
+      }
+    });
+    await Promise.all(promises);
+    toast.success(`${bulkAction.value === "restore" ? "Restored" : "Permanently deleted"} ${itemIds.length} items`);
+    deletedItems.value = deletedItems.value.filter((item) => !itemIds.includes(item.id));
     selectedItems.value.clear();
     showBulkConfirm.value = false;
   } catch (error) {
@@ -696,37 +754,13 @@ async function performBulkAction() {
   }
 }
 
-async function downloadItem(item: DeletedItem) {
+function downloadItem(item: DeletedItem) {
   if (!item.file_url || item.is_folder) {
     toast.error('Cannot download this item');
     return;
   }
-  
-  try {
-    const response = await fetch(`${API_BASE_URL}/${item.id}/download`, {
-      headers: {
-        ...(authToken.value && { 'Authorization': `Bearer ${authToken.value}` }),
-      },
-    });
-    
-    if (!response.ok) throw new Error('Download failed');
-    
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = item.file_name || item.title || 'download';
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-    
-    toast.success(`Downloaded ${item.title}`);
-  } catch (error) {
-    console.error('Failed to download item:', error);
-    toast.error('Failed to download item');
-  }
+  window.open(`${API_BASE_URL}/${item.id}/download`, '_blank');
+  toast.success(`Downloaded ${item.title}`);
 }
 
 function previewItem(item: DeletedItem) {
