@@ -52,7 +52,43 @@ export class ExportService implements IExportService {
           throw new Error(`Unsupported PDF engine: ${options.pdfEngine}`)
         }
       } else {
-        exporter = this.exporters.get(options.format)
+        // Primary path for XLSX: use LuckyExcel for 1:1 parity, fallback to registered exporter on error
+        if (options.format === 'xlsx') {
+          const workbook = facadeAPI.getActiveWorkbook()
+          if (!workbook) {
+            throw new Error('No active workbook found')
+          }
+          const filename = options.filename || `export-${Date.now()}.xlsx`
+          const snapshot = workbook.getSnapshot()
+
+          // Attempt primary export using univer-import-export
+          try {
+            // @ts-ignore dynamic import; package may not exist until installed
+            const mod: any = await import(/* @vite-ignore */ '@mertdeveci55/univer-import-export')
+            if (mod?.LuckyExcel?.transformUniverToExcel) {
+              await new Promise<void>((resolve, reject) => {
+                try {
+                  mod.LuckyExcel.transformUniverToExcel({
+                    snapshot,
+                    fileName: filename,
+                    success: () => resolve(),
+                    error: (err: any) => reject(err),
+                  })
+                } catch (e) {
+                  reject(e)
+                }
+              })
+              return
+            }
+          } catch (e) {
+            console.warn('LuckyExcel XLSX export not available or failed, falling back to default exporter:', e)
+            // fall through to exporter fallback
+          }
+
+          exporter = this.exporters.get(options.format)
+        } else {
+          exporter = this.exporters.get(options.format)
+        }
       }
 
       if (!exporter) {
