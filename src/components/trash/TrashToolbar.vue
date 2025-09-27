@@ -202,7 +202,7 @@ import { cn } from "@/lib/utils";
 const AlphabetAsc = FileType;
 const AlphabetDesc = FileType;
 
-const props = defineProps<{
+defineProps<{
   searchQuery: string;
   filters: { type: string; source: string };
   sortValue: string;

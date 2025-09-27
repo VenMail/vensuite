@@ -80,7 +80,7 @@ export const useFileStore = defineStore("files", {
           if (parsed && typeof parsed === 'object' && typeof parsed.name === 'string' && parsed.name.trim().length) {
             return parsed.name
           }
-        } catch {}
+        } catch { }
       }
       // Fallback to file_name without extension
       const fileName = serverData?.file_name
@@ -93,17 +93,17 @@ export const useFileStore = defineStore("files", {
     /** Construct full URL from relative path */
     constructFullUrl(filePath: string): string {
       if (!filePath) return '';
-      
+
       // If it's already a full URL, return as is
       if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
         return filePath;
       }
-      
+
       // If it's a relative path, prepend the base URL
       if (filePath.startsWith('/')) {
         return `${BASE_URL}${filePath}`;
       }
-      
+
       // If it doesn't start with /, add it
       return `${BASE_URL}/${filePath}`;
     },
@@ -126,9 +126,11 @@ export const useFileStore = defineStore("files", {
         updated_at: responseData.updated_at,
         last_viewed: new Date(),
         isNew: false,
-        isDirty: false
+        isDirty: false,
+        url: !!responseData.file_url, // Convert to boolean - true if URL exists
+        thumbnail_url: responseData.thumbnail_url || undefined,
       };
-      
+
       return file;
     },
 
@@ -137,7 +139,7 @@ export const useFileStore = defineStore("files", {
      * Uses client-side conversion first (DOCX via mammoth, XLSX via xlsx),
      * then falls back to backend /app-files/convert if client conversion fails.
      */
-    async convertUploadedFile(options: { appFileId?: string; url?: string; target?: 'docx'|'xlsx' }): Promise<FileData | null> {
+    async convertUploadedFile(options: { appFileId?: string; url?: string; target?: 'docx' | 'xlsx' }): Promise<FileData | null> {
       // Helper: load binary as ArrayBuffer from id or URL
       const loadArrayBuffer = async (): Promise<{ buf: ArrayBuffer; meta?: FileData } | null> => {
         try {
@@ -167,9 +169,9 @@ export const useFileStore = defineStore("files", {
         if (loaded?.buf) {
           const meta = loaded.meta || (options.appFileId ? await this.loadFromAPI(options.appFileId) : null);
           const lowerName = (meta?.file_name || '').toLowerCase();
-          const target = (options.target || (lowerName.endsWith('.docx') ? 'docx' : lowerName.endsWith('.xlsx') ? 'xlsx' : undefined)) as ('docx'|'xlsx'|undefined);
+          const target = (options.target || (lowerName.endsWith('.docx') ? 'docx' : lowerName.endsWith('.xlsx') ? 'xlsx' : undefined)) as ('docx' | 'xlsx' | undefined);
 
-        if (target === 'docx') {
+          if (target === 'docx') {
             // @ts-ignore mammoth is loaded globally in main.ts
             const result = await (window as any).mammoth?.convertToHtml({ arrayBuffer: loaded.buf });
             const html: string = result?.value || '';
@@ -258,7 +260,7 @@ export const useFileStore = defineStore("files", {
         const formData = new FormData();
         formData.append('file', file);
         if (folderId) formData.append('folder_id', folderId);
-        
+
         const response = await axios.post(`${UPLOAD_BASE}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -271,7 +273,7 @@ export const useFileStore = defineStore("files", {
             }
           }
         });
-        
+
         if (response.status === 200 || response.status === 201) {
           const uploadedFile = this.processUploadedFile(response.data.data);
           // Add to store immediately for instant visibility
@@ -283,12 +285,12 @@ export const useFileStore = defineStore("files", {
             try {
               const converted = await this.convertUploadedFile({ appFileId: uploadedFile.id, target: ext as any });
               if (converted) return converted;
-            } catch {}
+            } catch { }
           }
           console.log('File uploaded successfully:', uploadedFile);
           return uploadedFile;
         }
-        
+
         return null;
       } catch (error) {
         console.error('Error uploading file:', error);
@@ -347,7 +349,7 @@ export const useFileStore = defineStore("files", {
           try {
             const converted = await this.convertUploadedFile({ appFileId: saved.id, target: ext as any });
             if (converted) return converted;
-          } catch {}
+          } catch { }
         }
         return saved;
       } catch (e) {
@@ -361,7 +363,7 @@ export const useFileStore = defineStore("files", {
     addFile(file: FileData) {
       // Check if file already exists
       const existingIndex = this.allFiles.findIndex(f => f.id === file.id);
-      
+
       if (existingIndex !== -1) {
         // Update existing file
         this.allFiles[existingIndex] = file;
@@ -369,12 +371,12 @@ export const useFileStore = defineStore("files", {
         // Add new file
         this.allFiles.unshift(file); // Add to beginning for newest first
       }
-      
+
       // Update recent files if it's a media file
       if (this.isMediaFile(file)) {
         this.updateRecentFiles(file);
       }
-      
+
       // Cache the file
       this.cacheDocument(file);
     },
@@ -391,12 +393,12 @@ export const useFileStore = defineStore("files", {
           // Audio
           'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'
         ];
-        
+
         if (mediaTypes.includes(file.file_type.toLowerCase())) {
           return true;
         }
       }
-      
+
       // Fallback: check file extension from file_name
       if (file.file_name) {
         const extension = file.file_name.split('.').pop()?.toLowerCase();
@@ -412,7 +414,7 @@ export const useFileStore = defineStore("files", {
           return mediaTypes.includes(extension);
         }
       }
-      
+
       return false;
     },
 
@@ -420,10 +422,10 @@ export const useFileStore = defineStore("files", {
     updateRecentFiles(file: FileData) {
       // Remove if already in recent files
       this.recentFiles = this.recentFiles.filter(f => f.id !== file.id);
-      
+
       // Add to beginning
       this.recentFiles.unshift(file);
-      
+
       // Keep only last 10
       if (this.recentFiles.length > 10) {
         this.recentFiles = this.recentFiles.slice(0, 10);
@@ -450,7 +452,7 @@ export const useFileStore = defineStore("files", {
         const keys = Object.keys(localStorage);
         for (const k of keys) {
           if (k.startsWith('document_') || k.startsWith('sheet_') || k.startsWith('file_') || k === 'VENX_RECENT') {
-            try { localStorage.removeItem(k); } catch {}
+            try { localStorage.removeItem(k); } catch { }
           }
         }
       } catch (e) {
@@ -463,7 +465,7 @@ export const useFileStore = defineStore("files", {
       // Use proper default content based on file type
       const defaultContent = fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE : "";
       const auth = useAuthStore();
-      
+
       const newDoc = {
         title,
         file_name: `${title}.${fileType}`,
@@ -495,7 +497,7 @@ export const useFileStore = defineStore("files", {
               isNew: false,
               isDirty: false,
             };
-            
+
             this.cacheDocument(createdDoc);
             this.updateFiles(createdDoc);
             console.log("Created new document online:", createdDoc.id);
@@ -512,8 +514,10 @@ export const useFileStore = defineStore("files", {
         id: uuidv4(),
         isNew: true,
         isDirty: true,
+        url: false,
+        thumbnail_url: undefined,
       };
-      
+
       this.saveToLocalCache(localDoc);
       this.updateFiles(localDoc);
       console.log("Created new document locally:", localDoc.id);
@@ -538,11 +542,11 @@ export const useFileStore = defineStore("files", {
 
       // Remove from cache
       this.cachedDocuments.delete(id);
-      
+
       // Remove from pending changes and sync status
       this.pendingChanges.delete(id);
       this.syncStatus.delete(id);
-      
+
       // Remove from state arrays
       this.allFiles = this.allFiles.filter(f => f.id !== id);
       this.recentFiles = this.recentFiles.filter(f => f.id !== id);
@@ -555,16 +559,16 @@ export const useFileStore = defineStore("files", {
       redirectId?: string;
     }> {
       document.last_viewed = new Date();
-      
+
       // Save locally first for immediate responsiveness
       this.saveToLocalCache(document);
       this.updateFiles(document);
-      
+
       // Then attempt online sync if connected
       if (this.isOnline) {
         const isLocalDoc = this.isLocalDocument(document.id!);
         const saveResult = await this.saveToAPI(document);
-        
+
         if (saveResult) {
           // Save was successful online
           if (isLocalDoc) {
@@ -572,7 +576,7 @@ export const useFileStore = defineStore("files", {
             // Delete the local version and return redirect info
             this.deleteLocalDocument(document.id!);
             console.log("Local document saved online, redirecting from", document.id, "to", saveResult.id);
-            
+
             return {
               document: saveResult,
               shouldRedirect: true,
@@ -594,7 +598,7 @@ export const useFileStore = defineStore("files", {
         document.isDirty = true;
         this.queueForSync(document);
       }
-      
+
       return { document };
     },
 
@@ -622,17 +626,17 @@ export const useFileStore = defineStore("files", {
           if (!payload.employee_id && auth?.employeeId) {
             payload.employee_id = auth.employeeId;
           }
-        } catch {}
-        
+        } catch { }
+
         // Clean up local-only fields systematically
         const localOnlyFields: (keyof FileData)[] = ['isNew', 'isDirty'];
         localOnlyFields.forEach(field => delete payload[field]);
-        
+
         // Use proper HTTP methods: PUT for updates, POST for creates
         const isUpdate = !this.isLocalDocument(document.id!) && document.id;
         const url = isUpdate ? `${FILES_ENDPOINT}/${document.id}` : FILES_ENDPOINT;
         const method = isUpdate ? 'put' : 'post';
-        
+
         const response = await axios({
           method,
           url,
@@ -645,7 +649,7 @@ export const useFileStore = defineStore("files", {
 
         if (response.status === 200 || response.status === 201) {
           const serverData = response.data.data;
-          
+
           const savedDoc: FileData = {
             ...serverData,
             id: serverData.id, // Always use server ID
@@ -655,7 +659,7 @@ export const useFileStore = defineStore("files", {
             isNew: false,
             isDirty: false,
           };
-          
+
           // Persist refreshed version locally so offline cache always has latest server ID
           this.saveToLocalCache(savedDoc);
           this.updateFiles(savedDoc);
@@ -694,7 +698,7 @@ export const useFileStore = defineStore("files", {
         this.updateFiles(local);
         return local;
       }
-      
+
       return null;
     },
 
@@ -724,7 +728,7 @@ export const useFileStore = defineStore("files", {
         if ((data as any).file_url) {
           (doc as any).download_url = `${FILES_ENDPOINT}/${data.id}/download`;
         }
-        
+
         return doc;
       } catch (error) {
         console.error("Error loading from API:", error);
@@ -741,23 +745,23 @@ export const useFileStore = defineStore("files", {
     /** Sync pending changes with enhanced status tracking */
     async syncPendingChanges() {
       if (!this.isOnline || this.isSyncing || !this.pendingChanges.size) return;
-      
+
       this.isSyncing = true;
-      
+
       for (const [id, { data, attempts }] of this.pendingChanges.entries()) {
         if (attempts >= MAX_RETRIES) {
           this.pendingChanges.delete(id);
           this.syncStatus.set(id, 'failed');
           continue;
         }
-        
+
         this.syncStatus.set(id, 'syncing');
-        
+
         const saved = await this.saveToAPI(data);
         if (saved) {
           this.pendingChanges.delete(id);
           this.syncStatus.set(id, 'synced');
-          
+
           // If this was a local document that got saved online, clean up local version
           if (this.isLocalDocument(id)) {
             this.deleteLocalDocument(id);
@@ -768,13 +772,13 @@ export const useFileStore = defineStore("files", {
           this.pendingChanges.set(id, { data, attempts: attempts + 1 });
           this.syncStatus.set(id, 'pending');
         }
-        
+
         // Exponential backoff for failed attempts
         if (!saved && attempts > 0) {
           await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts)));
         }
       }
-      
+
       this.isSyncing = false;
     },
 
@@ -876,12 +880,12 @@ export const useFileStore = defineStore("files", {
                   item.file_type = "xlsx";
                 }
               }
-              
+
               // Ensure is_folder is properly set if missing
               if (item.is_folder === undefined) {
                 item.is_folder = false;
               }
-              
+
               offlineDocs.push(item);
             }
           } catch (error) {
@@ -913,7 +917,7 @@ export const useFileStore = defineStore("files", {
             isDirty: false
           }
         });
-        
+
         // Optionally update store with processed documents
         if (!doNotMutateStore) {
           this.allFiles = processedDocs;
@@ -922,12 +926,12 @@ export const useFileStore = defineStore("files", {
         try {
           const serverIds = processedDocs.map(d => d.id!).filter((id): id is string => typeof id === 'string' && id.length > 0);
           await this.reconcileOfflineDocuments(serverIds);
-        } catch {}
+        } catch { }
         return processedDocs;
       } catch (error) {
         console.error("Error loading documents:", error);
         this.lastError = "Failed to load documents";
-        
+
         // Load offline documents if online fetch fails
         const offlineDocs = this.loadOfflineDocuments();
         this.allFiles = offlineDocs;
@@ -990,7 +994,7 @@ export const useFileStore = defineStore("files", {
             isDirty: false
           }
         });
-        
+
         return processedDocs;
       } catch (error) {
         console.error("Error fetching files:", error);
@@ -1005,7 +1009,7 @@ export const useFileStore = defineStore("files", {
       if (docIndex === -1) return false;
 
       const doc = this.allFiles[docIndex];
-      
+
       // If it's an online document (not local UUID), delete from API
       if (this.isOnline && !this.isLocalDocument(id)) {
         try {
@@ -1024,11 +1028,11 @@ export const useFileStore = defineStore("files", {
       localStorage.removeItem(key);
       this.allFiles.splice(docIndex, 1);
       this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
-      
+
       // Remove from cache and pending changes
       this.cachedDocuments.delete(id);
       this.pendingChanges.delete(id);
-      
+
       return true;
     },
 
@@ -1111,8 +1115,8 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        const processedDocs = docs.map((doc) => ({ 
-          ...doc, 
+        const processedDocs = docs.map((doc) => ({
+          ...doc,
           id: doc.id, // Use server ID directly
           content: doc.content || this.getDefaultContent(doc.file_type),
           title: doc.title || doc.file_name || 'Untitled',
@@ -1120,13 +1124,13 @@ export const useFileStore = defineStore("files", {
           isNew: false,
           isDirty: false
         }));
-        
+
         // Filter for media files only
         const mediaFiles = processedDocs.filter(doc => this.isMediaFile(doc));
-        
+
         // Update store with all processed documents
         this.allFiles = processedDocs;
-        
+
         console.log('Loaded media files:', mediaFiles.length, 'out of', processedDocs.length, 'total files');
         console.log('Media files found:', mediaFiles.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name })));
         console.log('All files found:', processedDocs.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name, is_folder: f.is_folder })));
@@ -1134,7 +1138,7 @@ export const useFileStore = defineStore("files", {
       } catch (error) {
         console.error("Error loading media files:", error);
         this.lastError = "Failed to load media files";
-        
+
         // Fallback to filtering existing files
         const mediaFiles = this.allFiles.filter(file => this.isMediaFile(file));
         return mediaFiles;

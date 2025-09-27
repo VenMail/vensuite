@@ -4,7 +4,7 @@
     <TrashToolbar
       v-model:searchQuery="searchQuery"
       :filters="filters"
-      @update:filters="(newFilters) => (filters = newFilters)"
+      @update:filters="updateFilters"
       v-model:sortValue="sortValue"
       v-model:viewMode="viewMode"
       :hasSelection="hasSelection"
@@ -50,6 +50,22 @@
       <div v-if="loading && deletedItems.length === 0" class="flex flex-col items-center justify-center h-full p-8">
         <Loader2 class="h-8 w-8 animate-spin mb-4 text-gray-400" />
         <p class="text-gray-500 dark:text-gray-400">Loading trash items...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error && deletedItems.length === 0" class="flex flex-col items-center justify-center h-full p-8 text-center">
+        <div class="w-24 h-24 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-6">
+          <AlertCircle class="h-12 w-12 text-red-500" />
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          Failed to load trash items
+        </h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-4">
+          {{ error }}
+        </p>
+        <Button @click="fetchTrashedItems">
+          Try Again
+        </Button>
       </div>
 
       <!-- Empty State -->
@@ -138,7 +154,7 @@
                 {{ item.title }}
               </h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {{ item.file_type ?? (item.is_folder ? "Folder" : "Unknown") }}
+                {{ getFileType(item) }}
               </p>
             </div>
 
@@ -146,7 +162,7 @@
             <div class="space-y-2 text-xs text-gray-500 dark:text-gray-400">
               <div class="flex justify-between items-center">
                 <span>Size:</span>
-                <span class="font-medium">{{ item.file_size ? formatFileSize(item.file_size) : "N/A" }}</span>
+                <span class="font-medium">{{ formatFileSize(item.file_size) }}</span>
               </div>
               <div class="flex justify-between items-center">
                 <span>Deleted:</span>
@@ -154,7 +170,7 @@
               </div>
               <div class="flex justify-center">
                 <Badge variant="outline" class="text-xs">
-                  {{ item.source }}
+                  {{ item.source || 'Files' }}
                 </Badge>
               </div>
             </div>
@@ -220,7 +236,7 @@
                   {{ item.title }}
                 </h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                  {{ item.file_type ?? (item.is_folder ? "Folder" : "Unknown") }}
+                  {{ getFileType(item) }}
                 </p>
               </div>
             </div>
@@ -228,11 +244,11 @@
             <div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
               <div class="flex justify-between">
                 <span>Source:</span>
-                <span>{{ item.source }}</span>
+                <span>{{ item.source || 'Files' }}</span>
               </div>
               <div class="flex justify-between">
                 <span>Size:</span>
-                <span>{{ item.file_size ? formatFileSize(item.file_size) : "N/A" }}</span>
+                <span>{{ formatFileSize(item.file_size) }}</span>
               </div>
               <div class="flex justify-between">
                 <span>Deleted:</span>
@@ -284,16 +300,16 @@
                 </td>
                 <td class="px-4 py-3">
                   <Badge variant="secondary">
-                    {{ item.file_type ?? (item.is_folder ? "Folder" : "Unknown") }}
+                    {{ getFileType(item) }}
                   </Badge>
                 </td>
                 <td class="px-4 py-3">
-                  <Badge :variant="item.source === 'Files' ? 'default' : 'outline'">
-                    {{ item.source }}
+                  <Badge :variant="(item.source || 'Files') === 'Files' ? 'default' : 'outline'">
+                    {{ item.source || 'Files' }}
                   </Badge>
                 </td>
                 <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
-                  {{ item.file_size ? formatFileSize(item.file_size) : "N/A" }}
+                  {{ formatFileSize(item.file_size) }}
                 </td>
                 <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
                   {{ formatDate(item.updated_at) }}
@@ -345,11 +361,11 @@
         <div v-if="selectedItemForDetails" class="space-y-4">
           <div>
             <h4 class="font-medium text-gray-900 dark:text-gray-100">Type</h4>
-            <p class="text-gray-600 dark:text-gray-400">{{ selectedItemForDetails.file_type ?? (selectedItemForDetails.is_folder ? "Folder" : "Unknown") }}</p>
+            <p class="text-gray-600 dark:text-gray-400">{{ getFileType(selectedItemForDetails) }}</p>
           </div>
           <div>
             <h4 class="font-medium text-gray-900 dark:text-gray-100">Source</h4>
-            <p class="text-gray-600 dark:text-gray-400">{{ selectedItemForDetails.source }}</p>
+            <p class="text-gray-600 dark:text-gray-400">{{ selectedItemForDetails.source || 'Files' }}</p>
           </div>
           <div v-if="selectedItemForDetails.file_name">
             <h4 class="font-medium text-gray-900 dark:text-gray-100">Original Filename</h4>
@@ -357,7 +373,7 @@
           </div>
           <div>
             <h4 class="font-medium text-gray-900 dark:text-gray-100">Size</h4>
-            <p class="text-gray-600 dark:text-gray-400">{{ selectedItemForDetails.file_size ? formatFileSize(selectedItemForDetails.file_size) : "N/A" }}</p>
+            <p class="text-gray-600 dark:text-gray-400">{{ formatFileSize(selectedItemForDetails.file_size) }}</p>
           </div>
           <div>
             <h4 class="font-medium text-gray-900 dark:text-gray-100">Deleted At</h4>
@@ -462,10 +478,10 @@ import { toast } from "vue-sonner";
 interface DeletedItem {
   id: string;
   title: string;
-  file_type?: string;
+  file_type?: number;
   file_name?: string;
-  source: 'Files' | 'Forms';
-  file_size?: string;
+  source?: string;
+  file_size?: number;
   updated_at: string;
   is_folder: boolean;
   folder_id?: string;
@@ -473,8 +489,10 @@ interface DeletedItem {
   file_url?: string;
 }
 
+// State
 const deletedItems = ref<DeletedItem[]>([]);
 const loading = ref(false);
+const error = ref<string | null>(null);
 const viewMode = ref<"thumbnail" | "list" | "grid">("thumbnail");
 const selectedItems = ref<Set<string>>(new Set());
 const searchQuery = ref("");
@@ -487,10 +505,42 @@ const showEmptyConfirm = ref(false);
 const showBulkConfirm = ref(false);
 const bulkAction = ref<"restore" | "delete">("restore");
 
-// API configuration - adjust these based on your setup
-const API_BASE_URL = '/api/v1/app-files';
-const authToken = ref(''); // Set this from your auth system
+// API Base URL
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/api/v1/app-files`;
 
+// API Helper
+async function apiCall(url: string, options: RequestInit = {}): Promise<any> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        ...options.headers,
+      },
+      credentials: 'same-origin',
+      ...options,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch (e) {
+        // Use default error message if parsing fails
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.error('API call failed:', err);
+    throw err;
+  }
+}
+
+// Computed properties
 const sortValue = computed({
   get: () => `${sortBy.value}-${sortDir.value}`,
   set: (val: string) => {
@@ -505,23 +555,28 @@ const sortValue = computed({
 const filteredAndSortedItems = computed(() => {
   let items = [...deletedItems.value];
 
-  // Search
+  // Search filter
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     items = items.filter(
       (item) =>
         item.title.toLowerCase().includes(query) ||
-        (item.file_type ?? "").toLowerCase().includes(query) ||
-        (item.file_name ?? "").toLowerCase().includes(query)
+        (item.file_name || "").toLowerCase().includes(query) ||
+        getFileType(item).toLowerCase().includes(query)
     );
   }
 
-  // Filters
+  // Type filter
   if (filters.value.type && filters.value.type !== "all") {
-    items = items.filter((item) => (item.file_type ?? "") === filters.value.type);
+    items = items.filter((item) => {
+      const fileType = getFileType(item).toLowerCase();
+      return fileType.includes(filters.value.type.toLowerCase());
+    });
   }
+
+  // Source filter
   if (filters.value.source && filters.value.source !== "all") {
-    items = items.filter((item) => item.source === filters.value.source);
+    items = items.filter((item) => (item.source || "Files") === filters.value.source);
   }
 
   // Sorting
@@ -535,8 +590,8 @@ const filteredAndSortedItems = computed(() => {
         bVal = b.title.toLowerCase();
         break;
       case "file_type":
-        aVal = (a.file_type ?? "").toLowerCase();
-        bVal = (b.file_type ?? "").toLowerCase();
+        aVal = getFileType(a).toLowerCase();
+        bVal = getFileType(b).toLowerCase();
         break;
       case "updated_at":
         aVal = new Date(a.updated_at).getTime();
@@ -556,32 +611,69 @@ const filteredAndSortedItems = computed(() => {
 });
 
 const hasSelection = computed(() => selectedItems.value.size > 0);
-const allSources = computed(() => [...new Set(deletedItems.value.map((i) => i.source))]);
-const allTypes = computed(() => [
-  ...new Set(
-    deletedItems.value.map((i) => i.file_type).filter((t): t is string => t != null)
-  ),
-]);
 
-const handleBulkAction = (action: "restore" | "delete") => {
-  bulkAction.value = action;
-  showBulkConfirm.value = true;
-};
+const allSources = computed(() => {
+  const sources = [...new Set(deletedItems.value.map((i) => i.source || 'Files'))];
+  return sources;
+});
+
+const allTypes = computed(() => {
+  const types = [...new Set(deletedItems.value.map((i) => getFileType(i)))];
+  return types.filter(type => type && type !== 'Unknown');
+});
 
 // Utility functions
+function getFileType(item: DeletedItem): string {
+  if (item.is_folder) return "Folder";
+  
+  if (item.file_name) {
+    const ext = item.file_name.split('.').pop()?.toLowerCase();
+    if (ext) return ext.toUpperCase();
+  }
+  
+  if (item.mime_type) {
+    const mimeMap: Record<string, string> = {
+      'application/pdf': 'PDF',
+      'application/json': 'JSON',
+      'text/plain': 'TXT',
+      'image/jpeg': 'JPEG',
+      'image/png': 'PNG',
+      'image/gif': 'GIF',
+      'application/zip': 'ZIP',
+      'application/vnd.folder': 'Folder',
+    };
+    return mimeMap[item.mime_type] || 'Unknown';
+  }
+  
+  return 'Unknown';
+}
+
 function formatDate(dateString: string): string {
-  return new Date(dateString).toISOString().split('T')[0];
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return 'Unknown';
+  }
 }
 
-function formatFileSize(bytes: number | string): string {
-  if (!bytes) return 'N/A';
-  const size = typeof bytes === 'string' ? parseInt(bytes) : bytes;
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+function formatFileSize(bytes?: number): string {
+  if (!bytes || bytes === 0) return 'N/A';
+  
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const size = (bytes / Math.pow(1024, i)).toFixed(1);
+  
+  return `${size} ${sizes[i]}`;
 }
 
+// Selection functions
 function toggleSelection(id: string) {
   if (selectedItems.value.has(id)) {
     selectedItems.value.delete(id);
@@ -603,32 +695,32 @@ function clearFilters() {
   filters.value = { type: "all", source: "all" };
 }
 
+function updateFilters(newFilters: { type: string; source: string }) {
+  filters.value = newFilters;
+}
+
 function openDetails(item: DeletedItem) {
   selectedItemForDetails.value = item;
   showDetailsDialog.value = true;
 }
 
-async function fetchTrashItems() {
+// API functions
+async function fetchTrashedItems() {
   try {
     loading.value = true;
-    const response = await fetch(`${API_BASE_URL}/trash`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${authToken.value}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    error.value = null;
+    
+    const response = await apiCall(`${API_BASE_URL}/trash`);
+    
+    if (response.success && Array.isArray(response.data)) {
+      deletedItems.value = response.data;
+    } else {
+      throw new Error(response.message || 'Failed to fetch trash items');
     }
-    const data = await response.json();
-    deletedItems.value = (data.data || []).map((item: DeletedItem) => ({
-      ...item,
-      source: 'Files' as const,
-    }));
-  } catch (error) {
-    console.error('Failed to fetch trash items:', error);
-    toast.error('Failed to load trash items');
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to fetch trash items';
+    error.value = errorMessage;
+    toast.error(errorMessage);
   } finally {
     loading.value = false;
   }
@@ -637,25 +729,24 @@ async function fetchTrashItems() {
 async function restoreItem(id: string) {
   try {
     loading.value = true;
-    const response = await fetch(`${API_BASE_URL}/${id}/restore`, {
+    
+    const response = await apiCall(`${API_BASE_URL}/${id}/restore`, {
       method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${authToken.value}`,
-        'Content-Type': 'application/json',
-      },
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const item = deletedItems.value.find((i) => i.id === id);
-    if (item) {
-      toast.success(`Restored ${item.title}`);
+    
+    if (response.success) {
+      const item = deletedItems.value.find((i) => i.id === id);
+      toast.success(`Restored "${item?.title || 'item'}"`);
+      
+      // Remove from local state
       deletedItems.value = deletedItems.value.filter((i) => i.id !== id);
+      selectedItems.value.delete(id);
+    } else {
+      throw new Error(response.message || 'Failed to restore item');
     }
-    selectedItems.value.delete(id);
-  } catch (error) {
-    console.error('Failed to restore item:', error);
-    toast.error('Failed to restore item');
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to restore item';
+    toast.error(errorMessage);
   } finally {
     loading.value = false;
   }
@@ -664,91 +755,155 @@ async function restoreItem(id: string) {
 async function deletePermanently(id: string) {
   try {
     loading.value = true;
-    const response = await fetch(`${API_BASE_URL}/${id}`, {
+    
+    const response = await apiCall(`${API_BASE_URL}/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${authToken.value}`,
-      },
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const item = deletedItems.value.find((i) => i.id === id);
-    if (item) {
-      toast.success(`Permanently deleted ${item.title}`);
+    
+    if (response.success) {
+      const item = deletedItems.value.find((i) => i.id === id);
+      toast.success(`Permanently deleted "${item?.title || 'item'}"`);
+      
+      // Remove from local state
       deletedItems.value = deletedItems.value.filter((i) => i.id !== id);
+      selectedItems.value.delete(id);
+    } else {
+      throw new Error(response.message || 'Failed to delete item permanently');
     }
-    selectedItems.value.delete(id);
-  } catch (error) {
-    console.error('Failed to delete item permanently:', error);
-    toast.error('Failed to delete item permanently');
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to delete item permanently';
+    toast.error(errorMessage);
   } finally {
     loading.value = false;
   }
 }
 
 function emptyBin() {
-  if (deletedItems.value.length > 0) {
-    showEmptyConfirm.value = true;
-  } else {
+  if (deletedItems.value.length === 0) {
     toast.info('Trash is already empty');
+    return;
   }
+  showEmptyConfirm.value = true;
 }
 
 async function confirmEmptyBin() {
   try {
     loading.value = true;
-    const promises = deletedItems.value.map((item) =>
-      fetch(`${API_BASE_URL}/${item.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${authToken.value}`,
-        },
-      })
+    
+    // Get all item IDs to delete permanently
+    const itemIds = deletedItems.value.map(item => item.id);
+    
+    if (itemIds.length === 0) {
+      showEmptyConfirm.value = false;
+      return;
+    }
+
+    // Delete each item permanently (parallel requests)
+    const deletePromises = itemIds.map(id => 
+      apiCall(`${API_BASE_URL}/${id}`, { method: 'DELETE' })
     );
-    await Promise.all(promises);
+    
+    const results = await Promise.allSettled(deletePromises);
+    
+    // Count successful deletions
+    let deletedCount = 0;
+    let errors = 0;
+    
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value.success) {
+        deletedCount++;
+      } else {
+        errors++;
+        console.error(`Failed to delete item ${itemIds[index]}:`, 
+          result.status === 'rejected' ? result.reason : result.value);
+      }
+    });
+    
+    // Update UI
     deletedItems.value = [];
     selectedItems.value.clear();
     showEmptyConfirm.value = false;
-    toast.success("Bin emptied successfully");
-  } catch (error) {
-    console.error('Failed to empty bin:', error);
-    toast.error('Failed to empty bin');
+    
+    if (errors === 0) {
+      toast.success(`Bin emptied successfully - ${deletedCount} items deleted`);
+    } else {
+      toast.warning(`Bin partially emptied - ${deletedCount} items deleted, ${errors} failed`);
+    }
+    
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to empty bin';
+    toast.error(errorMessage);
   } finally {
     loading.value = false;
   }
 }
 
+function handleBulkAction(action: "restore" | "delete") {
+  if (selectedItems.value.size === 0) {
+    toast.info('No items selected');
+    return;
+  }
+  
+  bulkAction.value = action;
+  showBulkConfirm.value = true;
+}
+
 async function performBulkAction() {
   try {
     loading.value = true;
+    
     const itemIds = Array.from(selectedItems.value);
-    const promises = itemIds.map((id) => {
-      if (bulkAction.value === "restore") {
-        return fetch(`${API_BASE_URL}/${id}/restore`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${authToken.value}`,
-            'Content-Type': 'application/json',
-          },
-        });
+    if (itemIds.length === 0) {
+      showBulkConfirm.value = false;
+      return;
+    }
+    
+    let promises: Promise<any>[];
+    
+    if (bulkAction.value === "restore") {
+      promises = itemIds.map(id => 
+        apiCall(`${API_BASE_URL}/${id}/restore`, { method: 'PATCH' })
+      );
+    } else {
+      promises = itemIds.map(id => 
+        apiCall(`${API_BASE_URL}/${id}`, { method: 'DELETE' })
+      );
+    }
+    
+    const results = await Promise.allSettled(promises);
+    
+    // Count successful operations
+    let successCount = 0;
+    let errors = 0;
+    const successfulIds: string[] = [];
+    
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value.success) {
+        successCount++;
+        successfulIds.push(itemIds[index]);
       } else {
-        return fetch(`${API_BASE_URL}/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${authToken.value}`,
-          },
-        });
+        errors++;
+        console.error(`Failed to ${bulkAction.value} item ${itemIds[index]}:`, 
+          result.status === 'rejected' ? result.reason : result.value);
       }
     });
-    await Promise.all(promises);
-    toast.success(`${bulkAction.value === "restore" ? "Restored" : "Permanently deleted"} ${itemIds.length} items`);
-    deletedItems.value = deletedItems.value.filter((item) => !itemIds.includes(item.id));
+    
+    // Update UI - remove successful items from local state
+    deletedItems.value = deletedItems.value.filter(item => !successfulIds.includes(item.id));
     selectedItems.value.clear();
     showBulkConfirm.value = false;
-  } catch (error) {
-    console.error('Failed to perform bulk action:', error);
-    toast.error('Failed to perform bulk action');
+    
+    const actionText = bulkAction.value === "restore" ? "restored" : "permanently deleted";
+    
+    if (errors === 0) {
+      toast.success(`Successfully ${actionText} ${successCount} items`);
+    } else {
+      toast.warning(`${successCount} items ${actionText}, ${errors} failed`);
+    }
+    
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : `Failed to perform bulk ${bulkAction.value}`;
+    toast.error(errorMessage);
   } finally {
     loading.value = false;
   }
@@ -759,19 +914,41 @@ function downloadItem(item: DeletedItem) {
     toast.error('Cannot download this item');
     return;
   }
-  window.open(`${API_BASE_URL}/${item.id}/download`, '_blank');
-  toast.success(`Downloaded ${item.title}`);
-}
-
-function previewItem(item: DeletedItem) {
-  if (item.file_url && !item.is_folder) {
-    window.open(item.file_url, '_blank');
-  } else {
-    toast.info('Preview not available for this item');
+  
+  try {
+    // Create a temporary link to download the file
+    const link = document.createElement('a');
+    link.href = `${API_BASE_URL}/${item.id}/download`;
+    link.download = item.file_name || item.title;
+    link.target = '_blank';
+    
+    // Append to body, click, and remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success(`Downloading "${item.title}"`);
+  } catch (err) {
+    toast.error('Failed to download file');
   }
 }
 
+function previewItem(item: DeletedItem) {
+  if (!item.file_url || item.is_folder) {
+    toast.info('Preview not available for this item');
+    return;
+  }
+  
+  try {
+    // Open file URL in new tab for preview
+    window.open(`${API_BASE_URL}/${item.id}/download`, '_blank');
+  } catch (err) {
+    toast.error('Failed to preview file');
+  }
+}
+
+// Lifecycle
 onMounted(() => {
-  fetchTrashItems();
+  fetchTrashedItems();
 });
 </script>

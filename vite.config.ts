@@ -17,6 +17,16 @@ export default defineConfig({
     vue(),
     univerPlugin(),
   ],
+   server: {
+    proxy: {
+      // Proxy all API calls to backend
+      "/api": {
+        target: "http://127.0.0.1:8000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   build: {
     // Increase chunk size warning limit
     chunkSizeWarningLimit: 2000,

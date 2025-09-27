@@ -1,7 +1,7 @@
 <template>
   <div class="flex-1 overflow-hidden">
-    <!-- Grid View -->
-    <div v-if="viewMode === 'grid'" :class="cn(
+    <!-- Thumbnail View -->
+    <div v-if="viewMode === 'thumbnail'" :class="cn(
       'grid gap-4 p-6 overflow-y-auto min-h-0',
       gridSize === 'small' ? 'grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12' :
       gridSize === 'medium' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' :
@@ -25,26 +25,48 @@
       </div>
     </div>
 
+    <!-- Grid View -->
+    <div v-else-if="viewMode === 'grid'" :class="cn(
+      'grid gap-3 p-6 overflow-y-auto min-h-0',
+      gridSize === 'small' ? 'grid-cols-6 md:grid-cols-8 lg:grid-cols-10' :
+      gridSize === 'medium' ? 'grid-cols-4 md:grid-cols-6 lg:grid-cols-8' :
+      'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+    )" style="height: calc(100vh - 200px);">
+      <div
+        v-for="file in mediaFiles"
+        :key="file.id"
+        class="w-full min-w-0"
+        @mouseenter="showCheckboxes = true"
+        @mouseleave="showCheckboxes = false"
+      >
+        <MediaPreview
+          :file="file"
+          :size="gridSize"
+          :is-selected="selectedFiles.has(file.id || '')"
+          :show-checkbox="showCheckboxes || selectedFiles.has(file.id || '')"
+          @select="handleSelect"
+          @preview="handlePreview"
+        />
+      </div>
+    </div>
+
     <!-- List View -->
-    <div v-else-if="viewMode === 'list'" class="overflow-y-auto">
+    <div v-else-if="viewMode === 'list'" class="overflow-y-auto" style="height: calc(100vh - 200px);">
       <!-- List Header -->
-      <div :class="cn(
-        'grid grid-cols-12 gap-4 p-4 text-sm font-medium text-gray-500 dark:text-gray-400',
-        'border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-      )">
+      <div class="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400">
         <div class="col-span-1 flex items-center justify-center">
           <input
             type="checkbox"
-            :checked="allSelected"
-            :indeterminate="someSelected"
-            @change="handleSelectAll"
+            :checked="isAllSelected"
+            :indeterminate="isSomeSelected"
+            @change="handleSelectAll(!isAllSelected)"
             class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
           />
         </div>
         <div class="col-span-6">Name</div>
-        <div class="col-span-2">Size</div>
-        <div class="col-span-2">Modified</div>
-        <div class="col-span-1">Actions</div>
+        <div class="col-span-2 text-center">Size</div>
+        <div class="col-span-2 text-center">Modified</div>
+        <div class="col-span-1 text-center">Actions</div>
       </div>
 
       <!-- List Items -->
@@ -56,7 +78,7 @@
             'grid grid-cols-12 gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer',
             selectedFiles.has(file.id || '') ? 'bg-primary-50 dark:bg-primary-950/20' : ''
           )"
-          @click="handleSelect(file.id)"
+          @click="handleSelect(file.id, $event)"
         >
           <!-- Checkbox -->
           <div class="col-span-1 flex items-center justify-center">
@@ -68,7 +90,7 @@
             />
           </div>
 
-          <!-- File Info -->
+          <!-- File Info with MediaPreview -->
           <div class="col-span-6 flex items-center gap-3 min-w-0">
             <div class="flex-shrink-0 w-10 h-10 overflow-hidden">
               <MediaPreview
@@ -90,14 +112,14 @@
           </div>
 
           <!-- Size -->
-          <div class="col-span-2 flex items-center min-w-0">
+          <div class="col-span-2 flex items-center justify-center min-w-0">
             <span class="text-sm text-gray-600 dark:text-gray-400 truncate">
               {{ formatFileSize(file.file_size) }}
             </span>
           </div>
 
           <!-- Modified Date -->
-          <div class="col-span-2 flex items-center min-w-0">
+          <div class="col-span-2 flex items-center justify-center min-w-0">
             <span class="text-sm text-gray-600 dark:text-gray-400 truncate">
               {{ formatDate(file.updated_at || file.created_at) }}
             </span>
@@ -137,7 +159,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="mediaFiles.length === 0" class="flex flex-col items-center justify-center h-96 text-center">
+    <div v-if="mediaFiles.length === 0 && !isLoading" class="flex flex-col items-center justify-center h-96 text-center">
       <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
         <Image class="w-12 h-12 text-gray-400" />
       </div>
@@ -194,7 +216,7 @@ const props = defineProps({
     required: true
   },
   viewMode: {
-    type: String as PropType<'thumbnail' | 'grid' | 'list'>, // Add 'thumbnail' here
+    type: String as PropType<'thumbnail' | 'grid' | 'list'>,
     required: true
   },
   selectedFiles: {
@@ -212,7 +234,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits<{
-  select: [id: string | undefined]
+  select: [id: string | undefined, event?: MouseEvent]
   preview: [file: FileData]
   download: [file: FileData]
   rename: [file: FileData]
@@ -225,18 +247,22 @@ const showCheckboxes = ref(false)
 
 const { formatFileSize, formatDate } = useMediaTypes()
 
-const allSelected = computed(() => {
-  return props.mediaFiles.length > 0 && props.mediaFiles.every(file => 
-    props.selectedFiles.has(file.id || '')
-  )
+// Computed properties for select all functionality
+const isAllSelected = computed(() => {
+  return props.mediaFiles.length > 0 && 
+         props.mediaFiles.every(file => props.selectedFiles.has(file.id || ''))
 })
 
-const someSelected = computed(() => {
-  return props.selectedFiles.size > 0 && !allSelected.value
+const isSomeSelected = computed(() => {
+  return props.selectedFiles.size > 0 && !isAllSelected.value
 })
 
-const handleSelect = (id: string | undefined) => {
-  emit('select', id)
+const handleSelect = (id: string | undefined, event?: MouseEvent) => {
+  emit('select', id, event)
+}
+
+const handleSelectAll = (selected: boolean) => {
+  emit('select-all', selected)
 }
 
 const handlePreview = (file: FileData) => {
@@ -253,10 +279,5 @@ const handleRename = (file: FileData) => {
 
 const handleDelete = (file: FileData) => {
   emit('delete', file)
-}
-
-const handleSelectAll = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  emit('select-all', target.checked)
 }
 </script>

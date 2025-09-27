@@ -83,6 +83,24 @@ const templates = {
   ],
 };
 
+// File type statistics with icons
+const fileTypeStats = computed(() => {
+  const stats: Record<string, number> = {};
+  let folderCount = 0;
+  
+  sortedItems.value.forEach(item => {
+    if (item.is_folder) {
+      folderCount++;
+    } else {
+      const fileType = item.file_type?.toUpperCase() || 'UNKNOWN';
+      stats[fileType] = (stats[fileType] || 0) + 1;
+    }
+  });
+  
+  return { folderCount, fileTypes: stats };
+});
+
+// Get file type badge/icon
 function loginWithVenmail() {
   const redirectUri = encodeURIComponent(`${window.location.origin}/oauth/callback`);
   const currentPath = route.fullPath;
@@ -438,11 +456,13 @@ function openFile(id: string) {
 async function createNewFolder() {
   const newFolderName = "New Folder";
   try {
-    const folder = {
+    const folder: FileData = {
       file_name: sluggify(newFolderName),
       title: newFolderName,
       is_folder: true,
       folder_id: currentFolderId.value,
+      url: false,
+      thumbnail_url: '', file_type: 'folder' 
     };
     const result = await fileStore.makeFolder(folder);
     if (result && result.id) {
@@ -935,6 +955,25 @@ function handleEscapeKey(event: KeyboardEvent) {
             </template>
             <template v-else>
               <div class="flex items-center gap-3 w-full sm:w-auto">
+                <!-- Items Count - minimalist design -->
+                <div
+                  v-if="sortedItems.length > 0"
+                  :class="[
+                    'flex items-center gap-2 text-sm',
+                    theme.isDark.value ? 'text-gray-400' : 'text-gray-600'
+                  ]"
+                >
+                  <span>{{ sortedItems.length }} items</span>
+                  <template v-if="fileTypeStats.folderCount > 0">
+                    <span>•</span>
+                    <span>{{ fileTypeStats.folderCount }} folders</span>
+                  </template>
+                  <template v-if="Object.keys(fileTypeStats.fileTypes).length > 0">
+                    <span>•</span>
+                    <span>{{ Object.values(fileTypeStats.fileTypes).reduce((a, b) => a + b, 0) }} files</span>
+                  </template>
+                </div>
+
                 <!-- Sort dropdown -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -1117,35 +1156,30 @@ function handleEscapeKey(event: KeyboardEvent) {
                     {{ formatGroupName(groupName) }}
                   </h3>
                   
-                  <!-- Select All controls for all view modes -->
-                  <div v-if="sortedItems.length > 0" class="flex items-center gap-3">
-                    <div class="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        :id="`select-all-${groupName}`"
-                        :checked="isAllSelected"
-                        :indeterminate="isSomeSelected"
-                        @change="toggleSelectAll"
-                        :class="[
-                          'rounded border text-primary-600 focus:ring-primary-500 focus:ring-offset-0',
-                          theme.isDark.value 
-                            ? 'border-gray-600 bg-gray-700 focus:ring-offset-gray-800' 
-                            : 'border-gray-300 bg-white focus:ring-offset-white'
-                        ]"
-                      />
-                      <label 
-                        :for="`select-all-${groupName}`"
-                        :class="[
-                          'text-sm font-medium cursor-pointer select-none',
-                          theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
-                        ]"
-                      >
-                        Select All
-                        <span v-if="sortedItems.length > 0" class="ml-1 opacity-75">
-                          ({{ sortedItems.length }})
-                        </span>
-                      </label>
-                    </div>
+                  <!-- Select All controls -->
+                  <div v-if="sortedItems.length > 0" class="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      :id="`select-all-${groupName}`"
+                      :checked="isAllSelected"
+                      :indeterminate="isSomeSelected"
+                      @change="toggleSelectAll"
+                      :class="[
+                        'rounded border text-primary-600 focus:ring-primary-500 focus:ring-offset-0',
+                        theme.isDark.value 
+                          ? 'border-gray-600 bg-gray-700 focus:ring-offset-gray-800' 
+                          : 'border-gray-300 bg-white focus:ring-offset-white'
+                      ]"
+                    />
+                    <label 
+                      :for="`select-all-${groupName}`"
+                      :class="[
+                        'text-sm font-medium cursor-pointer select-none',
+                        theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
+                      ]"
+                    >
+                      Select All
+                    </label>
                   </div>
                 </div>
 

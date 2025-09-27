@@ -76,19 +76,42 @@
           />
         </div>
 
-        <!-- File Icon and Info -->
-        <div v-else class="flex flex-col items-center justify-center p-6">
-          <FileIcon
-            :fileType="fileType"
-            :fileData="file"
-            class="w-16 h-16 mb-2 text-gray-400 dark:text-gray-500"
+        <!-- Media Preview or File Icon -->
+        <div v-else class="w-full h-full flex items-center justify-center">
+          <!-- Image Preview -->
+          <img
+            v-if="isImageFile && getMediaUrl"
+            :src="getMediaUrl"
+            :alt="file.title"
+            class="w-full h-full object-cover"
+            @error="handleImageError"
+            @load="console.log('Image loaded:', getMediaUrl)"
           />
-          <span
-            v-if="file.file_size"
-            class="text-xs text-gray-500 dark:text-gray-400 font-medium"
+          
+          <!-- Video Preview -->
+          <video
+            v-else-if="isVideoFile && getMediaUrl"
+            :src="getMediaUrl"
+            class="w-full h-full object-cover"
+            muted
+            preload="metadata"
           >
-            {{ file.file_size }}
-          </span>
+          </video>
+
+          <!-- File Icon for non-media files or files without URL -->
+          <div v-else class="flex flex-col items-center justify-center p-6">
+            <FileIcon
+              :fileType="fileType"
+              :fileData="file"
+              class="w-16 h-16 mb-2 text-gray-400 dark:text-gray-500"
+            />
+            <span
+              v-if="formattedFileSize"
+              class="text-xs text-gray-500 dark:text-gray-400 font-medium"
+            >
+              {{ formattedFileSize }}
+            </span>
+          </div>
         </div>
 
         <!-- Loading Overlay -->
@@ -266,10 +289,10 @@
           <!-- File Size - 3 columns -->
           <div class="col-span-3 flex justify-center">
             <span
-              v-if="file.file_size"
+              v-if="formattedFileSize"
               class="text-sm text-gray-600 dark:text-gray-400 font-medium"
             >
-              {{ file.file_size }}
+              {{ formattedFileSize }}
             </span>
             <span v-else class="text-sm text-gray-400 dark:text-gray-500"> -- </span>
           </div>
@@ -350,6 +373,53 @@ const fileType = computed(() =>
   props.file.is_folder ? "folder" : props.file.file_type || ""
 );
 
+// File size formatting
+const formatFileSize = (bytes: number): string => {
+  if (!bytes || bytes === 0) return '0 B';
+  
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  if (i === 0) return `${bytes} B`;
+  
+  const size = bytes / Math.pow(k, i);
+  return `${size.toFixed(size < 10 ? 1 : 0)} ${sizes[i]}`;
+};
+
+const formattedFileSize = computed(() => {
+  // Handle if file_size is already a string (like "2.5MB")
+  if (typeof props.file.file_size === 'string') {
+    return props.file.file_size;
+  }
+  // Handle if file_size is a number (bytes)
+  if (typeof props.file.file_size === 'number') {
+    return formatFileSize(props.file.file_size);
+  }
+  return null;
+});
+
+// Media detection computed properties - using only known FileData properties
+const isImageFile = computed(() => {
+  const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+  const fileExt = props.file.file_type?.toLowerCase();
+  
+  return imageTypes.includes(fileExt || '');
+});
+
+const isVideoFile = computed(() => {
+  const videoTypes = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'];
+  const fileExt = props.file.file_type?.toLowerCase();
+  
+  return videoTypes.includes(fileExt || '');
+});
+
+// Get the media URL - only use known properties
+const getMediaUrl = computed(() => {
+  // Only use properties that exist on FileData type
+  return (props.file as any).url || null;
+});
+
 const fileItemClass = computed(() => {
   const baseClass = "transition-all duration-200 cursor-pointer";
   const selectedClass = props.isSelected
@@ -380,6 +450,12 @@ const formattedDate = computed(() => {
     year: "numeric",
   });
 });
+
+const handleImageError = (event: Event) => {
+  // Hide the image if it fails to load
+  const img = event.target as HTMLImageElement;
+  img.style.display = 'none';
+};
 
 const handleClick = (event: MouseEvent) => {
   const target = event.target as HTMLElement;

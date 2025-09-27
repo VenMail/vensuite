@@ -150,6 +150,7 @@
     "vue-template-compiler": "^2.7.16",
     "vue3-draggable-resizable": "^1.6.5",
     "vuex": "^4.1.0",
+    "xlsx": "^0.18.5",
     "y-prosemirror": "1.2.12",
     "yjs": "^13.6.26"
   },
