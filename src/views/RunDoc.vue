@@ -1051,14 +1051,15 @@ async function fetchSharingInfo() {
   }
 }
 
-async function handleInviteMember(payload: { email: string; permission: 'view'|'comment'|'edit' }) {
+async function handleInviteMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner'; note?: string }) {
   try {
     const id = (route.params.id as string) || currentDoc.value?.id
     if (!id) return
     const token = fileStore.getToken?.()
     await axios.post(`${FILES_ENDPOINT}/${id}/share`, {
       email: payload.email,
-      access_level: permToApi[payload.permission]
+      access_level: permToApi[payload.permission as 'view'|'comment'|'edit'] || 'e',
+      note: payload.note
     }, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
     await fetchSharingInfo()
     toast.success('Shared successfully')
@@ -1067,9 +1068,9 @@ async function handleInviteMember(payload: { email: string; permission: 'view'|'
   }
 }
 
-async function handleUpdateMember(payload: { email: string; permission: 'view'|'comment'|'edit' }) {
+async function handleUpdateMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner' }) {
   // Backend share endpoint overwrites the level when called again
-  return handleInviteMember(payload)
+  return handleInviteMember(payload as { email: string; permission: 'view'|'comment'|'edit' })
 }
 
 async function handleRemoveMember(payload: { email: string }) {
@@ -1135,7 +1136,7 @@ function downloadFile() {
     <div
       class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
       <div class="flex items-center gap-4">
-        <Button variant="ghost" size="icon" @click="router.push('/')">
+        <Button variant="ghost" size="icon" @click="router.back()">
           <ArrowLeft class="h-5 w-5" />
         </Button>
         <router-link to="/">

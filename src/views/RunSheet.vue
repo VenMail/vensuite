@@ -785,14 +785,15 @@ async function fetchSharingInfo() {
   } catch {}
 }
 
-async function handleInviteMember(payload: { email: string; permission: 'view'|'comment'|'edit' }) {
+async function handleInviteMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner'; note?: string }) {
   try {
     const id = route.params.id as string
     if (!id) return
     const token = fileStore.getToken?.()
     await axios.post(`${FILES_ENDPOINT}/${id}/share`, {
       email: payload.email,
-      access_level: permToApi[payload.permission]
+      access_level: payload.permission === 'owner' ? 'o' : permToApi[payload.permission],
+      note: payload.note
     }, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
     await fetchSharingInfo()
     toast.success('Shared successfully')
@@ -801,7 +802,7 @@ async function handleInviteMember(payload: { email: string; permission: 'view'|'
   }
 }
 
-async function handleUpdateMember(payload: { email: string; permission: 'view'|'comment'|'edit' }) {
+async function handleUpdateMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner' }) {
   return handleInviteMember(payload)
 }
 
@@ -846,7 +847,9 @@ async function updateVisibility(newVis: number) {
     is_folder: false,
     file_name: `${name.toLowerCase().replace(/\s+/g, '-')}.xlsx`,
     last_viewed: new Date(),
-    privacy_type: newVis,
+    privacy_type: 2,
+    url: false,
+    thumbnail_url: undefined,
   }
   const result = await fileStore.saveDocument(doc)
   if (result?.document) toast.success('Visibility updated')
@@ -920,7 +923,7 @@ function toggleChat() {
       <div class="flex items-center gap-4">
         <button
           class="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-          @click="router.push('/')"
+          @click="router.back()"
         >
           <ArrowLeft class="h-5 w-5" />
         </button>

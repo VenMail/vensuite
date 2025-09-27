@@ -57,7 +57,7 @@ const fileStore = useFileStore();
 const { isAuthenticated } = storeToRefs(authStore);
 const theme = inject("theme") as { isDark: { value: boolean } };
 
-const viewMode = ref<"grid" | "list">("grid");
+const viewMode = ref<"grid" | "list" | "thumbnail">("grid");
 const selectedFiles = ref<Set<string>>(new Set());
 const showRecentFiles = ref(false);
 const sortBy = ref("name");
@@ -83,6 +83,24 @@ const templates = {
   ],
 };
 
+// File type statistics with icons
+const fileTypeStats = computed(() => {
+  const stats: Record<string, number> = {};
+  let folderCount = 0;
+  
+  sortedItems.value.forEach(item => {
+    if (item.is_folder) {
+      folderCount++;
+    } else {
+      const fileType = item.file_type?.toUpperCase() || 'UNKNOWN';
+      stats[fileType] = (stats[fileType] || 0) + 1;
+    }
+  });
+  
+  return { folderCount, fileTypes: stats };
+});
+
+// Get file type badge/icon
 function loginWithVenmail() {
   const redirectUri = encodeURIComponent(`${window.location.origin}/oauth/callback`);
   const currentPath = route.fullPath;
@@ -438,11 +456,13 @@ function openFile(id: string) {
 async function createNewFolder() {
   const newFolderName = "New Folder";
   try {
-    const folder = {
+    const folder: FileData = {
       file_name: sluggify(newFolderName),
       title: newFolderName,
       is_folder: true,
       folder_id: currentFolderId.value,
+      url: false,
+      thumbnail_url: '', file_type: 'folder' 
     };
     const result = await fileStore.makeFolder(folder);
     if (result && result.id) {
@@ -935,6 +955,25 @@ function handleEscapeKey(event: KeyboardEvent) {
             </template>
             <template v-else>
               <div class="flex items-center gap-3 w-full sm:w-auto">
+                <!-- Items Count - minimalist design -->
+                <div
+                  v-if="sortedItems.length > 0"
+                  :class="[
+                    'flex items-center gap-2 text-sm',
+                    theme.isDark.value ? 'text-gray-400' : 'text-gray-600'
+                  ]"
+                >
+                  <span>{{ sortedItems.length }} items</span>
+                  <template v-if="fileTypeStats.folderCount > 0">
+                    <span>•</span>
+                    <span>{{ fileTypeStats.folderCount }} folders</span>
+                  </template>
+                  <template v-if="Object.keys(fileTypeStats.fileTypes).length > 0">
+                    <span>•</span>
+                    <span>{{ Object.values(fileTypeStats.fileTypes).reduce((a, b) => a + b, 0) }} files</span>
+                  </template>
+                </div>
+
                 <!-- Sort dropdown -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -1032,7 +1071,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                     variant="ghost"
                     size="sm"
                     :class="[
-                      'px-3 py-2',
+                      'px-2 py-2',
                       viewMode === 'grid'
                         ? theme.isDark.value
                           ? 'bg-gray-700 shadow-sm'
@@ -1040,6 +1079,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                         : '',
                     ]"
                     @click="viewMode = 'grid'"
+                    title="Grid View"
                   >
                     <Grid class="h-4 w-4" />
                   </Button>
@@ -1047,7 +1087,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                     variant="ghost"
                     size="sm"
                     :class="[
-                      'px-3 py-2',
+                      'px-2 py-2',
                       viewMode === 'list'
                         ? theme.isDark.value
                           ? 'bg-gray-700 shadow-sm'
@@ -1055,8 +1095,36 @@ function handleEscapeKey(event: KeyboardEvent) {
                         : '',
                     ]"
                     @click="viewMode = 'list'"
+                    title="List View"
                   >
                     <List class="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    :class="[
+                      'px-2 py-2',
+                      viewMode === 'thumbnail'
+                        ? theme.isDark.value
+                          ? 'bg-gray-700 shadow-sm'
+                          : 'bg-white shadow-sm'
+                        : '',
+                    ]"
+                    @click="viewMode = 'thumbnail'"
+                    title="Thumbnail View"
+                  >
+                    <svg
+                      class="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <rect x="3" y="3" width="7" height="7" />
+                      <rect x="14" y="3" width="7" height="7" />
+                      <rect x="3" y="14" width="7" height="7" />
+                      <rect x="14" y="14" width="7" height="7" />
+                    </svg>
                   </Button>
                 </div>
               </div>
@@ -1076,46 +1144,52 @@ function handleEscapeKey(event: KeyboardEvent) {
           <div v-if="Object.keys(groupedItems).length > 0 && sortedItems.length > 0">
             <template v-for="(items, groupName) in groupedItems" :key="groupName">
               <div class="p-2 sm:p-4">
-                <!-- Group header -->
-                <h3
-                  v-if="groupByFileType"
-                  :class="[
-                    'text-base font-semibold mb-3 px-2',
-                    theme.isDark.value ? 'text-gray-100' : 'text-gray-700',
-                  ]"
-                >
-                  {{ formatGroupName(groupName) }}
-                </h3>
-
-                <!-- Select All header for list view -->
-                <div
-                  v-if="viewMode === 'list' && !groupByFileType"
-                  :class="[
-                    'flex items-center gap-3 px-4 py-3 border-b mb-2',
-                    theme.isDark.value ? 'border-gray-700' : 'border-gray-200',
-                  ]"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="isAllSelected"
-                    :indeterminate="isSomeSelected"
-                    @change="toggleSelectAll"
-                    class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span
+                <!-- Group header with Select All for all view modes -->
+                <div class="flex items-center justify-between mb-3 px-2">
+                  <h3
+                    v-if="groupByFileType"
                     :class="[
-                      'text-sm font-medium',
-                      theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
+                      'text-base font-semibold',
+                      theme.isDark.value ? 'text-gray-100' : 'text-gray-700',
                     ]"
                   >
-                    Select All
-                  </span>
+                    {{ formatGroupName(groupName) }}
+                  </h3>
+                  
+                  <!-- Select All controls -->
+                  <div v-if="sortedItems.length > 0" class="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      :id="`select-all-${groupName}`"
+                      :checked="isAllSelected"
+                      :indeterminate="isSomeSelected"
+                      @change="toggleSelectAll"
+                      :class="[
+                        'rounded border text-primary-600 focus:ring-primary-500 focus:ring-offset-0',
+                        theme.isDark.value 
+                          ? 'border-gray-600 bg-gray-700 focus:ring-offset-gray-800' 
+                          : 'border-gray-300 bg-white focus:ring-offset-white'
+                      ]"
+                    />
+                    <label 
+                      :for="`select-all-${groupName}`"
+                      :class="[
+                        'text-sm font-medium cursor-pointer select-none',
+                        theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
+                      ]"
+                    >
+                      Select All
+                    </label>
+                  </div>
                 </div>
 
                 <!-- Items -->
                 <div
                   v-if="items.length === 0"
-                  class="text-center text-sm text-gray-500 py-4"
+                  :class="[
+                    'text-center text-sm py-4',
+                    theme.isDark.value ? 'text-gray-400' : 'text-gray-500'
+                  ]"
                 >
                   No items available in this category.
                 </div>
@@ -1123,7 +1197,9 @@ function handleEscapeKey(event: KeyboardEvent) {
                   :class="{
                     'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4':
                       viewMode === 'grid',
-                    'space-y-2': viewMode === 'list',
+                    'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2':
+                      viewMode === 'thumbnail',
+                    'space-y-1': viewMode === 'list',
                   }"
                 >
                   <FileItem
@@ -1132,6 +1208,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                     :file="item"
                     :viewMode="viewMode"
                     :isSelected="selectedFiles.has(item.id || '')"
+                    :showFileTypeTags="true"
                     @select-file="handleSelect"
                     @open-file="openFile"
                     @contextmenu-file="openContextMenu"
@@ -1146,8 +1223,6 @@ function handleEscapeKey(event: KeyboardEvent) {
             <div class="loading-spinner"></div>
             <p class="loading-text">Loading your files...</p>
           </div>
-
-          <!-- Empty state -->
 
           <!-- Empty state -->
           <div v-else class="flex flex-col items-center justify-center py-16 px-6">
@@ -1271,14 +1346,24 @@ function handleEscapeKey(event: KeyboardEvent) {
   <div
     v-if="contextMenuState.visible"
     id="context-menu"
-    class="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg context-menu"
+    :class="[
+      'fixed z-50 border rounded-md shadow-lg context-menu',
+      theme.isDark.value 
+        ? 'bg-gray-800 border-gray-700' 
+        : 'bg-white border-gray-200'
+    ]"
     :style="{ left: contextMenuState.x + 'px', top: contextMenuState.y + 'px' }"
   >
     <ul class="py-1">
       <li
         v-for="action in contextMenuActions"
         :key="action.label"
-        class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer flex items-center space-x-2"
+        :class="[
+          'px-3 py-2 cursor-pointer flex items-center space-x-2',
+          theme.isDark.value 
+            ? 'hover:bg-gray-700' 
+            : 'hover:bg-gray-100'
+        ]"
         @click="action.action"
       >
         <component :is="action.icon" class="h-4 w-4" />
@@ -1295,3 +1380,87 @@ function handleEscapeKey(event: KeyboardEvent) {
     :fileTypeFilter="'all'"
   />
 </template>
+
+<style scoped>
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.25rem;
+  z-index: 50;
+  overflow: hidden;
+  background-color: rgb(229 231 235);
+}
+
+.dark .loading-bar {
+  background-color: rgb(55 65 81);
+}
+
+.loading-progress {
+  height: 100%;
+  background-color: rgb(37 99 235);
+  width: 30%;
+  animation: loading 2s infinite ease-in-out;
+}
+
+.dark .loading-progress {
+  background-color: rgb(59 130 246);
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.dark .loading-spinner {
+  border-color: #374151;
+  border-top-color: #60a5fa;
+}
+
+.loading-text {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.dark .loading-text {
+  color: #9ca3af;
+}
+
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>

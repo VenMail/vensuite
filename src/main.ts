@@ -171,7 +171,16 @@ async function bootstrap() {
 
         const updatedDoc: FileData = currentDoc
           ? { ...currentDoc, title: doc?.title || currentDoc.title, content: content.html, last_viewed: new Date() }
-          : { id: undefined, title: doc?.title || "New Document", content: content.html, file_type: "docx", last_viewed: new Date(), isNew: true };
+          : { 
+              id: undefined, 
+              title: doc?.title || "New Document", 
+              content: content.html, 
+              file_type: "docx", 
+              last_viewed: new Date(), 
+              isNew: true,
+              url: false, // Add required url property as boolean
+              thumbnail_url: undefined // Add required thumbnail_url property
+            };
 
         console.log('updatedDoc:', updatedDoc);
         const saved = await documentStore.saveDocument(updatedDoc);

@@ -1,4 +1,6 @@
 export interface FileData {
+  url: boolean;
+  thumbnail_url: string | undefined;
   id?: string;              // Primary ID - either local UUID or server ID
   server_id?: string;       // Server ID (only present for documents that exist on server)
   title: string;
