@@ -973,101 +973,6 @@ export const useFileStore = defineStore("files", {
       return uuidv4();
     },
 
-
-    /** Load trashed documents from API */
-    async loadTrashedDocuments(): Promise<FileData[]> {
-      try {
-        const response = await axios.get(`${FILES_ENDPOINT}/trash`, {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
-        });
-
-        const docs = response.data.data as FileData[];
-        const processedDocs = docs.map((doc) => {
-          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name);
-          return {
-            ...doc,
-            id: doc.id,
-            file_type: normalizedType,
-            is_folder: !!doc.is_folder,
-            content: doc.content || this.getDefaultContent(normalizedType),
-            title: this.computeTitle(doc),
-            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
-            isNew: false,
-            isDirty: false,
-          };
-        });
-
-        return processedDocs;
-      } catch (error) {
-        console.error("Error loading trashed documents:", error);
-        this.lastError = "Failed to load trashed documents";
-        return [];
-      }
-    },
-
-    /** Restore a file from trash */
-    async restoreFile(id: string): Promise<boolean> {
-      try {
-        const response = await axios.post(
-          `${FILES_ENDPOINT}/${id}/restore`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${this.getToken()}` },
-          }
-        );
-
-        if (response.status === 200 || response.status === 201) {
-          // Update local state if the file exists in allFiles
-          const fileIndex = this.allFiles.findIndex((f) => f.id === id);
-          if (fileIndex !== -1) {
-            const restoredFile = response.data.data;
-            this.allFiles[fileIndex] = {
-              ...this.allFiles[fileIndex],
-              ...restoredFile,
-            };
-          }
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error("Error restoring file:", error);
-        this.lastError = "Failed to restore file";
-        return false;
-      }
-    },
-
-    /** Permanently delete a file */
-    async permanentDeleteFile(id: string): Promise<boolean> {
-      try {
-        const response = await axios.delete(`${FILES_ENDPOINT}/${id}/permanent`, {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
-        });
-
-        if (response.status === 200 || response.status === 204) {
-          // Remove from local state
-          this.allFiles = this.allFiles.filter((f) => f.id !== id);
-          this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
-          this.cachedDocuments.delete(id);
-          this.pendingChanges.delete(id);
-          this.syncStatus.delete(id);
-
-          // Remove from localStorage
-          const prefixes = ["document", "sheet", "file"];
-          prefixes.forEach(prefix => {
-            const key = `${prefix}_${id}`;
-            localStorage.removeItem(key);
-          });
-
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error("Error permanently deleting file:", error);
-        this.lastError = "Failed to permanently delete file";
-        return false;
-      }
-    },
-
     /** Fetch files within a specific folder */
     async fetchFiles(folderId: string): Promise<FileData[]> {
       try {
@@ -1099,36 +1004,10 @@ export const useFileStore = defineStore("files", {
     },
 
     /** Delete a file */
+    /** Delete a file (moves to trash) - replaces your current deleteFile method */
     async deleteFile(id: string): Promise<boolean> {
-      const docIndex = this.allFiles.findIndex((f) => f.id === id);
-      if (docIndex === -1) return false;
-
-      const doc = this.allFiles[docIndex];
-
-      // If it's an online document (not local UUID), delete from API
-      if (this.isOnline && !this.isLocalDocument(id)) {
-        try {
-          await axios.delete(`${FILES_ENDPOINT}/${id}`, {
-            headers: { Authorization: `Bearer ${this.getToken()}` },
-          });
-        } catch (error) {
-          console.error("Error deleting from API:", error);
-          // Proceed with local deletion even if API fails
-        }
-      }
-
-      // Remove from localStorage and state
-      const prefix = this.getPrefix(doc.file_type || "docx");
-      const key = `${prefix}_${id}`;
-      localStorage.removeItem(key);
-      this.allFiles.splice(docIndex, 1);
-      this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
-
-      // Remove from cache and pending changes
-      this.cachedDocuments.delete(id);
-      this.pendingChanges.delete(id);
-
-      return true;
+      // Use soft delete (move to trash) instead of permanent delete
+      return this.moveToTrash(id);
     },
 
     /** Create a new folder */
@@ -1239,8 +1118,104 @@ export const useFileStore = defineStore("files", {
         return mediaFiles;
       }
     },
+
+    /** Load trashed documents from API */
+    async loadTrashedDocuments(): Promise<FileData[]> {
+      try {
+        const response = await axios.get(`${FILES_ENDPOINT}/trash`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+
+        const docs = response.data.data as FileData[];
+        const processedDocs = docs.map((doc) => {
+          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name);
+          return {
+            ...doc,
+            id: doc.id,
+            file_type: normalizedType,
+            is_folder: !!doc.is_folder,
+            content: doc.content || this.getDefaultContent(normalizedType),
+            title: this.computeTitle(doc),
+            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+            source: 'Files', // Add source for display
+            isNew: false,
+            isDirty: false,
+          };
+        });
+
+        return processedDocs;
+      } catch (error) {
+        console.error("Error loading trashed documents:", error);
+        this.lastError = "Failed to load trashed documents";
+        return [];
+      }
+    },
+
+    /** Move file to trash (soft delete) - matches your backend PATCH /app-files/{id}/trash */
+    async moveToTrash(id: string): Promise<boolean> {
+      try {
+        const response = await axios.patch(
+          `${FILES_ENDPOINT}/${id}/trash`,
+          {},
+          { headers: { Authorization: `Bearer ${this.getToken()}` } }
+        );
+
+        if (response.status === 200 || response.status === 201) {
+          // Remove from allFiles since it's now in trash
+          this.allFiles = this.allFiles.filter((f) => f.id !== id);
+          this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error moving to trash:", error);
+        this.lastError = "Failed to move to trash";
+        return false;
+      }
+    },
+
+    /** Restore a file from trash - matches your backend PATCH /app-files/{id}/restore */
+    async restoreFile(id: string): Promise<boolean> {
+      try {
+        const response = await axios.patch(
+          `${FILES_ENDPOINT}/${id}/restore`,
+          {},
+          { headers: { Authorization: `Bearer ${this.getToken()}` } }
+        );
+        return response.status === 200 || response.status === 201;
+      } catch (error) {
+        console.error("Error restoring file:", error);
+        this.lastError = "Failed to restore file";
+        return false;
+      }
+    },
+
+    /** Permanently delete a file - matches your backend DELETE /app-files/{id} */
+    async permanentDeleteFile(id: string): Promise<boolean> {
+      try {
+        await axios.delete(`${FILES_ENDPOINT}/${id}`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+
+        // Clean up local state
+        this.allFiles = this.allFiles.filter((f) => f.id !== id);
+        this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
+        this.cachedDocuments.delete(id);
+        this.pendingChanges.delete(id);
+        this.syncStatus.delete(id);
+
+        // Clean up localStorage
+        const prefixes = ["document", "sheet", "file"];
+        prefixes.forEach(prefix => {
+          localStorage.removeItem(`${prefix}_${id}`);
+        });
+
+        return true;
+      } catch (error) {
+        console.error("Error permanently deleting file:", error);
+        this.lastError = "Failed to permanently delete file";
+        return false;
+      }
+    },
   },
 });
-
-
-
