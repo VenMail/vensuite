@@ -973,6 +973,101 @@ export const useFileStore = defineStore("files", {
       return uuidv4();
     },
 
+
+    /** Load trashed documents from API */
+    async loadTrashedDocuments(): Promise<FileData[]> {
+      try {
+        const response = await axios.get(`${FILES_ENDPOINT}/trash`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+
+        const docs = response.data.data as FileData[];
+        const processedDocs = docs.map((doc) => {
+          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name);
+          return {
+            ...doc,
+            id: doc.id,
+            file_type: normalizedType,
+            is_folder: !!doc.is_folder,
+            content: doc.content || this.getDefaultContent(normalizedType),
+            title: this.computeTitle(doc),
+            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+            isNew: false,
+            isDirty: false,
+          };
+        });
+
+        return processedDocs;
+      } catch (error) {
+        console.error("Error loading trashed documents:", error);
+        this.lastError = "Failed to load trashed documents";
+        return [];
+      }
+    },
+
+    /** Restore a file from trash */
+    async restoreFile(id: string): Promise<boolean> {
+      try {
+        const response = await axios.post(
+          `${FILES_ENDPOINT}/${id}/restore`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${this.getToken()}` },
+          }
+        );
+
+        if (response.status === 200 || response.status === 201) {
+          // Update local state if the file exists in allFiles
+          const fileIndex = this.allFiles.findIndex((f) => f.id === id);
+          if (fileIndex !== -1) {
+            const restoredFile = response.data.data;
+            this.allFiles[fileIndex] = {
+              ...this.allFiles[fileIndex],
+              ...restoredFile,
+            };
+          }
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error restoring file:", error);
+        this.lastError = "Failed to restore file";
+        return false;
+      }
+    },
+
+    /** Permanently delete a file */
+    async permanentDeleteFile(id: string): Promise<boolean> {
+      try {
+        const response = await axios.delete(`${FILES_ENDPOINT}/${id}/permanent`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+
+        if (response.status === 200 || response.status === 204) {
+          // Remove from local state
+          this.allFiles = this.allFiles.filter((f) => f.id !== id);
+          this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
+          this.cachedDocuments.delete(id);
+          this.pendingChanges.delete(id);
+          this.syncStatus.delete(id);
+
+          // Remove from localStorage
+          const prefixes = ["document", "sheet", "file"];
+          prefixes.forEach(prefix => {
+            const key = `${prefix}_${id}`;
+            localStorage.removeItem(key);
+          });
+
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error permanently deleting file:", error);
+        this.lastError = "Failed to permanently delete file";
+        return false;
+      }
+    },
+
     /** Fetch files within a specific folder */
     async fetchFiles(folderId: string): Promise<FileData[]> {
       try {
@@ -1146,3 +1241,6 @@ export const useFileStore = defineStore("files", {
     },
   },
 });
+
+
+

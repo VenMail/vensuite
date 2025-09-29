@@ -18,6 +18,10 @@ export interface FileData {
   content?: string;          // Normalized content field
   isNew?: boolean;          // Local flag for new documents
   isDirty?: boolean;        // Local flag for unsaved changes
+   mime_type?: string;       // MIME type of the file
+  source?: string;          // Source of the file (e.g., "Files", "Forms")
+  is_trashed?: boolean;     // Whether the file is in trash
+  trashed_at?: Date | string; // When the file was trashed
   // Sharing controls (backend-compliant)
   // privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
   privacy_type?: number;
