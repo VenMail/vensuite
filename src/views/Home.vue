@@ -46,6 +46,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileData } from "@/types";
 import FileItem from "@/components/FileItem.vue";
+import MediaViewer from "@/components/media/MediaViewer.vue";
 import { sluggify } from "@/utils/lib";
 import { toast } from "@/composables/useToast";
 import FileUploader from "@/components/FileUploader.vue";
@@ -70,6 +71,11 @@ const breadcrumbs = ref<Array<{ id: string | null; title: string }>>([
 const searchValue = ref("");
 const isUploadDialogOpen = ref(false);
 
+// Media viewer state
+const isViewerOpen = ref(false);
+const currentViewFile = ref<FileData | null>(null);
+const currentViewIndex = ref(0);
+
 const templates = {
   Documents: [
     { name: "Blank Document", icon: "IconMicrosoftWord" },
@@ -83,24 +89,44 @@ const templates = {
   ],
 };
 
+// Helper to check if file is viewable media
+function isViewableMedia(fileType: string | null | undefined): boolean {
+  if (!fileType) return false;
+  const type = fileType.toLowerCase();
+  return [
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "webp",
+    "svg",
+    "bmp",
+    "mp4",
+    "webm",
+    "ogg",
+    "mp3",
+    "wav",
+    "aac",
+  ].includes(type);
+}
+
 // File type statistics with icons
 const fileTypeStats = computed(() => {
   const stats: Record<string, number> = {};
   let folderCount = 0;
-  
-  sortedItems.value.forEach(item => {
+
+  sortedItems.value.forEach((item) => {
     if (item.is_folder) {
       folderCount++;
     } else {
-      const fileType = item.file_type?.toUpperCase() || 'UNKNOWN';
+      const fileType = item.file_type?.toUpperCase() || "UNKNOWN";
       stats[fileType] = (stats[fileType] || 0) + 1;
     }
   });
-  
+
   return { folderCount, fileTypes: stats };
 });
 
-// Get file type badge/icon
 function loginWithVenmail() {
   const redirectUri = encodeURIComponent(`${window.location.origin}/oauth/callback`);
   const currentPath = route.fullPath;
@@ -125,14 +151,11 @@ onMounted(async () => {
   document.addEventListener("keydown", handleEscapeKey);
 
   if (authStore.getToken()) {
-    // Load offline documents first
     const offlineDocs = fileStore.loadOfflineDocuments();
-    // Avoid flicker: only assign immediately if we are offline; otherwise, wait until merge completes
     if (!fileStore.isOnline) {
       fileStore.allFiles = offlineDocs;
     }
 
-    // Debug logging for file types (development only)
     if (import.meta.env.DEV) {
       const filesWithMissingTypes = offlineDocs.filter(
         (doc) => !doc.file_type && !doc.is_folder
@@ -148,27 +171,20 @@ onMounted(async () => {
       }
     }
 
-    // If online, load online documents and merge with offline
     if (fileStore.isOnline) {
-      // Do not mutate store yet to avoid flicker
       const onlineDocs = await fileStore.loadDocuments(true);
-
-      // Simple merge: prefer offline documents if they're dirty, otherwise use online
       const mergedFiles = new Map<string, FileData>();
 
-      // Add offline documents first
       offlineDocs.forEach((doc) => {
         if (doc.id) {
           mergedFiles.set(doc.id, doc);
         }
       });
 
-      // Add online documents, but only if no dirty offline version exists
       onlineDocs.forEach((doc) => {
         if (doc.id) {
           const offlineDoc = mergedFiles.get(doc.id);
           if (!offlineDoc || !offlineDoc.isDirty) {
-            // Prefer an offline non-default title if online looks default
             if (
               offlineDoc &&
               offlineDoc.title &&
@@ -185,7 +201,6 @@ onMounted(async () => {
 
       fileStore.allFiles = Array.from(mergedFiles.values());
 
-      // Debug logging for final merged files (development only)
       if (import.meta.env.DEV) {
         const finalFilesWithMissingTypes = fileStore.allFiles.filter(
           (doc) => !doc.file_type && !doc.is_folder
@@ -213,18 +228,14 @@ onUnmounted(() => {
 
 const selectedFilesList = computed(() => {
   const uniqueFiles = new Map<string, FileData>();
-
-  // Process both recent and all files
   const sourceFiles = showRecentFiles.value ? fileStore.recentFiles : fileStore.allFiles;
 
-  // Deduplicate files by ID
   sourceFiles.forEach((file) => {
     if (file.id && !uniqueFiles.has(file.id)) {
       uniqueFiles.set(file.id, file);
     }
   });
 
-  // Apply folder filtering
   return Array.from(uniqueFiles.values()).filter((file) => {
     const folderMatch = currentFolderId.value
       ? file.folder_id === currentFolderId.value
@@ -279,7 +290,6 @@ const sortedItems = computed(() => {
   return [...folders.value, ...files.value].sort(sortFn);
 });
 
-// Improved grouping logic
 const groupedItems = computed(() => {
   if (!groupByFileType.value) return { "All Items": sortedItems.value };
 
@@ -345,7 +355,13 @@ const groupedItems = computed(() => {
   return groups;
 });
 
-// Select all functionality
+// Viewable files for media viewer
+const viewableFiles = computed(() => {
+  return sortedItems.value.filter(
+    (file) => !file.is_folder && isViewableMedia(file.file_type)
+  );
+});
+
 const isAllSelected = computed(() => {
   return (
     sortedItems.value.length > 0 &&
@@ -370,10 +386,8 @@ function toggleSelectAll() {
 async function openFolder(id: string) {
   try {
     const docs = await fileStore.fetchFiles(id);
-    // Replace list with the folder's contents
     fileStore.allFiles = docs;
     currentFolderId.value = id;
-    // Update current folder title (try from store; if not found, load by id)
     const existing = fileStore.allFiles.find((f) => f.id === id && f.is_folder);
     if (existing && existing.title) {
       currentFolderTitle.value = existing.title;
@@ -384,7 +398,6 @@ async function openFolder(id: string) {
           folderDoc?.title || currentFolderTitle.value || "Folder";
       } catch {}
     }
-    // Update breadcrumbs
     const last = breadcrumbs.value[breadcrumbs.value.length - 1];
     if (!last || last.id !== id) {
       breadcrumbs.value.push({ id, title: currentFolderTitle.value || "Folder" });
@@ -397,16 +410,13 @@ async function openFolder(id: string) {
 function handleSelect(id: string | undefined, event?: MouseEvent) {
   if (!id) return;
 
-  // If Ctrl/Cmd is held, toggle selection of this item
   if (event?.ctrlKey || event?.metaKey) {
     if (selectedFiles.value.has(id)) {
       selectedFiles.value.delete(id);
     } else {
       selectedFiles.value.add(id);
     }
-  }
-  // If Shift is held, select range
-  else if (event?.shiftKey && selectedFiles.value.size > 0) {
+  } else if (event?.shiftKey && selectedFiles.value.size > 0) {
     const allFiles = sortedItems.value;
     const lastSelectedIndex = allFiles.findIndex(
       (f) => f.id === Array.from(selectedFiles.value).pop()
@@ -421,9 +431,7 @@ function handleSelect(id: string | undefined, event?: MouseEvent) {
         if (f.id) selectedFiles.value.add(f.id);
       });
     }
-  }
-  // Normal click - toggle individual selection (allows building selection)
-  else {
+  } else {
     if (selectedFiles.value.has(id)) {
       selectedFiles.value.delete(id);
     } else {
@@ -437,6 +445,9 @@ function openFile(id: string) {
   if (file) {
     if (file.is_folder) {
       openFolder(id);
+    } else if (isViewableMedia(file.file_type)) {
+      // Open media viewer instead of navigating
+      handlePreview(file);
     } else {
       switch (file.file_type?.toLowerCase()) {
         case "docx":
@@ -453,6 +464,41 @@ function openFile(id: string) {
   }
 }
 
+function handlePreview(file: FileData) {
+  const index = viewableFiles.value.findIndex((f) => f.id === file.id);
+  if (index !== -1) {
+    currentViewFile.value = file;
+    currentViewIndex.value = index;
+    isViewerOpen.value = true;
+  } else {
+    console.log("File not found in viewable files:", file.title, file.file_type);
+  }
+}
+
+function closeViewer() {
+  isViewerOpen.value = false;
+  currentViewFile.value = null;
+}
+
+function handleViewerNavigate(index: number) {
+  if (index >= 0 && index < viewableFiles.value.length) {
+    currentViewIndex.value = index;
+    currentViewFile.value = viewableFiles.value[index];
+  }
+}
+
+function handleViewerDownload(file: FileData) {
+  if (file.file_url) {
+    const link = document.createElement("a");
+    link.href = file.file_url;
+    link.download = file.title;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Downloaded ${file.title}`);
+  }
+}
+
 async function createNewFolder() {
   const newFolderName = "New Folder";
   try {
@@ -462,12 +508,12 @@ async function createNewFolder() {
       is_folder: true,
       folder_id: currentFolderId.value,
       url: false,
-      thumbnail_url: '', file_type: 'folder' 
+      thumbnail_url: "",
+      file_type: "folder",
     };
     const result = await fileStore.makeFolder(folder);
     if (result && result.id) {
       selectedFiles.value = new Set([result.id]);
-      // Trigger rename mode in FileItem component
       nextTick(() => {
         const fileItemElement = document.getElementById(`fileItem-${result.id}`);
         if (fileItemElement) {
@@ -499,7 +545,6 @@ function createNewFile(type: string, template?: string) {
   }
 }
 
-// uploader
 function openUploadDialog() {
   isUploadDialogOpen.value = true;
 }
@@ -509,7 +554,6 @@ async function handleUploadComplete(files: any[]) {
   toast.success(
     `Successfully uploaded ${files.length} file${files.length !== 1 ? "s" : ""}`
   );
-  // Refresh the current folder or all documents
   try {
     if (currentFolderId.value) {
       const docs = await fileStore.fetchFiles(currentFolderId.value);
@@ -524,11 +568,9 @@ async function handleUploadComplete(files: any[]) {
 }
 
 function navigateToBreadcrumb(index: number) {
-  // Navigate to selected breadcrumb level
   const target = breadcrumbs.value[index];
   breadcrumbs.value = breadcrumbs.value.slice(0, index + 1);
   if (!target.id) {
-    // Root
     currentFolderId.value = null;
     currentFolderTitle.value = "";
     fileStore.loadDocuments().then((docs) => {
@@ -545,7 +587,6 @@ function goUpOneLevel() {
   }
 }
 
-// Format group names for display
 function formatGroupName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1).replace("_", " ");
 }
@@ -562,7 +603,6 @@ function handleRename() {
   }
 }
 
-// Update the contextMenuActions computed property
 const contextMenuState = ref<{
   visible: boolean;
   x: number;
@@ -571,7 +611,6 @@ const contextMenuState = ref<{
 }>({ visible: false, x: 0, y: 0, targetId: null });
 
 function openContextMenu(payload: { id: string; x: number; y: number }) {
-  // select the right-clicked file
   selectedFiles.value = new Set([payload.id]);
   contextMenuState.value = {
     visible: true,
@@ -676,7 +715,6 @@ function handleBulkDownload() {
     .map((id) => fileStore.allFiles.find((f) => f.id === id))
     .filter((f) => f && !f.is_folder);
 
-  // Implement download logic here
   console.log("Downloading files:", selectedFilesList);
 }
 
@@ -685,7 +723,6 @@ function handleOutsideClick(event: MouseEvent) {
   if (!target.closest(".file-item") && !target.closest(".context-menu")) {
     selectedFiles.value.clear();
   }
-  // also close context menu if clicking anywhere else
   if (!target.closest("#context-menu")) {
     closeContextMenu();
   }
@@ -693,7 +730,11 @@ function handleOutsideClick(event: MouseEvent) {
 
 function handleEscapeKey(event: KeyboardEvent) {
   if (event.key === "Escape") {
-    selectedFiles.value.clear();
+    if (isViewerOpen.value) {
+      closeViewer();
+    } else {
+      selectedFiles.value.clear();
+    }
   } else if (event.key === "F2" && selectedFiles.value.size === 1) {
     event.preventDefault();
     handleRename();
@@ -960,7 +1001,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                   v-if="sortedItems.length > 0"
                   :class="[
                     'flex items-center gap-2 text-sm',
-                    theme.isDark.value ? 'text-gray-400' : 'text-gray-600'
+                    theme.isDark.value ? 'text-gray-400' : 'text-gray-600',
                   ]"
                 >
                   <span>{{ sortedItems.length }} items</span>
@@ -970,7 +1011,12 @@ function handleEscapeKey(event: KeyboardEvent) {
                   </template>
                   <template v-if="Object.keys(fileTypeStats.fileTypes).length > 0">
                     <span>•</span>
-                    <span>{{ Object.values(fileTypeStats.fileTypes).reduce((a, b) => a + b, 0) }} files</span>
+                    <span
+                      >{{
+                        Object.values(fileTypeStats.fileTypes).reduce((a, b) => a + b, 0)
+                      }}
+                      files</span
+                    >
                   </template>
                 </div>
 
@@ -1155,7 +1201,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                   >
                     {{ formatGroupName(groupName) }}
                   </h3>
-                  
+
                   <!-- Select All controls -->
                   <div v-if="sortedItems.length > 0" class="flex items-center gap-2">
                     <input
@@ -1166,12 +1212,12 @@ function handleEscapeKey(event: KeyboardEvent) {
                       @change="toggleSelectAll"
                       :class="[
                         'rounded border text-primary-600 focus:ring-primary-500 focus:ring-offset-0',
-                        theme.isDark.value 
-                          ? 'border-gray-600 bg-gray-700 focus:ring-offset-gray-800' 
-                          : 'border-gray-300 bg-white focus:ring-offset-white'
+                        theme.isDark.value
+                          ? 'border-gray-600 bg-gray-700 focus:ring-offset-gray-800'
+                          : 'border-gray-300 bg-white focus:ring-offset-white',
                       ]"
                     />
-                    <label 
+                    <label
                       :for="`select-all-${groupName}`"
                       :class="[
                         'text-sm font-medium cursor-pointer select-none',
@@ -1188,7 +1234,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                   v-if="items.length === 0"
                   :class="[
                     'text-center text-sm py-4',
-                    theme.isDark.value ? 'text-gray-400' : 'text-gray-500'
+                    theme.isDark.value ? 'text-gray-400' : 'text-gray-500',
                   ]"
                 >
                   No items available in this category.
@@ -1348,9 +1394,7 @@ function handleEscapeKey(event: KeyboardEvent) {
     id="context-menu"
     :class="[
       'fixed z-50 border rounded-md shadow-lg context-menu',
-      theme.isDark.value 
-        ? 'bg-gray-800 border-gray-700' 
-        : 'bg-white border-gray-200'
+      theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
     ]"
     :style="{ left: contextMenuState.x + 'px', top: contextMenuState.y + 'px' }"
   >
@@ -1360,9 +1404,7 @@ function handleEscapeKey(event: KeyboardEvent) {
         :key="action.label"
         :class="[
           'px-3 py-2 cursor-pointer flex items-center space-x-2',
-          theme.isDark.value 
-            ? 'hover:bg-gray-700' 
-            : 'hover:bg-gray-100'
+          theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
         ]"
         @click="action.action"
       >
@@ -1371,6 +1413,16 @@ function handleEscapeKey(event: KeyboardEvent) {
       </li>
     </ul>
   </div>
+
+  <MediaViewer
+    :is-open="isViewerOpen"
+    :current-file="currentViewFile"
+    :files="viewableFiles"
+    :current-index="currentViewIndex"
+    @close="closeViewer"
+    @download="handleViewerDownload"
+    @navigate="handleViewerNavigate"
+  />
 
   <FileUploader
     v-if="isUploadDialogOpen"
