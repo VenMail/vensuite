@@ -506,7 +506,11 @@ const showBulkConfirm = ref(false);
 const bulkAction = ref<"restore" | "delete">("restore");
 
 // API Base URL
-const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/api/v1/app-files`;
+const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = baseUrl.endsWith('/api/v1')
+  ? `${baseUrl}/app-files`
+  : `${baseUrl}/api/v1/app-files`;
+
 
 // API Helper
 async function apiCall(url: string, options: RequestInit = {}): Promise<any> {
