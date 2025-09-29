@@ -3,10 +3,20 @@ import axios from "axios";
 import { useAuthStore } from "./auth";
 import { FileData } from "@/types";
 import { v4 as uuidv4 } from "uuid";
+import { DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
 
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
-const UPLOAD_ENDPOINT = `${API_BASE_URI}/app-files/upload`;
+const FOLDERS_ENDPOINT = `${API_BASE_URI}/app-files/folders`;
+const UPLOAD_BASE = `${API_BASE_URI}/app-files/upload`;
+const UPLOAD_INIT = `${UPLOAD_BASE}/initiate`;
+const UPLOAD_CHUNK = `${UPLOAD_BASE}/chunk`;
+const UPLOAD_COMPLETE = `${UPLOAD_BASE}/complete`;
+const CONVERT_ENDPOINT = `${API_BASE_URI}/app-files/convert`;
+
+// Extract base URL for constructing full URLs from relative paths
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const BASE_URL = API_BASE_URL.replace('/api/v1', '');
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const SYNC_INTERVAL = 30 * 1000; // 30 seconds
@@ -18,19 +28,240 @@ export const useFileStore = defineStore("files", {
     recentFiles: [] as FileData[],
     cachedDocuments: new Map<string, { data: FileData; timestamp: number }>(),
     pendingChanges: new Map<string, { data: FileData; attempts: number }>(),
+    syncStatus: new Map<string, 'pending' | 'syncing' | 'failed' | 'synced'>(),
     isOnline: navigator.onLine,
     isSyncing: false,
     lastError: null as string | null,
   }),
 
   actions: {
-    /** Upload a file to the server with progress tracking */
-    async uploadFile(file: File, onProgress?: (progress: number) => void): Promise<boolean> {
+    /** Normalize/derive file_type safely from API data */
+    normalizeFileType(file_type?: any, file_name?: string | null): string | undefined {
+      const raw = typeof file_type === 'string' ? file_type : (file_type?.toString?.() ?? '')
+      let ft = (raw || '').trim().toLowerCase()
+      if (!ft || ft === '0' || ft === 'null' || ft === 'undefined') {
+        const ext = (file_name || '').split('.').pop()?.toLowerCase() || ''
+        if (ext) {
+          // Map common aliases
+          if (['doc', 'docx'].includes(ext)) return 'docx'
+          if (['xls', 'xlsx'].includes(ext)) return 'xlsx'
+          if (['ppt', 'pptx'].includes(ext)) return 'pptx'
+          return ext
+        }
+        return undefined
+      }
+      // Map numeric codes if any future variants appear
+      if (ft === '1') return 'docx'
+      if (ft === '2') return 'xlsx'
+      if (ft === '3') return 'pptx'
+      return ft
+    },
+
+    /** Ensure is_folder is a boolean and file_type is normalized */
+    normalizeDocumentShape(doc: any): FileData {
+      const normalizedType = this.normalizeFileType(doc?.file_type, doc?.file_name)
+      const isFolder = !!doc?.is_folder
+      return {
+        ...doc,
+        id: doc.id,
+        file_type: normalizedType,
+        is_folder: isFolder,
+      } as FileData
+    },
+    /** Derive a human title from server data safely */
+    computeTitle(serverData: any): string {
+      const rawTitle = serverData?.title
+      if (rawTitle && typeof rawTitle === 'string' && rawTitle.trim().length) return rawTitle
+      // Try to extract from content JSON (e.g., spreadsheets store name inside JSON)
+      const rawContent = serverData?.content || serverData?.contents
+      if (rawContent && typeof rawContent === 'string') {
+        try {
+          const parsed = JSON.parse(rawContent)
+          if (parsed && typeof parsed === 'object' && typeof parsed.name === 'string' && parsed.name.trim().length) {
+            return parsed.name
+          }
+        } catch { }
+      }
+      // Fallback to file_name without extension
+      const fileName = serverData?.file_name
+      if (fileName && typeof fileName === 'string') {
+        const noExt = fileName.replace(/\.[^/.]+$/, '')
+        if (noExt.trim().length) return noExt
+      }
+      return 'Untitled'
+    },
+    /** Construct full URL from relative path */
+    constructFullUrl(filePath: string): string {
+      if (!filePath) return '';
+
+      // If it's already a full URL, return as is
+      if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+        return filePath;
+      }
+
+      // If it's a relative path, prepend the base URL
+      if (filePath.startsWith('/')) {
+        return `${BASE_URL}${filePath}`;
+      }
+
+      // If it doesn't start with /, add it
+      return `${BASE_URL}/${filePath}`;
+    },
+
+    /** Process uploaded file data from API response */
+    processUploadedFile(responseData: any): FileData {
+      const file: FileData = {
+        id: responseData.id,
+        title: responseData.title || responseData.file_name?.replace(/\.[^/.]+$/, "") || 'Untitled',
+        file_name: responseData.file_name,
+        file_type: this.normalizeFileType(responseData.file_type, responseData.file_name),
+        file_size: responseData.file_size,
+        file_url: this.constructFullUrl(responseData.file_url),
+        folder_id: responseData.folder_id,
+        is_folder: !!responseData.is_folder,
+        is_template: responseData.is_template || false,
+        employee_id: responseData.employee_id,
+        content: responseData.content || responseData.contents || '',
+        created_at: responseData.created_at,
+        updated_at: responseData.updated_at,
+        last_viewed: new Date(),
+        isNew: false,
+        isDirty: false,
+        url: !!responseData.file_url, // Convert to boolean - true if URL exists
+        thumbnail_url: responseData.thumbnail_url || undefined,
+      };
+
+      return file;
+    },
+
+    /**
+     * Convert an uploaded file (docx/xlsx) into app content usable by editors.
+     * Uses client-side conversion first (DOCX via mammoth, XLSX via xlsx),
+     * then falls back to backend /app-files/convert if client conversion fails.
+     */
+    async convertUploadedFile(options: { appFileId?: string; url?: string; target?: 'docx' | 'xlsx' }): Promise<FileData | null> {
+      // Helper: load binary as ArrayBuffer from id or URL
+      const loadArrayBuffer = async (): Promise<{ buf: ArrayBuffer; meta?: FileData } | null> => {
+        try {
+          if (options.appFileId) {
+            const meta = await this.loadFromAPI(options.appFileId);
+            if (!meta) return null;
+            const downloadUrl = `${FILES_ENDPOINT}/${meta.id}/download`;
+            const buf = await axios.get(downloadUrl, {
+              responseType: 'arraybuffer',
+              headers: { Authorization: `Bearer ${this.getToken()}` },
+            }).then(r => r.data as ArrayBuffer);
+            return { buf, meta };
+          }
+          if (options.url) {
+            const buf = await axios.get(options.url, { responseType: 'arraybuffer' }).then(r => r.data as ArrayBuffer);
+            return { buf };
+          }
+        } catch (e) {
+          console.warn('Failed to load source binary for conversion', e);
+        }
+        return null;
+      };
+
+      // Client-side first
+      try {
+        const loaded = await loadArrayBuffer();
+        if (loaded?.buf) {
+          const meta = loaded.meta || (options.appFileId ? await this.loadFromAPI(options.appFileId) : null);
+          const lowerName = (meta?.file_name || '').toLowerCase();
+          const target = (options.target || (lowerName.endsWith('.docx') ? 'docx' : lowerName.endsWith('.xlsx') ? 'xlsx' : undefined)) as ('docx' | 'xlsx' | undefined);
+
+          if (target === 'docx') {
+            // @ts-ignore mammoth is loaded globally in main.ts
+            const result = await (window as any).mammoth?.convertToHtml({ arrayBuffer: loaded.buf });
+            const html: string = result?.value || '';
+            if (html && (html.length > 0)) {
+              const base: FileData = meta || ({
+                id: options.appFileId,
+                file_type: 'docx',
+                file_name: 'document.docx',
+                title: 'Document',
+                is_folder: false,
+              } as unknown as FileData);
+              const saved = await this.saveToAPI({ ...base, content: html, file_type: 'docx', is_folder: false } as FileData);
+              if (saved) return saved;
+            }
+          } else if (target === 'xlsx') {
+            try {
+              // Prefer community univer import-export package LuckyExcel for full-fidelity import
+              // @ts-ignore - dynamic import; module may not exist until installed
+              const impMod: any = await import(/* @vite-ignore */ '@mertdeveci55/univer-import-export').catch(() => null);
+              if (impMod && impMod.LuckyExcel && typeof impMod.LuckyExcel.transformExcelToUniver === 'function') {
+                const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                const blob = new Blob([loaded.buf], { type: mime });
+                const name = (meta?.file_name && meta.file_name.toLowerCase().endsWith('.xlsx')) ? meta.file_name : (meta?.file_name || 'workbook.xlsx');
+                const file = new File([blob], name, { type: mime });
+                const workbookData: any = await new Promise((resolve, reject) => {
+                  try {
+                    impMod.LuckyExcel.transformExcelToUniver(
+                      file,
+                      (univerData: any) => resolve(univerData),
+                      (error: any) => reject(error)
+                    );
+                  } catch (err) {
+                    reject(err);
+                  }
+                });
+                if (workbookData) {
+                  if (!workbookData.id) workbookData.id = meta?.id || options.appFileId || (Math.random().toString(36).slice(2));
+                  if (!workbookData.name) workbookData.name = meta?.title || 'Sheet';
+                  const base: FileData = meta || ({
+                    id: options.appFileId,
+                    file_type: 'xlsx',
+                    file_name: name,
+                    title: workbookData.name,
+                    is_folder: false,
+                  } as unknown as FileData);
+                  const saved = await this.saveToAPI({ ...base, content: JSON.stringify(workbookData), file_type: 'xlsx', is_folder: false } as FileData);
+                  if (saved) return saved;
+                }
+              } else {
+                throw new Error('univer-import-export (LuckyExcel) not available');
+              }
+            } catch (xlsxErr) {
+              console.warn('Client-side XLSX conversion (LuckyExcel) failed:', xlsxErr);
+            }
+          }
+        }
+      } catch (clientErr) {
+        console.warn('Client-side conversion failed:', clientErr);
+      }
+
+      // Fallback: server-side conversion if available
+      try {
+        const payload: any = {};
+        if (options.appFileId) payload.app_file_id = options.appFileId;
+        if (options.url) payload.url = options.url;
+        if (options.target) payload.target = options.target;
+        const res = await axios.post(CONVERT_ENDPOINT, payload, { headers: { Authorization: `Bearer ${this.getToken()}` } });
+        const data = res.data?.data || res.data;
+        if (data?.id) {
+          const refreshed = this.normalizeDocumentShape(data);
+          refreshed.title = this.computeTitle(data);
+          this.cacheDocument(refreshed);
+          this.updateFiles(refreshed);
+          return refreshed;
+        }
+      } catch (e) {
+        console.warn('Server conversion failed or not available:', (e as any)?.response?.data || e);
+      }
+
+      return null;
+    },
+
+    /** Simple upload (legacy). Prefer uploadChunked for large files. Optionally accepts folderId */
+    async uploadFile(file: File, onProgress?: (progress: number) => void, folderId?: string | null): Promise<FileData | null> {
       try {
         const formData = new FormData();
         formData.append('file', file);
-        
-        const response = await axios.post(UPLOAD_ENDPOINT, formData, {
+        if (folderId) formData.append('folder_id', folderId);
+
+        const response = await axios.post(`${UPLOAD_BASE}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${this.getToken()}`
@@ -42,89 +273,374 @@ export const useFileStore = defineStore("files", {
             }
           }
         });
-        
-        return response.status === 200 || response.status === 201;
+
+        if (response.status === 200 || response.status === 201) {
+          const uploadedFile = this.processUploadedFile(response.data.data);
+          // Add to store immediately for instant visibility
+          this.addFile(uploadedFile);
+
+          // Post-upload conversion for docx/xlsx
+          const ext = (uploadedFile.file_type || (uploadedFile.file_name || '').split('.').pop() || '').toLowerCase();
+          if (['docx', 'xlsx'].includes(ext) && uploadedFile.id) {
+            try {
+              const converted = await this.convertUploadedFile({ appFileId: uploadedFile.id, target: ext as any });
+              if (converted) return converted;
+            } catch { }
+          }
+          console.log('File uploaded successfully:', uploadedFile);
+          return uploadedFile;
+        }
+
+        return null;
       } catch (error) {
         console.error('Error uploading file:', error);
         this.lastError = 'Failed to upload file';
-        return false;
+        throw error;
       }
     },
+
+    /** Chunked upload flow compatible with backend endpoints. Pass folderId and privacy if needed. */
+    async uploadChunked(file: File, opts?: { folderId?: string | null; privacy_type?: number; onProgress?: (p: number) => void }): Promise<FileData | null> {
+      const filename = file.name;
+      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE) || 1;
+      try {
+        // 1) initiate
+        const initRes = await axios.post(UPLOAD_INIT, {
+          filename,
+          total_size: file.size,
+          total_chunks: totalChunks,
+          folder_id: opts?.folderId || null,
+          privacy_type: opts?.privacy_type || undefined,
+        }, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        const upload_id = initRes.data?.data?.upload_id;
+        if (!upload_id) throw new Error('Failed to initiate upload');
+
+        // 2) upload chunks
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * CHUNK_SIZE;
+          const end = Math.min(start + CHUNK_SIZE, file.size);
+          const blob = file.slice(start, end);
+          const fd = new FormData();
+          fd.append('upload_id', upload_id);
+          fd.append('index', String(i));
+          fd.append('chunk', new File([blob], `${filename}.part`));
+          await axios.post(UPLOAD_CHUNK, fd, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${this.getToken()}`
+            }
+          });
+          const progress = Math.round(((i + 1) / totalChunks) * 100);
+          opts?.onProgress?.(progress);
+        }
+
+        // 3) complete
+        const completeRes = await axios.post(UPLOAD_COMPLETE, { upload_id }, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        const saved = this.processUploadedFile(completeRes.data.data);
+        this.addFile(saved);
+        // Post-upload conversion for docx/xlsx
+        const ext = (saved.file_type || (saved.file_name || '').split('.').pop() || '').toLowerCase();
+        if (['docx', 'xlsx'].includes(ext) && saved.id) {
+          try {
+            const converted = await this.convertUploadedFile({ appFileId: saved.id, target: ext as any });
+            if (converted) return converted;
+          } catch { }
+        }
+        return saved;
+      } catch (e) {
+        console.error('Chunked upload failed', e);
+        this.lastError = 'Failed to upload file';
+        throw e;
+      }
+    },
+
+    /** Add a file to the store */
+    addFile(file: FileData) {
+      // Check if file already exists
+      const existingIndex = this.allFiles.findIndex(f => f.id === file.id);
+
+      if (existingIndex !== -1) {
+        // Update existing file
+        this.allFiles[existingIndex] = file;
+      } else {
+        // Add new file
+        this.allFiles.unshift(file); // Add to beginning for newest first
+      }
+
+      // Update recent files if it's a media file
+      if (this.isMediaFile(file)) {
+        this.updateRecentFiles(file);
+      }
+
+      // Cache the file
+      this.cacheDocument(file);
+    },
+
+    /** Check if a file is a media file */
+    isMediaFile(file: FileData): boolean {
+      // First check file_type
+      if (file.file_type) {
+        const mediaTypes = [
+          // Images
+          'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp',
+          // Videos
+          'mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'mkv',
+          // Audio
+          'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'
+        ];
+
+        if (mediaTypes.includes(file.file_type.toLowerCase())) {
+          return true;
+        }
+      }
+
+      // Fallback: check file extension from file_name
+      if (file.file_name) {
+        const extension = file.file_name.split('.').pop()?.toLowerCase();
+        if (extension) {
+          const mediaTypes = [
+            // Images
+            'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp',
+            // Videos
+            'mp4', 'webm', 'ogg', 'avi', 'mov', 'wmv', 'flv', 'mkv',
+            // Audio
+            'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'
+          ];
+          return mediaTypes.includes(extension);
+        }
+      }
+
+      return false;
+    },
+
+    /** Update recent files list */
+    updateRecentFiles(file: FileData) {
+      // Remove if already in recent files
+      this.recentFiles = this.recentFiles.filter(f => f.id !== file.id);
+
+      // Add to beginning
+      this.recentFiles.unshift(file);
+
+      // Keep only last 10
+      if (this.recentFiles.length > 10) {
+        this.recentFiles = this.recentFiles.slice(0, 10);
+      }
+    },
+
     /** Get authentication token from auth store or localStorage */
     getToken() {
       const authStore = useAuthStore();
       return authStore.getToken() || localStorage.getItem("venAuthToken");
     },
 
-    /** Save a document, handling offline and online scenarios */
-    async saveDocument(document: FileData): Promise<FileData> {
-      // Generate a local ID if none exists
-      if (!document.id) {
-        document.id = uuidv4();
-        document.isNew = true;
-      }
-
-      // Handle server IDs by mapping to local IDs
-      if (/^\d+-/.test(document.id) && !document.remote_id) {
-        document.remote_id = document.id;
-        document.id = uuidv4();
-        localStorage.setItem(`server_id_map_${document.remote_id}`, document.id);
-      }
-
-      document.last_viewed = new Date();
-      
-      // Normalize content field
-      if (document.contents && !document.content) {
-        document.content = document.contents;
-      }
-      
-      this.saveToLocalCache(document);
-
-      if (this.isOnline) {
-        const saved = await this.saveToAPI(document);
-        if (saved) {
-          this.pendingChanges.delete(document.id);
-          
-          // If this is a new document that received a server ID,
-          // indicate redirection is needed through the redirect_server_id field
-          if (document.isNew && saved.remote_id && !document.remote_id) {
-            saved.redirect_server_id = saved.remote_id;
+    /** Clear all files state and offline caches (used during logout) */
+    clearAll() {
+      try {
+        this.allFiles = [] as FileData[];
+        this.recentFiles = [] as FileData[];
+        this.cachedDocuments.clear();
+        this.pendingChanges.clear();
+        this.syncStatus.clear();
+        this.isSyncing = false;
+        this.lastError = null;
+        // Remove offline caches and recent list
+        const keys = Object.keys(localStorage);
+        for (const k of keys) {
+          if (k.startsWith('document_') || k.startsWith('sheet_') || k.startsWith('file_') || k === 'VENX_RECENT') {
+            try { localStorage.removeItem(k); } catch { }
           }
-          
-          return saved;
+        }
+      } catch (e) {
+        console.warn('files.clearAll failed:', e);
+      }
+    },
+
+    /** Create a new document - tries online first, falls back to local */
+    async createNewDocument(fileType: string = "docx", title: string = "Untitled"): Promise<FileData> {
+      // Use proper default content based on file type
+      const defaultContent = fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE : "";
+      const auth = useAuthStore();
+
+      const newDoc = {
+        title,
+        file_name: `${title}.${fileType}`,
+        file_type: fileType,
+        is_folder: false, // Explicitly ensure it's not a folder
+        content: defaultContent,
+        last_viewed: new Date(),
+        employee_id: auth?.employeeId || undefined,
+      };
+
+      // Try to create online first
+      if (this.isOnline) {
+        try {
+          const response = await axios.post(FILES_ENDPOINT, newDoc, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${this.getToken()}`,
+            },
+          });
+
+          if (response.status === 200 || response.status === 201) {
+            const serverDoc = response.data.data;
+            const createdDoc: FileData = {
+              ...serverDoc,
+              id: serverDoc.id, // Use server ID directly
+              file_type: fileType, // Explicitly ensure file_type is preserved
+              is_folder: false, // Explicitly ensure it's not marked as folder
+              content: serverDoc.content || serverDoc.contents || defaultContent,
+              isNew: false,
+              isDirty: false,
+            };
+
+            this.cacheDocument(createdDoc);
+            this.updateFiles(createdDoc);
+            console.log("Created new document online:", createdDoc.id);
+            return createdDoc;
+          }
+        } catch (error) {
+          console.error("Failed to create document online:", error);
         }
       }
 
-      // Offline or failed save: mark as dirty and queue for sync
-      document.isDirty = true;
-      this.queueForSync(document);
-      return document;
+      // Fallback to local creation
+      const localDoc: FileData = {
+        ...newDoc,
+        id: uuidv4(),
+        isNew: true,
+        isDirty: true,
+        url: false,
+        thumbnail_url: undefined,
+      };
+
+      this.saveToLocalCache(localDoc);
+      this.updateFiles(localDoc);
+      console.log("Created new document locally:", localDoc.id);
+      return localDoc;
+    },
+
+    /** Check if a document ID is a local UUID */
+    isLocalDocument(id: string): boolean {
+      // UUIDs have a specific format, server IDs typically don't
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return uuidRegex.test(id);
+    },
+
+    /** Delete a local document from storage */
+    deleteLocalDocument(id: string) {
+      // Remove from localStorage
+      const prefixes = ["document", "sheet", "file"];
+      prefixes.forEach(prefix => {
+        const key = `${prefix}_${id}`;
+        localStorage.removeItem(key);
+      });
+
+      // Remove from cache
+      this.cachedDocuments.delete(id);
+
+      // Remove from pending changes and sync status
+      this.pendingChanges.delete(id);
+      this.syncStatus.delete(id);
+
+      // Remove from state arrays
+      this.allFiles = this.allFiles.filter(f => f.id !== id);
+      this.recentFiles = this.recentFiles.filter(f => f.id !== id);
+    },
+
+    /** Save a document - local-first with robust sync */
+    async saveDocument(document: FileData): Promise<{
+      document: FileData;
+      shouldRedirect?: boolean;
+      redirectId?: string;
+    }> {
+      document.last_viewed = new Date();
+
+      // Save locally first for immediate responsiveness
+      this.saveToLocalCache(document);
+      this.updateFiles(document);
+
+      // Then attempt online sync if connected
+      if (this.isOnline) {
+        const isLocalDoc = this.isLocalDocument(document.id!);
+        const saveResult = await this.saveToAPI(document);
+
+        if (saveResult) {
+          // Save was successful online
+          if (isLocalDoc) {
+            // This was a local document that now has a server ID
+            // Delete the local version and return redirect info
+            this.deleteLocalDocument(document.id!);
+            console.log("Local document saved online, redirecting from", document.id, "to", saveResult.id);
+
+            return {
+              document: saveResult,
+              shouldRedirect: true,
+              redirectId: saveResult.id
+            };
+          } else {
+            // This was already a server document, just update cache
+            this.cacheDocument(saveResult);
+            this.updateFiles(saveResult);
+            return { document: saveResult };
+          }
+        } else {
+          // Online save failed - mark as dirty for later sync
+          document.isDirty = true;
+          this.queueForSync(document);
+        }
+      } else {
+        // Offline - mark as dirty for later sync
+        document.isDirty = true;
+        this.queueForSync(document);
+      }
+
+      return { document };
+    },
+
+    /** Get storage prefix based on file type */
+    getPrefix(fileType: string): string {
+      switch (fileType.toLowerCase()) {
+        case "docx": return "document";
+        case "xlsx": return "sheet";
+        default: return "file";
+      }
+    },
+
+    /** Get default content based on file type */
+    getDefaultContent(fileType?: string | null): string {
+      return fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE : "";
     },
 
     /** Save document to the API */
     async saveToAPI(document: FileData): Promise<FileData | null> {
       try {
-        // Create a new object to avoid modifying the original
-        const data = { ...document };
-        
-        // Handle content/contents field consistency
-        if (data.content && !data.contents) {
-          data.contents = data.content;
-        }
-        
-        // Clean up unnecessary fields
-        delete data.isNew;
-        delete data.isDirty;
-        
-        // Handle ID mapping for API
-        const isNew = !data.remote_id;
-        if (isNew) {
-          delete data.id; // Remove local ID for new documents
-        } else {
-          data.id = data.remote_id; // Use server_id as id for API
-        }
+        const payload = { ...document } as any;
+        // Ensure ownership set if available
+        try {
+          const auth = useAuthStore();
+          if (!payload.employee_id && auth?.employeeId) {
+            payload.employee_id = auth.employeeId;
+          }
+        } catch { }
 
-        const response = await axios.post(FILES_ENDPOINT, data, {
+        // Clean up local-only fields systematically
+        const localOnlyFields: (keyof FileData)[] = ['isNew', 'isDirty'];
+        localOnlyFields.forEach(field => delete payload[field]);
+
+        // Use proper HTTP methods: PUT for updates, POST for creates
+        const isUpdate = !this.isLocalDocument(document.id!) && document.id;
+        const url = isUpdate ? `${FILES_ENDPOINT}/${document.id}` : FILES_ENDPOINT;
+        const method = isUpdate ? 'put' : 'post';
+
+        const response = await axios({
+          method,
+          url,
+          data: payload,
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${this.getToken()}`,
@@ -133,26 +649,21 @@ export const useFileStore = defineStore("files", {
 
         if (response.status === 200 || response.status === 201) {
           const serverData = response.data.data;
-          
-          // Handle content/contents field from server response
-          const content = serverData.content || serverData.contents;
-          
-          // Create an updated document with normalized fields
-          const updated = {
-            ...document,
+
+          const savedDoc: FileData = {
             ...serverData,
-            id: document.id, // Maintain local ID
-            server_id: serverData.id,
-            content: content, // Consistent field name
-            contents: undefined, // Remove to avoid duplication
+            id: serverData.id, // Always use server ID
+            file_type: document.file_type || serverData.file_type, // Preserve file_type
+            is_folder: document.is_folder ?? serverData.is_folder ?? false, // Preserve is_folder
+            content: serverData.content || serverData.contents || this.getDefaultContent(serverData.file_type),
             isNew: false,
             isDirty: false,
           };
-          
-          localStorage.setItem(`server_id_map_${serverData.id}`, updated.id);
-          this.saveToLocalCache(updated);
-          this.updateFiles(updated);
-          return updated;
+
+          // Persist refreshed version locally so offline cache always has latest server ID
+          this.saveToLocalCache(savedDoc);
+          this.updateFiles(savedDoc);
+          return savedDoc;
         }
         return null;
       } catch (error) {
@@ -164,49 +675,14 @@ export const useFileStore = defineStore("files", {
 
     /** Load a document by ID */
     async loadDocument(id: string, fileType = "docx"): Promise<FileData | null> {
-      let localId = id;
-      let serverId: string | undefined;
-      
-      // Check if this is a server ID format
-      if (/^\d+-/.test(id)) {
-        serverId = id;
-        // Get mapped local ID or generate new one
-        localId = localStorage.getItem(`server_id_map_${id}`) || uuidv4();
-        localStorage.setItem(`server_id_map_${id}`, localId);
-        
-        // Try to load from API first since we have a server ID
-        if (this.isOnline) {
-          const apiDoc = await this.loadFromAPI(serverId);
-          if (apiDoc) {
-            this.cacheDocument(apiDoc);
-            this.updateFiles(apiDoc);
-            return apiDoc;
-          }
-        }
-      }
-
       // Try loading from cache first
-      const cached = this.cachedDocuments.get(localId)?.data;
-      if (cached && Date.now() - this.cachedDocuments.get(localId)!.timestamp < CACHE_DURATION) {
+      const cached = this.cachedDocuments.get(id)?.data;
+      if (cached && Date.now() - this.cachedDocuments.get(id)!.timestamp < CACHE_DURATION) {
         return cached;
       }
 
-      // Try loading from local storage
-      const local = this.loadFromLocalStorage(localId, fileType);
-      if (local) {
-        this.cacheDocument(local);
-        this.updateFiles(local);
-        
-        // If we have a server ID but loaded from local, and local isn't dirty,
-        // refresh from server in background (don't await)
-        if (this.isOnline && serverId && !local.isDirty) {
-          this.refreshFromServer(serverId, localId);
-        }
-        return local;
-      }
-
-      // Last resort - try API with the ID we have
-      if (this.isOnline && !serverId) {
+      // Try loading from API if online
+      if (this.isOnline) {
         const apiDoc = await this.loadFromAPI(id);
         if (apiDoc) {
           this.cacheDocument(apiDoc);
@@ -214,35 +690,45 @@ export const useFileStore = defineStore("files", {
           return apiDoc;
         }
       }
-      
+
+      // Try loading from local storage
+      const local = this.loadFromLocalStorage(id, fileType);
+      if (local) {
+        this.cacheDocument(local);
+        this.updateFiles(local);
+        return local;
+      }
+
       return null;
     },
 
     /** Load from API */
     async loadFromAPI(id: string): Promise<FileData | null> {
       try {
+        const token = this.getToken();
+        const headers: Record<string, string> = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
         const response = await axios.get(`${FILES_ENDPOINT}/${id}`, {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
+          headers,
         });
         const data = response.data.data;
-        const localId = localStorage.getItem(`server_id_map_${data.id}`) || uuidv4();
-        
-        // Handle content/contents field mismatch
-        const content = data.content || data.contents;
-        
-        // Create normalized document with consistent field names
-        const doc = { 
-          ...data, 
-          id: localId, 
-          server_id: data.id, 
-          content: content, // Normalize as 'content'
-          contents: undefined, // Remove 'contents' to avoid duplication
-          isNew: false, 
-          isDirty: false 
+        const normalizedType = this.normalizeFileType(data.file_type, data.file_name)
+        const doc: FileData = {
+          ...data,
+          id: data.id, // Use server ID directly
+          file_type: normalizedType,
+          is_folder: !!data.is_folder,
+          content: data.content || data.contents || this.getDefaultContent(normalizedType),
+          title: this.computeTitle(data),
+          isNew: false,
+          isDirty: false
         };
-        
-        localStorage.setItem(`server_id_map_${data.id}`, localId);
-        this.saveToLocalCache(doc);
+        // Attach large-file hints for front-end handling without breaking types
+        (doc as any).is_large = !!data.is_large;
+        if ((data as any).file_url) {
+          (doc as any).download_url = `${FILES_ENDPOINT}/${data.id}/download`;
+        }
+
         return doc;
       } catch (error) {
         console.error("Error loading from API:", error);
@@ -250,40 +736,49 @@ export const useFileStore = defineStore("files", {
       }
     },
 
-    /** Refresh document from server if not dirty */
-    async refreshFromServer(serverId: string, localId: string) {
-      const local = this.loadFromLocalStorage(localId);
-      if (local?.isDirty) return; // Don't override dirty local changes
-      
-      const apiDoc = await this.loadFromAPI(serverId);
-      if (apiDoc) {
-        // Make sure we maintain local ID
-        apiDoc.id = localId;
-        apiDoc.remote_id = serverId;
-        this.cacheDocument(apiDoc);
-        this.updateFiles(apiDoc);
-      }
-    },
-
     /** Queue document for sync */
     queueForSync(document: FileData) {
       this.pendingChanges.set(document.id!, { data: document, attempts: 0 });
+      this.syncStatus.set(document.id!, 'pending');
     },
 
-    /** Sync pending changes */
+    /** Sync pending changes with enhanced status tracking */
     async syncPendingChanges() {
       if (!this.isOnline || this.isSyncing || !this.pendingChanges.size) return;
+
       this.isSyncing = true;
+
       for (const [id, { data, attempts }] of this.pendingChanges.entries()) {
         if (attempts >= MAX_RETRIES) {
           this.pendingChanges.delete(id);
+          this.syncStatus.set(id, 'failed');
           continue;
         }
+
+        this.syncStatus.set(id, 'syncing');
+
         const saved = await this.saveToAPI(data);
-        if (saved) this.pendingChanges.delete(id);
-        else this.pendingChanges.set(id, { data, attempts: attempts + 1 });
-        await new Promise(resolve => setTimeout(resolve, 5000 * (attempts + 1)));
+        if (saved) {
+          this.pendingChanges.delete(id);
+          this.syncStatus.set(id, 'synced');
+
+          // If this was a local document that got saved online, clean up local version
+          if (this.isLocalDocument(id)) {
+            this.deleteLocalDocument(id);
+            // Remove from sync status since the document ID has changed
+            this.syncStatus.delete(id);
+          }
+        } else {
+          this.pendingChanges.set(id, { data, attempts: attempts + 1 });
+          this.syncStatus.set(id, 'pending');
+        }
+
+        // Exponential backoff for failed attempts
+        if (!saved && attempts > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts)));
+        }
       }
+
       this.isSyncing = false;
     },
 
@@ -321,28 +816,51 @@ export const useFileStore = defineStore("files", {
       localStorage.setItem("VENX_RECENT", JSON.stringify(this.recentFiles.map(f => f.id)));
     },
 
-    /** Get storage prefix based on file type */
-    getPrefix(fileType: string): string {
-      switch (fileType.toLowerCase()) {
-        case "docx": return "document";
-        case "xlsx": return "sheet";
-        default: return "file";
+    async moveFile(fileId: string, newFolderId: string) {
+      try {
+        if (!fileId) throw new Error('Invalid file id');
+        // Call backend move endpoint
+        await axios.patch(`${FILES_ENDPOINT}/${fileId}/move`, {
+          destination_folder_id: newFolderId || null,
+        }, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+
+        // Update local state
+        const idx = this.allFiles.findIndex(f => f.id === fileId);
+        if (idx !== -1) {
+          this.allFiles[idx] = { ...this.allFiles[idx], folder_id: newFolderId } as FileData;
+        }
+        const cached = this.cachedDocuments.get(fileId)?.data;
+        if (cached) {
+          cached.folder_id = newFolderId as any;
+          this.cacheDocument(cached);
+        }
+        return true;
+      } catch (error) {
+        console.error('Error moving file:', error);
+        this.lastError = 'Failed to move item';
+        return false;
       }
     },
 
-    async moveFile(fileId: string, newFolderId: string) {
+    async renameItem(fileId: string, name: string): Promise<FileData | null> {
       try {
-        const fileToMove = this.allFiles.find((f) => f.id === fileId);
-        if (!fileToMove) throw new Error("File not found");
-
-        fileToMove.folder_id = newFolderId;
-
-        const result = await this.saveDocument(fileToMove);
-
-        return result;
-      } catch (error) {
-        console.error("Error moving file:", error);
-        return false;
+        const res = await axios.patch(`${FILES_ENDPOINT}/${fileId}/rename`, { name }, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+        const data = res.data?.data;
+        if (!data) return null;
+        const updated = this.normalizeDocumentShape({ ...data });
+        updated.title = this.computeTitle(data);
+        // Update state
+        this.updateFiles(updated);
+        this.cacheDocument(updated);
+        return updated;
+      } catch (e) {
+        console.error('Error renaming item:', e);
+        this.lastError = 'Failed to rename item';
+        return null;
       }
     },
 
@@ -354,6 +872,20 @@ export const useFileStore = defineStore("files", {
           try {
             const item = JSON.parse(localStorage.getItem(key) || "{}");
             if (item && item.id) {
+              // Ensure file_type is properly set based on storage key prefix if missing
+              if (!item.file_type) {
+                if (key.startsWith("document_")) {
+                  item.file_type = "docx";
+                } else if (key.startsWith("sheet_")) {
+                  item.file_type = "xlsx";
+                }
+              }
+
+              // Ensure is_folder is properly set if missing
+              if (item.is_folder === undefined) {
+                item.is_folder = false;
+              }
+
               offlineDocs.push(item);
             }
           } catch (error) {
@@ -364,55 +896,176 @@ export const useFileStore = defineStore("files", {
       return offlineDocs;
     },
 
-    /** Merge online and offline documents */
-    mergeDocuments(onlineDocs: FileData[], offlineDocs: FileData[]): FileData[] {
-      const merged = new Map<string, FileData>();
-
-      // Add offline documents first
-      offlineDocs.forEach((offline) => {
-        if (offline.id) {
-          merged.set(offline.id, offline);
-        }
-      });
-
-      // Add online documents, but only if no offline version exists or if offline is not dirty
-      onlineDocs.forEach((online) => {
-        const localId = localStorage.getItem(`server_id_map_${online.remote_id}`) || online.id;
-        if (localId) {
-          const offlineDoc = merged.get(localId);
-          if (!offlineDoc || !offlineDoc.isDirty) {
-            merged.set(localId, { ...online, id: localId });
-          }
-        }
-      });
-
-      return Array.from(merged.values());
-    },
-
     /** Load all documents from API */
-    async loadDocuments(): Promise<FileData[]> {
+    async loadDocuments(doNotMutateStore: boolean = false): Promise<FileData[]> {
       try {
         const response = await axios.get(FILES_ENDPOINT, {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        return docs.map((doc) => {
-          let localId = localStorage.getItem(`server_id_map_${doc.id}`);
-          if (!localId) {
-            localId = uuidv4();
-            localStorage.setItem(`server_id_map_${doc.id}`, localId);
+        const processedDocs = docs.map((doc) => {
+          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name)
+          return {
+            ...doc,
+            id: doc.id, // Use server ID directly
+            file_type: normalizedType,
+            is_folder: !!doc.is_folder,
+            content: doc.content || this.getDefaultContent(normalizedType),
+            title: this.computeTitle(doc),
+            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+            isNew: false,
+            isDirty: false
           }
-          return { ...doc, id: localId, server_id: doc.id };
         });
+
+        // Optionally update store with processed documents
+        if (!doNotMutateStore) {
+          this.allFiles = processedDocs;
+        }
+        // After fetching server files, reconcile any offline-local files not present on server
+        try {
+          const serverIds = processedDocs.map(d => d.id!).filter((id): id is string => typeof id === 'string' && id.length > 0);
+          await this.reconcileOfflineDocuments(serverIds);
+        } catch { }
+        return processedDocs;
       } catch (error) {
         console.error("Error loading documents:", error);
         this.lastError = "Failed to load documents";
-        return [];
+
+        // Load offline documents if online fetch fails
+        const offlineDocs = this.loadOfflineDocuments();
+        this.allFiles = offlineDocs;
+        return offlineDocs;
+      }
+    },
+
+    /** Reconcile offline local documents: push any local-only docs to server and replace IDs */
+    async reconcileOfflineDocuments(serverIds: string[]): Promise<void> {
+      try {
+        const offlineDocs = this.loadOfflineDocuments();
+        const serverIdSet = new Set(serverIds);
+        const auth = useAuthStore();
+        const currentEmployee = auth?.employeeId || '';
+        for (const doc of offlineDocs) {
+          // If this is a purely local document (UUID) or missing on server, try to push it
+          const isLocal = this.isLocalDocument(doc.id!);
+          const missingOnServer = !serverIdSet.has(doc.id!);
+          const ownedByUser = !doc.employee_id || doc.employee_id === currentEmployee;
+          if ((isLocal || missingOnServer) && ownedByUser) {
+            // Ensure employee_id ownership when pushing
+            if (!doc.employee_id && currentEmployee) {
+              doc.employee_id = currentEmployee as any;
+            }
+            const saved = await this.saveToAPI(doc);
+            if (saved && saved.id !== doc.id) {
+              // Clean up the old local id cache and state
+              this.deleteLocalDocument(doc.id!);
+              // New saved doc already persisted by saveToAPI via saveToLocalCache/updateFiles
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Reconcile offline documents failed:', e);
       }
     },
 
     createLocalId(): string {
       return uuidv4();
+    },
+
+
+    /** Load trashed documents from API */
+    async loadTrashedDocuments(): Promise<FileData[]> {
+      try {
+        const response = await axios.get(`${FILES_ENDPOINT}/trash`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+
+        const docs = response.data.data as FileData[];
+        const processedDocs = docs.map((doc) => {
+          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name);
+          return {
+            ...doc,
+            id: doc.id,
+            file_type: normalizedType,
+            is_folder: !!doc.is_folder,
+            content: doc.content || this.getDefaultContent(normalizedType),
+            title: this.computeTitle(doc),
+            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+            isNew: false,
+            isDirty: false,
+          };
+        });
+
+        return processedDocs;
+      } catch (error) {
+        console.error("Error loading trashed documents:", error);
+        this.lastError = "Failed to load trashed documents";
+        return [];
+      }
+    },
+
+    /** Restore a file from trash */
+    async restoreFile(id: string): Promise<boolean> {
+      try {
+        const response = await axios.post(
+          `${FILES_ENDPOINT}/${id}/restore`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${this.getToken()}` },
+          }
+        );
+
+        if (response.status === 200 || response.status === 201) {
+          // Update local state if the file exists in allFiles
+          const fileIndex = this.allFiles.findIndex((f) => f.id === id);
+          if (fileIndex !== -1) {
+            const restoredFile = response.data.data;
+            this.allFiles[fileIndex] = {
+              ...this.allFiles[fileIndex],
+              ...restoredFile,
+            };
+          }
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error restoring file:", error);
+        this.lastError = "Failed to restore file";
+        return false;
+      }
+    },
+
+    /** Permanently delete a file */
+    async permanentDeleteFile(id: string): Promise<boolean> {
+      try {
+        const response = await axios.delete(`${FILES_ENDPOINT}/${id}/permanent`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+
+        if (response.status === 200 || response.status === 204) {
+          // Remove from local state
+          this.allFiles = this.allFiles.filter((f) => f.id !== id);
+          this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
+          this.cachedDocuments.delete(id);
+          this.pendingChanges.delete(id);
+          this.syncStatus.delete(id);
+
+          // Remove from localStorage
+          const prefixes = ["document", "sheet", "file"];
+          prefixes.forEach(prefix => {
+            const key = `${prefix}_${id}`;
+            localStorage.removeItem(key);
+          });
+
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error permanently deleting file:", error);
+        this.lastError = "Failed to permanently delete file";
+        return false;
+      }
     },
 
     /** Fetch files within a specific folder */
@@ -422,14 +1075,22 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];
-        return docs.map((doc) => {
-          let localId = localStorage.getItem(`server_id_map_${doc.id}`);
-          if (!localId) {
-            localId = uuidv4();
-            localStorage.setItem(`server_id_map_${doc.id}`, localId);
+        const processedDocs = docs.map((doc) => {
+          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name)
+          return {
+            ...doc,
+            id: doc.id, // Use server ID directly
+            file_type: normalizedType,
+            is_folder: !!doc.is_folder,
+            content: doc.content || this.getDefaultContent(normalizedType),
+            title: this.computeTitle(doc),
+            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+            isNew: false,
+            isDirty: false
           }
-          return { ...doc, id: localId, server_id: doc.id };
         });
+
+        return processedDocs;
       } catch (error) {
         console.error("Error fetching files:", error);
         this.lastError = "Failed to fetch files";
@@ -443,9 +1104,11 @@ export const useFileStore = defineStore("files", {
       if (docIndex === -1) return false;
 
       const doc = this.allFiles[docIndex];
-      if (this.isOnline && doc.remote_id) {
+
+      // If it's an online document (not local UUID), delete from API
+      if (this.isOnline && !this.isLocalDocument(id)) {
         try {
-          await axios.delete(`${FILES_ENDPOINT}/${doc.remote_id}`, {
+          await axios.delete(`${FILES_ENDPOINT}/${id}`, {
             headers: { Authorization: `Bearer ${this.getToken()}` },
           });
         } catch (error) {
@@ -460,37 +1123,54 @@ export const useFileStore = defineStore("files", {
       localStorage.removeItem(key);
       this.allFiles.splice(docIndex, 1);
       this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
+
+      // Remove from cache and pending changes
+      this.cachedDocuments.delete(id);
+      this.pendingChanges.delete(id);
+
       return true;
     },
 
     /** Create a new folder */
     async makeFolder(folder: FileData): Promise<FileData | null> {
-      folder.id = uuidv4();
+      // Ensure folder shape
       folder.is_folder = true;
       folder.last_viewed = new Date();
 
       if (this.isOnline) {
         try {
-          const response = await axios.post(FILES_ENDPOINT, folder, {
+          // API expects { name, parent_id }
+          const payload = {
+            name: folder.title || folder.file_name || 'New Folder',
+            parent_id: folder.folder_id || null,
+            privacy_type: (folder as any).privacy_type || undefined,
+          };
+          const response = await axios.post(FOLDERS_ENDPOINT, payload, {
             headers: { Authorization: `Bearer ${this.getToken()}` },
           });
           const saved = response.data.data as FileData;
-          localStorage.setItem(`server_id_map_${saved.id}`, folder.id!);
-          saved.id = folder.id;
-          saved.remote_id = saved.id;
-          this.saveToLocalCache(saved);
-          this.updateFiles(saved);
-          return saved;
+          const serverFolder: FileData = this.normalizeDocumentShape({
+            ...saved,
+            is_folder: true,
+          });
+          this.cacheDocument(serverFolder);
+          this.updateFiles(serverFolder);
+          return serverFolder;
         } catch (error) {
           console.error("Error creating folder on API:", error);
         }
       }
 
-      // Save locally if offline
-      folder.isDirty = true;
-      this.saveToLocalCache(folder);
-      this.updateFiles(folder);
-      return folder;
+      // Fallback to local creation
+      const localFolder: FileData = {
+        ...folder,
+        id: uuidv4(),
+        isDirty: true,
+        isNew: true,
+      };
+      this.saveToLocalCache(localFolder);
+      this.updateFiles(localFolder);
+      return localFolder;
     },
 
     /** Import an attachment as a new document */
@@ -513,7 +1193,7 @@ export const useFileStore = defineStore("files", {
     },
 
     /** Initialize sync handlers */
-    initialize() {
+    async initialize() {
       window.addEventListener("online", () => {
         this.isOnline = true;
         this.syncPendingChanges();
@@ -521,5 +1201,46 @@ export const useFileStore = defineStore("files", {
       window.addEventListener("offline", () => (this.isOnline = false));
       setInterval(() => this.isOnline && this.syncPendingChanges(), SYNC_INTERVAL);
     },
+
+    /** Load only media files from API */
+    async loadMediaFiles(): Promise<FileData[]> {
+      try {
+        // First try to load all documents since API may not support media_only
+        const response = await axios.get(FILES_ENDPOINT, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+        const docs = response.data.data as FileData[];
+        const processedDocs = docs.map((doc) => ({
+          ...doc,
+          id: doc.id, // Use server ID directly
+          content: doc.content || this.getDefaultContent(doc.file_type),
+          title: doc.title || doc.file_name || 'Untitled',
+          file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
+          isNew: false,
+          isDirty: false
+        }));
+
+        // Filter for media files only
+        const mediaFiles = processedDocs.filter(doc => this.isMediaFile(doc));
+
+        // Update store with all processed documents
+        this.allFiles = processedDocs;
+
+        console.log('Loaded media files:', mediaFiles.length, 'out of', processedDocs.length, 'total files');
+        console.log('Media files found:', mediaFiles.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name })));
+        console.log('All files found:', processedDocs.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name, is_folder: f.is_folder })));
+        return mediaFiles;
+      } catch (error) {
+        console.error("Error loading media files:", error);
+        this.lastError = "Failed to load media files";
+
+        // Fallback to filtering existing files
+        const mediaFiles = this.allFiles.filter(file => this.isMediaFile(file));
+        return mediaFiles;
+      }
+    },
   },
 });
+
+
+

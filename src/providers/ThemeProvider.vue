@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, provide, watch, onMounted } from 'vue'
+import { ref, provide, onMounted } from 'vue'
 
 const isDark = ref(false)
 

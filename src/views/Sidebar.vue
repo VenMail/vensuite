@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Home, FileText, Table, Image, FormInput, Menu, ChevronLeft, ChevronRight, Plus, LogOut } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { router } from '@/main'
 import {
@@ -30,13 +30,15 @@ const items = [
   { name: 'Home', icon: Home, route: '/' },
   { name: 'Documents', icon: FileText, route: '/docs' },
   { name: 'Spreadsheets', icon: Table, route: '/sheets' },
-  // { name: 'Forms', icon: FormInput, route: '/forms' },
-  { name: 'Media', icon: Image, route: '/media' }
+  { name: 'Media', icon: Image, route: '/media' },
+  { name: 'Bin', icon: Trash2, route: '/bin' }
 ]
 
 const activeItem = ref('Home')
 const isMobile = ref(false)
 const collapsed = ref(props.isCollapsed)
+const isDialogOpen = ref(false) // Add dialog state management
+const dialogRef = ref(null) // Reference to dialog component
 
 watch(() => props.isCollapsed, (value) => {
   collapsed.value = value
@@ -56,13 +58,10 @@ const setActiveItem = (item: string, route: string) => {
   router.push(route)
 }
 
-// Detect mobile screen size
+// Detect mobile screen size (do not auto-collapse; only change layout classes)
 onMounted(() => {
   const handleResize = () => {
     isMobile.value = window.innerWidth < 768
-    if (isMobile.value) {
-      collapsed.value = true
-    }
   }
   handleResize()
   window.addEventListener('resize', handleResize)
@@ -93,17 +92,29 @@ const templates = {
   ],
 }
 
+function handleTemplateClick(category: string, templateName: string) {
+  // Immediately close the dialog and navigate
+  isDialogOpen.value = false
+  createNewFile(category, templateName)
+}
+
 function createNewFile(type: string, template?: string) {
+  console.log('Creating new file:', type, template) // Debug log
+  
   if (type === "Spreadsheets") {
     if (template?.toLowerCase().includes("blank")) {
-      router.push("/sheets")
+      console.log('Navigating directly to /sheets/new') // Debug log
+      router.push("/sheets/new")
     } else {
+      console.log('Navigating to /sheets/t/' + template) // Debug log
       router.push("/sheets/t/" + template)
     }
   } else if (type === "Documents") {
     if (template?.toLowerCase().includes("blank")) {
-      router.push("/docs")
+      console.log('Navigating directly to /docs/new') // Debug log
+      router.push("/docs/new")
     } else {
+      console.log('Navigating to /docs/t/' + template) // Debug log
       router.push("/docs/t/" + template)
     }
   }
@@ -117,7 +128,7 @@ function createNewFile(type: string, template?: string) {
       <div class="flex flex-col h-full">
         <!-- Top Section with New Button and Collapse Toggle -->
         <div class="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
-          <Dialog>
+          <Dialog v-model:open="isDialogOpen" ref="dialogRef">
             <DialogTrigger asChild>
               <button
                 class="flex items-center justify-center rounded-sm bg-primary-600 text-white hover:bg-primary-700 transition-colors py-2"
@@ -140,10 +151,11 @@ function createNewFile(type: string, template?: string) {
                 <TabsContent v-for="(items, category) in templates" :key="category" :value="category">
                   <div class="grid grid-cols-2 gap-4">
                     <button v-for="template in items" :key="template.name"
-                      class="h-24 flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 hover:border-primary-500 transition-colors"
-                      @click="createNewFile(category, template.name)">
-                      <component :is="template.icon" class="w-8 h-8" />
-                      <span class="mt-2 text-sm">{{ template.name }}</span>
+                      class="h-24 flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 hover:border-primary-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      @click="handleTemplateClick(category, template.name)"
+                      type="button">
+                      <component :is="template.icon" class="w-8 h-8 pointer-events-none" />
+                      <span class="mt-2 text-sm pointer-events-none">{{ template.name }}</span>
                     </button>
                   </div>
                 </TabsContent>

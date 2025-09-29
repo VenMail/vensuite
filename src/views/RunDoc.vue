@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
-import { nextTick, onMounted, ref, watchEffect, computed, onUnmounted,watch } from "vue";
-import { v4 as uuidv4 } from "uuid";
+import { nextTick, onMounted, ref, watchEffect, computed, onUnmounted, watch } from "vue";
 
 import "@/assets/index.css";
 import {
   PencilIcon,
   ArrowLeft,
-  Plus,
   Share2,
-  User,
   Wifi,
   WifiOff,
 } from "lucide-vue-next";
@@ -18,13 +15,12 @@ import { useRoute, useRouter } from "vue-router";
 //@ts-ignore
 import { UmoEditor } from "@umoteam/editor";
 import { useFileStore } from "@/store/files";
+import { FileData } from "@/types";
 import Button from "@/components/ui/button/Button.vue";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import UserProfile from "@/components/layout/UserProfile.vue";
+import UnifiedMenubar from "@/components/menu/UnifiedMenubar.vue";
+import { createYSocketProvider } from "@/lib/yProviderCustom";
+import { useAuthStore } from "@/store/auth";
 import {
   Dialog,
   DialogContent,
@@ -32,12 +28,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { toast } from "@/composables/useToast";
+import { toast } from "vue-sonner";
+import { RESUME_TEMPLATE, LETTER_TEMPLATE, DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
+import { IWebsocketService, Message, useWebSocket, WebSocketService } from "@/lib/wsService";
+import ShareCard from '@/components/ShareCard.vue'
+import axios from 'axios'
+ 
 
 // Router setup
 const route = useRoute();
 const router = useRouter();
 const fileStore = useFileStore();
+const authStore = useAuthStore();
 
 // Reactive references
 const title = ref("New Document");
@@ -51,14 +53,67 @@ const isLoading = ref(false);
 const isOffline = ref(!navigator.onLine);
 const hasUnsavedChanges = ref(false);
 const currentDoc = ref<any>(null);
+const editorReady = ref(false);
+const isInitializing = ref(false);
+const lastSavedAt = ref<Date | null>(null);
+const shareOpen = ref(false);
+// privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
+const privacyType = ref<number>(7);
+// Share members state (can be hydrated from API later)
+const shareMembers = ref<Array<{ email: string; name?: string; avatarUrl?: string; permission: 'view' | 'comment' | 'edit' }>>([])
 const lastSaveResult = ref<{
   success: boolean;
   offline: boolean;
   error: string | null;
 } | null>(null);
-const translationsLoaded = ref(false);
-const editorInitialized = ref(false);
-const isInitializing = ref(false);
+
+// Collaboration state (harmonized with RunSheet)
+const { initializeWebSocket } = useWebSocket();
+const wsService = ref<IWebsocketService | null>(null);
+const isConnected = computed(() => WebSocketService?.isConnected.value);
+const isJoined = ref(false);
+const userId = ref(`user-${Math.random().toString(36).substr(2, 9)}`);
+const userName = ref(`User ${Math.floor(Math.random() * 1000)}`);
+const chatMessages = ref<Message[]>([]);
+const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({});
+
+// Filter out stale collaborators (>20s inactivity)
+const filteredCollaborators = computed(() => {
+  const result: Record<string, { name: string; selection: any; ts: number }> = {};
+  const now = Date.now();
+  Object.entries(collaborators.value).forEach(([uid, c]) => {
+    if (!c?.ts || now - c.ts <= 20000) result[uid] = c;
+  });
+  return result;
+});
+const isChatOpen = ref(false);
+const newChatMessage = ref("");
+const chatInput = ref<HTMLTextAreaElement | null>(null);
+const chatMessagesContainer = ref<HTMLElement | null>(null);
+const replyingTo = ref<Message | null>(null);
+const textareaHeight = ref("40px");
+
+// Layout/formatting toggles (toolbar hooks or keyboard shortcuts)
+const showFormattingMarks = ref(false);
+
+// Track last loaded document id to avoid duplicate reloads that may trigger large-file fallback
+const lastLoadedId = ref<string | null>(null);
+
+// Large-file handling (docs)
+const isLarge = ref(false);
+const downloadUrl = ref<string | null>(null);
+
+// Public access / interstitial state
+const accessDenied = ref(false);
+const requestEmail = ref("");
+const accessLevel = ref<'v'|'c'|'e'>("v");
+const requestMessage = ref("");
+const requestSubmitting = ref(false);
+const requestSuccess = ref<string | null>(null);
+
+function goToLogin() {
+  router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } });
+}
 
 // Computed properties
 const syncStatus = computed(() => {
@@ -69,6 +124,8 @@ const syncStatus = computed(() => {
 });
 
 const syncStatusText = computed(() => {
+  if (isInitializing.value) return "Setting up document...";
+  if (!editorReady.value) return "Loading editor..."; 
   if (lastSaveResult.value?.error) return `Error: ${lastSaveResult.value.error}`;
   switch (syncStatus.value) {
     case "offline":
@@ -79,6 +136,182 @@ const syncStatusText = computed(() => {
       return "Saving...";
     case "saved":
       return "All changes saved";
+  }
+});
+
+// Request access API call
+async function submitAccessRequest() {
+  if (!route.params.id) return;
+  requestSubmitting.value = true;
+  requestSuccess.value = null;
+  try {
+    const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+    const res = await fetch(`${API_BASE_URI}/app-files/${route.params.id}/request-access`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: requestEmail.value,
+        access_level: accessLevel.value,
+        message: requestMessage.value || undefined,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && (data?.requested || data?.success)) {
+      requestSuccess.value = 'Access request sent. You will receive an email when approved.';
+      toast.success('Access request sent');
+    } else {
+      requestSuccess.value = data?.message || 'Request sent (if the email is valid).';
+      toast.message(requestSuccess.value || '');
+    }
+  } catch (e) {
+    requestSuccess.value = 'Request submitted. Please check your email later.';
+    toast.message(requestSuccess.value || '');
+  } finally {
+    requestSubmitting.value = false;
+  }
+}
+
+const lastSavedText = computed(() => {
+  const d = lastSavedAt.value || (currentDoc.value?.updated_at ? new Date(currentDoc.value.updated_at as any) : null);
+  if (!d) return "Never saved";
+  const hh = d.getHours().toString().padStart(2, "0");
+  const mm = d.getMinutes().toString().padStart(2, "0");
+  return `Last saved at ${hh}:${mm}`;
+});
+
+const shareLinkDoc = computed(() => {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (!id) return "";
+  return `${window.location.origin}/docs/${id}`;
+});
+
+// Socket base URL (same as RunSheet)
+const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || "ws://app.venmail.io:8443";
+
+function initializeWebSocketAndJoinRoom() {
+  // Do not initialize collaboration for guests
+  if (!authStore.isAuthenticated) return;
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (id && !wsService.value) {
+    wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${id}&userName=${userName.value}&userId=${userId.value}`);
+    joinRoom();
+  }
+}
+
+// Collaboration: handle incoming messages and chat helpers
+function handleIncomingMessage(message: Message) {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (!id || message.sheetId !== id) return;
+
+  if ((message as any).messages) {
+    // init bundle
+    return (message as any).messages?.forEach(handleIncomingMessage);
+  }
+
+  switch (message.type) {
+    case 'chat':
+      handleChatMessage(message);
+      break;
+    case 'cursor':
+      if (message.user?.id && message.user?.name) {
+        collaborators.value[message.user.id] = {
+          name: message.user.name,
+          selection: (message as any).content?.selection,
+          ts: Date.now()
+        };
+      } else {
+        // When large, skip setting editor content to prevent unnecessary re-render loops
+      }
+      break;
+    case 'title':
+      // Ignore echo from self
+      if (message.user?.id !== userId.value && typeof (message as any).content?.title === 'string') {
+        const t = (message as any).content.title as string;
+        title.value = t;
+        document.title = t;
+        try { editorRef.value?.setDocument?.({ title: t }); } catch {}
+      }
+      break;
+  }
+}
+
+// Removed global WebSocketService.messages watcher to avoid duplicate handling; we rely on joinSheet listener.
+
+function sendChatMessage() {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (!id) return;
+  const msg = newChatMessage.value;
+  if (msg.trim()) {
+    wsService.value?.sendMessage(id, 'chat', { message: msg }, userId.value, userName.value);
+    adjustTextareaHeight();
+    replyingTo.value = null;
+    newChatMessage.value = '';
+  }
+}
+
+function handleChatMessage(messageInfo: Message) {
+  chatMessages.value.push(messageInfo);
+  scrollToBottom();
+}
+
+function adjustTextareaHeight() {
+  if (chatInput.value) {
+    chatInput.value.style.height = '40px';
+    chatInput.value.style.height = `${Math.min(chatInput.value.scrollHeight, 150)}px`;
+    textareaHeight.value = chatInput.value.style.height;
+  }
+}
+
+function scrollToBottom() {
+  nextTick(() => {
+    if (chatMessagesContainer.value) {
+      chatMessagesContainer.value.scrollTop = chatMessagesContainer.value.scrollHeight;
+    }
+  });
+}
+
+function formatDate(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString();
+}
+
+function replyToMessage(message: Message) {
+  replyingTo.value = message;
+  chatInput.value?.focus();
+}
+
+function cancelReply() {
+  replyingTo.value = null;
+}
+
+function getReplyUserName(replyId: string) {
+  const replyMessage = chatMessages.value.find(msg => (msg as any).id === replyId) as any;
+  return replyMessage ? replyMessage.user.name : 'Unknown User';
+}
+
+function getReplyContent(replyId: string) {
+  const replyMessage = chatMessages.value.find(msg => (msg as any).id === replyId) as any;
+  return replyMessage ? replyMessage.content.message : '';
+}
+
+function joinRoom() {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (isJoined.value || !id) return;
+  if (wsService.value) {
+    try {
+      isJoined.value = wsService.value.joinSheet(id, handleIncomingMessage);
+      // console.log('Joined room:', id)
+    } catch (error) {
+      console.error('Error joining room:', error);
+    }
+  }
+}
+
+// Watch for connection status to re-join if needed
+watch(isConnected, (newVal) => {
+  if (newVal) {
+    joinRoom();
+  } else {
+    isJoined.value = false;
   }
 });
 
@@ -153,10 +386,16 @@ const debouncedSave = useDebounceFn(
   { maxWait: 5000 }
 );
 
-const options = computed(() => ({
+const options = ref({
+  // v8+ configuration per docs
+  // https://dev.umodoc.com/en/docs/next/changelog (v8.0+)
+  // https://editor.umodoc.com/en/docs/options (toolbar keys removed/changed)
+  extensions: [],
+  // Match previous behavior by disabling legacy items formerly in toolbar.disableMenuItems
+  disableExtensions: ['chineseDate', 'chinese-case', 'break-marks', 'line-breaks'],
   document: {
     title: "Untitled Document",
-    content: "",
+    content: DEFAULT_BLANK_DOCUMENT_TEMPLATE,
     placeholder: {
       en_US: "Write something...",
     },
@@ -184,48 +423,116 @@ const options = computed(() => ({
       },
     },
   },
-  welcome: "Careful! Only open dev console if you know what you are doing",
-  toolbar: {
-    defaultMode: "ribbon",
-    enableSourceEditor: true,
-    menus: ["base", "table", "tools", "page", "export"],
-    disableMenuItems: ["chineseDate", "chineseCase"],
-    importWord: {
-      enabled: true,
-      options: {},
-      useCustomMethod: false,
-    },
-  },
-}));
+  // toolbar removed for v8.1.0 compatibility; re-add with supported keys after confirming docs
+});
+
+// Formatting marks toggle via editor commands
+function toggleFormattingMarks() {
+  showFormattingMarks.value = !showFormattingMarks.value;
+  try {
+    const ed: any = editorRef.value?.editor || editorRef.value;
+    if (showFormattingMarks.value) {
+      ed?.commands?.showInvisibleCharacters?.();
+    } else {
+      ed?.commands?.hideInvisibleCharacters?.();
+    }
+  } catch {}
+}
 
 const titleRef = ref<HTMLElement | null>(null);
 const editorRef = ref<any>(null);
+// Yjs collaboration (optional)
+const yProviderRef = ref<any>(null);
+const yDocRef = ref<any>(null);
+const yTextRef = ref<any>(null);
+let isApplyingRemote = false;
+let presenceIntervalId: any = null; // reserved if needed later
+let pushIntervalId: any = null;
+let domObserver: MutationObserver | null = null;
+let mutationScheduled = false;
 
-// Remove the watcher and handle initialization directly
-async function initializeEditor() {
-  if (isInitializing.value) {
-    console.log("Editor initialization already in progress");
-    return;
-  }
-
+// Debounced presence emitter
+const emitPresence = useDebounceFn(() => {
   try {
-    isInitializing.value = true;
-    console.log("Initializing editor");
-    if (editorRef.value) {
-      console.log("Setting up editor locale");
-      await editorRef.value.setLocale("en-US");
-      translationsLoaded.value = true;
-      console.log("Translations loaded");
-      editorInitialized.value = true;
-      console.log("Editor initialized");
-    } else {
-      console.error("Editor ref not available during initialization");
+    const idNow = (route.params.id as string) || currentDoc.value?.id;
+    if (!idNow) return;
+    wsService.value?.sendMessage(idNow, 'cursor', { selection: null }, userId.value, userName.value);
+  } catch {}
+}, 200, { maxWait: 1000 });
+
+// Hoisted helper: push local editor content into Yjs doc (guarded)
+function pushLocalToY() {
+  try {
+    if (!editorRef.value || !yTextRef.value) return;
+    if (isApplyingRemote) return; // avoid echo
+    const content = editorRef.value?.getContent?.() || '';
+    const cur = yTextRef.value.toString();
+    if (content !== cur) {
+      yTextRef.value.delete(0, cur.length);
+      yTextRef.value.insert(0, content);
     }
-  } catch (error) {
-    console.error("Failed to initialize editor:", error);
-    toast.error("Failed to initialize editor");
-  } finally {
-    isInitializing.value = false;
+  } catch {}
+}
+
+function setupDomObserver() {
+  try {
+    if (domObserver) {
+      try { domObserver.disconnect(); } catch {}
+      domObserver = null;
+    }
+    const hostEl: any = editorRef.value?.$el || (document.querySelector('umo-editor') as HTMLElement | null);
+    if (!hostEl) return;
+    domObserver = new MutationObserver(() => {
+      if (mutationScheduled) return;
+      mutationScheduled = true;
+      setTimeout(() => {
+        mutationScheduled = false;
+        pushLocalToY();
+      }, 200);
+    });
+    domObserver.observe(hostEl, { childList: true, characterData: true, subtree: true });
+  } catch {}
+}
+
+// Safe method to set editor content - waits for editor to be ready
+async function setEditorContent(content: string, title: string) {
+  // Wait for editor to be ready with timeout
+  let attempts = 0;
+  const maxAttempts = 50; // 2.5 seconds maximum wait
+  
+  while (!editorReady.value && attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 50));
+    attempts++;
+  }
+  
+  if (editorRef.value) {
+    await nextTick();
+    try {
+      editorRef.value.setDocument({
+        content,
+        title,
+      });
+      editorRef.value.setContent(content);
+      console.log("Editor content set safely", {
+        contentLength: content.length,
+        title,
+      });
+    } catch (error) {
+      console.error("Error setting editor content:", error);
+      // Fallback: try again after a delay
+      setTimeout(() => {
+        try {
+          if (editorRef.value) {
+            editorRef.value.setDocument({ content, title });
+            editorRef.value.setContent(content);
+          }
+        } catch (retryError) {
+          console.error("Retry failed:", retryError);
+        }
+      }, 500);
+    }
+  } else {
+    console.error("Editor reference not available");
   }
 }
 
@@ -245,107 +552,87 @@ async function loadData(id: string) {
   isLoading.value = true;
 
   try {
-    let serverId = null;
-    let localId = id;
-
-    // Check if this is a server ID and we have a local mapping
-    if (/^\d+-/.test(id)) {
-      serverId = id;
-      localId = localStorage.getItem(`server_id_map_${id}`) || id;
-      console.log(`Server ID detected (${id}). Mapped local ID: ${localId}`);
-    } else {
-      // If this is a local ID, check if we have a server ID mapping
-      const serverIdMapping = Object.keys(localStorage)
-        .filter((key) => key.startsWith("server_id_map_"))
-        .find((key) => localStorage.getItem(key) === id);
-
-      if (serverIdMapping) {
-        serverId = serverIdMapping.replace("server_id_map_", "");
-        console.log(`Local ID detected (${id}). Found server ID mapping: ${serverId}`);
-      }
-    }
-
     const doc = await fileStore.loadDocument(id, "docx");
     console.log("Document loaded:", doc);
 
     if (doc) {
-      // Create a clean document object with normalized fields
-      currentDoc.value = {
-        ...doc,
-        content: doc.content || doc.contents, // Normalize to use content field
-        contents: undefined, // Remove contents to avoid duplication
-      };
+      // Use the document as-is from the simplified store
+      currentDoc.value = doc;
+
+      // Large-file handling: respect backend flag but avoid flipping if we already have rendered content
+      try {
+        const anyDoc: any = doc;
+        const reportedLarge = !!anyDoc?.is_large;
+        const contentLen = (doc.content?.length || 0);
+        // Only treat as large if backend flagged AND there is no real content to render
+        // Allow preview when content is present (e.g., after import or cached HTML)
+        if (reportedLarge && contentLen < 1024) {
+          isLarge.value = true;
+          const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+          downloadUrl.value = anyDoc.download_url || (anyDoc.file_url ? `${API_BASE_URI}/app-files/${id}/download` : null);
+        } else {
+          isLarge.value = false;
+        }
+      } catch {}
+
+      // Initialize lastSavedAt from server timestamps for existing documents
+      try {
+        const ts = (doc as any).updated_at || (doc as any).created_at;
+        if (ts) lastSavedAt.value = new Date(ts);
+      } catch {}
 
       // Update title references
       title.value = doc.title || "Untitled Document";
       document.title = title.value;
 
-      // Ensure we have content to display
-      const contentToDisplay = currentDoc.value.content || "";
-      console.log(`Setting editor content, length: ${contentToDisplay.length}`);
+      if (!isLarge.value) {
+        // Ensure we have content to display - use default template if empty
+        const contentToDisplay = doc.content || DEFAULT_BLANK_DOCUMENT_TEMPLATE;
+        console.log(`Setting editor content, length: ${contentToDisplay.length}`);
 
-      // Force editor refresh with a slight delay to ensure it's ready
-      nextTick(() => {
-        if (editorRef.value) {
-          editorRef.value.setDocument({
-            content: contentToDisplay,
-            title: title.value,
-          });
-
-          editorRef.value.setContent(contentToDisplay);
-
-          console.log("Editor content set", {
-            contentLength: contentToDisplay.length,
-            title: title.value,
-          });
-        } else {
-          console.error("Editor reference not available");
-        }
-      });
+        // Use safe method to set editor content
+        await setEditorContent(contentToDisplay, title.value);
+      } else {
+        // When large, skip setting editor content to prevent unnecessary re-render loops
+      }
 
       console.log(
-        `Document loaded successfully. Title: ${title.value}, Content length: ${
-          currentDoc.value.content?.length || 0
+        `Document loaded successfully. Title: ${title.value}, Content length: ${doc.content?.length || 0
         }`
       );
 
-      // URL handling - prefer server ID in URL
-      if (serverId && route.params.id !== serverId) {
-        console.log(`Updating URL to use server ID: ${serverId}`);
-        router.replace(`/docs/${serverId}`);
-      } else if (doc.remote_id && doc.remote_id !== route.params.id) {
-        console.log(`Updating URL to use document's server ID: ${doc.remote_id}`);
-        router.replace(`/docs/${doc.remote_id}`);
-      } else if (!serverId && doc.id !== route.params.id) {
-        // No server ID available, fallback to local ID
-        console.log(`No server ID available. Using local ID in URL: ${doc.id}`);
+      // Update URL if document ID doesn't match route (shouldn't happen with simplified approach)
+      if (doc.id !== route.params.id) {
+        console.log(`Updating URL to use document ID: ${doc.id}`);
         router.replace(`/docs/${doc.id}`);
       }
+
+      // Permission handling for public shares (view/edit without auth)
+      try {
+        const priv = Number((doc as any)?.privacy_type ?? (doc as any)?.privacyType);
+        const unauth = !authStore.isAuthenticated;
+        const canEdit = !unauth || [2,4].includes(priv); // 2=everyone_edit,4=link_edit
+        options.value.document.readOnly = !canEdit;
+      } catch {}
     } else {
-      console.log(`No document found with ID: ${id}. Creating new document.`);
-      // Handle new document case
-      const newId = uuidv4();
-      currentDoc.value = {
-        id: newId,
-        title: "New Document",
-        file_type: "docx",
-        isNew: true,
-      };
-      title.value = "New Document";
-      document.title = "New Document";
-
-      // Set empty document in editor
-      nextTick(() => {
-        if (editorRef.value) {
-          editorRef.value.setDocument({
-            content: "",
-            title: "New Document",
-          });
-          editorRef.value.setContent("");
-        }
-      });
-
-      router.replace(`/docs/${newId}`);
+      // If unauthenticated and no document is available, show access request interstitial instead of creating a new doc
+      if (!authStore.isAuthenticated) {
+        accessDenied.value = true;
+        requestEmail.value = authStore.email || "";
+        return;
+      } else {
+        // Authenticated but not found: fall back to new doc flow
+        console.log("Document not found, creating new document");
+        const newDoc = await fileStore.createNewDocument("docx", "New Document");
+        currentDoc.value = newDoc;
+        title.value = newDoc.title || "New Document";
+        document.title = title.value;
+  
+        // Set default template in editor using safe method instead of empty string
+        await setEditorContent(DEFAULT_BLANK_DOCUMENT_TEMPLATE, title.value);
+  
+        router.replace(`/docs/${newDoc.id}`);
+      }
     }
     hasUnsavedChanges.value = false;
   } catch (error) {
@@ -357,11 +644,42 @@ async function loadData(id: string) {
 }
 
 async function syncChanges() {
+  if (options.value.document.readOnly) return;
   if (!currentDoc.value || isSyncing.value) return;
   isSyncing.value = true;
   try {
     console.log("Saving content");
-    editorRef.value?.saveContent(false);
+
+    // Get content from editor and save
+    const content = editorRef.value?.getContent() || "";
+    const docToSave = {
+      ...currentDoc.value,
+      content: content,
+      title: title.value,
+      file_type: "docx", // Explicitly ensure file type is preserved
+      is_folder: false, // Explicitly ensure it's not marked as folder
+      last_viewed: new Date()
+    } as FileData;
+
+    const result = await fileStore.saveDocument(docToSave);
+
+    // Handle redirect for local documents that got server IDs
+    if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
+      console.log("Document got new server ID, redirecting to:", result.redirectId);
+      await router.replace(`/docs/${result.redirectId}`);
+      // Update current doc reference
+      currentDoc.value = result.document;
+    } else {
+      currentDoc.value = result.document;
+    }
+
+    hasUnsavedChanges.value = false;
+    lastSaveResult.value = {
+      success: true,
+      offline: !fileStore.isOnline,
+      error: null
+    };
+    lastSavedAt.value = new Date();
   } catch (error) {
     console.error("Sync error:", error);
     lastSaveResult.value = {
@@ -378,9 +696,11 @@ function handleSavedEvent(result: any) {
   console.log("result:", result);
   lastSaveResult.value = result;
   console.log("last save result:", lastSaveResult.value);
+  lastSavedAt.value = new Date();
 }
 
 async function saveTitle() {
+  if (options.value.document.readOnly) return;
   const newTitle = editableTitle.value.trim();
   title.value = newTitle || "New Document";
   document.title = title.value;
@@ -388,11 +708,17 @@ async function saveTitle() {
   editorRef.value?.setDocument({ title: title.value });
 
   if (currentDoc.value) {
+    if (options.value.document.readOnly) return;
     console.log("current doc:", currentDoc.value);
     // Only mark as having unsaved changes if title actually changed
     if (currentDoc.value.title !== title.value) {
-      // Update document title
-      currentDoc.value.title = title.value;
+      // Update document title with explicit file properties
+      currentDoc.value = {
+        ...currentDoc.value,
+        title: title.value,
+        file_type: "docx", // Explicitly ensure file type is preserved
+        is_folder: false // Explicitly ensure it's not marked as folder
+      };
       hasUnsavedChanges.value = true;
 
       // Also update the editor's title to stay in sync
@@ -404,9 +730,22 @@ async function saveTitle() {
       syncChanges();
     }
   }
+
+  // Broadcast title change for collaboration
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (id) {
+    if (options.value.document.readOnly) return;
+    try {
+      wsService.value?.sendMessage(id, 'title', { title: title.value }, userId.value, userName.value);
+    } catch (e) {
+      // non-blocking
+    }
+  }
 }
 
 function startEditing() {
+  // Disallow editing title in readOnly
+  if (options.value.document.readOnly) return;
   if (!isTitleEdit.value) {
     editTitle();
   }
@@ -415,184 +754,592 @@ function startEditing() {
 // Icon reference and favicon setup
 const iconRef = ref<HTMLElement | null>(null);
 
+// Helper function to get template content
+function getTemplateContent(templateName: string): string {
+  const name = templateName.toLowerCase();
+  if (name.includes('resume')) return RESUME_TEMPLATE;
+  if (name.includes('letter')) return LETTER_TEMPLATE;
+  return DEFAULT_BLANK_DOCUMENT_TEMPLATE; // Use proper default template instead of empty string
+}
+
+// Helper function to get template title
+function getTemplateTitle(templateName: string): string {
+  const name = templateName.toLowerCase();
+  if (name.includes('resume')) return 'Resume';
+  if (name.includes('letter')) return 'Letter';
+  return 'New Document';
+}
+
 onMounted(async () => {
+  // Suppress unwanted console messages
+  const originalConsoleLog = console.info;
+  console.info = (...args) => {
+    const message = args.join(' ');
+    if (message.includes('Thanks for using Umo Editor') || 
+        message.includes('Current version:') || 
+        message.includes('More info: ')) {
+      return; // Suppress these messages
+    }
+    originalConsoleLog.apply(console, args);
+  };
+  
+  // Restore original console.info after a delay (after editor initialization)
+  setTimeout(() => {
+    console.info = originalConsoleLog;
+  }, 3000);
+
   window.addEventListener("online", updateOnlineStatus);
   window.addEventListener("offline", updateOnlineStatus);
 
-  console.log("RunDoc component mounted");
-  
-  // Initialize editor after a short delay to ensure DOM is ready
-  await nextTick();
-  await initializeEditor();
+  console.log("RunDoc component mounted, initializing editor");
 
-  // Listen to route changes and load document
-  watchEffect(async () => {
-    if (route.params.id) {
-      const docId = route.params.id as string;
-      console.log("Route changed, loading document with ID:", docId);
-
+  // Initialize the editor
+  nextTick(() => {
+    if (editorRef.value) {
+      editorRef.value.setLocale("en-US");
+      console.log("Editor initialized");
+      // Ensure formatting marks are hidden by default via command API
       try {
-        await loadData(docId);
-      } catch (error) {
-        console.error("Failed to load document:", error);
-        toast.error("Failed to load document");
-      }
+        const ed: any = editorRef.value?.editor || editorRef.value;
+        ed?.commands?.hideInvisibleCharacters?.();
+      } catch {}
     }
   });
+
+  // Handle template-based new documents first
+  if (route.params.template) {
+    isInitializing.value = true;
+    const templateName = route.params.template as string;
+    console.log('Creating new document from template:', templateName);
+
+    const docTitle = getTemplateTitle(templateName);
+    const templateContent = getTemplateContent(templateName);
+
+    // Create the document using the store's new method
+    const newDoc = await fileStore.createNewDocument('docx', docTitle);
+
+    // Update the document with template content
+    if (templateContent) {
+      newDoc.content = templateContent;
+      // Save the document with template content
+      const result = await fileStore.saveDocument(newDoc);
+      currentDoc.value = result.document;
+    } else {
+      currentDoc.value = newDoc;
+    }
+
+    title.value = docTitle;
+    document.title = docTitle;
+
+    // Use safe method to set editor content
+    await setEditorContent(templateContent, docTitle);
+
+    // Navigate to the proper doc URL with the new ID
+    await router.replace(`/docs/${newDoc.id}`);
+    isInitializing.value = false;
+  }
+  // Handle existing document with ID or new blank document
+  else {
+    // Check if document already exists in store and set title immediately
+    if (route.params.id) {
+      const existingDoc = fileStore.allFiles.find(doc => doc.id === route.params.id);
+      if (existingDoc && existingDoc.title) {
+        title.value = existingDoc.title;
+        document.title = existingDoc.title;
+        console.log("Set title from existing store data:", existingDoc.title);
+      }
+    }
+
+    // Listen to route changes and load document
+    watchEffect(async () => {
+      // Skip if we're initializing (prevents double execution during template creation)
+      if (isInitializing.value) return;
+      
+      if (route.params.id) {
+        const docId = route.params.id as string;
+        if (lastLoadedId.value === docId && currentDoc.value) {
+          // Already loaded this doc; avoid redundant reload that can flip UI state
+          return;
+        }
+        console.log("Route changed, loading document with ID:", docId);
+
+        try {
+          lastLoadedId.value = docId;
+          if (isLoading.value) return; // guard against concurrent loads
+          await loadData(docId);
+        } catch (error) {
+          console.error("Failed to load document:", error);
+          toast.error("Failed to load document");
+          lastLoadedId.value = null; // allow retry
+        }
+
+        // Initialize and join collaboration room after data load (authenticated only)
+        if (authStore.isAuthenticated && !isLarge.value) {
+          initializeWebSocketAndJoinRoom();
+        }
+
+        // Custom Yjs transport over uWebSockets: enable only when not large
+        try {
+          if (isLarge.value) throw new Error('skip-yjs-for-large');
+          // @ts-ignore -- dynamic import, types optional
+          const Y = await import('yjs');
+          yDocRef.value = new Y.Doc();
+          yTextRef.value = yDocRef.value.getText(`doc:${docId}`);
+          const binaryUrl = `${SOCKET_URI}?sheetId=${docId}&userName=${encodeURIComponent(userName.value)}&userId=${encodeURIComponent(userId.value)}&channel=crdt`;
+          yProviderRef.value = createYSocketProvider({ url: binaryUrl, doc: yDocRef.value });
+
+          // Apply remote updates to editor when Y.Text changes
+          yTextRef.value.observe(() => {
+            if (!editorRef.value) return;
+            if (isApplyingRemote) return;
+            isApplyingRemote = true;
+            try {
+              const text = yTextRef.value.toString();
+              const current = editorRef.value?.getContent?.() || '';
+              if (typeof text === 'string' && text !== current) {
+                editorRef.value.setContent(text);
+              }
+            } finally {
+              setTimeout(() => { isApplyingRemote = false; }, 0);
+            }
+          });
+
+          // Push local edits to Yjs (basic handler)
+          try {
+            editorRef.value?.on?.('update', pushLocalToY);
+            // Also emit lightweight presence on updates (debounced)
+            editorRef.value?.on?.('update', () => emitPresence());
+          } catch {}
+          pushIntervalId = setInterval(pushLocalToY, 1000);
+          // DOM observer fallback to detect content changes without using editor APIs
+          setupDomObserver();
+        } catch (e) {
+          console.warn('Custom Yjs transport failed to initialize:', e);
+        }
+
+        const iconHTML = iconRef.value?.outerHTML
+          .replace(/currentColor/g, "#4d7cfe")
+          .replace(/1em/g, "");
+        const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML || "")}`;
+        useFavicon(iconDataURL);
+      }
+      // Handle completely new document without ID (route: /docs)
+      else if (route.path === '/docs') {
+        console.log('Creating completely new blank document');
+
+        // Create the document using the store's new method
+        const newDoc = await fileStore.createNewDocument('docx', 'New Document');
+        currentDoc.value = newDoc;
+        title.value = 'New Document';
+        document.title = title.value;
+
+        // Set default template in editor using safe method instead of empty string
+        await setEditorContent(DEFAULT_BLANK_DOCUMENT_TEMPLATE, title.value);
+
+        // Navigate to the proper doc URL with the new ID
+        await router.replace(`/docs/${newDoc.id}`);
+
+        // Initialize and join collaboration room (authenticated only)
+        if (authStore.isAuthenticated) initializeWebSocketAndJoinRoom();
+      }
+    });
+  }
 });
 
 function handleEditorCreated() {
   console.log("Editor component created");
+  // Give the editor a moment to fully initialize before marking as ready
+  nextTick(() => {
+    setTimeout(() => {
+      editorReady.value = true;
+      console.log("Editor marked as ready");
+    }, 100);
+  });
 }
 
 onUnmounted(() => {
   window.removeEventListener("online", updateOnlineStatus);
   window.removeEventListener("offline", updateOnlineStatus);
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (wsService.value && id) {
+    try { wsService.value.leaveSheet(id); } catch {}
+  }
+  // Yjs cleanup
+  try { yProviderRef.value?.destroy?.(); } catch {}
+  try { yDocRef.value?.destroy?.(); } catch {}
+  if (presenceIntervalId) {
+    try { clearInterval(presenceIntervalId); } catch {}
+    presenceIntervalId = null;
+  }
+  if (pushIntervalId) {
+    try { clearInterval(pushIntervalId); } catch {}
+    pushIntervalId = null;
+  }
+  if (domObserver) {
+    try { domObserver.disconnect(); } catch {}
+    domObserver = null;
+  }
 });
 
-const templates = {
-  Documents: [
-    { name: "Blank Document", icon: defaultIcons.IconMicrosoftWord },
-    { name: "Resume", icon: defaultIcons.IconMicrosoftWord },
-    { name: "Letter", icon: defaultIcons.IconMicrosoftWord },
-  ],
-};
+// Removed templates and New Document dialog to unify header
 
 function shareDocument() {
-  // Implement share functionality
-  console.log("Share document");
+  if (currentDoc.value && typeof currentDoc.value.privacy_type === 'number') {
+    privacyType.value = currentDoc.value.privacy_type as number;
+  } else {
+    privacyType.value = 7;
+  }
+  // Hydrate sharing list from API when opening
+  fetchSharingInfo();
+  shareOpen.value = true;
+}
+
+function copyShareLink() {
+  const id = (route.params.id as string) || currentDoc.value?.id;
+  if (!id) return;
+  const url = `${window.location.origin}/docs/${id}`;
+  navigator.clipboard.writeText(url).then(() => toast.success("Link copied"));
+}
+
+async function updateVisibility(newVis: number) {
+  privacyType.value = newVis;
+  if (!currentDoc.value) return;
+  const updated: FileData = {
+    ...currentDoc.value,
+    privacy_type: newVis,
+    file_type: "docx",
+    is_folder: false,
+  } as FileData;
+  const result = await fileStore.saveDocument(updated);
+  currentDoc.value = result.document;
+  toast.success("Visibility updated");
+}
+
+// --- Sharing API integration ---
+const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+const FILES_ENDPOINT = `${API_BASE_URI}/app-files`
+
+const permToApi: Record<'view'|'comment'|'edit', 'v'|'c'|'e'> = { view: 'v', comment: 'c', edit: 'e' }
+const apiToPerm: Record<'v'|'c'|'e', 'view'|'comment'|'edit'> = { v: 'view', c: 'comment', e: 'edit' }
+
+function parseSharingInfoString(info?: string | null) {
+  const list: Array<{ email: string; permission: 'view'|'comment'|'edit' }> = []
+  if (!info || typeof info !== 'string') return list
+  info.split(',').map(s => s.trim()).filter(Boolean).forEach(pair => {
+    const [email, access] = pair.split(':').map(x => (x || '').trim())
+    if (email && (access === 'v' || access === 'c' || access === 'e')) {
+      list.push({ email, permission: apiToPerm[access] })
+    }
+  })
+  return list
+}
+
+async function fetchSharingInfo() {
+  try {
+    const id = (route.params.id as string) || currentDoc.value?.id
+    if (!id) return
+    const token = fileStore.getToken?.()
+    const res = await axios.get(`${FILES_ENDPOINT}/${id}` , {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+    const data = res.data?.data || {}
+    const parsed = parseSharingInfoString(data.sharing_info)
+    shareMembers.value = parsed
+    if (typeof data.privacy_type === 'number') privacyType.value = Number(data.privacy_type)
+  } catch (e) {
+    // non-blocking
+  }
+}
+
+async function handleInviteMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner'; note?: string }) {
+  try {
+    const id = (route.params.id as string) || currentDoc.value?.id
+    if (!id) return
+    const token = fileStore.getToken?.()
+    await axios.post(`${FILES_ENDPOINT}/${id}/share`, {
+      email: payload.email,
+      access_level: permToApi[payload.permission as 'view'|'comment'|'edit'] || 'e',
+      note: payload.note
+    }, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+    await fetchSharingInfo()
+    toast.success('Shared successfully')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Failed to share')
+  }
+}
+
+async function handleUpdateMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner' }) {
+  // Backend share endpoint overwrites the level when called again
+  return handleInviteMember(payload as { email: string; permission: 'view'|'comment'|'edit' })
+}
+
+async function handleRemoveMember(payload: { email: string }) {
+  try {
+    const id = (route.params.id as string) || currentDoc.value?.id
+    if (!id) return
+    const token = fileStore.getToken?.()
+    await axios.post(`${FILES_ENDPOINT}/${id}/unshare`, { email: payload.email }, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+    await fetchSharingInfo()
+    toast.success('Removed access')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Failed to remove access')
+  }
+}
+
+// Menubar handlers (Docs)
+function toggleChat() {
+  isChatOpen.value = !isChatOpen.value;
+}
+
+function handleUndo() {
+  try { editorRef.value?.undo?.() } catch {}
+}
+
+function handleRedo() {
+  try { editorRef.value?.redo?.() } catch {}
+}
+
+async function handleExport(format: string) {
+  try {
+    // Attempt editor-provided export if available
+    if (editorRef.value?.export) {
+      await editorRef.value.export({ format });
+      return;
+    }
+    toast.error("Export is not available in this editor");
+  } catch (err) {
+    console.error("Doc export failed", err);
+    toast.error("Export failed");
+  }
+}
+
+// Large file download helper (docs)
+function downloadFile() {
+  if (downloadUrl.value) {
+    try {
+      window.open(downloadUrl.value, '_blank');
+    } catch {}
+  }
 }
 </script>
 
 <template>
   <div id="app" class="h-screen flex flex-col">
     <!-- Loading bar -->
-    <div v-if="isLoading" class="loading-bar">
-      <div class="loading-progress"></div>
+    <div v-if="isLoading" class="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden">
+      <div class="h-full bg-primary-600 w-1/3 animate-pulse"></div>
     </div>
 
     <!-- Header -->
     <div
-      class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
-    >
+      class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
       <div class="flex items-center gap-4">
-        <Button variant="ghost" size="icon" @click="router.push('/')">
+        <Button variant="ghost" size="icon" @click="router.back()">
           <ArrowLeft class="h-5 w-5" />
         </Button>
         <router-link to="/">
-          <defaultIcons.IconMicrosoftWord
-            ref="iconRef"
-            class="w-[1.5rem] h-[3rem] text-blue-600"
-            xmlns="http://www.w3.org/2000/svg"
-          />
+          <defaultIcons.IconMicrosoftWord ref="iconRef" class="w-[1.5rem] h-[3rem] text-blue-600"
+            xmlns="http://www.w3.org/2000/svg" />
         </router-link>
         <div class="flex flex-col">
           <div class="flex items-center gap-2">
-            <div
-              id="docHead"
-              :contenteditable="isTitleEdit"
-              ref="titleRef"
-              class="font-bold border-b border-dotted border-gray-300 min-w-[100px] px-2 py-1 relative"
-              :class="{
+            <div id="docHead" :contenteditable="isTitleEdit" ref="titleRef"
+              class="font-bold border-b border-dotted border-gray-300 min-w-[100px] px-2 py-1 relative" :class="{
                 'cursor-text': isTitleEdit,
                 'hover:bg-gray-100': !isTitleEdit,
-              }"
-              @click="startEditing"
-              @input="updateTitle"
-              @blur="saveTitle"
-              @keydown.enter.prevent="saveTitle"
-            >
+              }" @click="startEditing" @input="updateTitle" @blur="saveTitle" @keydown.enter.prevent="saveTitle">
               {{ title }}
             </div>
             <div class="flex items-center gap-2">
-              <PencilIcon
-                v-if="!isTitleEdit"
-                @click="startEditing"
-                class="h-3 w-3 cursor-pointer hover:text-primary-600"
-              />
+              <PencilIcon v-if="!isTitleEdit" @click="startEditing"
+                class="h-3 w-3 cursor-pointer hover:text-primary-600" />
               <div class="flex items-center gap-1 text-sm">
                 <WifiOff v-if="isOffline" class="h-4 w-4 text-yellow-500" />
                 <Wifi v-else class="h-4 w-4 text-green-500" />
-                <span
-                  :class="{
-                    'text-yellow-500': isOffline,
-                    'text-green-500': !isOffline && !hasUnsavedChanges,
-                    'text-blue-500': isSyncing || hasUnsavedChanges,
-                  }"
-                  >{{ syncStatusText }}</span
-                >
+                <span :class="{
+                  'text-yellow-500': isOffline,
+                  'text-green-500': !isOffline && !hasUnsavedChanges,
+                  'text-blue-500': isSyncing || hasUnsavedChanges,
+                }">{{ syncStatusText }}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <Dialog>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-600 cursor-pointer" title="Click to save now" @click="syncChanges">{{ lastSavedText }}</span>
+        <Dialog v-model:open="shareOpen">
           <DialogTrigger asChild>
-            <Button variant="outline">
-              <Plus class="h-4 w-4 mr-2" />
-              New Document
+            <Button variant="outline" @click="shareDocument">
+              <Share2 class="h-4 w-4 mr-2" />
+              Share
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Choose a Template</DialogTitle>
+              <DialogTitle>Share</DialogTitle>
             </DialogHeader>
-            <div class="grid grid-cols-2 gap-4">
-              <button
-                v-for="template in templates.Documents"
-                :key="template.name"
-                class="h-24 flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 hover:border-primary-500 transition-colors"
-                @click="
-                  router.push(
-                    template.name.toLowerCase().includes('blank')
-                      ? '/docs'
-                      : `/docs/t/${template.name}`
-                  )
-                "
-              >
-                <component :is="template.icon" class="w-8 h-8" />
-                <span class="mt-2 text-sm">{{ template.name }}</span>
-              </button>
-            </div>
+            <ShareCard
+             @close="shareOpen = false" 
+              mode="doc"
+              :share-link="shareLinkDoc"
+              :privacy-type="privacyType"
+              :members="shareMembers"
+              :can-edit-privacy="authStore.isAuthenticated"
+              @copy-link="copyShareLink"
+              @change-privacy="updateVisibility"
+              @invite="handleInviteMember"
+              @update-member="handleUpdateMember"
+              @remove-member="handleRemoveMember"
+            />
           </DialogContent>
         </Dialog>
-        <Button variant="outline" @click="shareDocument">
-          <Share2 class="h-4 w-4 mr-2" />
-          Share
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <User class="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <UserProfile :isMobile="false" />
       </div>
     </div>
-    <div v-show="editorInitialized && translationsLoaded" class="flex-1">
-      <umo-editor
-        ref="editorRef"
-        v-bind="options"
-        @saved="handleSavedEvent"
-        @created="handleEditorCreated"
-        class="h-full"
+    
+    <UnifiedMenubar
+      :file-id="route.params.id as string"
+      mode="doc"
+      :collaborators="filteredCollaborators"
+      @toggle-chat="toggleChat"
+      @save="syncChanges"
+      @export="handleExport"
+      @undo="handleUndo"
+      @redo="handleRedo"
+      @toggle-formatting-marks="toggleFormattingMarks"
+    />
+    <!-- Access request interstitial for unauthenticated private docs -->
+    <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">
+      <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
+        <div class="mb-4">
+          <h2 class="text-lg font-semibold">Request access to this document</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">This document is private. Enter your email to request access from the owner.</p>
+        </div>
+        <form @submit.prevent="submitAccessRequest" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input v-model="requestEmail" type="email" required class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Requested access</label>
+            <select v-model="accessLevel" class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700">
+              <option value="v">View</option>
+              <option value="c">Comment</option>
+              <option value="e">Edit</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Message (optional)</label>
+            <textarea v-model="requestMessage" rows="3" class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700" placeholder="Add a note to the owner"></textarea>
+          </div>
+          <div class="flex items-center justify-between pt-2">
+            <Button type="submit" :disabled="requestSubmitting || !requestEmail" variant="default">
+              <span v-if="!requestSubmitting">Request access</span>
+              <span v-else>Sending...</span>
+            </Button>
+            <div class="flex items-center gap-3">
+              <span v-if="requestSuccess" class="text-sm text-green-600">{{ requestSuccess }}</span>
+              <Button type="button" variant="outline" @click="goToLogin">Sign in</Button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Large file panel -->
+    <div v-else-if="isLarge" class="flex-1 flex items-center justify-center p-6">
+      <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 text-center">
+        <h2 class="text-lg font-semibold mb-2">This document is large</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">The file is too large to preview online. You can download it to view locally.</p>
+        <Button variant="default" @click="downloadFile" :disabled="!downloadUrl">Download file</Button>
+      </div>
+    </div>
+
+    <!-- Editor when access is allowed -->
+    <div v-else class="relative w-full h-full">
+      <umo-editor 
+        ref="editorRef" 
+        v-bind="options" 
+        @saved="handleSavedEvent" 
+        @created="handleEditorCreated" 
       />
     </div>
-    <div v-show="!(editorInitialized && translationsLoaded)" class="flex-1 flex items-center justify-center">
-      <div class="animate-pulse text-gray-500">
-        Loading editor...
+    <div v-if="!accessDenied && isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">
+      <div class="flex justify-between items-center p-3 border-b border-gray-200">
+        <h3 class="font-semibold">Chat</h3>
+        <button @click="toggleChat" class="p-1 rounded-full hover:bg-gray-200">
+          <Share2 class="h-4 w-4 text-gray-600" />
+        </button>
+      </div>
+      <div class="flex-grow overflow-y-auto p-3" ref="chatMessagesContainer">
+        <div v-for="message in chatMessages" :key="(message as any).id" class="mb-4">
+          <div v-if="(message as any).replyTo" class="ml-4 mb-1 p-2 bg-gray-100 rounded text-sm">
+            <span class="font-semibold">{{ getReplyUserName((message as any).replyTo as any) }}:</span>
+            {{ getReplyContent((message as any).replyTo as any) }}
+          </div>
+          <div class="flex items-start">
+            <div class="w-8 h-8 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white font-semibold mr-2">
+              {{ (message as any).user.name.charAt(0).toUpperCase() }}
+            </div>
+            <div>
+              <div class="flex items-baseline">
+                <span class="font-semibold mr-2">{{ (message as any).user.name }}</span>
+                <span class="text-xs text-gray-500">{{ formatDate((message as any).timestamp as any) }}</span>
+              </div>
+              <div class="mt-1">{{ (message as any).content.message }}</div>
+              <button @click="replyToMessage(message)" class="text-sm text-blue-500 mt-1">Reply</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-3 border-t border-gray-200">
+        <form @submit.prevent="sendChatMessage" class="flex flex-col">
+          <div v-if="replyingTo" class="mb-2 p-2 bg-gray-100 rounded flex justify-between items-start">
+            <div class="text-sm">
+              <span class="font-semibold">Replying to {{ (replyingTo as any).user.name }}:</span>
+              {{ (replyingTo as any).content.message }}
+            </div>
+            <button @click="cancelReply" class="text-gray-500 hover:text-gray-700">
+              ✕
+            </button>
+          </div>
+          <div class="flex">
+            <textarea
+              v-model="newChatMessage"
+              placeholder="Type a message..."
+              class="flex-grow border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+              :style="{ height: textareaHeight }"
+              @input="adjustTextareaHeight"
+              ref="chatInput"
+            ></textarea>
+            <button
+              type="submit"
+              class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              Send
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </template>
 
+<style>
+/* Page break visuals disabled */
+.umo-page-break { display: none !important; }
+.umo-page-footer { display: none !important; }
+
+/* Print pagination */
+@media print {
+  .umo-page-break { display: none !important; }
+  .umo-page-footer { display: none !important; }
+}
+</style>
 <style>
 html,
 body {
@@ -616,9 +1363,6 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 300px;
-  -webkit-user-modify: read-write;
-  -moz-user-modify: read-write;
-  user-modify: read-write;
 }
 
 #docHead[contenteditable="true"] {
@@ -673,23 +1417,17 @@ body {
   background-color: #ecfdf5;
 }
 
-.loading-bar {
-  @apply fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden;
-}
-
-.loading-progress {
-  @apply h-full bg-primary-600;
-  width: 30%;
-  animation: loading 2s infinite ease-in-out;
-}
+/* Removed @apply rules; using inline classes in template for loading bar */
 
 @keyframes loading {
   0% {
     transform: translateX(-100%);
   }
+
   50% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(300%);
   }

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
-import { LoaderCircle, AlertCircle } from "lucide-vue-next";
+import { LoaderCircle } from "lucide-vue-next";
 import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/store/auth';
 
+const authStore = useAuthStore();
 const router = useRouter();
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 const errorMessage = ref<string | null>(null);
@@ -28,6 +30,7 @@ function authenticateWithCookie(authCookie: string) {
     .then((data) => {
       if (data.success) {
         console.log("setting token", data);
+        authStore.setUserInfo(data.user);
         localStorage.setItem("venAuthToken", data.token);
         router.push("/");
       } else {
@@ -60,6 +63,7 @@ function authenticateWithCode(code: string) {
         console.log("Auth suc", data);
         document.cookie = `venAuthToken=${data.token}; path=/`;
         localStorage.setItem("venAuthToken", data.token);
+        authStore.setUserInfo(data.user);
         router.push("/");
       } else {
         console.log("Auth failed with code:", data);

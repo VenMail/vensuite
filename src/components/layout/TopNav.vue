@@ -37,11 +37,11 @@
     )">
     <div :class="cn(
       'flex items-center w-full',
-      props.isMobile ? 'justify-between' : 'justify-start'
+      props.isMobile ? 'justify-between' : 'justify-between'
     )">
-      <!-- Left section: Logo and menu -->
+      <!-- Left section: Logo, menu and search -->
       <div :class="cn(
-        'flex items-center w-full',
+        'flex items-center',
         props.isMobile ? 'space-x-2' : 'space-x-6'
       )">
         <button v-if="props.isMobile" @click="emit('toggleSidebar')" :class="cn(
@@ -53,7 +53,6 @@
             'transition duration-150 ease-in-out'
           )">
           <Menu class="h-5 w-5"></Menu>
-
         </button>
 
         <div :class="cn(
@@ -65,9 +64,10 @@
         </div>
 
         <SearchBar :isMobile="props.isMobile" />
-
-        <UserProfile :isMobile="props.isMobile" />
       </div>
+
+      <!-- Right section: User Profile -->
+      <UserProfile :isMobile="props.isMobile" />
     </div>
   </nav>
 </template>

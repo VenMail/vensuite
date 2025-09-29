@@ -25,11 +25,16 @@ import {
   TrashIcon,
   UnderlineIcon,
   UndoIcon,
+  UsersIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from 'lucide-vue-next'
 import { Univer } from '@univerjs/core'
-import { FUniver } from '@univerjs/facade'
+import { FUniver } from '@univerjs/core/facade'
+// Ensure Facade implementations are mounted for used plugins
+import '@univerjs/ui/facade'
+import '@univerjs/docs-ui/facade'
+import '@univerjs/sheets-ui/facade'
 import type { ICellData, IWorkbookData } from '@univerjs/core'
 import { useRouter } from 'vue-router'
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data'
@@ -46,6 +51,7 @@ import {
 } from '@/components/ui/menubar'
 import UniverSheet from './components/UniverSheet.vue'
 import { useFileStore } from '@/store/files'
+import { ExportService, ExportFormat, PDFEngine, type IExportOptions } from '@/plugins/ExportPlugin'
 
 
 interface Props {
@@ -60,21 +66,15 @@ const emit = defineEmits(['updateData', 'toggleChat', 'save'])
 const router = useRouter()
 
 let facadeAPI: FUniver | null = null
-// let disposable = null
+const exportService = new ExportService()
 
 onMounted(() => {
   watchEffect(() => {
     if (props.coreRef && !facadeAPI) {
-      //facadeAPI = FUniver.newAPI(props.coreRef)
-      // disposable = facadeAPI.onBeforeCommandExecute((command) => {
-        // console.log('logging', command)
-        // custom preprocessing logic before the command is executed
-      // })
+      facadeAPI = FUniver.newAPI(props.coreRef)
     }
   })
   console.log("pid", props.fileId)
-
-  // fileStore.loadRecentFiles()
 })
 
 const recentFiles = computed(() => {
@@ -85,8 +85,8 @@ const recentFiles = computed(() => {
 async function loadData(id: string) {
   const savedData = await fileStore.loadDocument(id, "xlsx")
   console.log('saved', savedData)
-  if (savedData?.contents) {
-    return JSON.parse(savedData.contents)
+  if (savedData && savedData.content) {
+    return JSON.parse(savedData.content)
   }
   return DEFAULT_WORKBOOK_DATA
 }
@@ -114,13 +114,25 @@ function handleSave() {
  emit("save")
 }
 
-function exportAs(format: string) {
-  if (facadeAPI) {
-    facadeAPI.getActiveWorkbook()?.getSnapshot()
-    switch (format) {
+async function exportAs(format: string) {
+  if (!facadeAPI) {
+    console.error('FUniver facade API not available')
+    return
+  }
 
+  try {
+    const exportOptions: IExportOptions = {
+      format: format as ExportFormat,
+      filename: `sheet-export-${Date.now()}.${format}`,
+      includeStyles: true,
+      includeFormulas: true,
+      includeHeaders: true,
+      pdfEngine: format === 'pdf' ? PDFEngine.JSPDF : undefined
     }
-    // todo send data to remote API
+
+    await exportService.export(facadeAPI, exportOptions)
+  } catch (error) {
+    console.error(`Export failed for format ${format}:`, error)
   }
 }
 
@@ -425,7 +437,7 @@ function about() {
 </script>
 
 <template>
-  <Menubar class="border-none ml-0 pl-0 bg-transparent">
+  <Menubar class="border-none ml-0 pl-0">
     <!-- File Menu -->
     <MenubarMenu>
       <MenubarTrigger>File</MenubarTrigger>

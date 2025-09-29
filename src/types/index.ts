@@ -1,21 +1,42 @@
 export interface FileData {
-  id?: string;
-  local_id?: string;
-  redirect_server_id?: string;
+  url: boolean;
+  thumbnail_url: string | undefined;
+  id?: string;              // Primary ID - either local UUID or server ID
+  server_id?: string;       // Server ID (only present for documents that exist on server)
   title: string;
   file_name?: string;
   file_type?: string | null;
   file_size?: string;
   file_url?: string;
-  remote_id?: string;
+  is_template?: boolean;
+  employee_id?: string;
   folder_id?: string | null;
   last_viewed?: Date;
   created_at?: Date | string;
+  updated_at?: Date | string;
   is_folder?: boolean;
-  contents?: string;
+  content?: string;          // Normalized content field
+  isNew?: boolean;          // Local flag for new documents
+  isDirty?: boolean;        // Local flag for unsaved changes
+   mime_type?: string;       // MIME type of the file
+  source?: string;          // Source of the file (e.g., "Files", "Forms")
+  is_trashed?: boolean;     // Whether the file is in trash
+  trashed_at?: Date | string; // When the file was trashed
+  // Sharing controls (backend-compliant)
+  // privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
+  privacy_type?: number;
+  // sharing_info: 'email1:v,email2:e' where v=view, e=edit, c=comment
+  sharing_info?: string | null;
+}
+
+export interface AppForm {
+  id?: string;
+  title: string;
+  file_url?: string;
+  last_view_date?: Date;
+  created_at?: Date;
+  form?: FormData;
   content?: string;
-  isNew?: boolean;
-  isDirty?: boolean;
 }
 
 export interface FormData {
@@ -344,15 +365,6 @@ export const typeToCategoryMap: Record<QuestionType, FieldCategory> = {
   rating: "rating",
   yesno: "switch",
 };
-export interface AppForm {
-  id?: string;
-  title: string;
-  file_url?: string;
-  last_view_date?: Date;
-  created_at?: Date;
-  form?: FormData;
-  content?: string;
-}
 
 export interface ResponseMeta {
   total_responses: number;
@@ -388,3 +400,7 @@ export interface FormResponseData {
   meta: ResponseMeta;
   statistics: Record<string, QuestionStatistics>;
 }
+
+export type DeletedItem = 
+  | (FileData & { source: 'Files'; deletedAt: string })
+  | (AppForm & { source: 'Forms'; deletedAt: string; file_type?: string; file_size?: string })

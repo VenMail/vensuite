@@ -7,7 +7,6 @@ import "@univerjs/design/lib/index.css";
 import "@univerjs/ui/lib/index.css";
 import "@univerjs/docs-ui/lib/index.css";
 import "@univerjs/sheets-ui/lib/index.css";
-import "@univerjs/sheets-formula/lib/index.css";
 import { IWorkbookData, LocaleType, UnitModel, Univer, UniverInstanceType, Workbook } from '@univerjs/core'
 import { defaultTheme } from '@univerjs/design'
 import { UniverDocsPlugin } from '@univerjs/docs'
@@ -20,11 +19,34 @@ import { UniverSheetsNumfmtPlugin } from '@univerjs/sheets-numfmt'
 import { UniverSheetsUIPlugin } from '@univerjs/sheets-ui'
 import { UniverUIPlugin } from '@univerjs/ui'
 import { UniverSheetsZenEditorPlugin } from '@univerjs/sheets-zen-editor'
-import { FUniver } from '@univerjs/facade'
-import { enUS } from 'univer:locales'
+import { FUniver } from '@univerjs/core/facade'
+// Mount Facade implementations for plugins we use
+import '@univerjs/ui/facade'
+import '@univerjs/docs-ui/facade'
+import '@univerjs/sheets-ui/facade'
 import { onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
 import { DEFAULT_WORKBOOK_DATA } from "@/assets/default-workbook-data";
 import { IWebsocketService } from "@/lib/wsService";
+
+// Univer 0.10 locale modules: import from each package under /locale/en-US
+import designEnUs from '@univerjs/design/locale/en-US'
+import uiEnUs from '@univerjs/ui/locale/en-US'
+import docsUiEnUs from '@univerjs/docs-ui/locale/en-US'
+import sheetsUiEnUs from '@univerjs/sheets-ui/locale/en-US'
+import sheetsEnUs from '@univerjs/sheets/locale/en-US'
+import sheetsFormulaEnUs from '@univerjs/sheets-formula/locale/en-US'
+import zenEditorEnUs from '@univerjs/sheets-zen-editor/locale/en-US'
+
+// Merge EN US locales; cast to any to satisfy ILanguagePack typing differences across packages
+const enLocales: any = {
+  ...designEnUs,
+  ...uiEnUs,
+  ...docsUiEnUs,
+  ...sheetsUiEnUs,
+  ...sheetsEnUs,
+  ...sheetsFormulaEnUs,
+  ...zenEditorEnUs,
+}
 
 const univerRef = ref<Univer | null>(null);
 const workBook = ref<Workbook | null>(null);
@@ -33,8 +55,9 @@ const fUniver = ref<FUniver | null>(null);
 
 const props = defineProps({
   data: {
-    type: Object as () => IWorkbookData,
-    required: true,
+    type: Object as () => IWorkbookData | null,
+    required: false,
+    default: null,
   },
   ws: {
     type: Object as () => IWebsocketService,
@@ -66,7 +89,7 @@ function setupUniver(data: IWorkbookData) {
       theme: defaultTheme,
       locale: LocaleType.EN_US,
       locales: {
-        [LocaleType.EN_US]: enUS,
+        [LocaleType.EN_US]: enLocales,
       },
     })
     univerRef.value = univer;
@@ -93,7 +116,8 @@ function setupUniver(data: IWorkbookData) {
       data || DEFAULT_WORKBOOK_DATA
     );
 
-    fUniver.value = FUniver.newAPI(univer);
+    // Create Facade API directly from Univer instance
+    fUniver.value = FUniver.newAPI(univer)
 
     setupCollaboration();
 
@@ -128,32 +152,69 @@ function setupCollaboration() {
   });
 }
 
-watch(() => props.data, (newValue) => {
-  if (newValue && (!workBook.value || newValue.id !== workBook.value.getUnitId())) {
-    init(newValue);
+watch(() => props.data, (newValue, oldValue) => {
+  // Handle initialization when data becomes available
+  if (newValue && !oldValue) {
+    console.log('Data became available, initializing UniverSheet')
+    init(newValue)
+    return
   }
-});
+  
+  // Handle data updates with different IDs
+  if (newValue && (!workBook.value || newValue.id !== workBook.value.getUnitId())) {
+    console.log('Data ID changed, reinitializing UniverSheet')
+    init(newValue)
+    return
+  }
+  
+  // Handle case where data becomes null (shouldn't happen normally)
+  if (!newValue && oldValue) {
+    console.log('Data became null, using default data')
+    init(DEFAULT_WORKBOOK_DATA)
+  }
+}, { immediate: false })
 
 onMounted(() => {
-  init(props.data);
-});
+  // Initialize with provided data or wait for data to be provided
+  if (props.data) {
+    console.log('UniverSheet: Initializing with provided data')
+    init(props.data)
+  } else {
+    console.log('UniverSheet: No initial data, will wait for data prop to be set')
+    // The watch will handle initialization when data becomes available
+  }
+})
 
 onBeforeUnmount(() => {
   destroyUniver();
 });
 
-const init = (data: IWorkbookData) => {
+const init = (data: IWorkbookData | null) => {
   try {
-    const api = setupUniver(data);
+    // Clean up any existing instance first
+    if (workBook.value) {
+      destroyUniver()
+    }
+    
+    // Use provided data or fall back to default
+    const workbookData = data || DEFAULT_WORKBOOK_DATA
+    console.log('Initializing UniverSheet with data:', {
+      hasData: !!data,
+      dataId: workbookData.id,
+      dataName: workbookData.name,
+      hasSheets: !!workbookData.sheets
+    })
+    
+    const api = setupUniver(workbookData)
     if (api) {
-      emit('univerRefChange', api);
+      emit('univerRefChange', api)
     } else {
-      console.error('Failed to initialize Univer');
+      console.error('Failed to initialize Univer')
     }
   } catch (error) {
-    console.error('Error initializing Univer:', error);
+    console.error('Error initializing Univer:', error)
   }
-};
+}
 
 const destroyUniver = () => {
   try {

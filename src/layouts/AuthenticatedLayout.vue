@@ -8,6 +8,7 @@ import { useFileStore } from '@/store/files'
 import { ToastProvider } from '@/components/ui/toast'
 import TopNav from '@/components/layout/TopNav.vue'
 import { cn } from '@/lib/utils'
+import { useSidebarStore } from '@/store/sidebar'
 
 const route = useRoute()
 const router = useRouter()
@@ -17,40 +18,58 @@ const { isAuthenticated } = storeToRefs(authStore)
 
 const isMobile = ref(false)
 const isDark = ref(false)
-const sidebarVisible = ref(true)
-const sidebarCollapsed = ref(false)
-const searchValue = ref("")
+const sidebarStore = useSidebarStore()
+const { isVisible, isCollapsed } = storeToRefs(sidebarStore)
+// const searchValue = ref("")
 
 // Get hideLayout from route meta
 const hideLayout = computed(() => route.meta.hideLayout === true)
 
 // Show sidebar on specific routes
 watch(() => route.name, (newRouteName) => {
-  sidebarVisible.value = (newRouteName === 'home' || newRouteName === 'forms')
+  const show = (
+    newRouteName === 'home' ||
+    newRouteName === 'forms' ||
+    newRouteName === 'media' ||
+    newRouteName === 'docs-view' ||
+    newRouteName === 'sheets-view' ||
+    newRouteName === 'bin-view' // Add bin-view to keep sidebar visible
+  )
+  sidebarStore.setVisible(show)
 })
 
 const toggleSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value
+  sidebarStore.toggleVisible()
 }
 
 const toggleCollapse = (collapsed: boolean) => {
-  sidebarCollapsed.value = collapsed
+  sidebarStore.setCollapsed(collapsed)
 }
 
-const toggleDarkMode = () => {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-}
+// const toggleDarkMode = () => {
+//   isDark.value = !isDark.value
+//   document.documentElement.classList.toggle('dark', isDark.value)
+// }
 
-const navigateToRoute = (route: string) => {
-  router.push(route)
-}
+// const navigateToRoute = (route: string) => {
+//   router.push(route)
+// }
 
 onMounted(async () => {
   // Handle authentication
   console.log('hideLayout', hideLayout.value)
+  const name = router.currentRoute.value.name as string | undefined
+  const params: any = router.currentRoute.value.params
+  const isPublicViewer = (
+    (name === 'doc' && typeof params.id === 'string') ||
+    (name === 'sheet' && typeof params.id === 'string') ||
+    (name === 'file' && typeof params.id === 'string')
+  )
+
   if (isAuthenticated.value) {
     await fileStore.loadDocuments()
+  } else if (isPublicViewer) {
+    // Allow unauthenticated users to view public/link-access items without redirecting
   } else {
     await router.push({
       name: 'login',
@@ -61,9 +80,6 @@ onMounted(async () => {
   // Handle responsive design
   const handleResize = () => {
     isMobile.value = window.innerWidth < 768
-    if (isMobile.value) {
-      sidebarCollapsed.value = true
-    }
   }
   handleResize()
   window.addEventListener('resize', handleResize)
@@ -77,19 +93,23 @@ onMounted(async () => {
 
 watch(isAuthenticated, async (newValue) => {
   if (!newValue) {
-    await router.push({
-      name: 'login',
-      query: { redirect: router.currentRoute.value.fullPath }
-    })
+    const name = router.currentRoute.value.name as string | undefined
+    const params: any = router.currentRoute.value.params
+    const isPublicViewer = (
+      (name === 'doc' && typeof params.id === 'string') ||
+      (name === 'sheet' && typeof params.id === 'string') ||
+      (name === 'file' && typeof params.id === 'string')
+    )
+    if (!isPublicViewer) {
+      await router.push({
+        name: 'login',
+        query: { redirect: router.currentRoute.value.fullPath }
+      })
+    }
   }
 })
 
-// Watch for hideLayout changes to collapse sidebar
-watch(hideLayout, (newValue) => {
-  if (newValue) {
-    sidebarCollapsed.value = true
-  }
-})
+// Do not auto-collapse based on hideLayout; collapse only on explicit user action
 
 // Dynamic class for the main content area
 const mainContentClasses = computed(() =>
@@ -115,8 +135,8 @@ const mainContentClasses = computed(() =>
       <div class="flex flex-1 overflow-hidden">
         <Sidebar 
           v-if="!hideLayout"
-          :isVisible="sidebarVisible" 
-          :isCollapsed="sidebarCollapsed"
+          :isVisible="isVisible" 
+          :isCollapsed="isCollapsed"
           @toggle="toggleSidebar"
           @collapse="toggleCollapse"
         />

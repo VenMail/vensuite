@@ -69,10 +69,15 @@ export class WebSocketService implements IWebsocketService {
 
   private onMessage(event: MessageEvent) {
     try {
+      if (typeof event.data !== 'string') {
+        // Ignore binary frames (used by CRDT transport)
+        return
+      }
       const message: Message = JSON.parse(event.data)
-      console.log('Received message:', message)
       WebSocketService.messages.value.push(message)
-      
+      if (WebSocketService.messages.value.length > 200) {
+        WebSocketService.messages.value.splice(0, WebSocketService.messages.value.length - 200)
+      }
       // Notify sheet-specific listeners
       const listenerNode = WebSocketService.activeSheets.get(message.sheetId)
       listenerNode?.(message)

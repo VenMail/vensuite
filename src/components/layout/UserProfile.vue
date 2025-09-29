@@ -37,8 +37,8 @@ const menuItems = [
 
 <template>
   <div :class="cn(
-    'flex items-center ml-auto',
-    props.isMobile ? 'ml-1' : 'space-x-4 ml-auto'
+    'flex items-center',
+    props.isMobile ? 'ml-1' : 'space-x-4'
   )">
     <button
       v-if="!props.isMobile"
@@ -61,11 +61,15 @@ const menuItems = [
       <DropdownMenuTrigger asChild>
         <button class="focus:outline-none">
           <div class="h-8 w-8 rounded-full bg-primary-600 text-white flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors">
-            <span>U</span>
+            <span>{{ authStore.firstName.charAt(0).toUpperCase() }}</span>
           </div>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" class="w-56">
+        <div class="p-2">
+          <p class="font-semibold">{{ authStore.firstName }} {{ authStore.lastName }}</p>
+          <p class="text-xs text-gray-500">{{ authStore.email }}</p>
+        </div>
         <DropdownMenuItem
           v-for="item in menuItems"
           :key="item.route"

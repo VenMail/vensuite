@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle, Loader2 } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import type { Component } from 'vue'
 
 const props = defineProps<{
@@ -15,12 +15,6 @@ const props = defineProps<{
   class?: string
   onClose?: () => void
 }>()
-
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
-
-const theme = inject('theme') as { isDark: { value: boolean } }
 
 const variantIcon = computed<Component | null>(() => {
   switch (props.variant) {
