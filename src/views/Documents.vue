@@ -13,262 +13,154 @@
     </div>
 
     <!-- File browser -->
-    <div class="h-full p-6 overflow-hidden">
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center space-x-4">
-          <h2
-            :class="[
-              'text-2xl font-semibold',
-              theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
-            ]"
+    <div class="h-full flex flex-col gap-6 p-6 overflow-hidden">
+      <WorkspaceTopBar
+        :title="currentTitle"
+        :subtitle="documentsSubtitle"
+        :breadcrumbs="breadcrumbs"
+        :can-navigate-up="breadcrumbs.length > 1"
+        :is-dark="theme.isDark.value"
+        :actions="topBarActions"
+        @navigate-up="handleNavigateUp"
+        @navigate-breadcrumb="handleBreadcrumbNavigate"
+      >
+        <template #stats>
+          <div
+            class="flex items-center gap-2 text-sm"
+            :class="theme.isDark.value ? 'text-gray-300' : 'text-gray-600'"
           >
-            Documents
-          </h2>
-          <div class="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              :class="[
-                'relative group rounded-full transition-all duration-200',
-                theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-              ]"
-              @click="createNewFolder"
-            >
-              <FolderPlusIcon class="h-5 w-5 text-primary-600" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              :class="[
-                'relative group rounded-full transition-all duration-200',
-                theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-              ]"
-              @click="openUploadDialog"
-            >
-              <Upload class="h-5 w-5 text-primary-600" />
-            </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  :class="[
-                    'relative group rounded-full transition-all duration-200',
-                    theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-                  ]"
-                >
-                  <Plus class="h-5 w-5 text-primary-600" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent
-                :class="[
-                  'rounded-lg shadow-2xl border',
-                  theme.isDark.value
-                    ? 'bg-gray-800 border-gray-700'
-                    : 'bg-white border-gray-200',
-                ]"
-              >
-                <DialogHeader>
-                  <DialogTitle
-                    :class="[
-                      'text-xl font-semibold',
-                      theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
-                    ]"
-                  >
-                    Create New Document
-                  </DialogTitle>
-                </DialogHeader>
-                <div class="grid grid-cols-2 gap-4 p-2">
-                  <Button
-                    v-for="template in documentTemplates"
-                    :key="template.name"
-                    variant="outline"
-                    :class="[
-                      'h-24 flex flex-col items-center justify-center transition-all',
-                      theme.isDark.value
-                        ? 'hover:bg-gray-700 hover:border-primary-400'
-                        : 'hover:bg-gray-50 hover:border-primary-400',
-                    ]"
-                    @click="createNewDocument(template.name)"
-                  >
-                    <component :is="template.icon" class="w-8 h-8 text-primary-600" />
-                    <span class="mt-2 text-sm font-medium">{{ template.name }}</span>
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <span>{{ sortedDocuments.length }} items</span>
+            <span v-if="selectedFiles.size > 0">• {{ selectedFiles.size }} selected</span>
           </div>
-        </div>
+        </template>
 
-        <!-- Right sort actions / Selection actions -->
-        <div class="flex items-center space-x-4">
-          <template v-if="selectedFiles.size > 0">
-            <div class="flex items-center space-x-2">
-              <span
-                :class="[
-                  'text-sm font-medium',
-                  theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
-                ]"
-              >
-                {{ selectedFiles.size }} selected
-              </span>
-              <div
-                :class="['h-4 w-px', theme.isDark.value ? 'bg-gray-600' : 'bg-gray-300']"
-              ></div>
-            </div>
-            <div class="flex items-center space-x-2">
-              <Button
-                v-if="selectedFiles.size === 1"
-                variant="ghost"
-                @click="openFile(Array.from(selectedFiles)[0])"
-              >
-                <FolderOpen class="h-4 w-4 mr-2" />
-                Open
-              </Button>
-              <Button variant="ghost" size="sm" @click="handleBulkDelete">
-                <Trash2 class="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-              <Button
-                v-if="selectedFiles.size === 1"
-                variant="ghost"
-                size="sm"
-                @click="handleRename"
-              >
-                <Edit class="h-4 w-4 mr-2" />
-                Rename
-              </Button>
-              <Button variant="ghost" size="sm" @click="handleBulkDownload">
-                <Download class="h-4 w-4 mr-2" />
-                Download
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                class="!ml-2"
-                @click="clearSelection"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </Button>
-            </div>
-          </template>
-          <template v-else>
+        <template #extra>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   :class="[
-                    theme.isDark.value
-                      ? 'border-gray-600 text-gray-100'
-                      : 'border-gray-300',
+                    theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
                   ]"
                 >
-                  Sort by: {{ sortBy === "name" ? "Name" : "Date" }}
-                  <ChevronDown class="ml-2 h-4 w-4" />
+                  <ArrowUpDown class="h-4 w-4 mr-2" />
+                  Sort: {{ sortLabel }}
+                  <ChevronDown class="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem @click="sortBy = 'name'">
-                  Sort by Name
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="sortBy = 'date'">
-                  Sort by Date
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  v-for="option in sortOptions"
+                  :key="option.value"
+                  @click="handleSort(option.value)"
+                >
+                  <Check v-if="sortBy === option.value" class="mr-2 h-4 w-4" />
+                  <span>{{ option.label }}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <!-- Inline View Toggle (matching media toolbar style) -->
-            <div
-              :class="[
-                'flex items-center rounded-lg p-1',
-                theme.isDark.value ? 'bg-gray-800' : 'bg-gray-100',
-              ]"
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                :class="[
-                  'px-2 py-2',
-                  viewMode === 'grid'
-                    ? theme.isDark.value
-                      ? 'bg-gray-700 shadow-sm'
-                      : 'bg-white shadow-sm'
-                    : '',
-                ]"
-                @click="viewMode = 'grid'"
-                title="Grid View"
-              >
-                <Grid class="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                :class="[
-                  'px-2 py-2',
-                  viewMode === 'list'
-                    ? theme.isDark.value
-                      ? 'bg-gray-700 shadow-sm'
-                      : 'bg-white shadow-sm'
-                    : '',
-                ]"
-                @click="viewMode = 'list'"
-                title="List View"
-              >
-                <List class="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                :class="[
-                  'px-2 py-2',
-                  viewMode === 'thumbnail'
-                    ? theme.isDark.value
-                      ? 'bg-gray-700 shadow-sm'
-                      : 'bg-white shadow-sm'
-                    : '',
-                ]"
-                @click="viewMode = 'thumbnail'"
-                title="Thumbnail View"
-              >
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  :class="[
+                    theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
+                  ]"
                 >
-                  <rect x="3" y="3" width="7" height="7" />
-                  <rect x="14" y="3" width="7" height="7" />
-                  <rect x="3" y="14" width="7" height="7" />
-                  <rect x="14" y="14" width="7" height="7" />
-                </svg>
+                  <Filter class="h-4 w-4 mr-2" />
+                  {{ activeFilterLabel }}
+                  <ChevronDown class="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  v-for="filter in filterOptions"
+                  :key="filter.value"
+                  @click="handleFilter(filter.value)"
+                >
+                  <Check v-if="currentFilter === filter.value" class="mr-2 h-4 w-4" />
+                  <span>{{ filter.label }}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+              <Button
+                v-for="option in viewControls"
+                :key="option.value"
+                variant="ghost"
+                size="sm"
+                :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+                @click="handleViewChange(option.value)"
+              >
+                <component v-if="option.icon" :is="option.icon" class="h-4 w-4" />
+                <span v-else>{{ option.label }}</span>
               </Button>
             </div>
-          </template>
-        </div>
-      </div>
+          </div>
+        </template>
+
+        <template #action-new-document>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                :class="actionIconClass"
+              >
+                <Plus class="h-5 w-5 text-primary-600" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent
+              :class="[
+                'rounded-lg shadow-2xl border',
+                theme.isDark.value
+                  ? 'bg-gray-800 border-gray-700'
+                  : 'bg-white border-gray-200',
+              ]"
+            >
+              <DialogHeader>
+                <DialogTitle
+                  :class="[
+                    'text-xl font-semibold',
+                    theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
+                  ]"
+                >
+                  Create New Document
+                </DialogTitle>
+              </DialogHeader>
+              <div class="grid grid-cols-2 gap-4 p-2">
+                <Button
+                  v-for="template in documentTemplates"
+                  :key="template.name"
+                  variant="outline"
+                  :class="[
+                    'h-24 flex flex-col items-center justify-center transition-all',
+                    theme.isDark.value
+                      ? 'hover:bg-gray-700 hover:border-primary-400'
+                      : 'hover:bg-gray-50 hover:border-primary-400',
+                  ]"
+                  @click="createNewDocument(template.name)"
+                >
+                  <component :is="template.icon" class="w-8 h-8 text-primary-600" />
+                  <span class="mt-2 text-sm font-medium">{{ template.name }}</span>
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </template>
+      </WorkspaceTopBar>
 
       <!-- Content area -->
       <ScrollArea
         :class="[
-          'h-[calc(100vh-320px)] rounded-lg shadow-sm border',
+          'flex-1 min-h-0 rounded-lg shadow-sm border',
           theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
         ]"
       >
-        <div v-if="documentFiles.length > 0">
+        <div v-if="sortedDocuments.length > 0">
           <!-- Select All header for list view -->
           <div
             v-if="viewMode === 'list'"
@@ -332,8 +224,8 @@
             <span
               :class="['text-xs', theme.isDark.value ? 'text-gray-400' : 'text-gray-500']"
             >
-              {{ documentFiles.length }} document{{
-                documentFiles.length !== 1 ? "s" : ""
+              {{ sortedDocuments.length }} document{{
+                sortedDocuments.length !== 1 ? "s" : ""
               }}
             </span>
           </div>
@@ -412,17 +304,24 @@
 import { ref, computed, onMounted, onUnmounted, inject } from "vue";
 import { useRouter } from "vue-router";
 import {
+  ArrowUpDown,
   Grid,
   List,
+  LayoutGrid,
   Plus,
   ChevronDown,
   FolderOpen,
   Upload,
-  FolderPlusIcon,
+  FolderPlus as FolderPlusIcon,
   Trash2,
   Edit,
   Download,
   Share2,
+  Filter,
+  Check,
+  FileText,
+  FileIcon,
+  X,
 } from "lucide-vue-next";
 import { useFileStore } from "@/store/files";
 import Button from "@/components/ui/button/Button.vue";
@@ -440,7 +339,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileData } from "@/types";
 import FileItem from "@/components/FileItem.vue";
 import { toast } from "@/composables/useToast";
 import FileUploader from "@/components/FileUploader.vue";
@@ -451,14 +349,72 @@ import {
   type ContextMenuBuilderContext,
 } from "@/composables/useFileExplorer";
 import FileContextMenu from "@/components/FileContextMenu.vue";
+import WorkspaceTopBar from "@/components/layout/WorkspaceTopBar.vue";
+import type { FileData } from "@/types";
 
 const router = useRouter();
 const fileStore = useFileStore();
 const theme = inject("theme") as { isDark: { value: boolean } };
 
-const viewMode = ref<"grid" | "list" | "thumbnail">("grid");
-const sortBy = ref("name");
+type DocumentViewMode = "grid" | "list" | "thumbnail";
+type DocumentSort = "name" | "date";
+type DocumentFilter = "all" | "word" | "pdf" | "text" | "other";
+
+type SortOption = {
+  value: DocumentSort;
+  label: string;
+};
+
+type FilterOption = {
+  key: string;
+  label: string;
+  value: DocumentFilter;
+  icon: any;
+  active: boolean;
+};
+
+type ViewModeOption = {
+  value: DocumentViewMode;
+  icon?: any;
+  label: string;
+  active: boolean;
+};
+
+const viewMode = ref<DocumentViewMode>("grid");
+const sortBy = ref<DocumentSort>("name");
 const isUploadDialogOpen = ref(false);
+const searchQuery = ref("");
+const currentFilter = ref<DocumentFilter>("all");
+
+const breadcrumbs = computed(() => fileStore.breadcrumbs);
+
+const documentsSubtitle = computed(() => {
+  switch (currentFilter.value) {
+    case "word":
+      return "Word documents";
+    case "pdf":
+      return "PDF files";
+    case "text":
+      return "Text documents";
+    case "other":
+      return "Other documents";
+    default:
+      return "All documents";
+  }
+});
+
+const documentTypeGroups: Record<Exclude<DocumentFilter, "all">, string[]> = {
+  word: ["doc", "docx", "odt", "rtf"],
+  pdf: ["pdf"],
+  text: ["txt", "md", "markdown"],
+  other: ["csv", "ppt", "pptx"],
+};
+
+const allDocumentTypes = computed(() => {
+  const types = new Set<string>();
+  Object.values(documentTypeGroups).forEach(group => group.forEach(type => types.add(type)));
+  return Array.from(types);
+});
 
 function buildContextMenuActions({
   selectedIds,
@@ -553,27 +509,199 @@ const documentTemplates = [
 ];
 
 // Filter documents (docx, pdf, txt, etc.)
+const folderItems = computed(() =>
+  fileStore.allFiles
+    .filter((file) => file.is_folder)
+    .sort((a, b) => (a.title || "").localeCompare(b.title || "")),
+);
+
 const documentFiles = computed(() => {
   return fileStore.allFiles.filter((file) => {
     if (file.is_folder) return false;
-
-    const documentTypes = ["docx", "pdf", "txt", "rtf", "doc", "odt"];
-    return file.file_type && documentTypes.includes(file.file_type.toLowerCase());
+    const type = file.file_type?.toLowerCase();
+    if (!type) return false;
+    return allDocumentTypes.value.includes(type);
   });
 });
 
-const sortedDocuments = computed(() => {
-  const sortFn = (a: FileData, b: FileData) => {
-    if (sortBy.value === "name" && a.title && b.title) {
-      return a.title.localeCompare(b.title);
-    } else if (sortBy.value === "date" && a.last_viewed && b.last_viewed) {
-      return new Date(b.last_viewed).getTime() - new Date(a.last_viewed).getTime();
-    }
-    return 0;
-  };
+const getDocumentCategory = (fileType?: string | null): DocumentFilter => {
+  const type = fileType?.toLowerCase();
+  if (!type) return "other";
+  if (documentTypeGroups.word.includes(type)) return "word";
+  if (documentTypeGroups.pdf.includes(type)) return "pdf";
+  if (documentTypeGroups.text.includes(type)) return "text";
+  return "other";
+};
 
-  return [...documentFiles.value].sort(sortFn);
+const filteredDocuments = computed(() => {
+  let docs = [...documentFiles.value];
+
+  if (currentFilter.value !== "all") {
+    docs = docs.filter(file => getDocumentCategory(file.file_type) === currentFilter.value);
+  }
+
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase();
+    docs = docs.filter(file => {
+      const title = file.title?.toLowerCase() || "";
+      const name = file.file_name?.toLowerCase() || "";
+      return title.includes(query) || name.includes(query);
+    });
+  }
+
+  return docs;
 });
+
+const sortedDocumentFiles = computed(() => {
+  const docs = [...filteredDocuments.value];
+
+  if (sortBy.value === "date") {
+    return docs.sort((a, b) => {
+      const aTime = new Date(a.last_viewed || a.updated_at || a.created_at || 0).getTime();
+      const bTime = new Date(b.last_viewed || b.updated_at || b.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+  }
+
+  return docs.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+});
+
+const sortedDocuments = computed(() => [...folderItems.value, ...sortedDocumentFiles.value]);
+
+const sortOptions: SortOption[] = [
+  { value: "name", label: "Name" },
+  { value: "date", label: "Date" },
+];
+
+const sortLabel = computed(() => (sortBy.value === "date" ? "Date" : "Name"));
+
+const filterOptions = computed<FilterOption[]>(() => [
+  { key: "all", label: "All", value: "all", icon: FileIcon, active: currentFilter.value === "all" },
+  { key: "word", label: "Word", value: "word", icon: FileText, active: currentFilter.value === "word" },
+  { key: "pdf", label: "PDF", value: "pdf", icon: FileText, active: currentFilter.value === "pdf" },
+  { key: "text", label: "Text", value: "text", icon: FileText, active: currentFilter.value === "text" },
+  { key: "other", label: "Other", value: "other", icon: FileText, active: currentFilter.value === "other" },
+]);
+
+const activeFilterLabel = computed(() => {
+  return filterOptions.value.find((option) => option.value === currentFilter.value)?.label || "All";
+});
+
+const currentTitle = computed(() => {
+  const trail = breadcrumbs.value;
+  return trail[trail.length - 1]?.title || "Documents";
+});
+
+const viewControls = computed<ViewModeOption[]>(() => [
+  { value: "grid", icon: Grid, label: "Grid", active: viewMode.value === "grid" },
+  { value: "list", icon: List, label: "List", active: viewMode.value === "list" },
+  { value: "thumbnail", icon: LayoutGrid, label: "Thumbnail", active: viewMode.value === "thumbnail" },
+]);
+
+const actionIconClass = computed(
+  () =>
+    `relative group rounded-full transition-all duration-200 shrink-0 ${
+      theme.isDark.value ? "hover:bg-gray-700" : "hover:bg-gray-100"
+    }`,
+);
+
+const firstSelectedId = computed(() =>
+  selectedFiles.value.size > 0 ? Array.from(selectedFiles.value)[0] : null,
+);
+
+const topBarActions = computed(() => {
+  const actions = [
+    {
+      key: "create-folder",
+      icon: FolderPlusIcon,
+      component: Button,
+      props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+      onClick: createNewFolder,
+    },
+    {
+      key: "upload",
+      icon: Upload,
+      component: Button,
+      props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+      onClick: openUploadDialog,
+    },
+    {
+      key: "new-document",
+      component: "div",
+      slot: "new-document",
+    },
+  ];
+
+  if (selectedFiles.value.size > 0) {
+    if (selectedFiles.value.size === 1 && firstSelectedId.value) {
+      actions.push({
+        key: "open",
+        icon: FolderOpen,
+        component: Button,
+        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        onClick: () => openFile(firstSelectedId.value as string),
+      });
+
+      actions.push({
+        key: "rename",
+        icon: Edit,
+        component: Button,
+        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        onClick: handleRename,
+      });
+    }
+
+    actions.push(
+      {
+        key: "download",
+        icon: Download,
+        component: Button,
+        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        onClick: handleBulkDownload,
+      },
+      {
+        key: "delete",
+        icon: Trash2,
+        component: Button,
+        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        onClick: handleBulkDelete,
+      },
+      {
+        key: "clear",
+        icon: X,
+        component: Button,
+        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        onClick: () => clearSelection(),
+      },
+    );
+  }
+
+  return actions;
+});
+
+const handleFilter = (filter: DocumentFilter) => {
+  currentFilter.value = filter;
+  clearSelection();
+};
+
+const handleSort = (sort: DocumentSort) => {
+  sortBy.value = sort;
+  clearSelection();
+};
+
+const handleViewChange = (mode: DocumentViewMode) => {
+  viewMode.value = mode;
+};
+
+const handleNavigateUp = async () => {
+  clearSelection();
+  await fileStore.goUpOneLevel();
+};
+
+const handleBreadcrumbNavigate = async (index: number) => {
+  clearSelection();
+  await fileStore.navigateToBreadcrumb(index);
+};
 
 function createNewDocument(template: string) {
   if (template.toLowerCase().includes("blank")) {
@@ -583,23 +711,43 @@ function createNewDocument(template: string) {
   }
 }
 
-function createNewFolder() {
-  // Implement folder creation for documents
-  console.log("Create new folder in documents");
+async function createNewFolder() {
+  try {
+    const result = await fileStore.makeFolder({
+      title: "New Folder",
+      is_folder: true,
+      folder_id: fileStore.currentFolderId,
+      file_type: "folder",
+    } as FileData);
+    if (result?.id) {
+      toast.success("Folder created");
+      await fileStore.openFolder(result.folder_id ?? null);
+    }
+  } catch (error) {
+    console.error("Error creating document folder:", error);
+    toast.error("Failed to create folder");
+  }
 }
 
 function openUploadDialog() {
   isUploadDialogOpen.value = true;
 }
 
-function handleUploadComplete(files: any[]) {
+async function handleUploadComplete(files: any[]) {
   console.log("Upload completed:", files);
   toast.success(
     `Successfully uploaded ${files.length} file${files.length !== 1 ? "s" : ""}`
   );
+  await fileStore.openFolder(fileStore.currentFolderId);
 }
 
-function openFile(id: string) {
+async function openFile(id: string) {
+  const file = fileStore.allFiles.find((f) => f.id === id);
+  if (file?.is_folder) {
+    clearSelection();
+    await fileStore.openFolder(id);
+    return;
+  }
   router.push(`/docs/${id}`);
 }
 

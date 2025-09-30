@@ -1,46 +1,96 @@
 <template>
   <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-950">
-    <!-- Toolbar -->
-    <MediaToolbar
-      :selected-count="selectedFiles.size"
-      :view-mode="viewMode"
-      @search="handleSearch"
-      @filter="handleFilter"
-      @sort="handleSort"
-      @view-mode="handleViewModeChange"
-      @upload="openUploadDialog"
-      @bulk-download="handleBulkDownload"
-      @bulk-delete="handleBulkDelete"
-    />
-
-    <!-- Stats Bar -->
-    <div class="px-6 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-      <div class="flex items-center justify-between text-sm">
-        <div class="flex items-center gap-6 text-gray-600 dark:text-gray-400">
-          <span>{{ filteredMediaFiles.length }} items</span>
-          <span v-if="selectedFiles.size > 0">{{ selectedFiles.size }} selected</span>
+    <WorkspaceTopBar
+      :title="currentTitle"
+      :subtitle="mediaSubtitle"
+      :breadcrumbs="breadcrumbs"
+      :can-navigate-up="breadcrumbs.length > 1"
+      :is-dark="theme.isDark.value"
+      :actions="topBarActions"
+      @navigate-up="handleNavigateUp"
+      @navigate-breadcrumb="handleBreadcrumbNavigate"
+    >
+      <template #stats>
+        <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <span>{{ sortedMediaFiles.length }} items</span>
+          <span>•</span>
           <span>{{ totalSize }}</span>
+          <span v-if="selectedFiles.size > 0">• {{ selectedFiles.size }} selected</span>
         </div>
-        <div class="flex items-center gap-2">
-          <Badge v-if="currentFilter !== 'all'" variant="secondary">
-            {{ currentFilter.charAt(0).toUpperCase() + currentFilter.slice(1) }}
-          </Badge>
-          <Button
-            v-if="selectedFiles.size > 0"
-            variant="ghost"
-            size="sm"
-            @click="clearSelection"
-          >
-            Clear selection
-          </Button>
+      </template>
+      <template #extra>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                :class="[
+                  theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
+                ]"
+              >
+                <ArrowUpDown class="h-4 w-4 mr-2" />
+                Sort: {{ sortLabel }}
+                <ChevronDown class="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                v-for="option in sortOptions"
+                :key="option.value"
+                @click="handleSort(option.value)"
+              >
+                <Check v-if="currentSort === option.value" class="mr-2 h-4 w-4" />
+                <span>{{ option.label }}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                :class="[
+                  theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
+                ]"
+              >
+                <Filter class="h-4 w-4 mr-2" />
+                {{ activeFilterLabel }}
+                <ChevronDown class="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                v-for="filter in filterOptions"
+                :key="filter.value"
+                @click="handleFilter(filter.value)"
+              >
+                <Check v-if="currentFilter === filter.value" class="mr-2 h-4 w-4" />
+                <span>{{ filter.label }}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <Button
+              v-for="option in viewControls"
+              :key="option.value"
+              variant="ghost"
+              size="sm"
+              :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+              @click="handleViewModeChange(option.value)"
+            >
+              <component v-if="option.icon" :is="option.icon" class="h-4 w-4" />
+              <span v-else>{{ option.label }}</span>
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      </template>
+    </WorkspaceTopBar>
 
     <!-- Main Content -->
-    <div class="flex-1 overflow-hidden">
+    <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
       <!-- Select All Controls -->
-      <div v-if="filteredMediaFiles.length > 0" class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+      <div v-if="sortedMediaFiles.length > 0 || folderItems.length > 0" class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
         <!-- Select All header for list view -->
         <div
           v-if="viewMode === 'list'"
@@ -60,7 +110,7 @@
 
         <!-- Select All button for grid and thumbnail views -->
         <div
-          v-else-if="viewMode === 'grid' || viewMode === 'thumbnail'"
+          v-else
           class="flex items-center justify-between px-6 py-3"
         >
           <Button
@@ -88,20 +138,43 @@
         </div>
       </div>
 
-      <MediaGrid
-        :media-files="filteredMediaFiles"
-        :view-mode="viewMode"
-        :selected-files="selectedFiles"
-        :grid-size="gridSize"
-        :is-loading="isLoading"
-        @select="handleSelect"
-        @select-all="handleSelectAll"
-        @preview="handlePreview"
-        @download="handleDownload"
-        @rename="handleRename"
-        @delete="handleDelete"
-        @upload="openUploadDialog"
-      />
+      <div v-if="folderItems.length" class="px-6 py-4 overflow-auto max-h-[40vh]">
+        <div
+          :class="{
+            'space-y-2': viewMode === 'list',
+            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4': viewMode === 'grid' || viewMode === 'thumbnail'
+          }"
+        >
+          <FileItem
+            v-for="folder in folderItems"
+            :key="folder.id"
+            :file="folder"
+            :viewMode="viewMode"
+            :isSelected="selectedFiles.has(folder.id || '')"
+            @select-file="handleSelect"
+            @open-file="openMediaItem"
+            @contextmenu-file="(event) => openContextMenu(event)"
+          />
+        </div>
+      </div>
+
+      <div class="flex-1 min-h-0 overflow-auto">
+        <MediaGrid
+          :media-files="sortedMediaFiles"
+          :view-mode="viewMode"
+          :selected-files="selectedFiles"
+          :grid-size="gridSize"
+          :is-loading="isLoading"
+          @select="handleSelect"
+          @select-all="handleSelectAll"
+          @preview="handlePreview"
+          @download="handleDownload"
+          @rename="handleRename"
+          @delete="handleDelete"
+          @upload="openUploadDialog"
+          @context-menu="({ id, x, y }) => openContextMenu({ id, x, y })"
+        />
+      </div>
     </div>
 
     <!-- Upload Dialog -->
@@ -183,18 +256,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 import { useFileStore } from '@/store/files'
-import { FileData } from '@/types'
 import { toast } from '@/composables/useToast'
 import { useMediaTypes } from '@/composables/useMediaTypes'
-import MediaToolbar from '@/components/media/MediaToolbar.vue'
 import MediaGrid from '@/components/media/MediaGrid.vue'
+import FileItem from '@/components/FileItem.vue'
 import MediaViewer from '@/components/media/MediaViewer.vue'
 import FileUploader from '@/components/FileUploader.vue'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import Badge from '@/components/ui/badge/Badge.vue'
 import {
   Dialog,
   DialogContent,
@@ -209,16 +279,86 @@ import {
   type ContextMenuBuilderContext,
 } from '@/composables/useFileExplorer'
 import FileContextMenu from '@/components/FileContextMenu.vue'
+import WorkspaceTopBar from '@/components/layout/WorkspaceTopBar.vue'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import type { FileData } from '@/types'
+import {
+  LayoutGrid,
+  Grid,
+  List,
+  Upload,
+  Download,
+  Trash2,
+  FolderPlus as FolderPlusIcon,
+  ArrowUpDown,
+  ChevronDown,
+  Filter,
+  Check,
+  Image as ImageIcon,
+  Video,
+  Volume2,
+  FileIcon
+} from 'lucide-vue-next'
 
 const fileStore = useFileStore()
+const theme = inject('theme') as { isDark: { value: boolean } }
 const { isMediaFile, isViewable, isImage, isVideo, isAudio, formatFileSize } = useMediaTypes()
 
-const viewMode = ref<'thumbnail' | 'grid' | 'list'>('thumbnail')
+type MediaViewMode = 'thumbnail' | 'grid' | 'list'
+type MediaSort = 'name' | 'date' | 'size' | 'type'
+type MediaFilter = 'all' | 'images' | 'videos' | 'audio'
+
+type SortOption = {
+  value: MediaSort
+  label: string
+}
+
+type FilterOption = {
+  value: MediaFilter
+  label: string
+  icon: any
+  active: boolean
+}
+
+type ViewModeOption = {
+  value: MediaViewMode
+  icon?: any
+  label: string
+  active: boolean
+}
+
+const viewMode = ref<MediaViewMode>('thumbnail')
 const gridSize = ref<'small' | 'medium' | 'large'>('medium')
 const searchQuery = ref('')
-const currentFilter = ref('all')
-const currentSort = ref('name')
+const currentFilter = ref<MediaFilter>('all')
+const currentSort = ref<MediaSort>('name')
 const isLoading = ref(false)
+
+const breadcrumbs = computed(() =>
+  fileStore.breadcrumbs.map((crumb, index) => ({
+    id: crumb.id,
+    title: index === 0 ? 'Media' : crumb.title
+  }))
+)
+
+const currentTitle = computed(() => {
+  const trail = breadcrumbs.value
+  return trail[trail.length - 1]?.title || 'Media'
+})
+
+const mediaSubtitle = computed(() => {
+  if (currentFilter.value === 'all') {
+    return 'Browse all media files'
+  }
+  const label = currentFilter.value.charAt(0).toUpperCase() + currentFilter.value.slice(1)
+  return `${label} files`
+})
 
 // Upload
 const isUploadDialogOpen = ref(false)
@@ -296,17 +436,25 @@ function buildContextMenuActions({
   return actions;
 }
 
+const folderItems = computed(() =>
+  fileStore.allFiles
+    .filter((file) => file.is_folder)
+    .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+)
+
 const {
   selectedFiles,
-  handleSelect,
-  toggleSelectAll,
+  isAllSelected,
+  isSomeSelected,
   clearSelection,
+  handleSelect,
+  setAllSelected,
   handleContextMenu: openContextMenu,
   contextMenuState,
   contextMenuActions,
   closeContextMenu,
 } = useFileExplorer({
-  getFiles: () => filteredMediaFiles.value,
+  getFiles: () => combinedItems.value,
   buildContextMenuActions,
 });
 
@@ -321,16 +469,14 @@ const mediaFiles = computed(() => {
 const filteredMediaFiles = computed(() => {
   let files = [...mediaFiles.value]
 
-  // Apply search filter
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
-    files = files.filter(file => 
-      file.title.toLowerCase().includes(query) ||
+    files = files.filter(file =>
+      (file.title || '').toLowerCase().includes(query) ||
       file.file_type?.toLowerCase().includes(query)
     )
   }
 
-  // Apply type filter
   if (currentFilter.value !== 'all') {
     files = files.filter(file => {
       switch (currentFilter.value) {
@@ -346,78 +492,226 @@ const filteredMediaFiles = computed(() => {
     })
   }
 
-  // Apply sorting
-  files.sort((a, b) => {
-    switch (currentSort.value) {
-      case 'name':
-        return a.title.localeCompare(b.title)
-      case 'date':
+  return files
+})
+
+const sortedMediaFiles = computed(() => {
+  const files = [...filteredMediaFiles.value]
+
+  switch (currentSort.value) {
+    case 'date':
+      return files.sort((a, b) => {
         const dateA = new Date(a.updated_at || a.created_at || 0).getTime()
         const dateB = new Date(b.updated_at || b.created_at || 0).getTime()
         return dateB - dateA
-      case 'size':
+      })
+    case 'size':
+      return files.sort((a, b) => {
         const sizeA = typeof a.file_size === 'string' ? parseInt(a.file_size) : (a.file_size || 0)
         const sizeB = typeof b.file_size === 'string' ? parseInt(b.file_size) : (b.file_size || 0)
         return sizeB - sizeA
-      case 'type':
-        return (a.file_type || '').localeCompare(b.file_type || '')
-      default:
-        return 0
-    }
-  })
-
-  return files
+      })
+    case 'type':
+      return files.sort((a, b) => (a.file_type || '').localeCompare(b.file_type || ''))
+    default:
+      return files.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+  }
 })
+
+const combinedItems = computed(() => [...folderItems.value, ...sortedMediaFiles.value])
 
 const viewableFiles = computed(() => {
   return filteredMediaFiles.value.filter(file => isViewable(file.file_type))
 })
 
 const totalSize = computed(() => {
-  const bytes = filteredMediaFiles.value.reduce((total, file) => {
+  const bytes = sortedMediaFiles.value.reduce((total, file) => {
     const size = typeof file.file_size === 'string' ? parseInt(file.file_size) : (file.file_size || 0)
     return total + size
   }, 0)
   return formatFileSize(bytes)
 })
 
-// Select all functionality - matching the sheets pattern
-const isAllSelected = computed(() => {
-  return filteredMediaFiles.value.length > 0 && 
-         filteredMediaFiles.value.every(file => selectedFiles.value.has(file.id || ''));
-});
+const sortOptions: SortOption[] = [
+  { value: 'name', label: 'Name' },
+  { value: 'date', label: 'Date' },
+  { value: 'size', label: 'Size' },
+  { value: 'type', label: 'Type' }
+]
 
-const isSomeSelected = computed(() => {
-  return selectedFiles.value.size > 0 && !isAllSelected.value;
-});
+const sortLabel = computed(() => {
+  switch (currentSort.value) {
+    case 'date':
+      return 'Date'
+    case 'size':
+      return 'Size'
+    case 'type':
+      return 'Type'
+    default:
+      return 'Name'
+  }
+})
+
+const filterOptions = computed<FilterOption[]>(() => [
+  {
+    label: 'All',
+    value: 'all',
+    icon: FileIcon,
+    active: currentFilter.value === 'all'
+  },
+  {
+    label: 'Images',
+    value: 'images',
+    icon: ImageIcon,
+    active: currentFilter.value === 'images'
+  },
+  {
+    label: 'Videos',
+    value: 'videos',
+    icon: Video,
+    active: currentFilter.value === 'videos'
+  },
+  {
+    label: 'Audio',
+    value: 'audio',
+    icon: Volume2,
+    active: currentFilter.value === 'audio'
+  }
+])
+
+const activeFilterLabel = computed(() => {
+  return filterOptions.value.find(option => option.value === currentFilter.value)?.label || 'All'
+})
+
+const viewControls = computed<ViewModeOption[]>(() => [
+  {
+    value: 'thumbnail',
+    icon: LayoutGrid,
+    label: 'Thumbnail',
+    active: viewMode.value === 'thumbnail'
+  },
+  {
+    value: 'grid',
+    icon: Grid,
+    label: 'Grid',
+    active: viewMode.value === 'grid'
+  },
+  {
+    value: 'list',
+    icon: List,
+    label: 'List',
+    active: viewMode.value === 'list'
+  }
+])
+
+const actionClass = computed(() =>
+  `relative group rounded-full transition-all duration-200 shrink-0 ${
+    theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+  }`
+)
+
+const topBarActions = computed(() => {
+  const actions = [
+    {
+      key: 'create-folder',
+      icon: FolderPlusIcon,
+      component: Button,
+      props: {
+        variant: 'ghost',
+        size: 'icon',
+        class: actionClass.value
+      },
+      onClick: handleCreateFolder
+    },
+    {
+      key: 'upload-media',
+      icon: Upload,
+      component: Button,
+      props: {
+        variant: 'ghost',
+        size: 'icon',
+        class: actionClass.value
+      },
+      onClick: openUploadDialog
+    }
+  ]
+
+  if (selectedFiles.value.size > 0) {
+    actions.push(
+      {
+        key: 'bulk-download',
+        icon: Download,
+        component: Button,
+        props: {
+          variant: 'ghost',
+          size: 'icon',
+          class: actionClass.value
+        },
+        onClick: handleBulkDownload
+      },
+      {
+        key: 'bulk-delete',
+        icon: Trash2,
+        component: Button,
+        props: {
+          variant: 'ghost',
+          size: 'icon',
+          class: actionClass.value
+        },
+        onClick: handleBulkDelete
+      }
+    )
+  }
+
+  return actions
+})
 
 // Methods
-const handleSearch = (query: string) => {
-  searchQuery.value = query
-}
-
-const handleFilter = (filter: string) => {
+const handleFilter = (filter: MediaFilter) => {
   currentFilter.value = filter
   clearSelection()
 }
 
-const handleSort = (sort: string) => {
+const handleSort = (sort: MediaSort) => {
   currentSort.value = sort
+  clearSelection()
 }
 
-const handleViewModeChange = (mode: 'thumbnail' | 'grid' | 'list') => {
+const handleViewModeChange = (mode: MediaViewMode) => {
   viewMode.value = mode
   clearSelection()
 }
 
-const handleSelectAll = (selected: boolean) => {
-  if (selected) {
-    filteredMediaFiles.value.forEach(file => {
-      if (file.id) selectedFiles.value.add(file.id)
-    })
-  } else {
-    clearSelection()
+const handleNavigateUp = async () => {
+  clearSelection()
+  await fileStore.goUpOneLevel()
+}
+
+const handleBreadcrumbNavigate = async (index: number) => {
+  clearSelection()
+  await fileStore.navigateToBreadcrumb(index)
+}
+
+const handleCreateFolder = async () => {
+  try {
+    const result = await fileStore.makeFolder({
+      title: 'New Folder',
+      is_folder: true,
+      folder_id: fileStore.currentFolderId,
+      file_type: 'folder',
+    } as FileData)
+    if (result?.id) {
+      toast.success('Folder created')
+      await fileStore.openFolder(result.folder_id ?? null)
+    }
+  } catch (error) {
+    console.error('Error creating media folder:', error)
+    toast.error('Failed to create folder')
   }
+}
+
+const handleSelectAll = (selected: boolean) => {
+  setAllSelected(selected)
 }
 
 const handlePreview = (file: FileData) => {
@@ -488,8 +782,8 @@ const handleDelete = (file: FileData) => {
 
 const handleBulkDelete = () => {
   const files = Array.from(selectedFiles.value)
-    .map(id => mediaFiles.value.find(f => f.id === id))
-    .filter(Boolean) as FileData[]
+    .map(id => combinedItems.value.find(f => f.id === id))
+    .filter((file): file is FileData => Boolean(file && !file.is_folder))
   filesToDelete.value = files
   isDeleteDialogOpen.value = true
 }
@@ -518,9 +812,9 @@ const confirmDelete = async () => {
 
 const handleBulkDownload = () => {
   const files = Array.from(selectedFiles.value)
-    .map(id => mediaFiles.value.find(f => f.id === id))
-    .filter(Boolean) as FileData[]
-  
+    .map(id => sortedMediaFiles.value.find(f => f.id === id))
+    .filter((file): file is FileData => Boolean(file && !file.is_folder))
+
   files.forEach(file => handleDownload(file))
 }
 
@@ -532,17 +826,28 @@ const closeUploadDialog = () => {
   isUploadDialogOpen.value = false
 }
 
-const handleUploadComplete = (uploadedFiles: FileData[]) => {
+const handleUploadComplete = async (uploadedFiles: FileData[]) => {
   toast.success(`Uploaded ${uploadedFiles.length} file(s)`)
   closeUploadDialog()
-  // Files are already added to the store by the upload process, no need to reload all documents
+  await fileStore.loadMediaFiles(fileStore.currentFolderId)
+}
+
+const openMediaItem = async (id: string) => {
+  const file = combinedItems.value.find(item => item.id === id)
+  if (!file) return
+
+  if (file.is_folder) {
+    clearSelection()
+    await fileStore.openFolder(id)
+  } else {
+    handlePreview(file)
+  }
 }
 
 // Lifecycle
 onMounted(async () => {
   isLoading.value = true
   try {
-    // Load only media files for better performance
     await fileStore.loadMediaFiles()
   } catch (error) {
     toast.error('Failed to load media files')

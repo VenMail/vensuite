@@ -26,6 +26,9 @@ export const useFileStore = defineStore("files", {
   state: () => ({
     allFiles: [] as FileData[],
     recentFiles: [] as FileData[],
+    currentFolderId: null as string | null,
+    currentFolderTitle: "All Files",
+    breadcrumbs: [{ id: null as string | null, title: "All Files" }],
     cachedDocuments: new Map<string, { data: FileData; timestamp: number }>(),
     pendingChanges: new Map<string, { data: FileData; attempts: number }>(),
     syncStatus: new Map<string, 'pending' | 'syncing' | 'failed' | 'synced'>(),
@@ -378,6 +381,7 @@ export const useFileStore = defineStore("files", {
       }
     },
 
+    
     /** Add a file to the store */
     addFile(file: FileData) {
       // Check if file already exists
@@ -1012,11 +1016,16 @@ export const useFileStore = defineStore("files", {
       return offlineDocs;
     },
 
-    /** Load all documents from API */
-    async loadDocuments(doNotMutateStore: boolean = false): Promise<FileData[]> {
+    /** Load documents from API, optionally scoped to folder */
+    async loadDocuments(doNotMutateStore: boolean = false, folderId?: string | null): Promise<FileData[]> {
       try {
+        const params: Record<string, string> = {};
+        if (folderId) {
+          params.folder_id = folderId;
+        }
         const response = await axios.get(FILES_ENDPOINT, {
           headers: { Authorization: `Bearer ${this.getToken()}` },
+          params,
         });
         const docs = response.data.data as FileData[];
         const processedDocs = docs.map((doc) => {
@@ -1037,6 +1046,11 @@ export const useFileStore = defineStore("files", {
         // Optionally update store with processed documents
         if (!doNotMutateStore) {
           this.allFiles = processedDocs;
+          this.currentFolderId = folderId ?? null;
+          if (!folderId) {
+            this.currentFolderTitle = "All Files";
+            this.breadcrumbs = [{ id: null, title: "All Files" }];
+          }
         }
         // After fetching server files, reconcile any offline-local files not present on server
         try {
@@ -1053,6 +1067,44 @@ export const useFileStore = defineStore("files", {
         this.allFiles = offlineDocs;
         return offlineDocs;
       }
+    },
+
+    /** Navigate into a folder and update breadcrumb trail */
+    async openFolder(folderId: string | null) {
+      if (!folderId) {
+        await this.loadDocuments(false, null);
+        return;
+      }
+
+      const docs = await this.loadDocuments(false, folderId);
+
+      const folder = docs.find((doc) => doc.id === folderId && doc.is_folder);
+      if (folder && folder.title) {
+        this.currentFolderTitle = folder.title;
+      } else {
+        const fetched = await this.loadFromAPI(folderId);
+        this.currentFolderTitle = fetched?.title || "Folder";
+      }
+
+      const exists = this.breadcrumbs.find((crumb) => crumb.id === folderId);
+      if (!exists) {
+        this.breadcrumbs = [...this.breadcrumbs, { id: folderId, title: this.currentFolderTitle }];
+      }
+    },
+
+    /** Navigate to breadcrumb index */
+    async navigateToBreadcrumb(index: number) {
+      const target = this.breadcrumbs[index];
+      this.breadcrumbs = this.breadcrumbs.slice(0, index + 1);
+      this.currentFolderId = target?.id ?? null;
+      this.currentFolderTitle = target?.title || "All Files";
+      await this.loadDocuments(false, this.currentFolderId);
+    },
+
+    /** Go up one level from current folder */
+    async goUpOneLevel() {
+      if (this.breadcrumbs.length <= 1) return;
+      await this.navigateToBreadcrumb(this.breadcrumbs.length - 2);
     },
 
     /** Reconcile offline local documents: push any local-only docs to server and replace IDs */
@@ -1334,41 +1386,16 @@ export const useFileStore = defineStore("files", {
       setInterval(() => this.isOnline && this.syncPendingChanges(), SYNC_INTERVAL);
     },
 
-    /** Load only media files from API */
-    async loadMediaFiles(): Promise<FileData[]> {
+    /** Load only media files, respecting current folder */
+    async loadMediaFiles(folderId?: string | null): Promise<FileData[]> {
       try {
-        // First try to load all documents since API may not support media_only
-        const response = await axios.get(FILES_ENDPOINT, {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
-        });
-        const docs = response.data.data as FileData[];
-        const processedDocs = docs.map((doc) => ({
-          ...doc,
-          id: doc.id, // Use server ID directly
-          content: doc.content || this.getDefaultContent(doc.file_type),
-          title: doc.title || doc.file_name || 'Untitled',
-          file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
-          isNew: false,
-          isDirty: false
-        }));
-
-        // Filter for media files only
-        const mediaFiles = processedDocs.filter(doc => this.isMediaFile(doc));
-
-        // Update store with all processed documents
-        this.allFiles = processedDocs;
-
-        console.log('Loaded media files:', mediaFiles.length, 'out of', processedDocs.length, 'total files');
-        console.log('Media files found:', mediaFiles.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name })));
-        console.log('All files found:', processedDocs.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name, is_folder: f.is_folder })));
+        const docs = await this.loadDocuments(false, folderId ?? this.currentFolderId ?? null);
+        const mediaFiles = docs.filter((doc) => this.isMediaFile(doc));
         return mediaFiles;
       } catch (error) {
         console.error("Error loading media files:", error);
         this.lastError = "Failed to load media files";
-
-        // Fallback to filtering existing files
-        const mediaFiles = this.allFiles.filter(file => this.isMediaFile(file));
-        return mediaFiles;
+        return this.allFiles.filter((file) => this.isMediaFile(file));
       }
     },
   },
