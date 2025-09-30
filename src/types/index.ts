@@ -1,22 +1,23 @@
 export interface FileData {
-  url: boolean;
-  thumbnail_url: string | undefined;
   id?: string;              // Primary ID - either local UUID or server ID
   server_id?: string;       // Server ID (only present for documents that exist on server)
   title: string;
   file_name?: string;
   file_type?: string | null;
-  file_size?: string;
+  file_size?: number | string;
   file_url?: string;
+  thumbnail_url?: string;
+  url?: boolean;
   is_template?: boolean;
   employee_id?: string;
   folder_id?: string | null;
-  last_viewed?: Date;
+  is_folder?: boolean;
+  content?: string;
+  deleted_at?: Date | string;
   created_at?: Date | string;
   updated_at?: Date | string;
-  is_folder?: boolean;
-  content?: string;          // Normalized content field
-  isNew?: boolean;          // Local flag for new documents
+  last_viewed?: Date;
+  isNew?: boolean;
   isDirty?: boolean;        // Local flag for unsaved changes
    mime_type?: string;       // MIME type of the file
   source?: string;          // Source of the file (e.g., "Files", "Forms")

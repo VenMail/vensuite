@@ -32,6 +32,9 @@ export const useFileStore = defineStore("files", {
     isOnline: navigator.onLine,
     isSyncing: false,
     lastError: null as string | null,
+    trashItems: [] as FileData[],
+    isLoadingTrash: false,
+    trashError: null as string | null,
   }),
 
   actions: {
@@ -132,6 +135,22 @@ export const useFileStore = defineStore("files", {
       };
 
       return file;
+    },
+
+    prepareTrashItem(raw: any): FileData {
+      const normalized = this.normalizeDocumentShape(raw);
+      normalized.title = this.computeTitle(raw);
+      normalized.file_url = raw.file_url ? this.constructFullUrl(raw.file_url) : undefined;
+      normalized.file_size = raw.file_size;
+      normalized.mime_type = raw.mime_type;
+      normalized.source = raw.source;
+      normalized.deleted_at = raw.deleted_at || raw.updated_at;
+      normalized.created_at = raw.created_at;
+      normalized.updated_at = raw.updated_at;
+      normalized.url = !!raw.file_url;
+      normalized.isNew = false;
+      normalized.isDirty = false;
+      return normalized;
     },
 
     /**
@@ -379,6 +398,103 @@ export const useFileStore = defineStore("files", {
 
       // Cache the file
       this.cacheDocument(file);
+    },
+
+    async fetchTrashItems(force = false): Promise<FileData[]> {
+      if (!force && this.trashItems.length && !this.trashError) {
+        return this.trashItems;
+      }
+      try {
+        this.isLoadingTrash = true;
+        this.trashError = null;
+        const response = await axios.get(`${FILES_ENDPOINT}/trash`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        const items = (response.data?.data || []).map((item: any) => this.prepareTrashItem(item));
+        this.trashItems = items;
+        return items;
+      } catch (error: any) {
+        const message = error?.response?.data?.message || error?.message || 'Failed to load trash items';
+        this.trashError = message;
+        throw new Error(message);
+      } finally {
+        this.isLoadingTrash = false;
+      }
+    },
+
+    async restoreFromTrash(id: string): Promise<FileData | null> {
+      try {
+        const response = await axios.patch(`${FILES_ENDPOINT}/${id}/restore`, {}, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        const data = response.data?.data;
+        this.trashItems = this.trashItems.filter(item => item.id !== id);
+        if (data?.id) {
+          const restored = this.prepareTrashItem(data);
+          restored.content = data.content || data.contents || this.getDefaultContent(restored.file_type);
+          this.cacheDocument(restored);
+          this.updateFiles(restored);
+          return restored;
+        }
+        return null;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async deleteFromTrash(id: string): Promise<boolean> {
+      try {
+        await axios.delete(`${FILES_ENDPOINT}/${id}`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        this.trashItems = this.trashItems.filter(item => item.id !== id);
+        this.cachedDocuments.delete(id);
+        this.pendingChanges.delete(id);
+        this.syncStatus.delete(id);
+        this.allFiles = this.allFiles.filter(f => f.id !== id);
+        this.recentFiles = this.recentFiles.filter(f => f.id !== id);
+        return true;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async restoreMany(ids: string[]): Promise<{ restored: string[]; failed: { id: string; error: any }[] }> {
+      const results = await Promise.allSettled(ids.map(id => this.restoreFromTrash(id)));
+      const restored: string[] = [];
+      const failed: { id: string; error: any }[] = [];
+      results.forEach((result, index) => {
+        const id = ids[index];
+        if (result.status === 'fulfilled') {
+          restored.push(id);
+        } else {
+          failed.push({ id, error: result.reason });
+        }
+      });
+      return { restored, failed };
+    },
+
+    async deleteMany(ids: string[]): Promise<{ deleted: string[]; failed: { id: string; error: any }[] }> {
+      const results = await Promise.allSettled(ids.map(id => this.deleteFromTrash(id)));
+      const deleted: string[] = [];
+      const failed: { id: string; error: any }[] = [];
+      results.forEach((result, index) => {
+        const id = ids[index];
+        if (result.status === 'fulfilled') {
+          deleted.push(id);
+        } else {
+          failed.push({ id, error: result.reason });
+        }
+      });
+      return { deleted, failed };
+    },
+
+    async emptyTrash(): Promise<{ deleted: string[]; failed: { id: string; error: any }[] }> {
+      const ids = this.trashItems.map(item => item.id).filter((id): id is string => !!id);
+      if (!ids.length) {
+        return { deleted: [], failed: [] };
+      }
+      return this.deleteMany(ids);
     },
 
     /** Check if a file is a media file */
