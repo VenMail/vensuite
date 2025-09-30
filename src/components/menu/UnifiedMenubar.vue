@@ -54,9 +54,22 @@ const recentFiles = computed(() => {
   return fileStore.recentFiles.filter((f) => f.file_type === 'docx')
 })
 
-function handleNew() {
-  if (props.mode === 'sheet') router.push('/sheets')
-  else router.push('/docs')
+async function handleNew() {
+  try {
+    if (props.mode === 'sheet') {
+      const newSheet = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
+      if (newSheet?.id) {
+        await router.push(`/sheets/${newSheet.id}`)
+      }
+    } else {
+      const newDoc = await fileStore.createNewDocument('docx', 'New Document')
+      if (newDoc?.id) {
+        await router.push(`/docs/${newDoc.id}`)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to create new file from menubar:', error)
+  }
 }
 
 function handleOpenDialog() {
