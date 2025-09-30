@@ -1214,6 +1214,22 @@ export const useFileStore = defineStore("files", {
       }
     },
 
+    async moveToTrash(id: string): Promise<boolean> {
+      try {
+        const response = await axios.patch(`${FILES_ENDPOINT}/${id}/trash`, {}, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+        if (response.status === 200 || response.status === 201) {
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error moving to trash:", error);
+        this.lastError = "Failed to move to trash";
+        return false;
+      }
+    },
+
     /** Delete a file */
     async deleteFile(id: string): Promise<boolean> {
       const docIndex = this.allFiles.findIndex((f) => f.id === id);

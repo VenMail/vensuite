@@ -1,7 +1,7 @@
 <template>
   <div
     :id="`fileItem-${file.id}`"
-    :class="[fileItemClass, { 'drop-target': isDropTarget }]"
+    :class="['file-item', fileItemClass, { 'drop-target': isDropTarget }]"
     @click="handleClick"
     @dblclick="openFile"
     @contextmenu.prevent.stop="handleContextMenu"
@@ -475,14 +475,19 @@ const handleClick = (event: MouseEvent) => {
 };
 
 const handleContextMenu = (event: MouseEvent) => {
-  // If currently renaming, suppress context menu to avoid interruptions
-  if (isRenaming.value) {
-    event.preventDefault();
-    event.stopPropagation();
-    return;
+  // Emit context menu event with file ID and position
+  emit('contextmenu-file', {
+    id: props.file.id,
+    x: event.clientX,
+    y: event.clientY,
+  });
+  
+  // Also select the file if it's not already selected
+  if (!props.isSelected) {
+    emit('select-file', props.file.id, event);
   }
-  // Emit to parent with coordinates and this file id
-  emit("contextmenu-file", { id: props.file.id, x: event.clientX, y: event.clientY });
+  
+  event.preventDefault();
 };
 
 const openFile = () => {
@@ -557,7 +562,7 @@ const deleteFile = async () => {
   isLoading.value = true;
   try {
     if (!props.file.id) return;
-    await fileStore.deleteFile(props.file.id);
+    await fileStore.moveToTrash(props.file.id);
     emit("delete-file", props.file.id);
   } catch (error) {
     console.error("Error deleting file:", error);

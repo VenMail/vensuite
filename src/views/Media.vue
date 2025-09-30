@@ -450,7 +450,7 @@ const confirmDelete = async () => {
   try {
     for (const file of filesToDelete.value) {
       if (file.id) {
-        await fileStore.deleteFile(file.id)
+        await fileStore.moveToTrash(file.id)
         selectedFiles.value.delete(file.id)
       }
     }

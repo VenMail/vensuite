@@ -410,12 +410,21 @@ async function openFolder(id: string) {
 function handleSelect(id: string | undefined, event?: MouseEvent) {
   if (!id) return;
 
+  const isRightClick = event?.type === "contextmenu" || event?.button === 2;
+
+  if (isRightClick) {
+    selectedFiles.value = new Set([id]);
+    return;
+  }
+
   if (event?.ctrlKey || event?.metaKey) {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
+    const newSelection = new Set(selectedFiles.value);
+    if (newSelection.has(id)) {
+      newSelection.delete(id);
     } else {
-      selectedFiles.value.add(id);
+      newSelection.add(id);
     }
+    selectedFiles.value = newSelection;
   } else if (event?.shiftKey && selectedFiles.value.size > 0) {
     const allFiles = sortedItems.value;
     const lastSelectedIndex = allFiles.findIndex(
@@ -427,16 +436,20 @@ function handleSelect(id: string | undefined, event?: MouseEvent) {
       const start = Math.min(lastSelectedIndex, currentIndex);
       const end = Math.max(lastSelectedIndex, currentIndex);
 
+      const newSelection = new Set(selectedFiles.value);
       allFiles.slice(start, end + 1).forEach((f) => {
-        if (f.id) selectedFiles.value.add(f.id);
+        if (f.id) newSelection.add(f.id);
       });
+      selectedFiles.value = newSelection;
     }
   } else {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
+    const newSelection = new Set(selectedFiles.value);
+    if (newSelection.has(id)) {
+      newSelection.delete(id);
     } else {
-      selectedFiles.value.add(id);
+      newSelection.add(id);
     }
+    selectedFiles.value = newSelection;
   }
 }
 
@@ -586,16 +599,14 @@ function goUpOneLevel() {
     navigateToBreadcrumb(breadcrumbs.value.length - 2);
   }
 }
-
 function formatGroupName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1).replace("_", " ");
 }
 
 function handleRename() {
   if (selectedFiles.value.size === 1) {
-    const fileItemElement = document.getElementById(
-      `fileItem-${Array.from(selectedFiles.value)[0]}`
-    );
+    const fileId = Array.from(selectedFiles.value)[0];
+    const fileItemElement = document.getElementById(`fileItem-${fileId}`);
     if (fileItemElement) {
       const renameEvent = new CustomEvent("start-rename");
       fileItemElement.dispatchEvent(renameEvent);
@@ -603,12 +614,35 @@ function handleRename() {
   }
 }
 
+// Context menu state
 const contextMenuState = ref<{
   visible: boolean;
   x: number;
   y: number;
   targetId: string | null;
 }>({ visible: false, x: 0, y: 0, targetId: null });
+
+const handleFileUpdated = (fileId: string) => {
+  // Handle file update if needed
+  console.log('File updated:', fileId);
+};
+
+const handleFileDeleted = (fileId: string) => {
+  // Remove the deleted file from selected files
+  if (selectedFiles.value.has(fileId)) {
+    const newSelectedFiles = new Set(selectedFiles.value);
+    newSelectedFiles.delete(fileId);
+    selectedFiles.value = newSelectedFiles;
+  }
+};
+
+const handleFileContextMenu = (event: { id: string; x: number; y: number }) => {
+  openContextMenu({
+    id: event.id,
+    x: event.x,
+    y: event.y,
+  });
+};
 
 function openContextMenu(payload: { id: string; x: number; y: number }) {
   selectedFiles.value = new Set([payload.id]);
@@ -697,7 +731,7 @@ const contextMenuActions = computed(() => {
 async function handleBulkDelete() {
   try {
     const promises = Array.from(selectedFiles.value).map((id) =>
-      fileStore.deleteFile(id)
+      fileStore.moveToTrash(id)
     );
     await Promise.all(promises);
     selectedFiles.value.clear();
@@ -1252,12 +1286,14 @@ function handleEscapeKey(event: KeyboardEvent) {
                     v-for="item in items"
                     :key="item.id"
                     :file="item"
-                    :viewMode="viewMode"
-                    :isSelected="selectedFiles.has(item.id || '')"
-                    :showFileTypeTags="true"
+                    :view-mode="viewMode"
+                    :is-selected="item.id !== undefined && selectedFiles.has(item.id)"
+                    :depth="0"
                     @select-file="handleSelect"
                     @open-file="openFile"
-                    @contextmenu-file="openContextMenu"
+                    @update-file="handleFileUpdated"
+                    @delete-file="handleFileDeleted"
+                    @contextmenu-file="handleFileContextMenu"
                   />
                 </div>
               </div>

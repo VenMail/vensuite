@@ -149,7 +149,7 @@ function onFileDelete(fileInfo: any): void {
     }
     if (id) {
       // fire and forget to avoid returning a promise
-      documentStore.deleteFile(id).catch((e: any) => console.warn('onFileDelete delete failed:', e));
+      documentStore.moveToTrash(id).catch((e: any) => console.warn('onFileDelete delete failed:', e));
     }
   } catch (e) {
     console.warn('onFileDelete failed:', e);

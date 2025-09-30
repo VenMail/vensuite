@@ -286,9 +286,8 @@ async function fetchTrashedItems() {
     isLoading.value = true;
     
     // Load trashed documents from the store
-    const trashedFiles = await fileStore.loadDocuments(true);
-    // Filter for trashed items (you may need to add a `is_trashed` flag or separate endpoint)
-    trashItems.value = trashedFiles.filter((file: FileData) => (file as any).is_trashed);
+    const trashedFiles = await fileStore.fetchTrashItems();
+    trashItems.value = trashedFiles;
     
   } catch (error) {
     console.error("Error loading trash items:", error);
@@ -305,8 +304,7 @@ async function restoreItem(id: string) {
     isLoading.value = true;
     const item = trashItems.value.find((i) => i.id === id);
     
-    // Call API to restore file (you'll need to implement this endpoint)
-    const success = await fileStore.moveFile(id, item?.folder_id || "");
+    const success = await fileStore.restoreFromTrash(id);
     
     if (success) {
       toast.success(`Restored "${item?.title || "item"}"`);
@@ -333,8 +331,7 @@ async function deletePermanently(id: string) {
     isLoading.value = true;
     const item = trashItems.value.find((i) => i.id === id);
     
-    // Use fileStore method for permanent delete
-    const success = await fileStore.deleteFile(id);
+    const success = await fileStore.deleteFromTrash(id);
     
     if (success) {
       toast.success(`Permanently deleted "${item?.title || "item"}"`);
@@ -899,7 +896,6 @@ onUnmounted(() => {
             <p class="loading-text">Loading trash items...</p>
           </div>
 
-          <!-- Error state (if needed) -->
           <!-- Empty state -->
           <div
             v-else-if="!isLoading && filteredAndSortedItems.length === 0"

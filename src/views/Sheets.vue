@@ -564,7 +564,7 @@ function openFile(id: string) {
 async function handleBulkDelete() {
   try {
     const promises = Array.from(selectedFiles.value).map((id) =>
-      fileStore.deleteFile(id)
+      fileStore.moveToTrash(id)
     );
     await Promise.all(promises);
     selectedFiles.value.clear();
