@@ -43,6 +43,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { FileData } from "@/types";
 import MediaViewer from "@/components/media/MediaViewer.vue";
+import FileContextMenu from "@/components/FileContextMenu.vue";
 import { toast } from "@/composables/useToast";
 
 const route = useRoute();
@@ -54,7 +55,8 @@ const theme = inject("theme") as { isDark: { value: boolean } };
 const contextMenuState = ref({
   visible: false,
   x: 0,
-  y: 0
+  y: 0,
+  targetId: null as string | null
 });
 
 const contextMenuActions = computed(() => [
@@ -271,7 +273,7 @@ function formatFileSize(bytes?: number | string): string {
   const numBytes = typeof bytes === "string" ? parseInt(bytes, 10) : bytes;
   if (isNaN(numBytes)) return "N/A";
 
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const sizes = ["B", "KB", "MB", "GB", "T  B"];
   const i = Math.floor(Math.log(numBytes) / Math.log(1024));
   const size = (numBytes / Math.pow(1024, i)).toFixed(1);
 
@@ -622,10 +624,34 @@ function loginWithVenmail() {
   window.location.href = authStore.getAuthUrl(redirectUri);
 }
 
+// Global search handler
+function handleGlobalSearch(event: CustomEvent) {
+  const { query, filters: searchFilters } = event.detail
+  searchValue.value = query || ""
+  
+  // Apply context-aware filters
+  if (searchFilters && searchFilters.length > 0) {
+    // Map global filters to local filter structure
+    const filterMap: Record<string, string> = {
+      'documents': 'doc',
+      'spreadsheets': 'xls',
+      'media': 'image',
+      'folders': 'folder'
+    }
+    
+    // Apply the first filter (can be enhanced to support multiple)
+    const mappedFilter = filterMap[searchFilters[0]] || searchFilters[0]
+    filters.value.type = mappedFilter
+  } else {
+    filters.value.type = 'all'
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   document.addEventListener("click", handleOutsideClick);
   document.addEventListener("keydown", handleEscapeKey);
+  window.addEventListener("global-search", handleGlobalSearch as EventListener);
 
   if (authStore.getToken()) {
     await fetchTrashedItems();
@@ -637,6 +663,7 @@ onMounted(async () => {
 onUnmounted(() => {
   document.removeEventListener("click", handleOutsideClick);
   document.removeEventListener("keydown", handleEscapeKey);
+  window.removeEventListener("global-search", handleGlobalSearch as EventListener);
 });
 </script>
 
@@ -891,9 +918,42 @@ onUnmounted(() => {
           ]"
         >
           <!-- Loading state -->
-          <div v-if="isLoading && trashItems.length === 0" class="loading-state">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">Loading trash items...</p>
+          <div
+            v-if="isLoading && trashItems.length === 0"
+            :class="[
+              'flex flex-col items-center justify-center py-16 px-6 gap-12',
+              theme.isDark.value ? 'bg-gray-900/40' : 'bg-gray-50'
+            ]"
+          >
+            <div class="w-full max-w-5xl grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div
+                v-for="n in 4"
+                :key="`trash-skeleton-${n}`"
+                :class="[
+                  'rounded-xl border overflow-hidden shadow-sm relative isolate backdrop-blur-sm',
+                  theme.isDark.value ? 'border-gray-700 bg-gray-800/80' : 'border-gray-200 bg-white/80'
+                ]"
+              >
+                <div class="skeleton-hero"></div>
+                <div class="p-4 space-y-3">
+                  <div class="skeleton-line w-3/4"></div>
+                  <div class="skeleton-line w-1/2"></div>
+                  <div class="flex gap-2">
+                    <span class="skeleton-pill w-20"></span>
+                    <span class="skeleton-pill w-16"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              :class="[
+                'flex items-center gap-3 text-sm font-medium',
+                theme.isDark.value ? 'text-gray-400' : 'text-gray-600'
+              ]"
+            >
+              <Loader2 class="h-4 w-4 animate-spin" />
+              <span>Preparing your deleted items…</span>
+            </div>
           </div>
 
           <!-- Empty state -->
@@ -920,11 +980,11 @@ onUnmounted(() => {
                 theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
               ]"
             >
-              {{ 
-                trashItems.length === 0 
-                  ? "Trash is empty" 
+              {{
+                trashItems.length === 0
+                  ? "Trash is empty"
                   : searchValue || filters.type !== 'all' || filters.source !== 'all'
-                    ? "No matching items found" 
+                    ? "No matching items found"
                     : "No items found"
               }}
             </h3>
@@ -1379,31 +1439,13 @@ onUnmounted(() => {
     </div>
   </div>
 
-  <!-- Custom context menu at cursor position -->
-  <div
+  <!-- Context Menu -->
+  <FileContextMenu
     v-if="contextMenuState.visible"
-    id="context-menu"
-    :class="[
-      'fixed z-50 border rounded-md shadow-lg context-menu',
-      theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
-    ]"
-    :style="{ left: contextMenuState.x + 'px', top: contextMenuState.y + 'px' }"
-  >
-    <ul class="py-1">
-      <li
-        v-for="action in contextMenuActions"
-        :key="action.label"
-        :class="[
-          'px-3 py-2 cursor-pointer flex items-center space-x-2',
-          theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-        ]"
-        @click="action.action"
-      >
-        <component :is="action.icon" class="h-4 w-4" />
-        <span>{{ action.label }}</span>
-      </li>
-    </ul>
-  </div>
+    :state="contextMenuState"
+    :actions="contextMenuActions"
+    :is-dark="theme.isDark.value"
+  />
 
   <!-- Dialogs -->
   <Dialog v-model:open="showDetailsDialog">

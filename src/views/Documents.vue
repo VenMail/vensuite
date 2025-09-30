@@ -120,7 +120,6 @@
               <Button
                 v-if="selectedFiles.size === 1"
                 variant="ghost"
-                size="sm"
                 @click="openFile(Array.from(selectedFiles)[0])"
               >
                 <FolderOpen class="h-4 w-4 mr-2" />
@@ -147,7 +146,7 @@
                 variant="ghost"
                 size="sm"
                 class="!ml-2"
-                @click="selectedFiles.clear()"
+                @click="clearSelection"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -355,9 +354,9 @@
                 :file="item"
                 :viewMode="viewMode"
                 :isSelected="selectedFiles.has(item.id || '')"
-                @click.stop="handleSelect(item.id, $event)"
                 @select-file="handleSelect"
                 @open-file="openFile"
+                @contextmenu-file="(event) => openContextMenu(event)"
               />
             </div>
           </div>
@@ -400,10 +399,17 @@
     @upload="handleUploadComplete"
     :file-type-filter="'documents'"
   />
+
+  <FileContextMenu
+    v-if="contextMenuState.visible"
+    :state="contextMenuState"
+    :actions="contextMenuActions"
+    :is-dark="theme.isDark.value"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, inject } from "vue";
+import { ref, computed, onMounted, onUnmounted, inject } from "vue";
 import { useRouter } from "vue-router";
 import {
   Grid,
@@ -416,6 +422,7 @@ import {
   Trash2,
   Edit,
   Download,
+  Share2,
 } from "lucide-vue-next";
 import { useFileStore } from "@/store/files";
 import Button from "@/components/ui/button/Button.vue";
@@ -438,15 +445,106 @@ import FileItem from "@/components/FileItem.vue";
 import { toast } from "@/composables/useToast";
 import FileUploader from "@/components/FileUploader.vue";
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
+import {
+  useFileExplorer,
+  type ContextMenuAction,
+  type ContextMenuBuilderContext,
+} from "@/composables/useFileExplorer";
+import FileContextMenu from "@/components/FileContextMenu.vue";
 
 const router = useRouter();
 const fileStore = useFileStore();
 const theme = inject("theme") as { isDark: { value: boolean } };
 
 const viewMode = ref<"grid" | "list" | "thumbnail">("grid");
-const selectedFiles = ref<Set<string>>(new Set());
 const sortBy = ref("name");
 const isUploadDialogOpen = ref(false);
+
+function buildContextMenuActions({
+  selectedIds,
+  selectedFiles: selectedFileItems,
+  close,
+}: ContextMenuBuilderContext): ContextMenuAction[] {
+  const numSelected = selectedIds.length;
+  if (numSelected === 0) return [];
+
+  const hasFiles = selectedFileItems.some((file) => file && !file.is_folder);
+
+  const actions: ContextMenuAction[] = [];
+
+  if (numSelected === 1) {
+    actions.push(
+      {
+        label: "Open",
+        icon: FolderOpen,
+        action: () => {
+          const id = selectedIds[0];
+          if (id) {
+            openFile(id);
+          }
+          close();
+        },
+      },
+      {
+        label: "Rename",
+        icon: Edit,
+        action: () => {
+          handleRename();
+          close();
+        },
+      },
+    );
+  }
+
+  if (hasFiles) {
+    actions.push({
+      label: `Download ${numSelected > 1 ? `(${numSelected})` : ""}`.trim(),
+      icon: Download,
+      action: () => {
+        handleBulkDownload();
+        close();
+      },
+    });
+  }
+
+  actions.push({
+    label: `Delete ${numSelected > 1 ? `(${numSelected})` : ""}`.trim(),
+    icon: Trash2,
+    action: () => {
+      handleBulkDelete();
+      close();
+    },
+  });
+
+  if (numSelected === 1) {
+    actions.push({
+      label: "Share",
+      icon: Share2,
+      action: () => {
+        console.log("Share");
+        close();
+      },
+    });
+  }
+
+  return actions;
+}
+
+const {
+  selectedFiles,
+  isAllSelected,
+  isSomeSelected,
+  handleSelect,
+  toggleSelectAll,
+  clearSelection,
+  handleContextMenu: openContextMenu,
+  contextMenuState,
+  contextMenuActions,
+  closeContextMenu,
+} = useFileExplorer({
+  getFiles: () => sortedDocuments.value,
+  buildContextMenuActions,
+});
 
 const documentTemplates = [
   { name: "Blank Document", icon: defaultIcons.IconMicrosoftWord },
@@ -477,28 +575,6 @@ const sortedDocuments = computed(() => {
   return [...documentFiles.value].sort(sortFn);
 });
 
-// Select all functionality
-const isAllSelected = computed(() => {
-  return (
-    documentFiles.value.length > 0 &&
-    documentFiles.value.every((file) => selectedFiles.value.has(file.id || ""))
-  );
-});
-
-const isSomeSelected = computed(() => {
-  return selectedFiles.value.size > 0 && !isAllSelected.value;
-});
-
-function toggleSelectAll() {
-  if (isAllSelected.value) {
-    selectedFiles.value.clear();
-  } else {
-    selectedFiles.value = new Set(
-      documentFiles.value.map((file) => file.id || "").filter(Boolean)
-    );
-  }
-}
-
 function createNewDocument(template: string) {
   if (template.toLowerCase().includes("blank")) {
     router.push("/docs/new");
@@ -521,32 +597,6 @@ function handleUploadComplete(files: any[]) {
   toast.success(
     `Successfully uploaded ${files.length} file${files.length !== 1 ? "s" : ""}`
   );
-}
-
-function handleSelect(id: string | undefined, event?: MouseEvent) {
-  if (!id) return;
-
-  // If Ctrl/Cmd is held, toggle selection of this item
-  if (event?.ctrlKey || event?.metaKey) {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
-    } else {
-      selectedFiles.value.add(id);
-    }
-  }
-  // If Shift is held, select range (basic implementation)
-  else if (event?.shiftKey && selectedFiles.value.size > 0) {
-    // For now, just add to selection - you could implement range selection later
-    selectedFiles.value.add(id);
-  }
-  // Normal click - toggle individual selection (allows building selection)
-  else {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
-    } else {
-      selectedFiles.value.add(id);
-    }
-  }
 }
 
 function openFile(id: string) {
@@ -588,10 +638,26 @@ function handleRename() {
 onMounted(async () => {
   document.title = "Documents";
 
+  document.addEventListener("click", handleOutsideClick);
+
   if (fileStore.allFiles.length === 0) {
     await fileStore.loadDocuments();
   }
 });
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleOutsideClick);
+});
+
+function handleOutsideClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest(".file-item") && !target.closest(".context-menu")) {
+    clearSelection();
+  }
+  if (!target.closest("#context-menu")) {
+    closeContextMenu();
+  }
+}
 </script>
 
 <style scoped>

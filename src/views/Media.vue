@@ -171,11 +171,19 @@
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+  <!-- Context Menu -->
+  <FileContextMenu
+    v-if="contextMenuState.visible"
+    :state="contextMenuState"
+    :actions="contextMenuActions"
+    :is-dark="false"
+  />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFileStore } from '@/store/files'
 import { FileData } from '@/types'
 import { toast } from '@/composables/useToast'
@@ -195,12 +203,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  useFileExplorer,
+  type ContextMenuAction,
+  type ContextMenuBuilderContext,
+} from '@/composables/useFileExplorer'
+import FileContextMenu from '@/components/FileContextMenu.vue'
 
 const fileStore = useFileStore()
 const { isMediaFile, isViewable, isImage, isVideo, isAudio, formatFileSize } = useMediaTypes()
 
-// State
-const selectedFiles = ref<Set<string>>(new Set())
 const viewMode = ref<'thumbnail' | 'grid' | 'list'>('thumbnail')
 const gridSize = ref<'small' | 'medium' | 'large'>('medium')
 const searchQuery = ref('')
@@ -224,6 +236,79 @@ const newFileName = ref('')
 // Delete
 const isDeleteDialogOpen = ref(false)
 const filesToDelete = ref<FileData[]>([])
+
+function buildContextMenuActions({
+  selectedIds,
+  selectedFiles: selectedFileItems,
+  close,
+}: ContextMenuBuilderContext): ContextMenuAction[] {
+  const numSelected = selectedIds.length;
+  if (numSelected === 0) return [];
+
+  const hasFiles = selectedFileItems.some((file) => file && !file.is_folder);
+
+  const actions: ContextMenuAction[] = [];
+
+  if (numSelected === 1) {
+    actions.push(
+      {
+        label: "Preview",
+        icon: "Eye",
+        action: () => {
+          const file = selectedFileItems[0];
+          if (file) {
+            handlePreview(file);
+          }
+          close();
+        },
+      },
+      {
+        label: "Rename",
+        icon: "Edit",
+        action: () => {
+          handleRename(selectedFileItems[0]);
+          close();
+        },
+      },
+    );
+  }
+
+  if (hasFiles) {
+    actions.push({
+      label: `Download ${numSelected > 1 ? `(${numSelected})` : ""}`.trim(),
+      icon: "Download",
+      action: () => {
+        handleBulkDownload();
+        close();
+      },
+    });
+  }
+
+  actions.push({
+    label: `Delete ${numSelected > 1 ? `(${numSelected})` : ""}`.trim(),
+    icon: "Trash2",
+    action: () => {
+      handleBulkDelete();
+      close();
+    },
+  });
+
+  return actions;
+}
+
+const {
+  selectedFiles,
+  handleSelect,
+  toggleSelectAll,
+  clearSelection,
+  handleContextMenu: openContextMenu,
+  contextMenuState,
+  contextMenuActions,
+  closeContextMenu,
+} = useFileExplorer({
+  getFiles: () => filteredMediaFiles.value,
+  buildContextMenuActions,
+});
 
 // Computed
 const mediaFiles = computed(() => {
@@ -322,33 +407,7 @@ const handleSort = (sort: string) => {
 
 const handleViewModeChange = (mode: 'thumbnail' | 'grid' | 'list') => {
   viewMode.value = mode
-}
-
-// Updated handleSelect to match sheets pattern
-const handleSelect = (id: string | undefined, event?: MouseEvent) => {
-  if (!id) return
-  
-  // If Ctrl/Cmd is held, toggle selection of this item
-  if (event?.ctrlKey || event?.metaKey) {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
-    } else {
-      selectedFiles.value.add(id);
-    }
-  }
-  // If Shift is held, select range (basic implementation for now)
-  else if (event?.shiftKey && selectedFiles.value.size > 0) {
-    // For now, just add to selection - you could implement range selection later
-    selectedFiles.value.add(id);
-  }
-  // Normal click - toggle individual selection (allows building selection)
-  else {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
-    } else {
-      selectedFiles.value.add(id);
-    }
-  }
+  clearSelection()
 }
 
 const handleSelectAll = (selected: boolean) => {
@@ -359,10 +418,6 @@ const handleSelectAll = (selected: boolean) => {
   } else {
     clearSelection()
   }
-}
-
-const clearSelection = () => {
-  selectedFiles.value.clear()
 }
 
 const handlePreview = (file: FileData) => {
@@ -494,5 +549,21 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-})
+
+  document.addEventListener("click", handleOutsideClick);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleOutsideClick);
+});
+
+function handleOutsideClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest(".file-item") && !target.closest(".context-menu")) {
+    clearSelection();
+  }
+  if (!target.closest("#context-menu")) {
+    closeContextMenu();
+  }
+}
 </script>
