@@ -562,7 +562,13 @@ async function performBulkAction() {
 // Event handlers
 function handleOutsideClick(event: MouseEvent) {
   const target = event.target as HTMLElement;
-  if (!target.closest(".file-item")) {
+  // Don't clear selection if clicking on file items, buttons, or interactive elements
+  if (
+    !target.closest(".file-item") &&
+    !target.closest("button") &&
+    !target.closest('[role="menuitem"]') &&
+    !target.closest('[role="dialog"]')
+  ) {
     selectedFiles.value.clear();
   }
 }
@@ -718,15 +724,23 @@ onUnmounted(() => {
               </div>
               <!-- Selection actions -->
               <div class="flex items-center flex-wrap gap-2">
-                <Button variant="ghost" size="sm" @click="handleBulkAction('restore')">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  @click.stop="handleBulkAction('restore')"
+                >
                   <RefreshCw class="h-4 w-4 mr-2" />
                   <span class="hidden sm:inline">Restore</span>
                 </Button>
-                <Button variant="ghost" size="sm" @click="handleBulkAction('delete')">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  @click.stop="handleBulkAction('delete')"
+                >
                   <AlertCircle class="h-4 w-4 mr-2" />
                   <span class="hidden sm:inline">Delete</span>
                 </Button>
-                <Button variant="ghost" size="sm" @click="clearSelection">
+                <Button variant="ghost" size="sm" @click.stop="clearSelection">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="h-4 w-4"
