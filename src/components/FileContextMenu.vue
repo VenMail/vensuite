@@ -37,7 +37,7 @@ import type {
   FileContextMenuState,
 } from "@/composables/useFileExplorer";
 
-const props = defineProps<{
+defineProps<{
   state: FileContextMenuState;
   actions: ContextMenuAction[];
   isDark: boolean;
