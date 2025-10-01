@@ -381,7 +381,7 @@ export const useFileStore = defineStore("files", {
       }
     },
 
-    
+
     /** Add a file to the store */
     addFile(file: FileData) {
       // Check if file already exists
@@ -463,19 +463,33 @@ export const useFileStore = defineStore("files", {
       }
     },
 
-    async restoreMany(ids: string[]): Promise<{ restored: string[]; failed: { id: string; error: any }[] }> {
-      const results = await Promise.allSettled(ids.map(id => this.restoreFromTrash(id)));
-      const restored: string[] = [];
-      const failed: { id: string; error: any }[] = [];
-      results.forEach((result, index) => {
-        const id = ids[index];
-        if (result.status === 'fulfilled') {
-          restored.push(id);
-        } else {
-          failed.push({ id, error: result.reason });
+    async restoreMany(ids: string[], destinationFolderId?: string | null): Promise<{ restored: FileData[]; failed: { id: string; message: string }[] }> {
+      try {
+        const payload: any = { ids };
+        if (destinationFolderId) {
+          payload.destination_folder_id = destinationFolderId;
         }
-      });
-      return { restored, failed };
+
+        const response = await axios.patch(`${FILES_ENDPOINT}/restore/bulk`, payload, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+
+        const data = response.data?.data;
+        const succeeded = (data?.succeeded || []).map((item: any) => this.prepareTrashItem(item));
+        const failed = (data?.failed || []).map((f: any) => ({ id: f.id, message: f.message }));
+
+        // Update local state
+        succeeded.forEach((file: FileData) => {
+          this.trashItems = this.trashItems.filter(item => item.id !== file.id);
+          this.cacheDocument(file);
+          this.updateFiles(file);
+        });
+
+        return { restored: succeeded, failed };
+      } catch (error: any) {
+        const message = error?.response?.data?.message || 'Bulk restore failed';
+        throw new Error(message);
+      }
     },
 
     async deleteMany(ids: string[]): Promise<{ deleted: string[]; failed: { id: string; error: any }[] }> {
@@ -1400,6 +1414,5 @@ export const useFileStore = defineStore("files", {
     },
   },
 });
-
 
 

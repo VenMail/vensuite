@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  onMounted,
-  onUnmounted,
-  inject,
-} from "vue";
+import { ref, computed, onMounted, onUnmounted, inject } from "vue";
 import { useRoute } from "vue-router";
 import {
   Grid,
@@ -56,30 +50,30 @@ const contextMenuState = ref({
   visible: false,
   x: 0,
   y: 0,
-  targetId: null as string | null
+  targetId: null as string | null,
 });
 
 const contextMenuActions = computed(() => [
   {
-    label: 'Restore',
+    label: `Restore ${selectedFiles.value.size} item(s)`,
     icon: RefreshCw,
     action: () => {
       if (selectedFiles.value.size > 0) {
-        handleBulkAction('restore');
+        handleBulkAction("restore");
       }
       contextMenuState.value.visible = false;
-    }
+    },
   },
   {
-    label: 'Delete Permanently',
+    label: `Delete ${selectedFiles.value.size} item(s)`,
     icon: AlertCircle,
     action: () => {
       if (selectedFiles.value.size > 0) {
-        handleBulkAction('delete');
+        handleBulkAction("delete");
       }
       contextMenuState.value.visible = false;
-    }
-  }
+    },
+  },
 ]);
 
 const viewMode = ref<"grid" | "list" | "thumbnail">("grid");
@@ -182,8 +176,10 @@ const filteredAndSortedItems = computed(() => {
         bVal = new Date(b.updated_at || 0).getTime();
         break;
       case "size":
-        const aSize = typeof a.file_size === "string" ? parseInt(a.file_size, 10) : a.file_size || 0;
-        const bSize = typeof b.file_size === "string" ? parseInt(b.file_size, 10) : b.file_size || 0;
+        const aSize =
+          typeof a.file_size === "string" ? parseInt(a.file_size, 10) : a.file_size || 0;
+        const bSize =
+          typeof b.file_size === "string" ? parseInt(b.file_size, 10) : b.file_size || 0;
         aVal = aSize;
         bVal = bSize;
         break;
@@ -199,9 +195,6 @@ const filteredAndSortedItems = computed(() => {
 
   return items;
 });
-
-
-
 
 const isAllSelected = computed(() => {
   return (
@@ -252,7 +245,7 @@ function getFileType(item: FileData): string {
 
 function formatDate(dateString?: string | Date): string {
   if (!dateString) return "Unknown";
-  
+
   try {
     const date = dateString instanceof Date ? dateString : new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -273,7 +266,7 @@ function formatFileSize(bytes?: number | string): string {
   const numBytes = typeof bytes === "string" ? parseInt(bytes, 10) : bytes;
   if (isNaN(numBytes)) return "N/A";
 
-  const sizes = ["B", "KB", "MB", "GB", "T  B"];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(numBytes) / Math.log(1024));
   const size = (numBytes / Math.pow(1024, i)).toFixed(1);
 
@@ -286,11 +279,8 @@ async function fetchTrashedItems() {
 
   try {
     isLoading.value = true;
-    
-    // Load trashed documents from the store
     const trashedFiles = await fileStore.fetchTrashItems();
     trashItems.value = trashedFiles;
-    
   } catch (error) {
     console.error("Error loading trash items:", error);
     toast.error("Failed to load trash items");
@@ -305,19 +295,16 @@ async function restoreItem(id: string) {
   try {
     isLoading.value = true;
     const item = trashItems.value.find((i) => i.id === id);
-    
+
     const success = await fileStore.restoreFromTrash(id);
-    
+
     if (success) {
       toast.success(`Restored "${item?.title || "item"}"`);
-      
-      // Remove from local state
       trashItems.value = trashItems.value.filter((i) => i.id !== id);
       selectedFiles.value.delete(id);
     } else {
       toast.error("Failed to restore item");
     }
-    
   } catch (error) {
     console.error("Error restoring file:", error);
     toast.error("Failed to restore item");
@@ -332,19 +319,16 @@ async function deletePermanently(id: string) {
   try {
     isLoading.value = true;
     const item = trashItems.value.find((i) => i.id === id);
-    
+
     const success = await fileStore.deleteFromTrash(id);
-    
+
     if (success) {
       toast.success(`Permanently deleted "${item?.title || "item"}"`);
-      
-      // Remove from local state
       trashItems.value = trashItems.value.filter((i) => i.id !== id);
       selectedFiles.value.delete(id);
     } else {
       toast.error("Failed to delete item permanently");
     }
-    
   } catch (error) {
     console.error("Error permanently deleting file:", error);
     toast.error("Failed to delete item permanently");
@@ -357,6 +341,10 @@ async function deletePermanently(id: string) {
 function toggleSelection(id: string | undefined, event?: MouseEvent) {
   if (!id) return;
 
+  if (event) {
+    event.stopPropagation();
+  }
+
   if (event?.ctrlKey || event?.metaKey) {
     if (selectedFiles.value.has(id)) {
       selectedFiles.value.delete(id);
@@ -365,9 +353,8 @@ function toggleSelection(id: string | undefined, event?: MouseEvent) {
     }
   } else if (event?.shiftKey && selectedFiles.value.size > 0) {
     const allFiles = filteredAndSortedItems.value;
-    const lastSelectedIndex = allFiles.findIndex(
-      (f) => f.id === Array.from(selectedFiles.value).pop()
-    );
+    const lastSelected = Array.from(selectedFiles.value).pop();
+    const lastSelectedIndex = allFiles.findIndex((f) => f.id === lastSelected);
     const currentIndex = allFiles.findIndex((f) => f.id === id);
 
     if (lastSelectedIndex !== -1 && currentIndex !== -1) {
@@ -391,9 +378,11 @@ function toggleSelectAll() {
   if (isAllSelected.value) {
     selectedFiles.value.clear();
   } else {
-    selectedFiles.value = new Set(
-      filteredAndSortedItems.value.map((file) => file.id || "").filter(Boolean)
-    );
+    const newSelection = new Set<string>();
+    filteredAndSortedItems.value.forEach((file) => {
+      if (file.id) newSelection.add(file.id);
+    });
+    selectedFiles.value = newSelection;
   }
 }
 
@@ -482,41 +471,21 @@ async function confirmEmptyBin() {
   try {
     isLoading.value = true;
 
-    const itemIds = trashItems.value.map((item) => item.id).filter(Boolean) as string[];
+    const result = await fileStore.emptyTrash();
 
-    if (itemIds.length === 0) {
-      showEmptyConfirm.value = false;
-      return;
-    }
-
-    // Delete each item permanently
-    const results = await Promise.allSettled(
-      itemIds.map((id) => fileStore.deleteFile(id))
-    );
-
-    let deletedCount = 0;
-    let errors = 0;
-
-    results.forEach((result) => {
-      if (result.status === "fulfilled" && result.value) {
-        deletedCount++;
-      } else {
-        errors++;
-      }
-    });
-
-    // Update UI
     trashItems.value = [];
     selectedFiles.value.clear();
     showEmptyConfirm.value = false;
 
-    if (errors === 0) {
-      toast.success(`Bin emptied successfully - ${deletedCount} items deleted`);
+    if (result.failed.length === 0) {
+      toast.success(`Bin emptied successfully - ${result.deleted.length} items deleted`);
     } else {
-      toast.warning(`Bin partially emptied - ${deletedCount} items deleted, ${errors} failed`);
+      toast.warning(
+        `Bin partially emptied - ${result.deleted.length} deleted, ${result.failed.length} failed`
+      );
     }
-  } catch (err) {
-    toast.error("Failed to empty bin");
+  } catch (err: any) {
+    toast.error(err.message || "Failed to empty bin");
   } finally {
     isLoading.value = false;
   }
@@ -542,50 +511,49 @@ async function performBulkAction() {
       return;
     }
 
-    let results: PromiseSettledResult<any>[];
-
     if (bulkAction.value === "restore") {
-      results = await Promise.allSettled(
-        itemIds.map(async (id) => {
-          const item = trashItems.value.find(i => i.id === id);
-          return fileStore.moveFile(id, item?.folder_id || "");
-        })
-      );
+      const result = await fileStore.restoreMany(itemIds, null);
+
+      result.restored.forEach((restoredFile) => {
+        trashItems.value = trashItems.value.filter((item) => item.id !== restoredFile.id);
+        selectedFiles.value.delete(restoredFile.id || "");
+      });
+
+      if (result.failed.length === 0) {
+        toast.success(`Successfully restored ${result.restored.length} item(s)`);
+      } else {
+        toast.warning(
+          `Restored ${result.restored.length} item(s), ${result.failed.length} failed`
+        );
+
+        result.failed.forEach((failure) => {
+          console.error(`Failed to restore ${failure.id}:`, failure.message);
+        });
+      }
     } else {
-      results = await Promise.allSettled(
-        itemIds.map((id) => fileStore.deleteFile(id))
-      );
+      const result = await fileStore.deleteMany(itemIds);
+
+      result.deleted.forEach((id) => {
+        trashItems.value = trashItems.value.filter((item) => item.id !== id);
+        selectedFiles.value.delete(id);
+      });
+
+      if (result.failed.length === 0) {
+        toast.success(
+          `Successfully deleted ${result.deleted.length} item(s) permanently`
+        );
+      } else {
+        toast.warning(
+          `Deleted ${result.deleted.length} item(s), ${result.failed.length} failed`
+        );
+      }
     }
 
-    let successCount = 0;
-    let errors = 0;
-    const successfulIds: string[] = [];
-
-    results.forEach((result, index) => {
-      if (result.status === "fulfilled" && result.value) {
-        successCount++;
-        successfulIds.push(itemIds[index]);
-      } else {
-        errors++;
-      }
-    });
-
-    // Update UI - remove successful items from local state
-    trashItems.value = trashItems.value.filter(
-      (item) => !successfulIds.includes(item.id || "")
-    );
     selectedFiles.value.clear();
     showBulkConfirm.value = false;
-
-    const actionText = bulkAction.value === "restore" ? "restored" : "permanently deleted";
-
-    if (errors === 0) {
-      toast.success(`Successfully ${actionText} ${successCount} items`);
-    } else {
-      toast.warning(`${successCount} items ${actionText}, ${errors} failed`);
-    }
-  } catch (err) {
-    toast.error(`Failed to perform bulk ${bulkAction.value}`);
+  } catch (err: any) {
+    const action = bulkAction.value === "restore" ? "restore" : "delete";
+    toast.error(err.message || `Failed to ${action} items`);
   } finally {
     isLoading.value = false;
   }
@@ -626,24 +594,21 @@ function loginWithVenmail() {
 
 // Global search handler
 function handleGlobalSearch(event: CustomEvent) {
-  const { query, filters: searchFilters } = event.detail
-  searchValue.value = query || ""
-  
-  // Apply context-aware filters
+  const { query, filters: searchFilters } = event.detail;
+  searchValue.value = query || "";
+
   if (searchFilters && searchFilters.length > 0) {
-    // Map global filters to local filter structure
     const filterMap: Record<string, string> = {
-      'documents': 'doc',
-      'spreadsheets': 'xls',
-      'media': 'image',
-      'folders': 'folder'
-    }
-    
-    // Apply the first filter (can be enhanced to support multiple)
-    const mappedFilter = filterMap[searchFilters[0]] || searchFilters[0]
-    filters.value.type = mappedFilter
+      documents: "doc",
+      spreadsheets: "xls",
+      media: "image",
+      folders: "folder",
+    };
+
+    const mappedFilter = filterMap[searchFilters[0]] || searchFilters[0];
+    filters.value.type = mappedFilter;
   } else {
-    filters.value.type = 'all'
+    filters.value.type = "all";
   }
 }
 
@@ -922,7 +887,7 @@ onUnmounted(() => {
             v-if="isLoading && trashItems.length === 0"
             :class="[
               'flex flex-col items-center justify-center py-16 px-6 gap-12',
-              theme.isDark.value ? 'bg-gray-900/40' : 'bg-gray-50'
+              theme.isDark.value ? 'bg-gray-900/40' : 'bg-gray-50',
             ]"
           >
             <div class="w-full max-w-5xl grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -931,7 +896,9 @@ onUnmounted(() => {
                 :key="`trash-skeleton-${n}`"
                 :class="[
                   'rounded-xl border overflow-hidden shadow-sm relative isolate backdrop-blur-sm',
-                  theme.isDark.value ? 'border-gray-700 bg-gray-800/80' : 'border-gray-200 bg-white/80'
+                  theme.isDark.value
+                    ? 'border-gray-700 bg-gray-800/80'
+                    : 'border-gray-200 bg-white/80',
                 ]"
               >
                 <div class="skeleton-hero"></div>
@@ -948,7 +915,7 @@ onUnmounted(() => {
             <div
               :class="[
                 'flex items-center gap-3 text-sm font-medium',
-                theme.isDark.value ? 'text-gray-400' : 'text-gray-600'
+                theme.isDark.value ? 'text-gray-400' : 'text-gray-600',
               ]"
             >
               <Loader2 class="h-4 w-4 animate-spin" />
@@ -983,9 +950,9 @@ onUnmounted(() => {
               {{
                 trashItems.length === 0
                   ? "Trash is empty"
-                  : searchValue || filters.type !== 'all' || filters.source !== 'all'
-                    ? "No matching items found"
-                    : "No items found"
+                  : searchValue || filters.type !== "all" || filters.source !== "all"
+                  ? "No matching items found"
+                  : "No items found"
               }}
             </h3>
             <p
@@ -1001,9 +968,7 @@ onUnmounted(() => {
               }}
             </p>
             <div v-if="trashItems.length > 0" class="flex gap-3 justify-center">
-              <Button variant="outline" @click="clearFilters">
-                Clear Filters
-              </Button>
+              <Button variant="outline" @click="clearFilters"> Clear Filters </Button>
               <Button variant="ghost" @click="fetchTrashedItems">
                 <RefreshCw class="mr-2 h-4 w-4" />
                 Refresh
@@ -1014,12 +979,16 @@ onUnmounted(() => {
           <!-- Content Views -->
           <div v-else class="p-2 sm:p-4">
             <!-- Select All controls -->
-            <div v-if="filteredAndSortedItems.length > 0" class="flex items-center justify-between mb-4 px-2">
+            <div
+              v-if="filteredAndSortedItems.length > 0"
+              class="flex items-center justify-between mb-4 px-2"
+            >
               <div class="flex items-center gap-2">
                 <Checkbox
                   :checked="isAllSelected"
                   :indeterminate="isSomeSelected"
                   @update:checked="toggleSelectAll"
+                  @click.stop
                   :class="[
                     'rounded border text-primary-600 focus:ring-primary-500 focus:ring-offset-0',
                     theme.isDark.value
@@ -1037,7 +1006,7 @@ onUnmounted(() => {
                   Select All
                 </label>
               </div>
-              
+
               <!-- Stats -->
               <div
                 :class="[
@@ -1174,6 +1143,7 @@ onUnmounted(() => {
                     @click.stop
                     class="mt-0.5"
                   />
+
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -1315,7 +1285,10 @@ onUnmounted(() => {
                           v-if="item.is_folder"
                           class="h-4 w-4 mr-3 text-gray-500 flex-shrink-0"
                         />
-                        <FileIcon v-else class="h-4 w-4 mr-3 text-gray-500 flex-shrink-0" />
+                        <FileIcon
+                          v-else
+                          class="h-4 w-4 mr-3 text-gray-500 flex-shrink-0"
+                        />
                         <span
                           class="text-gray-900 dark:text-gray-100 cursor-pointer hover:underline"
                           @click="openDetails(item)"
@@ -1352,7 +1325,10 @@ onUnmounted(() => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem @click="restoreItem(item.id || '')" :disabled="isLoading">
+                          <DropdownMenuItem
+                            @click="restoreItem(item.id || '')"
+                            :disabled="isLoading"
+                          >
                             <RefreshCw class="h-4 w-4 mr-2" />
                             Restore
                           </DropdownMenuItem>
@@ -1467,9 +1443,7 @@ onUnmounted(() => {
           </p>
         </div>
         <div v-if="selectedItemForDetails.file_name">
-          <h4 class="font-medium text-gray-900 dark:text-gray-100">
-            Original Filename
-          </h4>
+          <h4 class="font-medium text-gray-900 dark:text-gray-100">Original Filename</h4>
           <p class="text-gray-600 dark:text-gray-400">
             {{ selectedItemForDetails.file_name }}
           </p>
@@ -1496,7 +1470,10 @@ onUnmounted(() => {
       <DialogFooter>
         <Button variant="outline" @click="showDetailsDialog = false">Close</Button>
         <Button
-          @click="restoreItem(selectedItemForDetails?.id || ''); showDetailsDialog = false"
+          @click="
+            restoreItem(selectedItemForDetails?.id || '');
+            showDetailsDialog = false;
+          "
           :disabled="isLoading"
         >
           <RefreshCw class="h-4 w-4 mr-2" />
@@ -1513,8 +1490,8 @@ onUnmounted(() => {
         <DialogTitle>Empty Bin?</DialogTitle>
       </DialogHeader>
       <p class="text-gray-600 dark:text-gray-400">
-        This will permanently delete all {{ trashItems.length }} items in the trash.
-        This action cannot be undone.
+        This will permanently delete all {{ trashItems.length }} items in the trash. This
+        action cannot be undone.
       </p>
       <DialogFooter>
         <Button variant="outline" @click="showEmptyConfirm = false" :disabled="isLoading"
@@ -1542,8 +1519,8 @@ onUnmounted(() => {
         This will restore {{ selectedFiles.size }} item(s) to their original location.
       </p>
       <p class="text-gray-600 dark:text-gray-400" v-else>
-        This will permanently delete {{ selectedFiles.size }} item(s). This action
-        cannot be undone.
+        This will permanently delete {{ selectedFiles.size }} item(s). This action cannot
+        be undone.
       </p>
       <DialogFooter>
         <Button variant="outline" @click="showBulkConfirm = false" :disabled="isLoading"
@@ -1598,5 +1575,4 @@ onUnmounted(() => {
 .dark .loading-progress {
   background-color: orangered;
 }
-
 </style>

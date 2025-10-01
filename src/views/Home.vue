@@ -548,6 +548,8 @@ async function createNewFolder() {
       url: false,
       thumbnail_url: "",
       file_type: "folder",
+      source: undefined,
+      mime_type: undefined
     };
     const result = await fileStore.makeFolder(folder);
     if (result && result.id) {

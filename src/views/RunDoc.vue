@@ -744,7 +744,7 @@ async function loadData(id: string) {
 }
 
 async function syncChanges(
-  trigger: SaveTrigger = "manual",
+  _trigger: SaveTrigger = "manual",
   payload: { content?: string; titleOverride?: string } = {}
 ): Promise<SaveResponse> {
   const failure = (error: string): SaveResponse => {
