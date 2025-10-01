@@ -47,9 +47,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileData } from "@/types";
 import FileItem from "@/components/FileItem.vue";
 import MediaViewer from "@/components/media/MediaViewer.vue";
+import FileContextMenu from "@/components/FileContextMenu.vue";
 import { sluggify } from "@/utils/lib";
 import { toast } from "@/composables/useToast";
 import FileUploader from "@/components/FileUploader.vue";
+import {
+  useFileExplorer,
+  type ContextMenuAction,
+  type ContextMenuBuilderContext,
+} from "@/composables/useFileExplorer";
 
 const router = useRouter();
 const route = useRoute();
@@ -59,7 +65,6 @@ const { isAuthenticated } = storeToRefs(authStore);
 const theme = inject("theme") as { isDark: { value: boolean } };
 
 const viewMode = ref<"grid" | "list" | "thumbnail">("grid");
-const selectedFiles = ref<Set<string>>(new Set());
 const showRecentFiles = ref(false);
 const sortBy = ref("name");
 const groupByFileType = ref(false);
@@ -88,6 +93,76 @@ const templates = {
     { name: "Invoice", icon: "IconMicrosoftExcel" },
   ],
 };
+
+function buildContextMenuActions({
+  selectedIds,
+  selectedFiles: selectedFileItems,
+  close,
+}: ContextMenuBuilderContext): ContextMenuAction[] {
+  const numSelected = selectedIds.length;
+  if (numSelected === 0) return [];
+
+  const hasFiles = selectedFileItems.some((file) => file && !file.is_folder);
+
+  const actions: ContextMenuAction[] = [];
+
+  if (numSelected === 1) {
+    actions.push(
+      {
+        label: "Open",
+        icon: FolderOpen,
+        action: () => {
+          const id = selectedIds[0];
+          if (id) {
+            openFile(id);
+          }
+          close();
+        },
+      },
+      {
+        label: "Rename",
+        icon: Edit,
+        action: () => {
+          handleRename();
+          close();
+        },
+      },
+    );
+  }
+
+  if (hasFiles) {
+    actions.push({
+      label: `Download ${numSelected > 1 ? `(${numSelected})` : ""}`.trim(),
+      icon: Download,
+      action: () => {
+        handleBulkDownload();
+        close();
+      },
+    });
+  }
+
+  actions.push({
+    label: `Delete ${numSelected > 1 ? `(${numSelected})` : ""}`.trim(),
+    icon: Trash2,
+    action: () => {
+      handleBulkDelete();
+      close();
+    },
+  });
+
+  if (numSelected === 1) {
+    actions.push({
+      label: "Share",
+      icon: Share2,
+      action: () => {
+        console.log("Share");
+        close();
+      },
+    });
+  }
+
+  return actions;
+}
 
 // Helper to check if file is viewable media
 function isViewableMedia(fileType: string | null | undefined): boolean {
@@ -362,26 +437,22 @@ const viewableFiles = computed(() => {
   );
 });
 
-const isAllSelected = computed(() => {
-  return (
-    sortedItems.value.length > 0 &&
-    sortedItems.value.every((file) => selectedFiles.value.has(file.id || ""))
-  );
+const {
+  selectedFiles,
+  isAllSelected,
+  isSomeSelected,
+  handleSelect,
+  toggleSelectAll,
+  clearSelection,
+  setSelected,
+  handleContextMenu: openContextMenu,
+  contextMenuState,
+  contextMenuActions,
+  closeContextMenu,
+} = useFileExplorer({
+  getFiles: () => sortedItems.value,
+  buildContextMenuActions,
 });
-
-const isSomeSelected = computed(() => {
-  return selectedFiles.value.size > 0 && !isAllSelected.value;
-});
-
-function toggleSelectAll() {
-  if (isAllSelected.value) {
-    selectedFiles.value.clear();
-  } else {
-    selectedFiles.value = new Set(
-      sortedItems.value.map((file) => file.id || "").filter(Boolean)
-    );
-  }
-}
 
 async function openFolder(id: string) {
   try {
@@ -396,7 +467,7 @@ async function openFolder(id: string) {
         const folderDoc = await fileStore.loadFromAPI(id);
         currentFolderTitle.value =
           folderDoc?.title || currentFolderTitle.value || "Folder";
-      } catch {}
+      } catch { }
     }
     const last = breadcrumbs.value[breadcrumbs.value.length - 1];
     if (!last || last.id !== id) {
@@ -404,39 +475,6 @@ async function openFolder(id: string) {
     }
   } catch (error) {
     console.error("Error opening folder:", error);
-  }
-}
-
-function handleSelect(id: string | undefined, event?: MouseEvent) {
-  if (!id) return;
-
-  if (event?.ctrlKey || event?.metaKey) {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
-    } else {
-      selectedFiles.value.add(id);
-    }
-  } else if (event?.shiftKey && selectedFiles.value.size > 0) {
-    const allFiles = sortedItems.value;
-    const lastSelectedIndex = allFiles.findIndex(
-      (f) => f.id === Array.from(selectedFiles.value).pop()
-    );
-    const currentIndex = allFiles.findIndex((f) => f.id === id);
-
-    if (lastSelectedIndex !== -1 && currentIndex !== -1) {
-      const start = Math.min(lastSelectedIndex, currentIndex);
-      const end = Math.max(lastSelectedIndex, currentIndex);
-
-      allFiles.slice(start, end + 1).forEach((f) => {
-        if (f.id) selectedFiles.value.add(f.id);
-      });
-    }
-  } else {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
-    } else {
-      selectedFiles.value.add(id);
-    }
   }
 }
 
@@ -513,7 +551,7 @@ async function createNewFolder() {
     };
     const result = await fileStore.makeFolder(folder);
     if (result && result.id) {
-      selectedFiles.value = new Set([result.id]);
+      setSelected([result.id]);
       nextTick(() => {
         const fileItemElement = document.getElementById(`fileItem-${result.id}`);
         if (fileItemElement) {
@@ -586,16 +624,14 @@ function goUpOneLevel() {
     navigateToBreadcrumb(breadcrumbs.value.length - 2);
   }
 }
-
 function formatGroupName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1).replace("_", " ");
 }
 
 function handleRename() {
   if (selectedFiles.value.size === 1) {
-    const fileItemElement = document.getElementById(
-      `fileItem-${Array.from(selectedFiles.value)[0]}`
-    );
+    const fileId = Array.from(selectedFiles.value)[0];
+    const fileItemElement = document.getElementById(`fileItem-${fileId}`);
     if (fileItemElement) {
       const renameEvent = new CustomEvent("start-rename");
       fileItemElement.dispatchEvent(renameEvent);
@@ -603,104 +639,35 @@ function handleRename() {
   }
 }
 
-const contextMenuState = ref<{
-  visible: boolean;
-  x: number;
-  y: number;
-  targetId: string | null;
-}>({ visible: false, x: 0, y: 0, targetId: null });
+const handleFileUpdated = (fileId: string) => {
+  // Handle file update if needed
+  console.log("File updated:", fileId);
+};
 
-function openContextMenu(payload: { id: string; x: number; y: number }) {
-  selectedFiles.value = new Set([payload.id]);
-  contextMenuState.value = {
-    visible: true,
-    x: payload.x,
-    y: payload.y,
-    targetId: payload.id,
-  };
-}
+const handleFileDeleted = (fileId: string) => {
+  // Remove the deleted file from selected files
+  if (selectedFiles.value.has(fileId)) {
+    const newSelectedFiles = new Set(selectedFiles.value);
+    newSelectedFiles.delete(fileId);
+    setSelected(Array.from(newSelectedFiles));
+  }
+};
 
-function closeContextMenu() {
-  contextMenuState.value.visible = false;
-}
-
-const contextMenuActions = computed(() => {
-  const numSelected = selectedFiles.value.size;
-  if (numSelected === 0) return [];
-
-  const selectedFilesList = Array.from(selectedFiles.value)
-    .map((id) => fileStore.allFiles.find((f) => f.id === id))
-    .filter(Boolean);
-
-  const hasFiles = selectedFilesList.some((f) => !f?.is_folder);
-
-  return [
-    ...(numSelected === 1
-      ? [
-          {
-            label: "Open",
-            icon: FolderOpen,
-            action: () => {
-              openFile(Array.from(selectedFiles.value)[0]);
-              closeContextMenu();
-            },
-          },
-        ]
-      : []),
-    ...(numSelected === 1
-      ? [
-          {
-            label: "Rename",
-            icon: Edit,
-            action: () => {
-              handleRename();
-              closeContextMenu();
-            },
-          },
-        ]
-      : []),
-    ...(hasFiles
-      ? [
-          {
-            label: `Download ${numSelected > 1 ? `(${numSelected})` : ""}`,
-            icon: Download,
-            action: () => {
-              handleBulkDownload();
-              closeContextMenu();
-            },
-          },
-        ]
-      : []),
-    {
-      label: `Delete ${numSelected > 1 ? `(${numSelected})` : ""}`,
-      icon: Trash2,
-      action: () => {
-        handleBulkDelete();
-        closeContextMenu();
-      },
-    },
-    ...(numSelected === 1
-      ? [
-          {
-            label: "Share",
-            icon: Share2,
-            action: () => {
-              console.log("Share");
-              closeContextMenu();
-            },
-          },
-        ]
-      : []),
-  ];
-});
+const handleFileContextMenu = (event: { id: string; x: number; y: number }) => {
+  openContextMenu({
+    id: event.id,
+    x: event.x,
+    y: event.y,
+  });
+};
 
 async function handleBulkDelete() {
   try {
     const promises = Array.from(selectedFiles.value).map((id) =>
-      fileStore.deleteFile(id)
+      fileStore.moveToTrash(id)
     );
     await Promise.all(promises);
-    selectedFiles.value.clear();
+    clearSelection();
     toast.success(
       `Successfully deleted ${promises.length} item${promises.length > 1 ? "s" : ""}`
     );
@@ -711,17 +678,17 @@ async function handleBulkDelete() {
 }
 
 function handleBulkDownload() {
-  const selectedFilesList = Array.from(selectedFiles.value)
+  const filesToDownload = Array.from(selectedFiles.value)
     .map((id) => fileStore.allFiles.find((f) => f.id === id))
     .filter((f) => f && !f.is_folder);
 
-  console.log("Downloading files:", selectedFilesList);
+  console.log("Downloading files:", filesToDownload);
 }
 
 function handleOutsideClick(event: MouseEvent) {
   const target = event.target as HTMLElement;
   if (!target.closest(".file-item") && !target.closest(".context-menu")) {
-    selectedFiles.value.clear();
+    clearSelection();
   }
   if (!target.closest("#context-menu")) {
     closeContextMenu();
@@ -733,7 +700,7 @@ function handleEscapeKey(event: KeyboardEvent) {
     if (isViewerOpen.value) {
       closeViewer();
     } else {
-      selectedFiles.value.clear();
+      clearSelection();
     }
   } else if (event.key === "F2" && selectedFiles.value.size === 1) {
     event.preventDefault();
@@ -745,692 +712,479 @@ function handleEscapeKey(event: KeyboardEvent) {
 </script>
 
 <template>
-  <div
-    v-if="isAuthenticated"
-    :class="[
-      'flex h-screen text-gray-900 transition-colors duration-200',
-      theme.isDark.value
-        ? 'bg-gradient-to-br from-gray-900 to-gray-800'
-        : 'bg-gradient-to-br from-gray-50 to-gray-100',
-    ]"
-  >
-    <!-- Main content -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- Loading bar -->
-      <div v-if="fileStore.isSyncing" class="loading-bar">
-        <div class="loading-progress"></div>
-      </div>
+  <template v-if="isAuthenticated">
+    <div
+      :class="[
+        'flex h-screen text-gray-900 transition-colors duration-200',
+        theme.isDark.value
+          ? 'bg-gradient-to-br from-gray-900 to-gray-800'
+          : 'bg-gradient-to-br from-gray-50 to-gray-100',
+      ]"
+    >
+      <!-- Main content -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Loading bar -->
+        <div v-if="fileStore.isSyncing" class="loading-bar">
+          <div class="loading-progress"></div>
+        </div>
 
-      <!-- File browser -->
-      <div class="flex-1 p-4 sm:p-6 overflow-hidden">
-        <!-- Header with responsive layout -->
-        <div
-          class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6"
-        >
-          <div
-            class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
-          >
-            <!-- Breadcrumbs and navigation -->
-            <div class="flex items-center space-x-2">
-              <!-- Up one level button -->
-              <button
-                class="inline-flex items-center justify-center h-8 w-8 rounded-md border transition-colors shrink-0"
-                :class="[
-                  theme.isDark.value
-                    ? 'bg-gray-800 border-gray-700 hover:bg-gray-700'
-                    : 'bg-white border-gray-200 hover:bg-gray-100',
-                  breadcrumbs.length > 1
-                    ? 'opacity-100'
-                    : 'opacity-50 cursor-not-allowed',
-                ]"
-                :disabled="breadcrumbs.length <= 1"
-                aria-label="Up one level"
-                title="Up one level"
-                @click="goUpOneLevel"
-              >
-                <ArrowUp class="h-4 w-4 text-primary-600" />
-              </button>
-              <!-- Breadcrumbs - hide on very small screens -->
-              <nav aria-label="Breadcrumb" class="hidden sm:flex items-center text-sm">
-                <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.id ?? 'root'">
-                  <button
-                    class="text-primary-600 hover:underline"
-                    @click="navigateToBreadcrumb(idx)"
-                  >
-                    {{ crumb.title }}
-                  </button>
-                  <span v-if="idx < breadcrumbs.length - 1" class="mx-2 text-gray-400"
-                    >/</span
-                  >
-                </template>
-              </nav>
-            </div>
+        <!-- File browser -->
+        <div class="flex-1 p-4 sm:p-6 overflow-hidden">
+          <!-- Header with responsive layout -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+              <!-- Breadcrumbs and navigation -->
+              <div class="flex items-center space-x-2">
+                <!-- Up one level button -->
+                <button
+                  class="inline-flex items-center justify-center h-8 w-8 rounded-md border transition-colors shrink-0"
+                  :class="[
+                    theme.isDark.value
+                      ? 'bg-gray-800 border-gray-700 hover:bg-gray-700'
+                      : 'bg-white border-gray-200 hover:bg-gray-100',
+                    breadcrumbs.length > 1
+                      ? 'opacity-100'
+                      : 'opacity-50 cursor-not-allowed',
+                  ]" :disabled="breadcrumbs.length <= 1" aria-label="Up one level" title="Up one level"
+                  @click="goUpOneLevel">
+                  <ArrowUp class="h-4 w-4 text-primary-600" />
+                </button>
+                <!-- Breadcrumbs - hide on very small screens -->
+                <nav aria-label="Breadcrumb" class="hidden sm:flex items-center text-sm">
+                  <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.id ?? 'root'">
+                    <button class="text-primary-600 hover:underline" @click="navigateToBreadcrumb(idx)">
+                      {{ crumb.title }}
+                    </button>
+                    <span v-if="idx < breadcrumbs.length - 1" class="mx-2 text-gray-400">/</span>
+                  </template>
+                </nav>
+              </div>
 
-            <h2
-              :class="[
+              <h2 :class="[
                 'text-xl sm:text-2xl font-semibold',
                 theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
-              ]"
-            >
-              {{ showRecentFiles ? "Recent Files" : "All Files" }}
-            </h2>
+              ]">
+                {{ showRecentFiles ? "Recent Files" : "All Files" }}
+              </h2>
 
-            <!-- Action buttons -->
-            <div class="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                :class="[
+              <!-- Action buttons -->
+              <div class="flex items-center space-x-2">
+                <Button variant="ghost" size="icon" :class="[
                   'relative group rounded-full transition-all duration-200 shrink-0',
                   theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-                ]"
-                @click="createNewFolder"
-              >
-                <FolderPlusIcon class="h-5 w-5 text-primary-600" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                :class="[
+                ]" @click="createNewFolder">
+                  <FolderPlusIcon class="h-5 w-5 text-primary-600" />
+                </Button>
+                <Button variant="ghost" size="icon" :class="[
                   'relative group rounded-full transition-all duration-200 shrink-0',
                   theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-                ]"
-                @click="openUploadDialog"
-              >
-                <Upload class="h-5 w-5 text-primary-600" />
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    :class="[
+                ]" @click="openUploadDialog">
+                  <Upload class="h-5 w-5 text-primary-600" />
+                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" :class="[
                       'relative group rounded-full transition-all duration-200 shrink-0',
                       theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-                    ]"
-                  >
-                    <Plus class="h-5 w-5 text-primary-600" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent
-                  :class="[
+                    ]">
+                      <Plus class="h-5 w-5 text-primary-600" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent :class="[
                     'rounded-lg shadow-2xl border',
                     theme.isDark.value
                       ? 'bg-gray-800 border-gray-700'
                       : 'bg-white border-gray-200',
-                  ]"
-                >
-                  <DialogHeader>
-                    <DialogTitle
-                      :class="[
+                  ]">
+                    <DialogHeader>
+                      <DialogTitle :class="[
                         'text-xl font-semibold',
                         theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
-                      ]"
-                    >
-                      Choose a Template
-                    </DialogTitle>
-                  </DialogHeader>
-                  <Tabs default-value="Documents">
-                    <TabsList
-                      :class="[theme.isDark.value ? 'bg-gray-700' : 'bg-gray-100']"
-                    >
-                      <TabsTrigger
-                        v-for="category in Object.keys(templates)"
-                        :key="category"
-                        :value="category"
-                        :class="[
-                          'data-[state=active]:text-primary-600',
-                          theme.isDark.value
-                            ? 'data-[state=active]:bg-gray-800'
-                            : 'data-[state=active]:bg-white',
-                        ]"
-                      >
-                        {{ category }}
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent
-                      v-for="(items, category) in templates"
-                      :key="category"
-                      :value="category"
-                    >
-                      <div class="grid grid-cols-2 gap-4 p-2">
-                        <Button
-                          v-for="template in items"
-                          :key="template.name"
-                          variant="outline"
+                      ]">
+                        Choose a Template
+                      </DialogTitle>
+                    </DialogHeader>
+                    <Tabs default-value="Documents">
+                      <TabsList :class="[theme.isDark.value ? 'bg-gray-700' : 'bg-gray-100']">
+                        <TabsTrigger v-for="category in Object.keys(templates)" :key="category" :value="category"
                           :class="[
+                            'data-[state=active]:text-primary-600',
+                            theme.isDark.value
+                              ? 'data-[state=active]:bg-gray-800'
+                              : 'data-[state=active]:bg-white',
+                          ]">
+                          {{ category }}
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent v-for="(items, category) in templates" :key="category" :value="category" class="p-2">
+                        <div class="grid grid-cols-2 gap-4">
+                          <Button v-for="template in items" :key="template.name" variant="outline" :class="[
                             'h-24 flex flex-col items-center justify-center transition-all',
                             theme.isDark.value
                               ? 'hover:bg-gray-700 hover:border-primary-400'
                               : 'hover:bg-gray-50 hover:border-primary-400',
-                          ]"
-                          @click="createNewFile(category?.toLowerCase(), template.name)"
-                        >
-                          <component
-                            :is="template.icon"
-                            class="w-8 h-8 text-primary-600"
-                          />
-                          <span class="mt-2 text-sm font-medium">{{
-                            template.name
-                          }}</span>
-                        </Button>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </DialogContent>
-              </Dialog>
+                          ]" @click="createNewFile(category?.toLowerCase(), template.name)">
+                            <component :is="template.icon" class="w-8 h-8 text-primary-600" />
+                            <span class="mt-2 text-sm font-medium">
+                              {{ template.name }}
+                            </span>
+                          </Button>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
-          </div>
 
-          <!-- Right controls with responsive layout -->
-          <div
-            class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto"
-          >
-            <template v-if="selectedFiles.size > 0">
-              <!-- Selection info -->
-              <div class="flex items-center space-x-2">
-                <span
-                  :class="[
+            <!-- Right controls with responsive layout -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+              <template v-if="selectedFiles.size > 0">
+                <!-- Selection info -->
+                <div class="flex items-center space-x-2">
+                  <span :class="[
                     'text-sm font-medium',
                     theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
-                  ]"
-                >
-                  {{ selectedFiles.size }} selected
-                </span>
-                <div
-                  :class="[
-                    'h-4 w-px',
-                    theme.isDark.value ? 'bg-gray-600' : 'bg-gray-300',
-                  ]"
-                ></div>
-              </div>
-              <!-- Selection actions with responsive wrapping -->
-              <div class="flex items-center flex-wrap gap-2">
-                <Button
-                  v-if="selectedFiles.size === 1"
-                  variant="ghost"
-                  size="sm"
-                  @click="openFile(Array.from(selectedFiles)[0])"
-                >
-                  <FolderOpen class="h-4 w-4 mr-2" />
-                  <span class="hidden sm:inline">Open</span>
-                </Button>
-                <Button variant="ghost" size="sm" @click="handleBulkDelete">
-                  <Trash2 class="h-4 w-4 mr-2" />
-                  <span class="hidden sm:inline">Delete</span>
-                </Button>
-                <Button
-                  v-if="selectedFiles.size === 1"
-                  variant="ghost"
-                  size="sm"
-                  @click="handleRename"
-                >
-                  <Edit class="h-4 w-4 mr-2" />
-                  <span class="hidden sm:inline">Rename</span>
-                </Button>
-                <Button variant="ghost" size="sm" @click="handleBulkDownload">
-                  <Download class="h-4 w-4 mr-2" />
-                  <span class="hidden sm:inline">Download</span>
-                </Button>
-                <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm">
-                  <Share2 class="h-4 w-4 mr-2" />
-                  <span class="hidden sm:inline">Share</span>
-                </Button>
-                <Button variant="ghost" size="sm" @click="selectedFiles.clear()">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </Button>
-              </div>
-            </template>
-            <template v-else>
-              <div class="flex items-center gap-3 w-full sm:w-auto">
-                <!-- Items Count - minimalist design -->
-                <div
-                  v-if="sortedItems.length > 0"
-                  :class="[
+                  ]">
+                    {{ selectedFiles.size }} selected
+                  </span>
+                </div>
+                <div :class="[
+                  'h-4 w-px',
+                  theme.isDark.value ? 'bg-gray-600' : 'bg-gray-300',
+                ]"></div>
+                <!-- Selection actions with responsive wrapping -->
+                <div class="flex items-center flex-wrap gap-2">
+                  <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm"
+                    @click="openFile(Array.from(selectedFiles)[0])">
+                    <FolderOpen class="h-4 w-4 mr-2" />
+                    <span class="hidden sm:inline">Open</span>
+                  </Button>
+                  <Button variant="ghost" size="sm" @click="handleBulkDelete">
+                    <Trash2 class="h-4 w-4 mr-2" />
+                    <span class="hidden sm:inline">Delete</span>
+                  </Button>
+                  <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm" @click="handleRename">
+                    <Edit class="h-4 w-4 mr-2" />
+                    <span class="hidden sm:inline">Rename</span>
+                  </Button>
+                  <Button variant="ghost" size="sm" @click="handleBulkDownload">
+                    <Download class="h-4 w-4 mr-2" />
+                    <span class="hidden sm:inline">Download</span>
+                  </Button>
+                  <Button v-if="selectedFiles.size === 1" variant="ghost" size="sm">
+                    <Share2 class="h-4 w-4 mr-2" />
+                    <span class="hidden sm:inline">Share</span>
+                  </Button>
+                  <Button variant="ghost" size="sm" @click="clearSelection()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </Button>
+                </div>
+              </template>
+              <template v-else>
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                  <!-- Items Count - minimalist design -->
+                  <div v-if="sortedItems.length > 0" :class="[
                     'flex items-center gap-2 text-sm',
                     theme.isDark.value ? 'text-gray-400' : 'text-gray-600',
-                  ]"
-                >
-                  <span>{{ sortedItems.length }} items</span>
-                  <template v-if="fileTypeStats.folderCount > 0">
-                    <span>•</span>
-                    <span>{{ fileTypeStats.folderCount }} folders</span>
-                  </template>
-                  <template v-if="Object.keys(fileTypeStats.fileTypes).length > 0">
-                    <span>•</span>
-                    <span
-                      >{{
-                        Object.values(fileTypeStats.fileTypes).reduce((a, b) => a + b, 0)
-                      }}
-                      files</span
-                    >
-                  </template>
-                </div>
+                  ]">
+                    <span>{{ sortedItems.length }} items</span>
+                    <template v-if="fileTypeStats.folderCount > 0">
+                      <span>•</span>
+                      <span>{{ fileTypeStats.folderCount }} folders</span>
+                    </template>
+                    <template v-if="Object.keys(fileTypeStats.fileTypes).length > 0">
+                      <span>•</span>
+                      <span>
+                        {{
+                          Object.values(fileTypeStats.fileTypes).reduce((a, b) => a + b, 0)
+                        }}
+                        files
+                      </span>
+                    </template>
+                  </div>
 
-                <!-- Sort dropdown -->
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      :class="[
+                  <!-- Sort dropdown -->
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" :class="[
                         'flex-1 sm:flex-initial',
                         theme.isDark.value
                           ? 'border-gray-600 text-gray-100'
                           : 'border-gray-300',
-                      ]"
-                    >
-                      <span class="hidden sm:inline">Sort: </span>
-                      {{
-                        sortBy === "name"
-                          ? "Name"
-                          : sortBy === "date"
-                          ? "Date"
-                          : sortBy === "type"
-                          ? "Type"
-                          : "Size"
-                      }}
-                      <ChevronDown class="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem @click="sortBy = 'name'">
-                      Sort by Name
-                    </DropdownMenuItem>
-                    <DropdownMenuItem @click="sortBy = 'date'">
-                      Sort by Date
-                    </DropdownMenuItem>
-                    <DropdownMenuItem @click="sortBy = 'type'">
-                      Sort by Type
-                    </DropdownMenuItem>
-                    <DropdownMenuItem @click="sortBy = 'size'">
-                      Sort by Size
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      ]">
+                        <span class="hidden sm:inline">Sort: </span>
+                        {{
+                          sortBy === "name"
+                            ? "Name"
+                            : sortBy === "date"
+                              ? "Date"
+                              : sortBy === "type"
+                                ? "Type"
+                                : "Size"
+                        }}
+                        <ChevronDown class="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem @click="sortBy = 'name'">
+                        Sort by Name
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="sortBy = 'date'">
+                        Sort by Date
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="sortBy = 'type'">
+                        Sort by Type
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="sortBy = 'size'">
+                        Sort by Size
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-                <!-- Filter/Group dropdown -->
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      :class="[
+                  <!-- Filter/Group dropdown -->
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" :class="[
                         'shrink-0',
                         theme.isDark.value
                           ? 'border-gray-600 text-gray-100'
                           : 'border-gray-300',
-                      ]"
-                    >
-                      <Filter class="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <div class="px-2 py-1.5">
-                      <div class="flex items-center justify-between space-x-2">
-                        <span
-                          :class="[
+                      ]">
+                        <Filter class="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <div class="px-2 py-1.5">
+                        <div class="flex items-center justify-between space-x-2">
+                          <span :class="[
                             'text-sm',
                             theme.isDark.value ? 'text-gray-300' : 'text-gray-600',
-                          ]"
-                        >
-                          Group by Type
-                        </span>
-                        <Switch v-model="groupByFileType" />
+                          ]">
+                            Group by Type
+                          </span>
+                          <Switch v-model="groupByFileType" />
+                        </div>
                       </div>
-                    </div>
-                    <div class="px-2 py-1.5">
-                      <div class="flex items-center justify-between space-x-2">
-                        <span
-                          :class="[
+                      <div class="px-2 py-1.5">
+                        <div class="flex items-center justify-between space-x-2">
+                          <span :class="[
                             'text-sm',
                             theme.isDark.value ? 'text-gray-300' : 'text-gray-600',
-                          ]"
-                        >
-                          Recent Files
-                        </span>
-                        <Switch v-model="showRecentFiles" />
+                          ]">
+                            Recent Files
+                          </span>
+                          <Switch v-model="showRecentFiles" />
+                        </div>
                       </div>
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-                <!-- Inline View Toggle (matching other components) -->
-                <div
-                  :class="[
+                  <!-- Inline View Toggle (matching other components) -->
+                  <div :class="[
                     'flex items-center rounded-lg p-1 shrink-0',
                     theme.isDark.value ? 'bg-gray-800' : 'bg-gray-100',
-                  ]"
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    :class="[
+                  ]">
+                    <Button variant="ghost" size="sm" :class="[
                       'px-2 py-2',
                       viewMode === 'grid'
                         ? theme.isDark.value
                           ? 'bg-gray-700 shadow-sm'
                           : 'bg-white shadow-sm'
                         : '',
-                    ]"
-                    @click="viewMode = 'grid'"
-                    title="Grid View"
-                  >
-                    <Grid class="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    :class="[
+                    ]" @click="viewMode = 'grid'" title="Grid View">
+                      <Grid class="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" :class="[
                       'px-2 py-2',
                       viewMode === 'list'
                         ? theme.isDark.value
                           ? 'bg-gray-700 shadow-sm'
                           : 'bg-white shadow-sm'
                         : '',
-                    ]"
-                    @click="viewMode = 'list'"
-                    title="List View"
-                  >
-                    <List class="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    :class="[
+                    ]" @click="viewMode = 'list'" title="List View">
+                      <List class="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" :class="[
                       'px-2 py-2',
                       viewMode === 'thumbnail'
                         ? theme.isDark.value
                           ? 'bg-gray-700 shadow-sm'
                           : 'bg-white shadow-sm'
                         : '',
-                    ]"
-                    @click="viewMode = 'thumbnail'"
-                    title="Thumbnail View"
-                  >
-                    <svg
-                      class="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <rect x="3" y="3" width="7" height="7" />
-                      <rect x="14" y="3" width="7" height="7" />
-                      <rect x="3" y="14" width="7" height="7" />
-                      <rect x="14" y="14" width="7" height="7" />
-                    </svg>
-                  </Button>
-                </div>
-              </div>
-            </template>
-          </div>
-        </div>
-
-        <!-- Content area -->
-        <ScrollArea
-          :class="[
-            'h-[calc(100vh-240px)] sm:h-[calc(100vh-280px)] rounded-lg shadow-sm border',
-            theme.isDark.value
-              ? 'bg-gray-800 border-gray-700'
-              : 'bg-white border-gray-200',
-          ]"
-        >
-          <div v-if="Object.keys(groupedItems).length > 0 && sortedItems.length > 0">
-            <template v-for="(items, groupName) in groupedItems" :key="groupName">
-              <div class="p-2 sm:p-4">
-                <!-- Group header with Select All for all view modes -->
-                <div class="flex items-center justify-between mb-3 px-2">
-                  <h3
-                    v-if="groupByFileType"
-                    :class="[
-                      'text-base font-semibold',
-                      theme.isDark.value ? 'text-gray-100' : 'text-gray-700',
-                    ]"
-                  >
-                    {{ formatGroupName(groupName) }}
-                  </h3>
-
-                  <!-- Select All controls -->
-                  <div v-if="sortedItems.length > 0" class="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      :id="`select-all-${groupName}`"
-                      :checked="isAllSelected"
-                      :indeterminate="isSomeSelected"
-                      @change="toggleSelectAll"
-                      :class="[
-                        'rounded border text-primary-600 focus:ring-primary-500 focus:ring-offset-0',
-                        theme.isDark.value
-                          ? 'border-gray-600 bg-gray-700 focus:ring-offset-gray-800'
-                          : 'border-gray-300 bg-white focus:ring-offset-white',
-                      ]"
-                    />
-                    <label
-                      :for="`select-all-${groupName}`"
-                      :class="[
-                        'text-sm font-medium cursor-pointer select-none',
-                        theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
-                      ]"
-                    >
-                      Select All
-                    </label>
+                    ]" @click="viewMode = 'thumbnail'" title="Thumbnail View">
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                      </svg>
+                    </Button>
                   </div>
                 </div>
+              </template>
+            </div>
+          </div>
 
-                <!-- Items -->
-                <div
-                  v-if="items.length === 0"
-                  :class="[
+          <!-- Content area -->
+          <ScrollArea :class="[
+            'h-[calc(100vh-240px)] sm:h-[calc(100vh-280px)] rounded-lg shadow-sm border',
+            theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
+          ]">
+            <div v-if="Object.keys(groupedItems).length > 0 && sortedItems.length > 0">
+              <template v-for="(items, groupName) in groupedItems" :key="groupName">
+                <div class="p-2 sm:p-4">
+                  <!-- Group header with Select All for all view modes -->
+                  <div class="flex items-center justify-between mb-3 px-2">
+                    <h3 v-if="groupByFileType" :class="[
+                      'text-base font-semibold',
+                      theme.isDark.value ? 'text-gray-100' : 'text-gray-700',
+                    ]">
+                      {{ formatGroupName(groupName) }}
+                    </h3>
+
+                    <!-- Select All controls -->
+                    <div v-if="sortedItems.length > 0" class="flex items-center gap-2">
+                      <input type="checkbox" :id="`select-all-${groupName}`" :checked="isAllSelected"
+                        :indeterminate="isSomeSelected" @change="toggleSelectAll" :class="[
+                          'rounded border text-primary-600 focus:ring-primary-500 focus:ring-offset-0',
+                          theme.isDark.value
+                            ? 'border-gray-600 bg-gray-700 focus:ring-offset-gray-800'
+                            : 'border-gray-300 bg-white focus:ring-offset-white',
+                        ]" />
+                      <label :for="`select-all-${groupName}`" :class="[
+                        'text-sm font-medium cursor-pointer select-none',
+                        theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
+                      ]">
+                        Select All
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Items -->
+                  <div v-if="items.length === 0" :class="[
                     'text-center text-sm py-4',
                     theme.isDark.value ? 'text-gray-400' : 'text-gray-500',
-                  ]"
-                >
-                  No items available in this category.
-                </div>
-                <div
-                  :class="{
+                  ]">
+                    No items available in this category.
+                  </div>
+                  <div v-else :class="{
                     'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4':
                       viewMode === 'grid',
                     'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2':
                       viewMode === 'thumbnail',
                     'space-y-1': viewMode === 'list',
-                  }"
-                >
-                  <FileItem
-                    v-for="item in items"
-                    :key="item.id"
-                    :file="item"
-                    :viewMode="viewMode"
-                    :isSelected="selectedFiles.has(item.id || '')"
-                    :showFileTypeTags="true"
-                    @select-file="handleSelect"
-                    @open-file="openFile"
-                    @contextmenu-file="openContextMenu"
-                  />
+                  }">
+                    <FileItem v-for="item in items" :key="item.id" :file="item" :view-mode="viewMode"
+                      :is-selected="!!(item.id && selectedFiles.has(item.id))" @select-file="handleSelect"
+                      @open-file="openFile" @update-file="handleFileUpdated" @delete-file="handleFileDeleted"
+                      @contextmenu-file="handleFileContextMenu" />
+                  </div>
+                </div>
+              </template>
+            </div>
+            <template v-else-if="fileStore.isSyncing">
+              <div class="loading-state">
+                <div class="flex flex-col items-center justify-center py-16 px-6">
+                  <div class="loading-spinner"></div>
+                  <p class="loading-text">Loading your files...</p>
                 </div>
               </div>
             </template>
-          </div>
-
-          <!-- Loading state -->
-          <div v-else-if="fileStore.isSyncing" class="loading-state">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">Loading your files...</p>
-          </div>
-
-          <!-- Empty state -->
-          <div v-else class="flex flex-col items-center justify-center py-16 px-6">
-            <div
-              :class="[
-                'flex items-center justify-center w-16 h-16 rounded-full mb-6',
-                theme.isDark.value ? 'bg-gray-700' : 'bg-gray-100',
-              ]"
-            >
-              <FolderOpen
-                :class="[
-                  'h-8 w-8',
-                  theme.isDark.value ? 'text-gray-400' : 'text-gray-500',
-                ]"
-              />
-            </div>
-            <h3
-              :class="[
-                'text-xl font-semibold mb-2 text-center',
-                theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
-              ]"
-            >
-              {{ searchValue ? "No matching files found" : "No files found" }}
-            </h3>
-            <p
-              :class="[
-                'text-center mb-8 max-w-md',
-                theme.isDark.value ? 'text-gray-400' : 'text-gray-600',
-              ]"
-            >
-              {{
-                searchValue
-                  ? "Try adjusting your search or filters."
-                  : "Get started by creating a new file or uploading an existing one."
-              }}
-            </p>
-            <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              <Button
-                @click="createNewFile('documents')"
-                class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2"
-              >
-                <Plus class="mr-2 h-4 w-4" />
-                New Document
-              </Button>
-              <Button
-                @click="createNewFile('spreadsheets')"
-                class="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-              >
-                <Plus class="mr-2 h-4 w-4" />
-                New Spreadsheet
-              </Button>
-              <Button
-                variant="outline"
-                :class="[
-                  'px-6 py-2',
-                  theme.isDark.value
-                    ? 'border-gray-600 text-gray-100 hover:bg-gray-700'
-                    : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50',
-                ]"
-                @click="openUploadDialog"
-              >
-                <Upload class="mr-2 h-4 w-4" />
-                Upload File
-              </Button>
-            </div>
-          </div>
-        </ScrollArea>
+            <template v-else>
+              <!-- Empty state -->
+              <div class="flex flex-col items-center justify-center py-16 px-6">
+                <div :class="[
+                  'flex items-center justify-center w-16 h-16 rounded-full mb-6',
+                  theme.isDark.value ? 'bg-gray-700' : 'bg-gray-100',
+                ]">
+                  <FolderOpen :class="[
+                    'h-8 w-8',
+                    theme.isDark.value ? 'text-gray-400' : 'text-gray-500',
+                  ]" />
+                </div>
+                <h3 :class="[
+                  'text-xl font-semibold mb-2 text-center',
+                  theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
+                ]">
+                  {{ searchValue ? "No matching files found" : "No files found" }}
+                </h3>
+                <p :class="[
+                  'text-center mb-8 max-w-md',
+                  theme.isDark.value ? 'text-gray-400' : 'text-gray-600',
+                ]">
+                  {{
+                    searchValue
+                      ? "Try adjusting your search or filters."
+                      : "Get started by creating a new file or uploading an existing one."
+                  }}
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                  <Button @click="createNewFile('documents')"
+                    class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2">
+                    <Plus class="mr-2 h-4 w-4" />
+                    New Document
+                  </Button>
+                  <Button @click="createNewFile('spreadsheets')"
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
+                    <Plus class="mr-2 h-4 w-4" />
+                    New Spreadsheet
+                  </Button>
+                  <Button variant="outline" :class="[
+                    'px-6 py-2',
+                    theme.isDark.value
+                      ? 'border-gray-600 text-gray-100 hover:bg-gray-700'
+                      : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50',
+                  ]" @click="openUploadDialog">
+                    <Upload class="mr-2 h-4 w-4" />
+                    Upload File
+                  </Button>
+                </div>
+              </div>
+            </template>
+          </ScrollArea>
+        </div>
       </div>
+
+      <!-- Context Menu and Dialogs -->
+      <FileContextMenu v-if="contextMenuState.visible" :state="contextMenuState" :actions="contextMenuActions"
+        :is-dark="theme.isDark.value" />
+
+      <MediaViewer :is-open="isViewerOpen" :current-file="currentViewFile" :files="viewableFiles"
+        :current-index="currentViewIndex" @close="closeViewer" @download="handleViewerDownload"
+        @navigate="handleViewerNavigate" />
+
+      <FileUploader v-if="isUploadDialogOpen" @close="isUploadDialogOpen = false" @upload="handleUploadComplete"
+        :folderId="currentFolderId" :fileTypeFilter="'all'" />
     </div>
-  </div>
+  </template>
 
   <!-- Login screen -->
-  <div
-    v-else
-    :class="[
-      'h-screen w-full flex flex-col items-center justify-center transition-colors duration-200',
-      theme.isDark.value
-        ? 'bg-gradient-to-br from-gray-900 to-gray-800'
-        : 'bg-gradient-to-br from-gray-50 to-gray-100',
-    ]"
-  >
-    <div
-      :class="[
-        'backdrop-filter backdrop-blur-lg p-10 rounded-lg shadow-xl border',
+  <template v-else>
+    <div class="h-screen w-full flex items-center justify-center">
+      <div :class="[
+        'backdrop-filter backdrop-blur-lg p-10 rounded-lg shadow-xl border max-w-md w-full mx-4',
         theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
-      ]"
-    >
-      <div class="flex items-center justify-center mb-6">
-        <img
-          :src="theme.isDark.value ? '/logo-white.png' : '/logo-black.png'"
-          alt="VenMail Logo"
-          class="h-6 w-full"
-        />
-      </div>
-      <h2
-        :class="[
-          'text-2xl font-bold mb-6 text-center',
-          theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
-        ]"
-      >
-        Welcome to Venmail File Manager
-      </h2>
-      <Button
-        class="w-full bg-primary-600 hover:bg-primary-700"
-        @click="loginWithVenmail"
-      >
-        Login with Venmail
-      </Button>
-      <p
-        :class="[
+      ]">
+        <img :src="theme.isDark.value ? '/logo-white.png' : '/logo-black.png'" alt="VenMail Logo" class="h-6 w-full" />
+        <h2 :class="[theme.isDark.value ? 'text-gray-100' : 'text-gray-800']">
+          Welcome to Venmail File Manager
+        </h2>
+        <Button class="w-full bg-primary-600 hover:bg-primary-700" @click="loginWithVenmail">
+          Login with Venmail
+        </Button>
+        <p :class="[
           'text-sm mt-4 text-center',
           theme.isDark.value ? 'text-gray-400' : 'text-gray-500',
-        ]"
-      >
-        Login to manage your files and folders on Venmail.
-      </p>
+        ]">
+          Login to manage your files and folders on Venmail.
+        </p>
+      </div>
     </div>
-  </div>
-
-  <!-- Custom context menu at cursor position -->
-  <div
-    v-if="contextMenuState.visible"
-    id="context-menu"
-    :class="[
-      'fixed z-50 border rounded-md shadow-lg context-menu',
-      theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
-    ]"
-    :style="{ left: contextMenuState.x + 'px', top: contextMenuState.y + 'px' }"
-  >
-    <ul class="py-1">
-      <li
-        v-for="action in contextMenuActions"
-        :key="action.label"
-        :class="[
-          'px-3 py-2 cursor-pointer flex items-center space-x-2',
-          theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-        ]"
-        @click="action.action"
-      >
-        <component :is="action.icon" class="h-4 w-4" />
-        <span>{{ action.label }}</span>
-      </li>
-    </ul>
-  </div>
-
-  <MediaViewer
-    :is-open="isViewerOpen"
-    :current-file="currentViewFile"
-    :files="viewableFiles"
-    :current-index="currentViewIndex"
-    @close="closeViewer"
-    @download="handleViewerDownload"
-    @navigate="handleViewerNavigate"
-  />
-
-  <FileUploader
-    v-if="isUploadDialogOpen"
-    @close="isUploadDialogOpen = false"
-    @upload="handleUploadComplete"
-    :folderId="currentFolderId"
-    :fileTypeFilter="'all'"
-  />
+  </template>
 </template>
 
 <style scoped>
@@ -1511,6 +1265,7 @@ function handleEscapeKey(event: KeyboardEvent) {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

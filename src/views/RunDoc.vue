@@ -67,6 +67,96 @@ const lastSaveResult = ref<{
   error: string | null;
 } | null>(null);
 
+type SaveTrigger = "manual" | "auto" | "title" | "external";
+
+type SaveResponse = {
+  success: boolean;
+  offline: boolean;
+  error: string | null;
+};
+
+interface UmoSaveRequestDetail {
+  id?: string;
+  content: string;
+  title?: string;
+  resolve: (result: SaveResponse) => void;
+  claimed?: boolean;
+}
+
+const UMO_SAVE_EVENT = "umo-doc-save-request";
+
+let latestSavePromise: Promise<SaveResponse> | null = null;
+
+function completeSave(detail: UmoSaveRequestDetail, response: SaveResponse) {
+  try {
+    detail.claimed = true;
+    detail.resolve(response);
+  } catch (err) {
+    console.warn("Failed to resolve UMO save request", err);
+  }
+}
+
+function attachEditorUpdateListener(handler: () => void) {
+  try {
+    if (!editorRef.value?.on) return;
+    if (editorUpdateHandler && typeof editorRef.value?.off === "function") {
+      editorRef.value.off("update", editorUpdateHandler);
+    }
+    editorUpdateHandler = handler;
+    editorRef.value.on("update", editorUpdateHandler);
+  } catch (err) {
+    console.warn("Failed to attach editor listener", err);
+  }
+}
+
+function detachEditorUpdateListener() {
+  try {
+    if (editorUpdateHandler && typeof editorRef.value?.off === "function") {
+      editorRef.value.off("update", editorUpdateHandler);
+    }
+  } catch (err) {
+    console.warn("Failed to detach editor listener", err);
+  } finally {
+    editorUpdateHandler = null;
+  }
+}
+
+function handleUmoSaveEvent(event: Event) {
+  const customEvent = event as CustomEvent<UmoSaveRequestDetail>;
+  const detail = customEvent.detail;
+  if (!detail || detail.claimed) return;
+
+  const docId = (route.params.id as string) || currentDoc.value?.id;
+  if (detail.id && docId && detail.id !== docId) {
+    return;
+  }
+
+  const content = detail.content ?? editorRef.value?.getContent?.() ?? "";
+  const titleOverride = detail.title ?? title.value;
+
+  detail.claimed = true;
+  hasUnsavedChanges.value = true;
+
+  syncChanges("external", { content, titleOverride })
+    .then((result) => {
+      completeSave(detail, result);
+    })
+    .catch((error) => {
+      const message = error instanceof Error ? error.message : "Sync failed";
+      completeSave(detail, {
+        success: false,
+        offline: !fileStore.isOnline,
+        error: message,
+      });
+    });
+}
+
+function handleManualSave() {
+  syncChanges("manual").catch(() => {
+    /* result recorded */
+  });
+}
+
 // Collaboration state (harmonized with RunSheet)
 const { initializeWebSocket } = useWebSocket();
 const wsService = ref<IWebsocketService | null>(null);
@@ -319,7 +409,9 @@ watch(isConnected, (newVal) => {
 function updateOnlineStatus() {
   isOffline.value = !navigator.onLine;
   if (navigator.onLine && hasUnsavedChanges.value) {
-    syncChanges();
+    syncChanges("auto").catch(() => {
+      /* result already stored */
+    });
   }
 }
 
@@ -448,6 +540,7 @@ const yTextRef = ref<any>(null);
 let isApplyingRemote = false;
 let presenceIntervalId: any = null; // reserved if needed later
 let pushIntervalId: any = null;
+let editorUpdateHandler: ((...args: any[]) => void) | null = null;
 let domObserver: MutationObserver | null = null;
 let mutationScheduled = false;
 
@@ -459,6 +552,13 @@ const emitPresence = useDebounceFn(() => {
     wsService.value?.sendMessage(idNow, 'cursor', { selection: null }, userId.value, userName.value);
   } catch {}
 }, 200, { maxWait: 1000 });
+
+const defaultEditorUpdateHandler = () => {
+  if (isApplyingRemote) return;
+  hasUnsavedChanges.value = true;
+  pushLocalToY();
+  emitPresence();
+};
 
 // Hoisted helper: push local editor content into Yjs doc (guarded)
 function pushLocalToY() {
@@ -643,53 +743,93 @@ async function loadData(id: string) {
   }
 }
 
-async function syncChanges() {
-  if (options.value.document.readOnly) return;
-  if (!currentDoc.value || isSyncing.value) return;
-  isSyncing.value = true;
-  try {
-    console.log("Saving content");
+async function syncChanges(
+  trigger: SaveTrigger = "manual",
+  payload: { content?: string; titleOverride?: string } = {}
+): Promise<SaveResponse> {
+  const failure = (error: string): SaveResponse => {
+    const result: SaveResponse = { success: false, offline: !fileStore.isOnline, error };
+    lastSaveResult.value = result;
+    return result;
+  };
 
-    // Get content from editor and save
-    const content = editorRef.value?.getContent() || "";
-    const docToSave = {
-      ...currentDoc.value,
-      content: content,
-      title: title.value,
-      file_type: "docx", // Explicitly ensure file type is preserved
-      is_folder: false, // Explicitly ensure it's not marked as folder
-      last_viewed: new Date()
-    } as FileData;
-
-    const result = await fileStore.saveDocument(docToSave);
-
-    // Handle redirect for local documents that got server IDs
-    if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
-      console.log("Document got new server ID, redirecting to:", result.redirectId);
-      await router.replace(`/docs/${result.redirectId}`);
-      // Update current doc reference
-      currentDoc.value = result.document;
-    } else {
-      currentDoc.value = result.document;
-    }
-
-    hasUnsavedChanges.value = false;
-    lastSaveResult.value = {
-      success: true,
-      offline: !fileStore.isOnline,
-      error: null
-    };
-    lastSavedAt.value = new Date();
-  } catch (error) {
-    console.error("Sync error:", error);
-    lastSaveResult.value = {
-      success: false,
-      offline: !fileStore.isOnline,
-      error: "Sync failed",
-    };
-  } finally {
-    isSyncing.value = false;
+  if (options.value.document.readOnly) {
+    return failure("Document is read-only");
   }
+
+  if (!currentDoc.value) {
+    return failure("Document not loaded");
+  }
+
+  if (isSyncing.value && latestSavePromise) {
+    return latestSavePromise;
+  }
+
+  const performSave = async (): Promise<SaveResponse> => {
+    isSyncing.value = true;
+    try {
+      const requestedTitle = payload.titleOverride ?? title.value ?? "";
+      const nextTitle = requestedTitle.trim() || "New Document";
+
+      if (nextTitle !== title.value) {
+        title.value = nextTitle;
+        editableTitle.value = nextTitle;
+        document.title = nextTitle;
+        try {
+          if (editorRef.value?.setTitle) {
+            await editorRef.value.setTitle(nextTitle);
+          } else if (editorRef.value?.setDocument) {
+            editorRef.value.setDocument({ title: nextTitle });
+          }
+        } catch (err) {
+          console.warn("Failed to update editor title", err);
+        }
+      }
+
+      const content = payload.content ?? editorRef.value?.getContent?.() ?? "";
+
+      const docToSave = {
+        ...currentDoc.value,
+        content,
+        title: nextTitle,
+        file_type: "docx",
+        is_folder: false,
+        last_viewed: new Date(),
+      } as FileData;
+
+      const result = await fileStore.saveDocument(docToSave);
+
+      if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
+        console.log("Document got new server ID, redirecting to:", result.redirectId);
+        await router.replace(`/docs/${result.redirectId}`);
+        currentDoc.value = result.document;
+      } else {
+        currentDoc.value = result.document;
+      }
+
+      const response: SaveResponse = {
+        success: true,
+        offline: !fileStore.isOnline,
+        error: null,
+      };
+
+      hasUnsavedChanges.value = false;
+      lastSaveResult.value = response;
+      lastSavedAt.value = new Date();
+
+      return response;
+    } catch (error) {
+      console.error("Sync error:", error);
+      const message = error instanceof Error ? error.message : "Sync failed";
+      return failure(message);
+    } finally {
+      isSyncing.value = false;
+      latestSavePromise = null;
+    }
+  };
+
+  latestSavePromise = performSave();
+  return latestSavePromise;
 }
 
 function handleSavedEvent(result: any) {
@@ -727,7 +867,7 @@ async function saveTitle() {
       }
 
       // Trigger sync to save changes
-      syncChanges();
+      handleManualSave();
     }
   }
 
@@ -790,6 +930,7 @@ onMounted(async () => {
 
   window.addEventListener("online", updateOnlineStatus);
   window.addEventListener("offline", updateOnlineStatus);
+  window.addEventListener(UMO_SAVE_EVENT, handleUmoSaveEvent as EventListener);
 
   console.log("RunDoc component mounted, initializing editor");
 
@@ -905,11 +1046,7 @@ onMounted(async () => {
           });
 
           // Push local edits to Yjs (basic handler)
-          try {
-            editorRef.value?.on?.('update', pushLocalToY);
-            // Also emit lightweight presence on updates (debounced)
-            editorRef.value?.on?.('update', () => emitPresence());
-          } catch {}
+          attachEditorUpdateListener(defaultEditorUpdateHandler);
           pushIntervalId = setInterval(pushLocalToY, 1000);
           // DOM observer fallback to detect content changes without using editor APIs
           setupDomObserver();
@@ -953,6 +1090,9 @@ function handleEditorCreated() {
     setTimeout(() => {
       editorReady.value = true;
       console.log("Editor marked as ready");
+      if (!editorUpdateHandler) {
+        attachEditorUpdateListener(defaultEditorUpdateHandler);
+      }
     }, 100);
   });
 }
@@ -960,6 +1100,8 @@ function handleEditorCreated() {
 onUnmounted(() => {
   window.removeEventListener("online", updateOnlineStatus);
   window.removeEventListener("offline", updateOnlineStatus);
+  window.removeEventListener(UMO_SAVE_EVENT, handleUmoSaveEvent as EventListener);
+  detachEditorUpdateListener();
   const id = (route.params.id as string) || currentDoc.value?.id;
   if (wsService.value && id) {
     try { wsService.value.leaveSheet(id); } catch {}
@@ -1170,7 +1312,7 @@ function downloadFile() {
       </div>
 
       <div class="flex items-center gap-3">
-        <span class="text-sm text-gray-600 cursor-pointer" title="Click to save now" @click="syncChanges">{{ lastSavedText }}</span>
+        <span class="text-sm text-gray-600 cursor-pointer" title="Click to save now" @click="handleManualSave">{{ lastSavedText }}</span>
         <Dialog v-model:open="shareOpen">
           <DialogTrigger asChild>
             <Button variant="outline" @click="shareDocument">
@@ -1206,7 +1348,7 @@ function downloadFile() {
       mode="doc"
       :collaborators="filteredCollaborators"
       @toggle-chat="toggleChat"
-      @save="syncChanges"
+      @save="handleManualSave"
       @export="handleExport"
       @undo="handleUndo"
       @redo="handleRedo"

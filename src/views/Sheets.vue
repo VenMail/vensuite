@@ -13,270 +13,154 @@
     </div>
 
     <!-- File browser -->
-    <div class="h-full p-4 sm:p-6 overflow-hidden">
-      <!-- Header with responsive layout -->
-      <div
-        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6"
+    <div class="h-full flex flex-col gap-6 p-4 sm:p-6 overflow-hidden">
+      <WorkspaceTopBar
+        :title="currentTitle"
+        :subtitle="sheetsSubtitle"
+        :breadcrumbs="breadcrumbs"
+        :can-navigate-up="breadcrumbs.length > 1"
+        :is-dark="theme.isDark.value"
+        :actions="topBarActions"
+        @navigate-up="handleNavigateUp"
+        @navigate-breadcrumb="handleBreadcrumbNavigate"
       >
-        <div class="flex items-center space-x-4">
-          <h2
-            :class="[
-              'text-2xl font-semibold',
-              theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
-            ]"
+        <template #stats>
+          <div
+            class="flex items-center gap-2 text-sm"
+            :class="theme.isDark.value ? 'text-gray-300' : 'text-gray-600'"
           >
-            Sheets
-          </h2>
-          <div class="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              :class="[
-                'relative group rounded-full transition-all duration-200',
-                theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-              ]"
-              @click="createNewFolder"
-            >
-              <FolderPlusIcon class="h-5 w-5 text-primary-600" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              :class="[
-                'relative group rounded-full transition-all duration-200',
-                theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-              ]"
-              @click="openUploadDialog"
-            >
-              <Upload class="h-5 w-5 text-primary-600" />
-            </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  :class="[
-                    'relative group rounded-full transition-all duration-200',
-                    theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
-                  ]"
-                >
-                  <Plus class="h-5 w-5 text-primary-600" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent
-                :class="[
-                  'rounded-lg shadow-2xl border',
-                  theme.isDark.value
-                    ? 'bg-gray-800 border-gray-700'
-                    : 'bg-white border-gray-200',
-                ]"
-              >
-                <DialogHeader>
-                  <DialogTitle
-                    :class="[
-                      'text-xl font-semibold',
-                      theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
-                    ]"
-                  >
-                    Create New Spreadsheet
-                  </DialogTitle>
-                </DialogHeader>
-                <div class="grid grid-cols-2 gap-4 p-2">
-                  <Button
-                    v-for="template in spreadsheetTemplates"
-                    :key="template.name"
-                    variant="outline"
-                    :class="[
-                      'h-24 flex flex-col items-center justify-center transition-all',
-                      theme.isDark.value
-                        ? 'hover:bg-gray-700 hover:border-primary-400'
-                        : 'hover:bg-gray-50 hover:border-primary-400',
-                    ]"
-                    @click="createNewSpreadsheet(template.name)"
-                  >
-                    <component :is="template.icon" class="w-8 h-8 text-primary-600" />
-                    <span class="mt-2 text-sm font-medium">{{ template.name }}</span>
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <span>{{ sortedSpreadsheets.length }} items</span>
+            <span v-if="selectedFiles.size > 0">• {{ selectedFiles.size }} selected</span>
           </div>
-        </div>
+        </template>
 
-        <!-- Right controls with responsive layout -->
-        <div
-          class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto"
-        >
-          <template v-if="selectedFiles.size > 0">
-            <!-- Selection info -->
-            <div class="flex items-center space-x-2">
-              <span
-                :class="[
-                  'text-sm font-medium',
-                  theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
-                ]"
-              >
-                {{ selectedFiles.size }} selected
-              </span>
-              <div
-                :class="['h-4 w-px', theme.isDark.value ? 'bg-gray-600' : 'bg-gray-300']"
-              ></div>
-            </div>
-            <!-- Selection actions with responsive wrapping -->
-            <div class="flex items-center flex-wrap gap-2">
+        <template #extra>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  :class="[
+                    theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
+                  ]"
+                >
+                  <ArrowUpDown class="h-4 w-4 mr-2" />
+                  Sort: {{ sortLabel }}
+                  <ChevronDown class="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  v-for="option in sortOptions"
+                  :key="option.value"
+                  @click="handleSort(option.value)"
+                >
+                  <Check v-if="sortBy === option.value" class="mr-2 h-4 w-4" />
+                  <span>{{ option.label }}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  :class="[
+                    theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
+                  ]"
+                >
+                  <Filter class="h-4 w-4 mr-2" />
+                  {{ activeFilterLabel }}
+                  <ChevronDown class="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  v-for="filter in filterOptions"
+                  :key="filter.value"
+                  @click="handleFilter(filter.value)"
+                >
+                  <Check v-if="currentFilter === filter.value" class="mr-2 h-4 w-4" />
+                  <span>{{ filter.label }}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
               <Button
-                v-if="selectedFiles.size === 1"
+                v-for="option in viewControls"
+                :key="option.value"
                 variant="ghost"
                 size="sm"
-                @click="openFile(Array.from(selectedFiles)[0])"
+                :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+                @click="handleViewChange(option.value)"
               >
-                <FolderOpen class="h-4 w-4 mr-2" />
-                <span class="hidden sm:inline">Open</span>
-              </Button>
-              <Button variant="ghost" size="sm" @click="handleBulkDelete">
-                <Trash2 class="h-4 w-4 mr-2" />
-                <span class="hidden sm:inline">Delete</span>
-              </Button>
-              <Button
-                v-if="selectedFiles.size === 1"
-                variant="ghost"
-                size="sm"
-                @click="handleRename"
-              >
-                <Edit class="h-4 w-4 mr-2" />
-                <span class="hidden sm:inline">Rename</span>
-              </Button>
-              <Button variant="ghost" size="sm" @click="handleBulkDownload">
-                <Download class="h-4 w-4 mr-2" />
-                <span class="hidden sm:inline">Download</span>
-              </Button>
-              <Button variant="ghost" size="sm" @click="selectedFiles.clear()">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <component v-if="option.icon" :is="option.icon" class="h-4 w-4" />
+                <span v-else>{{ option.label }}</span>
               </Button>
             </div>
-          </template>
-          <template v-else>
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-              <!-- Sort dropdown -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    :class="[
-                      'flex-1 sm:flex-initial',
-                      theme.isDark.value
-                        ? 'border-gray-600 text-gray-100'
-                        : 'border-gray-300',
-                    ]"
-                  >
-                    <span class="hidden sm:inline">Sort by: </span
-                    >{{ sortBy === "name" ? "Name" : "Date" }}
-                    <ChevronDown class="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="sortBy = 'name'">
-                    Sort by Name
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="sortBy = 'date'">
-                    Sort by Date
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+          </div>
+        </template>
 
-              <!-- Inline View Toggle (matching media toolbar style) -->
-              <div
-                :class="[
-                  'flex items-center rounded-lg p-1',
-                  theme.isDark.value ? 'bg-gray-800' : 'bg-gray-100',
-                ]"
+        <template #action-new-spreadsheet>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                :class="actionIconClass"
               >
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <Plus class="h-5 w-5 text-primary-600" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent
+              :class="[
+                'rounded-lg shadow-2xl border',
+                theme.isDark.value
+                  ? 'bg-gray-800 border-gray-700'
+                  : 'bg-white border-gray-200',
+              ]"
+            >
+              <DialogHeader>
+                <DialogTitle
                   :class="[
-                    'px-2 py-2',
-                    viewMode === 'grid'
-                      ? theme.isDark.value
-                        ? 'bg-gray-700 shadow-sm'
-                        : 'bg-white shadow-sm'
-                      : '',
+                    'text-xl font-semibold',
+                    theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
                   ]"
-                  @click="viewMode = 'grid'"
-                  title="Grid View"
                 >
-                  <Grid class="h-4 w-4" />
-                </Button>
+                  Create New Spreadsheet
+                </DialogTitle>
+              </DialogHeader>
+              <div class="grid grid-cols-2 gap-4 p-2">
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  v-for="template in spreadsheetTemplates"
+                  :key="template.name"
+                  variant="outline"
                   :class="[
-                    'px-2 py-2',
-                    viewMode === 'list'
-                      ? theme.isDark.value
-                        ? 'bg-gray-700 shadow-sm'
-                        : 'bg-white shadow-sm'
-                      : '',
+                    'h-24 flex flex-col items-center justify-center transition-all',
+                    theme.isDark.value
+                      ? 'hover:bg-gray-700 hover:border-primary-400'
+                      : 'hover:bg-gray-50 hover:border-primary-400',
                   ]"
-                  @click="viewMode = 'list'"
-                  title="List View"
+                  @click="createNewSpreadsheet(template.name)"
                 >
-                  <List class="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  :class="[
-                    'px-2 py-2',
-                    viewMode === 'thumbnail'
-                      ? theme.isDark.value
-                        ? 'bg-gray-700 shadow-sm'
-                        : 'bg-white shadow-sm'
-                      : '',
-                  ]"
-                  @click="viewMode = 'thumbnail'"
-                  title="Thumbnail View"
-                >
-                  <svg
-                    class="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                  </svg>
+                  <component :is="template.icon" class="w-8 h-8 text-primary-600" />
+                  <span class="mt-2 text-sm font-medium">{{ template.name }}</span>
                 </Button>
               </div>
-            </div>
-          </template>
-        </div>
-      </div>
+            </DialogContent>
+          </Dialog>
+        </template>
+      </WorkspaceTopBar>
 
       <!-- Content area -->
       <ScrollArea
         :class="[
-          'h-[calc(100vh-280px)] sm:h-[calc(100vh-320px)] rounded-lg shadow-sm border',
+          'flex-1 min-h-0 rounded-lg shadow-sm border',
           theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
         ]"
       >
-        <div v-if="spreadsheetFiles.length > 0">
+        <div v-if="sortedSpreadsheets.length > 0">
           <!-- Select All header for list view -->
           <div
             v-if="viewMode === 'list'"
@@ -340,8 +224,8 @@
             <span
               :class="['text-xs', theme.isDark.value ? 'text-gray-400' : 'text-gray-500']"
             >
-              {{ spreadsheetFiles.length }} spreadsheet{{
-                spreadsheetFiles.length !== 1 ? "s" : ""
+              {{ sortedSpreadsheets.length }} spreadsheet{{
+                sortedSpreadsheets.length !== 1 ? "s" : ""
               }}
             </span>
           </div>
@@ -362,9 +246,9 @@
                 :file="item"
                 :viewMode="viewMode"
                 :isSelected="selectedFiles.has(item.id || '')"
-                @click.stop="handleSelect(item.id, $event)"
                 @select-file="handleSelect"
                 @open-file="openFile"
+                @contextmenu-file="(event) => openContextMenu(event)"
               />
             </div>
           </div>
@@ -407,22 +291,37 @@
     @upload="handleUploadComplete"
     :file-type-filter="'spreadsheets'"
   />
+
+  <FileContextMenu
+    v-if="contextMenuState.visible"
+    :state="contextMenuState"
+    :actions="contextMenuActions"
+    :is-dark="theme.isDark.value"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, inject } from "vue";
+import { ref, computed, onMounted, onUnmounted, inject } from "vue";
 import { useRouter } from "vue-router";
 import {
+  ArrowUpDown,
   Grid,
   List,
+  LayoutGrid,
   Plus,
   ChevronDown,
   FolderOpen,
   Upload,
-  FolderPlusIcon,
+  FolderPlus as FolderPlusIcon,
   Trash2,
   Edit,
   Download,
+  Share2,
+  Filter,
+  Check,
+  FileSpreadsheet,
+  TableIcon,
+  X,
 } from "lucide-vue-next";
 import { useFileStore } from "@/store/files";
 import Button from "@/components/ui/button/Button.vue";
@@ -440,20 +339,163 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileData } from "@/types";
 import FileItem from "@/components/FileItem.vue";
 import { toast } from "@/composables/useToast";
 import FileUploader from "@/components/FileUploader.vue";
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
+import {
+  useFileExplorer,
+  type ContextMenuAction,
+  type ContextMenuBuilderContext,
+} from "@/composables/useFileExplorer";
+import FileContextMenu from "@/components/FileContextMenu.vue";
+import WorkspaceTopBar from "@/components/layout/WorkspaceTopBar.vue";
+import type { FileData } from "@/types";
 
 const router = useRouter();
 const fileStore = useFileStore();
 const theme = inject("theme") as { isDark: { value: boolean } };
 
-const viewMode = ref<"grid" | "list" | "thumbnail">("grid");
-const selectedFiles = ref<Set<string>>(new Set());
-const sortBy = ref("name");
+type SheetViewMode = "grid" | "list" | "thumbnail";
+type SheetSort = "name" | "date";
+type SheetFilter = "all" | "financial" | "project" | "other";
+
+type SortOption = {
+  value: SheetSort;
+  label: string;
+};
+
+type FilterOption = {
+  key: string;
+  label: string;
+  value: SheetFilter;
+  icon: any;
+  active: boolean;
+};
+
+type ViewModeOption = {
+  value: SheetViewMode;
+  icon?: any;
+  label: string;
+  active: boolean;
+};
+
+const viewMode = ref<SheetViewMode>("grid");
+const sortBy = ref<SheetSort>("name");
 const isUploadDialogOpen = ref(false);
+const searchQuery = ref("");
+const currentFilter = ref<SheetFilter>("all");
+
+const breadcrumbs = computed(() =>
+  fileStore.breadcrumbs.map((crumb, index) => ({
+    id: crumb.id,
+    title: index === 0 ? "Sheets" : crumb.title,
+  })),
+);
+
+const currentTitle = computed(() => {
+  const trail = breadcrumbs.value;
+  return trail[trail.length - 1]?.title || "Sheets";
+});
+
+const sheetsSubtitle = computed(() => {
+  switch (currentFilter.value) {
+    case "financial":
+      return "Financial spreadsheets";
+    case "project":
+      return "Project tracking";
+    case "other":
+      return "Other spreadsheets";
+    default:
+      return "All spreadsheets";
+  }
+});
+
+function buildContextMenuActions({
+  selectedIds,
+  selectedFiles: selectedFileItems,
+  close,
+}: ContextMenuBuilderContext): ContextMenuAction[] {
+  const numSelected = selectedIds.length;
+  if (numSelected === 0) return [];
+
+  const hasFiles = selectedFileItems.some((file) => file && !file.is_folder);
+
+  const actions: ContextMenuAction[] = [];
+
+  if (numSelected === 1) {
+    actions.push(
+      {
+        label: "Open",
+        icon: FolderOpen,
+        action: () => {
+          const id = selectedIds[0];
+          if (id) {
+            openFile(id);
+          }
+          close();
+        },
+      },
+      {
+        label: "Rename",
+        icon: Edit,
+        action: () => {
+          handleRename();
+          close();
+        },
+      },
+    );
+  }
+
+  if (hasFiles) {
+    actions.push({
+      label: `Download ${numSelected > 1 ? `(${numSelected})` : ""}`.trim(),
+      icon: Download,
+      action: () => {
+        handleBulkDownload();
+        close();
+      },
+    });
+  }
+
+  actions.push({
+    label: `Delete ${numSelected > 1 ? `(${numSelected})` : ""}`.trim(),
+    icon: Trash2,
+    action: () => {
+      handleBulkDelete();
+      close();
+    },
+  });
+
+  if (numSelected === 1) {
+    actions.push({
+      label: "Share",
+      icon: Share2,
+      action: () => {
+        console.log("Share");
+        close();
+      },
+    });
+  }
+
+  return actions;
+}
+
+const {
+  selectedFiles,
+  isAllSelected,
+  isSomeSelected,
+  handleSelect,
+  toggleSelectAll,
+  clearSelection,
+  handleContextMenu: openContextMenu,
+  contextMenuState,
+  contextMenuActions,
+  closeContextMenu,
+} = useFileExplorer({
+  getFiles: () => sortedSpreadsheets.value,
+  buildContextMenuActions,
+});
 
 const spreadsheetTemplates = [
   { name: "Blank Spreadsheet", icon: defaultIcons.IconMicrosoftExcel },
@@ -463,49 +505,206 @@ const spreadsheetTemplates = [
 ];
 
 // Filter spreadsheets (xlsx, xls, csv, etc.)
+const spreadsheetTypeGroups: Record<Exclude<SheetFilter, "all">, string[]> = {
+  financial: ["xlsx", "xls", "csv", "tsv"],
+  project: ["ods", "xlsm", "xlsb"],
+  other: ["numbers", "gsheet"],
+};
+
+const spreadsheetTypes = computed(() => {
+  const types = new Set<string>();
+  Object.values(spreadsheetTypeGroups).forEach(group => group.forEach(type => types.add(type)));
+  return Array.from(types);
+});
+
+const folderItems = computed(() =>
+  fileStore.allFiles
+    .filter((file) => file.is_folder)
+    .sort((a, b) => (a.title || "").localeCompare(b.title || "")),
+);
+
 const spreadsheetFiles = computed(() => {
   return fileStore.allFiles.filter((file) => {
     if (file.is_folder) return false;
 
-    const spreadsheetTypes = ["xlsx", "xls", "csv", "ods", "tsv", "xlsm", "xlsb"];
-    return file.file_type && spreadsheetTypes.includes(file.file_type.toLowerCase());
+    const type = file.file_type?.toLowerCase();
+    if (!type) return false;
+    return spreadsheetTypes.value.includes(type);
   });
 });
 
-const sortedSpreadsheets = computed(() => {
-  const sortFn = (a: FileData, b: FileData) => {
-    if (sortBy.value === "name" && a.title && b.title) {
-      return a.title.localeCompare(b.title);
-    } else if (sortBy.value === "date" && a.last_viewed && b.last_viewed) {
-      return new Date(b.last_viewed).getTime() - new Date(a.last_viewed).getTime();
+const getSpreadsheetCategory = (fileType?: string | null): SheetFilter => {
+  const type = fileType?.toLowerCase();
+  if (!type) return "other";
+  if (spreadsheetTypeGroups.financial.includes(type)) return "financial";
+  if (spreadsheetTypeGroups.project.includes(type)) return "project";
+  return "other";
+};
+
+const filteredSpreadsheets = computed(() => {
+  let files = [...spreadsheetFiles.value];
+
+  if (currentFilter.value !== "all") {
+    files = files.filter(file => getSpreadsheetCategory(file.file_type) === currentFilter.value);
+  }
+
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase();
+    files = files.filter(file => {
+      const title = file.title?.toLowerCase() || "";
+      const name = file.file_name?.toLowerCase() || "";
+      return title.includes(query) || name.includes(query);
+    });
+  }
+
+  return files;
+});
+
+const sortedSpreadsheetFiles = computed(() => {
+  const files = [...filteredSpreadsheets.value];
+
+  if (sortBy.value === "date") {
+    return files.sort((a, b) => {
+      const aTime = new Date(a.last_viewed || a.updated_at || a.created_at || 0).getTime();
+      const bTime = new Date(b.last_viewed || b.updated_at || b.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+  }
+
+  return files.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+});
+
+const sortedSpreadsheets = computed(() => [...folderItems.value, ...sortedSpreadsheetFiles.value]);
+
+const sortOptions: SortOption[] = [
+  { value: "name", label: "Name" },
+  { value: "date", label: "Date" },
+];
+
+const sortLabel = computed(() => (sortBy.value === "date" ? "Date" : "Name"));
+
+const filterOptions = computed<FilterOption[]>(() => [
+  { key: "all", label: "All", value: "all", icon: TableIcon, active: currentFilter.value === "all" },
+  { key: "financial", label: "Financial", value: "financial", icon: FileSpreadsheet, active: currentFilter.value === "financial" },
+  { key: "project", label: "Project", value: "project", icon: FileSpreadsheet, active: currentFilter.value === "project" },
+  { key: "other", label: "Other", value: "other", icon: TableIcon, active: currentFilter.value === "other" },
+]);
+
+const activeFilterLabel = computed(() => {
+  return filterOptions.value.find((option) => option.value === currentFilter.value)?.label || "All";
+});
+
+const viewControls = computed<ViewModeOption[]>(() => [
+  { value: "grid", icon: Grid, label: "Grid", active: viewMode.value === "grid" },
+  { value: "list", icon: List, label: "List", active: viewMode.value === "list" },
+  { value: "thumbnail", icon: LayoutGrid, label: "Thumbnail", active: viewMode.value === "thumbnail" },
+]);
+
+const actionIconClass = computed(
+  () =>
+    `relative group rounded-full transition-all duration-200 shrink-0 ${
+      theme.isDark.value ? "hover:bg-gray-700" : "hover:bg-gray-100"
+    }`,
+);
+
+const firstSelectedId = computed(() =>
+  selectedFiles.value.size > 0 ? Array.from(selectedFiles.value)[0] : null,
+);
+
+const topBarActions = computed(() => {
+  const actions = [
+    {
+      key: "create-folder",
+      icon: FolderPlusIcon,
+      component: Button,
+      props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+      onClick: createNewFolder,
+    },
+    {
+      key: "upload",
+      icon: Upload,
+      component: Button,
+      props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+      onClick: openUploadDialog,
+    },
+    {
+      key: "new-spreadsheet",
+      component: "div",
+      slot: "new-spreadsheet",
+    },
+  ];
+
+  if (selectedFiles.value.size > 0) {
+    if (selectedFiles.value.size === 1 && firstSelectedId.value) {
+      actions.push(
+        {
+          key: "open",
+          icon: FolderOpen,
+          component: Button,
+          props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+          onClick: () => openFile(firstSelectedId.value as string),
+        },
+        {
+          key: "rename",
+          icon: Edit,
+          component: Button,
+          props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+          onClick: handleRename,
+        },
+      );
     }
-    return 0;
-  };
 
-  return [...spreadsheetFiles.value].sort(sortFn);
-});
-
-// Select all functionality
-const isAllSelected = computed(() => {
-  return (
-    spreadsheetFiles.value.length > 0 &&
-    spreadsheetFiles.value.every((file) => selectedFiles.value.has(file.id || ""))
-  );
-});
-
-const isSomeSelected = computed(() => {
-  return selectedFiles.value.size > 0 && !isAllSelected.value;
-});
-
-function toggleSelectAll() {
-  if (isAllSelected.value) {
-    selectedFiles.value.clear();
-  } else {
-    selectedFiles.value = new Set(
-      spreadsheetFiles.value.map((file) => file.id || "").filter(Boolean)
+    actions.push(
+      {
+        key: "download",
+        icon: Download,
+        component: Button,
+        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        onClick: handleBulkDownload,
+      },
+      {
+        key: "delete",
+        icon: Trash2,
+        component: Button,
+        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        onClick: handleBulkDelete,
+      },
+      {
+        key: "clear",
+        icon: X,
+        component: Button,
+        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        onClick: () => clearSelection(),
+      },
     );
   }
-}
+
+  return actions;
+});
+
+const handleFilter = (filter: SheetFilter) => {
+  currentFilter.value = filter;
+  clearSelection();
+};
+
+const handleSort = (sort: SheetSort) => {
+  sortBy.value = sort;
+  clearSelection();
+};
+
+const handleViewChange = (mode: SheetViewMode) => {
+  viewMode.value = mode;
+};
+
+const handleNavigateUp = async () => {
+  clearSelection();
+  await fileStore.goUpOneLevel();
+};
+
+const handleBreadcrumbNavigate = async (index: number) => {
+  clearSelection();
+  await fileStore.navigateToBreadcrumb(index);
+};
 
 function createNewSpreadsheet(template: string) {
   if (template.toLowerCase().includes("blank")) {
@@ -515,56 +714,50 @@ function createNewSpreadsheet(template: string) {
   }
 }
 
-function createNewFolder() {
-  // Implement folder creation for spreadsheets
-  console.log("Create new folder in spreadsheets");
+async function createNewFolder() {
+  try {
+    const result = await fileStore.makeFolder({
+      title: "New Folder",
+      is_folder: true,
+      folder_id: fileStore.currentFolderId,
+      file_type: "folder",
+    } as FileData);
+    if (result?.id) {
+      toast.success("Folder created");
+      await fileStore.openFolder(result.folder_id ?? null);
+    }
+  } catch (error) {
+    console.error("Error creating spreadsheet folder:", error);
+    toast.error("Failed to create folder");
+  }
 }
 
 function openUploadDialog() {
   isUploadDialogOpen.value = true;
 }
 
-function handleUploadComplete(files: any[]) {
+async function handleUploadComplete(files: any[]) {
   console.log("Upload completed:", files);
   toast.success(
     `Successfully uploaded ${files.length} file${files.length !== 1 ? "s" : ""}`
   );
+  await fileStore.openFolder(fileStore.currentFolderId);
 }
 
-function handleSelect(id: string | undefined, event?: MouseEvent) {
-  if (!id) return;
-
-  // If Ctrl/Cmd is held, toggle selection of this item
-  if (event?.ctrlKey || event?.metaKey) {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
-    } else {
-      selectedFiles.value.add(id);
-    }
+async function openFile(id: string) {
+  const file = fileStore.allFiles.find((f) => f.id === id);
+  if (file?.is_folder) {
+    clearSelection();
+    await fileStore.openFolder(id);
+    return;
   }
-  // If Shift is held, select range (basic implementation)
-  else if (event?.shiftKey && selectedFiles.value.size > 0) {
-    // For now, just add to selection - you could implement range selection later
-    selectedFiles.value.add(id);
-  }
-  // Normal click - toggle individual selection (allows building selection)
-  else {
-    if (selectedFiles.value.has(id)) {
-      selectedFiles.value.delete(id);
-    } else {
-      selectedFiles.value.add(id);
-    }
-  }
-}
-
-function openFile(id: string) {
   router.push(`/sheets/${id}`);
 }
 
 async function handleBulkDelete() {
   try {
     const promises = Array.from(selectedFiles.value).map((id) =>
-      fileStore.deleteFile(id)
+      fileStore.moveToTrash(id)
     );
     await Promise.all(promises);
     selectedFiles.value.clear();
@@ -598,10 +791,26 @@ function handleRename() {
 onMounted(async () => {
   document.title = "Sheets";
 
+  document.addEventListener("click", handleOutsideClick);
+
   if (fileStore.allFiles.length === 0) {
     await fileStore.loadDocuments();
   }
 });
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleOutsideClick);
+});
+
+function handleOutsideClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest(".file-item") && !target.closest(".context-menu")) {
+    clearSelection();
+  }
+  if (!target.closest("#context-menu")) {
+    closeContextMenu();
+  }
+}
 </script>
 
 <style scoped>

@@ -22,13 +22,14 @@ import RunDoc from './views/RunDoc.vue'
 import MediaViewer from './views/MediaViewer.vue'
 import Sheets from './views/Sheets.vue'
 import Documents from './views/Documents.vue'
+import Forms from './views/Forms.vue'
 import Bin from './views/Bin.vue'
 import Login from './views/Login.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
 // Import utils as needed
 import Editor from './components/forms/Editor.vue'
-import Forms from './views/Forms.vue'
+import FilePicker from './views/FilePicker.vue'
 import { FileData } from './types'
 
 const routes = [
@@ -58,6 +59,7 @@ const routes = [
       { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },
+      { path: 'picker', name: 'file-picker', component: FilePicker },
       { path: 'media', name: 'media', component: () => import('./views/Media.vue') },
       { path: 'import/:id', name: 'import', component: Home },
       { path: '', name: 'home', component: Home },
@@ -149,7 +151,7 @@ function onFileDelete(fileInfo: any): void {
     }
     if (id) {
       // fire and forget to avoid returning a promise
-      documentStore.deleteFile(id).catch((e: any) => console.warn('onFileDelete delete failed:', e));
+      documentStore.moveToTrash(id).catch((e: any) => console.warn('onFileDelete delete failed:', e));
     }
   } catch (e) {
     console.warn('onFileDelete failed:', e);

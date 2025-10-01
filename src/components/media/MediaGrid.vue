@@ -1,43 +1,25 @@
 <template>
   <div class="flex-1 overflow-hidden">
     <!-- Thumbnail View -->
-    <div v-if="viewMode === 'thumbnail'" :class="cn(
-      'grid gap-4 p-6 overflow-y-auto min-h-0',
-      gridSize === 'small' ? 'grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12' :
-      gridSize === 'medium' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' :
-      'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-    )" style="height: calc(100vh - 200px);">
+    <div
+      v-if="viewMode === 'thumbnail'"
+      :class="cn(
+        'grid gap-4 p-6 overflow-y-auto min-h-0',
+        gridSize === 'small'
+          ? 'grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12'
+          : gridSize === 'medium'
+            ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+            : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+      )"
+      style="height: calc(100vh - 200px);"
+    >
       <div
         v-for="file in mediaFiles"
         :key="file.id"
         class="w-full min-w-0"
         @mouseenter="showCheckboxes = true"
         @mouseleave="showCheckboxes = false"
-      >
-        <MediaPreview
-          :file="file"
-          :size="gridSize"
-          :is-selected="selectedFiles.has(file.id || '')"
-          :show-checkbox="showCheckboxes || selectedFiles.has(file.id || '')"
-          @select="handleSelect"
-          @preview="handlePreview"
-        />
-      </div>
-    </div>
-
-    <!-- Grid View -->
-    <div v-else-if="viewMode === 'grid'" :class="cn(
-      'grid gap-3 p-6 overflow-y-auto min-h-0',
-      gridSize === 'small' ? 'grid-cols-6 md:grid-cols-8 lg:grid-cols-10' :
-      gridSize === 'medium' ? 'grid-cols-4 md:grid-cols-6 lg:grid-cols-8' :
-      'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-    )" style="height: calc(100vh - 200px);">
-      <div
-        v-for="file in mediaFiles"
-        :key="file.id"
-        class="w-full min-w-0"
-        @mouseenter="showCheckboxes = true"
-        @mouseleave="showCheckboxes = false"
+        @contextmenu.prevent.stop="handleContextMenu($event, file)"
       >
         <MediaPreview
           :file="file"
@@ -79,6 +61,7 @@
             selectedFiles.has(file.id || '') ? 'bg-primary-50 dark:bg-primary-950/20' : ''
           )"
           @click="handleSelect(file.id, $event)"
+          @contextmenu.prevent.stop="handleContextMenu($event, file)"
         >
           <!-- Checkbox -->
           <div class="col-span-1 flex items-center justify-center">
@@ -240,6 +223,7 @@ const emit = defineEmits<{
   rename: [file: FileData]
   delete: [file: FileData]
   'select-all': [selected: boolean]
+  'context-menu': [payload: { id: string; x: number; y: number; file: FileData }]
   upload: []
 }>()
 
@@ -279,5 +263,18 @@ const handleRename = (file: FileData) => {
 
 const handleDelete = (file: FileData) => {
   emit('delete', file)
+}
+
+const handleContextMenu = (event: MouseEvent, file: FileData) => {
+  if (!file.id) return
+
+  emit('select', file.id, event)
+
+  emit('context-menu', {
+    id: file.id,
+    x: event.clientX,
+    y: event.clientY,
+    file
+  })
 }
 </script>

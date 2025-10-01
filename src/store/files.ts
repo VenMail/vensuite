@@ -26,12 +26,18 @@ export const useFileStore = defineStore("files", {
   state: () => ({
     allFiles: [] as FileData[],
     recentFiles: [] as FileData[],
+    currentFolderId: null as string | null,
+    currentFolderTitle: "All Files",
+    breadcrumbs: [{ id: null as string | null, title: "All Files" }],
     cachedDocuments: new Map<string, { data: FileData; timestamp: number }>(),
     pendingChanges: new Map<string, { data: FileData; attempts: number }>(),
     syncStatus: new Map<string, 'pending' | 'syncing' | 'failed' | 'synced'>(),
     isOnline: navigator.onLine,
     isSyncing: false,
     lastError: null as string | null,
+    trashItems: [] as FileData[],
+    isLoadingTrash: false,
+    trashError: null as string | null,
   }),
 
   actions: {
@@ -129,9 +135,27 @@ export const useFileStore = defineStore("files", {
         isDirty: false,
         url: !!responseData.file_url, // Convert to boolean - true if URL exists
         thumbnail_url: responseData.thumbnail_url || undefined,
+        source: undefined,
+        mime_type: undefined
       };
 
       return file;
+    },
+
+    prepareTrashItem(raw: any): FileData {
+      const normalized = this.normalizeDocumentShape(raw);
+      normalized.title = this.computeTitle(raw);
+      normalized.file_url = raw.file_url ? this.constructFullUrl(raw.file_url) : undefined;
+      normalized.file_size = raw.file_size;
+      normalized.mime_type = raw.mime_type;
+      normalized.source = raw.source;
+      normalized.deleted_at = raw.deleted_at || raw.updated_at;
+      normalized.created_at = raw.created_at;
+      normalized.updated_at = raw.updated_at;
+      normalized.url = !!raw.file_url;
+      normalized.isNew = false;
+      normalized.isDirty = false;
+      return normalized;
     },
 
     /**
@@ -359,6 +383,7 @@ export const useFileStore = defineStore("files", {
       }
     },
 
+    
     /** Add a file to the store */
     addFile(file: FileData) {
       // Check if file already exists
@@ -379,6 +404,103 @@ export const useFileStore = defineStore("files", {
 
       // Cache the file
       this.cacheDocument(file);
+    },
+
+    async fetchTrashItems(force = false): Promise<FileData[]> {
+      if (!force && this.trashItems.length && !this.trashError) {
+        return this.trashItems;
+      }
+      try {
+        this.isLoadingTrash = true;
+        this.trashError = null;
+        const response = await axios.get(`${FILES_ENDPOINT}/trash`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        const items = (response.data?.data || []).map((item: any) => this.prepareTrashItem(item));
+        this.trashItems = items;
+        return items;
+      } catch (error: any) {
+        const message = error?.response?.data?.message || error?.message || 'Failed to load trash items';
+        this.trashError = message;
+        throw new Error(message);
+      } finally {
+        this.isLoadingTrash = false;
+      }
+    },
+
+    async restoreFromTrash(id: string): Promise<FileData | null> {
+      try {
+        const response = await axios.patch(`${FILES_ENDPOINT}/${id}/restore`, {}, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        const data = response.data?.data;
+        this.trashItems = this.trashItems.filter(item => item.id !== id);
+        if (data?.id) {
+          const restored = this.prepareTrashItem(data);
+          restored.content = data.content || data.contents || this.getDefaultContent(restored.file_type);
+          this.cacheDocument(restored);
+          this.updateFiles(restored);
+          return restored;
+        }
+        return null;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async deleteFromTrash(id: string): Promise<boolean> {
+      try {
+        await axios.delete(`${FILES_ENDPOINT}/${id}`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+        this.trashItems = this.trashItems.filter(item => item.id !== id);
+        this.cachedDocuments.delete(id);
+        this.pendingChanges.delete(id);
+        this.syncStatus.delete(id);
+        this.allFiles = this.allFiles.filter(f => f.id !== id);
+        this.recentFiles = this.recentFiles.filter(f => f.id !== id);
+        return true;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    async restoreMany(ids: string[]): Promise<{ restored: string[]; failed: { id: string; error: any }[] }> {
+      const results = await Promise.allSettled(ids.map(id => this.restoreFromTrash(id)));
+      const restored: string[] = [];
+      const failed: { id: string; error: any }[] = [];
+      results.forEach((result, index) => {
+        const id = ids[index];
+        if (result.status === 'fulfilled') {
+          restored.push(id);
+        } else {
+          failed.push({ id, error: result.reason });
+        }
+      });
+      return { restored, failed };
+    },
+
+    async deleteMany(ids: string[]): Promise<{ deleted: string[]; failed: { id: string; error: any }[] }> {
+      const results = await Promise.allSettled(ids.map(id => this.deleteFromTrash(id)));
+      const deleted: string[] = [];
+      const failed: { id: string; error: any }[] = [];
+      results.forEach((result, index) => {
+        const id = ids[index];
+        if (result.status === 'fulfilled') {
+          deleted.push(id);
+        } else {
+          failed.push({ id, error: result.reason });
+        }
+      });
+      return { deleted, failed };
+    },
+
+    async emptyTrash(): Promise<{ deleted: string[]; failed: { id: string; error: any }[] }> {
+      const ids = this.trashItems.map(item => item.id).filter((id): id is string => !!id);
+      if (!ids.length) {
+        return { deleted: [], failed: [] };
+      }
+      return this.deleteMany(ids);
     },
 
     /** Check if a file is a media file */
@@ -516,6 +638,8 @@ export const useFileStore = defineStore("files", {
         isDirty: true,
         url: false,
         thumbnail_url: undefined,
+        source: undefined,
+        mime_type: undefined
       };
 
       this.saveToLocalCache(localDoc);
@@ -896,11 +1020,16 @@ export const useFileStore = defineStore("files", {
       return offlineDocs;
     },
 
-    /** Load all documents from API */
-    async loadDocuments(doNotMutateStore: boolean = false): Promise<FileData[]> {
+    /** Load documents from API, optionally scoped to folder */
+    async loadDocuments(doNotMutateStore: boolean = false, folderId?: string | null): Promise<FileData[]> {
       try {
+        const params: Record<string, string> = {};
+        if (folderId) {
+          params.folder_id = folderId;
+        }
         const response = await axios.get(FILES_ENDPOINT, {
           headers: { Authorization: `Bearer ${this.getToken()}` },
+          params,
         });
         const docs = response.data.data as FileData[];
         const processedDocs = docs.map((doc) => {
@@ -921,6 +1050,11 @@ export const useFileStore = defineStore("files", {
         // Optionally update store with processed documents
         if (!doNotMutateStore) {
           this.allFiles = processedDocs;
+          this.currentFolderId = folderId ?? null;
+          if (!folderId) {
+            this.currentFolderTitle = "All Files";
+            this.breadcrumbs = [{ id: null, title: "All Files" }];
+          }
         }
         // After fetching server files, reconcile any offline-local files not present on server
         try {
@@ -937,6 +1071,44 @@ export const useFileStore = defineStore("files", {
         this.allFiles = offlineDocs;
         return offlineDocs;
       }
+    },
+
+    /** Navigate into a folder and update breadcrumb trail */
+    async openFolder(folderId: string | null) {
+      if (!folderId) {
+        await this.loadDocuments(false, null);
+        return;
+      }
+
+      const docs = await this.loadDocuments(false, folderId);
+
+      const folder = docs.find((doc) => doc.id === folderId && doc.is_folder);
+      if (folder && folder.title) {
+        this.currentFolderTitle = folder.title;
+      } else {
+        const fetched = await this.loadFromAPI(folderId);
+        this.currentFolderTitle = fetched?.title || "Folder";
+      }
+
+      const exists = this.breadcrumbs.find((crumb) => crumb.id === folderId);
+      if (!exists) {
+        this.breadcrumbs = [...this.breadcrumbs, { id: folderId, title: this.currentFolderTitle }];
+      }
+    },
+
+    /** Navigate to breadcrumb index */
+    async navigateToBreadcrumb(index: number) {
+      const target = this.breadcrumbs[index];
+      this.breadcrumbs = this.breadcrumbs.slice(0, index + 1);
+      this.currentFolderId = target?.id ?? null;
+      this.currentFolderTitle = target?.title || "All Files";
+      await this.loadDocuments(false, this.currentFolderId);
+    },
+
+    /** Go up one level from current folder */
+    async goUpOneLevel() {
+      if (this.breadcrumbs.length <= 1) return;
+      await this.navigateToBreadcrumb(this.breadcrumbs.length - 2);
     },
 
     /** Reconcile offline local documents: push any local-only docs to server and replace IDs */
@@ -1000,6 +1172,22 @@ export const useFileStore = defineStore("files", {
         console.error("Error fetching files:", error);
         this.lastError = "Failed to fetch files";
         return [];
+      }
+    },
+
+    async moveToTrash(id: string): Promise<boolean> {
+      try {
+        const response = await axios.patch(`${FILES_ENDPOINT}/${id}/trash`, {}, {
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        });
+        if (response.status === 200 || response.status === 201) {
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error moving to trash:", error);
+        this.lastError = "Failed to move to trash";
+        return false;
       }
     },
 
@@ -1081,41 +1269,16 @@ export const useFileStore = defineStore("files", {
       setInterval(() => this.isOnline && this.syncPendingChanges(), SYNC_INTERVAL);
     },
 
-    /** Load only media files from API */
-    async loadMediaFiles(): Promise<FileData[]> {
+    /** Load only media files, respecting current folder */
+    async loadMediaFiles(folderId?: string | null): Promise<FileData[]> {
       try {
-        // First try to load all documents since API may not support media_only
-        const response = await axios.get(FILES_ENDPOINT, {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
-        });
-        const docs = response.data.data as FileData[];
-        const processedDocs = docs.map((doc) => ({
-          ...doc,
-          id: doc.id, // Use server ID directly
-          content: doc.content || this.getDefaultContent(doc.file_type),
-          title: doc.title || doc.file_name || 'Untitled',
-          file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
-          isNew: false,
-          isDirty: false
-        }));
-
-        // Filter for media files only
-        const mediaFiles = processedDocs.filter(doc => this.isMediaFile(doc));
-
-        // Update store with all processed documents
-        this.allFiles = processedDocs;
-
-        console.log('Loaded media files:', mediaFiles.length, 'out of', processedDocs.length, 'total files');
-        console.log('Media files found:', mediaFiles.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name })));
-        console.log('All files found:', processedDocs.map(f => ({ name: f.title, type: f.file_type, file_name: f.file_name, is_folder: f.is_folder })));
+        const docs = await this.loadDocuments(false, folderId ?? this.currentFolderId ?? null);
+        const mediaFiles = docs.filter((doc) => this.isMediaFile(doc));
         return mediaFiles;
       } catch (error) {
         console.error("Error loading media files:", error);
         this.lastError = "Failed to load media files";
-
-        // Fallback to filtering existing files
-        const mediaFiles = this.allFiles.filter(file => this.isMediaFile(file));
-        return mediaFiles;
+        return this.allFiles.filter((file) => this.isMediaFile(file));
       }
     },
 
@@ -1151,28 +1314,6 @@ export const useFileStore = defineStore("files", {
       }
     },
 
-    /** Move file to trash (soft delete) - matches your backend PATCH /app-files/{id}/trash */
-    async moveToTrash(id: string): Promise<boolean> {
-      try {
-        const response = await axios.patch(
-          `${FILES_ENDPOINT}/${id}/trash`,
-          {},
-          { headers: { Authorization: `Bearer ${this.getToken()}` } }
-        );
-
-        if (response.status === 200 || response.status === 201) {
-          // Remove from allFiles since it's now in trash
-          this.allFiles = this.allFiles.filter((f) => f.id !== id);
-          this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error("Error moving to trash:", error);
-        this.lastError = "Failed to move to trash";
-        return false;
-      }
-    },
 
     /** Restore a file from trash - matches your backend PATCH /app-files/{id}/restore */
     async restoreFile(id: string): Promise<boolean> {
