@@ -67,6 +67,7 @@
     "@tiptap/starter-kit": "^2.12.0",
     "@tiptap/suggestion": "^2.12.0",
     "@tiptap/vue-3": "^2.12.0",
+    "@tiptap/y-tiptap": "^3.0.0",
     "@types/jspdf": "^2.0.0",
     "@umoteam/editor": "^8.1.0",
     "@univerjs-pro/sheets-exchange-client": "^0.10.7",
@@ -128,6 +129,9 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "tippy.js": "^6.3.7",
+    "tiptap-image-plus": "^1.0.5",
+    "tiptap-pagination-plus": "^1.1.8",
+    "tiptap-table-plus": "^2.0.6",
     "ts-lint": "^4.5.1",
     "ts-loader": "^9.5.2",
     "ts-morph": "^24.0.0",
@@ -152,6 +156,7 @@
     "vuex": "^4.1.0",
     "xlsx": "^0.18.5",
     "y-prosemirror": "1.2.12",
+    "y-websocket": "^3.0.0",
     "yjs": "^13.6.26"
   },
   "devDependencies": {

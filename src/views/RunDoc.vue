@@ -14,6 +14,9 @@ import { useDebounceFn, useFavicon } from "@vueuse/core";
 import { useRoute, useRouter } from "vue-router";
 //@ts-ignore
 import { UmoEditor } from "@umoteam/editor";
+import { PaginationPlus } from "tiptap-pagination-plus";
+import { PaginationTable } from "tiptap-table-plus";
+import { ImagePlus } from "tiptap-image-plus";
 import { useFileStore } from "@/store/files";
 import { FileData } from "@/types";
 import Button from "@/components/ui/button/Button.vue";
@@ -21,6 +24,7 @@ import UserProfile from "@/components/layout/UserProfile.vue";
 import UnifiedMenubar from "@/components/menu/UnifiedMenubar.vue";
 import { createYSocketProvider } from "@/lib/yProviderCustom";
 import { useAuthStore } from "@/store/auth";
+import VenEditor from "@/components/forms/VenEditor.vue";
 import {
   Dialog,
   DialogContent,
@@ -33,15 +37,38 @@ import { RESUME_TEMPLATE, LETTER_TEMPLATE, DEFAULT_BLANK_DOCUMENT_TEMPLATE } fro
 import { IWebsocketService, Message, useWebSocket, WebSocketService } from "@/lib/wsService";
 import ShareCard from '@/components/ShareCard.vue'
 import axios from 'axios'
- 
 
-// Router setup
+const { TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus } = PaginationTable;
+
 const route = useRoute();
 const router = useRouter();
 const fileStore = useFileStore();
 const authStore = useAuthStore();
 
-// Reactive references
+const useVenEditor = computed(() => import.meta.env.VITE_USE_VEN_EDITOR === "true");
+
+const paginationExtensions = [
+  TablePlus,
+  TableRowPlus,
+  TableCellPlus,
+  TableHeaderPlus,
+  PaginationPlus.configure({
+    pageHeight: 842,
+    pageGap: 20,
+    pageBreakBackground: "#F7F7F8",
+    pageHeaderHeight: 24,
+    pageFooterHeight: 24,
+    footerLeft: "Page {page}",
+    marginTop: 30,
+    marginBottom: 48,
+    contentMarginTop: 24,
+    contentMarginBottom: 24,
+  }),
+  ImagePlus.configure({
+    inline: false,
+  }),
+];
+
 const title = ref("New Document");
 const editableTitle = ref(title.value);
 const isSettingCursor = ref(false);
@@ -482,9 +509,9 @@ const options = ref({
   // v8+ configuration per docs
   // https://dev.umodoc.com/en/docs/next/changelog (v8.0+)
   // https://editor.umodoc.com/en/docs/options (toolbar keys removed/changed)
-  extensions: [],
+  extensions: paginationExtensions,
   // Match previous behavior by disabling legacy items formerly in toolbar.disableMenuItems
-  disableExtensions: ['chineseDate', 'chinese-case', 'break-marks', 'line-breaks'],
+  disableExtensions: ['chineseDate', 'chinese-date', 'chinese-case', 'break-marks', 'line-breaks', 'page-break'],
   document: {
     title: "Untitled Document",
     content: DEFAULT_BLANK_DOCUMENT_TEMPLATE,
@@ -1403,11 +1430,25 @@ function downloadFile() {
 
     <!-- Editor when access is allowed -->
     <div v-else class="relative w-full h-full">
-      <umo-editor 
-        ref="editorRef" 
-        v-bind="options" 
-        @saved="handleSavedEvent" 
-        @created="handleEditorCreated" 
+      <component
+        :is="useVenEditor ? VenEditor : 'umo-editor'"
+        ref="editorRef"
+        v-bind="useVenEditor ? undefined : options"
+        v-if="!useVenEditor"
+        @saved="handleSavedEvent"
+        @created="handleEditorCreated"
+      />
+      <VenEditor
+        v-else
+        ref="editorRef"
+        :modelValue="currentDoc?.content || DEFAULT_BLANK_DOCUMENT_TEMPLATE"
+        :title="title"
+        :editable="!options.document.readOnly"
+        :pagination="paginationConfig"
+        @update:modelValue="handleVenEditorUpdate"
+        @update:title="handleVenTitleUpdate"
+        @transaction="handleVenTransaction"
+        @ready="handleVenReady"
       />
     </div>
     <div v-if="!accessDenied && isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">
