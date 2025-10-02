@@ -664,9 +664,6 @@ const highlightColors = [
   '#fff7ed',
 ]
 
-const customTextColor = ref('#111827')
-const customHighlightColor = ref('#fef08a')
-
 const isTableDialogOpen = ref(false)
 const tableRows = ref('3')
 const tableColumns = ref('3')
@@ -917,14 +914,6 @@ const onFontSizeChange = (event: Event) => {
 const applyHighlightColor = (color: string) => {
   if (!editor.value || !color) return
   editor.value.chain().focus().setHighlight({ color }).run()
-}
-
-const clearFontColor = () => {
-  editor.value?.chain().focus().unsetColor().run()
-}
-
-const clearHighlight = () => {
-  editor.value?.chain().focus().unsetHighlight().run()
 }
 
 const openLinkDialogFromBubble = () => {
