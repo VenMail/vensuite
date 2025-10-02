@@ -20,75 +20,79 @@
         <button class="ven-editor__page-settings-toggle" @click="isPageSettingsOpen = !isPageSettingsOpen" :title="isPageSettingsOpen ? 'Hide page settings' : 'Show page settings'">
           <span class="settings-icon">⚙</span>
           <span class="toggle-text">Page Settings</span>
-          <span class="caret-icon" :class="{ 'is-open': isPageSettingsOpen }">▼</span>
         </button>
         
         <transition name="settings-expand">
           <div v-if="isPageSettingsOpen" class="ven-editor__page-settings-panel">
             <div class="ven-editor__page-settings-controls">
-          <div class="ven-editor__setting-group">
-            <label class="ven-editor__setting-label">Margin:</label>
-            <input
-              type="range"
-              min="0"
-              max="5"
-              step="0.1"
-              :value="pageMargins.top"
-              @input="setUniformMargin($event)"
-              class="ven-editor__setting-slider"
-            />
-            <span class="ven-editor__setting-value">{{ pageMargins.top.toFixed(1) }}in ({{ (pageMargins.top * 2.54).toFixed(1) }}cm)</span>
-            <div class="ven-editor__preset-buttons">
-              <button @click="setMarginPreset(0.5)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(0.5) }">Narrow</button>
-              <button @click="setMarginPreset(1)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(1) }">Normal</button>
-              <button @click="setMarginPreset(1.5)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(1.5) }">Wide</button>
-              <button @click="setMarginPreset(2)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(2) }">Extra Wide</button>
+              <div class="ven-editor__setting-group">
+                <label class="ven-editor__setting-label">Margin:</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  :value="pageMargins.top"
+                  @input="setUniformMargin($event)"
+                  class="ven-editor__setting-slider"
+                />
+                <span class="ven-editor__setting-value">
+                  {{ pageMargins.top.toFixed(1) }}in ({{ (pageMargins.top * 2.54).toFixed(1) }}cm)
+                </span>
+                <div class="ven-editor__preset-buttons">
+                  <button @click="setMarginPreset(0.5)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(0.5) }">Narrow</button>
+                  <button @click="setMarginPreset(1)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(1) }">Normal</button>
+                  <button @click="setMarginPreset(1.5)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(1.5) }">Wide</button>
+                  <button @click="setMarginPreset(2)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(2) }">Extra Wide</button>
+                </div>
+              </div>
+              <div class="ven-editor__setting-group">
+                <label class="ven-editor__setting-label">Gap:</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="3"
+                  step="0.1"
+                  :value="pageGap"
+                  @input="setPageGap($event)"
+                  class="ven-editor__setting-slider"
+                />
+                <span class="ven-editor__setting-value">
+                  {{ pageGap.toFixed(1) }}cm ({{ (pageGap / 2.54).toFixed(2) }}in)
+                </span>
+                <div class="ven-editor__preset-buttons">
+                  <button @click="setGapPreset(0.3)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(0.3) }">Small</button>
+                  <button @click="setGapPreset(0.8)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(0.8) }">Normal</button>
+                  <button @click="setGapPreset(1.5)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(1.5) }">Large</button>
+                  <button @click="setGapPreset(2.5)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(2.5) }">Extra Large</button>
+                </div>
+              </div>
+              <div class="ven-editor__setting-group">
+                <label class="ven-editor__setting-label">Padding:</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="0.5"
+                  :value="pagePadding"
+                  @input="setPagePadding($event)"
+                  class="ven-editor__setting-slider"
+                />
+                <span class="ven-editor__setting-value">
+                  {{ pagePadding.toFixed(1) }}px ({{ (pagePadding / 37.8).toFixed(1) }}cm)
+                </span>
+                <div class="ven-editor__preset-buttons">
+                  <button @click="setPaddingPreset(2)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(2) }">Narrow</button>
+                  <button @click="setPaddingPreset(5)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(5) }">Normal</button>
+                  <button @click="setPaddingPreset(7.5)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(7.5) }">Wide</button>
+                  <button @click="setPaddingPreset(10)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(10) }">Extra Wide</button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="ven-editor__setting-group">
-            <label class="ven-editor__setting-label">Gap:</label>
-            <input
-              type="range"
-              min="0"
-              max="3"
-              step="0.1"
-              :value="pageGap"
-              @input="setPageGap($event)"
-              class="ven-editor__setting-slider"
-            />
-            <span class="ven-editor__setting-value">{{ pageGap.toFixed(1) }}cm ({{ (pageGap / 2.54).toFixed(2) }}in)</span>
-            <div class="ven-editor__preset-buttons">
-              <button @click="setGapPreset(0.3)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(0.3) }">Small</button>
-              <button @click="setGapPreset(0.8)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(0.8) }">Normal</button>
-              <button @click="setGapPreset(1.5)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(1.5) }">Large</button>
-              <button @click="setGapPreset(2.5)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(2.5) }">Extra Large</button>
-            </div>
-          </div>
-          <div class="ven-editor__setting-group">
-            <label class="ven-editor__setting-label">Padding:</label>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="0.5"
-              :value="pagePadding"
-              @input="setPagePadding($event)"
-              class="ven-editor__setting-slider"
-            />
-            <span class="ven-editor__setting-value">{{ pagePadding.toFixed(1) }}px ({{ (pagePadding / 37.8).toFixed(1) }}cm)</span>
-            <div class="ven-editor__preset-buttons">
-              <button @click="setPaddingPreset(2)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(2) }">Narrow</button>
-              <button @click="setPaddingPreset(5)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(5) }">Normal</button>
-              <button @click="setPaddingPreset(7.5)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(7.5) }">Wide</button>
-              <button @click="setPaddingPreset(10)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(10) }">Extra Wide</button>
-            </div>
-          </div>
-        </div>
           </div>
         </transition>
       </div>
     </header>
-
     <div class="ven-editor__workspace">
       <div class="ven-editor__page-container">
         <div class="ven-editor__page-shadow">
@@ -112,8 +116,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { Editor, EditorContent } from '@tiptap/vue-3'
-// Note: Using 'any' for editor type due to @tiptap/vue-3 type definition complexities
+import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import CharacterCount from '@tiptap/extension-character-count'

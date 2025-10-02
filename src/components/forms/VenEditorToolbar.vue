@@ -7,7 +7,7 @@
         :title="isExpanded ? 'Collapse toolbar' : 'Expand toolbar'"
         @click="handleToggleExpanded"
       >
-        <span class="crystal-icon">{{ isExpanded ? '◆' : '◇' }}</span>
+        <span class="crystal-icon">{{ isExpanded ? '▲' : '▼' }}</span>
       </button>
       <span class="ven-editor__toolbar-divider" />
 
@@ -482,6 +482,94 @@
       </template>
     </div>
   </div>
+
+  <BubbleMenu
+    v-if="editor?.isEditable"
+    :editor="editor"
+    :update-delay="150"
+    :should-show="shouldShowBubbleMenu"
+    :tippy-options="{ placement: 'top', offset: [0, 12], animation: 'shift-away', duration: [150, 100] }"
+  >
+    <div class="ven-editor__bubble-menu" role="toolbar" aria-label="Selection formatting toolbar">
+      <button
+        class="ven-editor__bubble-btn"
+        :class="{ 'is-active': editor?.isActive('bold') }"
+        type="button"
+        title="Bold"
+        @click="toggleMark('bold')"
+      >
+        B
+      </button>
+      <button
+        class="ven-editor__bubble-btn"
+        :class="{ 'is-active': editor?.isActive('italic') }"
+        type="button"
+        title="Italic"
+        @click="toggleMark('italic')"
+      >
+        I
+      </button>
+      <button
+        class="ven-editor__bubble-btn"
+        :class="{ 'is-active': editor?.isActive('underline') }"
+        type="button"
+        title="Underline"
+        @click="toggleMark('underline')"
+      >
+        U
+      </button>
+      <button
+        class="ven-editor__bubble-btn"
+        :class="{ 'is-active': editor?.isActive('code') }"
+        type="button"
+        title="Inline code"
+        @click="toggleInlineCode"
+      >
+        &lt;/&gt;
+      </button>
+      <button
+        class="ven-editor__bubble-btn"
+        :class="{ 'is-active': editor?.isActive('link') }"
+        type="button"
+        title="Link"
+        @click="openLinkDialogFromBubble"
+      >
+        🔗
+      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button class="ven-editor__bubble-btn" type="button" title="Selection colors">
+            🎨
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="ven-editor__color-menu" align="start">
+          <DropdownMenuLabel>Text</DropdownMenuLabel>
+          <div class="ven-editor__color-grid">
+            <button
+              v-for="color in extendedTextColors"
+              :key="`bubble-text-${color}`"
+              class="ven-editor__color-option"
+              :style="{ backgroundColor: color }"
+              type="button"
+              @click="applyFontColor(color)"
+            />
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Highlight</DropdownMenuLabel>
+          <div class="ven-editor__color-grid">
+            <button
+              v-for="color in highlightColors"
+              :key="`bubble-highlight-${color}`"
+              class="ven-editor__color-option"
+              :style="{ backgroundColor: color }"
+              type="button"
+              @click="applyHighlightColor(color)"
+            />
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  </BubbleMenu>
 </template>
 
 <script setup lang="ts">
@@ -498,6 +586,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { BubbleMenu } from '@tiptap/vue-3'
 
 type FontOption = {
   value: string
@@ -535,6 +631,41 @@ const {
 const selectedFontFamily = ref('')
 const selectedFontSize = ref('')
 const isLinkActive = ref(false)
+
+const extendedTextColors = [
+  '#111827',
+  '#1f2937',
+  '#374151',
+  '#dc2626',
+  '#ef4444',
+  '#f97316',
+  '#f59e0b',
+  '#22c55e',
+  '#10b981',
+  '#0ea5e9',
+  '#6366f1',
+  '#a855f7',
+  '#ec4899',
+  '#14b8a6',
+  '#94a3b8',
+  '#111111',
+  '#ffffff',
+]
+
+const highlightColors = [
+  '#fef08a',
+  '#fde68a',
+  '#fbcfe8',
+  '#bfdbfe',
+  '#c4b5fd',
+  '#c7d2fe',
+  '#bbf7d0',
+  '#fecdd3',
+  '#fff7ed',
+]
+
+const customTextColor = ref('#111827')
+const customHighlightColor = ref('#fef08a')
 
 const isTableDialogOpen = ref(false)
 const tableRows = ref('3')
@@ -641,6 +772,15 @@ watch(isLinkDialogOpen, (open) => {
   }
 })
 
+const shouldShowBubbleMenu = ({ editor: bubbleEditor, state }: any) => {
+  const { selection } = state
+  if (!bubbleEditor) return false
+  if (selection.empty) return false
+  if (!selection.content().size) return false
+  if (bubbleEditor.isActive('codeBlock')) return false
+  return true
+}
+
 const runEditorCommand = (command: 'undo' | 'redo') => {
   if (!editor.value) return
   const chain = editor.value.chain().focus()
@@ -713,10 +853,6 @@ const toggleHighlight = () => {
   editor.value?.chain().focus().toggleHighlight().run()
 }
 
-const toggleInlineCode = () => {
-  editor.value?.chain().focus().toggleCode().run()
-}
-
 const toggleTaskList = () => {
   editor.value?.chain().focus().toggleTaskList().run()
 }
@@ -729,8 +865,8 @@ const insertHorizontalRule = () => {
   editor.value?.chain().focus().setHorizontalRule().run()
 }
 
-const handleSave = () => {
-  emit('save')
+const toggleInlineCode = () => {
+  editor.value?.chain().focus().toggleCode().run()
 }
 
 const onFontFamilyChange = (event: Event) => {
@@ -776,6 +912,24 @@ const onFontSizeChange = (event: Event) => {
   }).run()
 
   selectedFontSize.value = ''
+}
+
+const applyHighlightColor = (color: string) => {
+  if (!editor.value || !color) return
+  editor.value.chain().focus().setHighlight({ color }).run()
+}
+
+const clearFontColor = () => {
+  editor.value?.chain().focus().unsetColor().run()
+}
+
+const clearHighlight = () => {
+  editor.value?.chain().focus().unsetHighlight().run()
+}
+
+const openLinkDialogFromBubble = () => {
+  if (!editor.value) return
+  isLinkDialogOpen.value = true
 }
 
 const submitTable = () => {
@@ -882,6 +1036,10 @@ const isActive = (name: string | Record<string, unknown>, attrs?: Record<string,
   return editor.value.isActive(name as any)
 }
 
+const handleSave = () => {
+  emit('save')
+}
+
 const handleToggleExpanded = () => {
   emit('toggle-expanded')
 }
@@ -898,38 +1056,16 @@ const handleExport = (format: string) => {
   emit('export', format)
 }
 
-const insertTable = () => {
-  editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-}
-
-const insertImage = () => {
-  const url = prompt('Enter image URL:')
-  if (url) {
-    editor.value?.chain().focus().setImage({ src: url }).run()
-  }
-}
-
-const insertLink = () => {
-  const url = prompt('Enter link URL:')
-  if (url) {
-    editor.value?.chain().focus().setLink({ href: url }).run()
-  }
-}
-
-const insertMath = () => {
-  editor.value?.chain().focus().insertMath().run()
-}
-
-const insertMathBlock = () => {
-  editor.value?.chain().focus().insertMathBlock().run()
-}
-
 const applyFontColor = (color: string) => {
   editor.value?.chain().focus().setColor(color).run()
 }
 
-const applyBackgroundColor = (color: string) => {
-  editor.value?.chain().focus().setBackgroundColor(color).run()
+const insertMath = () => {
+  editor.value?.chain().focus().insertContent('$x^2$').run()
+}
+
+const insertMathBlock = () => {
+  editor.value?.chain().focus().insertContent('$$\\int_0^1 x^2 dx$$').run()
 }
 </script>
 
@@ -1063,7 +1199,7 @@ const applyBackgroundColor = (color: string) => {
 /* --- Start of Crystal Orb Toggle Styles --- */
 .ven-editor__crystal-toggle {
   --orb-size: 40px;
-  --glow-color: rgba(102, 126, 234, 0.7);
+  --glow-color: rgba(155, 170, 233, 0.7);
   --glow-color-expanded: rgba(245, 87, 108, 0.6);
 
   width: var(--orb-size);
