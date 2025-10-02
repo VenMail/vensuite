@@ -12,11 +12,7 @@ import {
 } from "lucide-vue-next";
 import { useDebounceFn, useFavicon } from "@vueuse/core";
 import { useRoute, useRouter } from "vue-router";
-//@ts-ignore
-import { UmoEditor } from "@umoteam/editor";
-import { PaginationPlus } from "tiptap-pagination-plus";
-import { PaginationTable } from "tiptap-table-plus";
-import { ImagePlus } from "tiptap-image-plus";
+import type { Editor as TiptapEditor } from "@tiptap/core";
 import { useFileStore } from "@/store/files";
 import { FileData } from "@/types";
 import Button from "@/components/ui/button/Button.vue";
@@ -38,36 +34,27 @@ import { IWebsocketService, Message, useWebSocket, WebSocketService } from "@/li
 import ShareCard from '@/components/ShareCard.vue'
 import axios from 'axios'
 
-const { TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus } = PaginationTable;
-
 const route = useRoute();
 const router = useRouter();
 const fileStore = useFileStore();
 const authStore = useAuthStore();
 
-const useVenEditor = computed(() => import.meta.env.VITE_USE_VEN_EDITOR === "true");
+const paginationDefaults = {
+  pageHeight: 842,
+  pageGap: 20,
+  pageBreakBackground: "#F7F7F8",
+  pageHeaderHeight: 24,
+  pageFooterHeight: 24,
+  footerLeft: "Page {page}",
+  marginTop: 30,
+  marginBottom: 48,
+  contentMarginTop: 24,
+  contentMarginBottom: 24,
+};
 
-const paginationExtensions = [
-  TablePlus,
-  TableRowPlus,
-  TableCellPlus,
-  TableHeaderPlus,
-  PaginationPlus.configure({
-    pageHeight: 842,
-    pageGap: 20,
-    pageBreakBackground: "#F7F7F8",
-    pageHeaderHeight: 24,
-    pageFooterHeight: 24,
-    footerLeft: "Page {page}",
-    marginTop: 30,
-    marginBottom: 48,
-    contentMarginTop: 24,
-    contentMarginBottom: 24,
-  }),
-  ImagePlus.configure({
-    inline: false,
-  }),
-];
+const paginationConfig = computed(() => ({
+  ...paginationDefaults,
+}));
 
 const title = ref("New Document");
 const editableTitle = ref(title.value);
@@ -102,81 +89,7 @@ type SaveResponse = {
   error: string | null;
 };
 
-interface UmoSaveRequestDetail {
-  id?: string;
-  content: string;
-  title?: string;
-  resolve: (result: SaveResponse) => void;
-  claimed?: boolean;
-}
-
-const UMO_SAVE_EVENT = "umo-doc-save-request";
-
 let latestSavePromise: Promise<SaveResponse> | null = null;
-
-function completeSave(detail: UmoSaveRequestDetail, response: SaveResponse) {
-  try {
-    detail.claimed = true;
-    detail.resolve(response);
-  } catch (err) {
-    console.warn("Failed to resolve UMO save request", err);
-  }
-}
-
-function attachEditorUpdateListener(handler: () => void) {
-  try {
-    if (!editorRef.value?.on) return;
-    if (editorUpdateHandler && typeof editorRef.value?.off === "function") {
-      editorRef.value.off("update", editorUpdateHandler);
-    }
-    editorUpdateHandler = handler;
-    editorRef.value.on("update", editorUpdateHandler);
-  } catch (err) {
-    console.warn("Failed to attach editor listener", err);
-  }
-}
-
-function detachEditorUpdateListener() {
-  try {
-    if (editorUpdateHandler && typeof editorRef.value?.off === "function") {
-      editorRef.value.off("update", editorUpdateHandler);
-    }
-  } catch (err) {
-    console.warn("Failed to detach editor listener", err);
-  } finally {
-    editorUpdateHandler = null;
-  }
-}
-
-function handleUmoSaveEvent(event: Event) {
-  const customEvent = event as CustomEvent<UmoSaveRequestDetail>;
-  const detail = customEvent.detail;
-  if (!detail || detail.claimed) return;
-
-  const docId = (route.params.id as string) || currentDoc.value?.id;
-  if (detail.id && docId && detail.id !== docId) {
-    return;
-  }
-
-  const content = detail.content ?? editorRef.value?.getContent?.() ?? "";
-  const titleOverride = detail.title ?? title.value;
-
-  detail.claimed = true;
-  hasUnsavedChanges.value = true;
-
-  syncChanges("external", { content, titleOverride })
-    .then((result) => {
-      completeSave(detail, result);
-    })
-    .catch((error) => {
-      const message = error instanceof Error ? error.message : "Sync failed";
-      completeSave(detail, {
-        success: false,
-        offline: !fileStore.isOnline,
-        error: message,
-      });
-    });
-}
 
 function handleManualSave() {
   syncChanges("manual").catch(() => {
@@ -346,7 +259,7 @@ function handleIncomingMessage(message: Message) {
         const t = (message as any).content.title as string;
         title.value = t;
         document.title = t;
-        try { editorRef.value?.setDocument?.({ title: t }); } catch {}
+        venTitle.value = t;
       }
       break;
   }
@@ -505,71 +418,26 @@ const debouncedSave = useDebounceFn(
   { maxWait: 5000 }
 );
 
-const options = ref({
-  // v8+ configuration per docs
-  // https://dev.umodoc.com/en/docs/next/changelog (v8.0+)
-  // https://editor.umodoc.com/en/docs/options (toolbar keys removed/changed)
-  extensions: paginationExtensions,
-  // Match previous behavior by disabling legacy items formerly in toolbar.disableMenuItems
-  disableExtensions: ['chineseDate', 'chinese-date', 'chinese-case', 'break-marks', 'line-breaks', 'page-break'],
-  document: {
-    title: "Untitled Document",
-    content: DEFAULT_BLANK_DOCUMENT_TEMPLATE,
-    placeholder: {
-      en_US: "Write something...",
-    },
-    enableSpellcheck: true,
-    enableMarkdown: true,
-    enableBubbleMenu: true,
-    enableBlockMenu: true,
-    readOnly: false,
-    autofocus: true,
-    characterLimit: 0,
-    typographyRules: {},
-    editorProps: {},
-    parseOptions: {
-      preserveWhitespace: "full",
-    },
-  },
-  locale: "en-US",
-  translations: {
-    base: {
-      color: {
-        text: "Font Colour",
-      },
-      bgColor: {
-        text: "Font Background",
-      },
-    },
-  },
-  // toolbar removed for v8.1.0 compatibility; re-add with supported keys after confirming docs
-});
+const isReadOnly = ref(false);
 
-// Formatting marks toggle via editor commands
+// Formatting marks toggle via editor commands (placeholder until extension support)
 function toggleFormattingMarks() {
   showFormattingMarks.value = !showFormattingMarks.value;
-  try {
-    const ed: any = editorRef.value?.editor || editorRef.value;
-    if (showFormattingMarks.value) {
-      ed?.commands?.showInvisibleCharacters?.();
-    } else {
-      ed?.commands?.hideInvisibleCharacters?.();
-    }
-  } catch {}
+  const editor = venEditorInstance.value;
+  if (!editor) return;
+  // Future: integrate invisible character extension. For now, no-op other than state toggle.
 }
-
 const titleRef = ref<HTMLElement | null>(null);
-const editorRef = ref<any>(null);
+const venEditorInstance = ref<TiptapEditor | null>(null);
+const venContent = ref<string>(DEFAULT_BLANK_DOCUMENT_TEMPLATE);
+const venTitle = ref<string>("New Document");
+const venLastTransaction = ref<{ html: string; json: unknown } | null>(null);
+const yTextRef = ref<any>(null);
+let isApplyingRemote = false;
+let autoSaveTimeout: NodeJS.Timeout | null = null;
 // Yjs collaboration (optional)
 const yProviderRef = ref<any>(null);
 const yDocRef = ref<any>(null);
-const yTextRef = ref<any>(null);
-let isApplyingRemote = false;
-let presenceIntervalId: any = null; // reserved if needed later
-let pushIntervalId: any = null;
-let editorUpdateHandler: ((...args: any[]) => void) | null = null;
-let domObserver: MutationObserver | null = null;
-let mutationScheduled = false;
 
 // Debounced presence emitter
 const emitPresence = useDebounceFn(() => {
@@ -580,86 +448,61 @@ const emitPresence = useDebounceFn(() => {
   } catch {}
 }, 200, { maxWait: 1000 });
 
-const defaultEditorUpdateHandler = () => {
-  if (isApplyingRemote) return;
+function handleVenEditorUpdate(value: string) {
+  venContent.value = value;
   hasUnsavedChanges.value = true;
-  pushLocalToY();
   emitPresence();
-};
-
-// Hoisted helper: push local editor content into Yjs doc (guarded)
-function pushLocalToY() {
-  try {
-    if (!editorRef.value || !yTextRef.value) return;
-    if (isApplyingRemote) return; // avoid echo
-    const content = editorRef.value?.getContent?.() || '';
-    const cur = yTextRef.value.toString();
-    if (content !== cur) {
-      yTextRef.value.delete(0, cur.length);
-      yTextRef.value.insert(0, content);
-    }
-  } catch {}
-}
-
-function setupDomObserver() {
-  try {
-    if (domObserver) {
-      try { domObserver.disconnect(); } catch {}
-      domObserver = null;
-    }
-    const hostEl: any = editorRef.value?.$el || (document.querySelector('umo-editor') as HTMLElement | null);
-    if (!hostEl) return;
-    domObserver = new MutationObserver(() => {
-      if (mutationScheduled) return;
-      mutationScheduled = true;
-      setTimeout(() => {
-        mutationScheduled = false;
-        pushLocalToY();
-      }, 200);
-    });
-    domObserver.observe(hostEl, { childList: true, characterData: true, subtree: true });
-  } catch {}
-}
-
-// Safe method to set editor content - waits for editor to be ready
-async function setEditorContent(content: string, title: string) {
-  // Wait for editor to be ready with timeout
-  let attempts = 0;
-  const maxAttempts = 50; // 2.5 seconds maximum wait
   
-  while (!editorReady.value && attempts < maxAttempts) {
-    await new Promise(resolve => setTimeout(resolve, 50));
-    attempts++;
-  }
+  // Auto-save after 2 seconds of inactivity
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(() => {
+    if (hasUnsavedChanges.value && !isReadOnly.value) {
+      handleManualSave();
+    }
+  }, 2000);
   
-  if (editorRef.value) {
-    await nextTick();
+  if (yTextRef.value && !isApplyingRemote) {
     try {
-      editorRef.value.setDocument({
-        content,
-        title,
-      });
-      editorRef.value.setContent(content);
-      console.log("Editor content set safely", {
-        contentLength: content.length,
-        title,
-      });
+      const current = yTextRef.value.toString();
+      if (current !== value) {
+        yTextRef.value.delete(0, current.length);
+        yTextRef.value.insert(0, value);
+      }
+    } catch {}
+  }
+}
+
+function handleVenTitleUpdate(value: string) {
+  venTitle.value = value;
+  title.value = value;
+  editableTitle.value = value;
+}
+
+function handleVenTransaction(payload: { html: string; json: unknown }) {
+  venLastTransaction.value = payload;
+}
+
+function handleVenReady(instance: TiptapEditor) {
+  venEditorInstance.value = instance;
+  editorReady.value = true;
+  try {
+    instance.commands?.setContent?.(venContent.value ?? "", false);
+    if (isReadOnly.value) instance.setEditable(false);
+  } catch (error) {
+    console.warn("Failed to initialize VenEditor instance", error);
+  }
+}
+
+async function setEditorContent(content: string, docTitle: string) {
+  venContent.value = content;
+  venTitle.value = docTitle;
+  document.title = docTitle;
+  if (venEditorInstance.value) {
+    try {
+      venEditorInstance.value.commands.setContent(content, false);
     } catch (error) {
-      console.error("Error setting editor content:", error);
-      // Fallback: try again after a delay
-      setTimeout(() => {
-        try {
-          if (editorRef.value) {
-            editorRef.value.setDocument({ content, title });
-            editorRef.value.setContent(content);
-          }
-        } catch (retryError) {
-          console.error("Retry failed:", retryError);
-        }
-      }, 500);
+      console.error("Error setting VenEditor content:", error);
     }
-  } else {
-    console.error("Editor reference not available");
   }
 }
 
@@ -739,7 +582,7 @@ async function loadData(id: string) {
         const priv = Number((doc as any)?.privacy_type ?? (doc as any)?.privacyType);
         const unauth = !authStore.isAuthenticated;
         const canEdit = !unauth || [2,4].includes(priv); // 2=everyone_edit,4=link_edit
-        options.value.document.readOnly = !canEdit;
+        isReadOnly.value = !canEdit;
       } catch {}
     } else {
       // If unauthenticated and no document is available, show access request interstitial instead of creating a new doc
@@ -780,7 +623,7 @@ async function syncChanges(
     return result;
   };
 
-  if (options.value.document.readOnly) {
+  if (isReadOnly.value) {
     return failure("Document is read-only");
   }
 
@@ -795,7 +638,7 @@ async function syncChanges(
   const performSave = async (): Promise<SaveResponse> => {
     isSyncing.value = true;
     try {
-      const requestedTitle = payload.titleOverride ?? title.value ?? "";
+      const requestedTitle = payload.titleOverride ?? title.value ?? venTitle.value ?? "";
       const nextTitle = requestedTitle.trim() || "New Document";
 
       if (nextTitle !== title.value) {
@@ -803,17 +646,15 @@ async function syncChanges(
         editableTitle.value = nextTitle;
         document.title = nextTitle;
         try {
-          if (editorRef.value?.setTitle) {
-            await editorRef.value.setTitle(nextTitle);
-          } else if (editorRef.value?.setDocument) {
-            editorRef.value.setDocument({ title: nextTitle });
+          if (venEditorInstance.value) {
+            venEditorInstance.value.commands?.setMeta?.('title', nextTitle);
           }
         } catch (err) {
           console.warn("Failed to update editor title", err);
         }
       }
 
-      const content = payload.content ?? editorRef.value?.getContent?.() ?? "";
+      const content = payload.content ?? venLastTransaction.value?.html ?? venContent.value ?? "";
 
       const docToSave = {
         ...currentDoc.value,
@@ -859,23 +700,17 @@ async function syncChanges(
   return latestSavePromise;
 }
 
-function handleSavedEvent(result: any) {
-  console.log("result:", result);
-  lastSaveResult.value = result;
-  console.log("last save result:", lastSaveResult.value);
-  lastSavedAt.value = new Date();
-}
 
 async function saveTitle() {
-  if (options.value.document.readOnly) return;
+  if (isReadOnly.value) return;
   const newTitle = editableTitle.value.trim();
   title.value = newTitle || "New Document";
   document.title = title.value;
   isTitleEdit.value = false;
-  editorRef.value?.setDocument({ title: title.value });
+  venTitle.value = title.value;
 
   if (currentDoc.value) {
-    if (options.value.document.readOnly) return;
+    if (isReadOnly.value) return;
     console.log("current doc:", currentDoc.value);
     // Only mark as having unsaved changes if title actually changed
     if (currentDoc.value.title !== title.value) {
@@ -889,8 +724,8 @@ async function saveTitle() {
       hasUnsavedChanges.value = true;
 
       // Also update the editor's title to stay in sync
-      if (editorRef.value?.setTitle) {
-        await editorRef.value.setTitle(title.value);
+      if (venEditorInstance.value) {
+        try { venEditorInstance.value.commands?.setMeta?.('title', title.value); } catch {}
       }
 
       // Trigger sync to save changes
@@ -901,7 +736,7 @@ async function saveTitle() {
   // Broadcast title change for collaboration
   const id = (route.params.id as string) || currentDoc.value?.id;
   if (id) {
-    if (options.value.document.readOnly) return;
+    if (isReadOnly.value) return;
     try {
       wsService.value?.sendMessage(id, 'title', { title: title.value }, userId.value, userName.value);
     } catch (e) {
@@ -912,7 +747,7 @@ async function saveTitle() {
 
 function startEditing() {
   // Disallow editing title in readOnly
-  if (options.value.document.readOnly) return;
+  if (isReadOnly.value) return;
   if (!isTitleEdit.value) {
     editTitle();
   }
@@ -938,41 +773,10 @@ function getTemplateTitle(templateName: string): string {
 }
 
 onMounted(async () => {
-  // Suppress unwanted console messages
-  const originalConsoleLog = console.info;
-  console.info = (...args) => {
-    const message = args.join(' ');
-    if (message.includes('Thanks for using Umo Editor') || 
-        message.includes('Current version:') || 
-        message.includes('More info: ')) {
-      return; // Suppress these messages
-    }
-    originalConsoleLog.apply(console, args);
-  };
-  
-  // Restore original console.info after a delay (after editor initialization)
-  setTimeout(() => {
-    console.info = originalConsoleLog;
-  }, 3000);
-
   window.addEventListener("online", updateOnlineStatus);
   window.addEventListener("offline", updateOnlineStatus);
-  window.addEventListener(UMO_SAVE_EVENT, handleUmoSaveEvent as EventListener);
 
-  console.log("RunDoc component mounted, initializing editor");
-
-  // Initialize the editor
-  nextTick(() => {
-    if (editorRef.value) {
-      editorRef.value.setLocale("en-US");
-      console.log("Editor initialized");
-      // Ensure formatting marks are hidden by default via command API
-      try {
-        const ed: any = editorRef.value?.editor || editorRef.value;
-        ed?.commands?.hideInvisibleCharacters?.();
-      } catch {}
-    }
-  });
+  console.log("RunDoc component mounted, initializing VenEditor");
 
   // Handle template-based new documents first
   if (route.params.template) {
@@ -1056,27 +860,22 @@ onMounted(async () => {
           const binaryUrl = `${SOCKET_URI}?sheetId=${docId}&userName=${encodeURIComponent(userName.value)}&userId=${encodeURIComponent(userId.value)}&channel=crdt`;
           yProviderRef.value = createYSocketProvider({ url: binaryUrl, doc: yDocRef.value });
 
-          // Apply remote updates to editor when Y.Text changes
+          // Apply remote updates to VenEditor when Y.Text changes
           yTextRef.value.observe(() => {
-            if (!editorRef.value) return;
+            if (!venEditorInstance.value) return;
             if (isApplyingRemote) return;
             isApplyingRemote = true;
             try {
               const text = yTextRef.value.toString();
-              const current = editorRef.value?.getContent?.() || '';
+              const current = venContent.value || '';
               if (typeof text === 'string' && text !== current) {
-                editorRef.value.setContent(text);
+                venEditorInstance.value.commands.setContent(text, false);
+                venContent.value = text;
               }
             } finally {
               setTimeout(() => { isApplyingRemote = false; }, 0);
             }
           });
-
-          // Push local edits to Yjs (basic handler)
-          attachEditorUpdateListener(defaultEditorUpdateHandler);
-          pushIntervalId = setInterval(pushLocalToY, 1000);
-          // DOM observer fallback to detect content changes without using editor APIs
-          setupDomObserver();
         } catch (e) {
           console.warn('Custom Yjs transport failed to initialize:', e);
         }
@@ -1110,25 +909,10 @@ onMounted(async () => {
   }
 });
 
-function handleEditorCreated() {
-  console.log("Editor component created");
-  // Give the editor a moment to fully initialize before marking as ready
-  nextTick(() => {
-    setTimeout(() => {
-      editorReady.value = true;
-      console.log("Editor marked as ready");
-      if (!editorUpdateHandler) {
-        attachEditorUpdateListener(defaultEditorUpdateHandler);
-      }
-    }, 100);
-  });
-}
 
 onUnmounted(() => {
   window.removeEventListener("online", updateOnlineStatus);
   window.removeEventListener("offline", updateOnlineStatus);
-  window.removeEventListener(UMO_SAVE_EVENT, handleUmoSaveEvent as EventListener);
-  detachEditorUpdateListener();
   const id = (route.params.id as string) || currentDoc.value?.id;
   if (wsService.value && id) {
     try { wsService.value.leaveSheet(id); } catch {}
@@ -1136,18 +920,6 @@ onUnmounted(() => {
   // Yjs cleanup
   try { yProviderRef.value?.destroy?.(); } catch {}
   try { yDocRef.value?.destroy?.(); } catch {}
-  if (presenceIntervalId) {
-    try { clearInterval(presenceIntervalId); } catch {}
-    presenceIntervalId = null;
-  }
-  if (pushIntervalId) {
-    try { clearInterval(pushIntervalId); } catch {}
-    pushIntervalId = null;
-  }
-  if (domObserver) {
-    try { domObserver.disconnect(); } catch {}
-    domObserver = null;
-  }
 });
 
 // Removed templates and New Document dialog to unify header
@@ -1263,21 +1035,26 @@ function toggleChat() {
 }
 
 function handleUndo() {
-  try { editorRef.value?.undo?.() } catch {}
+  try { venEditorInstance.value?.chain().focus().undo().run(); } catch {}
 }
 
 function handleRedo() {
-  try { editorRef.value?.redo?.() } catch {}
+  try { venEditorInstance.value?.chain().focus().redo().run(); } catch {}
 }
 
 async function handleExport(format: string) {
   try {
-    // Attempt editor-provided export if available
-    if (editorRef.value?.export) {
-      await editorRef.value.export({ format });
+    if (format === 'html') {
+      const blob = new Blob([venContent.value], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.value || 'document'}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
       return;
     }
-    toast.error("Export is not available in this editor");
+    toast.error("Export format not supported yet");
   } catch (err) {
     console.error("Doc export failed", err);
     toast.error("Export failed");
@@ -1424,26 +1201,14 @@ function downloadFile() {
       <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 text-center">
         <h2 class="text-lg font-semibold mb-2">This document is large</h2>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">The file is too large to preview online. You can download it to view locally.</p>
-        <Button variant="default" @click="downloadFile" :disabled="!downloadUrl">Download file</Button>
+        <Button variant="default" @click="downloadFile">Download</Button>
       </div>
     </div>
-
-    <!-- Editor when access is allowed -->
-    <div v-else class="relative w-full h-full">
-      <component
-        :is="useVenEditor ? VenEditor : 'umo-editor'"
-        ref="editorRef"
-        v-bind="useVenEditor ? undefined : options"
-        v-if="!useVenEditor"
-        @saved="handleSavedEvent"
-        @created="handleEditorCreated"
-      />
+    <div v-else class="flex-1 flex flex-col overflow-hidden">
       <VenEditor
-        v-else
-        ref="editorRef"
-        :modelValue="currentDoc?.content || DEFAULT_BLANK_DOCUMENT_TEMPLATE"
+        :modelValue="venContent"
         :title="title"
-        :editable="!options.document.readOnly"
+        :editable="!isReadOnly"
         :pagination="paginationConfig"
         @update:modelValue="handleVenEditorUpdate"
         @update:title="handleVenTitleUpdate"

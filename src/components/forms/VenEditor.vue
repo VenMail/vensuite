@@ -1,92 +1,91 @@
 <template>
   <div class="ven-editor" :class="{ 'ven-editor--readonly': !editable }">
-    <header class="ven-editor__toolbar shadow-sm">
-      <div class="ven-editor__title-group">
-        <input
-          v-model="titleInput"
-          class="ven-editor__title"
-          :readonly="!editable"
-          placeholder="Untitled document"
-          @keydown.stop
-        />
-        <div class="ven-editor__meta">
-          <span class="ven-editor__menu">File</span>
-          <span class="ven-editor__menu">Edit</span>
-          <span class="ven-editor__menu">View</span>
-          <span class="ven-editor__menu">Insert</span>
-          <span class="ven-editor__menu">Format</span>
-          <span class="ven-editor__menu">Tools</span>
+    <header class="ven-editor__chrome" :class="{ 'is-expanded': isRibbonExpanded }">
+      <VenEditorToolbar
+        :editor="editor"
+        :is-expanded="isRibbonExpanded"
+        :font-families="fontFamilies"
+        :font-sizes="fontSizes"
+        :font-colors="fontColors"
+        :page-orientation="pageOrientation"
+        :page-columns="pageColumns"
+        @toggle-expanded="toggleRibbon"
+        @save="emit('save')"
+        @change-orientation="setOrientation"
+        @change-columns="setColumns"
+        @export="emit('export', $event)"
+      />
+
+      <div v-if="!isRibbonExpanded" class="ven-editor__page-settings">
+        <button class="ven-editor__page-settings-toggle" @click="isPageSettingsOpen = !isPageSettingsOpen" :title="isPageSettingsOpen ? 'Hide page settings' : 'Show page settings'">
+          <span class="settings-icon">⚙</span>
+          <span class="toggle-text">Page Settings</span>
+          <span class="caret-icon" :class="{ 'is-open': isPageSettingsOpen }">▼</span>
+        </button>
+        
+        <transition name="settings-expand">
+          <div v-if="isPageSettingsOpen" class="ven-editor__page-settings-panel">
+            <div class="ven-editor__page-settings-controls">
+          <div class="ven-editor__setting-group">
+            <label class="ven-editor__setting-label">Margin:</label>
+            <input
+              type="range"
+              min="0"
+              max="5"
+              step="0.1"
+              :value="pageMargins.top"
+              @input="setUniformMargin($event)"
+              class="ven-editor__setting-slider"
+            />
+            <span class="ven-editor__setting-value">{{ pageMargins.top.toFixed(1) }}in ({{ (pageMargins.top * 2.54).toFixed(1) }}cm)</span>
+            <div class="ven-editor__preset-buttons">
+              <button @click="setMarginPreset(0.5)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(0.5) }">Narrow</button>
+              <button @click="setMarginPreset(1)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(1) }">Normal</button>
+              <button @click="setMarginPreset(1.5)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(1.5) }">Wide</button>
+              <button @click="setMarginPreset(2)" class="ven-editor__preset-btn" :class="{ active: isMarginPreset(2) }">Extra Wide</button>
+            </div>
+          </div>
+          <div class="ven-editor__setting-group">
+            <label class="ven-editor__setting-label">Gap:</label>
+            <input
+              type="range"
+              min="0"
+              max="3"
+              step="0.1"
+              :value="pageGap"
+              @input="setPageGap($event)"
+              class="ven-editor__setting-slider"
+            />
+            <span class="ven-editor__setting-value">{{ pageGap.toFixed(1) }}cm ({{ (pageGap / 2.54).toFixed(2) }}in)</span>
+            <div class="ven-editor__preset-buttons">
+              <button @click="setGapPreset(0.3)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(0.3) }">Small</button>
+              <button @click="setGapPreset(0.8)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(0.8) }">Normal</button>
+              <button @click="setGapPreset(1.5)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(1.5) }">Large</button>
+              <button @click="setGapPreset(2.5)" class="ven-editor__preset-btn" :class="{ active: isGapPreset(2.5) }">Extra Large</button>
+            </div>
+          </div>
+          <div class="ven-editor__setting-group">
+            <label class="ven-editor__setting-label">Padding:</label>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              step="0.5"
+              :value="pagePadding"
+              @input="setPagePadding($event)"
+              class="ven-editor__setting-slider"
+            />
+            <span class="ven-editor__setting-value">{{ pagePadding.toFixed(1) }}px ({{ (pagePadding / 37.8).toFixed(1) }}cm)</span>
+            <div class="ven-editor__preset-buttons">
+              <button @click="setPaddingPreset(2)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(2) }">Narrow</button>
+              <button @click="setPaddingPreset(5)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(5) }">Normal</button>
+              <button @click="setPaddingPreset(7.5)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(7.5) }">Wide</button>
+              <button @click="setPaddingPreset(10)" class="ven-editor__preset-btn" :class="{ active: isPaddingPreset(10) }">Extra Wide</button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="ven-editor__controls">
-        <button
-          class="ven-editor__control"
-          :class="{ 'is-active': isActive('undo') }"
-          type="button"
-          @click="runCommand('undo')"
-        >
-          ⟲
-        </button>
-        <button
-          class="ven-editor__control"
-          :class="{ 'is-active': isActive('redo') }"
-          type="button"
-          @click="runCommand('redo')"
-        >
-          ⟳
-        </button>
-        <span class="ven-editor__divider" />
-        <button
-          class="ven-editor__control"
-          :class="{ 'is-active': isActive('bold') }"
-          type="button"
-          @mousedown.prevent
-          @click="toggleMark('bold')"
-        >
-          B
-        </button>
-        <button
-          class="ven-editor__control"
-          :class="{ 'is-active': isActive('italic') }"
-          type="button"
-          @mousedown.prevent
-          @click="toggleMark('italic')"
-        >
-          I
-        </button>
-        <button
-          class="ven-editor__control"
-          :class="{ 'is-active': isActive('underline') }"
-          type="button"
-          @mousedown.prevent
-          @click="toggleMark('underline')"
-        >
-          U
-        </button>
-        <button
-          class="ven-editor__control"
-          :class="{ 'is-active': isActive({ textAlign: 'left' }) }"
-          type="button"
-          @click="setTextAlign('left')"
-        >
-          ⬉
-        </button>
-        <button
-          class="ven-editor__control"
-          :class="{ 'is-active': isActive({ textAlign: 'center' }) }"
-          type="button"
-          @click="setTextAlign('center')"
-        >
-          ⬈
-        </button>
-        <button
-          class="ven-editor__control"
-          :class="{ 'is-active': isActive({ textAlign: 'right' }) }"
-          type="button"
-          @click="setTextAlign('right')"
-        >
-          ⬊
-        </button>
+          </div>
+        </transition>
       </div>
     </header>
 
@@ -94,8 +93,10 @@
       <div class="ven-editor__page-container">
         <div class="ven-editor__page-shadow">
           <div class="ven-editor__page" :style="pageStyle">
-            <EditorContent v-if="editor" :editor="editor as Editor" />
-            <div v-else class="ven-editor__loading">Loading editor...</div>
+            <div class="ven-editor__content" :style="contentStyle">
+              <EditorContent v-if="editor" :editor="editor" />
+              <div v-else class="ven-editor__loading">Loading editor...</div>
+            </div>
           </div>
         </div>
       </div>
@@ -110,8 +111,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { Editor, EditorContent } from '@tiptap/vue-3'
+// Note: Using 'any' for editor type due to @tiptap/vue-3 type definition complexities
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import CharacterCount from '@tiptap/extension-character-count'
@@ -120,9 +122,27 @@ import FontFamily from '@tiptap/extension-font-family'
 import TextStyle from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
+import Strike from '@tiptap/extension-strike'
+import Subscript from '@tiptap/extension-subscript'
+import Superscript from '@tiptap/extension-superscript'
+import Highlight from '@tiptap/extension-highlight'
+import Color from '@tiptap/extension-color'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
+import HorizontalRule from '@tiptap/extension-horizontal-rule'
+import Blockquote from '@tiptap/extension-blockquote'
+import CodeBlock from '@tiptap/extension-code-block'
+import Mathematics from '@aarkue/tiptap-math-extension'
 import { PaginationPlus } from 'tiptap-pagination-plus'
 import { PaginationTable } from 'tiptap-table-plus'
 import { ImagePlus } from 'tiptap-image-plus'
+
+import VenEditorToolbar from './VenEditorToolbar.vue'
+
+type FontOption = {
+  value: string
+  label: string
+}
 
 const props = withDefaults(
   defineProps<{
@@ -138,26 +158,84 @@ const props = withDefaults(
     title: 'Untitled document',
     editable: true,
     placeholder: 'Write something…',
-    pagination: () => ({}),
     zoom: 1,
   },
 )
 
-const imagePlusExtension = ImagePlus.configure({ inline: false, allowBase64: true })
-
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'update:title', value: string): void
-  (e: 'ready', editor: Editor): void
+  (e: 'ready', editor: any): void
   (e: 'focus'): void
   (e: 'blur'): void
   (e: 'transaction', payload: { html: string; json: unknown }): void
+  (e: 'save'): void
+  (e: 'export', format: string): void
 }>()
 
-const editor = ref<Editor | null>(null)
-const titleInput = ref(props.title)
+const editor = ref<any>(null)
 const editable = computed(() => props.editable)
-const zoom = computed(() => props.zoom)
+const zoom = computed(() => props.zoom ?? 1)
+const isRibbonExpanded = ref(false)
+
+const pageMargins = reactive({ top: 1, bottom: 1, left: 1, right: 1 })
+const pageOrientation = ref<'portrait' | 'landscape'>('portrait')
+const pageColumns = ref(1)
+
+const fontFamilies: FontOption[] = [
+  { value: 'Inter', label: 'Inter' },
+  { value: 'Roboto', label: 'Roboto' },
+  { value: 'Open Sans', label: 'Open Sans' },
+  { value: 'Lato', label: 'Lato' },
+  { value: 'Montserrat', label: 'Montserrat' },
+  { value: 'Source Sans Pro', label: 'Source Sans Pro' },
+  { value: 'Merriweather', label: 'Merriweather' },
+  { value: 'PT Serif', label: 'PT Serif' },
+  { value: 'Crimson Text', label: 'Crimson Text' },
+  { value: 'Libre Baskerville', label: 'Libre Baskerville' },
+  { value: 'Arial', label: 'Arial' },
+  { value: 'Times New Roman', label: 'Times New Roman' },
+  { value: 'Georgia', label: 'Georgia' },
+  { value: 'Verdana', label: 'Verdana' },
+  { value: 'Courier New', label: 'Courier New' },
+]
+
+const fontSizes = [
+  '8',
+  '9',
+  '10',
+  '11',
+  '12',
+  '14',
+  '16',
+  '18',
+  '20',
+  '22',
+  '24',
+  '26',
+  '28',
+  '36',
+  '48',
+  '72',
+]
+
+const fontColors = [
+  '#111827',
+  '#EF4444',
+  '#F97316',
+  '#F59E0B',
+  '#10B981',
+  '#0EA5E9',
+  '#6366F1',
+  '#EC4899',
+  '#6B7280',
+]
+
+const pageGap = ref(0.8)
+const pagePadding = ref(5)
+const isPageSettingsOpen = ref(false)
+
+const imagePlusExtension = ImagePlus.configure({ inline: false, allowBase64: true })
 
 const { TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus } = PaginationTable
 
@@ -177,9 +255,35 @@ const paginationExtension = computed(() =>
   }),
 )
 
-const pageStyle = computed<Record<string, string>>(() => ({
-  transform: `scale(${zoom.value})`,
-}))
+const pageStyle = computed<Record<string, string>>(() => {
+  const baseWidth = pageOrientation.value === 'portrait' ? '8.5in' : '11in'
+  const baseHeight = pageOrientation.value === 'portrait' ? '11in' : '8.5in'
+
+  return {
+    width: baseWidth,
+    minHeight: baseHeight,
+    transform: `scale(${zoom.value})`,
+  }
+})
+
+const contentStyle = computed<Record<string, string>>(() => {
+  const columnStyles: Record<string, string> = {
+    columnCount: pageColumns.value.toString(),
+    columnGap: pageColumns.value === 1 ? '0px' : '48px',
+  }
+
+  const baseMargins = {
+    paddingTop: `${pageMargins.top}in`,
+    paddingBottom: `${pageMargins.bottom}in`,
+    paddingLeft: `${pageMargins.left}in`,
+    paddingRight: `${pageMargins.right}in`,
+  }
+
+  return {
+    ...baseMargins,
+    ...columnStyles,
+  }
+})
 
 const initializeEditor = () => {
   const instance = new Editor({
@@ -195,9 +299,26 @@ const initializeEditor = () => {
       CharacterCount.configure(),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TextStyle,
-      FontFamily,
+      FontFamily.configure({
+        types: ['textStyle'],
+      }),
+      Color.configure({ types: ['textStyle'] }),
+      Highlight.configure({ multicolor: true }),
       Underline,
+      Strike,
+      Subscript,
+      Superscript,
       Link.configure({ openOnClick: false }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      HorizontalRule,
+      Blockquote,
+      CodeBlock,
+      Mathematics.configure({
+        katexOptions: {
+          throwOnError: false,
+        },
+      }),
       TablePlus,
       TableRowPlus,
       TableCellPlus,
@@ -246,57 +367,80 @@ watch(editable, (value) => {
   editor.value?.setEditable(value)
 })
 
-watch(
-  () => props.title,
-  (value) => {
-    if (value !== titleInput.value) {
-      titleInput.value = value
-    }
-  },
-)
+watch(pageMargins, (next) => {
+  next.top = clampMargin(next.top)
+  next.bottom = clampMargin(next.bottom)
+  next.left = clampMargin(next.left)
+  next.right = clampMargin(next.right)
+}, { deep: true })
 
-watch(titleInput, (value) => {
-  emit('update:title', value)
+watch(pageColumns, (value) => {
+  if (value < 1) pageColumns.value = 1
+  if (value > 3) pageColumns.value = 3
 })
 
-const isActive = (name: string | Record<string, unknown>) => {
-  if (!editor.value) return false
-  if (typeof name === 'string') {
-    switch (name) {
-      case 'undo':
-        return false
-      case 'redo':
-        return false
-      default:
-        return editor.value.isActive(name)
-    }
-  }
-  return editor.value.isActive(name as any)
+const toggleRibbon = () => {
+  isRibbonExpanded.value = !isRibbonExpanded.value
 }
 
-const toggleMark = (mark: 'bold' | 'italic' | 'underline') => {
-  if (!editor.value) return
-  const chain = editor.value.chain().focus()
-  switch (mark) {
-    case 'bold':
-      chain.toggleBold().run()
-      break
-    case 'italic':
-      chain.toggleItalic().run()
-      break
-    case 'underline':
-      chain.toggleUnderline().run()
-      break
-  }
+const setOrientation = (value: 'portrait' | 'landscape') => {
+  pageOrientation.value = value
 }
 
-const setTextAlign = (alignment: 'left' | 'center' | 'right' | 'justify') => {
-  editor.value?.chain().focus().setTextAlign(alignment).run()
+const setColumns = (value: number) => {
+  pageColumns.value = Math.min(Math.max(value, 1), 3)
 }
 
-const runCommand = (command: 'undo' | 'redo') => {
-  if (!editor.value) return
-  editor.value.chain().focus()[command]().run()
+const clampMargin = (value: number) => {
+  if (Number.isNaN(value)) return 1
+  return Math.min(Math.max(value, 0), 5)
+}
+
+const setUniformMargin = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const value = parseFloat(target.value)
+  pageMargins.top = value
+  pageMargins.bottom = value
+  pageMargins.left = value
+  pageMargins.right = value
+}
+
+const setMarginPreset = (value: number) => {
+  pageMargins.top = value
+  pageMargins.bottom = value
+  pageMargins.left = value
+  pageMargins.right = value
+}
+
+const isMarginPreset = (value: number) => {
+  return pageMargins.top === value && pageMargins.bottom === value && 
+         pageMargins.left === value && pageMargins.right === value
+}
+
+const setPageGap = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  pageGap.value = parseFloat(target.value)
+}
+
+const setGapPreset = (value: number) => {
+  pageGap.value = value
+}
+
+const isGapPreset = (value: number) => {
+  return Math.abs(pageGap.value - value) < 0.01
+}
+
+const setPagePadding = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  pagePadding.value = parseFloat(target.value)
+}
+
+const setPaddingPreset = (value: number) => {
+  pagePadding.value = value
+}
+
+const isPaddingPreset = (value: number) => {
+  return Math.abs(pagePadding.value - value) < 0.01
 }
 
 const wordCount = computed(() => {
@@ -319,87 +463,176 @@ const characterCount = computed(() => {
   color: #1f2933;
 }
 
-.ven-editor__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1.5rem;
-  background: #ffffffcc;
-  backdrop-filter: blur(12px);
+.ven-editor--readonly {
+  background: #f3f4f6;
+}
+
+.ven-editor__chrome {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   position: sticky;
   top: 0;
   z-index: 10;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
-.ven-editor__title-group {
+.ven-editor__chrome.is-expanded {
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.08);
+}
+
+.ven-editor__page-settings {
+  background: linear-gradient(180deg, #fafbfc 0%, #f5f6f8 100%);
+  border-top: 1px solid #e5e7eb;
+}
+
+.ven-editor__page-settings-toggle {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 1rem;
-}
-
-.ven-editor__title {
-  font-size: 1rem;
-  font-weight: 600;
-  background: transparent;
-  border: none;
-  outline: none;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  transition: background 0.2s;
-  min-width: 16rem;
-}
-
-.ven-editor__title:focus {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.ven-editor__meta {
-  display: flex;
-  gap: 0.75rem;
+  gap: 8px;
+  padding: 10px 20px;
   font-size: 0.875rem;
-  color: #606f7b;
-}
-
-.ven-editor__menu {
-  cursor: pointer;
-}
-
-.ven-editor__controls {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.ven-editor__control {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
   font-weight: 600;
-  font-size: 0.85rem;
-  color: #2f3a4a;
-  transition: background 0.2s, color 0.2s;
+  color: #374151;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.ven-editor__control:hover {
-  background: rgba(15, 23, 42, 0.08);
+.ven-editor__page-settings-toggle:hover {
+  background: rgba(59, 130, 246, 0.05);
+  color: #3b82f6;
 }
 
-.ven-editor__control.is-active {
-  background: rgba(37, 99, 235, 0.15);
-  color: #1d4ed8;
+.settings-icon {
+  font-size: 1rem;
 }
 
-.ven-editor__divider {
-  width: 1px;
-  height: 18px;
-  background: rgba(148, 163, 184, 0.6);
-  margin: 0 0.5rem;
+.toggle-text {
+  flex: 1;
+  text-align: left;
+}
+
+.caret-icon {
+  font-size: 0.625rem;
+  transition: transform 0.3s ease;
+}
+
+.caret-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.ven-editor__page-settings-panel {
+  padding: 0 20px 16px;
+  overflow: hidden;
+}
+
+.settings-expand-enter-active,
+.settings-expand-leave-active {
+  transition: all 0.3s ease;
+}
+
+.settings-expand-enter-from,
+.settings-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.settings-expand-enter-to,
+.settings-expand-leave-from {
+  opacity: 1;
+  max-height: 500px;
+}
+
+.ven-editor__page-settings-controls {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.ven-editor__setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.ven-editor__setting-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.ven-editor__setting-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ven-editor__setting-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.ven-editor__setting-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3b82f6;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.ven-editor__setting-value {
+  font-size: 0.75rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.ven-editor__preset-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.ven-editor__preset-btn {
+  padding: 4px 12px;
+  font-size: 0.6875rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #6b7280;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.ven-editor__preset-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #eff6ff;
+}
+
+.ven-editor__preset-btn.active {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  color: white;
 }
 
 .ven-editor__workspace {
@@ -417,25 +650,32 @@ const characterCount = computed(() => {
 }
 
 .ven-editor__page-shadow {
-  background: transparent;
-  padding: 2rem 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.08) 0%, rgba(15, 23, 42, 0.02) 100%);
+  padding: 2.5rem 3.5rem;
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .ven-editor__page {
-  width: 8.5in;
-  min-height: 11in;
-  background: #fff;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
-  border-radius: 8px;
-  margin: 0 auto;
-  padding: 1.5in 1.25in 1.75in;
+  background: #ffffff;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.1), 0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
+  border-radius: 12px;
+  overflow: hidden;
   transform-origin: top center;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(148, 163, 184, 0.08);
 }
 
-.ven-editor__page :deep(p) {
+.ven-editor__content {
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
   font-size: 1rem;
   line-height: 1.6;
+  color: #111827;
+}
+
+.ven-editor__content :deep(p) {
   margin: 0.5rem 0;
 }
 
@@ -450,17 +690,15 @@ const characterCount = computed(() => {
   justify-content: flex-end;
   gap: 1.5rem;
   padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
-  color: #475569;
-  background: #ffffff;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  font-size: 0.8125rem;
+  color: #6b7280;
+  background: linear-gradient(90deg, rgba(249, 250, 251, 0.9) 0%, rgba(243, 244, 246, 0.95) 100%);
+  border-top: 1px solid #e5e7eb;
 }
 
 .ven-editor__status-item {
-  white-space: nowrap;
-}
-
-.ven-editor--readonly .ven-editor__title {
-  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 </style>

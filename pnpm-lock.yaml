@@ -14,6 +14,9 @@ importers:
       '@akira1ce/html2pdf':
         specifier: ^1.0.1
         version: 1.0.1(dom-to-image@2.6.0)(jspdf@3.0.1)
+      '@floating-ui/dom':
+        specifier: 1.6.0
+        version: 1.6.0
       '@fluentui-vue/file-type-icons':
         specifier: ^2.1.0
         version: 2.1.0(vue@3.5.13(typescript@5.8.3))
@@ -65,6 +68,9 @@ importers:
       '@tiptap/extension-collaboration':
         specifier: ^2.12.0
         version: 2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(y-prosemirror@1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26))
+      '@tiptap/extension-collaboration-caret':
+        specifier: ^3.6.2
+        version: 3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(@tiptap/y-tiptap@3.0.0(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26))
       '@tiptap/extension-collaboration-cursor':
         specifier: ^2.12.0
         version: 2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(y-prosemirror@1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26))
@@ -74,6 +80,12 @@ importers:
       '@tiptap/extension-document':
         specifier: ^2.12.0
         version: 2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))
+      '@tiptap/extension-drag-handle':
+        specifier: ^3.6.2
+        version: 3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/extension-collaboration@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(y-prosemirror@1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)))(@tiptap/extension-node-range@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(@tiptap/y-tiptap@3.0.0(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26))
+      '@tiptap/extension-drag-handle-vue-3':
+        specifier: ^3.6.2
+        version: 3.6.2(@tiptap/extension-drag-handle@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/extension-collaboration@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(y-prosemirror@1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)))(@tiptap/extension-node-range@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(@tiptap/y-tiptap@3.0.0(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)))(@tiptap/pm@2.12.0)(@tiptap/vue-3@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(vue@3.5.13(typescript@5.8.3)))(vue@3.5.13(typescript@5.8.3))
       '@tiptap/extension-dropcursor':
         specifier: ^2.12.0
         version: 2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)
@@ -116,6 +128,9 @@ importers:
       '@tiptap/extension-mention':
         specifier: ^2.12.0
         version: 2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(@tiptap/suggestion@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0))
+      '@tiptap/extension-node-range':
+        specifier: ^3.6.2
+        version: 3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)
       '@tiptap/extension-ordered-list':
         specifier: ^2.12.0
         version: 2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))
@@ -449,6 +464,9 @@ importers:
       y-prosemirror:
         specifier: 1.2.12
         version: 1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)
+      y-protocols:
+        specifier: ^1.0.6
+        version: 1.0.6(yjs@13.6.26)
       y-websocket:
         specifier: ^3.0.0
         version: 3.0.0(yjs@13.6.26)
@@ -1401,14 +1419,11 @@ packages:
   '@flatten-js/interval-tree@1.1.3':
     resolution: {integrity: sha512-xhFWUBoHJFF77cJO1D6REjdgJEMRf2Y2Z+eKEPav8evGKcLSnj1ud5pLXQSbGuxF3VSvT1rWhMfVpXEKJLTL+A==}
 
-  '@floating-ui/core@1.7.0':
-    resolution: {integrity: sha512-FRdBLykrPPA6P76GGGqlex/e7fbe0F1ykgxHYNXQsH/iTEtjMj/f9bpY5oQqbjt5VgZvgz/uKXbGuROijh3VLA==}
-
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
 
-  '@floating-ui/dom@1.7.0':
-    resolution: {integrity: sha512-lGTor4VlXcesUMh1cupTUTDoCxMb0V6bm3CnxHzQcw8Eaf1jQbgQX4i02fYgT0vJ82tb5MZ4CZk1LRGkktJCzg==}
+  '@floating-ui/dom@1.6.0':
+    resolution: {integrity: sha512-SZ0BEXzsaaS6THZfZJUcAobbZTD+MvfGM42bxgeg0Tnkp4/an/avqwAXiVLsFtIBZtfsx3Ymvwx0+KnnhdA/9g==}
 
   '@floating-ui/dom@1.7.4':
     resolution: {integrity: sha512-OOchDgh4F2CchOX94cRVqhvy7b3AFb+/rQXyswmzmGakRfkMgoWVjfnLWkRirfLEfuD4ysVW16eXzwt3jHIzKA==}
@@ -1421,9 +1436,6 @@ packages:
 
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
-
-  '@floating-ui/utils@0.2.9':
-    resolution: {integrity: sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==}
 
   '@floating-ui/vue@1.1.6':
     resolution: {integrity: sha512-XFlUzGHGv12zbgHNk5FN2mUB7ROul3oG2ENdTpWdE+qMFxyNxWSRmsoyhiEnpmabNm6WnUvR1OvJfUfN4ojC1A==}
@@ -2514,6 +2526,13 @@ packages:
     peerDependencies:
       '@tiptap/core': ^2.7.0
 
+  '@tiptap/extension-collaboration-caret@3.6.2':
+    resolution: {integrity: sha512-YWTgU+59UpEdHbEuaHNypfgQxVJIluDImI6YUtw5vHoNuwr0x+xlMrhUvhsJgKvy1ydTU/x8juovdKPTAz2R5g==}
+    peerDependencies:
+      '@tiptap/core': ^3.6.2
+      '@tiptap/pm': ^3.6.2
+      '@tiptap/y-tiptap': ^3.0.0-beta.3
+
   '@tiptap/extension-collaboration-cursor@2.12.0':
     resolution: {integrity: sha512-PMmIHbuLZKR7ecG9XsErEqoMWWsNtxGG8vXyr9rhuAWFA4f6S2bltRfew5iAANZRR5CXEHBBsw3AwTUQiLTUhQ==}
     peerDependencies:
@@ -2555,6 +2574,23 @@ packages:
     resolution: {integrity: sha512-sA1Q+mxDIv0Y3qQTBkYGwknNbDcGFiJ/fyAFholXpqbrcRx3GavwR/o0chBdsJZlFht0x7AWGwUYWvIo7wYilA==}
     peerDependencies:
       '@tiptap/core': ^2.7.0
+
+  '@tiptap/extension-drag-handle-vue-3@3.6.2':
+    resolution: {integrity: sha512-vHHjcatrUyIC38zciwnzU1MTnPGiAMGyr+KEzntRzdr54tqSyX+xEFO5fSx3tVRUmDViAlwtk2slK22kNf4Q+A==}
+    peerDependencies:
+      '@tiptap/extension-drag-handle': ^3.6.2
+      '@tiptap/pm': ^3.6.2
+      '@tiptap/vue-3': ^3.6.2
+      vue: ^3.0.0
+
+  '@tiptap/extension-drag-handle@3.6.2':
+    resolution: {integrity: sha512-UEacbNqGDRe3+6sia+sA4ix2EkVM06rtuOGNpbMrQ21bYWAO98CeVXxXZoG3/3sG2SneDKgqiccHpRkC8ID/wA==}
+    peerDependencies:
+      '@tiptap/core': ^3.6.2
+      '@tiptap/extension-collaboration': ^3.6.2
+      '@tiptap/extension-node-range': ^3.6.2
+      '@tiptap/pm': ^3.6.2
+      '@tiptap/y-tiptap': ^3.0.0-beta.3
 
   '@tiptap/extension-dropcursor@2.11.5':
     resolution: {integrity: sha512-uIN7L3FU0904ec7FFFbndO7RQE/yiON4VzAMhNn587LFMyWO8US139HXIL4O8dpZeYwYL3d1FnDTflZl6CwLlg==}
@@ -2692,6 +2728,12 @@ packages:
       '@tiptap/core': ^2.7.0
       '@tiptap/pm': ^2.7.0
       '@tiptap/suggestion': ^2.7.0
+
+  '@tiptap/extension-node-range@3.6.2':
+    resolution: {integrity: sha512-gmbRtzbl+KXlz0+CyNh410Cx9bWFtZHK1t1V++uhOexrZlSH5Q5ex1joz/FV6/lRWxw6ZwiaNNRmKSMioQqnow==}
+    peerDependencies:
+      '@tiptap/core': ^3.6.2
+      '@tiptap/pm': ^3.6.2
 
   '@tiptap/extension-ordered-list@2.11.5':
     resolution: {integrity: sha512-Cu8KwruBNWAaEfshRQR0yOSaUKAeEwxW7UgbvF9cN/zZuKgK5uZosPCPTehIFCcRe+TBpRtZQh+06f/gNYpYYg==}
@@ -11042,18 +11084,14 @@ snapshots:
 
   '@flatten-js/interval-tree@1.1.3': {}
 
-  '@floating-ui/core@1.7.0':
-    dependencies:
-      '@floating-ui/utils': 0.2.9
-
   '@floating-ui/core@1.7.3':
     dependencies:
       '@floating-ui/utils': 0.2.10
 
-  '@floating-ui/dom@1.7.0':
+  '@floating-ui/dom@1.6.0':
     dependencies:
-      '@floating-ui/core': 1.7.0
-      '@floating-ui/utils': 0.2.9
+      '@floating-ui/core': 1.7.3
+      '@floating-ui/utils': 0.2.10
 
   '@floating-ui/dom@1.7.4':
     dependencies:
@@ -11068,12 +11106,10 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
-  '@floating-ui/utils@0.2.9': {}
-
   '@floating-ui/vue@1.1.6(vue@3.5.13(typescript@5.8.3))':
     dependencies:
-      '@floating-ui/dom': 1.7.0
-      '@floating-ui/utils': 0.2.9
+      '@floating-ui/dom': 1.6.0
+      '@floating-ui/utils': 0.2.10
       vue-demi: 0.14.10(vue@3.5.13(typescript@5.8.3))
     transitivePeerDependencies:
       - '@vue/composition-api'
@@ -12222,6 +12258,12 @@ snapshots:
     dependencies:
       '@tiptap/core': 2.12.0(@tiptap/pm@2.12.0)
 
+  '@tiptap/extension-collaboration-caret@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(@tiptap/y-tiptap@3.0.0(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26))':
+    dependencies:
+      '@tiptap/core': 2.12.0(@tiptap/pm@2.12.0)
+      '@tiptap/pm': 2.12.0
+      '@tiptap/y-tiptap': 3.0.0(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)
+
   '@tiptap/extension-collaboration-cursor@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(y-prosemirror@1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26))':
     dependencies:
       '@tiptap/core': 2.12.0(@tiptap/pm@2.12.0)
@@ -12256,6 +12298,22 @@ snapshots:
   '@tiptap/extension-document@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))':
     dependencies:
       '@tiptap/core': 2.12.0(@tiptap/pm@2.12.0)
+
+  '@tiptap/extension-drag-handle-vue-3@3.6.2(@tiptap/extension-drag-handle@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/extension-collaboration@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(y-prosemirror@1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)))(@tiptap/extension-node-range@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(@tiptap/y-tiptap@3.0.0(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)))(@tiptap/pm@2.12.0)(@tiptap/vue-3@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(vue@3.5.13(typescript@5.8.3)))(vue@3.5.13(typescript@5.8.3))':
+    dependencies:
+      '@tiptap/extension-drag-handle': 3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/extension-collaboration@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(y-prosemirror@1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)))(@tiptap/extension-node-range@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(@tiptap/y-tiptap@3.0.0(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26))
+      '@tiptap/pm': 2.12.0
+      '@tiptap/vue-3': 2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(vue@3.5.13(typescript@5.8.3))
+      vue: 3.5.13(typescript@5.8.3)
+
+  '@tiptap/extension-drag-handle@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/extension-collaboration@2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(y-prosemirror@1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)))(@tiptap/extension-node-range@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(@tiptap/y-tiptap@3.0.0(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26))':
+    dependencies:
+      '@floating-ui/dom': 1.7.4
+      '@tiptap/core': 2.12.0(@tiptap/pm@2.12.0)
+      '@tiptap/extension-collaboration': 2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)(y-prosemirror@1.2.12(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26))
+      '@tiptap/extension-node-range': 3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)
+      '@tiptap/pm': 2.12.0
+      '@tiptap/y-tiptap': 3.0.0(prosemirror-model@1.25.1)(prosemirror-state@1.4.3)(prosemirror-view@1.39.2)(y-protocols@1.0.6(yjs@13.6.26))(yjs@13.6.26)
 
   '@tiptap/extension-dropcursor@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5)':
     dependencies:
@@ -12378,6 +12436,11 @@ snapshots:
       '@tiptap/core': 2.12.0(@tiptap/pm@2.12.0)
       '@tiptap/pm': 2.12.0
       '@tiptap/suggestion': 2.12.0(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)
+
+  '@tiptap/extension-node-range@3.6.2(@tiptap/core@2.12.0(@tiptap/pm@2.12.0))(@tiptap/pm@2.12.0)':
+    dependencies:
+      '@tiptap/core': 2.12.0(@tiptap/pm@2.12.0)
+      '@tiptap/pm': 2.12.0
 
   '@tiptap/extension-ordered-list@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))':
     dependencies:
@@ -19430,7 +19493,7 @@ snapshots:
 
   radix-vue@1.9.17(vue@3.5.13(typescript@5.8.3)):
     dependencies:
-      '@floating-ui/dom': 1.7.0
+      '@floating-ui/dom': 1.7.4
       '@floating-ui/vue': 1.1.6(vue@3.5.13(typescript@5.8.3))
       '@internationalized/date': 3.8.0
       '@internationalized/number': 3.6.1
@@ -21762,7 +21825,7 @@ snapshots:
 
   y-protocols@1.0.6(yjs@13.6.26):
     dependencies:
-      lib0: 0.2.107
+      lib0: 0.2.114
       yjs: 13.6.26
 
   y-websocket@3.0.0(yjs@13.6.26):
