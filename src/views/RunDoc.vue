@@ -695,7 +695,6 @@ async function loadData(id: string) {
         // Detect if content is JSON and convert to HTML if needed
         if (contentToDisplay.trim().startsWith('{') || contentToDisplay.trim().startsWith('[')) {
           try {
-            const parsed = JSON.parse(contentToDisplay);
             // If it's a Tiptap JSON document, the editor will handle it
             console.log('Detected JSON content, will load as Tiptap document');
           } catch {
