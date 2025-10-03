@@ -38,8 +38,7 @@
             Select Folder
           </button>
         </div>
-        
-        <!-- Single file input for files -->
+
         <input
           ref="fileInput"
           type="file"
@@ -48,8 +47,7 @@
           class="hidden"
           @change="onFileInputChange"
         />
-        
-        <!-- Single folder input for folders -->
+
         <input
           v-if="isFolderSupported"
           ref="folderInput"
@@ -61,14 +59,12 @@
         />
       </div>
 
-      <!-- File type restrictions info -->
       <div v-if="fileTypeFilter !== 'all'" class="mb-4 p-3 bg-muted/50 rounded-lg">
         <p class="text-sm text-muted-foreground">
           <strong>Allowed file types:</strong> {{ getAllowedExtensions() }}
         </p>
       </div>
 
-      <!-- Rejected files notification -->
       <div
         v-if="rejectedFiles.length > 0"
         class="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg"
@@ -185,6 +181,8 @@ interface FileData {
   preview?: string;
   file: File | undefined;
   error?: boolean;
+  folderName?: string;
+  relativePath?: string;
 }
 
 interface RejectedFile {
@@ -192,7 +190,6 @@ interface RejectedFile {
   reason: string;
 }
 
-// Define the file type filter options
 type FileTypeFilter = "all" | "documents" | "spreadsheets" | "media";
 
 const isFolderSupported = ref(false);
@@ -202,7 +199,6 @@ onMounted(() => {
   isFolderSupported.value = "webkitdirectory" in input;
 });
 
-// File type configurations
 const FILE_TYPE_CONFIG: Record<
   FileTypeFilter,
   {
@@ -286,18 +282,15 @@ const folderInput = ref<HTMLInputElement | null>(null);
 const files = ref<FileData[]>([]);
 const isUploading = ref(false);
 const rejectedFiles = ref<RejectedFile[]>([]);
-const lastSelectionType = ref<'files' | 'folder'>('files');
+const lastSelectionType = ref<"files" | "folder">("files");
 
-// Get current filter with proper typing
 const currentFilter = computed((): FileTypeFilter => props.fileTypeFilter);
 
-// Get accepted MIME types for the file input
 const acceptedMimeTypes = computed(() => {
   const config = FILE_TYPE_CONFIG[currentFilter.value];
   return config.mimeTypes.length > 0 ? config.mimeTypes.join(",") : "";
 });
 
-// Helper functions for UI text
 const getUploadDescription = () => {
   const config = FILE_TYPE_CONFIG[currentFilter.value];
   return `Drag and drop ${config.description}, or click to select`;
@@ -313,48 +306,42 @@ const getAllowedExtensions = () => {
   return config.extensions.join(", ").toUpperCase();
 };
 
-// Separate methods for handling file and folder selection
 const selectFiles = () => {
-  lastSelectionType.value = 'files';
-  // Reset the input value to allow selecting the same files again
+  lastSelectionType.value = "files";
   if (fileInput.value) {
-    fileInput.value.value = '';
+    fileInput.value.value = "";
     fileInput.value.click();
   }
 };
 
 const selectFolder = () => {
-  lastSelectionType.value = 'folder';
-  // Reset the input value to allow selecting the same folder again
+  lastSelectionType.value = "folder";
   if (folderInput.value) {
-    folderInput.value.value = '';
+    folderInput.value.value = "";
     folderInput.value.click();
   }
 };
 
-// Handle drop zone click (use the last selection type or default to files)
 const handleDropZoneClick = () => {
-  if (lastSelectionType.value === 'folder' && isFolderSupported.value) {
+  if (lastSelectionType.value === "folder" && isFolderSupported.value) {
     selectFolder();
   } else {
     selectFiles();
   }
 };
 
-// Separate event handlers for file and folder inputs
 const onFileInputChange = (e: Event) => {
-  rejectedFiles.value = []; // Clear previous rejections
+  rejectedFiles.value = [];
   const inputFiles = Array.from((e.target as HTMLInputElement).files || []);
   addFiles(inputFiles);
 };
 
 const onFolderInputChange = (e: Event) => {
-  rejectedFiles.value = []; // Clear previous rejections
+  rejectedFiles.value = [];
   const inputFiles = Array.from((e.target as HTMLInputElement).files || []);
   addFiles(inputFiles);
 };
 
-// Check if file is allowed based on current filter
 const isFileAllowed = (file: File): { allowed: boolean; reason?: string } => {
   if (currentFilter.value === "all") {
     return { allowed: true };
@@ -363,15 +350,10 @@ const isFileAllowed = (file: File): { allowed: boolean; reason?: string } => {
   const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
   const fileMimeType = file.type || "unknown";
 
-  // Log for debugging
-  console.log(`File: ${file.name}, Extension: ${fileExtension}, MIME: ${fileMimeType}`);
-
-  // Check extension
   if (config.extensions.length > 0 && !config.extensions.includes(fileExtension)) {
     return { allowed: false, reason: `File type .${fileExtension} not allowed` };
   }
 
-  // Check MIME type
   if (config.mimeTypes.length > 0) {
     const mimeTypeMatch = config.mimeTypes.some((allowedType) => {
       if (allowedType.endsWith("/*")) {
@@ -390,7 +372,7 @@ const isFileAllowed = (file: File): { allowed: boolean; reason?: string } => {
 
 const onDrop = async (e: DragEvent) => {
   isDragging.value = false;
-  rejectedFiles.value = []; // Clear previous rejections
+  rejectedFiles.value = [];
 
   const items = Array.from(e.dataTransfer?.items || []);
   const newFiles: File[] = [];
@@ -446,9 +428,13 @@ const addFiles = (newFiles: File[]) => {
   const allowedFiles: File[] = [];
   const currentRejected: RejectedFile[] = [];
 
-  // Filter files based on current filter
+  let folderName = "";
+  if (newFiles.length > 0 && (newFiles[0] as any).webkitRelativePath) {
+    const firstPath = (newFiles[0] as any).webkitRelativePath;
+    folderName = firstPath.split("/")[0];
+  }
+
   newFiles.forEach((file) => {
-    // Skip if file already exists
     const fileExists = files.value.some(
       (existingFile) =>
         existingFile.file_name === file.name && existingFile.file_size === file.size
@@ -475,7 +461,6 @@ const addFiles = (newFiles: File[]) => {
 
   rejectedFiles.value = currentRejected;
 
-  // Add allowed files
   files.value.push(
     ...allowedFiles.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
@@ -487,16 +472,16 @@ const addFiles = (newFiles: File[]) => {
       preview: isImageFile(file) ? URL.createObjectURL(file) : undefined,
       file: file,
       error: false,
+      folderName: folderName,
+      relativePath: (file as any).webkitRelativePath || file.name,
     }))
   );
 };
 
-// Checks if the raw File object is an image
 const isImageFile = (file: File) => {
   return file.type?.startsWith("image/");
 };
 
-// Checks if FileData is an image based on file_type (extension)
 const isImageFileData = (fileData: FileData) => {
   return ["png", "jpg", "jpeg", "gif", "webp"].includes(fileData.file_type || "");
 };
@@ -513,7 +498,6 @@ const removeFile = (file: FileData) => {
 };
 
 const cancelUpload = (file: FileData) => {
-  // Cancel logic for ongoing uploads
   removeFile(file);
 };
 
@@ -524,23 +508,128 @@ const retryUpload = (file: FileData) => {
 
 const uploadFiles = async () => {
   isUploading.value = true;
-  const uploadPromises = files.value.map((file) => uploadFile(file));
-  const results = await Promise.allSettled(uploadPromises);
 
-  // Get successfully uploaded files
-  const uploadedFiles = results
+  const filesGroupedByFolder: Record<string, FileData[]> = {};
+  const standaloneFiles: FileData[] = [];
+
+  files.value.forEach((file) => {
+    if (file.folderName) {
+      if (!filesGroupedByFolder[file.folderName]) {
+        filesGroupedByFolder[file.folderName] = [];
+      }
+      filesGroupedByFolder[file.folderName].push(file);
+    } else {
+      standaloneFiles.push(file);
+    }
+  });
+
+  const uploadedFiles: any[] = [];
+
+  for (const [folderName, folderFiles] of Object.entries(filesGroupedByFolder)) {
+    const uploadedFolderFiles = await uploadFolderWithContents(folderName, folderFiles);
+    uploadedFiles.push(...uploadedFolderFiles);
+  }
+
+  const uploadPromises = standaloneFiles.map((file) => uploadFile(file));
+  const results = await Promise.allSettled(uploadPromises);
+  const uploadedStandaloneFiles = results
     .map((result) => (result.status === "fulfilled" ? result.value : null))
     .filter(Boolean);
+  uploadedFiles.push(...uploadedStandaloneFiles);
 
   isUploading.value = false;
   emit("upload", uploadedFiles);
 };
 
-const uploadFile = async (file: FileData): Promise<FileData | null> => {
+const uploadFolderWithContents = async (
+  folderName: string,
+  folderFiles: FileData[]
+): Promise<any[]> => {
+  try {
+    const rootFolder = await fileStore.makeFolder({
+      title: folderName,
+      file_name: folderName,
+      folder_id: props.folderId || null,
+      is_folder: true,
+    } as any);
+
+    if (!rootFolder || !rootFolder.id) {
+      throw new Error("Failed to create root folder");
+    }
+
+    const folderMap = new Map<string, string>();
+    folderMap.set(folderName, rootFolder.id);
+
+    const uploadedFiles: any[] = [];
+
+    // Sort files by depth to ensure parent folders are created before child folders
+    const sortedFiles = [...folderFiles].sort((a, b) => {
+      const aDepth = (a.relativePath || "").split("/").length;
+      const bDepth = (b.relativePath || "").split("/").length;
+      return aDepth - bDepth;
+    });
+
+    for (const file of sortedFiles) {
+      if (!file.relativePath || !file.file) continue;
+
+      const pathParts = file.relativePath.split("/");
+      const fileName = pathParts.pop(); // Remove filename from path
+
+      let parentFolderId = rootFolder.id;
+
+      // Build folder hierarchy
+      for (let i = 1; i < pathParts.length; i++) {
+        const currentPath = pathParts.slice(0, i + 1).join("/");
+
+        if (!folderMap.has(currentPath)) {
+          const subfolder = await fileStore.makeFolder({
+            title: pathParts[i],
+            file_name: pathParts[i],
+            folder_id: parentFolderId,
+            is_folder: true,
+          } as any);
+
+          if (subfolder && subfolder.id) {
+            folderMap.set(currentPath, subfolder.id);
+            parentFolderId = subfolder.id;
+          } else {
+            console.error(`Failed to create subfolder: ${pathParts[i]}`);
+            break;
+          }
+        } else {
+          parentFolderId = folderMap.get(currentPath)!;
+        }
+      }
+
+      // Upload the actual file to its parent folder
+      try {
+        const uploadedFile = await uploadFile(file, parentFolderId);
+        if (uploadedFile) {
+          uploadedFiles.push(uploadedFile);
+        } else {
+          console.error(`Failed to upload file: ${fileName}`);
+        }
+      } catch (fileError) {
+        console.error(`Error uploading file ${fileName}:`, fileError);
+        // Continue with other files even if one fails
+      }
+    }
+
+    return uploadedFiles;
+  } catch (error) {
+    console.error(`Error uploading folder ${folderName}:`, error);
+    return [];
+  }
+};
+
+const uploadFile = async (
+  file: FileData,
+  targetFolderId?: string
+): Promise<any | null> => {
   if (!file.file) return null;
 
   try {
-    const useChunked = (file.file.size || 0) > 5 * 1024 * 1024; // >5MB
+    const useChunked = (file.file.size || 0) > 5 * 1024 * 1024;
     const progressCb = (progress: number) => {
       const index = files.value.findIndex((f) => f.id === file.id);
       if (index !== -1) {
@@ -548,39 +637,23 @@ const uploadFile = async (file: FileData): Promise<FileData | null> => {
       }
     };
 
+    const destinationFolderId = targetFolderId || props.folderId || null;
+
     const uploadedFile = useChunked
       ? await fileStore.uploadChunked(file.file, {
-          folderId: props.folderId || null,
+          folderId: destinationFolderId,
           onProgress: progressCb,
         })
-      : await fileStore.uploadFile(file.file, progressCb, props.folderId || null);
+      : await fileStore.uploadFile(file.file, progressCb, destinationFolderId);
 
     if (uploadedFile) {
-      // Mark as completed in UI
       const index = files.value.findIndex((f) => f.id === file.id);
       if (index !== -1) {
         files.value[index].progress = 100;
         files.value[index].error = false;
       }
 
-      // Create a proper FileData object that matches our local interface
-      const processedFile: FileData = {
-        id: uploadedFile.id || file.id,
-        title: uploadedFile.title,
-        file_name: uploadedFile.file_name,
-        file_type: uploadedFile.file_type,
-        file_size:
-          typeof uploadedFile.file_size === "string"
-            ? parseInt(uploadedFile.file_size)
-            : uploadedFile.file_size,
-        file_url: uploadedFile.file_url,
-        progress: 100,
-        preview: file.preview, // Keep the original preview
-        file: undefined, // Clear the file reference as it's now uploaded
-        error: false,
-      };
-
-      return processedFile;
+      return uploadedFile;
     }
 
     return null;
