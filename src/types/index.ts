@@ -1,3 +1,5 @@
+export * from "./docPersistence";
+
 export interface FileData {
   id?: string;              // Primary ID - either local UUID or server ID
   server_id?: string;       // Server ID (only present for documents that exist on server)

@@ -10,7 +10,6 @@ import { useUmoEditor } from '@umoteam/editor'
 // @ts-ignore - vite url import
 import mammothUrl from 'mammoth/mammoth.browser.min.js?url'
 import { createI18n } from 'vue-i18n'
-
 import App from './App.vue'
 import { useAuthStore } from './store/auth'
 import { useFileStore } from './store/files'
@@ -51,6 +50,8 @@ const routes = [
       { path: 'bin', name: 'bin-view', component: Bin },
       { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
       { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
+      { path: 'docs/:id', name: 'doc', component: RunDoc, meta: { hideLayout: true } },
+      { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
       { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },
       { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'docs/new', name: 'docs', component: RunDoc, meta: { hideLayout: true } },

@@ -6,8 +6,6 @@ import ThemeProvider from '@/providers/ThemeProvider.vue'
 <template>  
   <ThemeProvider>
     <Toaster class="pointer-events-auto" />
-    <div id="app" class="h-screen flex flex-col">
-      <router-view />
-    </div>
+    <RouterView />
   </ThemeProvider>
 </template>

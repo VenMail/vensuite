@@ -10,7 +10,7 @@
         :page-orientation="pageOrientation"
         :page-columns="pageColumns"
         @toggle-expanded="toggleRibbon"
-        @save="emit('save')"
+        @save="handleToolbarSave"
         @change-orientation="setOrientation"
         @change-columns="setColumns"
         @export="emit('export', $event)"
@@ -98,8 +98,8 @@
         <div class="ven-editor__page-shadow">
           <div class="ven-editor__page" :style="pageStyle">
             <div class="ven-editor__content" :style="contentStyle">
-              <EditorContent v-if="editor" :editor="editor" />
-              <div v-else class="ven-editor__loading">Loading editor...</div>
+              <div ref="contentElement" class="ven-editor__editor-host" />
+              <div v-if="!editor" class="ven-editor__loading">Loading editor...</div>
             </div>
           </div>
         </div>
@@ -115,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -125,37 +125,43 @@ import FontFamily from '@tiptap/extension-font-family'
 import TextStyle from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
-import Strike from '@tiptap/extension-strike'
 import Subscript from '@tiptap/extension-subscript'
 import Superscript from '@tiptap/extension-superscript'
 import Highlight from '@tiptap/extension-highlight'
 import Color from '@tiptap/extension-color'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
-import HorizontalRule from '@tiptap/extension-horizontal-rule'
-import Blockquote from '@tiptap/extension-blockquote'
-import CodeBlock from '@tiptap/extension-code-block'
 import Mathematics from '@aarkue/tiptap-math-extension'
-import { PaginationPlus } from 'tiptap-pagination-plus'
-import { PaginationTable } from 'tiptap-table-plus'
 import { ImagePlus } from 'tiptap-image-plus'
 
+import { PaginationPlus } from 'tiptap-pagination-plus';
 import VenEditorToolbar from './VenEditorToolbar.vue'
+import { Table } from '@tiptap/extension-table'
+import { TableRow } from '@tiptap/extension-table-row'
+import { TableCell } from '@tiptap/extension-table-cell'
+import { TableHeader } from '@tiptap/extension-table-header'
 
-type FontOption = {
+interface FontOption {
   value: string
   label: string
 }
 
+interface EditorSnapshot {
+  html: string
+  json: unknown
+}
+
+interface VenEditorProps {
+  modelValue: string
+  title?: string
+  editable?: boolean
+  placeholder?: string
+  pagination?: Record<string, unknown>
+  zoom?: number
+}
+
 const props = withDefaults(
-  defineProps<{
-    modelValue: string
-    title?: string
-    editable?: boolean
-    placeholder?: string
-    pagination?: Record<string, unknown>
-    zoom?: number
-  }>(),
+  defineProps<VenEditorProps>(),
   {
     modelValue: '',
     title: 'Untitled document',
@@ -168,15 +174,20 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'update:title', value: string): void
-  (e: 'ready', editor: any): void
+  (e: 'ready', editor: Editor): void
   (e: 'focus'): void
   (e: 'blur'): void
   (e: 'transaction', payload: { html: string; json: unknown }): void
-  (e: 'save'): void
+  (e: 'save', payload?: EditorSnapshot): void
+  (e: 'auto-save', payload: { html: string; json: unknown }): void
   (e: 'export', format: string): void
+  (e: 'toggle-expanded'): void
+  (e: 'change-orientation', value: 'portrait' | 'landscape'): void
+  (e: 'change-columns', value: number): void
 }>()
 
-const editor = ref<any>(null)
+const editor = ref<Editor | null>(null)
+const contentElement = ref<HTMLElement | null>(null)
 const editable = computed(() => props.editable)
 const zoom = computed(() => props.zoom ?? 1)
 const isRibbonExpanded = ref(false)
@@ -184,6 +195,64 @@ const isRibbonExpanded = ref(false)
 const pageMargins = reactive({ top: 1, bottom: 1, left: 1, right: 1 })
 const pageOrientation = ref<'portrait' | 'landscape'>('portrait')
 const pageColumns = ref(1)
+
+const latestSnapshot = ref<EditorSnapshot | null>(null)
+let autoSaveTimeout: ReturnType<typeof setTimeout> | null = null
+const autoSaveDelay = 2000
+const AUTO_SAVE_STORAGE_KEY = 'ven-editor-autosave'
+
+const persistBackup = (snapshot: EditorSnapshot) => {
+  if (typeof window === 'undefined') return
+
+  try {
+    const payload = {
+      ...snapshot,
+      timestamp: Date.now(),
+      title: props.title,
+    }
+
+    window.localStorage?.setItem(AUTO_SAVE_STORAGE_KEY, JSON.stringify(payload))
+  } catch (error) {
+    console.warn('Failed to persist Ven editor backup', error)
+  }
+}
+
+const captureSnapshot = (): EditorSnapshot | null => {
+  const instance = editor.value
+  if (!instance) return null
+
+  return {
+    html: instance.getHTML(),
+    json: instance.getJSON(),
+  }
+}
+
+const emitAutoSave = (snapshot: EditorSnapshot) => {
+  emit('auto-save', snapshot)
+}
+
+const scheduleAutoSave = () => {
+  if (autoSaveTimeout) {
+    clearTimeout(autoSaveTimeout)
+  }
+
+  autoSaveTimeout = setTimeout(() => {
+    const snapshot = latestSnapshot.value ?? captureSnapshot()
+    if (!snapshot) return
+
+    persistBackup(snapshot)
+    emitAutoSave(snapshot)
+  }, autoSaveDelay)
+}
+
+const handleToolbarSave = () => {
+  const snapshot = captureSnapshot()
+  if (!snapshot) return
+
+  latestSnapshot.value = snapshot
+  persistBackup(snapshot)
+  emit('save', snapshot)
+}
 
 const fontFamilies: FontOption[] = [
   { value: 'Inter', label: 'Inter' },
@@ -238,10 +307,6 @@ const pageGap = ref(0.8)
 const pagePadding = ref(5)
 const isPageSettingsOpen = ref(false)
 
-const imagePlusExtension = ImagePlus.configure({ inline: false, allowBase64: true })
-
-const { TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus } = PaginationTable
-
 const paginationExtension = computed(() =>
   PaginationPlus.configure({
     pageHeight: 842,
@@ -257,6 +322,8 @@ const paginationExtension = computed(() =>
     ...(props.pagination ?? {}),
   }),
 )
+
+const imagePlusExtension = ImagePlus.configure({ inline: false, allowBase64: true })
 
 const pageStyle = computed<Record<string, string>>(() => {
   const baseWidth = pageOrientation.value === 'portrait' ? '8.5in' : '11in'
@@ -288,8 +355,12 @@ const contentStyle = computed<Record<string, string>>(() => {
   }
 })
 
-const initializeEditor = () => {
+const createEditor = async () => {
+  await nextTick()
+  if (!contentElement.value) return
+
   const instance = new Editor({
+    element: contentElement.value,
     content: props.modelValue,
     editable: editable.value,
     extensions: [
@@ -308,31 +379,36 @@ const initializeEditor = () => {
       Color.configure({ types: ['textStyle'] }),
       Highlight.configure({ multicolor: true }),
       Underline,
-      Strike,
       Subscript,
       Superscript,
       Link.configure({ openOnClick: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
-      HorizontalRule,
-      Blockquote,
-      CodeBlock,
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableCell,
+      TableHeader,
       Mathematics.configure({
         katexOptions: {
           throwOnError: false,
         },
       }),
-      TablePlus,
-      TableRowPlus,
-      TableCellPlus,
-      TableHeaderPlus,
+
       paginationExtension.value,
       imagePlusExtension,
     ],
     onUpdate({ editor }) {
-      const html = editor.getHTML()
-      emit('update:modelValue', html)
-      emit('transaction', { html, json: editor.getJSON() })
+      const snapshot: EditorSnapshot = {
+        html: editor.getHTML(),
+        json: editor.getJSON(),
+      }
+
+      latestSnapshot.value = snapshot
+      emit('update:modelValue', snapshot.html)
+      emit('transaction', snapshot)
+      scheduleAutoSave()
     },
     onFocus() {
       emit('focus')
@@ -347,7 +423,7 @@ const initializeEditor = () => {
 }
 
 onMounted(() => {
-  initializeEditor()
+  createEditor()
 })
 
 onBeforeUnmount(() => {
@@ -362,7 +438,21 @@ watch(
     if (!editorInstance) return
     const current = editorInstance.getHTML()
     if (next === current) return
-    editorInstance.commands.setContent(next, false)
+    
+    // Support both HTML and JSON content
+    try {
+      if (next.trim().startsWith('{') || next.trim().startsWith('[')) {
+        // Try to parse as JSON
+        const parsed = JSON.parse(next)
+        editorInstance.commands.setContent(parsed, false)
+      } else {
+        // Treat as HTML
+        editorInstance.commands.setContent(next, false)
+      }
+    } catch {
+      // If JSON parse fails, treat as HTML
+      editorInstance.commands.setContent(next, false)
+    }
   },
 )
 
@@ -676,16 +766,86 @@ const characterCount = computed(() => {
   font-size: 1rem;
   line-height: 1.6;
   color: #111827;
+  position: relative;
+}
+
+.ven-editor__editor-host {
+  min-height: 100%;
 }
 
 .ven-editor__content :deep(p) {
   margin: 0.5rem 0;
 }
 
+/* Table styles */
+.ven-editor__content :deep(table) {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.ven-editor__content :deep(td),
+.ven-editor__content :deep(th) {
+  min-width: 60px;
+  min-height: 32px;
+  border: 2px solid #d1d5db;
+  padding: 0px 12px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  background-clip: padding-box;
+}
+
+.ven-editor__content :deep(th) {
+  font-weight: 600;
+  text-align: left;
+  background-color: #f3f4f6;
+}
+
+.ven-editor__content :deep(.selectedCell:after) {
+  z-index: 2;
+  position: absolute;
+  content: '';
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.1);
+  pointer-events: none;
+}
+
+.ven-editor__content :deep(.column-resize-handle) {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: #3b82f6;
+  pointer-events: none;
+}
+
+.ven-editor__content :deep(.tableWrapper) {
+  padding: 1rem 0;
+  overflow-x: auto;
+}
+
+.ven-editor__content :deep(.resize-cursor) {
+  cursor: ew-resize;
+  cursor: col-resize;
+}
+
 .ven-editor__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 2rem;
   text-align: center;
   color: #64748b;
+  pointer-events: none;
 }
 
 .ven-editor__status-bar {

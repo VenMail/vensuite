@@ -14,7 +14,7 @@ import { useDebounceFn, useFavicon } from "@vueuse/core";
 import { useRoute, useRouter } from "vue-router";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import { useFileStore } from "@/store/files";
-import { FileData } from "@/types";
+import { FileData, EditorSnapshot } from "@/types";
 import Button from "@/components/ui/button/Button.vue";
 import UserProfile from "@/components/layout/UserProfile.vue";
 import UnifiedMenubar from "@/components/menu/UnifiedMenubar.vue";
@@ -33,6 +33,7 @@ import { RESUME_TEMPLATE, LETTER_TEMPLATE, DEFAULT_BLANK_DOCUMENT_TEMPLATE } fro
 import { IWebsocketService, Message, useWebSocket, WebSocketService } from "@/lib/wsService";
 import ShareCard from '@/components/ShareCard.vue'
 import axios from 'axios'
+import { useDocumentPersistence } from "@/composables/useDocumentPersistence";
 
 const route = useRoute();
 const router = useRouter();
@@ -62,34 +63,162 @@ const isSettingCursor = ref(false);
 const isTitleEdit = ref(false);
 const titleEditTimeout = ref<NodeJS.Timeout | null>(null);
 const isAutoSaving = ref(false);
-const isSyncing = ref(false);
 const isLoading = ref(false);
 const isOffline = ref(!navigator.onLine);
-const hasUnsavedChanges = ref(false);
-const currentDoc = ref<any>(null);
 const editorReady = ref(false);
 const isInitializing = ref(false);
-const lastSavedAt = ref<Date | null>(null);
 const shareOpen = ref(false);
+const isReadOnly = ref(false);
+
+const {
+  currentDoc,
+  hasUnsavedChanges,
+  isSyncing,
+  lastSavedAt,
+  lastSaveResult,
+  markDirty,
+  setDocument,
+  syncChanges,
+} = useDocumentPersistence({
+  router,
+  readOnly: isReadOnly,
+  onAfterSave: (doc) => {
+    title.value = doc.title || "New Document";
+    editableTitle.value = title.value;
+    document.title = title.value;
+  },
+});
+
 // privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
 const privacyType = ref<number>(7);
 // Share members state (can be hydrated from API later)
-const shareMembers = ref<Array<{ email: string; name?: string; avatarUrl?: string; permission: 'view' | 'comment' | 'edit' }>>([])
-const lastSaveResult = ref<{
-  success: boolean;
-  offline: boolean;
-  error: string | null;
-} | null>(null);
+const shareMembers = ref<Array<{ email: string; name?: string; avatarUrl?: string; permission: "view" | "comment" | "edit" }>>([]);
 
-type SaveTrigger = "manual" | "auto" | "title" | "external";
+let ensureDocPromise: Promise<FileData | null> | null = null;
 
-type SaveResponse = {
-  success: boolean;
-  offline: boolean;
-  error: string | null;
+const ensureCurrentDoc = async (): Promise<FileData | null> => {
+  if (currentDoc.value) {
+    return currentDoc.value;
+  }
+
+  if (!ensureDocPromise) {
+    ensureDocPromise = (async () => {
+      try {
+        const titleSeed = title.value?.trim() || "New Document";
+        const created = await fileStore.createNewDocument("docx", titleSeed);
+        setDocument(created, { markClean: true });
+        currentDoc.value = created;
+        return created;
+      } catch (error) {
+        console.error("Failed to create document before saving", error);
+        toast.error("Unable to initialize document. Please try again.");
+        return null;
+      } finally {
+        ensureDocPromise = null;
+      }
+    })();
+  }
+
+  return ensureDocPromise;
 };
 
-let latestSavePromise: Promise<SaveResponse> | null = null;
+const updateCurrentDocContent = (content?: string) => {
+  if (!currentDoc.value) return;
+  currentDoc.value = {
+    ...currentDoc.value,
+    content,
+  } as FileData;
+  markDirty();
+};
+
+const updateCurrentDocTitle = (nextTitle: string) => {
+  if (!currentDoc.value) return;
+  currentDoc.value = {
+    ...currentDoc.value,
+    title: nextTitle,
+  } as FileData;
+  markDirty();
+};
+
+const extractContentPayload = async (snapshot?: EditorSnapshot | null) => {
+  const doc = await ensureCurrentDoc();
+  if (!doc) {
+    return null;
+  }
+
+  const html = snapshot?.html ?? venLastTransaction.value?.html ?? venContent.value ?? "";
+  const json = snapshot?.json ?? venLastTransaction.value?.json ?? null;
+
+  updateCurrentDocContent(html);
+  if (currentDoc.value && json) {
+    (currentDoc.value as any).content_json = JSON.stringify(json);
+  }
+
+  if (currentDoc.value) {
+    currentDoc.value = {
+      ...currentDoc.value,
+      content: html,
+    } as FileData;
+  }
+
+  return {
+    html,
+    json: json ? JSON.stringify(json) : undefined,
+  };
+};
+
+async function handleEditorSave(snapshot?: EditorSnapshot) {
+  if (snapshot) {
+    venLastTransaction.value = snapshot;
+    venContent.value = snapshot.html;
+  }
+
+  const payload = await extractContentPayload(snapshot ?? venLastTransaction.value);
+  if (!payload) return;
+
+  try {
+    const result = await syncChanges("manual", {
+      content: payload.html,
+      contentJson: payload.json,
+    });
+
+    if (!result.success) {
+      const message = result.error || "Save failed";
+      toast.error(message);
+      return;
+    }
+
+    toast.success("Document saved");
+  } catch (error) {
+    console.error("Toolbar save failed", error);
+    toast.error("Save failed");
+  }
+}
+
+async function handleEditorAutoSave(snapshot: EditorSnapshot) {
+  if (isReadOnly.value) return;
+
+  venLastTransaction.value = snapshot;
+  venContent.value = snapshot.html;
+
+  const payload = await extractContentPayload(snapshot);
+  if (!payload) return;
+  isAutoSaving.value = true;
+
+  try {
+    const result = await syncChanges("auto", {
+      content: payload.html,
+      contentJson: payload.json,
+    });
+    if (!result.success) {
+      console.warn("Auto-save failed", result.error);
+    }
+  } catch (error) {
+    console.warn("Auto-save failed", error);
+  } finally {
+    isAutoSaving.value = false;
+  }
+}
 
 function handleManualSave() {
   syncChanges("manual").catch(() => {
@@ -116,6 +245,7 @@ const filteredCollaborators = computed(() => {
   });
   return result;
 });
+
 const isChatOpen = ref(false);
 const newChatMessage = ref("");
 const chatInput = ref<HTMLTextAreaElement | null>(null);
@@ -365,7 +495,7 @@ function updateTitle(event: Event) {
   if (editableTitle.value === newText) return;
 
   editableTitle.value = newText;
-  hasUnsavedChanges.value = true;
+  updateCurrentDocTitle(newText);
 
   // Save cursor position
   const selection = window.getSelection();
@@ -418,8 +548,6 @@ const debouncedSave = useDebounceFn(
   { maxWait: 5000 }
 );
 
-const isReadOnly = ref(false);
-
 // Formatting marks toggle via editor commands (placeholder until extension support)
 function toggleFormattingMarks() {
   showFormattingMarks.value = !showFormattingMarks.value;
@@ -431,10 +559,9 @@ const titleRef = ref<HTMLElement | null>(null);
 const venEditorInstance = ref<TiptapEditor | null>(null);
 const venContent = ref<string>(DEFAULT_BLANK_DOCUMENT_TEMPLATE);
 const venTitle = ref<string>("New Document");
-const venLastTransaction = ref<{ html: string; json: unknown } | null>(null);
+const venLastTransaction = ref<EditorSnapshot | null>(null);
 const yTextRef = ref<any>(null);
 let isApplyingRemote = false;
-let autoSaveTimeout: NodeJS.Timeout | null = null;
 // Yjs collaboration (optional)
 const yProviderRef = ref<any>(null);
 const yDocRef = ref<any>(null);
@@ -450,17 +577,9 @@ const emitPresence = useDebounceFn(() => {
 
 function handleVenEditorUpdate(value: string) {
   venContent.value = value;
-  hasUnsavedChanges.value = true;
+  updateCurrentDocContent(value);
   emitPresence();
-  
-  // Auto-save after 2 seconds of inactivity
-  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
-  autoSaveTimeout = setTimeout(() => {
-    if (hasUnsavedChanges.value && !isReadOnly.value) {
-      handleManualSave();
-    }
-  }, 2000);
-  
+
   if (yTextRef.value && !isApplyingRemote) {
     try {
       const current = yTextRef.value.toString();
@@ -472,14 +591,16 @@ function handleVenEditorUpdate(value: string) {
   }
 }
 
+function handleVenTransaction(payload: EditorSnapshot) {
+  venLastTransaction.value = payload;
+  updateCurrentDocContent(payload.html);
+}
+
 function handleVenTitleUpdate(value: string) {
   venTitle.value = value;
   title.value = value;
   editableTitle.value = value;
-}
-
-function handleVenTransaction(payload: { html: string; json: unknown }) {
-  venLastTransaction.value = payload;
+  updateCurrentDocTitle(value);
 }
 
 function handleVenReady(instance: TiptapEditor) {
@@ -492,14 +613,25 @@ function handleVenReady(instance: TiptapEditor) {
     console.warn("Failed to initialize VenEditor instance", error);
   }
 }
-
 async function setEditorContent(content: string, docTitle: string) {
   venContent.value = content;
   venTitle.value = docTitle;
   document.title = docTitle;
   if (venEditorInstance.value) {
     try {
-      venEditorInstance.value.commands.setContent(content, false);
+      // Support both HTML and JSON content
+      if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
+        try {
+          const parsed = JSON.parse(content);
+          venEditorInstance.value.commands.setContent(parsed, false);
+          console.log('Loaded JSON content into editor');
+        } catch {
+          // If JSON parse fails, treat as HTML
+          venEditorInstance.value.commands.setContent(content, false);
+        }
+      } else {
+        venEditorInstance.value.commands.setContent(content, false);
+      }
     } catch (error) {
       console.error("Error setting VenEditor content:", error);
     }
@@ -526,8 +658,9 @@ async function loadData(id: string) {
     console.log("Document loaded:", doc);
 
     if (doc) {
-      // Use the document as-is from the simplified store
-      currentDoc.value = doc;
+      // Set document FIRST before any other operations
+      setDocument(doc, { markClean: true });
+      console.log("currentDoc set:", currentDoc.value?.id);
 
       // Large-file handling: respect backend flag but avoid flipping if we already have rendered content
       try {
@@ -557,7 +690,19 @@ async function loadData(id: string) {
 
       if (!isLarge.value) {
         // Ensure we have content to display - use default template if empty
-        const contentToDisplay = doc.content || DEFAULT_BLANK_DOCUMENT_TEMPLATE;
+        let contentToDisplay = doc.content || DEFAULT_BLANK_DOCUMENT_TEMPLATE;
+        
+        // Detect if content is JSON and convert to HTML if needed
+        if (contentToDisplay.trim().startsWith('{') || contentToDisplay.trim().startsWith('[')) {
+          try {
+            const parsed = JSON.parse(contentToDisplay);
+            // If it's a Tiptap JSON document, the editor will handle it
+            console.log('Detected JSON content, will load as Tiptap document');
+          } catch {
+            // Not valid JSON, treat as HTML
+          }
+        }
+        
         console.log(`Setting editor content, length: ${contentToDisplay.length}`);
 
         // Use safe method to set editor content
@@ -594,7 +739,7 @@ async function loadData(id: string) {
         // Authenticated but not found: fall back to new doc flow
         console.log("Document not found, creating new document");
         const newDoc = await fileStore.createNewDocument("docx", "New Document");
-        currentDoc.value = newDoc;
+        setDocument(newDoc, { markClean: true });
         title.value = newDoc.title || "New Document";
         document.title = title.value;
   
@@ -604,7 +749,7 @@ async function loadData(id: string) {
         router.replace(`/docs/${newDoc.id}`);
       }
     }
-    hasUnsavedChanges.value = false;
+    // Remove duplicate setDocument call - already set above
   } catch (error) {
     console.error("Failed to load document:", error);
     toast.error("Failed to load document");
@@ -612,94 +757,6 @@ async function loadData(id: string) {
     isLoading.value = false;
   }
 }
-
-async function syncChanges(
-  _trigger: SaveTrigger = "manual",
-  payload: { content?: string; titleOverride?: string } = {}
-): Promise<SaveResponse> {
-  const failure = (error: string): SaveResponse => {
-    const result: SaveResponse = { success: false, offline: !fileStore.isOnline, error };
-    lastSaveResult.value = result;
-    return result;
-  };
-
-  if (isReadOnly.value) {
-    return failure("Document is read-only");
-  }
-
-  if (!currentDoc.value) {
-    return failure("Document not loaded");
-  }
-
-  if (isSyncing.value && latestSavePromise) {
-    return latestSavePromise;
-  }
-
-  const performSave = async (): Promise<SaveResponse> => {
-    isSyncing.value = true;
-    try {
-      const requestedTitle = payload.titleOverride ?? title.value ?? venTitle.value ?? "";
-      const nextTitle = requestedTitle.trim() || "New Document";
-
-      if (nextTitle !== title.value) {
-        title.value = nextTitle;
-        editableTitle.value = nextTitle;
-        document.title = nextTitle;
-        try {
-          if (venEditorInstance.value) {
-            venEditorInstance.value.commands?.setMeta?.('title', nextTitle);
-          }
-        } catch (err) {
-          console.warn("Failed to update editor title", err);
-        }
-      }
-
-      const content = payload.content ?? venLastTransaction.value?.html ?? venContent.value ?? "";
-
-      const docToSave = {
-        ...currentDoc.value,
-        content,
-        title: nextTitle,
-        file_type: "docx",
-        is_folder: false,
-        last_viewed: new Date(),
-      } as FileData;
-
-      const result = await fileStore.saveDocument(docToSave);
-
-      if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
-        console.log("Document got new server ID, redirecting to:", result.redirectId);
-        await router.replace(`/docs/${result.redirectId}`);
-        currentDoc.value = result.document;
-      } else {
-        currentDoc.value = result.document;
-      }
-
-      const response: SaveResponse = {
-        success: true,
-        offline: !fileStore.isOnline,
-        error: null,
-      };
-
-      hasUnsavedChanges.value = false;
-      lastSaveResult.value = response;
-      lastSavedAt.value = new Date();
-
-      return response;
-    } catch (error) {
-      console.error("Sync error:", error);
-      const message = error instanceof Error ? error.message : "Sync failed";
-      return failure(message);
-    } finally {
-      isSyncing.value = false;
-      latestSavePromise = null;
-    }
-  };
-
-  latestSavePromise = performSave();
-  return latestSavePromise;
-}
-
 
 async function saveTitle() {
   if (isReadOnly.value) return;
@@ -714,16 +771,7 @@ async function saveTitle() {
     console.log("current doc:", currentDoc.value);
     // Only mark as having unsaved changes if title actually changed
     if (currentDoc.value.title !== title.value) {
-      // Update document title with explicit file properties
-      currentDoc.value = {
-        ...currentDoc.value,
-        title: title.value,
-        file_type: "docx", // Explicitly ensure file type is preserved
-        is_folder: false // Explicitly ensure it's not marked as folder
-      };
-      hasUnsavedChanges.value = true;
-
-      // Also update the editor's title to stay in sync
+      updateCurrentDocTitle(title.value);
       if (venEditorInstance.value) {
         try { venEditorInstance.value.commands?.setMeta?.('title', title.value); } catch {}
       }
@@ -795,9 +843,9 @@ onMounted(async () => {
       newDoc.content = templateContent;
       // Save the document with template content
       const result = await fileStore.saveDocument(newDoc);
-      currentDoc.value = result.document;
+      setDocument(result.document, { markClean: true });
     } else {
-      currentDoc.value = newDoc;
+      setDocument(newDoc, { markClean: true });
     }
 
     title.value = docTitle;
@@ -892,7 +940,7 @@ onMounted(async () => {
 
         // Create the document using the store's new method
         const newDoc = await fileStore.createNewDocument('docx', 'New Document');
-        currentDoc.value = newDoc;
+        setDocument(newDoc, { markClean: true });
         title.value = 'New Document';
         document.title = title.value;
 
@@ -1043,22 +1091,122 @@ function handleRedo() {
 }
 
 async function handleExport(format: string) {
+  const supportedFormats = ["pdf", "docx", "html", "txt"];
+  if (!supportedFormats.includes(format)) {
+    toast.error(`Unsupported export format: ${format}`);
+    return;
+  }
+
+  if (!venEditorInstance.value) {
+    toast.error("Editor is not ready yet.");
+    return;
+  }
+
+  const baseFileName = (title.value || "document").replace(/\s+/g, "_");
+  const htmlContent = venEditorInstance.value.getHTML();
+
   try {
-    if (format === 'html') {
-      const blob = new Blob([venContent.value], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${title.value || 'document'}.html`;
-      a.click();
-      URL.revokeObjectURL(url);
+    isSyncing.value = true;
+
+    if (format === "html") {
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      downloadBlob(blob, `${baseFileName}.html`);
+      toast.success("HTML export downloaded");
       return;
     }
-    toast.error("Export format not supported yet");
-  } catch (err) {
-    console.error("Doc export failed", err);
-    toast.error("Export failed");
+
+    if (format === "txt") {
+      const textContent = venEditorInstance.value.getText();
+      const blob = new Blob([textContent], { type: "text/plain" });
+      downloadBlob(blob, `${baseFileName}.txt`);
+      toast.success("Plain text export downloaded");
+      return;
+    }
+
+    if (format === "pdf") {
+      const { transfer2Pdf } = await import("@akira1ce/html2pdf");
+      const container = document.createElement("div");
+      container.innerHTML = htmlContent;
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "794px"; // ~A4 width
+      document.body.appendChild(container);
+
+      await transfer2Pdf(container, ".table-row-unit", "page_wrapper", 20);
+
+      document.body.removeChild(container);
+      toast.success("PDF export generated");
+      return;
+    }
+
+    if (format === "docx") {
+      const { Document, Packer, Paragraph } = await import("docx");
+      const textContent = venEditorInstance.value.getText();
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: textContent.split("\n").map((line) => new Paragraph(line || " ")),
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      downloadBlob(blob, `${baseFileName}.docx`);
+      toast.success("DOCX export generated");
+      return;
+    }
+  } catch (error) {
+    console.warn("Local export failed", error);
+
+    const fallbackEndpoint = import.meta.env.VITE_DOC_EXPORT_ENDPOINT;
+    if (!fallbackEndpoint) {
+      toast.error("Export failed locally and no server fallback is configured.");
+      return;
+    }
+
+    try {
+      const token = fileStore.getToken?.();
+      const response = await fetch(fallbackEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          format,
+          title: title.value ?? "Document",
+          html: htmlContent,
+          documentId: currentDoc.value?.id ?? null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      downloadBlob(blob, `${baseFileName}.${format}`);
+      toast.success(`Exported ${format.toUpperCase()} via server fallback`);
+    } catch (fallbackError) {
+      console.error("Doc export fallback failed", fallbackError);
+      toast.error("Export failed");
+    }
+  } finally {
+    isSyncing.value = false;
   }
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
 }
 
 // Large file download helper (docs)
@@ -1214,6 +1362,8 @@ function downloadFile() {
         @update:title="handleVenTitleUpdate"
         @transaction="handleVenTransaction"
         @ready="handleVenReady"
+        @save="handleEditorSave"
+        @auto-save="handleEditorAutoSave"
       />
     </div>
     <div v-if="!accessDenied && isChatOpen" class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col">

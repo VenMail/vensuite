@@ -7,7 +7,7 @@
         :title="isExpanded ? 'Collapse toolbar' : 'Expand toolbar'"
         @click="handleToggleExpanded"
       >
-        <span class="crystal-icon">{{ isExpanded ? '▲' : '▼' }}</span>
+        <span class="crystal-icon">▼</span>
       </button>
       <span class="ven-editor__toolbar-divider" />
 
@@ -17,6 +17,17 @@
         <button class="ven-editor__toolbar-btn" title="Save (Ctrl+S)" @click="handleSave">
           💾
         </button>
+        <template v-if="isExpanded">
+          <button class="ven-editor__toolbar-btn" @click="handleExport('pdf')" title="Export PDF">
+            📄
+          </button>
+          <button class="ven-editor__toolbar-btn" @click="handleExport('docx')" title="Export Word">
+            📝
+          </button>
+          <button class="ven-editor__toolbar-btn" @click="handleExport('html')" title="Export HTML">
+            🌐
+          </button>
+        </template>
       </div>
 
       <span class="ven-editor__toolbar-divider" />
@@ -316,7 +327,7 @@
               <DialogFooter>
                 <Button type="button" variant="outline" @click="isLinkDialogOpen = false">Cancel</Button>
                 <Button type="submit">Apply Link</Button>
-                <Button v-if="canRemoveLink" type="button" variant="destructive" @click="removeLink">Remove Link</Button>
+                <Button v-if="isLinkActive" type="button" variant="destructive" @click="removeLink">Remove Link</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -464,21 +475,6 @@
           </button>
         </div>
 
-        <span class="ven-editor__toolbar-divider" />
-
-        <!-- Export Section -->
-        <div class="ven-editor__section-label">Export</div>
-        <div class="ven-editor__toolbar-group">
-          <button class="ven-editor__toolbar-btn" @click="handleExport('pdf')" title="Export PDF">
-            📄
-          </button>
-          <button class="ven-editor__toolbar-btn" @click="handleExport('docx')" title="Export Word">
-            📝
-          </button>
-          <button class="ven-editor__toolbar-btn" @click="handleExport('html')" title="Export HTML">
-            🌐
-          </button>
-        </div>
       </template>
     </div>
   </div>
@@ -612,7 +608,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'toggle-expanded'): void
-  (e: 'save'): void
+  (e: 'save', payload: { html: string; json: unknown }): void
   (e: 'change-orientation', value: 'portrait' | 'landscape'): void
   (e: 'change-columns', value: number): void
   (e: 'export', format: string): void
@@ -683,7 +679,6 @@ const linkOpenInNewTab = ref(false)
 const linkError = ref('')
 
 const linkDialogTitle = computed(() => (isLinkActive.value ? 'Edit Link' : 'Insert Link'))
-const canRemoveLink = computed(() => isLinkActive.value)
 
 const updateFontState = () => {
   if (!editor.value) return
@@ -939,13 +934,22 @@ const submitTable = () => {
     return
   }
 
-  editor.value
-    .chain()
-    .focus()
-    .insertTable({ rows, cols, withHeaderRow: tableIncludeHeader.value })
-    .run()
+  try {
+    const result = editor.value.chain().focus().insertTable({
+      rows,
+      cols,
+      withHeaderRow: tableIncludeHeader.value,
+    }).run()
 
-  isTableDialogOpen.value = false
+    console.log('Table insertion result:', result)
+    console.log('Editor HTML after table insert:', editor.value.getHTML())
+
+    isTableDialogOpen.value = false
+    tableError.value = ''
+  } catch (error) {
+    console.error('Table insertion failed:', error)
+    tableError.value = 'Failed to insert table. Please try again.'
+  }
 }
 
 const submitImage = () => {
@@ -966,15 +970,32 @@ const submitImage = () => {
     return
   }
 
-  const attrs: Record<string, any> = { src: imageUrl.value.trim() }
-  if (imageAlt.value.trim()) attrs.alt = imageAlt.value.trim()
+  // Build image HTML
+  let imageHTML = '<img'
+  imageHTML += ` src="${imageUrl.value.trim()}"`
+  
+  if (imageAlt.value.trim()) {
+    imageHTML += ` alt="${imageAlt.value.trim()}"`
+  }
+  
   const width = Number.parseInt(imageWidth.value, 10)
   const height = Number.parseInt(imageHeight.value, 10)
-  if (!Number.isNaN(width) && width > 0) attrs.width = width
-  if (!Number.isNaN(height) && height > 0) attrs.height = height
+  if (!Number.isNaN(width) && width > 0) {
+    imageHTML += ` width="${width}"`
+  }
+  if (!Number.isNaN(height) && height > 0) {
+    imageHTML += ` height="${height}"`
+  }
+  
+  imageHTML += ' />'
 
-  editor.value.chain().focus().setImage(attrs).run()
-  isImageDialogOpen.value = false
+  try {
+    editor.value.chain().focus().insertContent(imageHTML).run()
+    isImageDialogOpen.value = false
+  } catch (error) {
+    console.error('Image insertion error:', error)
+    imageError.value = 'Failed to insert image. Please try again.'
+  }
 }
 
 const submitLink = () => {
@@ -1007,14 +1028,63 @@ const submitLink = () => {
     attrs.rel = 'noopener noreferrer'
   }
 
-  editor.value.chain().focus().extendMarkRange('link').setLink(attrs).run()
-  isLinkDialogOpen.value = false
+  try {
+    const chain = editor.value.chain().focus().extendMarkRange('link').setLink(attrs)
+    const applied = chain.run()
+
+    if (!applied) {
+      const { from, to } = editor.value.state.selection
+      const selectedText = editor.value.state.doc.textBetween(from, to, ' ')
+
+      const fallbackText = selectedText?.trim() ? selectedText : linkUrl.value.trim()
+
+      const fallbackApplied = editor.value
+        .chain()
+        .focus()
+        .deleteRange({ from, to })
+        .insertContent({
+          type: 'text',
+          text: fallbackText,
+          marks: [
+            {
+              type: 'link',
+              attrs,
+            },
+          ],
+        })
+        .run()
+
+      if (!fallbackApplied) {
+        throw new Error('Link fallback insertion failed')
+      }
+    }
+
+    isLinkDialogOpen.value = false
+  } catch (error) {
+    console.error('Link insertion error:', error)
+    linkError.value = 'Failed to apply link. Please try again.'
+  }
 }
 
 const removeLink = () => {
   if (!editor.value) return
   editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
   isLinkDialogOpen.value = false
+}
+
+const handleSave = () => {
+  if (!editor.value) return
+
+  try {
+    const snapshot = {
+      html: editor.value.getHTML(),
+      json: editor.value.getJSON(),
+    }
+
+    emit('save', snapshot)
+  } catch (error) {
+    console.error('Save failed:', error)
+  }
 }
 
 const isActive = (name: string | Record<string, unknown>, attrs?: Record<string, unknown>) => {
@@ -1025,10 +1095,6 @@ const isActive = (name: string | Record<string, unknown>, attrs?: Record<string,
   return editor.value.isActive(name as any)
 }
 
-const handleSave = () => {
-  emit('save')
-}
-
 const handleToggleExpanded = () => {
   emit('toggle-expanded')
 }
@@ -1036,12 +1102,12 @@ const handleToggleExpanded = () => {
 const handleOrientation = (value: 'portrait' | 'landscape') => {
   emit('change-orientation', value)
 }
-
 const handleColumns = (value: number) => {
   emit('change-columns', value)
 }
 
 const handleExport = (format: string) => {
+  if (!editor.value) return
   emit('export', format)
 }
 
@@ -1185,16 +1251,17 @@ const insertMathBlock = () => {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* --- Start of Crystal Orb Toggle Styles --- */
+/* --- Start of Office Orb Toggle Styles --- */
 .ven-editor__crystal-toggle {
   --orb-size: 40px;
-  --glow-color: rgba(155, 170, 233, 0.7);
-  --glow-color-expanded: rgba(245, 87, 108, 0.6);
+  --office-blue: #0078d4;
+  --office-blue-dark: #005a9e;
+  --office-blue-light: #50a0e0;
 
   width: var(--orb-size);
   height: var(--orb-size);
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 2px solid #e1e1e1;
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -1204,97 +1271,78 @@ const insertMathBlock = () => {
   align-items: center;
   justify-content: center;
 
-  /* Default (collapsed) state background */
-  background: radial-gradient(circle at 50% 30%, #a6b8ff, #667eea);
+  /* Office-style gradient */
+  background: linear-gradient(135deg, var(--office-blue-light) 0%, var(--office-blue) 50%, var(--office-blue-dark) 100%);
   
-  /* Shadows for depth and glow */
+  /* Professional shadow */
   box-shadow: 
-    inset 0 0 5px rgba(255, 255, 255, 0.6),
-    0 0 8px 2px var(--glow-color),
-    0 0 15px 5px rgba(102, 126, 234, 0.2);
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 
-  /* Smooth transitions for interactions */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
 }
 
-/* Internal snowy/crystal particles */
+/* Subtle shine effect */
 .ven-editor__crystal-toggle::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background-image: 
-    radial-gradient(circle, white 0.2px, transparent 0.5px),
-    radial-gradient(circle, rgba(255,255,255,0.8) 0.4px, transparent 1px);
-  background-size: 20px 20px, 35px 35px;
-  background-position: 0 0, 10px 10px;
-  animation: sparkle 20s linear infinite;
-  opacity: 0.5;
+  top: 2px;
+  left: 4px;
+  right: 4px;
+  height: 40%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), transparent);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
   z-index: 1;
-}
-
-/* Glossy highlight/glare on top */
-.ven-editor__crystal-toggle::after {
-  content: '';
-  position: absolute;
-  top: 5%;
-  left: 15%;
-  width: 70%;
-  height: 35%;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.05));
-  border-radius: 50%;
-  filter: blur(2px);
-  transform: rotate(-15deg);
-  z-index: 2;
-}
-
-@keyframes sparkle {
-    0% { transform: rotate(0deg) scale(1.2); }
-    100% { transform: rotate(360deg) scale(1.2); }
 }
 
 /* Icon inside the orb */
 .ven-editor__crystal-toggle .crystal-icon {
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: white;
   position: relative;
-  z-index: 3;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
 }
 
-/* Hover effect: lift and intensify glow */
+/* Hover effect */
 .ven-editor__crystal-toggle:hover {
-  transform: scale(1.1);
+  transform: translateY(-1px);
+  border-color: var(--office-blue);
   box-shadow: 
-    inset 0 0 6px rgba(255, 255, 255, 0.7),
-    0 0 12px 4px var(--glow-color),
-    0 0 22px 8px rgba(102, 126, 234, 0.3);
+    0 4px 8px rgba(0, 120, 212, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 /* Active/press effect */
 .ven-editor__crystal-toggle:active {
-    transform: scale(0.98);
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* Expanded state: new colors and rotation */
+/* Expanded state */
 .ven-editor__crystal-toggle.is-expanded {
-  background: radial-gradient(circle at 50% 30%, #f7c5f8, #f5576c);
+  background: linear-gradient(135deg, #e74856 0%, #d13438 50%, #a72828 100%);
+  border-color: #d13438;
   transform: rotate(180deg);
   box-shadow: 
-    inset 0 0 5px rgba(255, 255, 255, 0.6),
-    0 0 8px 2px var(--glow-color-expanded),
-    0 0 15px 5px rgba(245, 87, 108, 0.2);
+    0 2px 4px rgba(215, 52, 56, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .ven-editor__crystal-toggle.is-expanded:hover {
-  transform: scale(1.1) rotate(180deg);
+  transform: translateY(-1px) rotate(180deg);
   box-shadow: 
-    inset 0 0 6px rgba(255, 255, 255, 0.7),
-    0 0 12px 4px var(--glow-color-expanded),
-    0 0 22px 8px rgba(245, 87, 108, 0.3);
+    0 4px 8px rgba(215, 52, 56, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
-/* --- End of Crystal Orb Toggle Styles --- */
+/* --- End of Office Orb Toggle Styles --- */
 
 
 .ven-editor__advanced-panel {
@@ -1312,5 +1360,78 @@ const insertMathBlock = () => {
     opacity: 1;
     max-height: 500px;
   }
+}
+
+/* Bubble Menu Styles */
+.ven-editor__bubble-menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ven-editor__bubble-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  transition: all 0.2s;
+}
+
+.ven-editor__bubble-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ven-editor__bubble-btn.is-active {
+  background: rgba(255, 255, 255, 0.95);
+  color: #667eea;
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+.ven-editor__color-menu {
+  background: white;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+.ven-editor__color-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.ven-editor__color-option {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ven-editor__color-option:hover {
+  transform: scale(1.15);
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 </style>
