@@ -563,7 +563,26 @@
             />
           </div>
         </DropdownMenuContent>
-      </DropdownMenu>
+        </DropdownMenu>
+
+      <!-- Table quick actions (shown only when selection is inside a table) -->
+      <template v-if="editor?.isActive('table')">
+        <span class="ven-editor__bubble-sep" />
+        <div class="ven-editor__bubble-group" aria-label="Table actions">
+          <button class="ven-editor__bubble-btn" type="button" title="Row +" @click="bmAddRowAfter">＋R</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Row -" @click="bmDeleteRow">－R</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Row before" @click="bmAddRowBefore">↰R</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Col +" @click="bmAddColumnAfter">＋C</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Col -" @click="bmDeleteColumn">－C</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Col before" @click="bmAddColumnBefore">↰C</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Merge" @click="bmMergeCells">⤧</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Split" @click="bmSplitCell">⤨</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Toggle header row" @click="bmToggleHeaderRow">H R</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Toggle header col" @click="bmToggleHeaderColumn">H C</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Toggle header cell" @click="bmToggleHeaderCell">H Cell</button>
+          <button class="ven-editor__bubble-btn" type="button" title="Delete table" @click="bmDeleteTable">🗑</button>
+        </div>
+      </template>
     </div>
   </BubbleMenu>
 </template>
@@ -683,8 +702,10 @@ const linkDialogTitle = computed(() => (isLinkActive.value ? 'Edit Link' : 'Inse
 const updateFontState = () => {
   if (!editor.value) return
   const attrs = editor.value.getAttributes('textStyle') ?? {}
-  selectedFontFamily.value = (attrs.fontFamily as string | undefined) ?? ''
-  const rawSize = (attrs.fontSize as string | undefined) ?? ''
+  const ff = (attrs.fontFamily ?? attrs['font-family']) as string | undefined
+  const fs = (attrs.fontSize ?? attrs['font-size']) as string | undefined
+  selectedFontFamily.value = ff ?? ''
+  const rawSize = fs ?? ''
   selectedFontSize.value = rawSize.endsWith('pt') ? rawSize.replace(/pt$/, '') : rawSize
   isLinkActive.value = editor.value.isActive?.('link') ?? false
 }
@@ -767,6 +788,8 @@ watch(isLinkDialogOpen, (open) => {
 const shouldShowBubbleMenu = ({ editor: bubbleEditor, state }: any) => {
   const { selection } = state
   if (!bubbleEditor) return false
+  // Always show in tables to expose quick actions, even if cell selection is empty
+  if (bubbleEditor.isActive?.('table')) return true
   if (selection.empty) return false
   if (!selection.content().size) return false
   if (bubbleEditor.isActive('codeBlock')) return false
@@ -775,13 +798,14 @@ const shouldShowBubbleMenu = ({ editor: bubbleEditor, state }: any) => {
 
 const runEditorCommand = (command: 'undo' | 'redo') => {
   if (!editor.value) return
-  const chain = editor.value.chain().focus()
+  const chain = editor.value?.chain().focus()
   chain[command]().run()
 }
 
 const toggleMark = (mark: 'bold' | 'italic' | 'underline') => {
   if (!editor.value) return
-  const chain = editor.value.chain().focus()
+  const chain = editor.value?.chain().focus()
+  console.log('chain', chain)
   switch (mark) {
     case 'bold':
       chain.toggleBold().run()
@@ -816,8 +840,7 @@ const handlePaste = () => {
 }
 
 const toggleList = (listType: 'bulletList' | 'orderedList') => {
-  if (!editor.value) return
-  const chain = editor.value.chain().focus()
+  const chain = editor.value?.chain().focus()
   if (listType === 'bulletList') {
     chain.toggleBulletList().run()
   } else {
@@ -861,54 +884,125 @@ const toggleInlineCode = () => {
   editor.value?.chain().focus().toggleCode().run()
 }
 
+// BubbleMenu table actions with logging
+const runTableCmd = (label: string, exec: (chain: any) => any) => {
+  if (!editor.value) return
+  try {
+    const chain = editor.value?.chain().focus()
+    const ok = exec(chain)
+    console.debug(`[BubbleMenu][Table] ${label} result:`, ok)
+  } catch (e) {
+    console.error(`[BubbleMenu][Table] ${label} error:`, e)
+  }
+}
+
+const bmAddRowAfter = () => runTableCmd('addRowAfter', (ch) => ch.addRowAfter().run())
+const bmAddRowBefore = () => runTableCmd('addRowBefore', (ch) => ch.addRowBefore().run())
+const bmDeleteRow = () => runTableCmd('deleteRow', (ch) => ch.deleteRow().run())
+const bmAddColumnAfter = () => runTableCmd('addColumnAfter', (ch) => ch.addColumnAfter().run())
+const bmAddColumnBefore = () => runTableCmd('addColumnBefore', (ch) => ch.addColumnBefore().run())
+const bmDeleteColumn = () => runTableCmd('deleteColumn', (ch) => ch.deleteColumn().run())
+const bmMergeCells = () => runTableCmd('mergeCells', (ch) => ch.mergeCells().run())
+const bmSplitCell = () => runTableCmd('splitCell', (ch) => ch.splitCell().run())
+const bmToggleHeaderRow = () => runTableCmd('toggleHeaderRow', (ch) => ch.toggleHeaderRow().run())
+const bmToggleHeaderColumn = () => runTableCmd('toggleHeaderColumn', (ch) => ch.toggleHeaderColumn().run())
+const bmToggleHeaderCell = () => runTableCmd('toggleHeaderCell', (ch) => ch.toggleHeaderCell().run())
+const bmDeleteTable = () => runTableCmd('deleteTable', (ch) => ch.deleteTable().run())
+
+const logEditorState = (label: string) => {
+  try {
+    const ed = editor.value
+    if (!ed) return
+    const attrs = ed.getAttributes('textStyle') ?? {}
+    console.debug(`[Toolbar] ${label}`, {
+      selectionEmpty: ed.state.selection.empty,
+      textStyleAttrs: attrs,
+      active: {
+        bold: ed.isActive?.('bold'),
+        italic: ed.isActive?.('italic'),
+        underline: ed.isActive?.('underline'),
+        link: ed.isActive?.('link'),
+      },
+    })
+  } catch (e) {
+    console.debug('[Toolbar] logEditorState error', e)
+  }
+}
+
 const onFontFamilyChange = (event: Event) => {
   if (!editor.value) return
   const target = event.target as HTMLSelectElement
   const value = target.value
-  const chain = editor.value.chain().focus()
+  const chain = editor.value?.chain().focus()
+  console.log('ch', chain)
 
-  if (value) {
-    chain.setFontFamily(value).run()
-  } else {
-    const clearFontFamily = chain.unsetFontFamily?.().run?.()
-    if (!clearFontFamily) {
-      chain.command(({ commands }: { commands: { setFontFamily: (val: string) => void } }) => {
-        commands.setFontFamily('')
-        return true
-      }).run()
+  logEditorState('Before setFontFamily')
+  try {
+    let ok: any
+    if (value) {
+      ok = chain.setFontFamily(value).run()
+    } else {
+      ok = chain.unsetFontFamily?.().run?.()
+      if (!ok) {
+        ok = chain
+          .command(({ commands }: { commands: { setFontFamily: (val: string) => void } }) => {
+            commands.setFontFamily('')
+            return true
+          })
+          .run()
+      }
     }
+    console.debug('[Toolbar] setFontFamily result:', ok)
+  } catch (e) {
+    console.error('[Toolbar] setFontFamily error:', e)
   }
-
   selectedFontFamily.value = value
+  updateFontState()
+  logEditorState('After setFontFamily')
 }
 
 const onFontSizeChange = (event: Event) => {
+  console.log('fontSizeChange', editor.value)
   if (!editor.value) return
   const target = event.target as HTMLSelectElement
   const value = target.value
-  const chain = editor.value.chain().focus()
+  const chain = editor.value?.chain().focus()
+  console.log('chain', chain)
 
-  if (value) {
-    chain.setMark('textStyle', { fontSize: `${value}pt` }).run()
-    selectedFontSize.value = value
-    return
-  }
-
-  chain.command(({ commands, editor: ed }: { commands: any; editor: any }) => {
-    const attrs = { ...ed.getAttributes('textStyle') }
-    delete attrs.fontSize
-    if (Object.keys(attrs).length > 0) {
-      return commands.setMark('textStyle', attrs)
+  logEditorState('Before setFontSize')
+  try {
+    if (value) {
+      const ok = chain.setMark('textStyle', { fontSize: `${value}pt` }).run()
+      console.debug('[Toolbar] set fontSize result:', ok)
+      selectedFontSize.value = value
+      updateFontState()
+      logEditorState('After setFontSize')
+      return
     }
-    return commands.unsetMark?.('textStyle') ?? commands.command(() => false)
-  }).run()
 
-  selectedFontSize.value = ''
+    const ok = chain
+      .command(({ commands, editor: ed }: { commands: any; editor: any }) => {
+        const attrs = { ...(ed.getAttributes('textStyle') ?? {}) }
+        delete attrs.fontSize
+        delete attrs['font-size']
+        if (Object.keys(attrs).length > 0) {
+          return commands.setMark('textStyle', attrs)
+        }
+        return commands.unsetMark?.('textStyle') ?? commands.command(() => false)
+      })
+      .run()
+    console.debug('[Toolbar] unset fontSize result:', ok)
+    selectedFontSize.value = ''
+  } catch (e) {
+    console.error('[Toolbar] set/unset fontSize error:', e)
+  }
+  updateFontState()
+  logEditorState('After unsetFontSize')
 }
 
 const applyHighlightColor = (color: string) => {
   if (!editor.value || !color) return
-  editor.value.chain().focus().setHighlight({ color }).run()
+  editor.value?.chain().focus().setHighlight({ color }).run()
 }
 
 const openLinkDialogFromBubble = () => {
@@ -935,7 +1029,7 @@ const submitTable = () => {
   }
 
   try {
-    const result = editor.value.chain().focus().insertTable({
+    const result = editor.value?.chain().focus().insertTable({
       rows,
       cols,
       withHeaderRow: tableIncludeHeader.value,
@@ -990,7 +1084,7 @@ const submitImage = () => {
   imageHTML += ' />'
 
   try {
-    editor.value.chain().focus().insertContent(imageHTML).run()
+    editor.value?.chain().focus().insertContent(imageHTML).run()
     isImageDialogOpen.value = false
   } catch (error) {
     console.error('Image insertion error:', error)
@@ -1029,7 +1123,7 @@ const submitLink = () => {
   }
 
   try {
-    const chain = editor.value.chain().focus().extendMarkRange('link').setLink(attrs)
+    const chain = editor.value?.chain().focus().extendMarkRange('link').setLink(attrs)
     const applied = chain.run()
 
     if (!applied) {
@@ -1068,7 +1162,7 @@ const submitLink = () => {
 
 const removeLink = () => {
   if (!editor.value) return
-  editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
+  editor.value?.chain().focus().extendMarkRange('link').unsetLink().run()
   isLinkDialogOpen.value = false
 }
 

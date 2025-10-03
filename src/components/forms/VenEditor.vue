@@ -2,7 +2,7 @@
   <div class="ven-editor" :class="{ 'ven-editor--readonly': !editable }">
     <header class="ven-editor__chrome" :class="{ 'is-expanded': isRibbonExpanded }">
       <VenEditorToolbar
-        :editor="editor"
+        :editor="editor as Editor"
         :is-expanded="isRibbonExpanded"
         :font-families="fontFamilies"
         :font-sizes="fontSizes"
@@ -95,7 +95,7 @@
     </header>
     <div class="ven-editor__workspace">
       <div class="ven-editor__page-container">
-        <div class="ven-editor__page-shadow">
+        <div class="ven-editor__page-shadow" :style="pageShadowStyle">
           <div class="ven-editor__page" :style="pageStyle">
             <div class="ven-editor__content" :style="contentStyle">
               <div ref="contentElement" class="ven-editor__editor-host" />
@@ -160,16 +160,13 @@ interface VenEditorProps {
   zoom?: number
 }
 
-const props = withDefaults(
-  defineProps<VenEditorProps>(),
-  {
-    modelValue: '',
-    title: 'Untitled document',
-    editable: true,
-    placeholder: 'Write something…',
-    zoom: 1,
-  },
-)
+const props = withDefaults(defineProps<VenEditorProps>(), {
+  modelValue: '',
+  title: 'Untitled document',
+  editable: true,
+  placeholder: 'Write something…',
+  zoom: 1,
+})
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
@@ -310,15 +307,17 @@ const isPageSettingsOpen = ref(false)
 const paginationExtension = computed(() =>
   PaginationPlus.configure({
     pageHeight: 842,
-    pageGap: 20,
+    // Convert cm gap to px (~37.8px per cm)
+    pageGap: Math.round(pageGap.value * 37.8),
     pageBreakBackground: '#F7F7F8',
     pageHeaderHeight: 24,
     pageFooterHeight: 24,
     footerLeft: 'Page {page}',
-    marginTop: 30,
-    marginBottom: 48,
-    contentMarginTop: 24,
-    contentMarginBottom: 24,
+    // Convert inch margins to px (96px per inch)
+    marginTop: Math.round(pageMargins.top * 96),
+    marginBottom: Math.round(pageMargins.bottom * 96),
+    contentMarginTop: Math.round(pagePadding.value),
+    contentMarginBottom: Math.round(pagePadding.value),
     ...(props.pagination ?? {}),
   }),
 )
@@ -333,6 +332,7 @@ const pageStyle = computed<Record<string, string>>(() => {
     width: baseWidth,
     minHeight: baseHeight,
     transform: `scale(${zoom.value})`,
+    padding: `${pagePadding.value}px`,
   }
 })
 
@@ -352,6 +352,13 @@ const contentStyle = computed<Record<string, string>>(() => {
   return {
     ...baseMargins,
     ...columnStyles,
+  }
+})
+
+const pageShadowStyle = computed<Record<string, string>>(() => {
+  // pageGap is configured in cm for the UI; apply as padding around the page
+  return {
+    padding: `${pageGap.value}cm`,
   }
 })
 
@@ -420,6 +427,22 @@ const createEditor = async () => {
 
   editor.value = instance
   emit('ready', instance)
+}
+
+const recreateEditor = async () => {
+  const snapshot = captureSnapshot() || { html: props.modelValue, json: null }
+  editor.value?.destroy()
+  editor.value = null
+  await createEditor()
+  // restore content
+  if (snapshot?.html) {
+    const inst = editor.value as Editor | null
+    try {
+      inst?.commands.setContent(snapshot.html, false)
+    } catch {
+      // ignore
+    }
+  }
 }
 
 onMounted(() => {
@@ -863,5 +886,61 @@ const characterCount = computed(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* Print styles: focus on the document content only */
+@media print {
+  @page {
+    margin: 0;
+  }
+  /* Hide app chrome */
+  .ven-editor__chrome,
+  .ven-editor__status-bar,
+  .ven-editor__page-settings,
+  .ven-editor__loading {
+    display: none !important;
+  }
+
+  /* Remove background, shadows and extra padding around the page */
+  .ven-editor {
+    background: transparent !important;
+  }
+  .ven-editor__workspace {
+    padding: 0 !important;
+    overflow: visible !important;
+    justify-content: flex-start !important;
+  }
+  .ven-editor__page-container {
+    display: block !important;
+  }
+  .ven-editor__page-shadow {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .ven-editor__page {
+    box-shadow: none !important;
+    border: none !important;
+    transform: none !important; /* print at 100% size */
+  }
+  .ven-editor__content {
+    overflow: visible !important;
+  }
+
+  /* Optional: remove link underlines/colors for print legibility */
+  .ven-editor__content :deep(a) {
+    color: black !important;
+    text-decoration: none !important;
+  }
+
+  /* Ensure tables and images render well on print */
+  .ven-editor__content :deep(table) {
+    page-break-inside: avoid;
+  }
+  .ven-editor__content :deep(img),
+  .ven-editor__content :deep(video) {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
 }
 </style>

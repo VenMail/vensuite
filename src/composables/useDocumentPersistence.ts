@@ -121,6 +121,15 @@ export function useDocumentPersistence(
         hasUnsavedChanges.value = false;
         lastSavedAt.value = new Date();
 
+        // If we're still on a new-doc path, update the URL to the saved document id
+        try {
+          const r = options.router;
+          const path = r?.currentRoute?.value?.path || "";
+          if (r && savedDoc?.id && (path === "/docs/new" || path === "/docs")) {
+            await r.replace(`/docs/${savedDoc.id}`);
+          }
+        } catch {}
+
         const response: SaveResponse = {
           success: true,
           offline: !fileStore.isOnline,
