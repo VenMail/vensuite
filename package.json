@@ -72,7 +72,6 @@
     "@tiptap/vue-3": "^2.26.1",
     "@tiptap/y-tiptap": "^3.0.0",
     "@types/jspdf": "^2.0.0",
-    "@umoteam/editor": "^8.1.0",
     "@univerjs-pro/sheets-exchange-client": "^0.10.7",
     "@univerjs/core": "^0.10.7",
     "@univerjs/data-validation": "^0.10.7",
