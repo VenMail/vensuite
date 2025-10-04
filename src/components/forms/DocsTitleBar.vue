@@ -89,10 +89,13 @@
             @close="shareDialogOpen = false" 
             mode="doc"
             :share-link="shareLink || ''"
-            :privacy-type="privacyType || 'private'"
+            :privacy-type="Number(privacyType) || 7"
             :members="shareMembers || []"
-            @update:privacy-type="$emit('update:privacy-type', $event)"
-            @update:members="$emit('update:members', $event)"
+            @copy-link="$emit('copy-link')"
+            @change-privacy="$emit('change-privacy', $event)"
+            @invite="$emit('invite', $event)"
+            @update-member="$emit('update-member', $event)"
+            @remove-member="$emit('remove-member', $event)"
           />
         </DialogContent>
       </Dialog>
@@ -129,8 +132,11 @@ const emit = defineEmits<{
   (e: 'update:title', value: string): void;
   (e: 'back'): void;
   (e: 'manual-save'): void;
-  (e: 'update:privacy-type', value: string): void;
-  (e: 'update:members', value: any[]): void;
+  (e: 'copy-link'): void;
+  (e: 'change-privacy', value: number): void;
+  (e: 'invite', payload: any): void;
+  (e: 'update-member', payload: any): void;
+  (e: 'remove-member', payload: any): void;
 }>();
 
 const titleRef = ref<HTMLElement | null>(null);

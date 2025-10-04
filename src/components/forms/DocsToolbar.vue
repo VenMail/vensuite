@@ -3,29 +3,50 @@
     <div class="tiptap-toolbar__main">
       <!-- Toggle Expand/Collapse -->
       <button
-        class="tiptap-toolbar__crystal-toggle"
+        class="tiptap-toolbar__crystal-toggle bg-gradient-to-br from-blue-400 via-blue-600 to-blue-800 dark:from-blue-500 dark:via-blue-700 dark:to-blue-900"
         :class="{ 'is-expanded': isExpanded }"
         :title="isExpanded ? 'Collapse toolbar' : 'Expand toolbar'"
         @click="toggleExpanded"
       >
         <span class="crystal-icon">▼</span>
       </button>
+
       <span class="tiptap-toolbar__divider" />
 
       <!-- File Section (Expanded only) -->
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">File</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label text-gray-500 dark:text-gray-400">New</div>
+      <!-- New File Menu -->
+      <button
+        class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
+        title="New Document"
+        @click="showNewFileDialog = true"
+      >
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
-        <button class="tiptap-toolbar__btn" title="Export PDF" @click="handleExport('pdf')">
-          📄
+
+      <span class="tiptap-toolbar__divider bg-gray-300 dark:bg-gray-600" />
+        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title="Export PDF" @click="handleExport('pdf')">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
         </button>
-        <button class="tiptap-toolbar__btn" @click="handleExport('docx')" title="Export Word">
-          📝
+        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="handleExport('docx')" title="Export Word">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
         </button>
-        <button class="tiptap-toolbar__btn" @click="handleExport('html')" title="Export HTML">
-          🌐
+        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="handleExport('html')" title="Export HTML">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
         </button>
-        <button class="tiptap-toolbar__btn" @click="handlePrint" title="Print">
-          🖨️
+        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="handlePrint" title="Print">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
         </button>
       </div>
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
@@ -56,7 +77,7 @@
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">Font</div>
       <div class="tiptap-toolbar__group">
         <select
-          class="tiptap-toolbar__select"
+          class="tiptap-toolbar__select bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 focus:border-blue-500 dark:focus:border-blue-400 shadow-sm"
           :value="selectedFontFamily"
           title="Font Family"
           @change="onFontFamilyChange"
@@ -67,7 +88,7 @@
           </option>
         </select>
         <select
-          class="tiptap-toolbar__select tiptap-toolbar__select--small"
+          class="tiptap-toolbar__select tiptap-toolbar__select--small bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 focus:border-blue-500 dark:focus:border-blue-400 shadow-sm"
           :value="selectedFontSize"
           title="Font Size"
           @change="onFontSizeChange"
@@ -86,32 +107,28 @@
       <div class="tiptap-toolbar__group">
         <!-- Basic Formatting (Always visible) -->
         <button
-          class="tiptap-toolbar__btn"
-          :class="{ 'is-active': editor?.isActive('bold') }"
+          :class="['tiptap-toolbar__btn', btnClasses, editor?.isActive('bold') && btnActiveClasses]"
           title="Bold (Ctrl+B)"
           @click="editor?.chain().focus().toggleBold().run()"
         >
           <strong>B</strong>
         </button>
         <button
-          class="tiptap-toolbar__btn"
-          :class="{ 'is-active': editor?.isActive('italic') }"
+          :class="['tiptap-toolbar__btn', btnClasses, editor?.isActive('italic') && btnActiveClasses]"
           title="Italic (Ctrl+I)"
           @click="editor?.chain().focus().toggleItalic().run()"
         >
           <em>I</em>
         </button>
         <button
-          class="tiptap-toolbar__btn"
-          :class="{ 'is-active': editor?.isActive('underline') }"
+          :class="['tiptap-toolbar__btn', btnClasses, editor?.isActive('underline') && btnActiveClasses]"
           title="Underline (Ctrl+U)"
           @click="editor?.chain().focus().toggleUnderline().run()"
         >
           <u>U</u>
         </button>
         <button
-          class="tiptap-toolbar__btn"
-          :class="{ 'is-active': editor?.isActive('strike') }"
+          :class="['tiptap-toolbar__btn', btnClasses, editor?.isActive('strike') && btnActiveClasses]"
           title="Strikethrough"
           @click="editor?.chain().focus().toggleStrike().run()"
         >
@@ -486,6 +503,89 @@
       </DialogFooter>
     </DialogContent>
   </Dialog>
+
+  <!-- New File Dialog with Templates -->
+  <Dialog v-model:open="showNewFileDialog">
+    <DialogContent class="sm:max-w-4xl max-h-[80vh]">
+      <DialogHeader>
+        <DialogTitle>Create New Document</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4 overflow-y-auto max-h-[60vh] custom-scrollbar">
+        <div class="grid grid-cols-3 gap-4">
+          <!-- Blank Document -->
+          <button @click="createFromTemplate('blank')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+            <div class="w-full h-32 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 flex items-center justify-center">
+              <svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Blank Document</span>
+          </button>
+
+          <!-- Business Letter -->
+          <button @click="createFromTemplate('letter')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+            <div class="w-full h-32 bg-gradient-to-b from-blue-50 to-white dark:from-blue-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
+              <div class="h-2 w-16 bg-blue-400 rounded mb-2"></div>
+              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
+              <div class="h-1 w-3/4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Business Letter</span>
+          </button>
+
+          <!-- Report -->
+          <button @click="createFromTemplate('report')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+            <div class="w-full h-32 bg-gradient-to-b from-purple-50 to-white dark:from-purple-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
+              <div class="h-3 w-20 bg-purple-500 rounded mb-2"></div>
+              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
+              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
+              <div class="h-1 w-2/3 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Report</span>
+          </button>
+
+          <!-- Resume -->
+          <button @click="createFromTemplate('resume')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+            <div class="w-full h-32 bg-gradient-to-b from-green-50 to-white dark:from-green-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
+              <div class="h-2 w-24 bg-green-500 rounded mb-2"></div>
+              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
+              <div class="h-1 w-4/5 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Resume/CV</span>
+          </button>
+
+          <!-- Meeting Notes -->
+          <button @click="createFromTemplate('notes')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+            <div class="w-full h-32 bg-gradient-to-b from-yellow-50 to-white dark:from-yellow-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
+              <div class="h-2 w-16 bg-yellow-500 rounded mb-2"></div>
+              <div class="flex gap-1 mb-1">
+                <div class="h-1 w-1 bg-gray-400 rounded-full"></div>
+                <div class="h-1 flex-1 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </div>
+              <div class="flex gap-1">
+                <div class="h-1 w-1 bg-gray-400 rounded-full"></div>
+                <div class="h-1 flex-1 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Meeting Notes</span>
+          </button>
+
+          <!-- Article -->
+          <button @click="createFromTemplate('article')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+            <div class="w-full h-32 bg-gradient-to-b from-red-50 to-white dark:from-red-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
+              <div class="h-3 w-full bg-red-500 rounded mb-2"></div>
+              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
+              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
+              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Article/Blog</span>
+          </button>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="showNewFileDialog = false">Cancel</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -511,15 +611,21 @@ const emit = defineEmits<{
   (e: 'update:pageSize', value: string): void;
   (e: 'update:pageOrientation', value: 'portrait' | 'landscape'): void;
   (e: 'toggle-comments'): void;
+  (e: 'toggle-expanded', value: boolean): void;
 }>();
 
 // State
 const isExpanded = ref(false);
 
+// Reusable button classes
+const btnClasses = 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm';
+const btnActiveClasses = '!bg-blue-100 dark:!bg-blue-900 !border-blue-500 dark:!border-blue-400 !text-blue-700 dark:!text-blue-300';
+
 // Dialog states
 const showTableDialog = ref(false);
 const showLinkDialog = ref(false);
 const showImageDialog = ref(false);
+const showNewFileDialog = ref(false);
 
 // Table insert state
 const tableRows = ref(3);
@@ -728,6 +834,7 @@ function applyImage() {
 
 function toggleExpanded() {
   isExpanded.value = !isExpanded.value;
+  emit('toggle-expanded', isExpanded.value);
 }
 
 function handleExport(format: string) {
@@ -736,6 +843,23 @@ function handleExport(format: string) {
 
 function handlePrint() {
   window.print();
+}
+
+function createFromTemplate(template: string) {
+  if (!props.editor) return;
+  
+  const templates: Record<string, string> = {
+    blank: '<p>Start typing...</p>',
+    letter: '<p style="text-align: right">Your Name<br>Your Address<br>City, State ZIP<br>Email<br>Phone</p><p><br></p><p>Date</p><p><br></p><p>Recipient Name<br>Company<br>Address</p><p><br></p><p>Dear [Recipient],</p><p><br></p><p>Start your letter here...</p><p><br></p><p>Sincerely,<br>Your Name</p>',
+    report: '<h1>Report Title</h1><p><em>Author Name | Date</em></p><h2>Executive Summary</h2><p>Brief overview of the report...</p><h2>Introduction</h2><p>Background and context...</p><h2>Findings</h2><p>Key findings and analysis...</p><h2>Conclusion</h2><p>Summary and recommendations...</p>',
+    resume: '<h1>Your Name</h1><p>Email | Phone | LinkedIn</p><h2>Professional Summary</h2><p>Brief professional summary highlighting key skills and experience...</p><h2>Experience</h2><p><strong>Job Title</strong> - Company Name<br><em>Start Date - End Date</em></p><ul><li>Key achievement or responsibility</li><li>Key achievement or responsibility</li></ul><h2>Education</h2><p><strong>Degree</strong> - University Name<br><em>Graduation Year</em></p><h2>Skills</h2><ul><li>Skill 1</li><li>Skill 2</li><li>Skill 3</li></ul>',
+    notes: '<h1>Meeting Notes</h1><p><strong>Date:</strong> [Date]<br><strong>Attendees:</strong> [Names]<br><strong>Topic:</strong> [Topic]</p><h2>Agenda</h2><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul><h2>Discussion Points</h2><p>Key discussion points...</p><h2>Action Items</h2><ul data-type="taskList"><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Action item 1</p></div></li><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Action item 2</p></div></li></ul>',
+    article: '<h1>Article Title</h1><p><em>By Author Name | Published Date</em></p><p><br></p><p>Opening paragraph that hooks the reader...</p><h2>Section Heading</h2><p>Content for this section...</p><blockquote>A relevant quote or highlight</blockquote><p>More content...</p><h2>Conclusion</h2><p>Wrap up your article...</p>',
+  };
+  
+  const content = templates[template] || templates.blank;
+  props.editor.commands.setContent(content);
+  showNewFileDialog.value = false;
 }
 
 function onPageSizeChange(event: Event) {
@@ -788,22 +912,12 @@ function onBgColorChange(event: Event) {
   letter-spacing: 0.05em;
   padding: 0 8px;
   white-space: nowrap;
-  color: #6b7280;
-}
-
-:deep(.dark) .tiptap-toolbar__section-label {
-  color: #9ca3af;
 }
 
 .tiptap-toolbar__divider {
   width: 1px;
   height: 24px;
   margin: 0 4px;
-  background: #d1d5db;
-}
-
-:deep(.dark) .tiptap-toolbar__divider {
-  background: #4b5563;
 }
 
 .tiptap-toolbar__group {
@@ -822,46 +936,6 @@ function onBgColorChange(event: Event) {
   cursor: pointer;
   font-size: 0.875rem;
   transition: all 0.15s;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  color: #374151;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-:deep(.dark) .tiptap-toolbar__btn {
-  background: #374151;
-  border-color: #4b5563;
-  color: #e5e7eb;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.tiptap-toolbar__btn:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  color: #2563eb;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-:deep(.dark) .tiptap-toolbar__btn:hover:not(:disabled) {
-  background: #4b5563;
-  border-color: #6b7280;
-  color: #60a5fa;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.tiptap-toolbar__btn.is-active {
-  outline: none;
-  border-color: #2563eb;
-  background: #dbeafe;
-  color: #1e40af;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-:deep(.dark) .tiptap-toolbar__btn.is-active {
-  border-color: #60a5fa;
-  background: #1e3a8a;
-  color: #93c5fd;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
 }
 
 .tiptap-toolbar__btn:disabled {
@@ -877,46 +951,18 @@ function onBgColorChange(event: Event) {
 .tiptap-toolbar__select {
   height: 32px;
   padding: 0 8px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #374151;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-:deep(.dark) .tiptap-toolbar__select {
-  background: #374151;
-  border-color: #4b5563;
-  color: #e5e7eb;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.tiptap-toolbar__select--small {
-  min-width: 80px;
-}
-
-.tiptap-toolbar__select:hover {
-  border-color: #9ca3af;
-  background: #f9fafb;
-}
-
-:deep(.dark) .tiptap-toolbar__select:hover {
-  border-color: #6b7280;
-  background: #4b5563;
 }
 
 .tiptap-toolbar__select:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-:deep(.dark) .tiptap-toolbar__select:focus {
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+.tiptap-toolbar__select--small {
+  min-width: 80px;
 }
 
 /* Crystal Toggle Button - Office-style */
@@ -1017,51 +1063,22 @@ function onBgColorChange(event: Event) {
 
 .tiptap-toolbar__color-picker label {
   position: relative;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: white;
-  border: 1px solid #e5e7eb;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__color-picker label {
-    background: #374151;
-    border-color: #4b5563;
-  }
-}
-
-.tiptap-toolbar__color-picker label:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-}
-
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__color-picker label:hover {
-    background: #4b5563;
-    border-color: #6b7280;
-  }
-}
-
 .tiptap-toolbar__color-label {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #1f2937;
   pointer-events: none;
   position: relative;
   z-index: 1;
-  transition: color 0.2s;
-}
-
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__color-label {
-    color: #e5e7eb;
-  }
 }
 
 .tiptap-toolbar__color-input {
@@ -1074,218 +1091,31 @@ function onBgColorChange(event: Event) {
   left: 0;
 }
 
-/* Popover Styles */
-.tiptap-toolbar__popover-wrapper {
-  position: relative;
-  display: inline-block;
+/* Custom scrollbar for dialogs */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.tiptap-toolbar__popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  min-width: 280px;
-  z-index: 1000;
-  animation: popoverSlideIn 0.2s ease;
-}
-
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__popover {
-    background: #1f2937;
-    border-color: #374151;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  }
-}
-
-@keyframes popoverSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.popover-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: #1f2937;
-}
-
-@media (prefers-color-scheme: dark) {
-  .popover-header {
-    border-bottom-color: #374151;
-    color: #f9fafb;
-  }
-}
-
-.popover-body {
-  padding: 16px;
-}
-
-.popover-field {
-  margin-bottom: 12px;
-}
-
-.popover-field:last-child {
-  margin-bottom: 0;
-}
-
-.popover-field label {
-  display: block;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 6px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .popover-field label {
-    color: #d1d5db;
-  }
-}
-
-.popover-field input[type="text"],
-.popover-field input[type="url"],
-.popover-field input[type="number"],
-.popover-field select {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: #1f2937;
-  background: white;
-  transition: all 0.15s;
-}
-
-@media (prefers-color-scheme: dark) {
-  .popover-field input[type="text"],
-  .popover-field input[type="url"],
-  .popover-field input[type="number"],
-  .popover-field select {
-    background: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
-  }
-}
-
-.popover-field input:focus,
-.popover-field select:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  .popover-field input:focus,
-  .popover-field select:focus {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
-  }
-}
-
-.popover-checkbox {
-  margin-top: 12px;
-}
-
-.popover-checkbox label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.8125rem;
-  color: #374151;
-  cursor: pointer;
-  user-select: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  .popover-checkbox label {
-    color: #d1d5db;
-  }
-}
-
-.popover-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.popover-footer {
-  padding: 12px 16px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-@media (prefers-color-scheme: dark) {
-  .popover-footer {
-    border-top-color: #374151;
-  }
-}
-
-.popover-btn {
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-  border: 1px solid transparent;
-}
-
-.popover-btn-cancel {
+.custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
-  color: #6b7280;
-  border-color: #d1d5db;
 }
 
-.popover-btn-cancel:hover {
-  background: #f3f4f6;
-  color: #374151;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .popover-btn-cancel {
-    color: #9ca3af;
-    border-color: #4b5563;
-  }
-  
-  .popover-btn-cancel:hover {
-    background: #374151;
-    color: #e5e7eb;
-  }
+:deep(.dark) .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563;
 }
 
-.popover-btn-primary {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
-.popover-btn-primary:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-}
-
-.popover-btn-danger {
-  background: #dc2626;
-  color: white;
-  border-color: #dc2626;
-}
-
-.popover-btn-danger:hover {
-  background: #b91c1c;
-  border-color: #b91c1c;
+:deep(.dark) .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 @media print {

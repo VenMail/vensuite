@@ -1,14 +1,12 @@
 <template>
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Raleway:wght@400;600;700&family=Nunito:wght@400;600;700&family=Poppins:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
   
   <div class="flex flex-col h-screen bg-gray-50">
-    <!-- Title Bar -->
-    <TiptapTitleBar
+    <!-- Docs Title Bar -->
+    <DocsTitleBar
       :title="documentTitle"
-      :is-saving="isSaving"
+      :isSaving="isSaving"
       :has-unsaved-changes="hasUnsavedChanges"
       :is-offline="isOffline"
       :last-saved-at="lastSavedAt"
@@ -18,12 +16,15 @@
       @update:title="documentTitle = $event"
       @back="goBack"
       @manual-save="saveDocument"
-      @update:privacy-type="privacyType = $event"
-      @update:members="shareMembers = $event"
+      @copy-link="copyShareLink"
+      @change-privacy="updateVisibility"
+      @invite="handleInviteMember"
+      @update-member="handleUpdateMember"
+      @remove-member="handleRemoveMember"
     />
 
-    <!-- Tiptap Menu Bar -->
-    <TiptapToolbar 
+    <!-- Docs Menu Bar -->
+    <DocsToolbar 
       :editor="editor" 
       :page-size="pageSize"
       :page-orientation="pageOrientation"
@@ -31,12 +32,16 @@
       @update:page-orientation="pageOrientation = $event"
       @export="handleExport"
       @toggle-comments="isChatOpen = !isChatOpen"
+      @toggle-expanded="isToolbarExpanded = $event"
     />
 
     <!-- Table of Contents Toggle (Floating Left) -->
     <button
       @click="isTocOpen = !isTocOpen"
-      class="fixed left-4 top-[150px] z-40 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
+      :class="[
+        'fixed left-4 z-40 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105',
+        isToolbarExpanded ? 'top-[190px]' : 'top-[140px]'
+      ]"
       title="Table of Contents"
     >
       <svg class="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,7 +52,10 @@
     <!-- Table of Contents Panel -->
     <div
       v-if="isTocOpen"
-      class="fixed left-4 top-[206px] z-40 w-64 max-h-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden flex flex-col"
+      :class="[
+        'fixed left-4 z-40 w-64 max-h-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden flex flex-col',
+        isToolbarExpanded ? 'top-[250px]' : 'top-[200px]'
+      ]"
     >
       <div class="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
         <h3 class="font-semibold text-sm text-gray-900 dark:text-gray-100">Table of Contents</h3>
@@ -130,6 +138,28 @@
         </div>
       </div>
     </div>
+
+    <!-- Share Dialog -->
+    <Dialog v-model:open="shareOpen">
+      <DialogContent class="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Share</DialogTitle>
+        </DialogHeader>
+        <ShareCard
+          @close="shareOpen = false"
+          mode="doc"
+          :share-link="shareLinkDoc"
+          :privacy-type="Number(privacyType) || 7"
+          :members="shareMembers"
+          :can-edit-privacy="authStore.isAuthenticated"
+          @copy-link="copyShareLink"
+          @change-privacy="updateVisibility"
+          @invite="handleInviteMember"
+          @update-member="handleUpdateMember"
+          @remove-member="handleRemoveMember"
+        />
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
@@ -158,15 +188,25 @@ import { ImagePlus } from 'tiptap-image-plus';
 import { useFileStore } from '@/store/files';
 import { toast } from 'vue-sonner';
 import type { FileData } from '@/types';
-import TiptapToolbar from '@/components/forms/TiptapToolbar.vue';
-import TiptapTitleBar from '@/components/forms/TiptapTitleBar.vue';
+import DocsToolbar from '@/components/forms/DocsToolbar.vue';
+import DocsTitleBar from '@/components/forms/DocsTitleBar.vue';
+import ShareCard from '@/components/ShareCard.vue';
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
+import { useAuthStore } from '@/store/auth';
+import axios from 'axios';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const route = useRoute();
 const router = useRouter();
 const fileStore = useFileStore();
+const authStore = useAuthStore();
 
 // Custom FontSize extension
 const FontSize = Extension.create({
@@ -234,6 +274,15 @@ const isChatOpen = ref(false);
 
 // Table of Contents state
 const isTocOpen = ref(false);
+const isToolbarExpanded = ref(false);
+
+// Share dialog state
+const shareOpen = ref(false);
+const shareLinkDoc = computed(() => {
+  const id = route.params.appFileId as string;
+  if (!id) return '';
+  return `${window.location.origin}/docs/${id}`;
+});
 const tocItems = computed(() => {
   if (!editor.value) return [];
   
@@ -280,6 +329,50 @@ function scrollToHeading(index: number) {
   if (targetPos > 0) {
     editor.value.commands.setTextSelection(targetPos);
     editor.value.commands.scrollIntoView();
+  }
+}
+
+// Helper function to detect content type and load appropriately
+function loadContentIntoEditor(content: string) {
+  if (!editor.value || !content) return;
+  
+  try {
+    const trimmedContent = content.trim();
+    
+    // Check if it's HTML (starts with < and contains HTML tags)
+    const isHTML = trimmedContent.startsWith('<') && (
+      trimmedContent.includes('</') || 
+      trimmedContent.match(/<[a-z][\s\S]*>/i)
+    );
+    
+    if (isHTML) {
+      // Load as HTML - Tiptap will parse it
+      editor.value.commands.setContent(trimmedContent, false);
+      console.log('✓ Loaded HTML content');
+      return;
+    }
+    
+    // Try to parse as Tiptap JSON
+    try {
+      const parsed = JSON.parse(trimmedContent);
+      
+      // Validate it's a Tiptap document structure
+      if (parsed && typeof parsed === 'object' && (parsed.type === 'doc' || parsed.content)) {
+        editor.value.commands.setContent(parsed, false);
+        console.log('✓ Loaded Tiptap JSON content');
+        return;
+      }
+    } catch (jsonError) {
+      // Not valid JSON, continue to fallback
+    }
+    
+    // Fallback: treat as plain text wrapped in paragraph
+    editor.value.commands.setContent(`<p>${trimmedContent}</p>`, false);
+    console.log('✓ Loaded as plain text');
+    
+  } catch (error) {
+    console.error('Error loading content:', error);
+    editor.value?.commands.setContent('<p>Error loading content. Please try again.</p>', false);
   }
 }
 
@@ -632,8 +725,48 @@ watch(documentTitle, (newTitle) => {
 
 async function initializeDocument() {
   const docId = route.params.appFileId as string | undefined;
+  const template = route.params.template as string | undefined;
   
   isJustLoaded.value = true; // Mark as just loaded
+  
+  // Check if loading from template
+  if (template) {
+    const templates: Record<string, string> = {
+      blank: '<p>Start typing...</p>',
+      letter: '<p style="text-align: right">Your Name<br>Your Address<br>City, State ZIP<br>Email<br>Phone</p><p><br></p><p>Date</p><p><br></p><p>Recipient Name<br>Company<br>Address</p><p><br></p><p>Dear [Recipient],</p><p><br></p><p>Start your letter here...</p><p><br></p><p>Sincerely,<br>Your Name</p>',
+      report: '<h1>Report Title</h1><p><em>Author Name | Date</em></p><h2>Executive Summary</h2><p>Brief overview of the report...</p><h2>Introduction</h2><p>Background and context...</p><h2>Findings</h2><p>Key findings and analysis...</p><h2>Conclusion</h2><p>Summary and recommendations...</p>',
+      resume: '<h1>Your Name</h1><p>Email | Phone | LinkedIn</p><h2>Professional Summary</h2><p>Brief professional summary highlighting key skills and experience...</p><h2>Experience</h2><p><strong>Job Title</strong> - Company Name<br><em>Start Date - End Date</em></p><ul><li>Key achievement or responsibility</li><li>Key achievement or responsibility</li></ul><h2>Education</h2><p><strong>Degree</strong> - University Name<br><em>Graduation Year</em></p><h2>Skills</h2><ul><li>Skill 1</li><li>Skill 2</li><li>Skill 3</li></ul>',
+      notes: '<h1>Meeting Notes</h1><p><strong>Date:</strong> [Date]<br><strong>Attendees:</strong> [Names]<br><strong>Topic:</strong> [Topic]</p><h2>Agenda</h2><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul><h2>Discussion Points</h2><p>Key discussion points...</p><h2>Action Items</h2><ul data-type="taskList"><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Action item 1</p></div></li><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Action item 2</p></div></li></ul>',
+      article: '<h1>Article Title</h1><p><em>By Author Name | Published Date</em></p><p><br></p><p>Opening paragraph that hooks the reader...</p><h2>Section Heading</h2><p>Content for this section...</p><blockquote>A relevant quote or highlight</blockquote><p>More content...</p><h2>Conclusion</h2><p>Wrap up your article...</p>',
+    };
+    
+    const templateContent = templates[template] || templates.blank;
+    const templateTitle = `${template.charAt(0).toUpperCase() + template.slice(1)} Document`;
+    
+    // Load template content into editor
+    loadContentIntoEditor(templateContent);
+    
+    // Create new document with template
+    try {
+      const newDoc = await fileStore.createNewDocument('docx', templateTitle);
+      currentDoc.value = newDoc;
+      documentTitle.value = newDoc.title || templateTitle;
+      document.title = documentTitle.value;
+      
+      // Update URL to edit mode
+      await router.replace(`/docs/${newDoc.id}`);
+      
+      toast.success('Document created from template');
+      
+      setTimeout(() => {
+        isJustLoaded.value = false;
+      }, 500);
+    } catch (error) {
+      console.error('Failed to create document from template:', error);
+      toast.error('Failed to create document');
+    }
+    return;
+  }
   
   if (docId && docId !== 'new') {
     // Load existing document
@@ -644,16 +777,9 @@ async function initializeDocument() {
         documentTitle.value = doc.title || 'Untitled Document';
         document.title = documentTitle.value; // Set page title
         
-        // Load content into editor
+        // Load content into editor using helper function
         if (doc.content) {
-          try {
-            // Try to parse as JSON first
-            const parsed = JSON.parse(doc.content);
-            editor.value?.commands.setContent(parsed, false);
-          } catch {
-            // Fallback to HTML
-            editor.value?.commands.setContent(doc.content, false);
-          }
+          loadContentIntoEditor(doc.content);
         }
         
         lastSavedAt.value = new Date();
@@ -676,7 +802,7 @@ async function initializeDocument() {
       document.title = documentTitle.value; // Set page title
       
       // Update URL with the new document ID
-      await router.replace(`/tiptap/${newDoc.id}`);
+      await router.replace(`/docs/${newDoc.id}`);
       
       // Clear just loaded flag after a short delay
       setTimeout(() => {
@@ -691,6 +817,85 @@ async function initializeDocument() {
 
 function goBack() {
   router.push('/');
+}
+
+// Share functions
+const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
+
+const permToApi: Record<'view'|'comment'|'edit', 'v'|'c'|'e'> = { view: 'v', comment: 'c', edit: 'e' };
+const apiToPerm: Record<'v'|'c'|'e', 'view'|'comment'|'edit'> = { v: 'view', c: 'comment', e: 'edit' };
+
+function parseSharingInfoString(info?: string | null) {
+  const list: Array<{ email: string; permission: 'view'|'comment'|'edit' }> = [];
+  if (!info || typeof info !== 'string') return list;
+  info.split(',').map(s => s.trim()).filter(Boolean).forEach(pair => {
+    const [email, access] = pair.split(':').map(x => (x || '').trim());
+    if (email && access && access in apiToPerm) {
+      list.push({ email, permission: apiToPerm[access as 'v'|'c'|'e'] });
+    }
+  });
+  return list;
+}
+
+function serializeSharingInfoString(members: Array<{ email: string; permission: 'view'|'comment'|'edit' }>): string {
+  return members.map(m => `${m.email}:${permToApi[m.permission]}`).join(',');
+}
+
+function copyShareLink() {
+  try {
+    navigator.clipboard.writeText(shareLinkDoc.value);
+    toast.success('Link copied to clipboard');
+  } catch {}
+}
+
+async function handleInviteMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner'; note?: string }) {
+  try {
+    const id = route.params.appFileId as string;
+    if (!id) return;
+    
+    const newMembers = [...shareMembers.value, { email: payload.email, permission: payload.permission as any }];
+    const sharingInfo = serializeSharingInfoString(newMembers as any);
+    
+    const response = await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
+    if (response.data?.document) {
+      shareMembers.value = parseSharingInfoString(response.data.document.sharing_info) as any;
+      toast.success('Member invited');
+    }
+  } catch {}
+}
+
+async function handleUpdateMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner' }) {
+  return handleInviteMember(payload);
+}
+
+async function handleRemoveMember(payload: { email: string }) {
+  try {
+    const id = route.params.appFileId as string;
+    if (!id) return;
+    
+    const newMembers = shareMembers.value.filter(m => m.email !== payload.email);
+    const sharingInfo = serializeSharingInfoString(newMembers as any);
+    
+    const response = await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
+    if (response.data?.document) {
+      shareMembers.value = parseSharingInfoString(response.data.document.sharing_info) as any;
+      toast.success('Member removed');
+    }
+  } catch {}
+}
+
+async function updateVisibility(value: number) {
+  try {
+    const id = route.params.appFileId as string;
+    if (!id) return;
+    
+    const response = await axios.patch(`${FILES_ENDPOINT}/${id}`, { privacy_type: value });
+    if (response.data?.document) {
+      privacyType.value = response.data.document.privacy_type;
+      toast.success('Visibility updated');
+    }
+  } catch {}
 }
 
 onMounted(async () => {
