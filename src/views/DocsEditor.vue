@@ -1900,7 +1900,6 @@ onUnmounted(() => {
     margin: 0;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
-    color-adjust: exact;
   }
   
   :deep(.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked) {
