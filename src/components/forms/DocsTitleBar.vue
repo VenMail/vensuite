@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { ArrowLeft, PencilIcon, Share2, Wifi, WifiOff, Sun, Moon } from 'lucide-vue-next';
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
 import Button from '@/components/ui/button/Button.vue';
@@ -144,23 +144,59 @@ const isTitleEdit = ref(false);
 const shareDialogOpen = ref(false);
 const isSettingCursor = ref(false);
 const iconComponent = defaultIcons.IconMicrosoftWord;
+
+type ThemeMode = 'light' | 'dark';
+const THEME_STORAGE_KEY = 'theme';
+const THEME_EVENT = 'theme-change';
+
 const isDarkMode = ref(false);
 
-// Check initial dark mode state
-if (typeof window !== 'undefined') {
-  isDarkMode.value = document.documentElement.classList.contains('dark') ||
-    window.matchMedia('(prefers-color-scheme: dark)').matches;
+function applyTheme(mode: ThemeMode, emitEvent = false, persist = true) {
+  if (typeof window === 'undefined') return;
+  const isDark = mode === 'dark';
+  isDarkMode.value = isDark;
+  document.documentElement.classList.toggle('dark', isDark);
+  if (persist) {
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
+  }
+  if (emitEvent) {
+    window.dispatchEvent(new CustomEvent<ThemeMode>(THEME_EVENT, { detail: mode }));
+  }
 }
 
-function toggleDarkMode() {
-  isDarkMode.value = !isDarkMode.value;
-  if (isDarkMode.value) {
-    document.documentElement.classList.add('dark');
-    localStorage.setItem('theme', 'dark');
+function syncThemeFromStorage() {
+  if (typeof window === 'undefined') return;
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  if (stored === 'dark' || stored === 'light') {
+    applyTheme(stored as ThemeMode, false);
   } else {
-    document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
+    applyTheme('light', false, false);
   }
+}
+
+function handleExternalTheme(event: Event) {
+  const detail = (event as CustomEvent<ThemeMode>).detail;
+  if (detail === 'light' || detail === 'dark') {
+    applyTheme(detail, false);
+  }
+}
+
+onMounted(() => {
+  syncThemeFromStorage();
+  if (typeof window !== 'undefined') {
+    window.addEventListener(THEME_EVENT, handleExternalTheme as EventListener);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener(THEME_EVENT, handleExternalTheme as EventListener);
+  }
+});
+
+function toggleDarkMode() {
+  const mode: ThemeMode = isDarkMode.value ? 'light' : 'dark';
+  applyTheme(mode, true);
 }
 
 const statusText = computed(() => {

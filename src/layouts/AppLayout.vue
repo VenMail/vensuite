@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import Sidebar from './Sidebar.vue'
 import { Menu, Search, Filter, Moon, Sun, Plus } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,9 @@ const isDark = ref(false)
 const sidebarVisible = ref(true)
 const sidebarCollapsed = ref(false)
 
+const THEME_STORAGE_KEY = 'theme'
+const THEME_EVENT = 'theme-change'
+
 const toggleSidebar = () => {
   sidebarVisible.value = !sidebarVisible.value
 }
@@ -24,27 +27,57 @@ const toggleCollapse = (collapsed: boolean) => {
   sidebarCollapsed.value = collapsed
 }
 
-const toggleDarkMode = () => {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
+const applyTheme = (mode: 'light' | 'dark', emitEvent = false, persist = true) => {
+  const nextIsDark = mode === 'dark'
+  isDark.value = nextIsDark
+  document.documentElement.classList.toggle('dark', nextIsDark)
+  if (persist) {
+    localStorage.setItem(THEME_STORAGE_KEY, mode)
+  }
+  if (emitEvent) {
+    window.dispatchEvent(new CustomEvent<'light' | 'dark'>(THEME_EVENT, { detail: mode }))
+  }
 }
 
-// Detect mobile screen size
-onMounted(() => {
-  const handleResize = () => {
-    isMobile.value = window.innerWidth < 768
-    if (isMobile.value) {
-      sidebarCollapsed.value = true
-    }
+const toggleDarkMode = () => {
+  const mode: 'light' | 'dark' = isDark.value ? 'light' : 'dark'
+  applyTheme(mode, true)
+}
+
+const syncThemeFromStorage = () => {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY)
+  if (stored === 'light' || stored === 'dark') {
+    applyTheme(stored, false)
+  } else {
+    applyTheme('light', false, false)
   }
+}
+
+const handleExternalTheme = (event: Event) => {
+  const detail = (event as CustomEvent<'light' | 'dark'>).detail
+  if (detail === 'light' || detail === 'dark') {
+    applyTheme(detail, false)
+  }
+}
+
+const handleResize = () => {
+  isMobile.value = window.innerWidth < 768
+  if (isMobile.value) {
+    sidebarCollapsed.value = true
+  }
+}
+
+onMounted(() => {
   handleResize()
   window.addEventListener('resize', handleResize)
-  
-  // Check system preference for dark mode
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    isDark.value = true
-    document.documentElement.classList.add('dark')
-  }
+
+  syncThemeFromStorage()
+  window.addEventListener(THEME_EVENT, handleExternalTheme as EventListener)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  window.removeEventListener(THEME_EVENT, handleExternalTheme as EventListener)
 })
 </script>
 

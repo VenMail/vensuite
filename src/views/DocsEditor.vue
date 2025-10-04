@@ -41,7 +41,7 @@
     <button
       @click="isTocOpen = !isTocOpen"
       :class=" [
-        'fixed left-4 z-40 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105',
+        'toc-toggle fixed left-4 z-40 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105',
         isToolbarExpanded ? 'top-[190px]' : 'top-[140px]'
       ]"
       title="Table of Contents"
@@ -92,96 +92,123 @@
     </div>
 
     <!-- Editor Content -->
-    <div class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-800 p-6 transition-colors custom-scrollbar">
+    <div class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-800 p-6 transition-colors custom-scrollbar print:p-0 print:bg-white">
       <div 
-        class="mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-lg min-h-full transition-all"
+        class="mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
         :style="pageStyles"
       >
-        <div :style="contentPadding" class="doc-page">
+        <div :style="contentPadding" class="doc-page print:!p-0">
           <!-- Contextual Bubble Menu -->
-          <BubbleMenu v-if="editor" :editor="editor">
-            <!-- TABLE CONTEXT -->
-            <div v-if="editor.isActive('table')" class="bubble-menu-modern">
-              <button class="bubble-btn" @click="editor.chain().focus().addColumnAfter().run()" title="Add column"><Plus :size="16" /></button>
-              <button class="bubble-btn" @click="editor.chain().focus().addRowAfter().run()" title="Add row"><Plus :size="16" /></button>
-              <span class="bubble-divider"></span>
-              <button class="bubble-btn bubble-btn-danger" @click="editor.chain().focus().deleteColumn().run()" title="Delete column"><Trash2 :size="16" /></button>
-              <button class="bubble-btn bubble-btn-danger" @click="editor.chain().focus().deleteRow().run()" title="Delete row"><Trash2 :size="16" /></button>
-              <span class="bubble-divider"></span>
-              <button class="bubble-btn" @click="editor.chain().focus().mergeCells().run()" title="Merge cells"><Table2 :size="16" /></button>
-            </div>
-            
-            <!-- IMAGE CONTEXT -->
-            <div v-else-if="editor.isActive('image')" class="bubble-menu-modern">
-              <button class="bubble-btn" @click="editor.chain().focus().setTextAlign('left').run()" title="Align left"><AlignLeft :size="16" /></button>
-              <button class="bubble-btn" @click="editor.chain().focus().setTextAlign('center').run()" title="Center"><AlignCenter :size="16" /></button>
-              <button class="bubble-btn" @click="editor.chain().focus().setTextAlign('right').run()" title="Align right"><AlignRight :size="16" /></button>
-              <span class="bubble-divider"></span>
-              <button class="bubble-btn bubble-btn-danger" @click="editor.chain().focus().deleteSelection().run()" title="Delete image"><Trash2 :size="16" /></button>
-            </div>
-            
-            <!-- TEXT CONTEXT (default) -->
-            <div v-else class="bubble-menu-modern">
-              <!-- Basic formatting -->
-              <button class="bubble-btn" @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" title="Bold"><Bold :size="16" /></button>
-              <button class="bubble-btn" @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" title="Italic"><Italic :size="16" /></button>
-              <button class="bubble-btn" @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" title="Underline"><UnderlineIcon :size="16" /></button>
-              <button class="bubble-btn" @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" title="Strikethrough"><Strikethrough :size="16" /></button>
-              <span class="bubble-divider"></span>
-              
-              <!-- Link -->
-              <template v-if="!editor.isActive('link')">
-                <button class="bubble-btn" @click="openBubbleLink()" title="Add link"><Link2 :size="16" /></button>
-              </template>
-              <template v-else>
-                <button class="bubble-btn is-active" @click="openBubbleLink()" title="Edit link"><Link2 :size="16" /></button>
-                <button class="bubble-btn bubble-btn-danger" @click="removeBubbleLink()" title="Remove link"><Unlink :size="16" /></button>
-              </template>
-              <span class="bubble-divider"></span>
-                            <!-- Color/Highlight (if text has color) -->
-              <template v-if="editor.getAttributes('textStyle').color || editor.isActive('highlight')">
-                <div class="bubble-btn-group">
-                  <input v-model="bubbleTextColor" type="color" class="bubble-color-input" @change="applyTextColor" title="Text color" />
-                  <Palette :size="14" class="bubble-color-icon" />
-                </div>
-                <div class="bubble-btn-group">
-                  <input v-model="bubbleHighlightColor" type="color" class="bubble-color-input" @change="applyHighlight" title="Highlight" />
-                  <Highlighter :size="14" class="bubble-color-icon" />
-                </div>
-                <span class="bubble-divider"></span>
-              </template>
-
-              <!-- Lists -->
-              <button class="bubble-btn" @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" title="Bullet list"><List :size="16" /></button>
-              <button class="bubble-btn" @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" title="Numbered list"><ListOrdered :size="16" /></button>
-              <span class="bubble-divider"></span>
-              
-              
-              <!-- More menu -->
-              <div class="bubble-more-wrapper">
-                <button class="bubble-btn" @click="showBubbleMore = !showBubbleMore" title="More options"><MoreHorizontal :size="16" /></button>
-                <div v-if="showBubbleMore" class="bubble-more-dropdown">
-                  <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run(); showBubbleMore = false" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">
-                    <Type :size="16" /> Heading 2
-                  </button>
-                  <button @click="editor.chain().focus().toggleHeading({ level: 3 }).run(); showBubbleMore = false" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">
-                    <Type :size="16" /> Heading 3
-                  </button>
-                  <div class="bubble-more-divider"></div>
-                  <button @click="editor.chain().focus().setTextAlign('left').run(); showBubbleMore = false"><AlignLeft :size="16" /> Align left</button>
-                  <button @click="editor.chain().focus().setTextAlign('center').run(); showBubbleMore = false"><AlignCenter :size="16" /> Center</button>
-                  <button @click="editor.chain().focus().setTextAlign('right').run(); showBubbleMore = false"><AlignRight :size="16" /> Align right</button>
-                  <div class="bubble-more-divider"></div>
-                  <div class="bubble-more-color-row">
-                    <label>Text color:</label>
-                    <input v-model="bubbleTextColor" type="color" @change="applyTextColor; showBubbleMore = false" />
-                  </div>
-                  <div class="bubble-more-color-row">
-                    <label>Highlight:</label>
-                    <input v-model="bubbleHighlightColor" type="color" @change="applyHighlight; showBubbleMore = false" />
-                  </div>
-                </div>
+          <BubbleMenu
+            v-if="editor"
+            :editor="editor"
+            :tippy-options="{ duration: 100, placement: 'top', maxWidth: 340 }"
+          >
+            <div :class="[bubbleShellClass, 'bubble-shell']">
+              <div :class="bubbleGridClass">
+                <button
+                  v-for="action in primaryActions"
+                  :key="action.key"
+                  type="button"
+                  :class="[
+                    bubbleButtonBase,
+                    action.isActive && bubbleButtonActive,
+                    action.className
+                  ]"
+                  :title="action.tooltip"
+                  :disabled="action.disabled"
+                  :style="action.style"
+                  @click="executeAction(action)"
+                >
+                  <component :is="action.icon" class="h-4 w-4" />
+                </button>
               </div>
+              <div v-if="overflowActions.length" class="relative">
+                <button
+                  type="button"
+                  :class="[bubbleButtonBase, isOverflowOpen && bubbleButtonActive]"
+                  title="More"
+                  @click.stop="toggleOverflow"
+                >
+                  <MoreHorizontal class="h-4 w-4" />
+                </button>
+                <transition name="fade">
+                  <div
+                    v-if="isOverflowOpen"
+                    class="absolute right-0 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                    @mouseenter="suspendOverflowClose"
+                    @mouseleave="resumeOverflowClose"
+                  >
+                    <button
+                      v-for="action in overflowActions"
+                      :key="action.key"
+                      type="button"
+                      :class="[
+                        bubbleOverflowButtonClass,
+                        action.isActive && 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-200'
+                      ]"
+                      :title="action.tooltip"
+                      :disabled="action.disabled"
+                      :style="action.style"
+                      @click="executeAction(action, true)"
+                    >
+                      <component :is="action.icon" class="h-4 w-4" />
+                      <span class="ml-2 text-xs font-medium">{{ action.label }}</span>
+                    </button>
+                  </div>
+                </transition>
+              </div>
+              <template v-if="isLinkEditing">
+                <div :class="bubbleInlineFormClass">
+                  <input
+                    v-model="bubbleLinkUrl"
+                    type="url"
+                    placeholder="https://example.com"
+                    :class="bubbleInlineInputClass"
+                    @keydown.enter.prevent="applyBubbleLink"
+                  />
+                  <button
+                    type="button"
+                    :class="[bubbleButtonBase, bubbleButtonSuccess]"
+                    title="Apply link"
+                    @click="applyBubbleLink"
+                  >
+                    <CheckCircle2 class="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    :class="[bubbleButtonBase, bubbleButtonDanger]"
+                    title="Remove link"
+                    @click="removeBubbleLink"
+                  >
+                    <Trash2 class="h-4 w-4" />
+                  </button>
+                </div>
+              </template>
+              <template v-if="isImageEditing">
+                <div :class="bubbleInlineFormClass">
+                  <input
+                    v-model="bubbleImageUrl"
+                    type="url"
+                    placeholder="Image URL"
+                    :class="bubbleInlineInputClass"
+                  />
+                  <input
+                    v-model="bubbleImageAlt"
+                    type="text"
+                    placeholder="Alt text"
+                    :class="bubbleInlineInputClass"
+                  />
+                  <button
+                    type="button"
+                    :class="[bubbleButtonBase, bubbleButtonSuccess]"
+                    title="Apply image changes"
+                    @click="applyBubbleImage"
+                  >
+                    <CheckCircle2 class="h-4 w-4" />
+                  </button>
+                </div>
+              </template>
             </div>
           </BubbleMenu>
 
@@ -256,15 +283,39 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Editor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Link2, Unlink, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Palette, Highlighter, MoreHorizontal, Type, Table2, Image as ImageIcon, Trash2, Plus } from 'lucide-vue-next';
+import type { Component } from 'vue';
+import {
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  Strikethrough,
+  Heading2,
+  Heading3,
+  Text,
+  Link as LinkIcon,
+  List as BulletListIcon,
+  ListOrdered,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Palette,
+  Highlighter,
+  Eraser,
+  MoreHorizontal,
+  Columns,
+  Rows3,
+  Trash2,
+  GitMerge,
+  GitFork,
+  CheckCircle2,
+} from 'lucide-vue-next';
 import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
+import UnderlineExtension from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
-import TextStyle from '@tiptap/extension-text-style';
-import { Color } from '@tiptap/extension-color';
+import Color from '@tiptap/extension-color';
 import FontFamily from '@tiptap/extension-font-family';
+import { TextStyle } from '@tiptap/extension-text-style'
 import Highlight from '@tiptap/extension-highlight';
-import { Extension } from '@tiptap/core';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
 import Link from '@tiptap/extension-link';
@@ -272,6 +323,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
 import { PaginationPlus } from 'tiptap-pagination-plus';
+// @ts-expect-error tiptap-table-plus ships without types
 import { PaginationTable } from 'tiptap-table-plus';
 
 const {
@@ -300,54 +352,6 @@ const router = useRouter();
 const fileStore = useFileStore();
 const authStore = useAuthStore();
 
-// Custom FontSize extension
-const FontSize = Extension.create({
-  name: 'fontSize',
-
-  addOptions() {
-    return {
-      types: ['textStyle'],
-    };
-  },
-
-  addGlobalAttributes() {
-    return [
-      {
-        types: this.options.types,
-        attributes: {
-          fontSize: {
-            default: null,
-            parseHTML: element => element.style.fontSize?.replace(/['"]+/g, ''),
-            renderHTML: attributes => {
-              if (!attributes.fontSize) {
-                return {};
-              }
-              return {
-                style: `font-size: ${attributes.fontSize}`,
-              };
-            },
-          },
-        },
-      },
-    ];
-  },
-
-  addCommands() {
-    return {
-      setFontSize:
-        (fontSize: string) =>
-        ({ chain }: any) => {
-          return chain().setMark('textStyle', { fontSize }).run();
-        },
-      unsetFontSize:
-        () =>
-        ({ chain }: any) => {
-          return chain().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run();
-        },
-    } as any;
-  },
-});
-
 const editor = ref<Editor>();
 const currentDoc = ref<FileData | null>(null);
 const documentTitle = ref('Untitled Document');
@@ -369,11 +373,17 @@ const isTocOpen = ref(false);
 const isToolbarExpanded = ref(false);
 
 // Bubble menu state (quick link/image editors)
-const bubbleLinkUrl = ref('');
-const showBubbleMore = ref(false);
-const bubbleTextColor = ref('#000000');
-const bubbleHighlightColor = ref('#ffff00');
+const bubbleShellClass = 'flex w-full max-w-[340px] flex-col gap-1 rounded-xl border border-gray-200 bg-white/95 px-2 py-1 text-gray-700 shadow-xl print:hidden dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200';
+const bubbleGridClass = 'flex flex-wrap items-center gap-1';
+const bubbleButtonBase = 'inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-transparent text-gray-600 transition-colors duration-150 hover:bg-gray-100 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40';
+const bubbleButtonActive = 'bg-blue-600 text-white shadow-sm hover:bg-blue-600 hover:text-white focus-visible:ring-blue-400 dark:bg-blue-500';
+const bubbleButtonSuccess = 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/60';
+const bubbleButtonDanger = 'text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/60';
+const bubbleOverflowButtonClass = 'flex w-full items-center rounded-md px-2 py-1 text-left text-xs text-gray-600 transition-colors duration-150 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-200 dark:hover:bg-gray-800';
+const bubbleInlineFormClass = 'flex flex-wrap items-center gap-1 pt-1';
+const bubbleInlineInputClass = 'h-8 w-36 rounded-md border border-gray-300 bg-white px-2 text-xs text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100';
 
+const bubbleLinkUrl = ref('');
 function openBubbleLink() {
   if (!editor.value) return;
   const attrs = editor.value.getAttributes('link') as any;
@@ -382,24 +392,24 @@ function openBubbleLink() {
     editor.value.chain().focus().setLink({ href: bubbleLinkUrl.value || 'https://' }).run();
   }
 }
-
 function applyBubbleLink() {
   if (!editor.value) return;
   const href = (bubbleLinkUrl.value || '').trim();
   if (!href) {
     editor.value.chain().focus().unsetLink().run();
-    return;
+  } else {
+    editor.value.chain().focus().setLink({ href, target: '_blank', rel: 'noopener noreferrer' }).run();
   }
-  editor.value.chain().focus().setLink({ href, target: '_blank', rel: 'noopener noreferrer' }).run();
+  isOverflowOpen.value = false;
 }
-
 function removeBubbleLink() {
   editor.value?.chain().focus().unsetLink().run();
+  bubbleLinkUrl.value = '';
+  isOverflowOpen.value = false;
 }
 
 const bubbleImageUrl = ref('');
 const bubbleImageAlt = ref('');
-
 function applyBubbleImage() {
   if (!editor.value) return;
   const current = editor.value.getAttributes('image') as any;
@@ -409,21 +419,412 @@ function applyBubbleImage() {
   editor.value.chain().focus().updateAttributes('image', { src, alt }).run();
 }
 
-function applyTextColor() {
-  if (!editor.value) return;
-  editor.value.chain().focus().setColor(bubbleTextColor.value).run();
+const isOverflowOpen = ref(false);
+let overflowTimer: ReturnType<typeof setTimeout> | null = null;
+
+function toggleOverflow() {
+  if (!overflowActions.value.length) return;
+  isOverflowOpen.value = !isOverflowOpen.value;
+  clearOverflowTimer();
 }
 
-function applyHighlight() {
-  if (!editor.value) return;
-  editor.value.chain().focus().setHighlight({ color: bubbleHighlightColor.value }).run();
+function suspendOverflowClose() {
+  clearOverflowTimer();
 }
+
+function resumeOverflowClose() {
+  clearOverflowTimer();
+  overflowTimer = setTimeout(() => (isOverflowOpen.value = false), 1200);
+}
+
+function clearOverflowTimer() {
+  if (overflowTimer) {
+    clearTimeout(overflowTimer);
+    overflowTimer = null;
+  }
+}
+
+const isTextSelection = computed(() => !!editor.value && !editor.value.isActive('image') && !editor.value.isActive('table'));
+const isTableSelection = computed(() => !!editor.value && editor.value.isActive('table'));
+const isImageEditing = computed(() => !!editor.value && editor.value.isActive('image'));
+const isLinkEditing = computed(() => !!editor.value && editor.value.isActive('link'));
+
+const activeTextColor = computed(() => editor.value?.getAttributes('textStyle')?.color as string | undefined);
+const activeHighlightColor = computed(() => editor.value?.getAttributes('highlight')?.color as string | undefined);
+
+type BubbleAction = {
+  key: string;
+  icon: Component;
+  handler: () => void;
+  tooltip: string;
+  label: string;
+  disabled?: boolean;
+  isActive?: boolean;
+  className?: string;
+  style?: Partial<Record<string, string>>;
+};
+
+const allTextActions = computed<BubbleAction[]>(() => {
+  if (!editor.value) return [];
+  const instance = editor.value;
+  const highlightStyle = activeHighlightColor.value
+    ? { backgroundColor: String(activeHighlightColor.value), color: '#111827' }
+    : undefined;
+
+  return [
+    {
+      key: 'bold',
+      icon: Bold,
+      handler: () => instance.chain().focus().toggleBold().run(),
+      tooltip: 'Bold (Ctrl+B)',
+      label: 'Bold',
+      isActive: instance.isActive('bold'),
+    },
+    {
+      key: 'italic',
+      icon: Italic,
+      handler: () => instance.chain().focus().toggleItalic().run(),
+      tooltip: 'Italic (Ctrl+I)',
+      label: 'Italic',
+      isActive: instance.isActive('italic'),
+    },
+    {
+      key: 'underline',
+      icon: UnderlineIcon,
+      handler: () => instance.chain().focus().toggleUnderline().run(),
+      tooltip: 'Underline (Ctrl+U)',
+      label: 'Underline',
+      isActive: instance.isActive('underline'),
+    },
+    {
+      key: 'strike',
+      icon: Strikethrough,
+      handler: () => instance.chain().focus().toggleStrike().run(),
+      tooltip: 'Strikethrough',
+      label: 'Strikethrough',
+      isActive: instance.isActive('strike'),
+      className: 'text-gray-500 dark:text-gray-400',
+    },
+    {
+      key: 'text',
+      icon: Text,
+      handler: () => instance.chain().focus().setParagraph().run(),
+      tooltip: 'Normal text',
+      label: 'Paragraph',
+      isActive: instance.isActive('paragraph'),
+    },
+    {
+      key: 'h2',
+      icon: Heading2,
+      handler: () => instance.chain().focus().toggleHeading({ level: 2 }).run(),
+      tooltip: 'Heading 2',
+      label: 'Heading 2',
+      isActive: instance.isActive('heading', { level: 2 }),
+    },
+    {
+      key: 'h3',
+      icon: Heading3,
+      handler: () => instance.chain().focus().toggleHeading({ level: 3 }).run(),
+      tooltip: 'Heading 3',
+      label: 'Heading 3',
+      isActive: instance.isActive('heading', { level: 3 }),
+    },
+    {
+      key: 'color',
+      icon: Palette,
+      handler: () => {
+        const current = instance.getAttributes('textStyle')?.color;
+        if (current && current.toLowerCase() === '#2563eb') {
+          instance.chain().focus().unsetColor().run();
+        } else {
+          instance.chain().focus().setColor('#2563eb').run();
+        }
+      },
+      tooltip: 'Brand foreground color',
+      label: 'Text color',
+      isActive: (instance.getAttributes('textStyle')?.color || '').toLowerCase() === '#2563eb',
+      style: activeTextColor.value ? { color: String(activeTextColor.value) } : undefined,
+    },
+    {
+      key: 'highlight',
+      icon: Highlighter,
+      handler: () => {
+        const current = instance.getAttributes('highlight')?.color;
+        if (current && current.toLowerCase() === '#fde68a') {
+          instance.chain().focus().unsetHighlight().run();
+        } else {
+          instance.chain().focus().setHighlight({ color: '#fde68a' }).run();
+        }
+      },
+      tooltip: 'Highlight selection',
+      label: 'Highlight',
+      isActive: instance.isActive('highlight', { color: '#fde68a' }),
+      style: highlightStyle,
+    },
+    {
+      key: 'clear',
+      icon: Eraser,
+      handler: () => {
+        instance.chain().focus().unsetHighlight().unsetAllMarks().clearNodes().run();
+      },
+      tooltip: 'Clear formatting',
+      label: 'Clear formatting',
+      className: 'text-gray-500 dark:text-gray-400',
+    },
+    {
+      key: 'bullet-list',
+      icon: BulletListIcon,
+      handler: () => instance.chain().focus().toggleBulletList().run(),
+      tooltip: 'Bulleted list',
+      label: 'Bulleted list',
+      isActive: instance.isActive('bulletList'),
+    },
+    {
+      key: 'ordered-list',
+      icon: ListOrdered,
+      handler: () => instance.chain().focus().toggleOrderedList().run(),
+      tooltip: 'Numbered list',
+      label: 'Numbered list',
+      isActive: instance.isActive('orderedList'),
+    },
+    {
+      key: 'align-left',
+      icon: AlignLeft,
+      handler: () => instance.chain().focus().setTextAlign('left').run(),
+      tooltip: 'Align left',
+      label: 'Align left',
+      isActive: instance.isActive({ textAlign: 'left' }),
+    },
+    {
+      key: 'align-center',
+      icon: AlignCenter,
+      handler: () => instance.chain().focus().setTextAlign('center').run(),
+      tooltip: 'Align center',
+      label: 'Align center',
+      isActive: instance.isActive({ textAlign: 'center' }),
+    },
+    {
+      key: 'align-right',
+      icon: AlignRight,
+      handler: () => instance.chain().focus().setTextAlign('right').run(),
+      tooltip: 'Align right',
+      label: 'Align right',
+      isActive: instance.isActive({ textAlign: 'right' }),
+    },
+    {
+      key: 'link',
+      icon: LinkIcon,
+      handler: () => openBubbleLink(),
+      tooltip: 'Insert link (Ctrl+K)',
+      label: 'Link',
+      disabled: !instance.can().setLink({ href: '' }),
+      isActive: instance.isActive('link'),
+    },
+  ];
+});
+
+const tableActions = computed<BubbleAction[]>(() => {
+  if (!editor.value) return [];
+  const instance = editor.value;
+
+  return [
+    {
+      key: 'add-col',
+      icon: Columns,
+      handler: () => instance.chain().focus().addColumnAfter().run(),
+      tooltip: 'Add column',
+      label: 'Add column',
+    },
+    {
+      key: 'add-row',
+      icon: Rows3,
+      handler: () => instance.chain().focus().addRowAfter().run(),
+      tooltip: 'Add row',
+      label: 'Add row',
+    },
+    {
+      key: 'merge',
+      icon: GitMerge,
+      handler: () => instance.chain().focus().mergeCells().run(),
+      tooltip: 'Merge cells',
+      label: 'Merge cells',
+    },
+    {
+      key: 'split',
+      icon: GitFork,
+      handler: () => instance.chain().focus().splitCell().run(),
+      tooltip: 'Split cells',
+      label: 'Split cells',
+    },
+    {
+      key: 'align-left-table',
+      icon: AlignLeft,
+      handler: () => instance.chain().focus().setCellAttribute('alignment', 'left').run(),
+      tooltip: 'Align left',
+      label: 'Align left',
+    },
+    {
+      key: 'align-center-table',
+      icon: AlignCenter,
+      handler: () => instance.chain().focus().setCellAttribute('alignment', 'center').run(),
+      tooltip: 'Align center',
+      label: 'Align center',
+    },
+    {
+      key: 'align-right-table',
+      icon: AlignRight,
+      handler: () => instance.chain().focus().setCellAttribute('alignment', 'right').run(),
+      tooltip: 'Align right',
+      label: 'Align right',
+    },
+    {
+      key: 'del-col',
+      icon: Trash2,
+      handler: () => instance.chain().focus().deleteColumn().run(),
+      tooltip: 'Delete column',
+      label: 'Delete column',
+      className: 'text-red-500 dark:text-red-400',
+    },
+    {
+      key: 'del-row',
+      icon: Trash2,
+      handler: () => instance.chain().focus().deleteRow().run(),
+      tooltip: 'Delete row',
+      label: 'Delete row',
+      className: 'text-red-500 dark:text-red-400',
+    },
+  ];
+});
+
+const imageActions = computed<BubbleAction[]>(() => {
+  if (!editor.value) return [];
+  const instance = editor.value;
+  return [
+    {
+      key: 'image-align-left',
+      icon: AlignLeft,
+      handler: () => instance.chain().focus().setTextAlign('left').run(),
+      tooltip: 'Align left',
+      label: 'Align left',
+      isActive: instance.isActive({ textAlign: 'left' }),
+    },
+    {
+      key: 'image-align-center',
+      icon: AlignCenter,
+      handler: () => instance.chain().focus().setTextAlign('center').run(),
+      tooltip: 'Center image',
+      label: 'Center image',
+      isActive: instance.isActive({ textAlign: 'center' }),
+    },
+    {
+      key: 'image-align-right',
+      icon: AlignRight,
+      handler: () => instance.chain().focus().setTextAlign('right').run(),
+      tooltip: 'Align right',
+      label: 'Align right',
+      isActive: instance.isActive({ textAlign: 'right' }),
+    },
+  ];
+});
+
+const textPrimaryKeys = ['bold', 'italic', 'underline', 'color', 'highlight', 'link', 'bullet-list', 'ordered-list', 'align-left'];
+const textOverflowKeys = ['align-center', 'align-right', 'clear', 'strike', 'text', 'h2', 'h3'];
+const tablePrimaryKeys = ['add-col', 'add-row', 'merge', 'split', 'align-left-table', 'align-center-table', 'align-right-table'];
+const tableOverflowKeys = ['del-col', 'del-row'];
+const imagePrimaryKeys = ['image-align-left', 'image-align-center', 'image-align-right'];
+
+function splitActions(
+  actions: BubbleAction[],
+  primaryOrder: string[],
+  overflowOrder: string[],
+  excludeKeys: string[] = []
+) {
+  const map = new Map(actions.map((action) => [action.key, action]));
+  const primary: BubbleAction[] = [];
+  primaryOrder.forEach((key) => {
+    if (excludeKeys.includes(key)) return;
+    const action = map.get(key);
+    if (action) {
+      primary.push(action);
+    }
+  });
+  const used = new Set(primary.map((action) => action.key));
+  const overflow: BubbleAction[] = [];
+  overflowOrder.forEach((key) => {
+    if (excludeKeys.includes(key) || used.has(key)) return;
+    const action = map.get(key);
+    if (action) {
+      overflow.push(action);
+    }
+  });
+  actions.forEach((action) => {
+    if (excludeKeys.includes(action.key)) return;
+    if (!used.has(action.key) && !overflow.find((item) => item.key === action.key)) {
+      overflow.push(action);
+    }
+  });
+  return { primary, overflow };
+}
+
+const actionSets = computed(() => {
+  if (isImageEditing.value) {
+    return splitActions(imageActions.value, imagePrimaryKeys, []);
+  }
+  if (isTableSelection.value) {
+    return splitActions(tableActions.value, tablePrimaryKeys, tableOverflowKeys);
+  }
+  if (isTextSelection.value) {
+    return splitActions(
+      allTextActions.value,
+      textPrimaryKeys,
+      textOverflowKeys,
+      isLinkEditing.value ? ['link'] : []
+    );
+  }
+  return { primary: [] as BubbleAction[], overflow: [] as BubbleAction[] };
+});
+
+const primaryActions = computed(() => actionSets.value.primary);
+const overflowActions = computed(() => actionSets.value.overflow);
+
+function executeAction(action: BubbleAction, closeOverflow = false) {
+  if (action.disabled) return;
+  action.handler();
+  if (closeOverflow) {
+    isOverflowOpen.value = false;
+  }
+}
+
+watch([isTextSelection, isTableSelection, isImageEditing], () => {
+  isOverflowOpen.value = false;
+  clearOverflowTimer();
+});
+
+watch(isLinkEditing, (active) => {
+  if (active && editor.value) {
+    const attrs = editor.value.getAttributes('link') as any;
+    bubbleLinkUrl.value = attrs?.href || '';
+  } else if (!active) {
+    bubbleLinkUrl.value = '';
+  }
+});
+
+watch(isImageEditing, (active) => {
+  if (active && editor.value) {
+    const attrs = editor.value.getAttributes('image') as any;
+    bubbleImageUrl.value = attrs?.src || '';
+    bubbleImageAlt.value = attrs?.alt || '';
+  }
+});
+
+onUnmounted(() => clearOverflowTimer());
 
 // Share dialog state
 const shareOpen = ref(false);
 const shareLinkDoc = computed(() => {
-  const id = route.params.appFileId as string;
-  if (!id) return '';
+  const idParam = route.params.appFileId;
+  if (!idParam) return '';
+  const id = String(idParam);
   return `${window.location.origin}/docs/${id}`;
 });
 const tocItems = computed(() => {
@@ -452,8 +853,6 @@ const tocItems = computed(() => {
 
 function scrollToHeading(index: number) {
   if (!editor.value) return;
-  
-  // Find all heading nodes in the document
   const { state } = editor.value;
   let headingCount = 0;
   let targetPos = 0;
@@ -468,10 +867,8 @@ function scrollToHeading(index: number) {
     }
   });
   
-  // Scroll to the heading
   if (targetPos > 0) {
-    editor.value.commands.setTextSelection(targetPos);
-    editor.value.commands.scrollIntoView();
+    editor.value.chain().setTextSelection(targetPos).scrollIntoView().run();
   }
 }
 
@@ -519,8 +916,8 @@ function loadContentIntoEditor(content: string) {
   }
 }
 
-let saveTimeout: NodeJS.Timeout | null = null;
-let maxWaitTimeout: NodeJS.Timeout | null = null;
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+let maxWaitTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Track online/offline status
 window.addEventListener('online', () => isOffline.value = false);
@@ -542,6 +939,7 @@ const pageStyles = computed(() => {
   
   const isLandscape = pageOrientation.value === 'landscape';
   const width = isLandscape ? dims.height : dims.width;
+  const height = isLandscape ? dims.width : dims.height;
   
   // Convert mm to pixels (96 DPI: 1mm = 3.7795px)
   const widthPx = Math.round(width * 3.7795);
@@ -549,11 +947,13 @@ const pageStyles = computed(() => {
   return {
     maxWidth: `${widthPx}px`,
     width: '100%',
-  };
+    '--page-width': `${width}mm`,
+    '--page-height': `${height}mm`,
+  } as Record<string, string>;
 });
 
 const contentPadding = computed(() => {
-  // Standard document margins
+  // Standard document margins (screen only, removed in print)
   return {
     padding: '48px 64px', // ~1 inch margins
   };
@@ -1067,11 +1467,10 @@ function initializeEditor(
         bulletList: { keepMarks: true, keepAttributes: false },
         orderedList: { keepMarks: true, keepAttributes: false },
       }),
-      Underline,
+      UnderlineExtension,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TextStyle,
       FontFamily.configure({ types: ['textStyle'] }),
-      FontSize,
       Color.configure({ types: ['textStyle'] }),
       Highlight.configure({ multicolor: true }),
       Subscript,
@@ -1105,7 +1504,7 @@ function initializeEditor(
       }),
     ],
     content: existingContent || '<p>Start typing...</p>',
-    editorProps: { attributes: { class: 'focus:outline-none min-h-[500px]' } },
+    editorProps: { attributes: { class: 'focus:outline-none min-h-[500px] print:min-h-0 print:overflow-visible' } },
     onUpdate: () => { scheduleSave(); },
   });
 }
@@ -1469,555 +1868,22 @@ onUnmounted(() => {
   }
 }
 
-/* Print Styles */
-@media print {
-  @page {
-    margin: 0;
-    size: auto;
-  }
-  
-  /* Hide page title and URL */
-  html {
-    overflow: visible !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  
-  body {
-    overflow: visible !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  
-  /* Disable viewport constraints from root container */
-  .flex.flex-col.h-screen {
-    height: auto !important;
-    min-height: 0 !important;
-    display: block !important;
-  }
-  
-  /* Hide scrollbars completely */
-  * {
-    overflow: visible !important;
-  }
-  
-  *::-webkit-scrollbar {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-  }
-  
-  /* Hide UI chrome */
-  header,
-  .tiptap-toolbar,
-  .docs-toolbar,
-  button[title="Table of Contents"],
-  .fixed,
-  nav,
-  aside {
-    display: none !important;
-  }
-  
-  /* Critical: Disable flex scroll container to allow pagination */
-  .flex-1.overflow-auto {
-    display: block !important;
-    flex: none !important;
-    overflow: visible !important;
-    height: auto !important;
-    max-height: none !important;
-    padding: 0 !important;
-    background: white !important;
-  }
-  
-  /* Full width for print - remove app layout constraints */
-  .mx-auto.bg-white,
-  .mx-auto.dark\:bg-gray-900 {
-    max-width: 100% !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    min-height: auto !important;
-  }
-  
-  /* Ensure proper page breaks */
-  :deep(.ProseMirror),
-  :deep(.ProseMirror-focused) {
-    page-break-inside: auto;
-    padding: 0 !important;
-    overflow: visible !important;
-    height: auto !important;
-    min-height: 0 !important;
-  }
-  
-  :deep(.ProseMirror h1),
-  :deep(.ProseMirror h2),
-  :deep(.ProseMirror h3),
-  :deep(.ProseMirror h4),
-  :deep(.ProseMirror h5),
-  :deep(.ProseMirror h6) {
-    page-break-after: avoid;
-    page-break-inside: avoid;
-  }
-  
-  :deep(.ProseMirror table),
-  :deep(.ProseMirror blockquote),
-  :deep(.ProseMirror pre) {
-    page-break-inside: avoid;
-  }
-  
-  /* Better table printing */
-  :deep(.ProseMirror table) {
-    border: 1px solid #000;
-  }
-  
-  :deep(.ProseMirror td),
-  :deep(.ProseMirror th) {
-    border: 1px solid #666;
-    padding: 0.25rem 0.375rem;
-  }
-  
-  :deep(.ProseMirror th) {
-    background-color: #f5f5f5 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  
-  /* Ensure links are visible */
-  :deep(.ProseMirror a) {
-    text-decoration: underline;
-    color: #000;
-  }
-  
-  :deep(.ProseMirror a::after) {
-    content: " (" attr(href) ")";
-    font-size: 0.8em;
-    color: #666;
-  }
+
+/* Bubble menu helpers */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 120ms ease;
 }
 
-
-.doc-page {
-  width: 8.5in;         /* US Letter width (use 210mm for A4) */
-  min-height: 11in;     /* US Letter height (297mm for A4) */
-  margin: 1em auto;     /* center it on screen */
-  padding: 1in;         /* Word-like margins */
-  background: white;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
-  overflow: visible;    /* allow content to flow for pagination */
-  font-family: "Times New Roman", serif;
-  line-height: 1.5;
-}
-
-@media print {
-  body {
-    margin: 0;
-    padding: 0;
-  }
-  
-  .doc-page {
-    box-shadow: none;
-    margin: 0;
-    width: 100%;
-    min-height: 0;
-    overflow: visible !important;
-    page-break-after: auto;
-  }
-}
-
-/* ===== Modern Bubble Menu Styles ===== */
-.bubble-menu-modern {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 8px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%);
-  backdrop-filter: blur(12px) saturate(180%);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 10px;
-  box-shadow: 
-    0 8px 32px -4px rgba(0, 0, 0, 0.12),
-    0 4px 16px -2px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
-  font-size: 14px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@media (prefers-color-scheme: dark) {
-  .bubble-menu-modern {
-    background: linear-gradient(135deg, rgba(31, 41, 55, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 
-      0 8px 32px -4px rgba(0, 0, 0, 0.4),
-      0 4px 16px -2px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-  }
-}
-
-.bubble-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  border: none;
-  background: transparent;
-  color: #374151;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  user-select: none;
-  outline: none;
-}
-
-.bubble-btn:hover:not(:disabled) {
-  background: rgba(59, 130, 246, 0.08);
-  color: #2563eb;
-  transform: translateY(-1px);
-}
-
-.bubble-btn:active:not(:disabled) {
-  transform: translateY(0);
-  background: rgba(59, 130, 246, 0.12);
-}
-
-.bubble-btn.is-active {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  box-shadow: 
-    0 2px 8px -1px rgba(59, 130, 246, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
-}
-
-.bubble-btn.is-active:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-1px);
-  box-shadow: 
-    0 4px 12px -2px rgba(59, 130, 246, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
-}
-
-.bubble-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.bubble-btn-heading {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.bubble-btn-success {
-  color: #059669;
-}
-
-.bubble-btn-success:hover:not(:disabled) {
-  background: rgba(5, 150, 105, 0.1);
-  color: #047857;
-}
-
-.bubble-btn-danger {
-  color: #dc2626;
-}
-
-.bubble-btn-danger:hover:not(:disabled) {
-  background: rgba(220, 38, 38, 0.1);
-  color: #b91c1c;
-}
-
-.bubble-btn-clear {
-  color: #6b7280;
-}
-
-.bubble-btn-clear:hover:not(:disabled) {
-  background: rgba(107, 114, 128, 0.1);
-  color: #4b5563;
-}
-
-@media (prefers-color-scheme: dark) {
-  .bubble-btn {
-    color: #d1d5db;
-  }
-  
-  .bubble-btn:hover:not(:disabled) {
-    background: rgba(59, 130, 246, 0.15);
-    color: #60a5fa;
-  }
-  
-  .bubble-btn:active:not(:disabled) {
-    background: rgba(59, 130, 246, 0.2);
-  }
-  
-  .bubble-btn.is-active {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: white;
-  }
-  
-  .bubble-btn-success {
-    color: #34d399;
-  }
-  
-  .bubble-btn-success:hover:not(:disabled) {
-    background: rgba(52, 211, 153, 0.15);
-    color: #10b981;
-  }
-  
-  .bubble-btn-danger {
-    color: #f87171;
-  }
-  
-  .bubble-btn-danger:hover:not(:disabled) {
-    background: rgba(248, 113, 113, 0.15);
-    color: #ef4444;
-  }
-  
-  .bubble-btn-clear {
-    color: #9ca3af;
-  }
-  
-  .bubble-btn-clear:hover:not(:disabled) {
-    background: rgba(156, 163, 175, 0.15);
-    color: #d1d5db;
-  }
-}
-
-.bubble-divider {
-  width: 1px;
-  height: 20px;
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.1) 20%, rgba(0, 0, 0, 0.1) 80%, transparent 100%);
-  margin: 0 4px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .bubble-divider {
-    background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.1) 20%, rgba(255, 255, 255, 0.1) 80%, transparent 100%);
-  }
-}
-
-.bubble-input {
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 6px;
-  background: white;
-  color: #1f2937;
-  font-size: 13px;
-  outline: none;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) inset;
-}
-
-.bubble-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 
-    0 0 0 3px rgba(59, 130, 246, 0.12),
-    0 1px 3px 0 rgba(0, 0, 0, 0.05) inset;
-}
-
-.bubble-input::placeholder {
-  color: #9ca3af;
-}
-
-.bubble-input-link {
-  width: 200px;
-}
-
-.bubble-input-image {
-  width: 180px;
-}
-
-.bubble-input-alt {
-  width: 120px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .bubble-input {
-    background: #1f2937;
-    border-color: rgba(255, 255, 255, 0.15);
-    color: #f3f4f6;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3) inset;
-  }
-  
-  .bubble-input:focus {
-    border-color: #60a5fa;
-    box-shadow: 
-      0 0 0 3px rgba(96, 165, 250, 0.2),
-      0 1px 3px 0 rgba(0, 0, 0, 0.3) inset;
-  }
-  
-  .bubble-input::placeholder {
-    color: #6b7280;
-  }
-}
-
-/* Color picker button group */
-.bubble-btn-group {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.bubble-btn-group:hover {
-  background: rgba(59, 130, 246, 0.08);
-}
-
-.bubble-color-input {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
-  cursor: pointer;
 }
 
-.bubble-color-icon {
-  pointer-events: none;
-  color: #374151;
-}
 
-@media (prefers-color-scheme: dark) {
-  .bubble-btn-group:hover {
-    background: rgba(59, 130, 246, 0.15);
-  }
-  
-  .bubble-color-icon {
-    color: #d1d5db;
-  }
-}
-
-/* More dropdown */
-.bubble-more-wrapper {
-  position: relative;
-}
-
-.bubble-more-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 200px;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 8px;
-  box-shadow: 
-    0 12px 40px -8px rgba(0, 0, 0, 0.15),
-    0 4px 16px -2px rgba(0, 0, 0, 0.1);
-  padding: 6px;
-  z-index: 1000;
-  animation: bubbleDropdownIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes bubbleDropdownIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.bubble-more-dropdown button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  border: none;
-  background: transparent;
-  color: #374151;
-  font-size: 14px;
-  text-align: left;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-.bubble-more-dropdown button:hover {
-  background: rgba(59, 130, 246, 0.08);
-  color: #2563eb;
-}
-
-.bubble-more-dropdown button.is-active {
-  background: rgba(59, 130, 246, 0.12);
-  color: #2563eb;
-  font-weight: 500;
-}
-
-.bubble-more-divider {
-  height: 1px;
-  background: rgba(0, 0, 0, 0.08);
-  margin: 6px 0;
-}
-
-.bubble-more-color-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  gap: 12px;
-}
-
-.bubble-more-color-row label {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.bubble-more-color-row input[type="color"] {
-  width: 40px;
-  height: 28px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.bubble-more-color-row input[type="color"]:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-}
-
-@media (prefers-color-scheme: dark) {
-  .bubble-more-dropdown {
-    background: #1f2937;
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  .bubble-more-dropdown button {
-    color: #d1d5db;
-  }
-  
-  .bubble-more-dropdown button:hover {
-    background: rgba(59, 130, 246, 0.15);
-    color: #60a5fa;
-  }
-  
-  .bubble-more-dropdown button.is-active {
-    background: rgba(59, 130, 246, 0.2);
-    color: #60a5fa;
-  }
-  
-  .bubble-more-divider {
-    background: rgba(255, 255, 255, 0.1);
-  }
-  
-  .bubble-more-color-row label {
-    color: #9ca3af;
-  }
-  
-  .bubble-more-color-row input[type="color"] {
-    border-color: rgba(255, 255, 255, 0.15);
+@media print {
+  .tiptap-toolbar {
+    display: none!important;
   }
 }
 

@@ -795,12 +795,21 @@ function onFontSizeChange(event: Event) {
   const value = target.value;
 
   if (value) {
-    (props.editor.chain().focus() as any).setFontSize(`${value}pt`).run();
+    // Apply or update font size
+    props.editor.chain().focus()
+      .updateAttributes('textStyle', { fontSize: `${value}pt` })
+      .run();
+
     selectedFontSize.value = value;
   } else {
-    (props.editor.chain().focus() as any).unsetFontSize().run();
+    // Remove font size if selection is cleared
+    props.editor.chain().focus()
+      .updateAttributes('textStyle', { fontSize: null })
+      .run();
+
     selectedFontSize.value = '';
   }
+
   updateFontState();
 }
 
@@ -887,10 +896,6 @@ function toggleExpanded() {
 
 function handleExport(format: string) {
   emit('export', format);
-}
-
-function handlePrint() {
-  window.print();
 }
 
 function createFromTemplate(template: string) {
