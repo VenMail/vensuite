@@ -30,16 +30,103 @@
       @update:page-size="pageSize = $event"
       @update:page-orientation="pageOrientation = $event"
       @export="handleExport"
+      @toggle-comments="isChatOpen = !isChatOpen"
     />
 
+    <!-- Table of Contents Toggle (Floating Left) -->
+    <button
+      @click="isTocOpen = !isTocOpen"
+      class="fixed left-4 top-[150px] z-40 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
+      title="Table of Contents"
+    >
+      <svg class="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+      </svg>
+    </button>
+
+    <!-- Table of Contents Panel -->
+    <div
+      v-if="isTocOpen"
+      class="fixed left-4 top-[206px] z-40 w-64 max-h-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden flex flex-col"
+    >
+      <div class="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="font-semibold text-sm text-gray-900 dark:text-gray-100">Table of Contents</h3>
+        <button @click="isTocOpen = false" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+          <svg class="h-4 w-4 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="flex-grow overflow-y-auto p-2 custom-scrollbar">
+        <div v-if="tocItems.length === 0" class="text-center text-gray-500 dark:text-gray-400 text-sm py-8">
+          <p>No headings found</p>
+          <p class="mt-1 text-xs">Add headings to see outline</p>
+        </div>
+        <div v-else class="space-y-1">
+          <button
+            v-for="(item, index) in tocItems"
+            :key="index"
+            class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            :style="{ paddingLeft: `${(item.level - 1) * 12 + 8}px` }"
+            :class="{
+              'font-semibold text-gray-900 dark:text-gray-100': item.level === 1,
+              'font-medium text-gray-800 dark:text-gray-200': item.level === 2,
+              'text-gray-700 dark:text-gray-300': item.level >= 3
+            }"
+            @click="scrollToHeading(index)"
+          >
+            {{ item.text }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Editor Content -->
-    <div class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-800 p-6 transition-colors">
+    <div class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-800 p-6 transition-colors custom-scrollbar">
       <div 
         class="mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-lg min-h-full transition-all"
         :style="pageStyles"
       >
         <div :style="contentPadding">
           <EditorContent :editor="editor" class="prose prose-lg dark:prose-invert max-w-none" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Panel -->
+    <div
+      v-if="isChatOpen"
+      class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white dark:bg-gray-900 border-l border-t border-gray-200 dark:border-gray-700 shadow-lg flex flex-col"
+    >
+      <div class="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Comments & Chat</h3>
+        <button @click="isChatOpen = false" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
+          <svg class="h-4 w-4 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="flex-grow overflow-y-auto p-3">
+        <div class="text-center text-gray-500 dark:text-gray-400 text-sm py-8">
+          <p>Chat feature coming soon!</p>
+          <p class="mt-2 text-xs">Collaborate with your team in real-time</p>
+        </div>
+      </div>
+      <div class="p-3 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex gap-2">
+          <input
+            type="text"
+            placeholder="Type a message..."
+            class="flex-grow border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            disabled
+          />
+          <button
+            type="button"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
+            disabled
+          >
+            Send
+          </button>
         </div>
       </div>
     </div>
@@ -60,7 +147,6 @@ import Highlight from '@tiptap/extension-highlight';
 import { Extension } from '@tiptap/core';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
-import Strike from '@tiptap/extension-strike';
 import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
@@ -142,6 +228,60 @@ const isOffline = ref(!navigator.onLine);
 const shareLink = ref('');
 const privacyType = ref('private');
 const shareMembers = ref<any[]>([]);
+
+// Chat state
+const isChatOpen = ref(false);
+
+// Table of Contents state
+const isTocOpen = ref(false);
+const tocItems = computed(() => {
+  if (!editor.value) return [];
+  
+  const headings: Array<{ level: number; text: string; id: string }> = [];
+  const json = editor.value.getJSON();
+  
+  const extractHeadings = (node: any, index = 0) => {
+    if (node.type === 'heading' && node.content) {
+      const text = node.content.map((c: any) => c.text || '').join('');
+      const id = `heading-${index}`;
+      headings.push({ level: node.attrs.level, text, id });
+    }
+    if (node.content) {
+      node.content.forEach((child: any, i: number) => extractHeadings(child, headings.length + i));
+    }
+  };
+  
+  if (json.content) {
+    json.content.forEach((node: any, i: number) => extractHeadings(node, i));
+  }
+  
+  return headings;
+});
+
+function scrollToHeading(index: number) {
+  if (!editor.value) return;
+  
+  // Find all heading nodes in the document
+  const { state } = editor.value;
+  let headingCount = 0;
+  let targetPos = 0;
+  
+  state.doc.descendants((node, pos) => {
+    if (node.type.name === 'heading') {
+      if (headingCount === index) {
+        targetPos = pos;
+        return false; // Stop iteration
+      }
+      headingCount++;
+    }
+  });
+  
+  // Scroll to the heading
+  if (targetPos > 0) {
+    editor.value.commands.setTextSelection(targetPos);
+    editor.value.commands.scrollIntoView();
+  }
+}
 
 let saveTimeout: NodeJS.Timeout | null = null;
 let maxWaitTimeout: NodeJS.Timeout | null = null;
@@ -571,7 +711,6 @@ onMounted(async () => {
       Highlight.configure({ multicolor: true }),
       Subscript,
       Superscript,
-      Strike,
       Link.configure({ openOnClick: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -681,17 +820,30 @@ onUnmounted(() => {
 :deep(.ProseMirror td),
 :deep(.ProseMirror th) {
   min-width: 1em;
-  border: 2px solid #e5e7eb;
-  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  padding: 0.25rem 0.5rem;
   vertical-align: top;
   box-sizing: border-box;
   position: relative;
+}
+
+@media (prefers-color-scheme: dark) {
+  :deep(.ProseMirror td),
+  :deep(.ProseMirror th) {
+    border-color: #374151;
+  }
 }
 
 :deep(.ProseMirror th) {
   font-weight: bold;
   text-align: left;
   background-color: #f9fafb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :deep(.ProseMirror th) {
+    background-color: #1f2937;
+  }
 }
 
 /* Table Templates */
@@ -818,8 +970,8 @@ onUnmounted(() => {
   }
 }
 
-/* Images */
-:deep(.ProseMirror img.editor-image) {
+/* Images (ImagePlus) */
+:deep(.ProseMirror img) {
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
@@ -827,9 +979,17 @@ onUnmounted(() => {
   display: block;
 }
 
-:deep(.ProseMirror img.editor-image.ProseMirror-selectednode) {
+:deep(.ProseMirror img.ProseMirror-selectednode) {
   outline: 3px solid #2563eb;
   outline-offset: 2px;
+}
+
+:deep(.ProseMirror .image-plus-container) {
+  margin: 1rem 0;
+}
+
+:deep(.ProseMirror .image-plus-container img) {
+  border-radius: 0.5rem;
 }
 
 /* Links */
@@ -887,6 +1047,48 @@ onUnmounted(() => {
   margin: 2rem 0;
 }
 
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #4b5563;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar {
+    scrollbar-color: #4b5563 transparent;
+  }
+}
+
 /* Print Styles */
 @media print {
   @page {
@@ -896,7 +1098,9 @@ onUnmounted(() => {
   
   /* Hide UI chrome */
   header,
-  .tiptap-toolbar {
+  .tiptap-toolbar,
+  button[title="Table of Contents"],
+  .fixed {
     display: none !important;
   }
   

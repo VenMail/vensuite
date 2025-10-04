@@ -1,5 +1,5 @@
 <template>
-  <div class="tiptap-toolbar" :class="{ 'is-expanded': isExpanded }">
+  <div class="tiptap-toolbar bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700" :class="{ 'is-expanded': isExpanded }">
     <div class="tiptap-toolbar__main">
       <!-- Toggle Expand/Collapse -->
       <button
@@ -360,130 +360,145 @@
           ☑
         </button>
         
-        <!-- Table Insert with Popover -->
-        <div class="tiptap-toolbar__popover-wrapper">
-          <button
-            class="tiptap-toolbar__btn"
-            title="Insert Table"
-            @click="toggleTablePopover"
-          >
-            ⊞
-          </button>
-          <div v-if="showTablePopover" class="tiptap-toolbar__popover" @click.stop>
-            <div class="popover-header">Insert Table</div>
-            <div class="popover-body">
-              <div class="popover-field">
-                <label>Rows:</label>
-                <input type="number" v-model.number="tableRows" min="1" max="20" />
-              </div>
-              <div class="popover-field">
-                <label>Columns:</label>
-                <input type="number" v-model.number="tableCols" min="1" max="10" />
-              </div>
-              <div class="popover-field">
-                <label>Style:</label>
-                <select v-model="tableStyle">
-                  <option value="default">Default</option>
-                  <option value="striped">Striped Rows</option>
-                  <option value="bordered">Bordered</option>
-                  <option value="minimal">Minimal</option>
-                </select>
-              </div>
-              <div class="popover-checkbox">
-                <label>
-                  <input type="checkbox" v-model="tableWithHeader" />
-                  Include header row
-                </label>
-              </div>
-            </div>
-            <div class="popover-footer">
-              <button class="popover-btn popover-btn-cancel" @click="showTablePopover = false">Cancel</button>
-              <button class="popover-btn popover-btn-primary" @click="insertTable">Insert</button>
-            </div>
-          </div>
-        </div>
+        <!-- Table Insert with Dialog -->
+        <button
+          class="tiptap-toolbar__btn"
+          title="Insert Table"
+          @click="showTableDialog = true"
+        >
+          ⊞
+        </button>
         
-        <!-- Link Insert with Popover -->
-        <div class="tiptap-toolbar__popover-wrapper">
-          <button
-            class="tiptap-toolbar__btn"
-            :class="{ 'is-active': editor?.isActive('link') }"
-            title="Insert/Edit Link"
-            @click="toggleLinkPopover"
-          >
-            🔗
-          </button>
-          <div v-if="showLinkPopover" class="tiptap-toolbar__popover" @click.stop>
-            <div class="popover-header">{{ linkUrl ? 'Edit' : 'Insert' }} Link</div>
-            <div class="popover-body">
-              <div class="popover-field">
-                <label>URL:</label>
-                <input 
-                  type="url" 
-                  v-model="linkUrl" 
-                  placeholder="https://example.com"
-                  @keydown.enter="applyLink"
-                />
-              </div>
-              <div class="popover-checkbox">
-                <label>
-                  <input type="checkbox" v-model="linkOpenInNewTab" />
-                  Open in new tab
-                </label>
-              </div>
-            </div>
-            <div class="popover-footer">
-              <button v-if="editor?.isActive('link')" class="popover-btn popover-btn-danger" @click="removeLink">Remove</button>
-              <button class="popover-btn popover-btn-cancel" @click="showLinkPopover = false">Cancel</button>
-              <button class="popover-btn popover-btn-primary" @click="applyLink">Apply</button>
-            </div>
-          </div>
-        </div>
+        <!-- Link Insert with Dialog -->
+        <button
+          class="tiptap-toolbar__btn"
+          :class="{ 'is-active': editor?.isActive('link') }"
+          title="Insert/Edit Link"
+          @click="openLinkDialog"
+        >
+          🔗
+        </button>
         
-        <!-- Image Insert with Popover -->
-        <div v-if="isExpanded" class="tiptap-toolbar__popover-wrapper">
-          <button
-            class="tiptap-toolbar__btn"
-            title="Insert Image"
-            @click="toggleImagePopover"
-          >
-            🖼️
-          </button>
-          <div v-if="showImagePopover" class="tiptap-toolbar__popover" @click.stop>
-            <div class="popover-header">Insert Image</div>
-            <div class="popover-body">
-              <div class="popover-field">
-                <label>Image URL:</label>
-                <input 
-                  type="url" 
-                  v-model="imageUrl" 
-                  placeholder="https://example.com/image.jpg"
-                  @keydown.enter="applyImage"
-                />
-              </div>
-              <div class="popover-field">
-                <label>Alt Text (optional):</label>
-                <input 
-                  type="text" 
-                  v-model="imageAlt" 
-                  placeholder="Description of image"
-                />
-              </div>
-            </div>
-            <div class="popover-footer">
-              <button class="popover-btn popover-btn-cancel" @click="showImagePopover = false">Cancel</button>
-              <button class="popover-btn popover-btn-primary" @click="applyImage">Insert</button>
-            </div>
-          </div>
-        </div>
+        <!-- Image Insert with Dialog -->
+        <button
+          v-if="isExpanded"
+          class="tiptap-toolbar__btn"
+          title="Insert Image"
+          @click="showImageDialog = true"
+        >
+          🖼️
+        </button>
+      </div>
+      
+      <!-- Comment/Chat Icon (Always visible at end) -->
+      <div class="tiptap-toolbar__group" style="margin-left: auto;">
+        <button
+          class="tiptap-toolbar__btn"
+          title="Comments & Chat"
+          @click="$emit('toggle-comments')"
+        >
+          💬
+        </button>
       </div>
     </div>
   </div>
+
+  <!-- Dialogs -->
+  <!-- Table Insert Dialog -->
+  <Dialog v-model:open="showTableDialog">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Insert Table</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <div class="grid grid-cols-4 items-center gap-4">
+          <label class="text-right text-sm font-medium">Rows:</label>
+          <input type="number" v-model.number="tableRows" min="1" max="20" class="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+        <div class="grid grid-cols-4 items-center gap-4">
+          <label class="text-right text-sm font-medium">Columns:</label>
+          <input type="number" v-model.number="tableCols" min="1" max="10" class="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+        <div class="grid grid-cols-4 items-center gap-4">
+          <label class="text-right text-sm font-medium">Style:</label>
+          <select v-model="tableStyle" class="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <option value="default">Default</option>
+            <option value="striped">Striped Rows</option>
+            <option value="bordered">Bordered</option>
+            <option value="minimal">Minimal</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="checkbox" v-model="tableWithHeader" id="header-check" class="h-4 w-4" />
+          <label for="header-check" class="text-sm font-medium">Include header row</label>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="showTableDialog = false">Cancel</Button>
+        <Button @click="insertTable">Insert</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+
+  <!-- Link Insert Dialog -->
+  <Dialog v-model:open="showLinkDialog">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{{ linkUrl ? 'Edit' : 'Insert' }} Link</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <div class="grid gap-2">
+          <label class="text-sm font-medium">URL:</label>
+          <input type="url" v-model="linkUrl" placeholder="https://example.com" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" @keydown.enter="applyLink" />
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="checkbox" v-model="linkOpenInNewTab" id="new-tab-check" class="h-4 w-4" />
+          <label for="new-tab-check" class="text-sm font-medium">Open in new tab</label>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button v-if="editor?.isActive('link')" variant="destructive" @click="removeLink">Remove</Button>
+        <Button variant="outline" @click="showLinkDialog = false">Cancel</Button>
+        <Button @click="applyLink">Apply</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+
+  <!-- Image Insert Dialog -->
+  <Dialog v-model:open="showImageDialog">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Insert Image</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <div class="grid gap-2">
+          <label class="text-sm font-medium">Image URL:</label>
+          <input type="url" v-model="imageUrl" placeholder="https://example.com/image.jpg" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" @keydown.enter="applyImage" />
+        </div>
+        <div class="grid gap-2">
+          <label class="text-sm font-medium">Alt Text (optional):</label>
+          <input type="text" v-model="imageAlt" placeholder="Description of image" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="showImageDialog = false">Cancel</Button>
+        <Button @click="applyImage">Insert</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue';
 import type { Editor } from '@tiptap/vue-3';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import Button from '@/components/ui/button/Button.vue';
 
 const props = defineProps<{
   editor: Editor | null | undefined;
@@ -495,15 +510,16 @@ const emit = defineEmits<{
   (e: 'export', format: string): void;
   (e: 'update:pageSize', value: string): void;
   (e: 'update:pageOrientation', value: 'portrait' | 'landscape'): void;
+  (e: 'toggle-comments'): void;
 }>();
 
 // State
 const isExpanded = ref(false);
 
-// Popover states
-const showTablePopover = ref(false);
-const showLinkPopover = ref(false);
-const showImagePopover = ref(false);
+// Dialog states
+const showTableDialog = ref(false);
+const showLinkDialog = ref(false);
+const showImageDialog = ref(false);
 
 // Table insert state
 const tableRows = ref(3);
@@ -634,30 +650,14 @@ function onFontSizeChange(event: Event) {
   updateFontState();
 }
 
-// Popover toggle functions
-function toggleTablePopover() {
-  showTablePopover.value = !showTablePopover.value;
-  showLinkPopover.value = false;
-  showImagePopover.value = false;
-}
-
-function toggleLinkPopover() {
+// Dialog open functions
+function openLinkDialog() {
   if (!props.editor) return;
   
   const previousUrl = props.editor.getAttributes('link').href;
   linkUrl.value = previousUrl || '';
   
-  showLinkPopover.value = !showLinkPopover.value;
-  showTablePopover.value = false;
-  showImagePopover.value = false;
-}
-
-function toggleImagePopover() {
-  showImagePopover.value = !showImagePopover.value;
-  showTablePopover.value = false;
-  showLinkPopover.value = false;
-  imageUrl.value = '';
-  imageAlt.value = '';
+  showLinkDialog.value = true;
 }
 
 // Table insert function
@@ -681,7 +681,7 @@ function insertTable() {
     }
   }
   
-  showTablePopover.value = false;
+  showTableDialog.value = false;
 }
 
 // Link functions
@@ -696,14 +696,14 @@ function applyLink() {
   const target = linkOpenInNewTab.value ? '_blank' : undefined;
   props.editor.chain().focus().extendMarkRange('link').setLink({ href: finalUrl, target }).run();
   
-  showLinkPopover.value = false;
+  showLinkDialog.value = false;
   linkUrl.value = '';
 }
 
 function removeLink() {
   if (!props.editor) return;
   props.editor.chain().focus().extendMarkRange('link').unsetLink().run();
-  showLinkPopover.value = false;
+  showLinkDialog.value = false;
   linkUrl.value = '';
 }
 
@@ -721,18 +721,9 @@ function applyImage() {
     alt: imageAlt.value || undefined,
   }).run();
   
-  showImagePopover.value = false;
+  showImageDialog.value = false;
   imageUrl.value = '';
   imageAlt.value = '';
-}
-
-// Close popovers when clicking outside
-if (typeof document !== 'undefined') {
-  document.addEventListener('click', () => {
-    showTablePopover.value = false;
-    showLinkPopover.value = false;
-    showImagePopover.value = false;
-  });
 }
 
 function toggleExpanded() {
@@ -779,16 +770,7 @@ function onBgColorChange(event: Event) {
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: linear-gradient(180deg, #fafbfc 0%, #f5f6f8 100%);
-  border-bottom: 1px solid #e5e7eb;
   transition: background-color 0.2s, border-color 0.2s;
-}
-
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar {
-    background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
-    border-bottom-color: #374151;
-  }
 }
 
 .tiptap-toolbar__main {
@@ -802,32 +784,26 @@ function onBgColorChange(event: Event) {
 .tiptap-toolbar__section-label {
   font-size: 0.6875rem;
   font-weight: 600;
-  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0 8px;
   white-space: nowrap;
-  transition: color 0.2s;
+  color: #6b7280;
 }
 
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__section-label {
-    color: #9ca3af;
-  }
+:deep(.dark) .tiptap-toolbar__section-label {
+  color: #9ca3af;
 }
 
 .tiptap-toolbar__divider {
   width: 1px;
   height: 24px;
-  background: #e5e7eb;
   margin: 0 4px;
-  transition: background-color 0.2s;
+  background: #d1d5db;
 }
 
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__divider {
-    background: #374151;
-  }
+:deep(.dark) .tiptap-toolbar__divider {
+  background: #4b5563;
 }
 
 .tiptap-toolbar__group {
@@ -842,52 +818,50 @@ function onBgColorChange(event: Event) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #e5e7eb;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
-  color: #1f2937;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__btn {
-    background: #374151;
-    border-color: #4b5563;
-    color: #e5e7eb;
-  }
+:deep(.dark) .tiptap-toolbar__btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .tiptap-toolbar__btn:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: #f9fafb;
+  border-color: #9ca3af;
   color: #2563eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__btn:hover:not(:disabled) {
-    background: #4b5563;
-    border-color: #6b7280;
-    color: #60a5fa;
-  }
+:deep(.dark) .tiptap-toolbar__btn:hover:not(:disabled) {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #60a5fa;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .tiptap-toolbar__btn.is-active {
   outline: none;
   border-color: #2563eb;
-  background: #eff6ff;
-  color: #1d4ed8;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+  background: #dbeafe;
+  color: #1e40af;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__btn.is-active {
-    border-color: #60a5fa;
-    background: #1e3a8a;
-    color: #93c5fd;
-    box-shadow: 0 2px 6px rgba(96, 165, 250, 0.3);
-  }
+:deep(.dark) .tiptap-toolbar__btn.is-active {
+  border-color: #60a5fa;
+  background: #1e3a8a;
+  color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
 }
 
 .tiptap-toolbar__btn:disabled {
@@ -903,22 +877,21 @@ function onBgColorChange(event: Event) {
 .tiptap-toolbar__select {
   height: 32px;
   padding: 0 8px;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: #374151;
-  min-width: 140px;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__select {
-    background: #374151;
-    border-color: #4b5563;
-    color: #e5e7eb;
-  }
+:deep(.dark) .tiptap-toolbar__select {
+  background: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .tiptap-toolbar__select--small {
@@ -926,28 +899,24 @@ function onBgColorChange(event: Event) {
 }
 
 .tiptap-toolbar__select:hover {
-  border-color: #d1d5db;
+  border-color: #9ca3af;
   background: #f9fafb;
 }
 
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__select:hover {
-    border-color: #6b7280;
-    background: #4b5563;
-  }
+:deep(.dark) .tiptap-toolbar__select:hover {
+  border-color: #6b7280;
+  background: #4b5563;
 }
 
 .tiptap-toolbar__select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  .tiptap-toolbar__select:focus {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-  }
+:deep(.dark) .tiptap-toolbar__select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
 }
 
 /* Crystal Toggle Button - Office-style */
@@ -1317,5 +1286,11 @@ function onBgColorChange(event: Event) {
 .popover-btn-danger:hover {
   background: #b91c1c;
   border-color: #b91c1c;
+}
+
+@media print {
+  .tiptap-toolbar {
+    display: none;
+  }
 }
 </style>
