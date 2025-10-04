@@ -23,13 +23,14 @@ import Sheets from './views/Sheets.vue'
 import Documents from './views/Documents.vue'
 import Forms from './views/Forms.vue'
 import Bin from './views/Bin.vue'
-import Login from './views/Login.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
 // Import utils as needed
 import Editor from './components/forms/Editor.vue'
 import FilePicker from './views/FilePicker.vue'
+import DocsEditor from './views/DocsEditor.vue';
 import { FileData } from './types'
+import Login from './views/Login.vue';
 
 const routes = [
   { 
@@ -48,15 +49,14 @@ const routes = [
     children: [
       { path: 'sheets', name: 'sheets-view', component: Sheets },
       { path: 'bin', name: 'bin-view', component: Bin },
+      { path: 'docs/new', name: 'docs-new', component: DocsEditor, meta: { hideLayout: true } },
+      { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true } },
+      { path: 'docs/t/:template', name: 'docs-template', component: DocsEditor, meta: { hideLayout: true } },
+      { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
       { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
-      { path: 'docs/:id', name: 'doc', component: RunDoc, meta: { hideLayout: true } },
       { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
       { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },
-      { path: 'docs', name: 'docs-view', component: Documents },
-      { path: 'docs/new', name: 'docs', component: RunDoc, meta: { hideLayout: true } },
-      { path: 'docs/t/:template', name: 'doc-template', component: RunDoc, meta: { hideLayout: true } },
-      { path: 'docs/:id', name: 'doc', component: RunDoc, meta: { hideLayout: true } },
       { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },

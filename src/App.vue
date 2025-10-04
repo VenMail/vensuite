@@ -5,7 +5,11 @@ import ThemeProvider from '@/providers/ThemeProvider.vue'
 
 <template>  
   <ThemeProvider>
-    <Toaster class="pointer-events-auto" />
+    <Toaster 
+      position="bottom-right" 
+      :duration="3000"
+      class="pointer-events-auto" 
+    />
     <RouterView />
   </ThemeProvider>
 </template>

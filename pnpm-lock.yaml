@@ -386,6 +386,9 @@ importers:
       tiptap-pagination-plus:
         specifier: ^1.1.8
         version: 1.1.8(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))(@tiptap/pm@2.26.2)
+      tiptap-table-plus:
+        specifier: ^2.0.7
+        version: 2.0.7(@tiptap/extension-table-cell@2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2)))(@tiptap/extension-table-header@2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2)))(@tiptap/extension-table-row@2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2)))(@tiptap/extension-table@2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))(@tiptap/pm@2.26.2))(@tiptap/pm@2.26.2)
       tiptap-utility:
         specifier: ^1.0.20
         version: 1.0.20(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))
@@ -9193,6 +9196,15 @@ packages:
     resolution: {integrity: sha512-N3xVJu/H9hkFySfoZByiViX+nahZ1zxcSUrEh2a/HsqutrdLndDeO0BoQOyVw/lrTTJzGjPnCgSaopLL80KFIg==}
     peerDependencies:
       '@tiptap/core': ^2.0.0
+      '@tiptap/pm': ^2.0.0
+
+  tiptap-table-plus@2.0.7:
+    resolution: {integrity: sha512-B6OraqEmbeK//AsHWvt+9uZIK6iLugBnhMbpC6wWj3o00xBS3XXfEFi9T3Bb7r9nATDmpCp9tthtQYgQwMhrIw==}
+    peerDependencies:
+      '@tiptap/extension-table': ^2.0.0
+      '@tiptap/extension-table-cell': ^2.0.0
+      '@tiptap/extension-table-header': ^2.0.0
+      '@tiptap/extension-table-row': ^2.0.0
       '@tiptap/pm': ^2.0.0
 
   tiptap-utility@1.0.20:
@@ -20700,6 +20712,14 @@ snapshots:
   tiptap-pagination-plus@1.1.8(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))(@tiptap/pm@2.26.2):
     dependencies:
       '@tiptap/core': 2.26.2(@tiptap/pm@2.26.2)
+      '@tiptap/pm': 2.26.2
+
+  tiptap-table-plus@2.0.7(@tiptap/extension-table-cell@2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2)))(@tiptap/extension-table-header@2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2)))(@tiptap/extension-table-row@2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2)))(@tiptap/extension-table@2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))(@tiptap/pm@2.26.2))(@tiptap/pm@2.26.2):
+    dependencies:
+      '@tiptap/extension-table': 2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))(@tiptap/pm@2.26.2)
+      '@tiptap/extension-table-cell': 2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))
+      '@tiptap/extension-table-header': 2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))
+      '@tiptap/extension-table-row': 2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))
       '@tiptap/pm': 2.26.2
 
   tiptap-utility@1.0.20(@tiptap/core@2.26.2(@tiptap/pm@2.26.2)):

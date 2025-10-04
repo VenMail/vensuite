@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import axios from "axios";
 import { useAuthStore } from "./auth";
-import { FileData } from "@/types";
+import type { DocumentFormat, LoadDocumentOptions, LoadDocumentResult, FileData } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 import { DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
 
@@ -63,6 +63,72 @@ export const useFileStore = defineStore("files", {
       return ft
     },
 
+    async ensureDocument(options: LoadDocumentOptions = {}): Promise<LoadDocumentResult<FileData>> {
+      const {
+        id,
+        fileType,
+        title,
+        template,
+        initialContent,
+        createIfMissing = true,
+      } = options;
+
+      const effectiveType = fileType ?? template?.format ?? "docx";
+      let document: FileData | null = null;
+      let created = false;
+      let markClean = false;
+
+      if (id) {
+        document = await this.loadDocument(id, effectiveType as string);
+        if (document) {
+          return {
+            document,
+            created: false,
+            format: template?.format ?? this.inferDocumentFormat(document.file_type),
+            markClean: true,
+          };
+        }
+      }
+
+      if (!createIfMissing) {
+        return {
+          document: null,
+          created: false,
+          format: template?.format ?? this.inferDocumentFormat(effectiveType),
+        };
+      }
+
+      const resolvedTitle = title ?? template?.title ?? "New Document";
+      const newDoc = await this.createNewDocument(effectiveType as string, resolvedTitle);
+      document = newDoc;
+      created = true;
+
+      const templateContent = template?.content ?? initialContent;
+      if (templateContent !== undefined) {
+        // JSON-in-content policy: when template is tiptap, content contains JSON string
+        const updatedDoc: FileData = {
+          ...newDoc,
+          title: resolvedTitle,
+          content: templateContent as string,
+        } as FileData;
+        try {
+          const result = await this.saveDocument(updatedDoc);
+          document = result.document;
+          markClean = true;
+        } catch {
+          document = updatedDoc;
+          markClean = false;
+        }
+      }
+
+      return {
+        document,
+        created,
+        format: template?.format ?? this.inferDocumentFormat(document?.file_type ?? effectiveType),
+        markClean,
+      };
+    },
+
     /** Ensure is_folder is a boolean and file_type is normalized */
     normalizeDocumentShape(doc: any): FileData {
       const normalizedType = this.normalizeFileType(doc?.file_type, doc?.file_name)
@@ -73,6 +139,12 @@ export const useFileStore = defineStore("files", {
         file_type: normalizedType,
         is_folder: isFolder,
       } as FileData
+    },
+    inferDocumentFormat(fileType?: string | null): DocumentFormat {
+      const normalized = (fileType || "").toString().trim().toLowerCase();
+      if (["xlsx", "xls", "sheet", "spreadsheet"].includes(normalized)) return "univer";
+      if (["html", "htm", "umodoc"].includes(normalized)) return "umodoc";
+      return "tiptap";
     },
     /** Derive a human title from server data safely */
     computeTitle(serverData: any): string {
