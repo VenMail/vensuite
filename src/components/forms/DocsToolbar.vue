@@ -8,7 +8,7 @@
         :title="isExpanded ? 'Collapse toolbar' : 'Expand toolbar'"
         @click="toggleExpanded"
       >
-        <span class="crystal-icon">▼</span>
+        <ChevronDown class="crystal-icon h-4 w-4" />
       </button>
 
       <span class="tiptap-toolbar__divider" />
@@ -49,7 +49,7 @@
           :disabled="!editor?.can().undo()"
           @click="editor?.chain().focus().undo().run()"
         >
-          ↶
+          <Undo2 class="h-4 w-4" />
         </button>
         <button
           class="tiptap-toolbar__btn"
@@ -57,7 +57,7 @@
           :disabled="!editor?.can().redo()"
           @click="editor?.chain().focus().redo().run()"
         >
-          ↷
+          <Redo2 class="h-4 w-4" />
         </button>
       </div>
 
@@ -101,28 +101,28 @@
           title="Bold (Ctrl+B)"
           @click="editor?.chain().focus().toggleBold().run()"
         >
-          <strong>B</strong>
+          <Bold class="h-4 w-4" />
         </button>
         <button
           :class="['tiptap-toolbar__btn', btnClasses, editor?.isActive('italic') && btnActiveClasses]"
           title="Italic (Ctrl+I)"
           @click="editor?.chain().focus().toggleItalic().run()"
         >
-          <em>I</em>
+          <Italic class="h-4 w-4" />
         </button>
         <button
           :class="['tiptap-toolbar__btn', btnClasses, editor?.isActive('underline') && btnActiveClasses]"
           title="Underline (Ctrl+U)"
           @click="editor?.chain().focus().toggleUnderline().run()"
         >
-          <u>U</u>
+          <UnderlineIcon class="h-4 w-4" />
         </button>
         <button
           :class="['tiptap-toolbar__btn', btnClasses, editor?.isActive('strike') && btnActiveClasses]"
           title="Strikethrough"
           @click="editor?.chain().focus().toggleStrike().run()"
         >
-          <s>S</s>
+          <Strikethrough class="h-4 w-4" />
         </button>
         <button
           v-if="isExpanded"
@@ -131,7 +131,7 @@
           title="Inline Code"
           @click="editor?.chain().focus().toggleCode().run()"
         >
-          &lt;/&gt;
+          <Code2 class="h-4 w-4" />
         </button>
         <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
@@ -314,7 +314,7 @@
           title="Subscript"
           @click="editor?.chain().focus().toggleSubscript().run()"
         >
-          X<sub style="font-size: 0.6em;">₂</sub>
+          <Subscript class="h-4 w-4" />
         </button>
         <button
           class="tiptap-toolbar__btn"
@@ -322,7 +322,7 @@
           title="Superscript"
           @click="editor?.chain().focus().toggleSuperscript().run()"
         >
-          X<sup style="font-size: 0.6em;">²</sup>
+          <Superscript class="h-4 w-4" />
         </button>
       </div>
 
@@ -337,7 +337,7 @@
           title="Blockquote"
           @click="editor?.chain().focus().toggleBlockquote().run()"
         >
-          "
+          <Quote class="h-4 w-4" />
         </button>
         <button
           class="tiptap-toolbar__btn"
@@ -345,14 +345,14 @@
           title="Code Block"
           @click="editor?.chain().focus().toggleCodeBlock().run()"
         >
-          {
+          <SquareCode class="h-4 w-4" />
         </button>
         <button
           class="tiptap-toolbar__btn"
           title="Horizontal Line"
           @click="editor?.chain().focus().setHorizontalRule().run()"
         >
-          ─
+          <Minus class="h-4 w-4" />
         </button>
       </div>
 
@@ -367,7 +367,7 @@
           title="Task List"
           @click="editor?.chain().focus().toggleTaskList().run()"
         >
-          ☑
+          <ListChecks class="h-4 w-4" />
         </button>
         
         <!-- Table Insert with Dialog -->
@@ -376,7 +376,7 @@
           title="Insert Table"
           @click="showTableDialog = true"
         >
-          ⊞
+          <Table class="h-4 w-4" />
         </button>
         
         <!-- Link Insert with Dialog -->
@@ -386,7 +386,7 @@
           title="Insert/Edit Link"
           @click="openLinkDialog"
         >
-          🔗
+          <Link2 class="h-4 w-4" />
         </button>
         
         <!-- Image Insert with Dialog -->
@@ -396,7 +396,7 @@
           title="Insert Image"
           @click="showImageDialog = true"
         >
-          🖼️
+          <ImageIcon class="h-4 w-4" />
         </button>
       </div>
       
@@ -407,7 +407,7 @@
           title="Comments & Chat"
           @click="$emit('toggle-comments')"
         >
-          💬
+          <MessageSquare class="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -618,19 +618,37 @@
 import { ref, watch, onBeforeUnmount } from 'vue';
 import type { Editor } from '@tiptap/vue-3';
 import {
-  Plus,
-  FileText,
-  FileDown,
-  Code,
-  Printer,
-  Settings,
-  AlignLeft,
   AlignCenter,
+  AlignLeft,
   AlignRight,
-  List,
-  ListOrdered,
+  Bold,
+  ChevronDown,
+  Code,
+  Code2,
+  FileDown,
+  FileText,
   FileType,
+  Image as ImageIcon,
+  Italic,
+  List,
+  ListChecks,
+  ListOrdered,
+  Link2,
   Maximize,
+  MessageSquare,
+  Minus,
+  Plus,
+  Printer,
+  Quote,
+  Redo2,
+  Settings,
+  SquareCode,
+  Strikethrough,
+  Subscript,
+  Superscript,
+  Table,
+  Undo2,
+  Underline as UnderlineIcon,
 } from 'lucide-vue-next';
 import {
   Dialog,

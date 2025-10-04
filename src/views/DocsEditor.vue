@@ -102,7 +102,7 @@
           <BubbleMenu
             v-if="editor"
             :editor="editor"
-            :tippy-options="{ duration: 100, placement: 'top', maxWidth: 340 }"
+            :tippy-options="bubbleMenuTippyOptions"
           >
             <div :class="[bubbleShellClass, 'bubble-shell']">
               <div :class="bubbleGridClass">
@@ -421,7 +421,7 @@ const isToolbarExpanded = ref(false);
 const bubbleShellClass = 'flex w-full max-w-[340px] flex-col gap-1 rounded-xl border border-gray-200 bg-white/95 px-2 py-1 text-gray-700 shadow-xl print:hidden dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200';
 const bubbleGridClass = 'flex flex-wrap items-center gap-1';
 const bubbleButtonBase = 'inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-transparent text-gray-600 transition-colors duration-150 hover:bg-gray-100 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40';
-const bubbleButtonActive = 'bg-blue-600 text-white shadow-sm hover:bg-blue-600 hover:text-white focus-visible:ring-blue-400 dark:bg-blue-500';
+const bubbleButtonActive = 'border-blue-500 bg-blue-100 text-blue-700 shadow-sm hover:bg-blue-100 dark:border-blue-400 dark:bg-blue-900/60 dark:text-blue-200';
 const bubbleButtonSuccess = 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/60';
 const bubbleButtonDanger = 'text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/60';
 const bubbleOverflowButtonClass = 'flex w-full items-center rounded-md px-2 py-1 text-left text-xs text-gray-600 transition-colors duration-150 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-200 dark:hover:bg-gray-800';
@@ -773,6 +773,20 @@ const showBgColorPicker = ref(false);
 const bubbleTextColor = ref('#000000');
 const bubbleBgColor = ref('#ffff00');
 
+function resetBubbleColorPickers() {
+  showTextColorPicker.value = false;
+  showBgColorPicker.value = false;
+}
+
+const bubbleMenuTippyOptions: Record<string, any> = {
+  duration: 100,
+  placement: 'top',
+  maxWidth: 340,
+  onHide: () => {
+    resetBubbleColorPickers();
+  },
+};
+
 // Computed for current colors
 const currentBubbleTextColor = computed(() => {
   if (!editor.value) return '#000000';
@@ -866,18 +880,20 @@ function executeAction(action: BubbleAction, closeOverflow = false) {
   
   // Handle color picker actions
   if (action.key === 'color') {
-    showTextColorPicker.value = !showTextColorPicker.value;
-    showBgColorPicker.value = false;
-    if (showTextColorPicker.value) {
+    const shouldShow = !showTextColorPicker.value;
+    resetBubbleColorPickers();
+    showTextColorPicker.value = shouldShow;
+    if (shouldShow) {
       bubbleTextColor.value = currentBubbleTextColor.value;
     }
     return;
   }
-  
+
   if (action.key === 'highlight') {
-    showBgColorPicker.value = !showBgColorPicker.value;
-    showTextColorPicker.value = false;
-    if (showBgColorPicker.value) {
+    const shouldShow = !showBgColorPicker.value;
+    resetBubbleColorPickers();
+    showBgColorPicker.value = shouldShow;
+    if (shouldShow) {
       bubbleBgColor.value = currentBubbleBgColor.value;
     }
     return;
@@ -907,8 +923,7 @@ function onBubbleBgColorChange(event: Event) {
 
 watch([isTextSelection, isTableSelection, isImageEditing], () => {
   isOverflowOpen.value = false;
-  showTextColorPicker.value = false;
-  showBgColorPicker.value = false;
+  resetBubbleColorPickers();
   clearOverflowTimer();
 });
 
