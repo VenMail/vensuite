@@ -1709,7 +1709,8 @@ onUnmounted(() => {
 
 :deep(.ProseMirror td),
 :deep(.ProseMirror th) {
-  min-width: 1em;
+  min-width: 80px;
+  min-height: 32px;
   border: 1px solid #d1d5db;
   padding: 0.375rem 0.5rem;
   vertical-align: top;
@@ -1717,11 +1718,9 @@ onUnmounted(() => {
   position: relative;
 }
 
-@media (prefers-color-scheme: dark) {
-  :deep(.ProseMirror td),
-  :deep(.ProseMirror th) {
-    border-color: #4b5563;
-  }
+:deep(.dark .ProseMirror td),
+:deep(.dark .ProseMirror th) {
+  border-color: #4b5563;
 }
 
 :deep(.ProseMirror th) {
@@ -1731,10 +1730,16 @@ onUnmounted(() => {
   padding: 0.5rem 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :deep(.ProseMirror th) {
-    background-color: #374151;
-  }
+:deep(.ProseMirror td p) {
+  margin: 0;
+}
+
+:deep(.ProseMirror th p) {
+  margin: 0;
+}
+
+:deep(.dark .ProseMirror th) {
+  background-color: #374151;
 }
 
 /* Table Templates */
@@ -1742,10 +1747,8 @@ onUnmounted(() => {
   background-color: #f9fafb;
 }
 
-@media (prefers-color-scheme: dark) {
-  :deep(.ProseMirror table.table-striped tbody tr:nth-child(even)) {
-    background-color: #1f2937;
-  }
+:deep(.dark .ProseMirror table.table-striped tbody tr:nth-child(even)) {
+  background-color: #1f2937;
 }
 
 :deep(.ProseMirror table.table-bordered td),
@@ -1763,11 +1766,9 @@ onUnmounted(() => {
   border-bottom: 1px solid #e5e7eb;
 }
 
-@media (prefers-color-scheme: dark) {
-  :deep(.ProseMirror table.table-minimal td),
-  :deep(.ProseMirror table.table-minimal th) {
-    border-bottom-color: #374151;
-  }
+:deep(.dark .ProseMirror table.table-minimal td),
+:deep(.dark .ProseMirror table.table-minimal th) {
+  border-bottom-color: #374151;
 }
 
 :deep(.ProseMirror table.table-minimal th) {
@@ -1845,19 +1846,66 @@ onUnmounted(() => {
 }
 
 /* Dark mode task list */
-@media (prefers-color-scheme: dark) {
-  :deep(.ProseMirror ul[data-type="taskList"] input[type="checkbox"]) {
-    background-color: #374151;
-    border-color: #4b5563;
+:deep(.dark .ProseMirror ul[data-type="taskList"] input[type="checkbox"]) {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+:deep(.dark .ProseMirror ul[data-type="taskList"] input[type="checkbox"]:hover) {
+  border-color: #60a5fa;
+}
+
+:deep(.dark .ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked) {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Print styles for task lists */
+@media print {
+  :deep(.ProseMirror ul[data-type="taskList"]) {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.5rem 0;
   }
   
-  :deep(.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:hover) {
-    border-color: #60a5fa;
+  :deep(.ProseMirror ul[data-type="taskList"] li) {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 0.25rem;
+    padding: 0.125rem 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  :deep(.ProseMirror ul[data-type="taskList"] li > label) {
+    flex: 0 0 auto;
+    margin-right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    height: auto;
+    min-width: 1.125rem;
+  }
+  
+  :deep(.ProseMirror ul[data-type="taskList"] li > div) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  
+  :deep(.ProseMirror ul[data-type="taskList"] input[type="checkbox"]) {
+    width: 1rem;
+    height: 1rem;
+    min-width: 1rem;
+    min-height: 1rem;
+    flex-shrink: 0;
+    margin: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
   }
   
   :deep(.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked) {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
+    background-color: #2563eb !important;
+    border-color: #2563eb !important;
   }
 }
 
@@ -1929,6 +1977,10 @@ onUnmounted(() => {
 
 :deep(.ProseMirror li p) {
   margin: 0;
+}
+
+:deep(.tiptap .handle) {
+  z-index: 40!important;
 }
 
 /* Horizontal Rule */
