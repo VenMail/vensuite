@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { Router } from 'vue-router'
+import { useFileStore } from './files'
 
 const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/auth/oauth'
 
@@ -98,8 +99,7 @@ export const useAuthStore = defineStore('auth', {
         // Clear app caches (files, recent, offline).
         // Use dynamic import to avoid potential circular dependency at module top-level
         try {
-          const mod = await import('./files');
-          const fileStore = mod.useFileStore();
+          const fileStore = useFileStore();
           fileStore.clearAll();
         } catch (e) {
           console.warn('Failed to clear files store on logout:', e);

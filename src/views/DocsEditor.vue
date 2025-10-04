@@ -380,7 +380,6 @@ import type { FileData } from '@/types';
 import DocsToolbar from '@/components/forms/DocsToolbar.vue';
 import DocsTitleBar from '@/components/forms/DocsTitleBar.vue';
 import ShareCard from '@/components/ShareCard.vue';
-import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { useAuthStore } from '@/store/auth';
@@ -1295,10 +1294,11 @@ function printAsHtml() {
   toast.success('HTML exported successfully');
 }
 
-function exportToPDF() {
+async function exportToPDF() {
   if (!editor.value) return;
   
   try {
+    const { default: jsPDF } = await import('jspdf');
     const pdf = new jsPDF({
       orientation: pageOrientation.value === 'landscape' ? 'landscape' : 'portrait',
       unit: 'mm',
