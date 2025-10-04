@@ -122,42 +122,88 @@
                 >
                   <component :is="action.icon" class="h-4 w-4" />
                 </button>
-              </div>
-              <div v-if="overflowActions.length" class="relative">
-                <button
-                  type="button"
-                  :class="[bubbleButtonBase, isOverflowOpen && bubbleButtonActive]"
-                  title="More"
-                  @click.stop="toggleOverflow"
-                >
-                  <MoreHorizontal class="h-4 w-4" />
-                </button>
-                <transition name="fade">
-                  <div
-                    v-if="isOverflowOpen"
-                    class="absolute right-0 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
-                    @mouseenter="suspendOverflowClose"
-                    @mouseleave="resumeOverflowClose"
+                <span v-if="overflowActions.length" class="relative inline-flex">
+                  <button
+                    type="button"
+                    :class="[bubbleButtonBase, isOverflowOpen && bubbleButtonActive]"
+                    title="More"
+                    @click.stop="toggleOverflow"
                   >
-                    <button
-                      v-for="action in overflowActions"
-                      :key="action.key"
-                      type="button"
-                      :class="[
-                        bubbleOverflowButtonClass,
-                        action.isActive && 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-200'
-                      ]"
-                      :title="action.tooltip"
-                      :disabled="action.disabled"
-                      :style="action.style"
-                      @click="executeAction(action, true)"
+                    <MoreHorizontal class="h-4 w-4" />
+                  </button>
+                  <transition name="fade">
+                    <div
+                      v-if="isOverflowOpen"
+                      class="absolute right-0 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                      @mouseenter="suspendOverflowClose"
+                      @mouseleave="resumeOverflowClose"
                     >
-                      <component :is="action.icon" class="h-4 w-4" />
-                      <span class="ml-2 text-xs font-medium">{{ action.label }}</span>
-                    </button>
-                  </div>
-                </transition>
+                      <button
+                        v-for="action in overflowActions"
+                        :key="action.key"
+                        type="button"
+                        :class="[
+                          bubbleOverflowButtonClass,
+                          action.isActive && 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-200'
+                        ]"
+                        :title="action.tooltip"
+                        :disabled="action.disabled"
+                        :style="action.style"
+                        @click="executeAction(action, true)"
+                      >
+                        <component :is="action.icon" class="h-4 w-4" />
+                        <span class="ml-2 text-xs font-medium">{{ action.label }}</span>
+                      </button>
+                    </div>
+                  </transition>
+                </span>
               </div>
+              
+              <!-- Color Pickers -->
+              <template v-if="showTextColorPicker">
+                <div :class="bubbleInlineFormClass">
+                  <label class="flex items-center gap-2">
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Text:</span>
+                    <input
+                      type="color"
+                      :value="bubbleTextColor"
+                      @input="onBubbleTextColorChange"
+                      class="h-8 w-16 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    :class="[bubbleButtonBase, 'text-gray-500 dark:text-gray-400']"
+                    title="Remove color"
+                    @click="editor?.chain().focus().unsetColor().run(); showTextColorPicker = false"
+                  >
+                    <Eraser class="h-4 w-4" />
+                  </button>
+                </div>
+              </template>
+              
+              <template v-if="showBgColorPicker">
+                <div :class="bubbleInlineFormClass">
+                  <label class="flex items-center gap-2">
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Background:</span>
+                    <input
+                      type="color"
+                      :value="bubbleBgColor"
+                      @input="onBubbleBgColorChange"
+                      class="h-8 w-16 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    :class="[bubbleButtonBase, 'text-gray-500 dark:text-gray-400']"
+                    title="Remove highlight"
+                    @click="editor?.chain().focus().unsetHighlight().run(); showBgColorPicker = false"
+                  >
+                    <Eraser class="h-4 w-4" />
+                  </button>
+                </div>
+              </template>
+              
               <template v-if="isLinkEditing">
                 <div :class="bubbleInlineFormClass">
                   <input
@@ -323,7 +369,6 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
 import { PaginationPlus } from 'tiptap-pagination-plus';
-// @ts-expect-error tiptap-table-plus ships without types
 import { PaginationTable } from 'tiptap-table-plus';
 
 const {
@@ -549,16 +594,11 @@ const allTextActions = computed<BubbleAction[]>(() => {
       key: 'highlight',
       icon: Highlighter,
       handler: () => {
-        const current = instance.getAttributes('highlight')?.color;
-        if (current && current.toLowerCase() === '#fde68a') {
-          instance.chain().focus().unsetHighlight().run();
-        } else {
-          instance.chain().focus().setHighlight({ color: '#fde68a' }).run();
-        }
+        // This will be intercepted by executeAction to show color picker
       },
-      tooltip: 'Highlight selection',
-      label: 'Highlight',
-      isActive: instance.isActive('highlight', { color: '#fde68a' }),
+      tooltip: 'Background color',
+      label: 'Background color',
+      isActive: instance.isActive('highlight'),
       style: highlightStyle,
     },
     {
@@ -727,8 +767,30 @@ const imageActions = computed<BubbleAction[]>(() => {
   ];
 });
 
-const textPrimaryKeys = ['bold', 'italic', 'underline', 'color', 'highlight', 'link', 'bullet-list', 'ordered-list', 'align-left'];
-const textOverflowKeys = ['align-center', 'align-right', 'clear', 'strike', 'text', 'h2', 'h3'];
+// Bubble menu state for color pickers
+const showTextColorPicker = ref(false);
+const showBgColorPicker = ref(false);
+const bubbleTextColor = ref('#000000');
+const bubbleBgColor = ref('#ffff00');
+
+// Computed for current colors
+const currentBubbleTextColor = computed(() => {
+  if (!editor.value) return '#000000';
+  const color = editor.value.getAttributes('textStyle')?.color;
+  return color || '#000000';
+});
+
+const currentBubbleBgColor = computed(() => {
+  if (!editor.value) return '#ffff00';
+  const color = editor.value.getAttributes('highlight')?.color;
+  return color || '#ffff00';
+});
+
+// Priority keys for different contexts
+const textPrimaryKeys = ['bold', 'italic', 'underline', 'color', 'highlight', 'link', 'clear'];
+const textOverflowKeys = ['strike', 'bullet-list', 'ordered-list', 'align-left', 'align-center', 'align-right', 'text', 'h2', 'h3'];
+const headingPrimaryKeys = ['h2', 'h3', 'text', 'bold', 'italic', 'underline', 'clear'];
+const headingOverflowKeys = ['strike', 'color', 'highlight', 'link', 'bullet-list', 'ordered-list', 'align-left', 'align-center', 'align-right'];
 const tablePrimaryKeys = ['add-col', 'add-row', 'merge', 'split', 'align-left-table', 'align-center-table', 'align-right-table'];
 const tableOverflowKeys = ['del-col', 'del-row'];
 const imagePrimaryKeys = ['image-align-left', 'image-align-center', 'image-align-right'];
@@ -741,15 +803,20 @@ function splitActions(
 ) {
   const map = new Map(actions.map((action) => [action.key, action]));
   const primary: BubbleAction[] = [];
+  const MAX_PRIMARY = 8; // Reserve 1 slot for "more" button (max 9 total)
+  
   primaryOrder.forEach((key) => {
     if (excludeKeys.includes(key)) return;
+    if (primary.length >= MAX_PRIMARY) return;
     const action = map.get(key);
     if (action) {
       primary.push(action);
     }
   });
+  
   const used = new Set(primary.map((action) => action.key));
   const overflow: BubbleAction[] = [];
+  
   overflowOrder.forEach((key) => {
     if (excludeKeys.includes(key) || used.has(key)) return;
     const action = map.get(key);
@@ -757,12 +824,14 @@ function splitActions(
       overflow.push(action);
     }
   });
+  
   actions.forEach((action) => {
     if (excludeKeys.includes(action.key)) return;
     if (!used.has(action.key) && !overflow.find((item) => item.key === action.key)) {
       overflow.push(action);
     }
   });
+  
   return { primary, overflow };
 }
 
@@ -774,10 +843,15 @@ const actionSets = computed(() => {
     return splitActions(tableActions.value, tablePrimaryKeys, tableOverflowKeys);
   }
   if (isTextSelection.value) {
+    // Check if selection is a heading
+    const isHeading = editor.value?.isActive('heading');
+    const primaryKeys = isHeading ? headingPrimaryKeys : textPrimaryKeys;
+    const overflowKeys = isHeading ? headingOverflowKeys : textOverflowKeys;
+    
     return splitActions(
       allTextActions.value,
-      textPrimaryKeys,
-      textOverflowKeys,
+      primaryKeys,
+      overflowKeys,
       isLinkEditing.value ? ['link'] : []
     );
   }
@@ -789,14 +863,52 @@ const overflowActions = computed(() => actionSets.value.overflow);
 
 function executeAction(action: BubbleAction, closeOverflow = false) {
   if (action.disabled) return;
+  
+  // Handle color picker actions
+  if (action.key === 'color') {
+    showTextColorPicker.value = !showTextColorPicker.value;
+    showBgColorPicker.value = false;
+    if (showTextColorPicker.value) {
+      bubbleTextColor.value = currentBubbleTextColor.value;
+    }
+    return;
+  }
+  
+  if (action.key === 'highlight') {
+    showBgColorPicker.value = !showBgColorPicker.value;
+    showTextColorPicker.value = false;
+    if (showBgColorPicker.value) {
+      bubbleBgColor.value = currentBubbleBgColor.value;
+    }
+    return;
+  }
+  
   action.handler();
   if (closeOverflow) {
     isOverflowOpen.value = false;
   }
 }
 
+function onBubbleTextColorChange(event: Event) {
+  if (!editor.value) return;
+  const target = event.target as HTMLInputElement;
+  const color = target.value;
+  editor.value.chain().focus().setColor(color).run();
+  bubbleTextColor.value = color;
+}
+
+function onBubbleBgColorChange(event: Event) {
+  if (!editor.value) return;
+  const target = event.target as HTMLInputElement;
+  const color = target.value;
+  editor.value.chain().focus().setHighlight({ color }).run();
+  bubbleBgColor.value = color;
+}
+
 watch([isTextSelection, isTableSelection, isImageEditing], () => {
   isOverflowOpen.value = false;
+  showTextColorPicker.value = false;
+  showBgColorPicker.value = false;
   clearOverflowTimer();
 });
 

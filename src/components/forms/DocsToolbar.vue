@@ -21,37 +21,22 @@
         title="New Document"
         @click="showNewFileDialog = true"
       >
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
+        <Plus class="h-4 w-4" />
       </button>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
-
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">Export</div>
       <span class="tiptap-toolbar__divider bg-gray-300 dark:bg-gray-600" />
         <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title="Export PDF" @click="handleExport('pdf')">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
+          <FileDown class="h-4 w-4" />
         </button>
         <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="handleExport('docx')" title="Export Word">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+          <FileText class="h-4 w-4" />
         </button>
         <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="handleExport('html')" title="Export HTML">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-          </svg>
+          <Code class="h-4 w-4" />
         </button>
         <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="$emit('print')" title="Print">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-        </button>
-        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="showPaginationDialog = true" title="Page Settings">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+          <Printer class="h-4 w-4" />
         </button>
       </div>
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
@@ -189,7 +174,7 @@
           title="Align Left"
           @click="editor?.chain().focus().setTextAlign('left').run()"
         >
-          ⫴
+          <AlignLeft class="h-4 w-4" />
         </button>
         <button
           class="tiptap-toolbar__btn"
@@ -197,7 +182,7 @@
           title="Center"
           @click="editor?.chain().focus().setTextAlign('center').run()"
         >
-          ≡
+          <AlignCenter class="h-4 w-4" />
         </button>
         <button
           class="tiptap-toolbar__btn"
@@ -205,7 +190,7 @@
           title="Align Right"
           @click="editor?.chain().focus().setTextAlign('right').run()"
         >
-          ⫵
+          <AlignRight class="h-4 w-4" />
         </button>
         <button
           class="tiptap-toolbar__btn"
@@ -213,7 +198,7 @@
           title="Bullet List"
           @click="editor?.chain().focus().toggleBulletList().run()"
         >
-          ☰
+          <List class="h-4 w-4" />
         </button>
         <button
           class="tiptap-toolbar__btn"
@@ -221,7 +206,7 @@
           title="Numbered List"
           @click="editor?.chain().focus().toggleOrderedList().run()"
         >
-          ≡
+          <ListOrdered class="h-4 w-4" />
         </button>
       </div>
 
@@ -230,6 +215,9 @@
       <!-- Page Layout (Expanded only) -->
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">Page</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
+        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="showPaginationDialog = true" title="Page Settings">
+          <Settings class="h-4 w-4" />
+        </button>
         <select
           class="tiptap-toolbar__select"
           :value="pageSize || 'a4'"
@@ -248,7 +236,7 @@
           @click="handleOrientation('portrait')"
           title="Portrait"
         >
-          📄
+          <FileType class="h-4 w-4" />
         </button>
         <button
           class="tiptap-toolbar__btn"
@@ -256,7 +244,7 @@
           @click="handleOrientation('landscape')"
           title="Landscape"
         >
-          📃
+          <Maximize class="h-4 w-4" />
         </button>
       </div>
 
@@ -629,6 +617,21 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue';
 import type { Editor } from '@tiptap/vue-3';
+import {
+  Plus,
+  FileText,
+  FileDown,
+  Code,
+  Printer,
+  Settings,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  List,
+  ListOrdered,
+  FileType,
+  Maximize,
+} from 'lucide-vue-next';
 import {
   Dialog,
   DialogContent,
