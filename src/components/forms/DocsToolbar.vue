@@ -43,9 +43,14 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
           </svg>
         </button>
-        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="handlePrint" title="Print">
+        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="$emit('print')" title="Print">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+        </button>
+        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="showPaginationDialog = true" title="Page Settings">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </button>
       </div>
@@ -504,6 +509,39 @@
     </DialogContent>
   </Dialog>
 
+  <!-- Pagination Settings Dialog -->
+  <Dialog v-model:open="showPaginationDialog">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Page Settings</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <div class="grid gap-2">
+          <label class="flex items-center gap-2 text-sm font-medium">
+            <input type="checkbox" v-model="paginationSettings.showPageNumbers" class="rounded" />
+            Show Page Numbers
+          </label>
+        </div>
+        <div class="grid gap-2" v-if="paginationSettings.showPageNumbers">
+          <label class="text-sm font-medium">Page Number Position:</label>
+          <select v-model="paginationSettings.pageNumberPosition" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
+        <div class="grid gap-2">
+          <label class="text-sm font-medium">Footer Height (px):</label>
+          <input type="number" v-model.number="paginationSettings.footerHeight" min="0" max="100" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="showPaginationDialog = false">Cancel</Button>
+        <Button @click="applyPaginationSettings">Apply</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+
   <!-- New File Dialog with Templates -->
   <Dialog v-model:open="showNewFileDialog">
     <DialogContent class="sm:max-w-4xl max-h-[80vh]">
@@ -612,6 +650,8 @@ const emit = defineEmits<{
   (e: 'update:pageOrientation', value: 'portrait' | 'landscape'): void;
   (e: 'toggle-comments'): void;
   (e: 'toggle-expanded', value: boolean): void;
+  (e: 'update-pagination', value: { showPageNumbers: boolean; pageNumberPosition: string; footerHeight: number }): void;
+  (e: 'print'): void;
 }>();
 
 // State
@@ -626,6 +666,14 @@ const showTableDialog = ref(false);
 const showLinkDialog = ref(false);
 const showImageDialog = ref(false);
 const showNewFileDialog = ref(false);
+const showPaginationDialog = ref(false);
+
+// Pagination settings
+const paginationSettings = ref({
+  showPageNumbers: true,
+  pageNumberPosition: 'right', // 'left', 'center', 'right', 'none'
+  footerHeight: 30,
+});
 
 // Table insert state
 const tableRows = ref(3);
@@ -860,6 +908,11 @@ function createFromTemplate(template: string) {
   const content = templates[template] || templates.blank;
   props.editor.commands.setContent(content);
   showNewFileDialog.value = false;
+}
+
+function applyPaginationSettings() {
+  emit('update-pagination', paginationSettings.value);
+  showPaginationDialog.value = false;
 }
 
 function onPageSizeChange(event: Event) {

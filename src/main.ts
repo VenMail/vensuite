@@ -17,7 +17,6 @@ import { useFileStore } from './store/files'
 // Routes
 import Home from './views/Home.vue'
 import RunSheet from './views/RunSheet.vue'
-import RunDoc from './views/RunDoc.vue'
 import MediaViewer from './views/MediaViewer.vue'
 import Sheets from './views/Sheets.vue'
 import Documents from './views/Documents.vue'

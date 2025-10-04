@@ -33,12 +33,14 @@
       @export="handleExport"
       @toggle-comments="isChatOpen = !isChatOpen"
       @toggle-expanded="isToolbarExpanded = $event"
+      @update-pagination="updatePaginationSettings"
+      @print="handlePrint"
     />
 
     <!-- Table of Contents Toggle (Floating Left) -->
     <button
       @click="isTocOpen = !isTocOpen"
-      :class="[
+      :class=" [
         'fixed left-4 z-40 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105',
         isToolbarExpanded ? 'top-[190px]' : 'top-[140px]'
       ]"
@@ -49,7 +51,7 @@
       </svg>
     </button>
 
-    <!-- Table of Contents Panel -->
+    <!-- Floating Table of Contents Panel -->
     <div
       v-if="isTocOpen"
       :class="[
@@ -95,7 +97,94 @@
         class="mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-lg min-h-full transition-all"
         :style="pageStyles"
       >
-        <div :style="contentPadding">
+        <div :style="contentPadding" class="doc-page">
+          <!-- Contextual Bubble Menu -->
+          <BubbleMenu v-if="editor" :editor="editor">
+            <!-- TABLE CONTEXT -->
+            <div v-if="editor.isActive('table')" class="bubble-menu-modern">
+              <button class="bubble-btn" @click="editor.chain().focus().addColumnAfter().run()" title="Add column"><Plus :size="16" /></button>
+              <button class="bubble-btn" @click="editor.chain().focus().addRowAfter().run()" title="Add row"><Plus :size="16" /></button>
+              <span class="bubble-divider"></span>
+              <button class="bubble-btn bubble-btn-danger" @click="editor.chain().focus().deleteColumn().run()" title="Delete column"><Trash2 :size="16" /></button>
+              <button class="bubble-btn bubble-btn-danger" @click="editor.chain().focus().deleteRow().run()" title="Delete row"><Trash2 :size="16" /></button>
+              <span class="bubble-divider"></span>
+              <button class="bubble-btn" @click="editor.chain().focus().mergeCells().run()" title="Merge cells"><Table2 :size="16" /></button>
+            </div>
+            
+            <!-- IMAGE CONTEXT -->
+            <div v-else-if="editor.isActive('image')" class="bubble-menu-modern">
+              <button class="bubble-btn" @click="editor.chain().focus().setTextAlign('left').run()" title="Align left"><AlignLeft :size="16" /></button>
+              <button class="bubble-btn" @click="editor.chain().focus().setTextAlign('center').run()" title="Center"><AlignCenter :size="16" /></button>
+              <button class="bubble-btn" @click="editor.chain().focus().setTextAlign('right').run()" title="Align right"><AlignRight :size="16" /></button>
+              <span class="bubble-divider"></span>
+              <button class="bubble-btn bubble-btn-danger" @click="editor.chain().focus().deleteSelection().run()" title="Delete image"><Trash2 :size="16" /></button>
+            </div>
+            
+            <!-- TEXT CONTEXT (default) -->
+            <div v-else class="bubble-menu-modern">
+              <!-- Basic formatting -->
+              <button class="bubble-btn" @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" title="Bold"><Bold :size="16" /></button>
+              <button class="bubble-btn" @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" title="Italic"><Italic :size="16" /></button>
+              <button class="bubble-btn" @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" title="Underline"><UnderlineIcon :size="16" /></button>
+              <button class="bubble-btn" @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }" title="Strikethrough"><Strikethrough :size="16" /></button>
+              <span class="bubble-divider"></span>
+              
+              <!-- Link -->
+              <template v-if="!editor.isActive('link')">
+                <button class="bubble-btn" @click="openBubbleLink()" title="Add link"><Link2 :size="16" /></button>
+              </template>
+              <template v-else>
+                <button class="bubble-btn is-active" @click="openBubbleLink()" title="Edit link"><Link2 :size="16" /></button>
+                <button class="bubble-btn bubble-btn-danger" @click="removeBubbleLink()" title="Remove link"><Unlink :size="16" /></button>
+              </template>
+              <span class="bubble-divider"></span>
+                            <!-- Color/Highlight (if text has color) -->
+              <template v-if="editor.getAttributes('textStyle').color || editor.isActive('highlight')">
+                <div class="bubble-btn-group">
+                  <input v-model="bubbleTextColor" type="color" class="bubble-color-input" @change="applyTextColor" title="Text color" />
+                  <Palette :size="14" class="bubble-color-icon" />
+                </div>
+                <div class="bubble-btn-group">
+                  <input v-model="bubbleHighlightColor" type="color" class="bubble-color-input" @change="applyHighlight" title="Highlight" />
+                  <Highlighter :size="14" class="bubble-color-icon" />
+                </div>
+                <span class="bubble-divider"></span>
+              </template>
+
+              <!-- Lists -->
+              <button class="bubble-btn" @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" title="Bullet list"><List :size="16" /></button>
+              <button class="bubble-btn" @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" title="Numbered list"><ListOrdered :size="16" /></button>
+              <span class="bubble-divider"></span>
+              
+              
+              <!-- More menu -->
+              <div class="bubble-more-wrapper">
+                <button class="bubble-btn" @click="showBubbleMore = !showBubbleMore" title="More options"><MoreHorizontal :size="16" /></button>
+                <div v-if="showBubbleMore" class="bubble-more-dropdown">
+                  <button @click="editor.chain().focus().toggleHeading({ level: 2 }).run(); showBubbleMore = false" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">
+                    <Type :size="16" /> Heading 2
+                  </button>
+                  <button @click="editor.chain().focus().toggleHeading({ level: 3 }).run(); showBubbleMore = false" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">
+                    <Type :size="16" /> Heading 3
+                  </button>
+                  <div class="bubble-more-divider"></div>
+                  <button @click="editor.chain().focus().setTextAlign('left').run(); showBubbleMore = false"><AlignLeft :size="16" /> Align left</button>
+                  <button @click="editor.chain().focus().setTextAlign('center').run(); showBubbleMore = false"><AlignCenter :size="16" /> Center</button>
+                  <button @click="editor.chain().focus().setTextAlign('right').run(); showBubbleMore = false"><AlignRight :size="16" /> Align right</button>
+                  <div class="bubble-more-divider"></div>
+                  <div class="bubble-more-color-row">
+                    <label>Text color:</label>
+                    <input v-model="bubbleTextColor" type="color" @change="applyTextColor; showBubbleMore = false" />
+                  </div>
+                  <div class="bubble-more-color-row">
+                    <label>Highlight:</label>
+                    <input v-model="bubbleHighlightColor" type="color" @change="applyHighlight; showBubbleMore = false" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </BubbleMenu>
+
           <EditorContent :editor="editor" class="prose prose-lg dark:prose-invert max-w-none" />
         </div>
       </div>
@@ -166,7 +255,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Editor, EditorContent } from '@tiptap/vue-3';
+import { Editor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Link2, Unlink, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Palette, Highlighter, MoreHorizontal, Type, Table2, Image as ImageIcon, Trash2, Plus } from 'lucide-vue-next';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
@@ -180,11 +270,13 @@ import Superscript from '@tiptap/extension-superscript';
 import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
-import Table from '@tiptap/extension-table';
-import TableRow from '@tiptap/extension-table-row';
-import TableCell from '@tiptap/extension-table-cell';
-import TableHeader from '@tiptap/extension-table-header';
 import { ImagePlus } from 'tiptap-image-plus';
+import { PaginationPlus } from 'tiptap-pagination-plus';
+import { PaginationTable } from 'tiptap-table-plus';
+
+const {
+  TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus
+} = PaginationTable;
 import { useFileStore } from '@/store/files';
 import { toast } from 'vue-sonner';
 import type { FileData } from '@/types';
@@ -275,6 +367,57 @@ const isChatOpen = ref(false);
 // Table of Contents state
 const isTocOpen = ref(false);
 const isToolbarExpanded = ref(false);
+
+// Bubble menu state (quick link/image editors)
+const bubbleLinkUrl = ref('');
+const showBubbleMore = ref(false);
+const bubbleTextColor = ref('#000000');
+const bubbleHighlightColor = ref('#ffff00');
+
+function openBubbleLink() {
+  if (!editor.value) return;
+  const attrs = editor.value.getAttributes('link') as any;
+  bubbleLinkUrl.value = attrs?.href || '';
+  if (!editor.value.isActive('link')) {
+    editor.value.chain().focus().setLink({ href: bubbleLinkUrl.value || 'https://' }).run();
+  }
+}
+
+function applyBubbleLink() {
+  if (!editor.value) return;
+  const href = (bubbleLinkUrl.value || '').trim();
+  if (!href) {
+    editor.value.chain().focus().unsetLink().run();
+    return;
+  }
+  editor.value.chain().focus().setLink({ href, target: '_blank', rel: 'noopener noreferrer' }).run();
+}
+
+function removeBubbleLink() {
+  editor.value?.chain().focus().unsetLink().run();
+}
+
+const bubbleImageUrl = ref('');
+const bubbleImageAlt = ref('');
+
+function applyBubbleImage() {
+  if (!editor.value) return;
+  const current = editor.value.getAttributes('image') as any;
+  const src = (bubbleImageUrl.value || current?.src || '').trim();
+  const alt = (bubbleImageAlt.value || current?.alt || '').trim();
+  if (!src) return;
+  editor.value.chain().focus().updateAttributes('image', { src, alt }).run();
+}
+
+function applyTextColor() {
+  if (!editor.value) return;
+  editor.value.chain().focus().setColor(bubbleTextColor.value).run();
+}
+
+function applyHighlight() {
+  if (!editor.value) return;
+  editor.value.chain().focus().setHighlight({ color: bubbleHighlightColor.value }).run();
+}
 
 // Share dialog state
 const shareOpen = ref(false);
@@ -399,7 +542,6 @@ const pageStyles = computed(() => {
   
   const isLandscape = pageOrientation.value === 'landscape';
   const width = isLandscape ? dims.height : dims.width;
-  const height = isLandscape ? dims.width : dims.height;
   
   // Convert mm to pixels (96 DPI: 1mm = 3.7795px)
   const widthPx = Math.round(width * 3.7795);
@@ -467,12 +609,15 @@ function scheduleSave() {
   }
 }
 
+function handlePrint() {
+  window.print();
+}
 
 function handleExport(format: string) {
   if (!editor.value) return;
   
   if (format === 'html') {
-    exportToHTML();
+    printAsHtml();
   } else if (format === 'pdf') {
     exportToPDF();
   } else if (format === 'docx') {
@@ -480,7 +625,7 @@ function handleExport(format: string) {
   }
 }
 
-function exportToHTML() {
+function printAsHtml() {
   if (!editor.value) return;
   
   const html = editor.value.getHTML();
@@ -603,13 +748,6 @@ function exportToHTML() {
     }
     
     @media print {
-      body {
-        padding: 0;
-      }
-      .document-container {
-        box-shadow: none;
-        padding: 0;
-      }
     }
   </style>
 </head>
@@ -819,6 +957,19 @@ function goBack() {
   router.push('/');
 }
 
+// Pagination settings update
+function updatePaginationSettings(settings: { showPageNumbers: boolean; pageNumberPosition: string; footerHeight: number }) {
+  // Update pagination extension configuration
+  if (editor.value) {
+    const footerLeft = settings.showPageNumbers && settings.pageNumberPosition === 'left' ? '{page}' : '';
+    const footerRight = settings.showPageNumbers && settings.pageNumberPosition === 'right' ? '{page}' : '';
+    
+    // Recreate editor with new settings
+    editor.value.destroy();
+    initializeEditor(settings.footerHeight, footerLeft, footerRight);
+  }
+}
+
 // Share functions
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
@@ -898,8 +1049,17 @@ async function updateVisibility(value: number) {
   } catch {}
 }
 
-onMounted(async () => {
-  // Initialize Tiptap editor
+// Helper to (re)initialize the editor with pagination settings
+function initializeEditor(
+  footerHeight: number = 30,
+  footerLeft: string = '',
+  footerRight: string = '{page}'
+) {
+  const existingContent = editor.value ? editor.value.getJSON() : undefined;
+  if (editor.value) {
+    try { editor.value.destroy(); } catch {}
+  }
+
   editor.value = new Editor({
     extensions: [
       StarterKit.configure({
@@ -919,27 +1079,41 @@ onMounted(async () => {
       Link.configure({ openOnClick: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableCell,
-      TableHeader,
-      ImagePlus.configure({
-        inline: false,
-        allowBase64: true,
+      TablePlus.configure({ resizable: true }),
+      TableRowPlus,
+      TableCellPlus,
+      TableHeaderPlus,
+      ImagePlus.configure({ allowBase64: true }),
+      PaginationPlus.configure({
+        pageHeight: 842,
+        pageGap: 2,
+        pageGapBorderSize: 1,
+        pageBreakBackground: '#F7F7F8',
+        pageHeaderHeight: 0,
+        pageFooterHeight: footerHeight,
+        footerLeft,
+        footerRight,
+        headerLeft: '',
+        headerRight: '',
+        // Keep plugin margins minimal – main layout already adds paddings
+        marginTop: 10,
+        marginBottom: 10,
+        marginLeft: 10,
+        marginRight: 10,
+        contentMarginTop: 30,
+        contentMarginBottom: 40,
       }),
     ],
-    content: '<p>Start typing...</p>',
-    editorProps: {
-      attributes: {
-        class: 'focus:outline-none min-h-[500px]',
-      },
-    },
-    onUpdate: () => {
-      scheduleSave();
-    },
+    content: existingContent || '<p>Start typing...</p>',
+    editorProps: { attributes: { class: 'focus:outline-none min-h-[500px]' } },
+    onUpdate: () => { scheduleSave(); },
   });
-  
-  // Initialize document
+}
+
+onMounted(async () => {
+  // Initialize editor with default pagination matching current standard
+  initializeEditor(30, '', '{page}');
+  // Initialize/load document
   await initializeDocument();
 });
 
@@ -1298,38 +1472,82 @@ onUnmounted(() => {
 /* Print Styles */
 @media print {
   @page {
-    margin: 0.75in 1in;
+    margin: 0;
     size: auto;
+  }
+  
+  /* Hide page title and URL */
+  html {
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  body {
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Disable viewport constraints from root container */
+  .flex.flex-col.h-screen {
+    height: auto !important;
+    min-height: 0 !important;
+    display: block !important;
+  }
+  
+  /* Hide scrollbars completely */
+  * {
+    overflow: visible !important;
+  }
+  
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
   
   /* Hide UI chrome */
   header,
   .tiptap-toolbar,
+  .docs-toolbar,
   button[title="Table of Contents"],
-  .fixed {
+  .fixed,
+  nav,
+  aside {
     display: none !important;
   }
   
-  /* Remove background and shadows */
+  /* Critical: Disable flex scroll container to allow pagination */
   .flex-1.overflow-auto {
+    display: block !important;
+    flex: none !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
     padding: 0 !important;
     background: white !important;
-    overflow: visible !important;
   }
   
-  /* Full width for print */
-  .mx-auto.bg-white {
+  /* Full width for print - remove app layout constraints */
+  .mx-auto.bg-white,
+  .mx-auto.dark\:bg-gray-900 {
     max-width: 100% !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+    min-height: auto !important;
   }
   
   /* Ensure proper page breaks */
-  :deep(.ProseMirror) {
+  :deep(.ProseMirror),
+  :deep(.ProseMirror-focused) {
     page-break-inside: auto;
     padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
   }
   
   :deep(.ProseMirror h1),
@@ -1377,6 +1595,432 @@ onUnmounted(() => {
     color: #666;
   }
 }
+
+
+.doc-page {
+  width: 8.5in;         /* US Letter width (use 210mm for A4) */
+  min-height: 11in;     /* US Letter height (297mm for A4) */
+  margin: 1em auto;     /* center it on screen */
+  padding: 1in;         /* Word-like margins */
+  background: white;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  overflow: visible;    /* allow content to flow for pagination */
+  font-family: "Times New Roman", serif;
+  line-height: 1.5;
+}
+
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .doc-page {
+    box-shadow: none;
+    margin: 0;
+    width: 100%;
+    min-height: 0;
+    overflow: visible !important;
+    page-break-after: auto;
+  }
+}
+
+/* ===== Modern Bubble Menu Styles ===== */
+.bubble-menu-modern {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%);
+  backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  box-shadow: 
+    0 8px 32px -4px rgba(0, 0, 0, 0.12),
+    0 4px 16px -2px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  font-size: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bubble-menu-modern {
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 8px 32px -4px rgba(0, 0, 0, 0.4),
+      0 4px 16px -2px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  }
+}
+
+.bubble-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  user-select: none;
+  outline: none;
+}
+
+.bubble-btn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.bubble-btn:active:not(:disabled) {
+  transform: translateY(0);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.bubble-btn.is-active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 
+    0 2px 8px -1px rgba(59, 130, 246, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+.bubble-btn.is-active:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px -2px rgba(59, 130, 246, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+}
+
+.bubble-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bubble-btn-heading {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.bubble-btn-success {
+  color: #059669;
+}
+
+.bubble-btn-success:hover:not(:disabled) {
+  background: rgba(5, 150, 105, 0.1);
+  color: #047857;
+}
+
+.bubble-btn-danger {
+  color: #dc2626;
+}
+
+.bubble-btn-danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.1);
+  color: #b91c1c;
+}
+
+.bubble-btn-clear {
+  color: #6b7280;
+}
+
+.bubble-btn-clear:hover:not(:disabled) {
+  background: rgba(107, 114, 128, 0.1);
+  color: #4b5563;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bubble-btn {
+    color: #d1d5db;
+  }
+  
+  .bubble-btn:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+  }
+  
+  .bubble-btn:active:not(:disabled) {
+    background: rgba(59, 130, 246, 0.2);
+  }
+  
+  .bubble-btn.is-active {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+  }
+  
+  .bubble-btn-success {
+    color: #34d399;
+  }
+  
+  .bubble-btn-success:hover:not(:disabled) {
+    background: rgba(52, 211, 153, 0.15);
+    color: #10b981;
+  }
+  
+  .bubble-btn-danger {
+    color: #f87171;
+  }
+  
+  .bubble-btn-danger:hover:not(:disabled) {
+    background: rgba(248, 113, 113, 0.15);
+    color: #ef4444;
+  }
+  
+  .bubble-btn-clear {
+    color: #9ca3af;
+  }
+  
+  .bubble-btn-clear:hover:not(:disabled) {
+    background: rgba(156, 163, 175, 0.15);
+    color: #d1d5db;
+  }
+}
+
+.bubble-divider {
+  width: 1px;
+  height: 20px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.1) 20%, rgba(0, 0, 0, 0.1) 80%, transparent 100%);
+  margin: 0 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bubble-divider {
+    background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.1) 20%, rgba(255, 255, 255, 0.1) 80%, transparent 100%);
+  }
+}
+
+.bubble-input {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  background: white;
+  color: #1f2937;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) inset;
+}
+
+.bubble-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 
+    0 0 0 3px rgba(59, 130, 246, 0.12),
+    0 1px 3px 0 rgba(0, 0, 0, 0.05) inset;
+}
+
+.bubble-input::placeholder {
+  color: #9ca3af;
+}
+
+.bubble-input-link {
+  width: 200px;
+}
+
+.bubble-input-image {
+  width: 180px;
+}
+
+.bubble-input-alt {
+  width: 120px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bubble-input {
+    background: #1f2937;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f3f4f6;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3) inset;
+  }
+  
+  .bubble-input:focus {
+    border-color: #60a5fa;
+    box-shadow: 
+      0 0 0 3px rgba(96, 165, 250, 0.2),
+      0 1px 3px 0 rgba(0, 0, 0, 0.3) inset;
+  }
+  
+  .bubble-input::placeholder {
+    color: #6b7280;
+  }
+}
+
+/* Color picker button group */
+.bubble-btn-group {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bubble-btn-group:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.bubble-color-input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.bubble-color-icon {
+  pointer-events: none;
+  color: #374151;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bubble-btn-group:hover {
+    background: rgba(59, 130, 246, 0.15);
+  }
+  
+  .bubble-color-icon {
+    color: #d1d5db;
+  }
+}
+
+/* More dropdown */
+.bubble-more-wrapper {
+  position: relative;
+}
+
+.bubble-more-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  box-shadow: 
+    0 12px 40px -8px rgba(0, 0, 0, 0.15),
+    0 4px 16px -2px rgba(0, 0, 0, 0.1);
+  padding: 6px;
+  z-index: 1000;
+  animation: bubbleDropdownIn 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes bubbleDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.bubble-more-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: #374151;
+  font-size: 14px;
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.bubble-more-dropdown button:hover {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+}
+
+.bubble-more-dropdown button.is-active {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.bubble-more-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.08);
+  margin: 6px 0;
+}
+
+.bubble-more-color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  gap: 12px;
+}
+
+.bubble-more-color-row label {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.bubble-more-color-row input[type="color"] {
+  width: 40px;
+  height: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bubble-more-color-row input[type="color"]:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bubble-more-dropdown {
+    background: #1f2937;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .bubble-more-dropdown button {
+    color: #d1d5db;
+  }
+  
+  .bubble-more-dropdown button:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+  }
+  
+  .bubble-more-dropdown button.is-active {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+  }
+  
+  .bubble-more-divider {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .bubble-more-color-row label {
+    color: #9ca3af;
+  }
+  
+  .bubble-more-color-row input[type="color"] {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
 </style>
 
 
