@@ -1025,8 +1025,8 @@ onUnmounted(() => {
 :deep(.ProseMirror td),
 :deep(.ProseMirror th) {
   min-width: 1em;
-  border: 1px solid #e5e7eb;
-  padding: 0.25rem 0.5rem;
+  border: 1px solid #d1d5db;
+  padding: 0.375rem 0.5rem;
   vertical-align: top;
   box-sizing: border-box;
   position: relative;
@@ -1035,19 +1035,20 @@ onUnmounted(() => {
 @media (prefers-color-scheme: dark) {
   :deep(.ProseMirror td),
   :deep(.ProseMirror th) {
-    border-color: #374151;
+    border-color: #4b5563;
   }
 }
 
 :deep(.ProseMirror th) {
-  font-weight: bold;
+  font-weight: 600;
   text-align: left;
-  background-color: #f9fafb;
+  background-color: #f3f4f6;
+  padding: 0.5rem 0.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :deep(.ProseMirror th) {
-    background-color: #1f2937;
+    background-color: #374151;
   }
 }
 
@@ -1297,7 +1298,7 @@ onUnmounted(() => {
 /* Print Styles */
 @media print {
   @page {
-    margin: 0;
+    margin: 0.75in 1in;
     size: auto;
   }
   
@@ -1322,11 +1323,13 @@ onUnmounted(() => {
     box-shadow: none !important;
     border-radius: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
   
   /* Ensure proper page breaks */
   :deep(.ProseMirror) {
     page-break-inside: auto;
+    padding: 0 !important;
   }
   
   :deep(.ProseMirror h1),
@@ -1343,6 +1346,23 @@ onUnmounted(() => {
   :deep(.ProseMirror blockquote),
   :deep(.ProseMirror pre) {
     page-break-inside: avoid;
+  }
+  
+  /* Better table printing */
+  :deep(.ProseMirror table) {
+    border: 1px solid #000;
+  }
+  
+  :deep(.ProseMirror td),
+  :deep(.ProseMirror th) {
+    border: 1px solid #666;
+    padding: 0.25rem 0.375rem;
+  }
+  
+  :deep(.ProseMirror th) {
+    background-color: #f5f5f5 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   
   /* Ensure links are visible */
