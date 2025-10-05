@@ -24,19 +24,20 @@ import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
 // Import utils as needed
 import Editor from './components/forms/Editor.vue'
 import FilePicker from './views/FilePicker.vue'
-import DocsEditor from './views/DocsEditor.vue';
-import Login from './views/Login.vue';
+import DocsEditor from './views/DocsEditor.vue'
+import Login from './views/Login.vue'
+import SlidesEditor from './views/SlidesEditor.vue'
 
 const routes = [
-  { 
-    path: '/login', 
-    name: 'login', 
-    component: Login 
+  {
+    path: '/login',
+    name: 'login',
+    component: Login,
   },
-  { 
-    path: '/oauth/callback', 
-    name: 'oauthCallback', 
-    component: OauthCallback 
+  {
+    path: '/oauth/callback',
+    name: 'oauthCallback',
+    component: OauthCallback,
   },
   {
     path: '/',
@@ -47,20 +48,22 @@ const routes = [
       { path: 'docs/new', name: 'docs-new', component: DocsEditor, meta: { hideLayout: true } },
       { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true } },
       { path: 'docs/t/:template', name: 'docs-template', component: DocsEditor, meta: { hideLayout: true } },
+      { path: 'slides/new', name: 'slides-new', component: SlidesEditor, meta: { hideLayout: true } },
+      { path: 'slides/:deckId', name: 'slides-edit', component: SlidesEditor, meta: { hideLayout: true } },
+      { path: 'slides/t/:template', name: 'slides-template', component: SlidesEditor, meta: { hideLayout: true } },
       { path: 'docs', name: 'docs-view', component: Documents },
-      { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
-      { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
-      { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
-      { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },
-      { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },
+      { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
       { path: 'picker', name: 'file-picker', component: FilePicker },
       { path: 'media', name: 'media', component: () => import('./views/Media.vue') },
       { path: 'import/:id', name: 'import', component: Home },
+      { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
+      { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
+      { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },
       { path: '', name: 'home', component: Home },
-    ]
-  }
+    ],
+  },
 ]
 
 const router = createRouter({

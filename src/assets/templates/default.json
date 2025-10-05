@@ -1,0 +1,66 @@
+{
+  "title": "Title Slide",
+  "description": "Centered title with subtitle",
+  "default": true,
+  "pages": [
+    {
+      "name": "Title Slide",
+      "scene": {
+        "elements": [
+          {
+            "type": "text",
+            "x": 140,
+            "y": 150,
+            "width": 680,
+            "height": 0,
+            "text": "Click to add title",
+            "fontSize": 56,
+            "fontFamily": 1,
+            "textAlign": "center",
+            "verticalAlign": "middle",
+            "strokeColor": "#374151",
+            "backgroundColor": "transparent",
+            "fillStyle": "hachure",
+            "strokeWidth": 1,
+            "strokeStyle": "solid",
+            "roughness": 0,
+            "opacity": 100,
+            "groupIds": [],
+            "angle": 0,
+            "baseline": 45,
+            "lineHeight": 1.25,
+            "containerId": null
+          },
+          {
+            "type": "text",
+            "x": 210,
+            "y": 280,
+            "width": 540,
+            "height": 0,
+            "text": "Click to add subtitle",
+            "fontSize": 28,
+            "fontFamily": 1,
+            "textAlign": "center",
+            "verticalAlign": "middle",
+            "strokeColor": "#6b7280",
+            "backgroundColor": "transparent",
+            "fillStyle": "hachure",
+            "strokeWidth": 1,
+            "strokeStyle": "solid",
+            "roughness": 0,
+            "opacity": 100,
+            "groupIds": [],
+            "angle": 0,
+            "baseline": 22,
+            "lineHeight": 1.25,
+            "containerId": null
+          }
+        ],
+        "appState": {
+          "viewBackgroundColor": "#ffffff"
+        },
+        "files": {}
+      }
+    }
+  ]
+}

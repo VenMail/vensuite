@@ -11,3 +11,7 @@ declare module '@univerjs/vite-plugin' {
   // Re-export the actual types from the correct file
   export * from '@univerjs/vite-plugin/lib/types';
 }
+
+declare module '@/store/slides' {
+  export * from './src/store/slides';
+}

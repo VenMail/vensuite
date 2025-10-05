@@ -1,4 +1,5 @@
 export * from "./docPersistence";
+export * from "./slides";
 
 export interface FileData {
   id?: string;              // Primary ID - either local UUID or server ID
