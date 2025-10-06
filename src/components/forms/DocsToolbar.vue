@@ -483,24 +483,15 @@
 
   <!-- Image Insert Dialog -->
   <Dialog v-model:open="showImageDialog">
-    <DialogContent class="sm:max-w-md">
+    <DialogContent class="sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>Insert Image</DialogTitle>
       </DialogHeader>
-      <div class="grid gap-4 py-4">
-        <div class="grid gap-2">
-          <label class="text-sm font-medium">Image URL:</label>
-          <input type="url" v-model="imageUrl" placeholder="https://example.com/image.jpg" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" @keydown.enter="applyImage" />
-        </div>
-        <div class="grid gap-2">
-          <label class="text-sm font-medium">Alt Text (optional):</label>
-          <input type="text" v-model="imageAlt" placeholder="Description of image" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-        </div>
-      </div>
-      <DialogFooter>
-        <Button variant="outline" @click="showImageDialog = false">Cancel</Button>
-        <Button @click="applyImage">Insert</Button>
-      </DialogFooter>
+      <ImagePicker
+        submit-label="Insert"
+        @submit="applyImage"
+        @cancel="showImageDialog = false"
+      />
     </DialogContent>
   </Dialog>
 
@@ -723,6 +714,7 @@ import {
 } from '@/components/ui/dialog';
 import Button from '@/components/ui/button/Button.vue';
 import ChartConfigurator from '@/components/editor/ChartConfigurator.vue';
+import ImagePicker from '@/components/ImagePicker.vue';
 import type { ChartAttrs } from '@/extensions/chart';
 import { NodeSelection } from '@tiptap/pm/state';
 
@@ -966,11 +958,11 @@ function removeLink() {
 }
 
 // Image function
-function applyImage() {
-  if (!props.editor || !imageUrl.value) return;
+function applyImage(url: string) {
+  if (!props.editor || !url) return;
   
-  let finalUrl = imageUrl.value;
-  if (!finalUrl.match(/^https?:\/\//i)) {
+  let finalUrl = url;
+  if (!finalUrl.match(/^https?:\/\//i) && !finalUrl.startsWith('data:')) {
     finalUrl = 'https://' + finalUrl;
   }
   

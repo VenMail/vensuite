@@ -243,31 +243,6 @@
                   </button>
                 </div>
               </template>
-              <template v-if="isImageEditing">
-                <div :class="bubbleInlineFormClass">
-                  <input
-                    v-model="bubbleImageUrl"
-                    type="url"
-                    placeholder="Image URL"
-                    :class="bubbleInlineInputClass"
-                  />
-                  <input
-                    v-model="bubbleImageAlt"
-                    type="text"
-                    placeholder="Alt text"
-                    :class="bubbleInlineInputClass"
-                  />
-                  <button
-                    type="button"
-                    :class="[bubbleButtonBase, bubbleButtonSuccess]"
-                    title="Apply image changes"
-                    @click="applyBubbleImage"
-                  >
-                    <CheckCircle2 class="h-4 w-4" />
-                  </button>
-                </div>
-              </template>
-              
               <template v-if="showChartTitleEdit">
                 <div :class="bubbleInlineFormClass">
                   <input
@@ -650,9 +625,14 @@ function clearOverflowTimer() {
   }
 }
 
-const isTextSelection = computed(() => !!editor.value && !editor.value.isActive('image') && !editor.value.isActive('table') && !editor.value.isActive('chart'));
+const isImageEditing = computed(() => {
+  if (!editor.value) return false;
+  // Check for both 'image' and 'imagePlus' node types
+  return editor.value.isActive('image') || editor.value.isActive('imagePlus');
+});
+
+const isTextSelection = computed(() => !!editor.value && !isImageEditing.value && !editor.value.isActive('table') && !editor.value.isActive('chart'));
 const isTableSelection = computed(() => !!editor.value && editor.value.isActive('table'));
-const isImageEditing = computed(() => !!editor.value && editor.value.isActive('image'));
 const isLinkEditing = computed(() => !!editor.value && editor.value.isActive('link'));
 const isChartSelection = computed(() => !!editor.value && editor.value.isActive('chart'));
 
@@ -903,19 +883,26 @@ const showImageUrlDialog = ref(false);
 const imageUrlInput = ref('');
 
 function openImageUrlDialog() {
-  const attrs = editor.value?.getAttributes('image');
+  // Try both 'image' and 'imagePlus' node types
+  let attrs = editor.value?.getAttributes('image');
+  if (!attrs?.src) {
+    attrs = editor.value?.getAttributes('imagePlus');
+  }
   imageUrlInput.value = attrs?.src || '';
   showImageUrlDialog.value = true;
 }
 
-function replaceImageUrl() {
-  if (!editor.value || !imageUrlInput.value) return;
+function replaceImageUrl(url: string) {
+  if (!editor.value || !url) return;
   
-  editor.value
-    .chain()
-    .focus()
-    .updateAttributes('image', { src: imageUrlInput.value })
-    .run();
+  // Try to update both node types
+  const chain = editor.value.chain().focus();
+  
+  if (editor.value.isActive('image')) {
+    chain.updateAttributes('image', { src: url }).run();
+  } else if (editor.value.isActive('imagePlus')) {
+    chain.updateAttributes('imagePlus', { src: url }).run();
+  }
   
   showImageUrlDialog.value = false;
   imageUrlInput.value = '';
@@ -932,12 +919,14 @@ function openImageUpload() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const src = event.target?.result as string;
-      if (src) {
-        editor.value
-          ?.chain()
-          .focus()
-          .updateAttributes('image', { src })
-          .run();
+      if (src && editor.value) {
+        const chain = editor.value.chain().focus();
+        
+        if (editor.value.isActive('image')) {
+          chain.updateAttributes('image', { src }).run();
+        } else if (editor.value.isActive('imagePlus')) {
+          chain.updateAttributes('imagePlus', { src }).run();
+        }
       }
     };
     reader.readAsDataURL(file);
@@ -953,8 +942,8 @@ const imageActions = computed<BubbleAction[]>(() => {
       key: 'replace-url',
       icon: ImageIcon,
       handler: openImageUrlDialog,
-      tooltip: 'Replace with URL',
-      label: 'Replace URL',
+      tooltip: 'Replace Image',
+      label: 'Replace Image',
     },
     {
       key: 'upload-image',
@@ -1187,8 +1176,7 @@ const headingPrimaryKeys = ['h2', 'h3', 'text', 'bold', 'italic', 'underline', '
 const headingOverflowKeys = ['strike', 'color', 'highlight', 'link', 'bullet-list', 'ordered-list', 'align-left', 'align-center', 'align-right'];
 const tablePrimaryKeys = ['add-col', 'add-row', 'merge', 'split', 'align-left-table', 'align-center-table', 'align-right-table'];
 const tableOverflowKeys = ['del-col', 'del-row'];
-const imagePrimaryKeys = ['replace-url', 'upload-image', 'image-align-left', 'image-align-center', 'image-align-right'];
-const imageOverflowKeys = ['delete-image'];
+const imagePrimaryKeys = ['replace-url', 'upload-image', 'image-align-left', 'image-align-center', 'image-align-right', 'delete-image'];
 const chartPrimaryKeys = ['edit-chart', 'chart-title', 'toggle-legend', 'chart-fontsize'];
 
 function splitActions(
@@ -1233,7 +1221,7 @@ function splitActions(
 
 const actionSets = computed(() => {
   if (isImageEditing.value) {
-    return splitActions(imageActions.value, imagePrimaryKeys, imageOverflowKeys);
+    return splitActions(imageActions.value, imagePrimaryKeys, []);
   }
   if (isTableSelection.value) {
     return splitActions(tableActions.value, tablePrimaryKeys, tableOverflowKeys);
@@ -1323,7 +1311,11 @@ watch(isLinkEditing, (active) => {
 
 watch(isImageEditing, (active) => {
   if (active && editor.value) {
-    const attrs = editor.value.getAttributes('image') as any;
+    // Try both node types
+    let attrs = editor.value.getAttributes('image') as any;
+    if (!attrs?.src) {
+      attrs = editor.value.getAttributes('imagePlus') as any;
+    }
     bubbleImageUrl.value = attrs?.src || '';
     bubbleImageAlt.value = attrs?.alt || '';
   }
