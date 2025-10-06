@@ -14,6 +14,7 @@ import type {
 } from '@/types/slides';
 import { useFileStore } from './files';
 import { useAuthStore } from './auth';
+import { PAGE_WIDTH, PAGE_HEIGHT, DEFAULT_LINE_HEIGHT, DEFAULT_TITLE_FONT_FAMILY, DEFAULT_BODY_FONT_FAMILY } from '@/constants/slides';
 
 const DEFAULT_SNAP_SETTINGS: SnapSettings = {
   showGrid: true,
@@ -29,9 +30,10 @@ function createPlaceholderTextElement(options: {
   width: number;
   fontSize: number;
   color?: string;
+  fontFamily?: number;
 }): any {
-  const { text, x, y, width, fontSize, color = '#6b7280' } = options;
-  const lineHeight = 1.25;
+  const { text, x, y, width, fontSize, color = '#6b7280', fontFamily = DEFAULT_BODY_FONT_FAMILY } = options;
+  const lineHeight = DEFAULT_LINE_HEIGHT;
   const lines = Math.max(1, String(text || '').split('\n').length);
   const height = Math.max(1, Math.round(fontSize * lineHeight * lines));
   const baseline = Math.round(fontSize * 0.8);
@@ -57,7 +59,7 @@ function createPlaceholderTextElement(options: {
     isDeleted: false,
     text,
     fontSize,
-    fontFamily: 1,
+    fontFamily,
     textAlign: 'center',
     verticalAlign: 'middle',
     baseline,
@@ -67,29 +69,70 @@ function createPlaceholderTextElement(options: {
   };
 }
 
+function createRectangle(options: {
+  x: number; y: number; width: number; height: number;
+  backgroundColor?: string; strokeColor?: string; roundness?: { type: number } | null; locked?: boolean;
+  custom?: Record<string, any>;
+}) {
+  const { x, y, width, height, backgroundColor = '#ffffff', strokeColor = '#e5e7eb', roundness = null, locked = false, custom = {} } = options;
+  return {
+    id: uuidv4(),
+    type: 'rectangle',
+    x, y, width, height,
+    angle: 0,
+    strokeColor,
+    backgroundColor,
+    fillStyle: 'solid',
+    strokeWidth: 1,
+    strokeStyle: 'solid',
+    roughness: 0,
+    opacity: 100,
+    groupIds: [],
+    seed: Math.floor(Math.random() * 1_000_000),
+    version: 1,
+    versionNonce: Math.floor(Math.random() * 1_000_000),
+    isDeleted: false,
+    roundness,
+    locked,
+    ...custom,
+  } as any;
+}
+
 function createDefaultSlideElements(): any[] {
-  const canvasWidth = 960;
-  const titleWidth = 680;
-  const subtitleWidth = 540;
-  const titleX = (canvasWidth - titleWidth) / 2;
-  const subtitleX = (canvasWidth - subtitleWidth) / 2;
+  const titleWidth = Math.min(680, PAGE_WIDTH - 160);
+  const subtitleWidth = Math.min(540, PAGE_WIDTH - 240);
+  const titleX = (PAGE_WIDTH - titleWidth) / 2;
+  const subtitleX = (PAGE_WIDTH - subtitleWidth) / 2;
 
   return [
+    // Page frame (non-interactive)
+    createRectangle({
+      x: 0,
+      y: 0,
+      width: PAGE_WIDTH,
+      height: PAGE_HEIGHT,
+      backgroundColor: '#ffffff',
+      strokeColor: '#e5e7eb',
+      locked: true,
+      custom: { isPageFrame: true },
+    }),
     createPlaceholderTextElement({
       text: 'Click to add title',
       x: titleX,
-      y: 160,
+      y: Math.round(PAGE_HEIGHT * 0.28),
       width: titleWidth,
       fontSize: 56,
+      fontFamily: DEFAULT_TITLE_FONT_FAMILY,
       color: '#374151',
     }),
     createPlaceholderTextElement({
       text: 'Click to add subtitle',
       x: subtitleX,
-      y: 280,
+      y: Math.round(PAGE_HEIGHT * 0.52),
       width: subtitleWidth,
       fontSize: 28,
       color: '#6b7280',
+      fontFamily: DEFAULT_BODY_FONT_FAMILY,
     }),
   ];
 }
@@ -141,8 +184,15 @@ function normalizeElements(elements: any[] | readonly any[] | undefined): any[] 
 
 function normalizeTemplateScene(scene?: SlideScene): SlideScene {
   const s = scene || createSceneSkeleton();
+  const elems = normalizeElements(s.elements);
+  const hasPage = elems.some((e: any) => e && (e.isPageFrame || (e.type === 'rectangle' && e.locked && e.width === PAGE_WIDTH && e.height === PAGE_HEIGHT)));
+  if (!hasPage) {
+    elems.unshift(
+      createRectangle({ x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, backgroundColor: s.appState?.viewBackgroundColor || '#ffffff', strokeColor: '#e5e7eb', locked: true, custom: { isPageFrame: true } })
+    );
+  }
   return {
-    elements: normalizeElements(s.elements),
+    elements: elems,
     appState: { ...(s.appState || {}), viewBackgroundColor: s.appState?.viewBackgroundColor || '#ffffff' },
     files: { ...(s.files || {}) },
   };

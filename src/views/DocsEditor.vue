@@ -97,7 +97,17 @@
         class="mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
         :style="pageStyles"
       >
-        <div :style="contentPadding" class="doc-page print:!p-0">
+        <div :style="contentPadding" class="doc-page relative print:!p-0">
+          <div
+            v-if="showPlaceholderOverlay"
+            class="editor-placeholder-overlay"
+            @click="focusEditor"
+          >
+            <div class="editor-placeholder-content">
+              <p class="text-lg font-semibold text-gray-700">Click to start typing</p>
+              <!-- <p class="text-sm text-gray-500 mt-2">Click on text to apply formatting.</p> -->
+            </div>
+          </div>
           <!-- Contextual Bubble Menu -->
           <BubbleMenu
             v-if="editor"
@@ -258,7 +268,13 @@
             </div>
           </BubbleMenu>
 
-          <EditorContent :editor="editor" class="prose prose-lg dark:prose-invert max-w-none" />
+          <EditorContent
+            v-if="editor"
+            :editor="editor"
+            class="prose prose-lg dark:prose-invert max-w-none"
+            @focusin="onEditorFocus"
+            @focusout="onEditorBlur"
+          />
         </div>
       </div>
     </div>
@@ -326,7 +342,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Editor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
 import type { Component } from 'vue';
@@ -360,8 +376,9 @@ import UnderlineExtension from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Color from '@tiptap/extension-color';
 import FontFamily from '@tiptap/extension-font-family';
-import { TextStyle } from '@tiptap/extension-text-style'
+import { TextStyle } from '@tiptap/extension-text-style';
 import Highlight from '@tiptap/extension-highlight';
+import Placeholder from '@tiptap/extension-placeholder';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
 import Link from '@tiptap/extension-link';
@@ -384,12 +401,7 @@ import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const route = useRoute();
 const router = useRouter();
@@ -408,6 +420,83 @@ const isOffline = ref(!navigator.onLine);
 const shareLink = ref('');
 const privacyType = ref('private');
 const shareMembers = ref<any[]>([]);
+
+const isEditorFocused = ref(false);
+const isEditorEmpty = ref(true);
+const hasEnteredContent = ref(false);
+const showPlaceholderOverlay = computed(() => !isEditorFocused.value && isEditorEmpty.value && !hasEnteredContent.value);
+
+let detachEditorListeners: (() => void) | null = null;
+
+function focusEditor() {
+  if (!editor.value) return;
+  editor.value.chain().focus().run();
+  isEditorFocused.value = true;
+}
+
+function onEditorFocus() {
+  isEditorFocused.value = true;
+}
+
+function onEditorBlur() {
+  // Delay to allow focus transitions to related controls (e.g., bubble menu)
+  requestAnimationFrame(() => {
+    if (!editor.value?.isFocused) {
+      isEditorFocused.value = false;
+    }
+  });
+}
+
+function updateEditorEmptyState(instance?: Editor) {
+  const activeEditor = instance ?? editor.value;
+  if (!activeEditor) return;
+
+  const empty = activeEditor.isEmpty;
+  isEditorEmpty.value = empty;
+  if (!empty) {
+    hasEnteredContent.value = true;
+  }
+}
+
+function handleEditorContentChange(instance: Editor) {
+  console.log("editorContentChange")
+  updateEditorEmptyState(instance);
+
+  if (isJustLoaded.value) {
+    return;
+  }
+
+  if (!instance.isEmpty) {
+    hasUnsavedChanges.value = true;
+    scheduleSave();
+  }
+}
+
+function attachEditorEventListeners(instance: Editor) {
+  detachEditorListeners?.();
+
+  const handleUpdate = () => handleEditorContentChange(instance);
+  const handleSelection = () => updateEditorEmptyState(instance);
+  const handleFocus = () => { isEditorFocused.value = true; };
+  const handleBlur = () => { isEditorFocused.value = false; };
+
+  instance.on('update', handleUpdate);
+  instance.on('selectionUpdate', handleSelection);
+  instance.on('transaction', handleSelection);
+  instance.on('focus', handleFocus);
+  instance.on('blur', handleBlur);
+
+  detachEditorListeners = () => {
+    instance.off('update', handleUpdate);
+    instance.off('selectionUpdate', handleSelection);
+    instance.off('transaction', handleSelection);
+    instance.off('focus', handleFocus);
+    instance.off('blur', handleBlur);
+    detachEditorListeners = null;
+  };
+
+  nextTick(() => updateEditorEmptyState(instance));
+}
 
 // Chat state
 const isChatOpen = ref(false);
@@ -1001,7 +1090,7 @@ function scrollToHeading(index: number) {
 // Helper function to detect content type and load appropriately
 function loadContentIntoEditor(content: string) {
   if (!editor.value || !content) return;
-  
+
   try {
     const trimmedContent = content.trim();
     
@@ -1014,6 +1103,8 @@ function loadContentIntoEditor(content: string) {
     if (isHTML) {
       // Load as HTML - Tiptap will parse it
       editor.value.commands.setContent(trimmedContent, false);
+      hasEnteredContent.value = true;
+      updateEditorEmptyState(editor.value);
       console.log('✓ Loaded HTML content');
       return;
     }
@@ -1025,6 +1116,8 @@ function loadContentIntoEditor(content: string) {
       // Validate it's a Tiptap document structure
       if (parsed && typeof parsed === 'object' && (parsed.type === 'doc' || parsed.content)) {
         editor.value.commands.setContent(parsed, false);
+        hasEnteredContent.value = true;
+        updateEditorEmptyState(editor.value);
         console.log('✓ Loaded Tiptap JSON content');
         return;
       }
@@ -1034,11 +1127,14 @@ function loadContentIntoEditor(content: string) {
     
     // Fallback: treat as plain text wrapped in paragraph
     editor.value.commands.setContent(`<p>${trimmedContent}</p>`, false);
+    hasEnteredContent.value = true;
+    updateEditorEmptyState(editor.value);
     console.log('✓ Loaded as plain text');
-    
+
   } catch (error) {
     console.error('Error loading content:', error);
     editor.value?.commands.setContent('<p>Error loading content. Please try again.</p>', false);
+    updateEditorEmptyState(editor.value);
   }
 }
 
@@ -1087,12 +1183,35 @@ const contentPadding = computed(() => {
 
 async function saveDocument() {
   if (!editor.value || !currentDoc.value) return;
-  
+
+  if (editor.value.isEmpty && !hasEnteredContent.value) {
+    toast.info('Add some content before saving.');
+    return;
+  }
+
   isSaving.value = true;
   
   try {
     const json = editor.value.getJSON();
-    
+    const hasMeaningfulContent = Array.isArray(json.content)
+      ? json.content.some((node: any) => {
+          if (!node) return false;
+          if (node.type === 'paragraph') {
+            const text = (node.content || [])
+              .map((child: any) => child?.text || '')
+              .join('')
+              .trim();
+            return text.length > 0;
+          }
+          return node.type && node.type !== 'paragraph';
+        })
+      : false;
+
+    if (!hasMeaningfulContent) {
+      toast.info('Your document is still empty. Add content before saving.');
+      return;
+    }
+
     // Save JSON as string in content field
     const updatedDoc: FileData = {
       ...currentDoc.value,
@@ -1397,7 +1516,7 @@ async function initializeDocument() {
   // Check if loading from template
   if (template) {
     const templates: Record<string, string> = {
-      blank: '<p>Start typing...</p>',
+      blank: '<p></p>',
       letter: '<p style="text-align: right">Your Name<br>Your Address<br>City, State ZIP<br>Email<br>Phone</p><p><br></p><p>Date</p><p><br></p><p>Recipient Name<br>Company<br>Address</p><p><br></p><p>Dear [Recipient],</p><p><br></p><p>Start your letter here...</p><p><br></p><p>Sincerely,<br>Your Name</p>',
       report: '<h1>Report Title</h1><p><em>Author Name | Date</em></p><h2>Executive Summary</h2><p>Brief overview of the report...</p><h2>Introduction</h2><p>Background and context...</p><h2>Findings</h2><p>Key findings and analysis...</p><h2>Conclusion</h2><p>Summary and recommendations...</p>',
       resume: '<h1>Your Name</h1><p>Email | Phone | LinkedIn</p><h2>Professional Summary</h2><p>Brief professional summary highlighting key skills and experience...</p><h2>Experience</h2><p><strong>Job Title</strong> - Company Name<br><em>Start Date - End Date</em></p><ul><li>Key achievement or responsibility</li><li>Key achievement or responsibility</li></ul><h2>Education</h2><p><strong>Degree</strong> - University Name<br><em>Graduation Year</em></p><h2>Skills</h2><ul><li>Skill 1</li><li>Skill 2</li><li>Skill 3</li></ul>',
@@ -1584,7 +1703,10 @@ function initializeEditor(
 ) {
   const existingContent = editor.value ? editor.value.getJSON() : undefined;
   if (editor.value) {
-    try { editor.value.destroy(); } catch {}
+    try {
+      detachEditorListeners?.();
+      editor.value.destroy();
+    } catch {}
   }
 
   editor.value = new Editor({
@@ -1610,6 +1732,11 @@ function initializeEditor(
       TableCellPlus,
       TableHeaderPlus,
       ImagePlus.configure({ allowBase64: true }),
+      Placeholder.configure({
+        placeholder: 'Click to start typing…',
+        includeChildren: true,
+        emptyEditorClass: 'is-editor-empty',
+      }),
       PaginationPlus.configure({
         pageHeight: 842,
         pageGap: 2,
@@ -1630,10 +1757,12 @@ function initializeEditor(
         contentMarginBottom: 40,
       }),
     ],
-    content: existingContent || '<p>Start typing...</p>',
-    editorProps: { attributes: { class: 'focus:outline-none min-h-[500px] print:min-h-0 print:overflow-visible' } },
-    onUpdate: () => { scheduleSave(); },
+    content: existingContent || '',
+    editorProps: { attributes: { class: 'focus:outline-none min-h-[500px] print:min-h-0 print:overflow-visible' } }
   });
+
+  attachEditorEventListeners(editor.value);
+  updateEditorEmptyState(editor.value);
 }
 
 onMounted(async () => {
@@ -1657,6 +1786,26 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.editor-placeholder-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: start;
+  justify-content: start;
+  background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.85) 100%);
+  border-radius: inherit;
+  text-align: left;
+  padding: 3rem 1.5rem;
+  cursor: text;
+}
+
+.editor-placeholder-content {
+  margin-top: 4rem;
+  margin-left: 2rem;
+  opacity: 0.8;
+}
+
 /* Editor Styles */
 :deep(.ProseMirror) {
   min-height: 500px;

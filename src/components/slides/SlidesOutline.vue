@@ -124,7 +124,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { SlidePage, SlideTemplateSummary } from '@/types/slides';
 
-const props = defineProps<{
+defineProps<{
   pages: SlidePage[];
   activePageId: string | null;
   templates: SlideTemplateSummary[];

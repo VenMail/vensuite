@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import { Check, FileCode, Grid, Loader2, Presentation, Rows, Sparkles } from 'lucide-vue-next';
 import type { SlideImportStatus, SnapSettings } from '@/types/slides';
 import Button from '@/components/ui/button/Button.vue';

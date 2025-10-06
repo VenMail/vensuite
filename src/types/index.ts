@@ -22,7 +22,9 @@ export interface FileData {
   last_viewed?: Date;
   isNew?: boolean;
   isDirty?: boolean;        // Local flag for unsaved changes
-   mime_type?: string;       // MIME type of the file
+  isDuplicate?: boolean;    // Flag when backend returns an existing document instead of creating a new one
+  duplicateMessage?: string;
+  mime_type?: string;       // MIME type of the file
   source?: string;          // Source of the file (e.g., "Files", "Forms")
   is_trashed?: boolean;     // Whether the file is in trash
   trashed_at?: Date | string; // When the file was trashed

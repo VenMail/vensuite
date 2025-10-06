@@ -27,6 +27,8 @@
       :disabled="!activePage"
       :templates="slidesStore.templateSummaries"
       :selected-template-slug="slidesStore.selectedTemplateSlug"
+      :selection="selectionState"
+      :available-fonts="availableFonts"
       @change-template="handleChangeTemplate"
       @add-page="handleAddPage"
       @duplicate-page="handleDuplicatePage"
@@ -37,6 +39,9 @@
       @import-powerpoint="openPowerPointImport"
       @import-html="openHtmlImport"
       @export="handleExport"
+      @change-font="handleToolbarChangeFont"
+      @change-font-advanced="handleToolbarChangeFontAdvanced"
+      @insert-chart="handleToolbarInsertChart"
     />
 
     <div class="flex flex-1 overflow-hidden">
@@ -63,9 +68,14 @@
                 :scene="activePage.scene"
                 :snap-settings="snapSettings"
                 :disabled="slidesStore.importStatus.isImporting"
+                :text-command="textCommand"
+                :chart-command="chartCommand"
+                :text-advanced-command="textAdvancedCommand"
                 class="h-[720px] w-full"
                 @update:scene="handleSceneUpdate"
                 @thumbnail="handleThumbnailGenerated"
+                @selection="handleSelection"
+                @available-fonts="handleAvailableFonts"
               />
               <div v-else class="flex h-[720px] items-center justify-center text-gray-500 dark:text-gray-400">
                 Select or add a slide to begin.
@@ -356,6 +366,34 @@ function handleSceneUpdate(scene: SlideScene) {
 function handleThumbnailGenerated(thumbnail: string | null) {
   if (!thumbnail || !activePage.value) return;
   slidesStore.setPageThumbnail(activePage.value.id, thumbnail);
+}
+
+// Selection-driven toolbar state and commands
+const selectionState = ref<{ hasText: boolean; fontFamily?: number } | undefined>(undefined);
+const textCommand = ref<{ seq: number; fontFamily?: number }>({ seq: 0 });
+const chartCommand = ref<{ seq: number; type?: 'bar' | 'line' | 'pie' }>({ seq: 0 });
+const textAdvancedCommand = ref<{ seq: number; name?: string }>({ seq: 0 });
+const availableFonts = ref<string[]>([]);
+
+function handleSelection(payload: { hasText: boolean; fontFamily?: number }) {
+  selectionState.value = payload;
+}
+
+function handleToolbarChangeFont(fontFamily: number) {
+  textCommand.value = { seq: (textCommand.value.seq ?? 0) + 1, fontFamily };
+}
+
+function handleToolbarInsertChart(type: 'bar' | 'line' | 'pie') {
+  chartCommand.value = { seq: (chartCommand.value.seq ?? 0) + 1, type } as any;
+}
+
+function handleAvailableFonts(list: string[]) {
+  availableFonts.value = Array.isArray(list) ? Array.from(new Set(list)) : [];
+}
+
+function handleToolbarChangeFontAdvanced(name: string) {
+  if (!name) return;
+  textAdvancedCommand.value = { seq: (textAdvancedCommand.value.seq ?? 0) + 1, name } as any;
 }
 
 function openPowerPointImport() {

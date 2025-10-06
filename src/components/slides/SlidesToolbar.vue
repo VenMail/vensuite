@@ -87,6 +87,18 @@
 
       <div class="h-8 w-px bg-gray-200 dark:bg-gray-700" />
 
+      <!-- Fonts: only when text is selected (appears before grid) -->
+      <div class="flex items-center gap-2" v-if="isExpanded && selection?.hasText">
+        <label class="text-xs text-gray-600 dark:text-gray-300">Font</label>
+        <select :class="numberInputClass" :disabled="disabled" :value="`id:${selection?.fontFamily ?? 2}`" @change="onFontChange">
+          <option value="id:1">Hand (Virgil)</option>
+          <option value="id:2">Sans (Inter)</option>
+          <option value="id:3">Mono (Monospace)</option>
+          <option v-if="availableFonts?.length" disabled>──────────</option>
+          <option v-for="name in availableFonts" :key="name" :value="`name:${name}`">{{ name }}</option>
+        </select>
+      </div>
+
       <div class="flex items-center gap-2" v-if="isExpanded">
         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
           <span>Grid</span>
@@ -133,6 +145,20 @@
         <button :class="buttonClass" title="Export thumbnails" :disabled="isSaving" @click="emitExport('images')">
           <ImageDown class="h-4 w-4" />
         </button>
+        <div class="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+        <!-- Charts menu -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button :class="buttonClass" :disabled="disabled" title="Insert chart">
+              <Sparkles class="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" class="min-w-[200px]">
+            <DropdownMenuItem @click="emitInsertChart('bar')">Bar chart</DropdownMenuItem>
+            <DropdownMenuItem @click="emitInsertChart('line')">Line chart</DropdownMenuItem>
+            <DropdownMenuItem @click="emitInsertChart('pie')">Pie chart</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
 
@@ -185,6 +211,8 @@ const props = defineProps<{
   disabled?: boolean;
   templates: SlideTemplateSummary[];
   selectedTemplateSlug: string;
+  selection?: { hasText: boolean; fontFamily?: number };
+  availableFonts?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -198,6 +226,9 @@ const emit = defineEmits<{
   (e: 'import-html'): void;
   (e: 'export', format: 'pdf' | 'pptx' | 'images'): void;
   (e: 'change-template', slug: string): void;
+  (e: 'change-font', fontFamily: number): void;
+  (e: 'change-font-advanced', name: string): void;
+  (e: 'insert-chart', type: 'bar' | 'line' | 'pie'): void;
 }>();
 
 const isExpanded = ref(true);
@@ -275,4 +306,24 @@ function onGridInput(event: Event) {
     emit('update-snap-settings', { gridSize: value });
   }
 }
+
+function onFontChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  const value = String(target.value || '');
+  if (value.startsWith('id:')) {
+    const id = Number(value.slice(3));
+    if (Number.isFinite(id)) emit('change-font', id);
+    return;
+  }
+  if (value.startsWith('name:')) {
+    const name = value.slice(5);
+    if (name) emit('change-font-advanced', name);
+  }
+}
+
+function emitInsertChart(type: 'bar' | 'line' | 'pie') {
+  emit('insert-chart', type);
+}
+
+// advanced font handler is merged into onFontChange via 'name:' values
 </script>
