@@ -591,14 +591,6 @@ function removeBubbleLink() {
 
 const bubbleImageUrl = ref('');
 const bubbleImageAlt = ref('');
-function applyBubbleImage() {
-  if (!editor.value) return;
-  const current = editor.value.getAttributes('image') as any;
-  const src = (bubbleImageUrl.value || current?.src || '').trim();
-  const alt = (bubbleImageAlt.value || current?.alt || '').trim();
-  if (!src) return;
-  editor.value.chain().focus().updateAttributes('image', { src, alt }).run();
-}
 
 const isOverflowOpen = ref(false);
 let overflowTimer: ReturnType<typeof setTimeout> | null = null;
