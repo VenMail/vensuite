@@ -1,0 +1,66 @@
+{
+  "title": "Title & Content",
+  "slug": "title-content",
+  "description": "Title at top, content body text",
+  "pages": [
+    {
+      "name": "Title & Content",
+      "scene": {
+        "elements": [
+          {
+            "type": "text",
+            "x": 80,
+            "y": 100,
+            "width": 800,
+            "height": 70,
+            "text": "Click to add title",
+            "fontSize": 48,
+            "fontFamily": 1,
+            "textAlign": "center",
+            "verticalAlign": "middle",
+            "strokeColor": "#374151",
+            "backgroundColor": "transparent",
+            "fillStyle": "hachure",
+            "strokeWidth": 1,
+            "strokeStyle": "solid",
+            "roughness": 0,
+            "opacity": 100,
+            "groupIds": [],
+            "angle": 0,
+            "baseline": 38,
+            "lineHeight": 1.25,
+            "containerId": null
+          },
+          {
+            "type": "text",
+            "x": 120,
+            "y": 220,
+            "width": 720,
+            "height": 140,
+            "text": "Click to add content",
+            "fontSize": 24,
+            "fontFamily": 1,
+            "textAlign": "left",
+            "verticalAlign": "top",
+            "strokeColor": "#6b7280",
+            "backgroundColor": "transparent",
+            "fillStyle": "hachure",
+            "strokeWidth": 1,
+            "strokeStyle": "solid",
+            "roughness": 0,
+            "opacity": 100,
+            "groupIds": [],
+            "angle": 0,
+            "baseline": 19,
+            "lineHeight": 1.25,
+            "containerId": null
+          }
+        ],
+        "appState": {
+          "viewBackgroundColor": "#ffffff"
+        },
+        "files": {}
+      }
+    }
+  ]
+}

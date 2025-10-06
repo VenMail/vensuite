@@ -31,13 +31,17 @@ function createPlaceholderTextElement(options: {
   color?: string;
 }): any {
   const { text, x, y, width, fontSize, color = '#6b7280' } = options;
+  const lineHeight = 1.25;
+  const lines = Math.max(1, String(text || '').split('\n').length);
+  const height = Math.max(1, Math.round(fontSize * lineHeight * lines));
+  const baseline = Math.round(fontSize * 0.8);
   return {
     id: uuidv4(),
     type: 'text',
     x,
     y,
     width,
-    height: 0,
+    height,
     angle: 0,
     strokeColor: color,
     backgroundColor: 'transparent',
@@ -56,8 +60,8 @@ function createPlaceholderTextElement(options: {
     fontFamily: 1,
     textAlign: 'center',
     verticalAlign: 'middle',
-    baseline: Math.round(fontSize * 0.8),
-    lineHeight: 1.25,
+    baseline,
+    lineHeight,
     containerId: null,
     originalText: text,
   };
@@ -101,10 +105,51 @@ function createSceneSkeleton(): SlideScene {
   };
 }
 
-const TEMPLATE_DIRECTORY = '@/assets/templates';
+function normalizeElements(elements: any[] | readonly any[] | undefined): any[] {
+  const arr = Array.isArray(elements) ? [...elements] : [];
+  return arr.map((el: any) => {
+    if (!el || typeof el !== 'object') return el;
+    // Ensure arrays/ids exist
+    const groupIds = Array.isArray(el.groupIds) ? el.groupIds : [];
+    const x = Number(el.x) || 0;
+    const y = Number(el.y) || 0;
+    const width = Number(el.width);
+    const fontSize = Number(el.fontSize) || 16;
+    const lineHeight = Number(el.lineHeight) || 1.25;
+    let next = { ...el, groupIds, x, y };
+    if (el.type === 'text') {
+      const text = typeof el.text === 'string' ? el.text : '';
+      const lines = Math.max(1, text.split('\n').length);
+      const height = Math.max(1, Number(el.height) > 0 ? Number(el.height) : Math.round(fontSize * lineHeight * lines));
+      const baseline = Math.round(fontSize * 0.8);
+      // If width is invalid or missing, estimate based on characters (approx width factor 0.6)
+      const estimatedWidth = Math.max(60, Math.round((text.length || 10) * fontSize * 0.6));
+      next = {
+        ...next,
+        text,
+        fontSize,
+        lineHeight,
+        height,
+        baseline,
+        width: Number.isFinite(width) && width > 0 ? width : estimatedWidth,
+        originalText: el.originalText ?? text,
+      };
+    }
+    return next;
+  });
+}
+
+function normalizeTemplateScene(scene?: SlideScene): SlideScene {
+  const s = scene || createSceneSkeleton();
+  return {
+    elements: normalizeElements(s.elements),
+    appState: { ...(s.appState || {}), viewBackgroundColor: s.appState?.viewBackgroundColor || '#ffffff' },
+    files: { ...(s.files || {}) },
+  };
+}
 
 function cloneScene(scene?: SlideScene, index = 0): SlideScene {
-  const base = scene ?? createFallbackScene(index);
+  const base = normalizeTemplateScene(scene ?? createFallbackScene(index));
   return {
     elements: (base.elements || []).map((element: any) => ({
       ...element,
@@ -141,7 +186,6 @@ function createFallbackScene(index = 0): SlideScene {
         originalText: replacements(element.originalText || element.text),
       };
     }),
-    appState: { ...createSceneSkeleton().appState },
     files: {},
   };
 }
@@ -150,7 +194,7 @@ interface ResolvedTemplate extends SlideTemplateSummary {
   pages: SlideDeckTemplatePage[];
 }
 
-const templateModules = import.meta.glob<{ default: SlideTemplateManifest }>(`${TEMPLATE_DIRECTORY}/*.json`, {
+const templateModules = import.meta.glob<{ default: SlideTemplateManifest }>('@/assets/templates/*.json', {
   eager: true,
 });
 
@@ -162,7 +206,10 @@ const loadedTemplates: ResolvedTemplate[] = Object.entries(templateModules).map(
     title: manifest.title || slug,
     description: manifest.description,
     isDefault: Boolean(manifest.isDefault ?? manifest.default),
-    pages: manifest.pages || [],
+    pages: (manifest.pages || []).map((p) => ({
+      ...p,
+      scene: normalizeTemplateScene(p.scene),
+    })),
   };
 });
 

@@ -1,5 +1,6 @@
 <template>
-  <div ref="canvasHost" class="h-full w-full"></div>
+  <div ref="canvasHost" class="h-full w-full overflow-hidden"></div>
+  
 </template>
 
 <script setup lang="ts">
@@ -7,7 +8,7 @@ import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { Excalidraw, exportToCanvas } from '@excalidraw/excalidraw';
-import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
+import type { AppState, ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
 import type { SlideScene, SnapSettings } from '@/types/slides';
 
 import '@excalidraw/excalidraw/index.css';
@@ -30,31 +31,25 @@ let thumbnailTimer: ReturnType<typeof setTimeout> | null = null;
 let lastSceneSignature = '';
 let isApplyingScene = false;
 
-function cloneElements(elements: readonly any[] | undefined): any[] {
-  if (!Array.isArray(elements)) return [];
-  return elements.map((element) => ({ ...element }));
-}
-
-function buildAppState(base?: Record<string, any>) {
-  const merged = {
-    ...(base || {}),
-    viewBackgroundColor: base?.viewBackgroundColor || '#ffffff',
-    gridModeEnabled: props.snapSettings.showGrid,
-    gridSize: props.snapSettings.showGrid ? props.snapSettings.gridSize : 0,
-    showGrid: props.snapSettings.showGrid,
-    showGuides: props.snapSettings.showGuides,
-    smartSnapping: props.snapSettings.smartSnapping,
-    viewModeEnabled: props.disabled ?? false,
-  } as Record<string, any>;
-  return merged;
+function sanitizeAppStateForUpdate(state: AppState): Partial<AppState> {
+  const s = { ...(state as any) } as any;
+  // Clear transient keys that may keep the loader visible
+  s.isLoading = false;
+  if (s.openDialog) s.openDialog = null;
+  return s as Partial<AppState>;
 }
 
 function normaliseScene(scene: SlideScene) {
   return {
-    elements: cloneElements(scene.elements),
-    appState: buildAppState(scene.appState),
-    files: { ...(scene.files || {}) },
-  } as SlideScene;
+    elements: Array.isArray(scene.elements) ? [...scene.elements] : [],
+    appState: {
+      ...(scene.appState || {}),
+      viewBackgroundColor: scene.appState?.viewBackgroundColor || '#ffffff',
+      // Ensure the loading overlay is not shown
+      isLoading: false,
+    },
+    files: scene.files || {},
+  } satisfies SlideScene;
 }
 
 function computeSignature(scene: SlideScene) {
@@ -76,9 +71,9 @@ function refreshSignatureFromCanvas() {
   const api = excalidrawApi.value;
   if (!api) return;
   const snapshot: SlideScene = {
-    elements: cloneElements(api.getSceneElements()),
-    appState: { ...api.getAppState() },
-    files: { ...api.getFiles() },
+    elements: [...api.getSceneElements()],
+    appState: api.getAppState(),
+    files: api.getFiles(),
   };
   lastSceneSignature = computeSignature(snapshot);
 }
@@ -90,13 +85,13 @@ function scheduleThumbnail() {
   thumbnailTimer = setTimeout(async () => {
     if (!excalidrawApi.value) return;
     try {
-      const elements = cloneElements(excalidrawApi.value.getSceneElements());
+      const elements = excalidrawApi.value.getSceneElements();
       const appState = {
         ...excalidrawApi.value.getAppState(),
         exportPadding: 24,
         exportBackground: true,
       };
-      const files = { ...excalidrawApi.value.getFiles() };
+      const files = excalidrawApi.value.getFiles();
       const canvas = await exportToCanvas({ elements, appState, files });
       emit('thumbnail', canvas.toDataURL('image/png'));
     } catch (error) {
@@ -106,6 +101,37 @@ function scheduleThumbnail() {
   }, 600);
 }
 
+function centerViewportOnElements() {
+  const api = excalidrawApi.value;
+  const host = canvasHost.value;
+  if (!api || !host) return;
+  const elements = api.getSceneElements();
+  if (!elements || elements.length === 0) return;
+  // Compute bounding box
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const el of elements as any[]) {
+    if (!el || el.isDeleted) continue;
+    const x = Number(el.x) || 0;
+    const y = Number(el.y) || 0;
+    const w = Math.max(Number(el.width) || 0, 1);
+    const h = Math.max(Number(el.height) || 0, 1);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + w);
+    maxY = Math.max(maxY, y + h);
+  }
+  if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) return;
+  const bboxCenterX = (minX + maxX) / 2;
+  const bboxCenterY = (minY + maxY) / 2;
+  const zoom = (api.getAppState() as any)?.zoom?.value ?? 1;
+  const hostRect = host.getBoundingClientRect();
+  const targetScrollX = hostRect.width / 2 - zoom * bboxCenterX;
+  const targetScrollY = hostRect.height / 2 - zoom * bboxCenterY;
+  (api.updateScene as unknown as (sceneData: any, addToHistory?: boolean) => void)({
+    appState: { ...api.getAppState(), scrollX: targetScrollX, scrollY: targetScrollY },
+  }, false);
+}
+
 function applySceneToCanvas(scene: SlideScene) {
   const api = excalidrawApi.value;
   if (!api) return;
@@ -113,12 +139,21 @@ function applySceneToCanvas(scene: SlideScene) {
   const signature = computeSignature(normalised);
   if (signature === lastSceneSignature) return;
   isApplyingScene = true;
-  api.updateScene({
-    elements: cloneElements(normalised.elements),
-    appState: { ...buildAppState(api.getAppState()), ...normalised.appState },
-    files: normalised.files,
-    commitToHistory: false,
-  });
+  const currentAppState = api.getAppState();
+  const mergedAppState: Partial<AppState> = {
+    ...sanitizeAppStateForUpdate(currentAppState),
+    ...normalised.appState,
+    gridSize: props.snapSettings.showGrid ? props.snapSettings.gridSize : undefined,
+    gridModeEnabled: props.snapSettings.showGrid,
+    viewModeEnabled: props.disabled ?? false,
+  };
+  (mergedAppState as any).isLoading = false;
+  (api.updateScene as unknown as (sceneData: any, addToHistory?: boolean) => void)({
+    elements: normalised.elements as any,
+    appState: mergedAppState as AppState,
+  }, false);
+  // Center after applying scene so shapes are visible within the page viewport
+  centerViewportOnElements();
   lastSceneSignature = signature;
   isApplyingScene = false;
   scheduleThumbnail();
@@ -128,15 +163,14 @@ function applySnapSettings(settings: SnapSettings) {
   const api = excalidrawApi.value;
   if (!api) return;
   const current = api.getAppState();
+  const updatedAppState: Partial<AppState> = {
+    ...sanitizeAppStateForUpdate(current),
+    gridSize: settings.showGrid ? settings.gridSize : undefined,
+    gridModeEnabled: settings.showGrid,
+  };
+  (updatedAppState as any).isLoading = false;
   api.updateScene({
-    appState: {
-      ...current,
-      gridSize: settings.showGrid ? settings.gridSize : 0,
-      gridModeEnabled: settings.showGrid,
-      showGrid: settings.showGrid,
-      showGuides: settings.showGuides,
-      smartSnapping: settings.smartSnapping,
-    },
+    appState: updatedAppState as AppState,
   });
   refreshSignatureFromCanvas();
   scheduleThumbnail();
@@ -144,9 +178,13 @@ function applySnapSettings(settings: SnapSettings) {
 
 function handleChange(elements: readonly any[], appState: any, files: any) {
   if (isApplyingScene) return;
+  const sanitizedAppState = { ...appState } as Record<string, any>;
+  // Strip transient flags so we don't persist them to the store
+  sanitizedAppState.isLoading = false;
+  if (sanitizedAppState.openDialog) sanitizedAppState.openDialog = null;
   const nextScene: SlideScene = {
     elements: elements.map((element) => ({ ...element })),
-    appState: { ...appState },
+    appState: sanitizedAppState,
     files: { ...files },
   };
   lastSceneSignature = computeSignature(normaliseScene(nextScene));
@@ -175,13 +213,20 @@ function mountExcalidraw() {
         },
         dockedSidebarBreakpoint: 0,
       },
-      renderFooter: () => null,
       onChange: handleChange,
       excalidrawAPI: (api: ExcalidrawImperativeAPI) => {
         excalidrawApi.value = api;
-        applySnapSettings(props.snapSettings);
-        refreshSignatureFromCanvas();
-        scheduleThumbnail();
+        // Defer updates to avoid React setState-on-unmounted warning
+        requestAnimationFrame(() => {
+          applySnapSettings(props.snapSettings);
+          refreshSignatureFromCanvas();
+          scheduleThumbnail();
+          const current = sanitizeAppStateForUpdate(api.getAppState()) as AppState;
+          (api.updateScene as unknown as (sceneData: any, addToHistory?: boolean) => void)({
+            appState: { ...current, viewModeEnabled: !!(props.disabled ?? false), isLoading: false } as any,
+          }, false);
+          centerViewportOnElements();
+        });
       },
     })
   );
@@ -226,7 +271,7 @@ watch(
     if (!excalidrawApi.value) return;
     const current = excalidrawApi.value.getAppState();
     excalidrawApi.value.updateScene({
-      appState: { ...current, viewModeEnabled: !!value },
+      appState: { ...current, viewModeEnabled: !!value } as AppState,
     });
   },
   { deep: true }

@@ -23,7 +23,7 @@
             <DropdownMenuItem
               v-for="template in templates"
               :key="template.slug"
-              @click="$emit('change-template', template.slug)"
+              @click="onSelectTemplate(template.slug)"
             >
               <Check class="mr-2 h-4 w-4" :class="template.slug === selectedTemplateSlug ? 'opacity-100' : 'opacity-0'" />
               <div class="flex flex-col">
@@ -130,6 +130,20 @@ const props = defineProps<{
   templates: SlideTemplateSummary[];
   selectedTemplateSlug: string;
 }>();
+
+const emit = defineEmits<{
+  (e: 'add', templateSlug?: string): void;
+  (e: 'select', pageId: string): void;
+  (e: 'duplicate', pageId: string): void;
+  (e: 'delete', pageId: string): void;
+  (e: 'move', direction: 'up' | 'down', pageId: string): void;
+  (e: 'change-template', slug: string): void;
+}>();
+
+function onSelectTemplate(slug: string) {
+  emit('change-template', slug);
+  emit('add', slug);
+}
 
 function formatElementCount(count: number) {
   if (!count) return 'Empty';
