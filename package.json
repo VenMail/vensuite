@@ -149,7 +149,6 @@
     "vue": "^3.5.13",
     "vue-chartjs": "^5.3.2",
     "vue-class-component": "8.0.0-rc.1",
-    "vue-file-toolbar-menu": "github:xwiz/vue-file-toolbar-menu",
     "vue-i18n": "^10.0.7",
     "vue-inline-svg": "^3.1.4",
     "vue-loader": "^17.4.2",

@@ -369,6 +369,13 @@
         >
           <ListChecks class="h-4 w-4" />
         </button>
+        <button
+          class="tiptap-toolbar__btn"
+          title="Insert Chart"
+          @click="openChartDialog"
+        >
+          <BarChart3 class="h-4 w-4" />
+        </button>
         
         <!-- Table Insert with Dialog -->
         <button
@@ -612,6 +619,13 @@
       </DialogFooter>
     </DialogContent>
   </Dialog>
+
+  <ChartConfigurator
+    v-model:open="showChartDialog"
+    :initial-value="chartInitialValue"
+    @submit="handleChartSubmit"
+    @cancel="handleChartCancel"
+  />
 </template>
 
 <script setup lang="ts">
@@ -621,6 +635,7 @@ import {
   AlignCenter,
   AlignLeft,
   AlignRight,
+  BarChart3,
   Bold,
   ChevronDown,
   Code,
@@ -658,6 +673,9 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import Button from '@/components/ui/button/Button.vue';
+import ChartConfigurator from '@/components/editor/ChartConfigurator.vue';
+import type { ChartAttrs } from '@/extensions/chart';
+import { NodeSelection } from '@tiptap/pm/state';
 
 const props = defineProps<{
   editor: Editor | null | undefined;
@@ -688,6 +706,9 @@ const showLinkDialog = ref(false);
 const showImageDialog = ref(false);
 const showNewFileDialog = ref(false);
 const showPaginationDialog = ref(false);
+const showChartDialog = ref(false);
+
+const chartInitialValue = ref<Partial<ChartAttrs> | null>(null);
 
 // Pagination settings
 const paginationSettings = ref({
@@ -750,6 +771,7 @@ const currentBgColor = ref('#ffffff');
 
 // Update font and color state when editor selection changes
 const updateFontState = () => {
+  chartInitialValue.value = null;
   if (!props.editor) return;
   const attrs = props.editor.getAttributes('textStyle') ?? {};
   const ff = (attrs.fontFamily ?? attrs['font-family']) as string | undefined;
@@ -769,6 +791,8 @@ const updateFontState = () => {
   if (highlightAttrs.color) {
     currentBgColor.value = highlightAttrs.color as string;
   }
+
+  updateChartSelectionState();
 };
 
 watch(
@@ -784,6 +808,7 @@ watch(
     } else {
       selectedFontFamily.value = '';
       selectedFontSize.value = '';
+      chartInitialValue.value = null;
     }
   },
   { immediate: true }
@@ -909,6 +934,57 @@ function applyImage() {
   imageUrl.value = '';
   imageAlt.value = '';
 }
+
+
+function showChartConfigurator(attrs?: ChartAttrs | null) {
+  if (!props.editor) return;
+  chartInitialValue.value = attrs ?? getSelectedChartAttrs();
+  showChartDialog.value = true;
+}
+
+function openChartDialog() {
+  if (!props.editor) return;
+  showChartConfigurator(getSelectedChartAttrs());
+}
+
+function getSelectedChartAttrs(): ChartAttrs | null {
+  const editor = props.editor;
+  if (!editor) return null;
+  const { state } = editor;
+  const { selection } = state;
+
+  if (selection instanceof NodeSelection && selection.node.type.name === 'chart') {
+    return { ...(selection.node.attrs as ChartAttrs) };
+  }
+
+  let attrs: ChartAttrs | null = null;
+  state.doc.nodesBetween(selection.from, selection.to, node => {
+    if (!attrs && node.type.name === 'chart') {
+      attrs = { ...(node.attrs as ChartAttrs) };
+      return false;
+    }
+    return undefined;
+  });
+  return attrs;
+}
+
+function handleChartSubmit(attrs: ChartAttrs) {
+  if (!props.editor) return;
+  props.editor.chain().focus().setChart(attrs).run();
+  showChartDialog.value = false;
+}
+
+function handleChartCancel() {
+  showChartDialog.value = false;
+}
+
+function updateChartSelectionState() {
+  chartInitialValue.value = getSelectedChartAttrs();
+}
+
+defineExpose({
+  openChartConfigurator: showChartConfigurator,
+});
 
 function toggleExpanded() {
   isExpanded.value = !isExpanded.value;

@@ -25,6 +25,7 @@
 
     <!-- Docs Menu Bar -->
     <DocsToolbar 
+      ref="toolbarRef"
       :editor="editor" 
       :page-size="pageSize"
       :page-orientation="pageOrientation"
@@ -370,6 +371,7 @@ import {
   GitMerge,
   GitFork,
   CheckCircle2,
+  BarChart3,
 } from 'lucide-vue-next';
 import StarterKit from '@tiptap/starter-kit';
 import UnderlineExtension from '@tiptap/extension-underline';
@@ -388,6 +390,8 @@ import { ImagePlus } from 'tiptap-image-plus';
 import { PaginationPlus } from 'tiptap-pagination-plus';
 import { PaginationTable } from 'tiptap-table-plus';
 import { FontSize } from '@/extensions/font-size';
+import { ChartExtension } from '@/extensions/chart';
+import type { ChartAttrs } from '@/extensions/chart';
 
 const {
   TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus
@@ -403,6 +407,7 @@ import { saveAs } from 'file-saver';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { NodeSelection } from '@tiptap/pm/state';
 
 const route = useRoute();
 const router = useRouter();
@@ -410,6 +415,7 @@ const fileStore = useFileStore();
 const authStore = useAuthStore();
 
 const editor = ref<Editor>();
+const toolbarRef = ref<InstanceType<typeof DocsToolbar> | null>(null);
 const currentDoc = ref<FileData | null>(null);
 const documentTitle = ref('Untitled Document');
 const isSaving = ref(false);
@@ -460,7 +466,6 @@ function updateEditorEmptyState(instance?: Editor) {
 }
 
 function handleEditorContentChange(instance: Editor) {
-  console.log("editorContentChange")
   updateEditorEmptyState(instance);
 
   if (isJustLoaded.value) {
@@ -578,10 +583,11 @@ function clearOverflowTimer() {
   }
 }
 
-const isTextSelection = computed(() => !!editor.value && !editor.value.isActive('image') && !editor.value.isActive('table'));
+const isTextSelection = computed(() => !!editor.value && !editor.value.isActive('image') && !editor.value.isActive('table') && !editor.value.isActive('chart'));
 const isTableSelection = computed(() => !!editor.value && editor.value.isActive('table'));
 const isImageEditing = computed(() => !!editor.value && editor.value.isActive('image'));
 const isLinkEditing = computed(() => !!editor.value && editor.value.isActive('link'));
+const isChartSelection = computed(() => !!editor.value && editor.value.isActive('chart'));
 
 const activeTextColor = computed(() => editor.value?.getAttributes('textStyle')?.color as string | undefined);
 const activeHighlightColor = computed(() => editor.value?.getAttributes('highlight')?.color as string | undefined);
@@ -856,6 +862,47 @@ const imageActions = computed<BubbleAction[]>(() => {
   ];
 });
 
+const chartActions = computed<BubbleAction[]>(() => {
+  if (!editor.value) return [];
+  return [
+    {
+      key: 'edit-chart',
+      icon: BarChart3,
+      handler: () => openChartConfiguratorFromBubble(),
+      tooltip: 'Configure chart',
+      label: 'Configure chart',
+      isActive: true,
+    },
+  ];
+});
+
+
+function getSelectedChartAttrs(): ChartAttrs | null {
+  if (!editor.value) return null;
+  const { state } = editor.value;
+  const { selection } = state;
+
+  if (selection instanceof NodeSelection && selection.node.type.name === 'chart') {
+    return { ...(selection.node.attrs as ChartAttrs) };
+  }
+
+  let attrs: ChartAttrs | null = null;
+  state.doc.nodesBetween(selection.from, selection.to, node => {
+    if (!attrs && node.type.name === 'chart') {
+      attrs = { ...(node.attrs as ChartAttrs) };
+      return false;
+    }
+    return undefined;
+  });
+  return attrs;
+}
+
+function openChartConfiguratorFromBubble() {
+  const attrs = getSelectedChartAttrs();
+  if (!attrs) return;
+  toolbarRef.value?.openChartConfigurator(attrs);
+}
+
 // Bubble menu state for color pickers
 const showTextColorPicker = ref(false);
 const showBgColorPicker = ref(false);
@@ -897,6 +944,7 @@ const headingOverflowKeys = ['strike', 'color', 'highlight', 'link', 'bullet-lis
 const tablePrimaryKeys = ['add-col', 'add-row', 'merge', 'split', 'align-left-table', 'align-center-table', 'align-right-table'];
 const tableOverflowKeys = ['del-col', 'del-row'];
 const imagePrimaryKeys = ['image-align-left', 'image-align-center', 'image-align-right'];
+const chartPrimaryKeys = ['edit-chart'];
 
 function splitActions(
   actions: BubbleAction[],
@@ -944,6 +992,9 @@ const actionSets = computed(() => {
   }
   if (isTableSelection.value) {
     return splitActions(tableActions.value, tablePrimaryKeys, tableOverflowKeys);
+  }
+  if (isChartSelection.value) {
+    return splitActions(chartActions.value, chartPrimaryKeys, []);
   }
   if (isTextSelection.value) {
     // Check if selection is a heading
@@ -1010,7 +1061,7 @@ function onBubbleBgColorChange(event: Event) {
   bubbleBgColor.value = color;
 }
 
-watch([isTextSelection, isTableSelection, isImageEditing], () => {
+watch([isTextSelection, isTableSelection, isImageEditing, isChartSelection], () => {
   isOverflowOpen.value = false;
   resetBubbleColorPickers();
   clearOverflowTimer();
@@ -1739,6 +1790,7 @@ function initializeEditor(
         includeChildren: true,
         emptyEditorClass: 'is-editor-empty',
       }),
+      ChartExtension,
       PaginationPlus.configure({
         pageHeight: 842,
         pageGap: 2,
@@ -1795,7 +1847,7 @@ onUnmounted(() => {
   display: flex;
   align-items: start;
   justify-content: start;
-  background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.85) 100%);
+  background: transparent;
   border-radius: inherit;
   text-align: left;
   padding: 3rem 1.5rem;

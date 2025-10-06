@@ -46,10 +46,10 @@ onMounted(async () => {
   <div class="min-h-screen flex flex-col justify-between items-center bg-white text-black">
     <!-- Logo header -->
     <div class="flex items-center justify-between w-full border-b border-[#A9C9D64D] p-6">
-      <div class="w-[150px]">
+      <div class="max-w-[150px]">
         <img src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full" />
       </div>
-      <div class="w-[150px] flex justify-end">
+      <div class="max-w-[150px] flex justify-end">
         <!-- Globe icon could go here if needed -->
       </div>
     </div>
