@@ -19,6 +19,9 @@ export interface ChartAttrs {
   datasets: ChartDatasetAttr[];
   width?: number;
   height?: number;
+  title?: string;
+  showLegend?: boolean;
+  fontSize?: number;
 }
 
 const DEFAULT_DIMENSIONS = {
@@ -61,6 +64,9 @@ const DEFAULT_ATTRS: ChartAttrs = {
   datasets: cloneDatasets(),
   width: DEFAULT_DIMENSIONS.width,
   height: DEFAULT_DIMENSIONS.height,
+  title: '',
+  showLegend: true,
+  fontSize: 12,
 };
 
 function normalizeChartAttrs(attrs: Partial<ChartAttrs> = {}): ChartAttrs {
@@ -70,6 +76,9 @@ function normalizeChartAttrs(attrs: Partial<ChartAttrs> = {}): ChartAttrs {
     datasets: cloneDatasets(attrs.datasets),
     width: typeof attrs.width === 'number' && Number.isFinite(attrs.width) ? attrs.width : DEFAULT_ATTRS.width,
     height: typeof attrs.height === 'number' && Number.isFinite(attrs.height) ? attrs.height : DEFAULT_ATTRS.height,
+    title: attrs.title ?? DEFAULT_ATTRS.title,
+    showLegend: attrs.showLegend ?? DEFAULT_ATTRS.showLegend,
+    fontSize: typeof attrs.fontSize === 'number' && Number.isFinite(attrs.fontSize) ? attrs.fontSize : DEFAULT_ATTRS.fontSize,
   };
 }
 
@@ -159,6 +168,31 @@ export const ChartExtension = Node.create({
         },
         renderHTML: (attributes: { height?: number }) => ({
           'data-chart-height': attributes.height ?? DEFAULT_DIMENSIONS.height,
+        }),
+      },
+      title: {
+        default: DEFAULT_ATTRS.title,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-chart-title') || '',
+        renderHTML: (attributes: { title?: string }) => ({
+          'data-chart-title': attributes.title ?? '',
+        }),
+      },
+      showLegend: {
+        default: DEFAULT_ATTRS.showLegend,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-chart-legend') !== 'false',
+        renderHTML: (attributes: { showLegend?: boolean }) => ({
+          'data-chart-legend': String(attributes.showLegend ?? true),
+        }),
+      },
+      fontSize: {
+        default: DEFAULT_ATTRS.fontSize,
+        parseHTML: (element: HTMLElement) => {
+          const raw = element.getAttribute('data-chart-fontsize');
+          const parsed = raw ? Number(raw) : NaN;
+          return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_ATTRS.fontSize;
+        },
+        renderHTML: (attributes: { fontSize?: number }) => ({
+          'data-chart-fontsize': attributes.fontSize ?? DEFAULT_ATTRS.fontSize,
         }),
       },
     } satisfies Record<string, any>;

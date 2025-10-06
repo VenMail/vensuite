@@ -22,45 +22,53 @@
           </select>
         </div>
 
-        <!-- Labels -->
+        <!-- X-Axis Labels -->
         <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-blue-50/50 to-transparent dark:from-blue-950/20 p-3">
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Labels</label>
-            <span class="text-xs text-gray-500 dark:text-gray-400">{{ form.labels.length }}</span>
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">X-Axis Labels</label>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Categories or data points ({{ form.labels.length }})</p>
+            </div>
+            <Button type="button" size="sm" variant="ghost" @click="addLabel" class="h-7 text-xs">
+              + Add
+            </Button>
           </div>
           
-          <div class="space-y-1.5 mb-2 max-h-36 overflow-y-auto">
-            <div v-for="(_label, i) in form.labels" :key="i" class="flex gap-1.5">
+          <div v-if="form.labels.length" class="flex flex-wrap gap-2 mb-3">
+            <div
+              v-for="i in form.labels.length"
+              :key="i"
+              class="group inline-flex items-center gap-1.5 rounded-full bg-blue-100 dark:bg-blue-900/40 px-3 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-200 border border-blue-200 dark:border-blue-800"
+            >
+              <Pencil class="h-3 w-3 opacity-60" />
               <input
-                v-model="form.labels[i]"
+                v-model="form.labels[i - 1]"
                 type="text"
-                placeholder="Label"
-                class="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                :placeholder="`Label ${i}`"
+                class="bg-transparent border-none outline-none w-20 placeholder:text-blue-400 dark:placeholder:text-blue-500"
+                @click="($event.target as HTMLInputElement)?.select()"
               />
               <button
                 type="button"
-                @click="form.labels.splice(i, 1)"
-                class="px-2.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                @click="form.labels.splice(i - 1, 1)"
+                class="ml-1 opacity-0 group-hover:opacity-100 text-blue-500 hover:text-red-500 transition-all"
               >
                 ×
               </button>
             </div>
-            <p v-if="!form.labels.length" class="text-xs text-gray-400 dark:text-gray-500 py-2 text-center">
-              No labels yet
-            </p>
           </div>
+          <p v-else class="text-xs text-gray-400 dark:text-gray-500 py-2 text-center mb-3">
+            No labels yet. Add labels for your chart's X-axis.
+          </p>
 
           <div class="flex gap-1.5">
             <input
               v-model="newLabel"
               type="text"
-              placeholder="Add label (e.g. Q1, Jan, Week 1)"
+              placeholder="Type label name and press Enter (e.g. Q1, Jan, Week 1)"
               class="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               @keydown.enter.prevent="addLabel"
             />
-            <Button type="button" size="sm" @click="addLabel" :disabled="!newLabel.trim()">
-              Add
-            </Button>
           </div>
         </div>
 
@@ -189,7 +197,7 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref, watch } from 'vue';
-import { ChevronDown } from 'lucide-vue-next';
+import { ChevronDown, Pencil } from 'lucide-vue-next';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Button from '@/components/ui/button/Button.vue';
 import type { ChartAttrs, ChartDatasetAttr } from '@/extensions/chart';
@@ -306,6 +314,7 @@ function loadInitialValue() {
 
 function handleSubmit() {
   if (!isValid.value) return;
+  const attrs = getSelectedChartAttrs();
   emit('submit', {
     chartType: form.chartType,
     labels: [...form.labels],
@@ -313,8 +322,15 @@ function handleSubmit() {
       ...ds,
       data: [...ds.data || []],
     })),
+    title: attrs?.title || '',
+    showLegend: attrs?.showLegend ?? true,
+    fontSize: attrs?.fontSize ?? 12,
   });
   internalOpen.value = false;
+}
+
+function getSelectedChartAttrs() {
+  return props.initialValue;
 }
 
 function handleCancel() {

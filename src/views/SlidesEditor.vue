@@ -371,8 +371,8 @@ function handleThumbnailGenerated(thumbnail: string | null) {
 // Selection-driven toolbar state and commands
 const selectionState = ref<{ hasText: boolean; fontFamily?: number } | undefined>(undefined);
 const textCommand = ref<{ seq: number; fontFamily?: number }>({ seq: 0 });
-const chartCommand = ref<{ seq: number; type?: 'bar' | 'line' | 'pie' }>({ seq: 0 });
-const textAdvancedCommand = ref<{ seq: number; name?: string }>({ seq: 0 });
+const chartCommand = ref<{ seq: number; type: 'bar' | 'line' | 'pie' }>({ seq: 0, type: 'bar' });
+const textAdvancedCommand = ref<{ seq: number; name: string }>({ seq: 0, name: '' });
 const availableFonts = ref<string[]>([]);
 
 function handleSelection(payload: { hasText: boolean; fontFamily?: number }) {

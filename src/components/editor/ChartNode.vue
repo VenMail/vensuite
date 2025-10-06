@@ -111,6 +111,10 @@ function renderChart() {
   const labels = chartAttrs.value.labels;
   const datasets = buildDatasets();
 
+  const fontSize = props.node?.attrs?.fontSize ?? 12;
+  const showLegend = props.node?.attrs?.showLegend ?? true;
+  const title = props.node?.attrs?.title ?? '';
+
   chart = new Chart<SupportedChartType, number[], string>(ctx, {
     type,
     data: {
@@ -121,23 +125,51 @@ function renderChart() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
+        title: {
+          display: !!title,
+          text: title,
+          font: {
+            size: fontSize + 4,
+            weight: 'bold',
+          },
+        },
         legend: {
+          display: showLegend,
           position: 'top',
           labels: {
             boxWidth: 14,
+            font: {
+              size: fontSize,
+            },
           },
         },
         tooltip: {
           intersect: false,
+          bodyFont: {
+            size: fontSize,
+          },
+          titleFont: {
+            size: fontSize,
+          },
         },
       },
       scales: {
         x: {
           display: type !== 'pie' && type !== 'doughnut',
+          ticks: {
+            font: {
+              size: fontSize,
+            },
+          },
         },
         y: {
           display: type !== 'pie' && type !== 'doughnut',
           beginAtZero: true,
+          ticks: {
+            font: {
+              size: fontSize,
+            },
+          },
         },
       },
     },

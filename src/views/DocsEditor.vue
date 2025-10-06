@@ -112,6 +112,7 @@
           <!-- Contextual Bubble Menu -->
           <BubbleMenu
             v-if="editor"
+            ref="bubbleMenuRef"
             :editor="editor"
             :tippy-options="bubbleMenuTippyOptions"
           >
@@ -266,6 +267,50 @@
                   </button>
                 </div>
               </template>
+              
+              <template v-if="showChartTitleEdit">
+                <div :class="bubbleInlineFormClass">
+                  <input
+                    v-model="chartTitleInput"
+                    type="text"
+                    placeholder="Chart title (optional)"
+                    :class="bubbleInlineInputClass"
+                    @keydown.enter.prevent="applyChartTitle"
+                  />
+                  <button
+                    type="button"
+                    :class="[bubbleButtonBase, bubbleButtonSuccess]"
+                    title="Apply title"
+                    @click="applyChartTitle"
+                  >
+                    <CheckCircle2 class="h-4 w-4" />
+                  </button>
+                </div>
+              </template>
+              
+              <template v-if="showChartFontSizeEdit">
+                <div :class="bubbleInlineFormClass">
+                  <label class="flex items-center gap-2">
+                    <span class="text-xs text-gray-600 dark:text-gray-400">Size:</span>
+                    <input
+                      v-model.number="chartFontSizeInput"
+                      type="number"
+                      min="8"
+                      max="24"
+                      class="h-8 w-16 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 text-xs text-center"
+                      @keydown.enter.prevent="applyChartFontSize"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    :class="[bubbleButtonBase, bubbleButtonSuccess]"
+                    title="Apply font size"
+                    @click="applyChartFontSize"
+                  >
+                    <CheckCircle2 class="h-4 w-4" />
+                  </button>
+                </div>
+              </template>
             </div>
           </BubbleMenu>
 
@@ -372,6 +417,10 @@ import {
   GitFork,
   CheckCircle2,
   BarChart3,
+  AArrowUp,
+  Type,
+  Eye,
+  EyeOff,
 } from 'lucide-vue-next';
 import StarterKit from '@tiptap/starter-kit';
 import UnderlineExtension from '@tiptap/extension-underline';
@@ -864,14 +913,40 @@ const imageActions = computed<BubbleAction[]>(() => {
 
 const chartActions = computed<BubbleAction[]>(() => {
   if (!editor.value) return [];
+  const attrs = getSelectedChartAttrs();
+  const showLegend = attrs?.showLegend ?? true;
+  
   return [
     {
       key: 'edit-chart',
       icon: BarChart3,
-      handler: () => openChartConfiguratorFromBubble(),
-      tooltip: 'Configure chart',
-      label: 'Configure chart',
-      isActive: true,
+      handler: openChartConfiguratorFromBubble,
+      tooltip: 'Configure chart data',
+      label: 'Configure data',
+    },
+    {
+      key: 'chart-title',
+      icon: Type,
+      handler: () => toggleChartTitleEdit(),
+      tooltip: 'Edit chart title',
+      label: 'Title',
+      isActive: showChartTitleEdit.value,
+    },
+    {
+      key: 'toggle-legend',
+      icon: showLegend ? Eye : EyeOff,
+      handler: () => toggleChartLegend(),
+      tooltip: showLegend ? 'Hide legend' : 'Show legend',
+      label: showLegend ? 'Hide legend' : 'Show legend',
+      isActive: showLegend,
+    },
+    {
+      key: 'chart-fontsize',
+      icon: AArrowUp,
+      handler: () => toggleChartFontSizeEdit(),
+      tooltip: 'Adjust font size',
+      label: 'Font size',
+      isActive: showChartFontSizeEdit.value,
     },
   ];
 });
@@ -897,10 +972,90 @@ function getSelectedChartAttrs(): ChartAttrs | null {
   return attrs;
 }
 
+const bubbleMenuRef = ref<any>(null);
+
 function openChartConfiguratorFromBubble() {
   const attrs = getSelectedChartAttrs();
   if (!attrs) return;
+  // Close bubble menu overflow if open
+  isOverflowOpen.value = false;
+  showChartTitleEdit.value = false;
+  showChartFontSizeEdit.value = false;
+  // Hide the bubble menu
+  if (bubbleMenuRef.value?.tippy) {
+    bubbleMenuRef.value.tippy.hide();
+  }
   toolbarRef.value?.openChartConfigurator(attrs);
+}
+
+// Chart quick edit state
+const showChartTitleEdit = ref(false);
+const chartTitleInput = ref('');
+const showChartFontSizeEdit = ref(false);
+const chartFontSizeInput = ref(12);
+
+function toggleChartTitleEdit() {
+  const attrs = getSelectedChartAttrs();
+  if (!attrs) return;
+  showChartTitleEdit.value = !showChartTitleEdit.value;
+  showChartFontSizeEdit.value = false;
+  if (showChartTitleEdit.value) {
+    chartTitleInput.value = attrs.title || '';
+  }
+}
+
+function toggleChartFontSizeEdit() {
+  const attrs = getSelectedChartAttrs();
+  if (!attrs) return;
+  showChartFontSizeEdit.value = !showChartFontSizeEdit.value;
+  showChartTitleEdit.value = false;
+  if (showChartFontSizeEdit.value) {
+    chartFontSizeInput.value = attrs.fontSize ?? 12;
+  }
+}
+
+function applyChartTitle() {
+  if (!editor.value) return;
+  const { state } = editor.value;
+  const { selection } = state;
+  
+  if (selection instanceof NodeSelection && selection.node.type.name === 'chart') {
+    const pos = selection.from;
+    editor.value.chain().focus().setNodeSelection(pos).updateAttributes('chart', {
+      title: chartTitleInput.value.trim(),
+    }).run();
+  }
+  showChartTitleEdit.value = false;
+}
+
+function applyChartFontSize() {
+  if (!editor.value) return;
+  const { state } = editor.value;
+  const { selection } = state;
+  
+  if (selection instanceof NodeSelection && selection.node.type.name === 'chart') {
+    const pos = selection.from;
+    editor.value.chain().focus().setNodeSelection(pos).updateAttributes('chart', {
+      fontSize: chartFontSizeInput.value,
+    }).run();
+  }
+  showChartFontSizeEdit.value = false;
+}
+
+function toggleChartLegend() {
+  if (!editor.value) return;
+  const attrs = getSelectedChartAttrs();
+  if (!attrs) return;
+  
+  const { state } = editor.value;
+  const { selection } = state;
+  
+  if (selection instanceof NodeSelection && selection.node.type.name === 'chart') {
+    const pos = selection.from;
+    editor.value.chain().focus().setNodeSelection(pos).updateAttributes('chart', {
+      showLegend: !attrs.showLegend,
+    }).run();
+  }
 }
 
 // Bubble menu state for color pickers
@@ -912,12 +1067,14 @@ const bubbleBgColor = ref('#ffff00');
 function resetBubbleColorPickers() {
   showTextColorPicker.value = false;
   showBgColorPicker.value = false;
+  showChartTitleEdit.value = false;
+  showChartFontSizeEdit.value = false;
 }
 
 const bubbleMenuTippyOptions: Record<string, any> = {
   duration: 100,
   placement: 'top',
-  maxWidth: 340,
+  maxWidth: 400,
   onHide: () => {
     resetBubbleColorPickers();
   },
@@ -944,7 +1101,7 @@ const headingOverflowKeys = ['strike', 'color', 'highlight', 'link', 'bullet-lis
 const tablePrimaryKeys = ['add-col', 'add-row', 'merge', 'split', 'align-left-table', 'align-center-table', 'align-right-table'];
 const tableOverflowKeys = ['del-col', 'del-row'];
 const imagePrimaryKeys = ['image-align-left', 'image-align-center', 'image-align-right'];
-const chartPrimaryKeys = ['edit-chart'];
+const chartPrimaryKeys = ['edit-chart', 'chart-title', 'toggle-legend', 'chart-fontsize'];
 
 function splitActions(
   actions: BubbleAction[],
