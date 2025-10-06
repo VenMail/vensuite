@@ -387,6 +387,7 @@ import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
 import { PaginationPlus } from 'tiptap-pagination-plus';
 import { PaginationTable } from 'tiptap-table-plus';
+import { FontSize } from '@/extensions/font-size';
 
 const {
   TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus
@@ -1719,6 +1720,7 @@ function initializeEditor(
       UnderlineExtension,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TextStyle,
+      FontSize,
       FontFamily.configure({ types: ['textStyle'] }),
       Color.configure({ types: ['textStyle'] }),
       Highlight.configure({ multicolor: true }),

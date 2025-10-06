@@ -814,20 +814,20 @@ function onFontSizeChange(event: Event) {
   if (!props.editor) return;
   const target = event.target as HTMLSelectElement;
   const value = target.value;
+  const currentAttrs = { ...(props.editor.getAttributes('textStyle') ?? {}) } as Record<string, unknown>;
 
   if (value) {
-    // Apply or update font size
-    props.editor.chain().focus()
-      .updateAttributes('textStyle', { fontSize: `${value}pt` })
-      .run();
-
+    const nextAttrs = { ...currentAttrs, fontSize: `${value}pt` };
+    props.editor.chain().focus().setMark('textStyle', nextAttrs).run();
     selectedFontSize.value = value;
   } else {
-    // Remove font size if selection is cleared
-    props.editor.chain().focus()
-      .updateAttributes('textStyle', { fontSize: null })
-      .run();
-
+    delete currentAttrs.fontSize;
+    const chain = props.editor.chain().focus();
+    if (Object.keys(currentAttrs).length) {
+      chain.setMark('textStyle', currentAttrs).run();
+    } else {
+      chain.unsetMark?.('textStyle')?.run?.();
+    }
     selectedFontSize.value = '';
   }
 
