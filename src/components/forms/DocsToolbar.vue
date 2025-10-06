@@ -865,19 +865,20 @@ const lineHeights = [
   { value: '2.5', label: '2.5' },
   { value: '3', label: '3.0' },
 ];
+// Paragraph spacing options expressed as factors of current line-height
 const paragraphSpacings = [
-  { value: '0px', label: '0px', description: 'No extra paragraph spacing' },
-  { value: '4px', label: '4px' },
-  { value: '8px', label: '8px' },
-  { value: '12px', label: '12px' },
-  { value: '16px', label: '16px' },
-  { value: '24px', label: '24px' },
+  { value: '0', label: '0', description: 'No extra spacing' },
+  { value: '0.5', label: '0.5' },
+  { value: '1', label: '1.0' },
+  { value: '1.15', label: '1.15' },
+  { value: '1.5', label: '1.5' },
+  { value: '2', label: '2.0' },
 ];
 
 const selectedFontFamily = ref('');
 const selectedFontSize = ref('');
 const selectedLineHeight = ref('1');
-const selectedParagraphSpacing = ref('0px');
+const selectedParagraphSpacing = ref('0');
 const activeSpacingLabel = computed(() => {
   const lh = lineHeights.find((item) => item.value === selectedLineHeight.value);
   const ps = paragraphSpacings.find((item) => item.value === selectedParagraphSpacing.value);
@@ -921,7 +922,7 @@ const updateFontState = () => {
     }
   }
 
-  selectedParagraphSpacing.value = detectedParagraphSpacing ?? '0px';
+  selectedParagraphSpacing.value = detectedParagraphSpacing ?? '0';
   
   // Update text color
   const color = attrs.color as string | undefined;
@@ -997,12 +998,12 @@ function onFontFamilyChange(event: Event) {
 function applyParagraphSpacing(value: string) {
   if (!props.editor) return;
   const chain = props.editor.chain().focus();
-  if (value && value !== '0px') {
+  if (value && value !== '0') {
     chain.setParagraphSpacing?.(value).run?.();
   } else {
     chain.unsetParagraphSpacing?.().run?.();
   }
-  selectedParagraphSpacing.value = value || '0px';
+  selectedParagraphSpacing.value = value || '0';
   updateFontState();
 }
 
