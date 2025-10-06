@@ -539,82 +539,130 @@
 
   <!-- New File Dialog with Templates -->
   <Dialog v-model:open="showNewFileDialog">
-    <DialogContent class="sm:max-w-4xl max-h-[80vh]">
+    <DialogContent class="sm:max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
       <DialogHeader>
-        <DialogTitle>Create New Document</DialogTitle>
+        <DialogTitle class="text-xl">Create New Document</DialogTitle>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Choose a template to get started quickly</p>
       </DialogHeader>
-      <div class="grid gap-4 py-4 overflow-y-auto max-h-[60vh] custom-scrollbar">
-        <div class="grid grid-cols-3 gap-4">
+      <div class="overflow-y-auto flex-1 py-6 px-1 custom-scrollbar">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-5">
           <!-- Blank Document -->
-          <button @click="createFromTemplate('blank')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
-            <div class="w-full h-32 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 flex items-center justify-center">
-              <svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <button @click="createFromTemplate('blank')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent dark:from-gray-800/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 flex items-center justify-center shadow-sm">
+              <svg class="h-14 w-14 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Blank Document</span>
+            <div class="relative text-center">
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Blank Document</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Start from scratch</p>
+            </div>
           </button>
 
           <!-- Business Letter -->
-          <button @click="createFromTemplate('letter')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
-            <div class="w-full h-32 bg-gradient-to-b from-blue-50 to-white dark:from-blue-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
-              <div class="h-2 w-16 bg-blue-400 rounded mb-2"></div>
-              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
-              <div class="h-1 w-3/4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+          <button @click="createFromTemplate('letter')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent dark:from-blue-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-blue-50 via-white to-white dark:from-blue-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">
+              <div class="h-2.5 w-20 bg-blue-500 rounded mb-3"></div>
+              <div class="space-y-1.5">
+                <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+                <div class="h-1 w-4/5 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </div>
             </div>
-            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Business Letter</span>
+            <div class="relative text-center">
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Business Letter</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Professional correspondence</p>
+            </div>
           </button>
 
           <!-- Report -->
-          <button @click="createFromTemplate('report')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
-            <div class="w-full h-32 bg-gradient-to-b from-purple-50 to-white dark:from-purple-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
-              <div class="h-3 w-20 bg-purple-500 rounded mb-2"></div>
-              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
-              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
-              <div class="h-1 w-2/3 bg-gray-300 dark:bg-gray-600 rounded"></div>
+          <button @click="createFromTemplate('report')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent dark:from-purple-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-purple-50 via-white to-white dark:from-purple-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">
+              <div class="h-3.5 w-24 bg-purple-600 rounded mb-3"></div>
+              <div class="space-y-2">
+                <div class="h-1.5 w-16 bg-purple-400 rounded"></div>
+                <div class="space-y-1">
+                  <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+                  <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+                  <div class="h-1 w-3/4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                </div>
+              </div>
             </div>
-            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Report</span>
+            <div class="relative text-center">
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Report</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Structured analysis</p>
+            </div>
           </button>
 
           <!-- Resume -->
-          <button @click="createFromTemplate('resume')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
-            <div class="w-full h-32 bg-gradient-to-b from-green-50 to-white dark:from-green-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
-              <div class="h-2 w-24 bg-green-500 rounded mb-2"></div>
-              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
-              <div class="h-1 w-4/5 bg-gray-300 dark:bg-gray-600 rounded"></div>
+          <button @click="createFromTemplate('resume')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent dark:from-green-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-green-50 via-white to-white dark:from-green-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">
+              <div class="h-3 w-28 bg-green-600 rounded mb-2"></div>
+              <div class="h-1 w-20 bg-green-400 rounded mb-3"></div>
+              <div class="space-y-2">
+                <div class="h-1.5 w-20 bg-gray-400 dark:bg-gray-500 rounded"></div>
+                <div class="space-y-1">
+                  <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+                  <div class="h-1 w-4/5 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                </div>
+              </div>
             </div>
-            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Resume/CV</span>
+            <div class="relative text-center">
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Resume/CV</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Professional profile</p>
+            </div>
           </button>
 
           <!-- Meeting Notes -->
-          <button @click="createFromTemplate('notes')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
-            <div class="w-full h-32 bg-gradient-to-b from-yellow-50 to-white dark:from-yellow-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
-              <div class="h-2 w-16 bg-yellow-500 rounded mb-2"></div>
-              <div class="flex gap-1 mb-1">
-                <div class="h-1 w-1 bg-gray-400 rounded-full"></div>
-                <div class="h-1 flex-1 bg-gray-300 dark:bg-gray-600 rounded"></div>
-              </div>
-              <div class="flex gap-1">
-                <div class="h-1 w-1 bg-gray-400 rounded-full"></div>
-                <div class="h-1 flex-1 bg-gray-300 dark:bg-gray-600 rounded"></div>
+          <button @click="createFromTemplate('notes')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-yellow-50 to-transparent dark:from-yellow-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-yellow-50 via-white to-white dark:from-yellow-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">
+              <div class="h-2.5 w-20 bg-yellow-600 rounded mb-3"></div>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="h-1.5 w-1.5 bg-yellow-500 rounded-full"></div>
+                  <div class="h-1 flex-1 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="h-1.5 w-1.5 bg-yellow-500 rounded-full"></div>
+                  <div class="h-1 flex-1 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="h-1.5 w-1.5 bg-yellow-500 rounded-full"></div>
+                  <div class="h-1 flex-1 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                </div>
               </div>
             </div>
-            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Meeting Notes</span>
+            <div class="relative text-center">
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Meeting Notes</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Capture discussions</p>
+            </div>
           </button>
 
           <!-- Article -->
-          <button @click="createFromTemplate('article')" class="group flex flex-col items-center p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-all">
-            <div class="w-full h-32 bg-gradient-to-b from-red-50 to-white dark:from-red-900 dark:to-gray-800 border border-gray-300 dark:border-gray-600 rounded mb-3 p-2">
-              <div class="h-3 w-full bg-red-500 rounded mb-2"></div>
-              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
-              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
-              <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+          <button @click="createFromTemplate('article')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-red-50 to-transparent dark:from-red-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-red-50 via-white to-white dark:from-red-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">
+              <div class="h-3.5 w-full bg-red-600 rounded mb-2"></div>
+              <div class="h-1 w-24 bg-red-400 rounded mb-3"></div>
+              <div class="space-y-1">
+                <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+                <div class="h-1 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+                <div class="h-1 w-4/5 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              </div>
             </div>
-            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Article/Blog</span>
+            <div class="relative text-center">
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Article/Blog</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Long-form content</p>
+            </div>
           </button>
         </div>
       </div>
-      <DialogFooter>
+      <DialogFooter class="flex-shrink-0">
         <Button variant="outline" @click="showNewFileDialog = false">Cancel</Button>
       </DialogFooter>
     </DialogContent>
@@ -630,6 +678,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
 import type { Editor } from '@tiptap/vue-3';
 import {
   AlignCenter,
@@ -995,21 +1044,60 @@ function handleExport(format: string) {
   emit('export', format);
 }
 
-function createFromTemplate(template: string) {
+const router = useRouter();
+
+// Template cache
+const templateCache = new Map<string, string>();
+
+async function loadTemplate(templateName: string): Promise<string> {
+  // Check cache first
+  if (templateCache.has(templateName)) {
+    return templateCache.get(templateName)!;
+  }
+
+  try {
+    // Dynamically import template file
+    const templateModule = await import(`../../assets/docs/templates/${templateName}.html?raw`);
+    const content = templateModule.default;
+    
+    // Cache the template
+    templateCache.set(templateName, content);
+    return content;
+  } catch (error) {
+    console.error(`Failed to load template: ${templateName}`, error);
+    // Fallback to blank template
+    return '<p></p>';
+  }
+}
+
+function isDocumentBlank(): boolean {
+  if (!props.editor) return true;
+  const json = props.editor.getJSON();
+  // Check if document only has empty paragraph
+  if (json.content?.length === 1) {
+    const firstNode = json.content[0];
+    if (firstNode.type === 'paragraph' && (!firstNode.content || firstNode.content.length === 0)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function createFromTemplate(template: string) {
   if (!props.editor) return;
   
-  const templates: Record<string, string> = {
-    blank: '<p></p>',
-    letter: '<p style="text-align: right">Your Name<br>Your Address<br>City, State ZIP<br>Email<br>Phone</p><p><br></p><p>Date</p><p><br></p><p>Recipient Name<br>Company<br>Address</p><p><br></p><p>Dear [Recipient],</p><p><br></p><p>Start your letter here...</p><p><br></p><p>Sincerely,<br>Your Name</p>',
-    report: '<h1>Report Title</h1><p><em>Author Name | Date</em></p><h2>Executive Summary</h2><p>Brief overview of the report...</p><h2>Introduction</h2><p>Background and context...</p><h2>Findings</h2><p>Key findings and analysis...</p><h2>Conclusion</h2><p>Summary and recommendations...</p>',
-    resume: '<h1>Your Name</h1><p>Email | Phone | LinkedIn</p><h2>Professional Summary</h2><p>Brief professional summary highlighting key skills and experience...</p><h2>Experience</h2><p><strong>Job Title</strong> - Company Name<br><em>Start Date - End Date</em></p><ul><li>Key achievement or responsibility</li><li>Key achievement or responsibility</li></ul><h2>Education</h2><p><strong>Degree</strong> - University Name<br><em>Graduation Year</em></p><h2>Skills</h2><ul><li>Skill 1</li><li>Skill 2</li><li>Skill 3</li></ul>',
-    notes: '<h1>Meeting Notes</h1><p><strong>Date:</strong> [Date]<br><strong>Attendees:</strong> [Names]<br><strong>Topic:</strong> [Topic]</p><h2>Agenda</h2><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul><h2>Discussion Points</h2><p>Key discussion points...</p><h2>Action Items</h2><ul data-type="taskList"><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Action item 1</p></div></li><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Action item 2</p></div></li></ul>',
-    article: '<h1>Article Title</h1><p><em>By Author Name | Published Date</em></p><p><br></p><p>Opening paragraph that hooks the reader...</p><h2>Section Heading</h2><p>Content for this section...</p><blockquote>A relevant quote or highlight</blockquote><p>More content...</p><h2>Conclusion</h2><p>Wrap up your article...</p>',
-  };
-  
-  const content = templates[template] || templates.blank;
-  props.editor.commands.setContent(content);
   showNewFileDialog.value = false;
+  
+  // If document is not blank, open template in new tab
+  if (!isDocumentBlank()) {
+    const url = router.resolve({ name: 'docs-template', params: { template } }).href;
+    window.open(url, '_blank');
+    return;
+  }
+  
+  // Load and apply template to current document
+  const content = await loadTemplate(template);
+  props.editor.commands.setContent(content);
 }
 
 function applyPaginationSettings() {

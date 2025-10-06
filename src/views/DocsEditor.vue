@@ -15,7 +15,7 @@
       :share-members="shareMembers"
       @update:title="documentTitle = $event"
       @back="goBack"
-      @manual-save="saveDocument"
+      @manual-save="() => saveDocument(true)"
       @copy-link="copyShareLink"
       @change-privacy="updateVisibility"
       @invite="handleInviteMember"
@@ -384,6 +384,21 @@
         />
       </DialogContent>
     </Dialog>
+
+    <!-- Image Picker Dialog -->
+    <Dialog v-model:open="showImageUrlDialog">
+      <DialogContent class="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Replace Image</DialogTitle>
+        </DialogHeader>
+        <ImagePicker
+          :initial-url="imageUrlInput"
+          submit-label="Replace"
+          @submit="replaceImageUrl"
+          @cancel="showImageUrlDialog = false"
+        />
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
@@ -421,6 +436,8 @@ import {
   Type,
   Eye,
   EyeOff,
+  Image as ImageIcon,
+  Upload,
 } from 'lucide-vue-next';
 import StarterKit from '@tiptap/starter-kit';
 import UnderlineExtension from '@tiptap/extension-underline';
@@ -451,6 +468,7 @@ import type { FileData } from '@/types';
 import DocsToolbar from '@/components/forms/DocsToolbar.vue';
 import DocsTitleBar from '@/components/forms/DocsTitleBar.vue';
 import ShareCard from '@/components/ShareCard.vue';
+import ImagePicker from '@/components/ImagePicker.vue';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { useAuthStore } from '@/store/auth';
@@ -880,10 +898,71 @@ const tableActions = computed<BubbleAction[]>(() => {
   ];
 });
 
+// Image replacement state
+const showImageUrlDialog = ref(false);
+const imageUrlInput = ref('');
+
+function openImageUrlDialog() {
+  const attrs = editor.value?.getAttributes('image');
+  imageUrlInput.value = attrs?.src || '';
+  showImageUrlDialog.value = true;
+}
+
+function replaceImageUrl() {
+  if (!editor.value || !imageUrlInput.value) return;
+  
+  editor.value
+    .chain()
+    .focus()
+    .updateAttributes('image', { src: imageUrlInput.value })
+    .run();
+  
+  showImageUrlDialog.value = false;
+  imageUrlInput.value = '';
+}
+
+function openImageUpload() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file || !editor.value) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const src = event.target?.result as string;
+      if (src) {
+        editor.value
+          ?.chain()
+          .focus()
+          .updateAttributes('image', { src })
+          .run();
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
 const imageActions = computed<BubbleAction[]>(() => {
   if (!editor.value) return [];
   const instance = editor.value;
   return [
+    {
+      key: 'replace-url',
+      icon: ImageIcon,
+      handler: openImageUrlDialog,
+      tooltip: 'Replace with URL',
+      label: 'Replace URL',
+    },
+    {
+      key: 'upload-image',
+      icon: Upload,
+      handler: openImageUpload,
+      tooltip: 'Upload new image',
+      label: 'Upload',
+    },
     {
       key: 'image-align-left',
       icon: AlignLeft,
@@ -907,6 +986,14 @@ const imageActions = computed<BubbleAction[]>(() => {
       tooltip: 'Align right',
       label: 'Align right',
       isActive: instance.isActive({ textAlign: 'right' }),
+    },
+    {
+      key: 'delete-image',
+      icon: Trash2,
+      handler: () => instance.chain().focus().deleteSelection().run(),
+      tooltip: 'Delete image',
+      label: 'Delete',
+      className: 'text-red-500 dark:text-red-400',
     },
   ];
 });
@@ -1100,7 +1187,8 @@ const headingPrimaryKeys = ['h2', 'h3', 'text', 'bold', 'italic', 'underline', '
 const headingOverflowKeys = ['strike', 'color', 'highlight', 'link', 'bullet-list', 'ordered-list', 'align-left', 'align-center', 'align-right'];
 const tablePrimaryKeys = ['add-col', 'add-row', 'merge', 'split', 'align-left-table', 'align-center-table', 'align-right-table'];
 const tableOverflowKeys = ['del-col', 'del-row'];
-const imagePrimaryKeys = ['image-align-left', 'image-align-center', 'image-align-right'];
+const imagePrimaryKeys = ['replace-url', 'upload-image', 'image-align-left', 'image-align-center', 'image-align-right'];
+const imageOverflowKeys = ['delete-image'];
 const chartPrimaryKeys = ['edit-chart', 'chart-title', 'toggle-legend', 'chart-fontsize'];
 
 function splitActions(
@@ -1145,7 +1233,7 @@ function splitActions(
 
 const actionSets = computed(() => {
   if (isImageEditing.value) {
-    return splitActions(imageActions.value, imagePrimaryKeys, []);
+    return splitActions(imageActions.value, imagePrimaryKeys, imageOverflowKeys);
   }
   if (isTableSelection.value) {
     return splitActions(tableActions.value, tablePrimaryKeys, tableOverflowKeys);
@@ -1390,11 +1478,13 @@ const contentPadding = computed(() => {
   };
 });
 
-async function saveDocument() {
+async function saveDocument(isManual = false) {
   if (!editor.value || !currentDoc.value) return;
 
   if (editor.value.isEmpty && !hasEnteredContent.value) {
-    toast.info('Add some content before saving.');
+    if (isManual) {
+      toast.info('Add some content before saving.');
+    }
     return;
   }
 
@@ -1417,7 +1507,9 @@ async function saveDocument() {
       : false;
 
     if (!hasMeaningfulContent) {
-      toast.info('Your document is still empty. Add content before saving.');
+      if (isManual) {
+        toast.info('Your document is still empty. Add content before saving.');
+      }
       return;
     }
 
@@ -1433,10 +1525,14 @@ async function saveDocument() {
       currentDoc.value = result.document;
       lastSavedAt.value = new Date();
       hasUnsavedChanges.value = false;
-      toast.success('Document saved');
+      // Only show toast for manual saves
+      if (isManual) {
+        toast.success('Document saved');
+      }
     }
   } catch (error) {
     console.error('Failed to save document:', error);
+    // Always show error toasts
     toast.error('Failed to save document');
   } finally {
     isSaving.value = false;
@@ -1449,17 +1545,17 @@ function scheduleSave() {
     clearTimeout(saveTimeout);
   }
   
-  // Schedule save after 5 seconds of idle
+  // Schedule save after 3 seconds of idle (more responsive)
   saveTimeout = setTimeout(() => {
-    saveDocument();
-  }, 5000);
+    saveDocument(false);
+  }, 3000);
   
-  // Ensure we save within 3 minutes regardless of activity
+  // Ensure we save within 30 seconds regardless of activity
   if (!maxWaitTimeout) {
     maxWaitTimeout = setTimeout(() => {
-      saveDocument();
+      saveDocument(false);
       maxWaitTimeout = null;
-    }, 180000); // 3 minutes
+    }, 30000); // 30 seconds
   }
 }
 
@@ -1716,6 +1812,17 @@ watch(documentTitle, (newTitle) => {
   }
 });
 
+async function loadTemplateContent(templateName: string): Promise<string> {
+  try {
+    // Dynamically import template file
+    const templateModule = await import(`../assets/docs/templates/${templateName}.html?raw`);
+    return templateModule.default;
+  } catch (error) {
+    console.error(`Failed to load template: ${templateName}`, error);
+    return '<p></p>'; // Fallback to blank
+  }
+}
+
 async function initializeDocument() {
   const docId = route.params.appFileId as string | undefined;
   const template = route.params.template as string | undefined;
@@ -1724,16 +1831,7 @@ async function initializeDocument() {
   
   // Check if loading from template
   if (template) {
-    const templates: Record<string, string> = {
-      blank: '<p></p>',
-      letter: '<p style="text-align: right">Your Name<br>Your Address<br>City, State ZIP<br>Email<br>Phone</p><p><br></p><p>Date</p><p><br></p><p>Recipient Name<br>Company<br>Address</p><p><br></p><p>Dear [Recipient],</p><p><br></p><p>Start your letter here...</p><p><br></p><p>Sincerely,<br>Your Name</p>',
-      report: '<h1>Report Title</h1><p><em>Author Name | Date</em></p><h2>Executive Summary</h2><p>Brief overview of the report...</p><h2>Introduction</h2><p>Background and context...</p><h2>Findings</h2><p>Key findings and analysis...</p><h2>Conclusion</h2><p>Summary and recommendations...</p>',
-      resume: '<h1>Your Name</h1><p>Email | Phone | LinkedIn</p><h2>Professional Summary</h2><p>Brief professional summary highlighting key skills and experience...</p><h2>Experience</h2><p><strong>Job Title</strong> - Company Name<br><em>Start Date - End Date</em></p><ul><li>Key achievement or responsibility</li><li>Key achievement or responsibility</li></ul><h2>Education</h2><p><strong>Degree</strong> - University Name<br><em>Graduation Year</em></p><h2>Skills</h2><ul><li>Skill 1</li><li>Skill 2</li><li>Skill 3</li></ul>',
-      notes: '<h1>Meeting Notes</h1><p><strong>Date:</strong> [Date]<br><strong>Attendees:</strong> [Names]<br><strong>Topic:</strong> [Topic]</p><h2>Agenda</h2><ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul><h2>Discussion Points</h2><p>Key discussion points...</p><h2>Action Items</h2><ul data-type="taskList"><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Action item 1</p></div></li><li data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Action item 2</p></div></li></ul>',
-      article: '<h1>Article Title</h1><p><em>By Author Name | Published Date</em></p><p><br></p><p>Opening paragraph that hooks the reader...</p><h2>Section Heading</h2><p>Content for this section...</p><blockquote>A relevant quote or highlight</blockquote><p>More content...</p><h2>Conclusion</h2><p>Wrap up your article...</p>',
-    };
-    
-    const templateContent = templates[template] || templates.blank;
+    const templateContent = await loadTemplateContent(template);
     const templateTitle = `${template.charAt(0).toUpperCase() + template.slice(1)} Document`;
     
     // Load template content into editor
@@ -2353,8 +2451,17 @@ onUnmounted(() => {
   margin: 0;
 }
 
+/* Prevent table resize handles from splitting across pages */
 :deep(.tiptap .handle) {
   z-index: 40!important;
+  position: sticky !important;
+  top: 0;
+}
+
+/* Keep handle container with table */
+:deep(.tiptap [style*="--cell-count"] > div[style*="position: relative"]) {
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 /* Horizontal Rule */
