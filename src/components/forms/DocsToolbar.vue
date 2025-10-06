@@ -192,6 +192,48 @@
         >
           <AlignRight class="h-4 w-4" />
         </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button
+              class="inline-flex h-8 items-center gap-1 rounded-md border border-gray-300 bg-white px-2 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+              title="Line & paragraph spacing"
+            >
+              <span class="font-semibold">{{ activeSpacingLabel }}</span>
+              <ChevronDown class="h-3 w-3 opacity-60 inline-flex" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" class="w-56 p-1">
+            <div class="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Line height
+            </div>
+            <DropdownMenuRadioGroup :model-value="selectedLineHeight" @update:model-value="applyLineHeight">
+              <DropdownMenuRadioItem
+                v-for="option in lineHeights"
+                :key="option.value"
+                :value="option.value"
+                class="flex items-center justify-between gap-2"
+              >
+                <span>{{ option.label }}</span>
+                <Check v-if="selectedLineHeight === option.value" class="h-3.5 w-3.5 text-blue-500" />
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <div class="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Paragraph spacing
+            </div>
+            <DropdownMenuRadioGroup :model-value="selectedParagraphSpacing" @update:model-value="applyParagraphSpacing">
+              <DropdownMenuRadioItem
+                v-for="option in paragraphSpacings"
+                :key="option.value"
+                :value="option.value"
+                class="flex items-center justify-between gap-2"
+              >
+                <span>{{ option.label }}</span>
+                <Check v-if="selectedParagraphSpacing === option.value" class="h-3.5 w-3.5 text-blue-500" />
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           class="tiptap-toolbar__btn"
           :class="{ 'is-active': editor?.isActive('bulletList') }"
@@ -668,7 +710,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount } from 'vue';
+import { computed, ref, watch, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import type { Editor } from '@tiptap/vue-3';
 import {
@@ -677,6 +719,7 @@ import {
   AlignRight,
   BarChart3,
   Bold,
+  Check,
   ChevronDown,
   Code,
   Code2,
@@ -713,6 +756,14 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import Button from '@/components/ui/button/Button.vue';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import ChartConfigurator from '@/components/editor/ChartConfigurator.vue';
 import ImagePicker from '@/components/ImagePicker.vue';
 import type { ChartAttrs } from '@/extensions/chart';
@@ -804,11 +855,39 @@ const fontFamilies = [
 ];
 
 const fontSizes = ['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '32', '36', '48', '72'];
+const lineHeights = [
+  { value: '1', label: '1.0', description: 'Default line height' },
+  { value: '1.15', label: '1.15' },
+  { value: '1.25', label: '1.25' },
+  { value: '1.5', label: '1.5' },
+  { value: '1.75', label: '1.75' },
+  { value: '2', label: '2.0' },
+  { value: '2.5', label: '2.5' },
+  { value: '3', label: '3.0' },
+];
+const paragraphSpacings = [
+  { value: '0px', label: '0px', description: 'No extra paragraph spacing' },
+  { value: '4px', label: '4px' },
+  { value: '8px', label: '8px' },
+  { value: '12px', label: '12px' },
+  { value: '16px', label: '16px' },
+  { value: '24px', label: '24px' },
+];
 
 const selectedFontFamily = ref('');
 const selectedFontSize = ref('');
+const selectedLineHeight = ref('1');
+const selectedParagraphSpacing = ref('0px');
+const activeSpacingLabel = computed(() => {
+  const lh = lineHeights.find((item) => item.value === selectedLineHeight.value);
+  const ps = paragraphSpacings.find((item) => item.value === selectedParagraphSpacing.value);
+  return `${lh?.value ?? '1.0'} / ${ps?.value ?? '0px'}`;
+});
 const currentTextColor = ref('#000000');
 const currentBgColor = ref('#ffffff');
+
+const lineHeightTargets = ['paragraph', 'heading', 'listItem', 'taskItem'] as const;
+const paragraphSpacingTargets = lineHeightTargets;
 
 // Update font and color state when editor selection changes
 const updateFontState = () => {
@@ -820,6 +899,29 @@ const updateFontState = () => {
   selectedFontFamily.value = ff ?? '';
   const rawSize = fs ?? '';
   selectedFontSize.value = rawSize.endsWith('pt') ? rawSize.replace(/pt$/, '') : rawSize;
+
+  let detectedLineHeight: string | undefined;
+  for (const type of lineHeightTargets) {
+    const nodeAttrs = props.editor.getAttributes(type as string) as { lineHeight?: string };
+    if (nodeAttrs?.lineHeight) {
+      detectedLineHeight = nodeAttrs.lineHeight;
+      break;
+    }
+  }
+
+
+  selectedLineHeight.value = detectedLineHeight ?? '1';
+
+  let detectedParagraphSpacing: string | undefined;
+  for (const type of paragraphSpacingTargets) {
+    const nodeAttrs = props.editor.getAttributes(type as string) as { paragraphSpacing?: string };
+    if (nodeAttrs?.paragraphSpacing) {
+      detectedParagraphSpacing = nodeAttrs.paragraphSpacing;
+      break;
+    }
+  }
+
+  selectedParagraphSpacing.value = detectedParagraphSpacing ?? '0px';
   
   // Update text color
   const color = attrs.color as string | undefined;
@@ -836,6 +938,7 @@ const updateFontState = () => {
   updateChartSelectionState();
 };
 
+
 watch(
   () => props.editor,
   (next, prev) => {
@@ -849,6 +952,8 @@ watch(
     } else {
       selectedFontFamily.value = '';
       selectedFontSize.value = '';
+      selectedLineHeight.value = '1';
+      selectedParagraphSpacing.value = '0px';
       chartInitialValue.value = null;
     }
   },
@@ -861,18 +966,43 @@ onBeforeUnmount(() => {
   instance?.off?.('transaction', updateFontState);
 });
 
+function applyLineHeight(value: string) {
+  if (!props.editor) return;
+  const chain = props.editor.chain().focus();
+  if (value && value !== '1') {
+    chain.setLineHeight?.(value).run?.();
+  } else {
+    chain.unsetLineHeight?.().run?.();
+  }
+  selectedLineHeight.value = value || '1';
+  updateFontState();
+}
+
 function onFontFamilyChange(event: Event) {
   if (!props.editor) return;
   const target = event.target as HTMLSelectElement;
   const value = target.value;
-  const chain = props.editor.chain().focus();
 
   if (value) {
-    chain.setFontFamily(value).run();
+    props.editor.chain().focus().setFontFamily?.(value).run?.();
+    selectedFontFamily.value = value;
   } else {
-    chain.unsetFontFamily?.().run?.();
+    props.editor.chain().focus().unsetFontFamily?.().run?.();
+    selectedFontFamily.value = '';
   }
-  selectedFontFamily.value = value;
+
+  updateFontState();
+}
+
+function applyParagraphSpacing(value: string) {
+  if (!props.editor) return;
+  const chain = props.editor.chain().focus();
+  if (value && value !== '0px') {
+    chain.setParagraphSpacing?.(value).run?.();
+  } else {
+    chain.unsetParagraphSpacing?.().run?.();
+  }
+  selectedParagraphSpacing.value = value || '0px';
   updateFontState();
 }
 
@@ -1025,6 +1155,7 @@ function updateChartSelectionState() {
 
 defineExpose({
   openChartConfigurator: showChartConfigurator,
+  chartDialogOpen: showChartDialog,
 });
 
 function toggleExpanded() {
@@ -1041,6 +1172,16 @@ const router = useRouter();
 // Template cache
 const templateCache = new Map<string, string>();
 
+const docsTemplateLoaders = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('../../assets/docs/templates/*.html', { as: 'raw' })
+  ).map(([path, loader]) => {
+    const fileName = path.split('/').pop() ?? '';
+    const templateKey = fileName.replace(/\.html$/, '');
+    return [templateKey, loader as () => Promise<string>];
+  })
+) as Record<string, () => Promise<string>>;
+
 async function loadTemplate(templateName: string): Promise<string> {
   // Check cache first
   if (templateCache.has(templateName)) {
@@ -1048,9 +1189,13 @@ async function loadTemplate(templateName: string): Promise<string> {
   }
 
   try {
-    // Dynamically import template file
-    const templateModule = await import(`../../assets/docs/templates/${templateName}.html?raw`);
-    const content = templateModule.default;
+    const loader = docsTemplateLoaders[templateName];
+    if (!loader) {
+      console.error(`Template not found: ${templateName}`);
+      return '<p></p>';
+    }
+
+    const content = await loader();
     
     // Cache the template
     templateCache.set(templateName, content);

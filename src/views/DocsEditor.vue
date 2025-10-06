@@ -431,6 +431,8 @@ import { ImagePlus } from 'tiptap-image-plus';
 import { PaginationPlus } from 'tiptap-pagination-plus';
 import { PaginationTable } from 'tiptap-table-plus';
 import { FontSize } from '@/extensions/font-size';
+import { LineHeight } from '@/extensions/line-height';
+import { ParagraphSpacing } from '@/extensions/paragraph-spacing';
 import { ChartExtension } from '@/extensions/chart';
 import type { ChartAttrs } from '@/extensions/chart';
 
@@ -630,6 +632,16 @@ const isChartSelection = computed(() => !!editor.value && editor.value.isActive(
 
 const activeTextColor = computed(() => editor.value?.getAttributes('textStyle')?.color as string | undefined);
 const activeHighlightColor = computed(() => editor.value?.getAttributes('highlight')?.color as string | undefined);
+
+const docsTemplateCache = new Map<string, string>();
+const docsTemplateLoaders = Object.fromEntries(
+  Object.entries(import.meta.glob('../assets/docs/templates/*.html', { as: 'raw' }))
+    .map(([path, loader]) => {
+      const fileName = path.split('/').pop() ?? '';
+      const templateKey = fileName.replace(/\.html$/, '');
+      return [templateKey, loader as () => Promise<string>];
+    })
+) as Record<string, () => Promise<string>>;
 
 type BubbleAction = {
   key: string;
@@ -875,13 +887,14 @@ const showImageUrlDialog = ref(false);
 const imageUrlInput = ref('');
 
 function openImageUrlDialog() {
-  // Try both 'image' and 'imagePlus' node types
   let attrs = editor.value?.getAttributes('image');
   if (!attrs?.src) {
     attrs = editor.value?.getAttributes('imagePlus');
   }
   imageUrlInput.value = attrs?.src || '';
+  closeTiptapBubbleMenu();
   showImageUrlDialog.value = true;
+  isOverflowOpen.value = false;
 }
 
 function replaceImageUrl(url: string) {
@@ -1042,6 +1055,31 @@ function getSelectedChartAttrs(): ChartAttrs | null {
 
 const bubbleMenuRef = ref<any>(null);
 
+function closeTiptapBubbleMenu(): void {
+  // Query all Tippy root containers (used by Tiptap BubbleMenu)
+  const tippies = document.querySelectorAll<HTMLElement>('[data-tippy-root]');
+
+  tippies.forEach((tippy) => {
+    const box = tippy.querySelector<HTMLElement>('.tippy-box');
+    if (!box) return;
+
+    // Hide visually and disable interaction
+    tippy.style.visibility = 'hidden';
+    tippy.style.opacity = '0';
+    tippy.style.pointerEvents = 'none';
+
+    // Try to call the Tippy instance hide method if available
+    const anyTippy = tippy as any;
+    if (anyTippy._tippy && typeof anyTippy._tippy.hide === 'function') {
+      try {
+        anyTippy._tippy.hide();
+      } catch {
+        // Silently ignore in case Tippy instance is already destroyed
+      }
+    }
+  });
+}
+
 function openChartConfiguratorFromBubble() {
   const attrs = getSelectedChartAttrs();
   if (!attrs) return;
@@ -1050,9 +1088,8 @@ function openChartConfiguratorFromBubble() {
   showChartTitleEdit.value = false;
   showChartFontSizeEdit.value = false;
   // Hide the bubble menu
-  if (bubbleMenuRef.value?.tippy) {
-    bubbleMenuRef.value.tippy.hide();
-  }
+  closeTiptapBubbleMenu();
+
   toolbarRef.value?.openChartConfigurator(attrs);
 }
 
@@ -1596,8 +1633,9 @@ function printAsHtml() {
     }
     
     h1, h2, h3, h4, h5, h6 {
-      margin-top: 1.5em;
-      margin-bottom: 0.5em;
+      /* Neutralize default margins to let paragraphSpacing extension control spacing */
+      margin-top: 0;
+      margin-bottom: 0;
       font-weight: 600;
       line-height: 1.3;
     }
@@ -1610,7 +1648,9 @@ function printAsHtml() {
     h6 { font-size: 1em; }
     
     p {
-      margin-bottom: 1em;
+      /* Neutralize default margins to let paragraphSpacing extension control spacing */
+      margin-top: 0;
+      margin-bottom: 0;
     }
     
     ul, ol {
@@ -1797,10 +1837,20 @@ watch(documentTitle, (newTitle) => {
 });
 
 async function loadTemplateContent(templateName: string): Promise<string> {
+  if (docsTemplateCache.has(templateName)) {
+    return docsTemplateCache.get(templateName)!;
+  }
+
   try {
-    // Dynamically import template file
-    const templateModule = await import(`../assets/docs/templates/${templateName}.html?raw`);
-    return templateModule.default;
+    const loader = docsTemplateLoaders[templateName];
+    if (!loader) {
+      console.error(`Template not found: ${templateName}`);
+      return '<p></p>';
+    }
+
+    const content = await loader();
+    docsTemplateCache.set(templateName, content);
+    return content;
   } catch (error) {
     console.error(`Failed to load template: ${templateName}`, error);
     return '<p></p>'; // Fallback to blank
@@ -2011,6 +2061,8 @@ function initializeEditor(
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TextStyle,
       FontSize,
+      LineHeight,
+      ParagraphSpacing,
       FontFamily.configure({ types: ['textStyle'] }),
       Color.configure({ types: ['textStyle'] }),
       Highlight.configure({ multicolor: true }),
@@ -2079,6 +2131,31 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Neutralize Tailwind Typography defaults so paragraphSpacing controls spacing */
+:deep(.prose :where(p):not(:where([class~="not-prose"],[class~="not-prose"] *))),
+:deep(.prose-lg :where(p):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+:deep(.prose :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"],[class~="not-prose"] *))),
+:deep(.prose-lg :where(h1,h2,h3,h4,h5,h6):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Neutralize ProseMirror defaults to allow paragraphSpacing to apply via inline style */
+:deep(.ProseMirror p),
+:deep(.ProseMirror h1),
+:deep(.ProseMirror h2),
+:deep(.ProseMirror h3),
+:deep(.ProseMirror h4),
+:deep(.ProseMirror h5),
+:deep(.ProseMirror h6) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .editor-placeholder-overlay {
   position: absolute;
   inset: 0;
@@ -2436,10 +2513,16 @@ onUnmounted(() => {
 }
 
 /* Prevent table resize handles from splitting across pages */
+:deep(.tiptap table) {
+  position: relative;
+}
+
 :deep(.tiptap .handle) {
+  position: absolute !important;
+  left: 0;
+  bottom: 0;
+  transform: translate(-50%, 50%);
   z-index: 40!important;
-  position: sticky !important;
-  top: 0;
 }
 
 /* Keep handle container with table */
@@ -2517,5 +2600,3 @@ onUnmounted(() => {
 }
 
 </style>
-
-

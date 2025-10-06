@@ -157,6 +157,20 @@ const apiToPerm: Record<'v' | 'c' | 'e', ShareMember['permission']> = {
   e: 'edit',
 };
 
+const slideTemplateCache = new Map<string, SlideDeckTemplate>();
+const slideTemplateLoaders = Object.fromEntries(
+  Object.entries(
+    import.meta.glob('@/assets/templates/*.json', {
+      import: 'default',
+      eager: false,
+    })
+  ).map(([path, loader]) => {
+    const fileName = path.split('/').pop() ?? '';
+    const templateKey = fileName.replace(/\.json$/, '');
+    return [templateKey, loader as () => Promise<SlideDeckTemplate>];
+  })
+) as Record<string, () => Promise<SlideDeckTemplate>>;
+
 function parseSharingInfoString(info?: string | null): ShareMember[] {
   if (!info || typeof info !== 'string') return [];
   return info
@@ -227,8 +241,20 @@ async function hydrateSharing(id: string) {
 
 async function loadTemplate(templateId: string) {
   try {
-    const module = await import(`@/assets/templates/${templateId}.json`, { assert: { type: 'json' } });
-    const template = module.default as SlideDeckTemplate;
+    if (slideTemplateCache.has(templateId)) {
+      slidesStore.applyTemplate(slideTemplateCache.get(templateId)!, templateId);
+      return;
+    }
+
+    const loader = slideTemplateLoaders[templateId];
+    if (!loader) {
+      console.warn(`Slide template not found: ${templateId}`);
+      toast.error('Template unavailable, starting with blank deck.');
+      return;
+    }
+
+    const template = await loader();
+    slideTemplateCache.set(templateId, template);
     slidesStore.applyTemplate(template, templateId);
   } catch (error) {
     console.warn('Slide template load failed', error);
