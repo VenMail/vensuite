@@ -1,6 +1,6 @@
 import type { EditorView } from '@tiptap/pm/view';
 import type { PaginationOptions, PageBreak, NodePosition, PaginationState } from './types';
-import { mmToPx } from './measure';
+import { mmToPx, measureNodeHeight } from './measure';
 
 /**
  * Calculate usable content height per page in pixels
@@ -47,29 +47,13 @@ export function calculatePageBreaks(
   let cumulativeHeight = 0;
 
   const { state } = view;
-  const decorationClasses = new Set([
-    'page-break-marker',
-    'page-number-display',
-    'page-numbers-preview',
-  ]);
-
-  const handleBlockNode = (pos: number, domNode: Node | null) => {
-    if (!domNode || !(domNode instanceof HTMLElement)) {
-      return;
-    }
-
-    for (const cls of decorationClasses) {
-      if (domNode.classList.contains(cls)) {
-        return;
-      }
-    }
-
-    const height = domNode.getBoundingClientRect().height;
+  const processBlock = (pos: number) => {
+    const height = measureNodeHeight(view, pos);
     if (height <= 0) {
       return;
     }
 
-    if (currentPageOffset + height > pageContentHeight && currentPageOffset > 0) {
+    if (currentPageOffset > 0 && currentPageOffset + height > pageContentHeight) {
       pageBreaks.push({
         afterPos: pos - 1,
         pageIndex: currentPageIndex,
@@ -94,49 +78,38 @@ export function calculatePageBreaks(
   state.doc.descendants((node, pos) => {
     const type = node.type.name;
 
-    // Tables: measure rows to allow breaks between them
-    if (type === 'table') {
-      let processedRows = false;
-
-      node.forEach((child, childOffset) => {
-        if (child.type.name === 'tableRow') {
-          const rowPos = pos + 1 + childOffset;
-          const rowDom = view.nodeDOM(rowPos);
-          handleBlockNode(rowPos, rowDom);
-          processedRows = true;
-        }
-      });
-
-      if (!processedRows) {
-        const tableDom = view.nodeDOM(pos);
-        handleBlockNode(pos, tableDom);
-      }
-
-      return false; // Skip into cells to avoid double counting
-    }
-
-    if (type === 'tableRow' || type === 'tableCell' || type === 'tableHeader') {
-      return false; // Already handled via table processing
-    }
-
-    if (type === 'bulletList' || type === 'orderedList') {
-      // Measure list items individually
+    if (type === 'doc') {
       return true;
     }
 
-    if (type === 'listItem') {
-      const dom = view.nodeDOM(pos);
-      handleBlockNode(pos, dom);
+    if (type === 'table') {
+      let handledRows = false;
+
+      node.forEach((child, offset) => {
+        if (child.type.name === 'tableRow') {
+          const rowPos = pos + 1 + offset;
+          processBlock(rowPos);
+          handledRows = true;
+        }
+      });
+
+      if (!handledRows) {
+        processBlock(pos);
+      }
+
+      return false; // do not traverse into cells separately
+    }
+
+    if (type === 'tableRow' || type === 'tableCell' || type === 'tableHeader') {
       return false;
     }
 
-    if (node.isBlock) {
-      const dom = view.nodeDOM(pos);
-      handleBlockNode(pos, dom);
-      return false; // Prevent measuring children to avoid double counting
+    if (!node.isBlock) {
+      return true;
     }
 
-    return true;
+    processBlock(pos);
+    return false;
   });
   
   return {
