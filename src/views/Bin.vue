@@ -683,10 +683,20 @@ onUnmounted(() => {
                 size="sm"
                 @click="fetchTrashedItems"
                 :disabled="isLoading"
+                class="text-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                title="Refresh"
+                aria-label="Refresh"
               >
-                <RefreshCw :class="['h-4 w-4', isLoading ? 'animate-spin' : '']" />
+                <RefreshCw
+                  :class="[
+                    'h-4 w-4',
+                    isLoading ? 'animate-spin' : '',
+                    'text-foreground stroke-current',
+                  ]"
+                />
                 <span class="ml-2 hidden sm:inline">Refresh</span>
               </Button>
+
               <Button
                 v-if="trashItems.length > 0"
                 variant="destructive"
@@ -723,24 +733,44 @@ onUnmounted(() => {
                 ></div>
               </div>
               <!-- Selection actions -->
+              <!-- Selection actions -->
               <div class="flex items-center flex-wrap gap-2">
                 <Button
-                  variant="ghost"
                   size="sm"
                   @click.stop="handleBulkAction('restore')"
+                  :class="[
+                    theme.isDark.value
+                      ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
+                      : 'bg-white hover:bg-gray-50 border-gray-200',
+                    'border',
+                  ]"
                 >
-                  <RefreshCw class="h-4 w-4 mr-2" />
-                  <span class="hidden sm:inline">Restore</span>
+                  <RefreshCw class="h-4 w-4" />
+                  <span class="ml-2 hidden sm:inline">Restore</span>
                 </Button>
                 <Button
-                  variant="ghost"
                   size="sm"
                   @click.stop="handleBulkAction('delete')"
+                  :class="[
+                    theme.isDark.value
+                      ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
+                      : 'bg-white hover:bg-gray-50 border-gray-200',
+                    'border',
+                  ]"
                 >
-                  <AlertCircle class="h-4 w-4 mr-2" />
-                  <span class="hidden sm:inline">Delete</span>
+                  <AlertCircle class="h-4 w-4" />
+                  <span class="ml-2 hidden sm:inline">Delete</span>
                 </Button>
-                <Button variant="ghost" size="sm" @click.stop="clearSelection">
+                <Button
+                  size="sm"
+                  @click.stop="clearSelection"
+                  :class="[
+                    theme.isDark.value
+                      ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
+                      : 'bg-white hover:bg-gray-50 border-gray-200',
+                    'border',
+                  ]"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="h-4 w-4"
@@ -816,10 +846,13 @@ onUnmounted(() => {
                 </DropdownMenu>
 
                 <!-- Inline View Toggle -->
+                <!-- Inline View Toggle -->
                 <div
                   :class="[
-                    'flex items-center rounded-lg p-1 shrink-0',
-                    theme.isDark.value ? 'bg-gray-800' : 'bg-gray-100',
+                    'flex items-center rounded-lg p-1 shrink-0 border',
+                    theme.isDark.value
+                      ? 'bg-gray-800 border-gray-700'
+                      : 'bg-gray-100 border-gray-200',
                   ]"
                 >
                   <Button
@@ -829,9 +862,11 @@ onUnmounted(() => {
                       'px-2 py-2',
                       viewMode === 'grid'
                         ? theme.isDark.value
-                          ? 'bg-gray-700 shadow-sm'
-                          : 'bg-white shadow-sm'
-                        : '',
+                          ? 'bg-gray-700 shadow-sm text-gray-100'
+                          : 'bg-white shadow-sm text-gray-900'
+                        : theme.isDark.value
+                        ? 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
                     ]"
                     @click="viewMode = 'grid'"
                     title="Grid View"
@@ -845,9 +880,11 @@ onUnmounted(() => {
                       'px-2 py-2',
                       viewMode === 'list'
                         ? theme.isDark.value
-                          ? 'bg-gray-700 shadow-sm'
-                          : 'bg-white shadow-sm'
-                        : '',
+                          ? 'bg-gray-700 shadow-sm text-gray-100'
+                          : 'bg-white shadow-sm text-gray-900'
+                        : theme.isDark.value
+                        ? 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
                     ]"
                     @click="viewMode = 'list'"
                     title="List View"
@@ -861,9 +898,11 @@ onUnmounted(() => {
                       'px-2 py-2',
                       viewMode === 'thumbnail'
                         ? theme.isDark.value
-                          ? 'bg-gray-700 shadow-sm'
-                          : 'bg-white shadow-sm'
-                        : '',
+                          ? 'bg-gray-700 shadow-sm text-gray-100'
+                          : 'bg-white shadow-sm text-gray-900'
+                        : theme.isDark.value
+                        ? 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
                     ]"
                     @click="viewMode = 'thumbnail'"
                     title="Thumbnail View"
@@ -940,27 +979,17 @@ onUnmounted(() => {
           <!-- Empty state -->
           <div
             v-else-if="!isLoading && filteredAndSortedItems.length === 0"
-            class="flex flex-col items-center justify-center py-16 px-6"
+            class="flex flex-col items-center justify-center py-16 px-6 bg-background text-foreground transition-colors duration-200"
           >
+            <!-- Trash Icon Container -->
             <div
-              :class="[
-                'flex items-center justify-center w-16 h-16 rounded-full mb-6',
-                theme.isDark.value ? 'bg-gray-700' : 'bg-gray-100',
-              ]"
+              class="flex items-center justify-center w-16 h-16 rounded-full mb-6 bg-muted/40 border border-border shadow-sm"
             >
-              <Trash2
-                :class="[
-                  'h-8 w-8',
-                  theme.isDark.value ? 'text-gray-400' : 'text-gray-500',
-                ]"
-              />
+              <Trash2 class="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3
-              :class="[
-                'text-xl font-semibold mb-2 text-center',
-                theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
-              ]"
-            >
+
+            <!-- Heading -->
+            <h3 class="text-xl font-semibold mb-2 text-center text-foreground">
               {{
                 trashItems.length === 0
                   ? "Trash is empty"
@@ -969,22 +998,34 @@ onUnmounted(() => {
                   : "No items found"
               }}
             </h3>
-            <p
-              :class="[
-                'text-center mb-8 max-w-md',
-                theme.isDark.value ? 'text-gray-400' : 'text-gray-600',
-              ]"
-            >
+
+            <!-- Description -->
+            <p class="text-center mb-8 max-w-md text-muted-foreground">
               {{
                 trashItems.length === 0
                   ? "Deleted files will appear here and can be restored or permanently deleted."
                   : "Try adjusting your search or filters to find specific items."
               }}
             </p>
-            <div v-if="trashItems.length > 0" class="flex gap-3 justify-center">
-              <Button variant="outline" @click="clearFilters"> Clear Filters </Button>
-              <Button variant="ghost" @click="fetchTrashedItems">
-                <RefreshCw class="mr-2 h-4 w-4" />
+
+            <!-- Action Buttons -->
+            <div v-if="trashItems.length > 0" class="flex flex-wrap gap-3 justify-center">
+              <Button
+                variant="outline"
+                class="transition-colors hover:bg-muted hover:text-foreground"
+                @click="clearFilters"
+              >
+                Clear Filters
+              </Button>
+
+              <Button
+                variant="ghost"
+                class="transition-colors hover:bg-accent hover:text-accent-foreground"
+                @click="fetchTrashedItems"
+              >
+                <RefreshCw
+                  class="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground"
+                />
                 Refresh
               </Button>
             </div>

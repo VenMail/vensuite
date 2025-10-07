@@ -86,13 +86,27 @@
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <div 
+              :class="[
+                'flex items-center gap-2 rounded-lg p-1',
+                theme.isDark.value ? 'bg-gray-800' : 'bg-gray-100'
+              ]"
+            >
               <Button
                 v-for="option in viewControls"
                 :key="option.value"
                 variant="ghost"
                 size="sm"
-                :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+                :class="[
+                  'transition-all',
+                  option.active 
+                    ? theme.isDark.value 
+                      ? 'bg-gray-700 text-gray-100 shadow-sm' 
+                      : 'bg-white text-gray-900 shadow-sm'
+                    : theme.isDark.value
+                      ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                ]"
                 @click="handleViewChange(option.value)"
               >
                 <component v-if="option.icon" :is="option.icon" class="h-4 w-4" />
@@ -203,13 +217,15 @@
                 theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
               ]"
             >
-              <input
-                type="checkbox"
-                :checked="isAllSelected"
-                :indeterminate="isSomeSelected"
-                @click.stop
-                class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
-              />
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  :checked="isAllSelected"
+                  :indeterminate="isSomeSelected"
+                  @change.stop="toggleSelectAll"
+                  class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+              </div>
               <span
                 :class="[
                   'text-sm font-medium',
@@ -603,7 +619,9 @@ const viewControls = computed<ViewModeOption[]>(() => [
 const actionIconClass = computed(
   () =>
     `relative group rounded-full transition-all duration-200 shrink-0 ${
-      theme.isDark.value ? "hover:bg-gray-700" : "hover:bg-gray-100"
+      theme.isDark.value 
+        ? "hover:bg-gray-700 text-gray-300 hover:text-gray-100" 
+        : "hover:bg-gray-100 text-gray-700 hover:text-gray-900"
     }`,
 );
 

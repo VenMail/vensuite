@@ -1,118 +1,134 @@
-<!-- TrashToolbar.vue -->
 <template>
-  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-    <!-- Left Side: Search and Filters -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-1">
-      <!-- Search Input -->
-      <div class="relative flex-1 min-w-0 max-w-sm">
-        <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          :modelValue="searchQuery"
-          @update:modelValue="handleSearchUpdate"
-          placeholder="Search trash items..."
-          class="pl-10 pr-4"
-        />
+  <div
+    :class="cn(
+      'flex flex-col gap-4 p-4',
+      'bg-white dark:bg-secondary-900 border-b border-grey-300 dark:border-secondary-700'
+    )"
+  >
+    <!-- Top Row: Search / Filters / Sort -->
+    <div class="flex flex-col xl:flex-row xl:items-center gap-3 xl:gap-6">
+      <div class="flex flex-col lg:flex-row lg:items-center gap-3 flex-1">
+        <!-- Search -->
+        <div class="relative flex-1 min-w-0">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-grey-500 dark:text-grey-400" />
+          <Input
+            v-model="searchValue"
+            placeholder="Search media files..."
+            class="pl-10 pr-4 bg-white dark:bg-secondary-800 border-grey-300 dark:border-secondary-600 text-secondary-900 dark:text-grey-100 placeholder:text-grey-500 dark:placeholder:text-grey-400 focus:border-primary-500 dark:focus:border-primary-500"
+            @input="$emit('search', searchValue)"
+          />
+        </div>
+
+        <!-- Filter -->
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              class="shrink-0 bg-white dark:bg-secondary-800 border-grey-300 dark:border-secondary-600 text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700"
+            >
+              <Filter class="h-4 w-4 mr-2" />
+              {{ filterLabel }}
+              <ChevronDown class="h-4 w-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="end"
+            class="bg-white dark:bg-secondary-800 border-grey-300 dark:border-secondary-600"
+          >
+            <DropdownMenuItem 
+              @click="handleFilterChange('all')"
+              class="text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700 cursor-pointer"
+            >
+              <FileIcon class="h-4 w-4 mr-2" />
+              All Media
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              @click="handleFilterChange('images')"
+              class="text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700 cursor-pointer"
+            >
+              <Image class="h-4 w-4 mr-2" />
+              Images
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              @click="handleFilterChange('videos')"
+              class="text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700 cursor-pointer"
+            >
+              <Video class="h-4 w-4 mr-2" />
+              Videos
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              @click="handleFilterChange('audio')"
+              class="text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700 cursor-pointer"
+            >
+              <Volume2 class="h-4 w-4 mr-2" />
+              Audio
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <!-- Type Filter -->
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" class="shrink-0">
-            <Filter class="h-4 w-4 mr-2" />
-            {{ filters.type === 'all' || !filters.type ? 'All Types' : filters.type }}
-            <ChevronDown class="h-4 w-4 ml-2" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem @click="updateFilters({ ...filters, type: 'all' })">
-            <FileIcon class="h-4 w-4 mr-2" />
-            All Types
-          </DropdownMenuItem>
-          <DropdownMenuItem v-for="type in allTypes" :key="type" @click="updateFilters({ ...filters, type })">
-            <FileType class="h-4 w-4 mr-2" />
-            {{ type }}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <!-- Source Filter -->
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" class="shrink-0">
-            <Filter class="h-4 w-4 mr-2" />
-            {{ filters.source === 'all' || !filters.source ? 'All Sources' : filters.source }}
-            <ChevronDown class="h-4 w-4 ml-2" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem @click="updateFilters({ ...filters, source: 'all' })">
-            <FileIcon class="h-4 w-4 mr-2" />
-            All Sources
-          </DropdownMenuItem>
-          <DropdownMenuItem v-for="source in allSources" :key="source" @click="updateFilters({ ...filters, source })">
-            <FolderIcon class="h-4 w-4 mr-2" />
-            {{ source }}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <!-- Sort Options -->
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" class="shrink-0">
-            <ArrowUpDown class="h-4 w-4 mr-2" />
-            Sort
-            <ChevronDown class="h-4 w-4 ml-2" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem @click="updateSortValue('title-asc')">
-            <AlphabetAsc class="h-4 w-4 mr-2" />
-            Name (A-Z)
-          </DropdownMenuItem>
-          <DropdownMenuItem @click="updateSortValue('title-desc')">
-            <AlphabetDesc class="h-4 w-4 mr-2" />
-            Name (Z-A)
-          </DropdownMenuItem>
-          <DropdownMenuItem @click="updateSortValue('updated_at-desc')">
-            <Calendar class="h-4 w-4 mr-2" />
-            Deleted (Newest)
-          </DropdownMenuItem>
-          <DropdownMenuItem @click="updateSortValue('updated_at-asc')">
-            <Calendar class="h-4 w-4 mr-2" />
-            Deleted (Oldest)
-          </DropdownMenuItem>
-          <DropdownMenuItem @click="updateSortValue('file_type-asc')">
-            <FileType class="h-4 w-4 mr-2" />
-            Type
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div class="flex items-center gap-3 w-full xl:w-auto justify-between lg:justify-end">
+        <span class="hidden sm:inline text-sm text-grey-600 dark:text-grey-400">Sort by</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              class="shrink-0 bg-white dark:bg-secondary-800 border-grey-300 dark:border-secondary-600 text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700"
+            >
+              <ArrowUpDown class="h-4 w-4 mr-2" />
+              {{ sortLabel }}
+              <ChevronDown class="h-4 w-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="end"
+            class="bg-white dark:bg-secondary-800 border-grey-300 dark:border-secondary-600"
+          >
+            <DropdownMenuItem 
+              @click="handleSortChange('name')"
+              class="text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700 cursor-pointer"
+            >
+              <AlphabeticalIcon class="h-4 w-4 mr-2" />
+              Name
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              @click="handleSortChange('date')"
+              class="text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700 cursor-pointer"
+            >
+              <Calendar class="h-4 w-4 mr-2" />
+              Date
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              @click="handleSortChange('size')"
+              class="text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700 cursor-pointer"
+            >
+              <HardDrive class="h-4 w-4 mr-2" />
+              Size
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              @click="handleSortChange('type')"
+              class="text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700 cursor-pointer"
+            >
+              <FileType class="h-4 w-4 mr-2" />
+              Type
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
 
-    <!-- Right Side: View Controls and Actions -->
-    <div class="flex items-center gap-3">
-      <!-- View Mode Toggle -->
-      <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+    <!-- Bottom Row: View Controls / Actions -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <!-- View Toggles -->
+      <div class="flex items-center bg-grey-200 dark:bg-secondary-800 rounded-lg p-1 border border-grey-300 dark:border-secondary-600 w-full sm:w-auto justify-between sm:justify-start">
         <Button
           variant="ghost"
           size="sm"
           :class="cn(
-            'px-3 py-2',
-            viewMode === 'thumbnail' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
+            'px-3 py-2 text-secondary-700 dark:text-grey-300 hover:text-secondary-900 dark:hover:text-grey-100',
+            isThumbnailMode ? 'bg-white dark:bg-secondary-700 shadow-sm text-primary-500 dark:text-primary-400' : ''
           )"
-          @click="$emit('update:viewMode', 'thumbnail')"
-        >
-          <Grid class="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          :class="cn(
-            'px-3 py-2',
-            viewMode === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
-          )"
-          @click="$emit('update:viewMode', 'grid')"
+          @click="$emit('view-mode', 'thumbnail')"
         >
           <LayoutGrid class="h-4 w-4" />
         </Button>
@@ -120,120 +136,156 @@
           variant="ghost"
           size="sm"
           :class="cn(
-            'px-3 py-2',
-            viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''
+            'px-3 py-2 text-secondary-700 dark:text-grey-300 hover:text-secondary-900 dark:hover:text-grey-100',
+            isGridMode ? 'bg-white dark:bg-secondary-700 shadow-sm text-primary-500 dark:text-primary-400' : ''
           )"
-          @click="$emit('update:viewMode', 'list')"
+          @click="$emit('view-mode', 'grid')"
         >
-          <LayoutList class="h-4 w-4" />
+          <Grid class="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          :class="cn(
+            'px-3 py-2 text-secondary-700 dark:text-grey-300 hover:text-secondary-900 dark:hover:text-grey-100',
+            isListMode ? 'bg-white dark:bg-secondary-700 shadow-sm text-primary-500 dark:text-primary-400' : ''
+          )"
+          @click="$emit('view-mode', 'list')"
+        >
+          <List class="h-4 w-4" />
         </Button>
       </div>
 
-      <!-- Bulk Actions (shown when items are selected) -->
-      <div v-if="hasSelection" class="flex items-center gap-2">
-        <Button variant="outline" size="sm" @click="$emit('clearSelection')">
-          Clear
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              {{ selectedCount }} selected
-              <ChevronDown class="h-4 w-4 ml-2" />
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-end w-full sm:w-auto">
+        <template v-if="hasSelectedItems">
+          <span class="text-sm text-grey-600 dark:text-grey-400 whitespace-nowrap">
+            {{ selectedCount }} selected
+          </span>
+          <div class="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              @click="$emit('bulk-download')"
+              class="bg-white dark:bg-secondary-800 border-grey-300 dark:border-secondary-600 text-secondary-800 dark:text-grey-100 hover:bg-grey-100 dark:hover:bg-secondary-700"
+            >
+              <Download class="h-4 w-4 mr-2" />
+              Download
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem @click="$emit('bulkAction', 'restore')">
-              <RefreshCw class="h-4 w-4 mr-2" />
-              Restore Selected
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              @click="$emit('bulkAction', 'delete')"
-              class="text-destructive focus:text-destructive"
+            <Button 
+              variant="outline" 
+              size="sm" 
+              @click="$emit('bulk-delete')"
+              class="bg-white dark:bg-secondary-800 border-red-400 dark:border-red-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
             >
               <Trash2 class="h-4 w-4 mr-2" />
-              Delete Selected
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+              Delete
+            </Button>
+          </div>
+        </template>
 
-      <!-- Empty Bin Button -->
-      <Button
-        variant="outline"
-        class="shrink-0 text-white bg-red-600 hover:bg-red-700 dark:text-white dark:bg-red-600 dark:hover:bg-red-700"
-        @click="$emit('emptyBin')"
-        :disabled="loading || deletedItemsLength === 0"
-      >
-        <Trash2 class="h-4 w-4 mr-2" />
-        Empty Bin
-      </Button>
+        <Button 
+          @click="$emit('upload')" 
+          class="shrink-0 bg-primary-500 border-primary-500 text-white hover:bg-primary-600 hover:border-primary-600 dark:bg-primary-500 dark:border-primary-500 dark:text-white dark:hover:bg-primary-600 dark:hover:border-primary-600"
+        >
+          <Upload class="h-4 w-4 mr-2" />
+          Upload Media
+        </Button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from "vue";
+import { computed, ref, PropType } from 'vue'
 import {
-  Filter,
   Search,
+  Filter,
   ChevronDown,
-  FileIcon,
-  FileType,
-  FolderIcon,
   ArrowUpDown,
-  Grid,
   LayoutGrid,
-  LayoutList,
-  RefreshCw,
+  Grid,
+  List,
+  Upload,
+  Download,
   Trash2,
+  Image,
+  Video,
+  Volume2,
+  FileIcon,
   Calendar,
-} from "lucide-vue-next";
+  HardDrive,
+  FileType
+} from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import Button from "@/components/ui/button/Button.vue";
-import Input from "@/components/ui/input/Input.vue";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 
-// Create simple icons for alphabetical sorting
-const AlphabetAsc = FileType;
-const AlphabetDesc = FileType;
+const AlphabeticalIcon = FileType
 
-defineProps<{
-  searchQuery: string;
-  filters: { type: string; source: string };
-  sortValue: string;
-  viewMode: "thumbnail" | "list" | "grid";
-  hasSelection: boolean;
-  selectedCount: number;
-  allTypes: string[];
-  allSources: string[];
-  loading: boolean;
-  deletedItemsLength: number;
-}>();
+const props = defineProps({
+  selectedCount: {
+    type: Number,
+    default: 0,
+  },
+  viewMode: {
+    type: String as PropType<'thumbnail' | 'grid' | 'list'>,
+    default: 'thumbnail',
+  },
+})
 
 const emit = defineEmits<{
-  'update:searchQuery': [value: string]
-  'update:filters': [value: { type: string; source: string }]
-  'update:sortValue': [value: string]
-  'update:viewMode': [value: "thumbnail" | "list" | "grid"]
-  clearSelection: []
-  bulkAction: [action: "restore" | "delete"]
-  emptyBin: []
-}>();
+  search: [query: string]
+  filter: [filter: string]
+  sort: [sort: string]
+  'view-mode': [mode: 'thumbnail' | 'grid' | 'list']
+  upload: []
+  'bulk-download': []
+  'bulk-delete': []
+}>()
 
-const handleSearchUpdate = (payload: string | number) => {
-  emit('update:searchQuery', String(payload));
-};
+const searchValue = ref('')
+const selectedFilter = ref<'all' | 'images' | 'videos' | 'audio'>('all')
+const selectedSort = ref<'name' | 'date' | 'size' | 'type'>('name')
 
-const updateFilters = (newFilters: { type: string; source: string }) => {
-  emit('update:filters', newFilters);
-};
+const filterLabel = computed(() => {
+  if (selectedFilter.value === 'all') return 'All Media'
+  const label = selectedFilter.value
+  return `${label.charAt(0).toUpperCase()}${label.slice(1)}`
+})
 
-const updateSortValue = (value: string) => {
-  emit('update:sortValue', value);
-};
+const sortLabel = computed(() => {
+  switch (selectedSort.value) {
+    case 'date':
+      return 'Date'
+    case 'size':
+      return 'Size'
+    case 'type':
+      return 'Type'
+    default:
+      return 'Name'
+  }
+})
+
+// Computed properties to ensure linter recognizes prop usage
+const hasSelectedItems = computed(() => props.selectedCount > 0)
+const isThumbnailMode = computed(() => props.viewMode === 'thumbnail')
+const isGridMode = computed(() => props.viewMode === 'grid')
+const isListMode = computed(() => props.viewMode === 'list')
+
+const handleFilterChange = (filter: 'all' | 'images' | 'videos' | 'audio') => {
+  selectedFilter.value = filter
+  emit('filter', filter)
+}
+
+const handleSortChange = (sort: 'name' | 'date' | 'size' | 'type') => {
+  selectedSort.value = sort
+  emit('sort', sort)
+}
 </script>
