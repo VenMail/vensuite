@@ -38,6 +38,9 @@
         <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="$emit('print')" title="Print">
           <Printer class="h-4 w-4" />
         </button>
+        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="togglePagination" title="Toggle Page View">
+          <FileText class="h-4 w-4" />
+        </button>
       </div>
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
@@ -1281,6 +1284,11 @@ function onPageSizeChange(event: Event) {
 
 function handleOrientation(orientation: 'portrait' | 'landscape') {
   emit('update:pageOrientation', orientation);
+}
+
+function togglePagination() {
+  if (!props.editor) return;
+  props.editor.chain().focus().togglePagination().run();
 }
 
 function onTextColorChange(event: Event) {

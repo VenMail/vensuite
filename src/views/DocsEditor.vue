@@ -440,7 +440,7 @@ import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
-import { PaginationPlus } from 'tiptap-pagination-plus';
+import { Pagination } from '@/extensions/pagination';
 import { PaginationTable } from 'tiptap-table-plus';
 import { FontSize } from '@/extensions/font-size';
 import { LineHeight } from '@/extensions/line-height';
@@ -1608,6 +1608,36 @@ const pageStyles = computed(() => {
   } as Record<string, string>;
 });
 
+// Inject print-specific CSS so print preview matches editor pagination
+let printStyleElement: HTMLStyleElement | null = null;
+
+function ensurePrintStyleElement(): HTMLStyleElement {
+  if (printStyleElement?.isConnected) {
+    return printStyleElement;
+  }
+  const styleEl = document.createElement('style');
+  styleEl.id = 'docs-print-pagination-styles';
+  document.head.appendChild(styleEl);
+  printStyleElement = styleEl;
+  return styleEl;
+}
+
+function updatePrintStyles() {
+  const styleEl = ensurePrintStyleElement();
+  // Use zero @page margins; all spacing is handled by the pagination plugin
+  // (margins, header/footer heights, and content margins). This prevents
+  // double counting and aligns print preview with on-screen pagination.
+  styleEl.textContent = `@page { margin: 0; }
+  @media print {
+    html, body { margin: 0 !important; padding: 0 !important; }
+    .doc-page { padding: 0 !important; }
+    .rm-page-break { break-after: page; }
+    /* Do not force a break before the very first page marker; prevents blank first page */
+    .rm-page-break:first-child { break-after: auto; }
+    .rm-page-break .page { break-after: avoid; break-inside: avoid; }
+  }`;
+}
+
 async function saveDocument(isManual = false) {
   if (!editor.value || !currentDoc.value) return;
 
@@ -2064,7 +2094,12 @@ function updatePaginationSettings(settings: { showPageNumbers: boolean; pageNumb
   paginationConfig.footerRight = isShow && (pos === 'right' || pos === 'center') ? '{page}' : '';
 
   if (editor.value) {
-    initializeEditor();
+    // Update pagination options dynamically
+    editor.value.commands.updatePaginationOptions({
+      footerHeight: settings.footerHeight,
+      showPageNumbers: isShow,
+      pageNumberPosition: pos as 'left' | 'center' | 'right',
+    });
   }
   
   updatePrintStyles();
@@ -2194,24 +2229,17 @@ function initializeEditor() {
         emptyEditorClass: 'is-editor-empty',
       }),
       ChartExtension,
-      PaginationPlus.configure({
-        pageHeight: metrics.heightPx,
-        pageGap: 2,
-        pageGapBorderSize: 1,
-        pageBreakBackground: '#F7F7F8',
-        pageHeaderHeight: 0,
-        pageFooterHeight: paginationConfig.footerHeight,
-        footerLeft: paginationConfig.footerLeft,
-        footerRight: paginationConfig.footerRight,
-        headerLeft: '',
-        headerRight: '',
-        // Keep plugin margins minimal – main layout already adds paddings
-        marginTop: 10,
-        marginBottom: 10,
-        marginLeft: 10,
-        marginRight: 10,
-        contentMarginTop: 30,
-        contentMarginBottom: 40,
+      Pagination.configure({
+        pageFormat: pageSize.value as 'a4' | 'a3' | 'letter' | 'legal' | 'card',
+        orientation: pageOrientation.value,
+        pageMargin: 60,
+        pageGap: 24,
+        footerHeight: paginationConfig.footerHeight,
+        headerHeight: 30,
+        enabled: false, // Start with pagination disabled, enable via toolbar
+        printable: true,
+        showPageNumbers: true,
+        pageNumberPosition: paginationConfig.footerRight ? 'right' : paginationConfig.footerLeft ? 'left' : 'center',
       }),
     ],
     content: existingContent || '',
@@ -2235,13 +2263,21 @@ function initializeEditor() {
 onMounted(async () => {
   // Initialize editor with default pagination matching current standard
   initializeEditor();
+  updatePrintStyles();
   // Initialize/load document
   await initializeDocument();
 });
 
 watch([pageSize, pageOrientation], () => {
   if (!editor.value) return;
-  initializeEditor();
+  
+  // Update pagination options dynamically
+  editor.value.commands.updatePaginationOptions({
+    pageFormat: pageSize.value as 'a4' | 'a3' | 'letter' | 'legal' | 'card',
+    orientation: pageOrientation.value,
+  });
+  
+  updatePrintStyles();
 });
 
 onUnmounted(() => {
