@@ -192,6 +192,14 @@
         >
           <AlignRight class="h-4 w-4" />
         </button>
+        <button
+          class="tiptap-toolbar__btn"
+          :class="{ 'is-active': editor?.isActive({ textAlign: 'justify' }) }"
+          title="Align Justify"
+          @click="editor?.chain().focus().setTextAlign('justify').run()"
+        >
+          <AlignJustify class="h-4 w-4" />
+        </button>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <button
@@ -717,6 +725,7 @@ import {
   AlignCenter,
   AlignLeft,
   AlignRight,
+  AlignJustify,
   BarChart3,
   Bold,
   Check,

@@ -223,6 +223,7 @@
                     type="url"
                     placeholder="https://example.com"
                     :class="bubbleInlineInputClass"
+                    :title="linkCtrlClickTooltip"
                     @keydown.enter.prevent="applyBubbleLink"
                   />
                   <button
@@ -232,6 +233,15 @@
                     @click="applyBubbleLink"
                   >
                     <CheckCircle2 class="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    :class="[bubbleButtonBase, 'text-blue-600 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-200']"
+                    :title="openLinkButtonTooltip"
+                    :disabled="!bubbleLinkUrl"
+                    @click="visitBubbleLink"
+                  >
+                    <ExternalLink class="h-4 w-4" />
                   </button>
                   <button
                     type="button"
@@ -396,6 +406,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  AlignJustify,
   Palette,
   Highlighter,
   Eraser,
@@ -406,6 +417,7 @@ import {
   GitMerge,
   GitFork,
   CheckCircle2,
+  ExternalLink,
   BarChart3,
   AArrowUp,
   Type,
@@ -526,7 +538,10 @@ function attachEditorEventListeners(instance: Editor) {
   detachEditorListeners?.();
 
   const handleUpdate = () => handleEditorContentChange(instance);
-  const handleSelection = () => updateEditorEmptyState(instance);
+  const handleSelection = () => {
+    updateEditorEmptyState(instance);
+    syncBubbleLinkFromEditor(instance);
+  };
   const handleFocus = () => { isEditorFocused.value = true; };
   const handleBlur = () => { isEditorFocused.value = false; };
 
@@ -566,24 +581,45 @@ const bubbleOverflowButtonClass = 'flex w-full items-center rounded-md px-2 py-1
 const bubbleInlineFormClass = 'flex flex-wrap items-center gap-1 pt-1';
 const bubbleInlineInputClass = 'h-8 w-36 rounded-md border border-gray-300 bg-white px-2 text-xs text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100';
 
+const isMacLike = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/.test((navigator.platform || ''));
+const linkCtrlClickTooltip = computed(() => isMacLike ? 'Tip: Hold ⌘ and click to open the link.' : 'Tip: Hold Ctrl and click to open the link.');
+const openLinkButtonTooltip = computed(() => isMacLike ? 'Open link in new tab (⌘+Click)' : 'Open link in new tab (Ctrl+Click)');
+
 const bubbleLinkUrl = ref('');
 function openBubbleLink() {
   if (!editor.value) return;
-  const attrs = editor.value.getAttributes('link') as any;
-  bubbleLinkUrl.value = attrs?.href || '';
+  syncBubbleLinkFromEditor(editor.value);
   if (!editor.value.isActive('link')) {
     editor.value.chain().focus().setLink({ href: bubbleLinkUrl.value || 'https://' }).run();
+    syncBubbleLinkFromEditor(editor.value);
   }
 }
+function normalizeHref(rawHref: string) {
+  if (!rawHref) return '';
+  return /^(https?:|mailto:|tel:|ftp:)/i.test(rawHref) ? rawHref : `https://${rawHref}`;
+}
+function openHrefInNewTab(rawHref: string) {
+  const trimmed = (rawHref || '').trim();
+  if (!trimmed) return;
+  const urlToOpen = normalizeHref(trimmed);
+  window.open(urlToOpen, '_blank', 'noopener,noreferrer');
+}
+
 function applyBubbleLink() {
   if (!editor.value) return;
   const href = (bubbleLinkUrl.value || '').trim();
   if (!href) {
     editor.value.chain().focus().unsetLink().run();
+    bubbleLinkUrl.value = '';
   } else {
-    editor.value.chain().focus().setLink({ href, target: '_blank', rel: 'noopener noreferrer' }).run();
+    const normalized = normalizeHref(href);
+    editor.value.chain().focus().setLink({ href: normalized, target: '_blank', rel: 'noopener noreferrer' }).run();
+    bubbleLinkUrl.value = normalized;
   }
   isOverflowOpen.value = false;
+}
+function visitBubbleLink() {
+  openHrefInNewTab(bubbleLinkUrl.value || '');
 }
 function removeBubbleLink() {
   editor.value?.chain().focus().unsetLink().run();
@@ -629,6 +665,32 @@ const isTextSelection = computed(() => !!editor.value && !isImageEditing.value &
 const isTableSelection = computed(() => !!editor.value && editor.value.isActive('table'));
 const isLinkEditing = computed(() => !!editor.value && editor.value.isActive('link'));
 const isChartSelection = computed(() => !!editor.value && editor.value.isActive('chart'));
+
+function syncBubbleLinkFromEditor(activeEditor?: Editor) {
+  const instance = activeEditor ?? editor.value;
+  if (!instance) return;
+  if (instance.isActive('link')) {
+    const attrs = instance.getAttributes('link') as any;
+    bubbleLinkUrl.value = attrs?.href || '';
+  } else {
+    bubbleLinkUrl.value = '';
+  }
+}
+
+function handleLinkCtrlClick(event: MouseEvent) {
+  const target = event.target as HTMLElement | null;
+  const linkEl = target?.closest('a[href]');
+  if (!linkEl) {
+    return false;
+  }
+  const href = linkEl.getAttribute('href') || '';
+  if (!href) {
+    return false;
+  }
+  event.preventDefault();
+  openHrefInNewTab(href);
+  return true;
+}
 
 const activeTextColor = computed(() => editor.value?.getAttributes('textStyle')?.color as string | undefined);
 const activeHighlightColor = computed(() => editor.value?.getAttributes('highlight')?.color as string | undefined);
@@ -796,6 +858,14 @@ const allTextActions = computed<BubbleAction[]>(() => {
       tooltip: 'Align right',
       label: 'Align right',
       isActive: instance.isActive({ textAlign: 'right' }),
+    },
+    {
+      key: 'align-justify',
+      icon: AlignJustify,
+      handler: () => instance.chain().focus().setTextAlign('justify').run(),
+      tooltip: 'Align justify',
+      label: 'Align justify',
+      isActive: instance.isActive({ textAlign: 'justify' }),
     },
     {
       key: 'link',
@@ -1330,10 +1400,9 @@ watch([isTextSelection, isTableSelection, isImageEditing, isChartSelection], () 
 });
 
 watch(isLinkEditing, (active) => {
-  if (active && editor.value) {
-    const attrs = editor.value.getAttributes('link') as any;
-    bubbleLinkUrl.value = attrs?.href || '';
-  } else if (!active) {
+  if (active) {
+    syncBubbleLinkFromEditor(editor.value);
+  } else {
     bubbleLinkUrl.value = '';
   }
 });
@@ -2053,7 +2122,8 @@ function initializeEditor(
   editor.value = new Editor({
     extensions: [
       StarterKit.configure({
-        history: { depth: 100 },
+        heading: { levels: [1, 2, 3, 4] },
+        history: { depth: 100  },
         bulletList: { keepMarks: true, keepAttributes: false },
         orderedList: { keepMarks: true, keepAttributes: false },
       }),
@@ -2103,7 +2173,17 @@ function initializeEditor(
       }),
     ],
     content: existingContent || '',
-    editorProps: { attributes: { class: 'focus:outline-none min-h-[500px] print:min-h-0 print:overflow-visible' } }
+    editorProps: {
+      attributes: {
+        class: 'focus:outline-none min-h-[500px] print:min-h-0 print:overflow-visible'
+      },
+      handleClick: (_view, _pos, event) => {
+        if (event instanceof MouseEvent) {
+          return handleLinkCtrlClick(event);
+        }
+        return false;
+      }
+    }
   });
 
   attachEditorEventListeners(editor.value);
