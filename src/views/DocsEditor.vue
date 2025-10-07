@@ -440,7 +440,7 @@ import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
-import { Pagination } from '@/extensions/pagination';
+import { PaginationPlus } from 'tiptap-pagination-plus';
 import { PaginationTable } from 'tiptap-table-plus';
 import { FontSize } from '@/extensions/font-size';
 import { LineHeight } from '@/extensions/line-height';
@@ -2094,12 +2094,7 @@ function updatePaginationSettings(settings: { showPageNumbers: boolean; pageNumb
   paginationConfig.footerRight = isShow && (pos === 'right' || pos === 'center') ? '{page}' : '';
 
   if (editor.value) {
-    // Update pagination options dynamically
-    editor.value.commands.updatePaginationOptions({
-      footerHeight: settings.footerHeight,
-      showPageNumbers: isShow,
-      pageNumberPosition: pos as 'left' | 'center' | 'right',
-    });
+    initializeEditor();
   }
   
   updatePrintStyles();
@@ -2229,17 +2224,24 @@ function initializeEditor() {
         emptyEditorClass: 'is-editor-empty',
       }),
       ChartExtension,
-      Pagination.configure({
-        pageFormat: pageSize.value as 'a4' | 'a3' | 'letter' | 'legal' | 'card',
-        orientation: pageOrientation.value,
-        pageMargin: 60,
-        pageGap: 24,
-        footerHeight: paginationConfig.footerHeight,
-        headerHeight: 30,
-        enabled: false, // Start with pagination disabled, enable via toolbar
-        printable: true,
-        showPageNumbers: true,
-        pageNumberPosition: paginationConfig.footerRight ? 'right' : paginationConfig.footerLeft ? 'left' : 'center',
+      PaginationPlus.configure({
+        pageHeight: metrics.heightPx,
+        pageGap: 2,
+        pageGapBorderSize: 1,
+        pageBreakBackground: '#F7F7F8',
+        pageHeaderHeight: 0,
+        pageFooterHeight: paginationConfig.footerHeight,
+        footerLeft: paginationConfig.footerLeft,
+        footerRight: paginationConfig.footerRight,
+        headerLeft: '',
+        headerRight: '',
+        // Keep plugin margins minimal – main layout already adds paddings
+        marginTop: 10,
+        marginBottom: 10,
+        marginLeft: 10,
+        marginRight: 10,
+        contentMarginTop: 30,
+        contentMarginBottom: 40,
       }),
     ],
     content: existingContent || '',
@@ -2270,13 +2272,7 @@ onMounted(async () => {
 
 watch([pageSize, pageOrientation], () => {
   if (!editor.value) return;
-  
-  // Update pagination options dynamically
-  editor.value.commands.updatePaginationOptions({
-    pageFormat: pageSize.value as 'a4' | 'a3' | 'letter' | 'legal' | 'card',
-    orientation: pageOrientation.value,
-  });
-  
+  initializeEditor();
   updatePrintStyles();
 });
 
