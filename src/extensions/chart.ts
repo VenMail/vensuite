@@ -3,6 +3,7 @@ import type { CommandProps } from '@tiptap/core';
 import { VueNodeViewRenderer } from '@tiptap/vue-3';
 import { NodeSelection } from '@tiptap/pm/state';
 import ChartNode from '@/components/editor/ChartNode.vue';
+import { computeNextPageInsertionPosition, resolvePaginationOptions, INSERTION_PADDING_PX } from '@/extensions/pagination-utils';
 
 export interface ChartDatasetAttr {
   label?: string;
@@ -68,130 +69,6 @@ const DEFAULT_ATTRS: ChartAttrs = {
   showLegend: true,
   fontSize: 12,
 };
-
-type EditorInstance = CommandProps['editor'];
-
-interface PaginationExtensionOptions {
-  pageHeight: number;
-  pageWidth: number;
-  pageGap: number;
-  pageBreakBackground: string;
-  pageHeaderHeight: number;
-  pageFooterHeight: number;
-  pageGapBorderSize: number;
-  footerRight: string;
-  footerLeft: string;
-  headerRight: string;
-  headerLeft: string;
-  marginTop: number;
-  marginBottom: number;
-  marginLeft: number;
-  marginRight: number;
-  contentMarginTop: number;
-  contentMarginBottom: number;
-  pageGapBorderColor: string;
-}
-
-const INSERTION_PADDING_PX = 24;
-
-function resolvePaginationOptions(editor: EditorInstance | null | undefined): PaginationExtensionOptions | null {
-  const extension = editor?.extensionManager.extensions.find(ext => ext.name === 'PaginationPlus');
-  if (!extension) {
-    return null;
-  }
-
-  const options = extension.options as Partial<PaginationExtensionOptions> | undefined;
-  if (!options) {
-    return null;
-  }
-
-  const requiredNumericKeys: Array<keyof PaginationExtensionOptions> = [
-    'pageHeight',
-    'pageGap',
-    'pageHeaderHeight',
-    'pageFooterHeight',
-    'marginTop',
-    'marginBottom',
-    'contentMarginTop',
-    'contentMarginBottom',
-  ];
-
-  for (const key of requiredNumericKeys) {
-    if (typeof options[key] !== 'number' || !Number.isFinite(options[key]!)) {
-      return null;
-    }
-  }
-
-  return options as PaginationExtensionOptions;
-}
-
-function computeNextPageInsertionPosition(
-  options: PaginationExtensionOptions,
-  props: CommandProps,
-  chartHeight: number
-): number | null {
-  const view = props.view;
-  const selection = props.state.selection;
-
-  if (!view || !selection || typeof selection.from !== 'number') {
-    return null;
-  }
-
-  const headerSpace = options.pageHeaderHeight + options.contentMarginTop + options.marginTop;
-  const footerSpace = options.pageFooterHeight + options.contentMarginBottom + options.marginBottom;
-  const usableContentHeight = options.pageHeight - headerSpace - footerSpace;
-
-  if (!Number.isFinite(usableContentHeight) || usableContentHeight <= 0) {
-    return null;
-  }
-
-  const totalPageSpan = options.pageHeight + options.pageGap;
-
-  let selectionCoords: { top: number; left: number } | null = null;
-  try {
-    const coords = view.coordsAtPos(selection.from);
-    selectionCoords = { top: coords.top, left: coords.left };
-  } catch {
-    return null;
-  }
-
-  if (!selectionCoords) {
-    return null;
-  }
-
-  const rootRect = (view.dom as HTMLElement).getBoundingClientRect();
-  const distanceFromDocTop = selectionCoords.top - rootRect.top;
-
-  if (!Number.isFinite(distanceFromDocTop)) {
-    return null;
-  }
-
-  const pageIndex = Math.max(0, Math.floor(distanceFromDocTop / totalPageSpan));
-  const offsetInsideCycle = distanceFromDocTop - pageIndex * totalPageSpan;
-  const contentOffset = Math.max(0, offsetInsideCycle - headerSpace);
-  const remainingSpace = usableContentHeight - contentOffset;
-  const requiredSpace = chartHeight + INSERTION_PADDING_PX;
-
-  if (remainingSpace >= requiredSpace) {
-    return null;
-  }
-
-  const nextPageTopOffset = (pageIndex + 1) * options.pageHeight + pageIndex * options.pageGap + headerSpace + 1;
-  const targetTop = rootRect.top + nextPageTopOffset;
-  const targetLeft = Math.min(Math.max(selectionCoords.left, rootRect.left + 16), rootRect.right - 16);
-
-  const nextPos = view.posAtCoords({ left: targetLeft, top: targetTop });
-
-  if (!nextPos || typeof nextPos.pos !== 'number') {
-    return props.state.doc.content.size;
-  }
-
-  if (nextPos.pos <= selection.from) {
-    return props.state.doc.content.size;
-  }
-
-  return nextPos.pos;
-}
 
 function normalizeChartAttrs(attrs: Partial<ChartAttrs> = {}): ChartAttrs {
   return {
@@ -349,7 +226,15 @@ export const ChartExtension = Node.create({
 
           const paginationOptions = resolvePaginationOptions(editor ?? null);
           const chartHeight = typeof nextAttrs.height === 'number' ? nextAttrs.height : DEFAULT_DIMENSIONS.height;
-          const insertPos = paginationOptions ? computeNextPageInsertionPosition(paginationOptions, commandProps, chartHeight) : null;
+          const insertPos = paginationOptions
+            ? computeNextPageInsertionPosition(
+                paginationOptions,
+                commandProps.view,
+                commandProps.state.selection,
+                chartHeight,
+                INSERTION_PADDING_PX,
+              )
+            : null;
 
           if (typeof insertPos === 'number') {
             return chain()

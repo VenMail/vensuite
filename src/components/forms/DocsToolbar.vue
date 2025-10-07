@@ -502,7 +502,7 @@
       </div>
       <DialogFooter>
         <Button variant="outline" @click="showTableDialog = false">Cancel</Button>
-        <Button @click="insertTable">Insert</Button>
+        <Button :title="tablePaginationTooltip" @click="insertTable">Insert</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -776,6 +776,7 @@ import {
 import ChartConfigurator from '@/components/editor/ChartConfigurator.vue';
 import ImagePicker from '@/components/ImagePicker.vue';
 import type { ChartAttrs } from '@/extensions/chart';
+import { computeNextPageInsertionPosition, resolvePaginationOptions, INSERTION_PADDING_PX } from '@/extensions/pagination-utils';
 import { NodeSelection } from '@tiptap/pm/state';
 
 const props = defineProps<{
@@ -823,6 +824,8 @@ const tableRows = ref(3);
 const tableCols = ref(3);
 const tableStyle = ref('default');
 const tableWithHeader = ref(true);
+const tablePaginationTooltip = computed(() => 'Tables will move to the next page if there isn\'t space for at least two rows.');
+const TABLE_ROW_HEIGHT_ESTIMATE = 44; // px – heuristic for pagination checks
 
 // Link insert state
 const linkUrl = ref('');
@@ -1043,26 +1046,45 @@ function onFontSizeChange(event: Event) {
 // Dialog open functions
 function openLinkDialog() {
   if (!props.editor) return;
-  
+
   const previousUrl = props.editor.getAttributes('link').href;
   linkUrl.value = previousUrl || '';
-  
+
   showLinkDialog.value = true;
 }
 
-// Table insert function
 function insertTable() {
   if (!props.editor) return;
-  
-  props.editor.chain().focus().insertTable({
-    rows: tableRows.value,
-    cols: tableCols.value,
-    withHeaderRow: tableWithHeader.value,
-  }).run();
-  
-  // Apply table style class
+
+  const paginationOptions = resolvePaginationOptions(props.editor);
+  const totalRows = tableRows.value + (tableWithHeader.value ? 1 : 0);
+  const rowsToEnsure = Math.min(totalRows, 2);
+  const requiredHeight = rowsToEnsure * TABLE_ROW_HEIGHT_ESTIMATE;
+
+  const insertPosition = paginationOptions
+    ? computeNextPageInsertionPosition(
+        paginationOptions,
+        props.editor.view,
+        props.editor.state.selection,
+        requiredHeight,
+        INSERTION_PADDING_PX,
+      )
+    : null;
+
+  const chain = props.editor.chain().focus();
+  if (typeof insertPosition === 'number') {
+    chain.setTextSelection(insertPosition);
+  }
+
+  chain
+    .insertTable({
+      rows: tableRows.value,
+      cols: tableCols.value,
+      withHeaderRow: tableWithHeader.value,
+    })
+    .run();
+
   if (tableStyle.value !== 'default') {
-    // Add custom class to table (will be styled via CSS)
     const tableNode = props.editor.state.selection.$anchor.node(-1);
     if (tableNode && tableNode.type.name === 'table') {
       props.editor.commands.updateAttributes('table', {
@@ -1070,7 +1092,7 @@ function insertTable() {
       });
     }
   }
-  
+
   showTableDialog.value = false;
 }
 

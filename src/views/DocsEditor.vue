@@ -98,7 +98,7 @@
         class="mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
         :style="pageStyles"
       >
-        <div :style="contentPadding" class="doc-page relative print:!p-0">
+        <div :style="contentPadding" class="doc-page relative">
           <div
             v-if="showPlaceholderOverlay"
             class="editor-placeholder-overlay"
@@ -388,7 +388,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed, nextTick, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Editor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
 import type { Component } from 'vue';
@@ -1430,48 +1430,75 @@ const shareLinkDoc = computed(() => {
   return `${window.location.origin}/docs/${id}`;
 });
 const tocItems = computed(() => {
-  if (!editor.value) return [];
-  
-  const headings: Array<{ level: number; text: string; id: string }> = [];
-  const json = editor.value.getJSON();
-  
-  const extractHeadings = (node: any, index = 0) => {
-    if (node.type === 'heading' && node.content) {
-      const text = node.content.map((c: any) => c.text || '').join('');
-      const id = `heading-${index}`;
-      headings.push({ level: node.attrs.level, text, id });
+  if (!editor.value) return [] as Array<{ level: number; text: string; id: string; pos: number }>;
+
+  const items: Array<{ level: number; text: string; id: string; pos: number }> = [];
+  const { state } = editor.value;
+
+  let headingIndex = 0;
+  state.doc.descendants((node, pos) => {
+    if (node.type.name === 'heading') {
+      const text = node.textContent || '';
+      const id = `heading-${headingIndex++}`;
+      items.push({ level: node.attrs.level, text, id, pos });
     }
-    if (node.content) {
-      node.content.forEach((child: any, i: number) => extractHeadings(child, headings.length + i));
-    }
-  };
-  
-  if (json.content) {
-    json.content.forEach((node: any, i: number) => extractHeadings(node, i));
-  }
-  
-  return headings;
+  });
+
+  return items;
 });
+
+function getNearestScrollContainer(element: HTMLElement | null): HTMLElement | null {
+  let el: HTMLElement | null = element;
+  while (el) {
+    const style = window.getComputedStyle(el);
+    const overflowY = style.overflowY;
+    if (overflowY === 'auto' || overflowY === 'scroll') {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
+
+function scrollElementIntoViewWithinContainer(targetEl: HTMLElement) {
+  const container = getNearestScrollContainer(targetEl) || document.scrollingElement as HTMLElement | null;
+  if (!container) {
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const containerRect = container.getBoundingClientRect();
+  const targetRect = targetEl.getBoundingClientRect();
+  const currentScrollTop = container.scrollTop;
+
+  // Offset slightly to avoid sticking under headers/decorations
+  const offset = 16; // px
+  const deltaTop = targetRect.top - containerRect.top - offset;
+
+  container.scrollTo({ top: currentScrollTop + deltaTop, behavior: 'smooth' });
+}
 
 function scrollToHeading(index: number) {
   if (!editor.value) return;
-  const { state } = editor.value;
-  let headingCount = 0;
-  let targetPos = 0;
-  
-  state.doc.descendants((node, pos) => {
-    if (node.type.name === 'heading') {
-      if (headingCount === index) {
-        targetPos = pos;
-        return false; // Stop iteration
-      }
-      headingCount++;
+  const item = tocItems.value[index] as { pos: number } | undefined;
+  if (!item) return;
+
+  // Set selection at the start of the heading to ensure correct mapping
+  editor.value.chain().setTextSelection(item.pos).run();
+
+  // Resolve the DOM node for the heading and perform a container-aware smooth scroll
+  requestAnimationFrame(() => {
+    let dom = editor.value?.view.nodeDOM(item.pos) as HTMLElement | null | undefined;
+    if (dom && dom.nodeType !== 1) {
+      dom = (dom as any).parentElement as HTMLElement | null;
+    }
+    if (dom && dom instanceof HTMLElement) {
+      scrollElementIntoViewWithinContainer(dom);
+    } else {
+      // Fallback to editor built-in scroll if DOM resolution failed
+      editor.value?.chain().scrollIntoView().run();
     }
   });
-  
-  if (targetPos > 0) {
-    editor.value.chain().setTextSelection(targetPos).scrollIntoView().run();
-  }
 }
 
 // Helper function to detect content type and load appropriately
@@ -1532,40 +1559,53 @@ let maxWaitTimeout: ReturnType<typeof setTimeout> | null = null;
 window.addEventListener('online', () => isOffline.value = false);
 window.addEventListener('offline', () => isOffline.value = true);
 
-// Page dimension configurations
+// Page dimension configurations (values in millimeters)
 const pageDimensions = {
-  a4: { width: 210, height: 297 }, // mm
+  a4: { width: 210, height: 297 },
   a3: { width: 297, height: 420 },
   letter: { width: 215.9, height: 279.4 },
   legal: { width: 215.9, height: 355.6 },
   card: { width: 88.9, height: 50.8 },
-};
+} as const;
+
+const paginationConfig = reactive({
+  footerHeight: 30,
+  footerLeft: '',
+  footerRight: '{page}',
+});
+
+const MM_TO_PX = 96 / 25.4;
+
+const contentPadding = computed(() => {
+  // Remove outer padding so on-screen pagination matches print exactly.
+  // All spacing comes from the pagination plugin margins and content margins.
+  return {
+    padding: '0',
+  };
+});
+
+function resolvePageMetrics(sizeKey: keyof typeof pageDimensions, orientation: 'portrait' | 'landscape') {
+  const dims = pageDimensions[sizeKey] || pageDimensions.a4;
+  const isLandscape = orientation === 'landscape';
+  const widthMm = isLandscape ? dims.height : dims.width;
+  const heightMm = isLandscape ? dims.width : dims.height;
+  const widthPx = Math.round(widthMm * MM_TO_PX);
+  const heightPx = Math.round(heightMm * MM_TO_PX);
+  return { widthMm, heightMm, widthPx, heightPx };
+}
 
 // Computed styles for page dimensions
 const pageStyles = computed(() => {
-  const size = pageSize.value as keyof typeof pageDimensions;
-  const dims = pageDimensions[size] || pageDimensions.a4;
-  
-  const isLandscape = pageOrientation.value === 'landscape';
-  const width = isLandscape ? dims.height : dims.width;
-  const height = isLandscape ? dims.width : dims.height;
-  
-  // Convert mm to pixels (96 DPI: 1mm = 3.7795px)
-  const widthPx = Math.round(width * 3.7795);
-  
-  return {
-    maxWidth: `${widthPx}px`,
-    width: '100%',
-    '--page-width': `${width}mm`,
-    '--page-height': `${height}mm`,
-  } as Record<string, string>;
-});
+  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
+  const padding = contentPadding.value.padding;
 
-const contentPadding = computed(() => {
-  // Standard document margins (screen only, removed in print)
   return {
-    padding: '48px 64px', // ~1 inch margins
-  };
+    maxWidth: `${metrics.widthPx}px`,
+    width: '100%',
+    '--page-width': `${metrics.widthMm}mm`,
+    '--page-height': `${metrics.heightMm}mm`,
+    '--page-padding': padding,
+  } as Record<string, string>;
 });
 
 async function saveDocument(isManual = false) {
@@ -2015,15 +2055,19 @@ function goBack() {
 
 // Pagination settings update
 function updatePaginationSettings(settings: { showPageNumbers: boolean; pageNumberPosition: string; footerHeight: number }) {
-  // Update pagination extension configuration
+  paginationConfig.footerHeight = settings.footerHeight;
+  // Until the plugin supports a true centered footer slot, map "center" to right
+  // to keep layout stable and consistent between editor and print.
+  const isShow = !!settings.showPageNumbers;
+  const pos = settings.pageNumberPosition;
+  paginationConfig.footerLeft = isShow && pos === 'left' ? '{page}' : '';
+  paginationConfig.footerRight = isShow && (pos === 'right' || pos === 'center') ? '{page}' : '';
+
   if (editor.value) {
-    const footerLeft = settings.showPageNumbers && settings.pageNumberPosition === 'left' ? '{page}' : '';
-    const footerRight = settings.showPageNumbers && settings.pageNumberPosition === 'right' ? '{page}' : '';
-    
-    // Recreate editor with new settings
-    editor.value.destroy();
-    initializeEditor(settings.footerHeight, footerLeft, footerRight);
+    initializeEditor();
   }
+  
+  updatePrintStyles();
 }
 
 // Share functions
@@ -2106,11 +2150,7 @@ async function updateVisibility(value: number) {
 }
 
 // Helper to (re)initialize the editor with pagination settings
-function initializeEditor(
-  footerHeight: number = 30,
-  footerLeft: string = '',
-  footerRight: string = '{page}'
-) {
+function initializeEditor() {
   const existingContent = editor.value ? editor.value.getJSON() : undefined;
   if (editor.value) {
     try {
@@ -2118,6 +2158,8 @@ function initializeEditor(
       editor.value.destroy();
     } catch {}
   }
+
+  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
 
   editor.value = new Editor({
     extensions: [
@@ -2153,14 +2195,14 @@ function initializeEditor(
       }),
       ChartExtension,
       PaginationPlus.configure({
-        pageHeight: 842,
+        pageHeight: metrics.heightPx,
         pageGap: 2,
         pageGapBorderSize: 1,
         pageBreakBackground: '#F7F7F8',
         pageHeaderHeight: 0,
-        pageFooterHeight: footerHeight,
-        footerLeft,
-        footerRight,
+        pageFooterHeight: paginationConfig.footerHeight,
+        footerLeft: paginationConfig.footerLeft,
+        footerRight: paginationConfig.footerRight,
         headerLeft: '',
         headerRight: '',
         // Keep plugin margins minimal – main layout already adds paddings
@@ -2192,9 +2234,14 @@ function initializeEditor(
 
 onMounted(async () => {
   // Initialize editor with default pagination matching current standard
-  initializeEditor(30, '', '{page}');
+  initializeEditor();
   // Initialize/load document
   await initializeDocument();
+});
+
+watch([pageSize, pageOrientation], () => {
+  if (!editor.value) return;
+  initializeEditor();
 });
 
 onUnmounted(() => {
