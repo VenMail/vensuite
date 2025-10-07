@@ -95,10 +95,10 @@
     <!-- Editor Content -->
     <div class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-800 p-6 transition-colors custom-scrollbar print:p-0 print:bg-white">
       <div 
-        class="mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
+        class="mx-auto bg-white dark:bg-gray-900 shadow-xl rounded-lg min-h-full transition-all print:shadow-none print:rounded-none print:border-none border border-gray-200 dark:border-gray-700"
         :style="pageStyles"
       >
-        <div :style="contentPadding" class="doc-page relative">
+        <div :style="contentPadding" class="doc-page relative" style="min-height: 100vh;">
           <div
             v-if="showPlaceholderOverlay"
             class="editor-placeholder-overlay"
@@ -440,17 +440,20 @@ import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
-import { PaginationPlus } from 'tiptap-pagination-plus';
-import { PaginationTable } from 'tiptap-table-plus';
+import { SmartPagination } from '@/extensions/pagination';
 import { FontSize } from '@/extensions/font-size';
 import { LineHeight } from '@/extensions/line-height';
 import { ParagraphSpacing } from '@/extensions/paragraph-spacing';
 import { ChartExtension } from '@/extensions/chart';
 import type { ChartAttrs } from '@/extensions/chart';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
 
-const {
-  TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus
-} = PaginationTable;
+// const {
+//   TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus
+// } = PaginationTable;
 import { useFileStore } from '@/store/files';
 import { toast } from 'vue-sonner';
 import type { FileData } from '@/types';
@@ -1572,15 +1575,17 @@ const paginationConfig = reactive({
   footerHeight: 30,
   footerLeft: '',
   footerRight: '{page}',
+  showPageNumbers: true,
+  pageNumberPosition: 'right' as 'left' | 'center' | 'right',
 });
 
 const MM_TO_PX = 96 / 25.4;
 
 const contentPadding = computed(() => {
-  // Remove outer padding so on-screen pagination matches print exactly.
-  // All spacing comes from the pagination plugin margins and content margins.
+  // Apply page margins to match print layout
+  // 20mm margins = ~75px at 96 DPI
   return {
-    padding: '0',
+    padding: '75px', // Matches 20mm margins from pagination config
   };
 });
 
@@ -1624,18 +1629,47 @@ function ensurePrintStyleElement(): HTMLStyleElement {
 
 function updatePrintStyles() {
   const styleEl = ensurePrintStyleElement();
-  // Use zero @page margins; all spacing is handled by the pagination plugin
-  // (margins, header/footer heights, and content margins). This prevents
-  // double counting and aligns print preview with on-screen pagination.
-  styleEl.textContent = `@page { margin: 0; }
-  @media print {
-    html, body { margin: 0 !important; padding: 0 !important; }
-    .doc-page { padding: 0 !important; }
-    .rm-page-break { break-after: page; }
-    /* Do not force a break before the very first page marker; prevents blank first page */
-    .rm-page-break:first-child { break-after: auto; }
-    .rm-page-break .page { break-after: avoid; break-inside: avoid; }
-  }`;
+  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
+  
+  console.log('[Print] Updating print styles with:', {
+    size: `${metrics.widthMm}mm x ${metrics.heightMm}mm`,
+    showPageNumbers: paginationConfig.showPageNumbers,
+    position: paginationConfig.pageNumberPosition,
+  });
+  
+  // Generate print CSS that matches pagination settings
+  // Keep print padding at 0 to use @page margins instead (as it was before)
+  styleEl.textContent = `
+    @page {
+      size: ${metrics.widthMm}mm ${metrics.heightMm}mm;
+      margin: 20mm;
+      
+      ${paginationConfig.showPageNumbers ? `
+      @bottom-${paginationConfig.pageNumberPosition} {
+        content: counter(page);
+        font-size: 10pt;
+        color: #6b7280;
+      }
+      ` : ''}
+    }
+    
+    @media print {
+      html, body { 
+        margin: 0 !important; 
+        padding: 0 !important; 
+      }
+      
+      .doc-page { 
+        padding: 0 !important; 
+      }
+      
+      .page-break-marker,
+      .page-number-display,
+      .page-numbers-preview {
+        display: none !important;
+      }
+    }
+  `;
 }
 
 async function saveDocument(isManual = false) {
@@ -2086,8 +2120,10 @@ function goBack() {
 // Pagination settings update
 function updatePaginationSettings(settings: { showPageNumbers: boolean; pageNumberPosition: string; footerHeight: number }) {
   paginationConfig.footerHeight = settings.footerHeight;
-  // Until the plugin supports a true centered footer slot, map "center" to right
-  // to keep layout stable and consistent between editor and print.
+  paginationConfig.showPageNumbers = settings.showPageNumbers;
+  paginationConfig.pageNumberPosition = settings.pageNumberPosition as 'left' | 'center' | 'right';
+  
+  // Update footer config for compatibility
   const isShow = !!settings.showPageNumbers;
   const pos = settings.pageNumberPosition;
   paginationConfig.footerLeft = isShow && pos === 'left' ? '{page}' : '';
@@ -2213,10 +2249,10 @@ function initializeEditor() {
       Link.configure({ openOnClick: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
-      TablePlus.configure({ resizable: true }),
-      TableRowPlus,
-      TableCellPlus,
-      TableHeaderPlus,
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
       ImagePlus.configure({ allowBase64: true }),
       Placeholder.configure({
         placeholder: 'Click to start typing…',
@@ -2224,24 +2260,13 @@ function initializeEditor() {
         emptyEditorClass: 'is-editor-empty',
       }),
       ChartExtension,
-      PaginationPlus.configure({
-        pageHeight: metrics.heightPx,
-        pageGap: 2,
-        pageGapBorderSize: 1,
-        pageBreakBackground: '#F7F7F8',
-        pageHeaderHeight: 0,
-        pageFooterHeight: paginationConfig.footerHeight,
-        footerLeft: paginationConfig.footerLeft,
-        footerRight: paginationConfig.footerRight,
-        headerLeft: '',
-        headerRight: '',
-        // Keep plugin margins minimal – main layout already adds paddings
-        marginTop: 10,
-        marginBottom: 10,
-        marginLeft: 10,
-        marginRight: 10,
-        contentMarginTop: 30,
-        contentMarginBottom: 40,
+      SmartPagination.configure({
+        pageSize: { width: metrics.widthMm, height: metrics.heightMm },
+        margins: { top: 25, bottom: 25, left: 25, right: 25 },
+        headerHeight: 0,
+        footerHeight: 15, // in mm
+        showPageNumbers: paginationConfig.showPageNumbers,
+        pageNumberPosition: paginationConfig.pageNumberPosition,
       }),
     ],
     content: existingContent || '',
@@ -2598,6 +2623,45 @@ onUnmounted(() => {
   :deep(.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked) {
     background-color: #2563eb !important;
     border-color: #2563eb !important;
+  }
+}
+
+/* Pagination Plugin Styles */
+.doc-page {
+  position: relative;
+  background: white;
+}
+
+:deep(.page-break-marker) {
+  margin: 20px 0 !important;
+  position: relative;
+  z-index: 5;
+}
+
+:deep(.page-number-display) {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+:deep(.page-numbers-preview) {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Show page margins visually in editor (screen only) */
+@media screen {
+  .doc-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 1px dashed rgba(209, 213, 219, 0.3);
+    pointer-events: none;
+    z-index: 0;
   }
 }
 
