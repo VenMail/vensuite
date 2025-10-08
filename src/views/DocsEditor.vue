@@ -57,7 +57,7 @@
     <div
       v-if="isTocOpen"
       :class="[
-        'fixed left-4 z-40 w-64 max-h-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden flex flex-col print-none',
+        'print-none fixed left-4 z-40 w-64 max-h-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden flex flex-col print-none',
         isToolbarExpanded ? 'top-[250px]' : 'top-[200px]'
       ]"
     >
@@ -106,7 +106,7 @@
             @click="focusEditor"
           >
             <div class="editor-placeholder-content">
-              <p class="text-lg font-semibold text-gray-700">Click to start typing</p>
+              <p class="text-lg text-gray-700">Click to start typing...</p>
               <!-- <p class="text-sm text-gray-500 mt-2">Click on text to apply formatting.</p> -->
             </div>
           </div>
@@ -116,6 +116,7 @@
             ref="bubbleMenuRef"
             :editor="editor"
             :tippy-options="bubbleMenuTippyOptions"
+            :should-show="bubbleShouldShow"
           >
             <div :class="[bubbleShellClass, 'bubble-shell']">
               <div :class="bubbleGridClass">
@@ -412,11 +413,7 @@ import {
   Highlighter,
   Eraser,
   MoreHorizontal,
-  Columns,
-  Rows3,
   Trash2,
-  GitMerge,
-  GitFork,
   CheckCircle2,
   ExternalLink,
   BarChart3,
@@ -426,6 +423,12 @@ import {
   EyeOff,
   Image as ImageIcon,
   Upload,
+  Maximize,
+  Plus,
+  ArrowDown,
+  ArrowRight,
+  Combine,
+  SplitSquareHorizontal,
 } from 'lucide-vue-next';
 import StarterKit from '@tiptap/starter-kit';
 import UnderlineExtension from '@tiptap/extension-underline';
@@ -434,7 +437,7 @@ import Color from '@tiptap/extension-color';
 import FontFamily from '@tiptap/extension-font-family';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Highlight from '@tiptap/extension-highlight';
-import Placeholder from '@tiptap/extension-placeholder';
+// import Placeholder from '@tiptap/extension-placeholder';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
 import Link from '@tiptap/extension-link';
@@ -447,10 +450,7 @@ import { LineHeight } from '@/extensions/line-height';
 import { ParagraphSpacing } from '@/extensions/paragraph-spacing';
 import { ChartExtension } from '@/extensions/chart';
 import type { ChartAttrs } from '@/extensions/chart';
-import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableCell } from '@tiptap/extension-table-cell';
-import { TableHeader } from '@tiptap/extension-table-header';
+import { AdvancedTable, AdvancedTableRow, AdvancedTableCell, AdvancedTableHeader } from '@/extensions/advanced-table';
 
 // const {
 //   TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus
@@ -674,8 +674,31 @@ const isImageEditing = computed(() => {
 
 const isTextSelection = computed(() => !!editor.value && !isImageEditing.value && !editor.value.isActive('table') && !editor.value.isActive('chart'));
 const isTableSelection = computed(() => !!editor.value && editor.value.isActive('table'));
+// Tracks table focus by click or selection, so UI appears even on click-only
+const isTableActiveByClick = ref(false);
 const isLinkEditing = computed(() => !!editor.value && editor.value.isActive('link'));
 const isChartSelection = computed(() => !!editor.value && editor.value.isActive('chart'));
+
+// Make BubbleMenu appear when a table is clicked (even without a cell selection)
+const bubbleShouldShow = () => {
+  if (!editor.value) return false;
+  if (isImageEditing.value) return false;
+  return isTextSelection.value || isTableSelection.value || isTableActiveByClick.value;
+};
+
+function setTableActiveUI(active: boolean) {
+  isTableActiveByClick.value = active;
+  const rootEl = editor.value?.view.dom as HTMLElement | undefined;
+  if (!rootEl) return;
+  if (active) rootEl.classList.add('is-table-active');
+  else rootEl.classList.remove('is-table-active');
+}
+
+function handleEditorClick(e: MouseEvent) {
+  const target = e.target as HTMLElement | null;
+  const isOnTable = !!target?.closest('table');
+  setTableActiveUI(isOnTable);
+}
 
 function syncBubbleLinkFromEditor(activeEditor?: Editor) {
   const instance = activeEditor ?? editor.value;
@@ -897,31 +920,31 @@ const tableActions = computed<BubbleAction[]>(() => {
   return [
     {
       key: 'add-col',
-      icon: Columns,
+      icon: ArrowRight,
       handler: () => instance.chain().focus().addColumnAfter().run(),
-      tooltip: 'Add column',
-      label: 'Add column',
+      tooltip: 'Add column after',
+      label: 'Add column after',
     },
     {
       key: 'add-row',
-      icon: Rows3,
-      handler: () => instance.chain().focus().addRowAfter().run(),
-      tooltip: 'Add row',
-      label: 'Add row',
+      icon: ArrowDown,
+      handler: () => instance.chain().focus().addRowBelow().run(),
+      tooltip: 'Add row below',
+      label: 'Add row below',
     },
     {
       key: 'merge',
-      icon: GitMerge,
+      icon: Combine,
       handler: () => instance.chain().focus().mergeCells().run(),
       tooltip: 'Merge cells',
       label: 'Merge cells',
     },
     {
       key: 'split',
-      icon: GitFork,
+      icon: SplitSquareHorizontal,
       handler: () => instance.chain().focus().splitCell().run(),
-      tooltip: 'Split cells',
-      label: 'Split cells',
+      tooltip: 'Split cell',
+      label: 'Split cell',
     },
     {
       key: 'align-left-table',
@@ -959,6 +982,13 @@ const tableActions = computed<BubbleAction[]>(() => {
       tooltip: 'Delete row',
       label: 'Delete row',
       className: 'text-red-500 dark:text-red-400',
+    },
+    {
+      key: 'reset-row-height',
+      icon: Maximize,
+      handler: () => instance.chain().focus().resetRowHeight().run(),
+      tooltip: 'Reset row height',
+      label: 'Reset row height',
     },
   ];
 });
@@ -1656,9 +1686,22 @@ function updatePrintStyles() {
   document.documentElement.style.setProperty('--print-margin-left', `${marginLeftMm}mm`);
   document.documentElement.style.setProperty('--page-width', `${pageWidthMm}mm`);
   document.documentElement.style.setProperty('--page-height', `${pageHeightMm}mm`);
+  document.documentElement.style.setProperty('--print-padding', `${marginTopMm}mm ${marginRightMm}mm ${marginBottomMm}mm ${marginLeftMm}mm`);
   
   styleEl.textContent = `
+  @page {
+    margin: 0;
+    size: var(--page-width, 210mm) var(--page-height, 297mm);
+  }
   @media print {
+    html, body { margin: 0 !important; padding: 0 !important; }
+    .doc-page,
+    .document-container,
+    .editor,
+    .editor-content,
+    .ProseMirror {
+      padding: var(--print-padding, 0) !important;
+    }
     .rm-page-break { break-after: page; }
     /* Do not force a break before the very first page marker; prevents blank first page */
     .rm-page-break:first-child { break-after: auto; }
@@ -2119,6 +2162,7 @@ function updatePaginationSettings(settings: any) {
     // Override with settings from toolbar
     if (settings.showPageNumbers !== undefined) config.showPageNumbers = settings.showPageNumbers;
     if (settings.pageNumberPosition !== undefined) config.pageNumberPosition = settings.pageNumberPosition;
+    if (settings.printPageNumbers !== undefined) config.printPageNumbers = settings.printPageNumbers;
     if (settings.footerHeight !== undefined) {
       config.marginBottom = settings.footerHeight;
     }
@@ -2241,7 +2285,7 @@ function initializeEditor() {
     } catch {}
   }
 
-  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
+  // const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
 
   editor.value = new Editor({
     extensions: [
@@ -2265,16 +2309,15 @@ function initializeEditor() {
       Link.configure({ openOnClick: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableCell,
-      TableHeader,
-      ImagePlus.configure({ allowBase64: true }),
-      Placeholder.configure({
-        placeholder: 'Click to start typing…',
-        includeChildren: true,
-        emptyEditorClass: 'is-editor-empty',
+      AdvancedTable.configure({
+        resizable: true,
+        rowResizing: true,
+        minRowHeight: 28,
       }),
+      AdvancedTableRow,
+      AdvancedTableCell,
+      AdvancedTableHeader,
+      ImagePlus.configure({ allowBase64: true }),
       ChartExtension,
       // Remove PaginationPlus extension
     ],
@@ -2291,9 +2334,6 @@ function initializeEditor() {
       }
     }
   });
-
-  attachEditorEventListeners(editor.value);
-  updateEditorEmptyState(editor.value);
 
   // Register editor with pagination manager
   if (paginationManager.value) {
@@ -2315,6 +2355,7 @@ function getPaginationConfig(): PaginationConfig {
     marginRight: 50,
     pageNumberPosition: 'bottom-right',
     showPageNumbers: true,
+    printPageNumbers: false,
     pageBorder: true,
     pageShadow: true,
     enabled: true,
@@ -2348,6 +2389,17 @@ onMounted(async () => {
   if (paginationManager.value) {
     paginationManager.value.enablePagination('main-editor');
   }
+
+  // Hook editor events for table-active visuals and bubble visibility
+  editor.value?.on('selectionUpdate', () => {
+    // If selection enters/leaves a table, reflect via class
+    const active = !!editor.value?.isActive('table');
+    setTableActiveUI(active || isTableActiveByClick.value);
+  });
+
+  // Attach click listener to detect table clicks (no selection change)
+  const dom = editor.value?.view.dom as HTMLElement | undefined;
+  dom?.addEventListener('click', handleEditorClick, true);
 
   // Initialize/load document
   await initializeDocument();
@@ -2650,6 +2702,10 @@ onUnmounted(() => {
 
 /* Print styles for task lists */
 @media print {
+  .print-none {
+    display: none!important;
+  }
+
   :deep(.ProseMirror ul[data-type="taskList"]) {
     list-style: none;
     padding-left: 0;
@@ -2777,6 +2833,79 @@ onUnmounted(() => {
   bottom: 0;
   transform: translate(-50%, 50%);
   z-index: 40!important;
+}
+
+/* Row resize handles - positioned on each row */
+:deep(.ProseMirror table) {
+  position: relative;
+}
+
+:deep(.ProseMirror table tr.has-row-resize-handle) {
+  position: relative;
+}
+
+:deep(.ProseMirror table tr.has-row-resize-handle::after) {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 4px;
+  background: transparent;
+  border-top: 2px solid transparent;
+  cursor: row-resize;
+  opacity: 0;
+  transition: opacity 0.12s ease, border-color 0.12s ease;
+  pointer-events: auto;
+  z-index: 20;
+}
+
+:deep(.ProseMirror table tr.has-row-resize-handle:hover::after),
+:deep(.is-table-active .ProseMirror table tr.has-row-resize-handle::after) {
+  opacity: 1;
+  border-top-color: rgba(59, 130, 246, 0.4);
+}
+
+:deep(.ProseMirror table tr.has-row-resize-handle.is-dragging::after) {
+  border-top-color: rgba(59, 130, 246, 0.8) !important;
+  opacity: 1 !important;
+}
+
+/* Column resize handles - positioned on first row cells */
+:deep(.ProseMirror table tr:first-child th.has-col-resize-handle,
+       .ProseMirror table tr:first-child td.has-col-resize-handle) {
+  position: relative;
+}
+
+:deep(.ProseMirror table tr:first-child th.has-col-resize-handle::after,
+       .ProseMirror table tr:first-child td.has-col-resize-handle::after) {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: transparent;
+  border-right: 2px solid transparent;
+  cursor: col-resize;
+  opacity: 0;
+  transition: opacity 0.12s ease, border-color 0.12s ease;
+  pointer-events: auto;
+  z-index: 20;
+}
+
+:deep(.ProseMirror table tr:first-child th.has-col-resize-handle:hover::after,
+       .ProseMirror table tr:first-child td.has-col-resize-handle:hover::after,
+       .is-table-active .ProseMirror table tr:first-child th.has-col-resize-handle::after,
+       .is-table-active .ProseMirror table tr:first-child td.has-col-resize-handle::after) {
+  opacity: 1;
+  border-right-color: rgba(59, 130, 246, 0.4);
+}
+
+:deep(.ProseMirror table tr:first-child th.has-col-resize-handle.is-dragging::after,
+       .ProseMirror table tr:first-child td.has-col-resize-handle.is-dragging::after) {
+  border-right-color: rgba(59, 130, 246, 0.8) !important;
+  opacity: 1 !important;
 }
 
 /* Keep handle container with table */

@@ -36,7 +36,15 @@ export const paginationStyles = `
   background: transparent; /* Fully transparent - no overlay on content */
   border: 1px solid rgba(224, 224, 224, 0.5);
   box-shadow: none; /* Remove shadow to avoid dimming effect */
+  margin-top: 3px;
   pointer-events: none;
+}
+
+.page-indicator:first-child, .page-indicator:last-child,
+.pagination-overlay:first-child, .pagination-overlay:last-child {
+  border: none!important;
+  border-width: 0!important;
+  box-shadow: none!important;
 }
 
 .page-number {
@@ -74,11 +82,15 @@ export const paginationStyles = `
   }
 
   .page-number {
-    display: block !important;
+    display: none !important;
     background: white !important;
     border: 1px solid #ddd !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+  }
+
+  .page-number.page-number--print-visible {
+    display: block !important;
   }
 
   /* Hide masks in print */

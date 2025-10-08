@@ -38,6 +38,13 @@
   pointer-events: none;
 }
 
+.page-indicator:first-child, .page-indicator:last-child,
+.pagination-overlay:first-child, .pagination-overlay:last-child {
+  border: none!important;
+  border-width: 0!important;
+  box-shadow: none!important;
+}
+
 .page-number {
   background: white;
   border: 1px solid #ddd;

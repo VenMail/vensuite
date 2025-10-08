@@ -12,6 +12,7 @@ export interface PaginationConfig {
   marginRight: number;
   pageNumberPosition: 'bottom-right' | 'bottom-center' | 'bottom-left' | 'top-right' | 'top-center' | 'top-left' | 'none';
   showPageNumbers: boolean;
+  printPageNumbers: boolean;
   pageBorder: boolean;
   pageShadow: boolean;
   enabled: boolean;
@@ -44,6 +45,7 @@ export class TiptapPaginationManager {
     marginRight: 50,
     pageNumberPosition: 'bottom-right',
     showPageNumbers: true,
+    printPageNumbers: false,
     pageBorder: true,
     pageShadow: true,
     enabled: false,
@@ -391,6 +393,10 @@ export class TiptapPaginationManager {
     numberElement.textContent = config.pageNumberPosition !== 'none'
       ? pageNumber.toString()
       : '';
+
+    if (config.printPageNumbers) {
+      numberElement.classList.add('page-number--print-visible');
+    }
 
     const positionStyles: Record<string, string> = {
       position: 'absolute',

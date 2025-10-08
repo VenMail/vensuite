@@ -551,26 +551,66 @@
       <DialogHeader>
         <DialogTitle>Page Settings</DialogTitle>
       </DialogHeader>
-      <div class="grid gap-4 py-4">
-        <div class="grid gap-2">
-          <label class="flex items-center gap-2 text-sm font-medium">
-            <input type="checkbox" v-model="paginationSettings.showPageNumbers" class="rounded" />
-            Show Page Numbers
-          </label>
-        </div>
-        <div class="grid gap-2" v-if="paginationSettings.showPageNumbers">
-          <label class="text-sm font-medium">Page Number Position:</label>
-          <select v-model="paginationSettings.pageNumberPosition" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="right">Right</option>
+      <div class="space-y-4">
+        <label class="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" v-model="paginationSettings.showPageNumbers" class="rounded" />
+          Show Page Numbers
+        </label>
+
+        <div v-if="paginationSettings.showPageNumbers" class="space-y-3 pl-6">
+          <label class="text-sm font-medium">Page Number Position</label>
+          <select
+            v-model="paginationSettings.pageNumberPosition"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="top-left">Top Left</option>
+            <option value="top-center">Top Center</option>
+            <option value="top-right">Top Right</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="bottom-center">Bottom Center</option>
+            <option value="bottom-right">Bottom Right</option>
           </select>
-        </div>
-        <div class="grid gap-2">
-          <label class="text-sm font-medium">Footer Height (px):</label>
-          <input type="number" v-model.number="paginationSettings.footerHeight" min="0" max="100" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+
+          <label class="flex items-center gap-2 text-sm font-medium">
+            <input type="checkbox" v-model="paginationSettings.printPageNumbers" class="rounded" />
+            Show page numbers when printing
+          </label>
+          <!-- <p class="text-xs text-gray-500">Printed numbers remain hidden by default to avoid browser headers.</p> -->
         </div>
       </div>
+
+     <div class="space-y-3">
+       <h3 class="text-sm font-semibold">Page Margins (px)</h3>
+       <div class="grid grid-cols-2 gap-4">
+         <label class="grid gap-2 text-sm font-medium">
+           Top
+           <input type="number" v-model.number="paginationSettings.marginTop" min="0" max="200" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+         </label>
+         <label class="grid gap-2 text-sm font-medium">
+           Bottom
+           <input type="number" v-model.number="paginationSettings.marginBottom" min="0" max="200" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+         </label>
+         <label class="grid gap-2 text-sm font-medium">
+           Left
+           <input type="number" v-model.number="paginationSettings.marginLeft" min="0" max="200" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+         </label>
+         <label class="grid gap-2 text-sm font-medium">
+           Right
+           <input type="number" v-model.number="paginationSettings.marginRight" min="0" max="200" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+         </label>
+       </div>
+     </div>
+
+     <div class="space-y-2">
+       <label class="flex items-center gap-2 text-sm font-medium">
+         <input type="checkbox" v-model="paginationSettings.pageBorder" class="rounded" />
+         Show Page Border
+       </label>
+       <label class="flex items-center gap-2 text-sm font-medium">
+         <input type="checkbox" v-model="paginationSettings.pageShadow" class="rounded" />
+         Show Page Shadow
+       </label>
+     </div>
       <DialogFooter>
         <Button variant="outline" @click="showPaginationDialog = false">Cancel</Button>
         <Button @click="applyPaginationSettings">Apply</Button>
@@ -791,7 +831,18 @@ const emit = defineEmits<{
   (e: 'update:pageOrientation', value: 'portrait' | 'landscape'): void;
   (e: 'toggle-comments'): void;
   (e: 'toggle-expanded', value: boolean): void;
-  (e: 'update-pagination', value: { showPageNumbers: boolean; pageNumberPosition: string; footerHeight: number }): void;
+  (e: 'update-pagination', value: {
+    showPageNumbers: boolean;
+    pageNumberPosition: string;
+    footerHeight: number;
+    marginTop: number;
+    marginBottom: number;
+    marginLeft: number;
+    marginRight: number;
+    pageBorder: boolean;
+    pageShadow: boolean;
+    printPageNumbers: boolean;
+  }): void;
   (e: 'print'): void;
 }>();
 
@@ -815,7 +866,7 @@ const chartInitialValue = ref<Partial<ChartAttrs> | null>(null);
 // Pagination settings
 const paginationSettings = ref({
   showPageNumbers: true,
-  pageNumberPosition: 'bottom-right' as const,
+  pageNumberPosition: 'bottom-right' as 'bottom-right' | 'bottom-center' | 'bottom-left' | 'top-right' | 'top-center' | 'top-left' | 'none',
   footerHeight: 30,
   marginTop: 50,
   marginBottom: 50,
@@ -823,6 +874,7 @@ const paginationSettings = ref({
   marginRight: 50,
   pageBorder: true,
   pageShadow: true,
+  printPageNumbers: false,
 });
 
 // Table insert state
