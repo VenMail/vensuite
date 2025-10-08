@@ -29,6 +29,7 @@
       :editor="editor" 
       :page-size="pageSize"
       :page-orientation="pageOrientation"
+      :pagination-manager="paginationManager"
       @update:page-size="pageSize = $event"
       @update:page-orientation="pageOrientation = $event"
       @export="handleExport"
@@ -56,7 +57,7 @@
     <div
       v-if="isTocOpen"
       :class="[
-        'fixed left-4 z-40 w-64 max-h-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden flex flex-col',
+        'fixed left-4 z-40 w-64 max-h-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden flex flex-col print-none',
         isToolbarExpanded ? 'top-[250px]' : 'top-[200px]'
       ]"
     >
@@ -78,7 +79,7 @@
             v-for="(item, index) in tocItems"
             :key="index"
             class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            :style="{ paddingLeft: (item.level - 1) * 12 + 8 }"
+            :style="{ paddingLeft: `${(item.level - 1) * 12 + 8}px` }"
             :class="{
               'font-semibold text-gray-900 dark:text-gray-100': item.level === 1,
               'font-medium text-gray-800 dark:text-gray-200': item.level === 2,
@@ -93,9 +94,9 @@
     </div>
 
     <!-- Editor Content -->
-    <div class="flex-1 overflow-auto bg-gray-50 dark:bg-gray-800 p-6 transition-colors custom-scrollbar print:p-0 print:bg-white">
+    <div class="flex-1 overflow-auto bg-gray-50 p-6 transition-colors custom-scrollbar print:p-0 print:bg-white">
       <div 
-        class="mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
+        class="mx-auto bg-white shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
         :style="pageStyles"
       >
         <div :style="contentPadding" class="doc-page relative">
@@ -302,7 +303,7 @@
           <EditorContent
             v-if="editor"
             :editor="editor"
-            class="prose prose-lg dark:prose-invert max-w-none"
+            class="prose prose-lg max-w-none"
             @focusin="onEditorFocus"
             @focusout="onEditorBlur"
           />
@@ -440,14 +441,20 @@ import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
-import { PaginationTable } from 'tiptap-table-plus';
+// import { PaginationPlus } from 'tiptap-pagination-plus';
 import { FontSize } from '@/extensions/font-size';
 import { LineHeight } from '@/extensions/line-height';
 import { ParagraphSpacing } from '@/extensions/paragraph-spacing';
 import { ChartExtension } from '@/extensions/chart';
 import type { ChartAttrs } from '@/extensions/chart';
-import { PracticalPaginationExtension } from '@/extensions/pagination';
-import type { PracticalPaginationConfig, PageNumberPosition } from '@/extensions/pagination';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+
+// const {
+//   TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus
+// } = PaginationTable;
 import { useFileStore } from '@/store/files';
 import { toast } from 'vue-sonner';
 import type { FileData } from '@/types';
@@ -459,16 +466,11 @@ import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+// Import the new pagination manager and styles
+import PaginationManagerInstance, { TiptapPaginationManager, PaginationConfig } from '@/lib/pagination/pagination-manager';
+import { paginationStyles } from '@/lib/pagination/pagination-styles';
+import { PaginationUI } from '@/lib/pagination/pagination-ui';
 import { NodeSelection } from '@tiptap/pm/state';
-
-const {
-  TablePlus,
-  TableRowPlus,
-  TableCellPlus,
-  TableHeaderPlus,
-} = PaginationTable;
-
 
 const route = useRoute();
 const router = useRouter();
@@ -477,6 +479,10 @@ const authStore = useAuthStore();
 
 const editor = ref<Editor>();
 const toolbarRef = ref<InstanceType<typeof DocsToolbar> | null>(null);
+
+// Pagination manager instances
+const paginationManager = ref<TiptapPaginationManager>();
+const paginationUI = ref<PaginationUI>();
 const currentDoc = ref<FileData | null>(null);
 const documentTitle = ref('Untitled Document');
 const isSaving = ref(false);
@@ -524,211 +530,6 @@ function updateEditorEmptyState(instance?: Editor) {
   if (!empty) {
     hasEnteredContent.value = true;
   }
-}
-
-function buildPrintStyles(config: PracticalPaginationConfig, metrics: PageMetrics) {
-  const paddingTopMm = (config.marginTop + config.contentMarginTop) * PX_TO_MM;
-  const paddingBottomMm = (config.marginBottom + config.contentMarginBottom + config.pageFooterHeight) * PX_TO_MM;
-  const paddingLeftMm = config.marginLeft * PX_TO_MM;
-  const paddingRightMm = config.marginRight * PX_TO_MM;
-
-  const pageNumberCss = (() => {
-    if (!config.showPageNumbers) return '';
-
-    const baseRules = [
-      'body::after {',
-      '  counter-increment: page;',
-      '  content: counter(page);',
-      '  position: fixed;',
-      `  bottom: ${Math.max(4, config.marginBottom) * PX_TO_MM}mm;`,
-      '  font-size: 11pt;',
-      '  color: #4b5563;',
-      '  pointer-events: none;',
-    ];
-
-    if (config.pageNumberPosition === 'left') {
-      baseRules.push(`  left: ${paddingLeftMm}mm;`);
-    } else if (config.pageNumberPosition === 'center') {
-      baseRules.push('  left: 50%;');
-      baseRules.push('  transform: translateX(-50%);');
-    } else {
-      baseRules.push(`  right: ${paddingRightMm}mm;`);
-    }
-
-    baseRules.push('}');
-    return baseRules.join('\n');
-  })();
-
-  const sections = [
-    "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');",
-    '',
-    `@page {\n  size: ${metrics.widthMm}mm ${metrics.heightMm}mm;\n  margin: 0;\n}`,
-    '',
-    '*, *::before, *::after {\n  box-sizing: border-box;\n}',
-    '',
-    `body {\n  margin: 0;\n  background: white;\n  color: #1f2937;\n  line-height: 1.6;\n  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n  font-size: 11pt;\n  counter-reset: page;\n}`,
-    '',
-    `.print-page {\n  width: ${metrics.widthMm}mm;\n  min-height: ${metrics.heightMm}mm;\n  padding: ${paddingTopMm}mm ${paddingRightMm}mm ${paddingBottomMm}mm ${paddingLeftMm}mm;\n  margin: 0 auto;\n  background: white;\n}`,
-    '',
-    'h1, h2, h3, h4, h5, h6 {\n  margin: 0 0 0.5em 0;\n  font-weight: 600;\n  line-height: 1.3;\n}',
-    '',
-    'p {\n  margin: 0 0 0.75em 0;\n}',
-    '',
-    'ul, ol {\n  margin: 0 0 0.75em 1.5em;\n  padding: 0;\n}',
-    '',
-    'table {\n  width: 100%;\n  border-collapse: collapse;\n  margin: 1em 0;\n  page-break-inside: avoid;\n}',
-    '',
-    'th, td {\n  border: 1px solid #d1d5db;\n  padding: 0.5em;\n  vertical-align: top;\n}',
-    '',
-    'blockquote {\n  margin: 0 0 1em 0;\n  padding-left: 1em;\n  border-left: 3px solid #d1d5db;\n  color: #4b5563;\n}',
-    '',
-    'img, svg, canvas {\n  max-width: 100%;\n  break-inside: avoid;\n}',
-    '',
-    'pre {\n  background: #f3f4f6;\n  padding: 0.75em;\n  border-radius: 8px;\n  overflow: hidden;\n  break-inside: avoid;\n}',
-    '',
-    '.avoid-break {\n  break-inside: avoid;\n  page-break-inside: avoid;\n}',
-    '',
-    pageNumberCss,
-    '',
-    '@media print {\n  body {\n    background: white;\n  }\n}',
-  ].filter(Boolean);
-
-  return sections.join('\n');
-}
-
-function escapeForHtml(text: string) {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function buildPrintHtml(content: string) {
-  const config = buildPaginationConfig();
-  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
-  const styles = buildPrintStyles(config, metrics);
-  const title = escapeForHtml(documentTitle.value || 'Document');
-
-  return `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>${title}</title>
-    <style>${styles}</style>
-  </head>
-  <body>
-    <div class="print-page">
-      ${content}
-    </div>
-    <script>
-      window.addEventListener('load', () => {
-        window.focus();
-        setTimeout(() => {
-          window.print();
-          window.close();
-        }, 150);
-      });
-    <\/script>
-  </body>
-</html>`;
-}
-
-async function saveDocument(isManual = false) {
-  if (!editor.value || !currentDoc.value) return;
-
-  if (editor.value.isEmpty && !hasEnteredContent.value) {
-    if (isManual) {
-      toast.info('Add some content before saving.');
-    }
-    return;
-  }
-
-  isSaving.value = true;
-  
-  try {
-    const json = editor.value.getJSON();
-    const hasMeaningfulContent = Array.isArray(json.content)
-      ? json.content.some((node: any) => {
-          if (!node) return false;
-          if (node.type === 'paragraph') {
-            const text = (node.content || [])
-              .map((child: any) => child?.text || '')
-              .join('')
-              .trim();
-            return text.length > 0;
-          }
-          return node.type && node.type !== 'paragraph';
-        })
-      : false;
-
-    if (!hasMeaningfulContent) {
-      if (isManual) {
-        toast.info('Your document is still empty. Add content before saving.');
-      }
-      return;
-    }
-
-    // Save JSON as string in content field
-    const updatedDoc: FileData = {
-      ...currentDoc.value,
-      content: JSON.stringify(json),
-      last_viewed: new Date(),
-    };
-    
-    const result = await fileStore.saveDocument(updatedDoc);
-    if (result.document) {
-      currentDoc.value = result.document;
-      lastSavedAt.value = new Date();
-      hasUnsavedChanges.value = false;
-      // Only show toast for manual saves
-      if (isManual) {
-        toast.success('Document saved');
-      }
-    }
-  } catch (error) {
-    console.error('Failed to save document:', error);
-    // Always show error toasts
-    toast.error('Failed to save document');
-  } finally {
-    isSaving.value = false;
-  }
-}
-
-function scheduleSave() {
-  // Clear existing idle timeout
-  if (saveTimeout) {
-    clearTimeout(saveTimeout);
-  }
-  
-  // Schedule save after 3 seconds of idle (more responsive)
-  saveTimeout = setTimeout(() => {
-    saveDocument(false);
-  }, 3000);
-  
-  // Ensure we save within 30 seconds regardless of activity
-  if (!maxWaitTimeout) {
-    maxWaitTimeout = setTimeout(() => {
-      saveDocument(false);
-      maxWaitTimeout = null;
-    }, 30000); // 30 seconds
-  }
-}
-
-function handlePrint() {
-  if (!editor.value) {
-    toast.error('Editor is not ready to print yet.');
-    return;
-  }
-
-  const htmlContent = editor.value.getHTML();
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1024,height=768');
-
-  if (!printWindow) {
-    toast.error('Pop-up blocked. Allow pop-ups for this site to print.');
-    return;
-  }
-
-  const printDocument = buildPrintHtml(htmlContent);
-  printWindow.document.open();
-  printWindow.document.write(printDocument);
-  printWindow.document.close();
 }
 
 function handleEditorContentChange(instance: Editor) {
@@ -1778,44 +1579,19 @@ const pageDimensions = {
   card: { width: 88.9, height: 50.8 },
 } as const;
 
-const paginationState = reactive({
+const paginationConfig = reactive({
   footerHeight: 30,
-  showPageNumbers: true,
-  pageNumberPosition: 'right' as PageNumberPosition,
+  footerLeft: '',
+  footerRight: '{page}',
 });
 
-const PAGE_MARGIN_PX = {
-  top: 48,
-  bottom: 48,
-  left: 56,
-  right: 56,
-};
-
-const CONTENT_MARGIN_PX = {
-  top: 32,
-  bottom: 40,
-};
-
-const PAGE_GAP_PX = 24;
-
 const MM_TO_PX = 96 / 25.4;
-const PX_TO_MM = 1 / MM_TO_PX;
-
-interface PageMetrics {
-  widthMm: number;
-  heightMm: number;
-  widthPx: number;
-  heightPx: number;
-}
 
 const contentPadding = computed(() => {
-  const top = PAGE_MARGIN_PX.top + CONTENT_MARGIN_PX.top;
-  const bottom = PAGE_MARGIN_PX.bottom + CONTENT_MARGIN_PX.bottom + paginationState.footerHeight;
-  const left = PAGE_MARGIN_PX.left;
-  const right = PAGE_MARGIN_PX.right;
-
+  // Remove outer padding so on-screen pagination matches print exactly.
+  // All spacing comes from the pagination plugin margins and content margins.
   return {
-    padding: `${top}px ${right}px ${bottom}px ${left}px`,
+    padding: '0',
   };
 });
 
@@ -1843,36 +1619,6 @@ const pageStyles = computed(() => {
   } as Record<string, string>;
 });
 
-function buildPaginationConfig(): PracticalPaginationConfig {
-  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
-  return {
-    pageHeight: metrics.heightPx,
-    marginTop: PAGE_MARGIN_PX.top,
-    marginBottom: PAGE_MARGIN_PX.bottom,
-    marginLeft: PAGE_MARGIN_PX.left,
-    marginRight: PAGE_MARGIN_PX.right,
-    pageHeaderHeight: 0,
-    pageFooterHeight: paginationState.footerHeight,
-    contentMarginTop: CONTENT_MARGIN_PX.top,
-    contentMarginBottom: CONTENT_MARGIN_PX.bottom,
-    pageGap: PAGE_GAP_PX,
-    showPageNumbers: paginationState.showPageNumbers,
-    pageNumberPosition: paginationState.pageNumberPosition,
-  };
-}
-
-function applyPaginationConfig() {
-  if (!editor.value) return;
-  editor.value.commands.updatePaginationConfig(buildPaginationConfig());
-}
-
-function updatePaginationEnabledState() {
-  if (!editor.value) return;
-  // Enable pagination only when a document is loaded and pagination mode is desired.
-  // Currently we keep it always enabled to maintain page visuals.
-  editor.value.commands.setPaginationEnabled(true);
-}
-
 // Inject print-specific CSS so print preview matches editor pagination
 let printStyleElement: HTMLStyleElement | null = null;
 
@@ -1888,47 +1634,121 @@ function ensurePrintStyleElement(): HTMLStyleElement {
 }
 
 function updatePrintStyles() {
-  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
-  const marginTopMm = PAGE_MARGIN_PX.top * PX_TO_MM;
-  const marginBottomMm = PAGE_MARGIN_PX.bottom * PX_TO_MM;
-  const marginLeftMm = PAGE_MARGIN_PX.left * PX_TO_MM;
-  const marginRightMm = PAGE_MARGIN_PX.right * PX_TO_MM;
-  const contentTopMm = CONTENT_MARGIN_PX.top * PX_TO_MM;
-  const contentBottomMm = CONTENT_MARGIN_PX.bottom * PX_TO_MM;
-  const footerHeightMm = paginationState.footerHeight * PX_TO_MM;
-
   const styleEl = ensurePrintStyleElement();
-  styleEl.textContent = `@page {
-    size: ${metrics.widthMm}mm ${metrics.heightMm}mm;
-    margin: ${marginTopMm}mm ${marginRightMm}mm ${marginBottomMm}mm ${marginLeftMm}mm;
+  const config = paginationManager.value?.getConfig('main-editor');
+  
+  // Convert px to mm for print (96 DPI = 1 inch = 25.4mm)
+  const pxToMm = (px: number) => (px * 25.4) / 96;
+  
+  const marginTopMm = config ? pxToMm(config.marginTop) : 20;
+  const marginRightMm = config ? pxToMm(config.marginRight) : 15;
+  const marginBottomMm = config ? pxToMm(config.marginBottom) : 20;
+  const marginLeftMm = config ? pxToMm(config.marginLeft) : 15;
+  
+  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
+  const pageWidthMm = (metrics.widthPx * 25.4) / 96;
+  const pageHeightMm = (metrics.heightPx * 25.4) / 96;
+  
+  // Set CSS variables for print
+  document.documentElement.style.setProperty('--print-margin-top', `${marginTopMm}mm`);
+  document.documentElement.style.setProperty('--print-margin-right', `${marginRightMm}mm`);
+  document.documentElement.style.setProperty('--print-margin-bottom', `${marginBottomMm}mm`);
+  document.documentElement.style.setProperty('--print-margin-left', `${marginLeftMm}mm`);
+  document.documentElement.style.setProperty('--page-width', `${pageWidthMm}mm`);
+  document.documentElement.style.setProperty('--page-height', `${pageHeightMm}mm`);
+  
+  styleEl.textContent = `
+  @media print {
+    .rm-page-break { break-after: page; }
+    /* Do not force a break before the very first page marker; prevents blank first page */
+    .rm-page-break:first-child { break-after: auto; }
+    .rm-page-break .page { break-after: avoid; break-inside: avoid; }
+  }`;
+}
+
+async function saveDocument(isManual = false) {
+  if (!editor.value || !currentDoc.value) return;
+
+  if (editor.value.isEmpty && !hasEnteredContent.value) {
+    if (isManual) {
+      toast.info('Add some content before saving.');
+    }
+    return;
   }
 
-  @media print {
-    html, body {
-      margin: 0 !important;
-      padding: 0 !important;
+  isSaving.value = true;
+  
+  try {
+    const json = editor.value.getJSON();
+    const hasMeaningfulContent = Array.isArray(json.content)
+      ? json.content.some((node: any) => {
+          if (!node) return false;
+          if (node.type === 'paragraph') {
+            const text = (node.content || [])
+              .map((child: any) => child?.text || '')
+              .join('')
+              .trim();
+            return text.length > 0;
+          }
+          return node.type && node.type !== 'paragraph';
+        })
+      : false;
+
+    if (!hasMeaningfulContent) {
+      if (isManual) {
+        toast.info('Your document is still empty. Add content before saving.');
+      }
+      return;
     }
 
-    .pagination-overlay,
-    .pagination-overlay *,
-    .page-indicator,
-    .page-number {
-      display: none !important;
+    // Save JSON as string in content field
+    const updatedDoc: FileData = {
+      ...currentDoc.value,
+      content: JSON.stringify(json),
+      last_viewed: new Date(),
+    };
+    
+    const result = await fileStore.saveDocument(updatedDoc);
+    if (result.document) {
+      currentDoc.value = result.document;
+      lastSavedAt.value = new Date();
+      hasUnsavedChanges.value = false;
+      // Only show toast for manual saves
+      if (isManual) {
+        toast.success('Document saved');
+      }
     }
+  } catch (error) {
+    console.error('Failed to save document:', error);
+    // Always show error toasts
+    toast.error('Failed to save document');
+  } finally {
+    isSaving.value = false;
+  }
+}
 
-    .doc-page {
-      padding: 0 !important;
-      background: transparent !important;
-      box-shadow: none !important;
-    }
+function scheduleSave() {
+  // Clear existing idle timeout
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  
+  // Schedule save after 3 seconds of idle (more responsive)
+  saveTimeout = setTimeout(() => {
+    saveDocument(false);
+  }, 3000);
+  
+  // Ensure we save within 30 seconds regardless of activity
+  if (!maxWaitTimeout) {
+    maxWaitTimeout = setTimeout(() => {
+      saveDocument(false);
+      maxWaitTimeout = null;
+    }, 30000); // 30 seconds
+  }
+}
 
-    .ProseMirror {
-      padding: ${contentTopMm}mm ${marginRightMm}mm ${contentBottomMm + footerHeightMm}mm ${marginLeftMm}mm !important;
-      box-sizing: border-box !important;
-      margin: 0 !important;
-      width: 100% !important;
-    }
-  }`;
+function handlePrint() {
+  window.print();
 }
 
 function handleExport(format: string) {
@@ -2292,15 +2112,43 @@ function goBack() {
 }
 
 // Pagination settings update
-function updatePaginationSettings(settings: { showPageNumbers: boolean; pageNumberPosition: string; footerHeight: number }) {
-  paginationState.footerHeight = settings.footerHeight;
-  paginationState.showPageNumbers = !!settings.showPageNumbers;
-  const allowedPositions: PageNumberPosition[] = ['left', 'center', 'right'];
-  paginationState.pageNumberPosition = allowedPositions.includes(settings.pageNumberPosition as PageNumberPosition)
-    ? (settings.pageNumberPosition as PageNumberPosition)
-    : 'right';
+function updatePaginationSettings(settings: any) {
+  if (paginationManager.value) {
+    // Update the pagination manager with the new settings
+    const config = getPaginationConfig();
+    // Override with settings from toolbar
+    if (settings.showPageNumbers !== undefined) config.showPageNumbers = settings.showPageNumbers;
+    if (settings.pageNumberPosition !== undefined) config.pageNumberPosition = settings.pageNumberPosition;
+    if (settings.footerHeight !== undefined) {
+      config.marginBottom = settings.footerHeight;
+    }
+    if (settings.pageBorder !== undefined) config.pageBorder = settings.pageBorder;
+    if (settings.pageShadow !== undefined) config.pageShadow = settings.pageShadow;
+    if (settings.marginTop !== undefined) config.marginTop = settings.marginTop;
+    if (settings.marginBottom !== undefined) config.marginBottom = settings.marginBottom;
+    if (settings.marginLeft !== undefined) config.marginLeft = settings.marginLeft;
+    if (settings.marginRight !== undefined) config.marginRight = settings.marginRight;
+    if (settings.debounceDelay !== undefined) config.debounceDelay = settings.debounceDelay;
+    if (settings.autoRecalculate !== undefined) config.autoRecalculate = settings.autoRecalculate;
 
-  applyPaginationConfig();
+    // Update the manager
+    paginationManager.value.updateConfig('main-editor', config);
+
+    // Also update the old paginationConfig for backward compatibility
+    paginationConfig.footerHeight = settings.footerHeight || 30;
+    const isShow = !!settings.showPageNumbers;
+    const pos = settings.pageNumberPosition || 'right';
+    paginationConfig.footerLeft = isShow && pos === 'left' ? '{page}' : '';
+    paginationConfig.footerRight = isShow && (pos === 'right' || pos === 'center') ? '{page}' : '';
+
+    // Ensure pagination is enabled
+    paginationManager.value.enablePagination('main-editor');
+  }
+
+  if (editor.value) {
+    initializeEditor();
+  }
+
   updatePrintStyles();
 }
 
@@ -2393,6 +2241,8 @@ function initializeEditor() {
     } catch {}
   }
 
+  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
+
   editor.value = new Editor({
     extensions: [
       StarterKit.configure({
@@ -2415,10 +2265,10 @@ function initializeEditor() {
       Link.configure({ openOnClick: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
-      TablePlus.configure({ resizable: true }),
-      TableRowPlus,
-      TableCellPlus,
-      TableHeaderPlus,
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
       ImagePlus.configure({ allowBase64: true }),
       Placeholder.configure({
         placeholder: 'Click to start typing…',
@@ -2426,10 +2276,7 @@ function initializeEditor() {
         emptyEditorClass: 'is-editor-empty',
       }),
       ChartExtension,
-      PracticalPaginationExtension.configure({
-        enabled: true,
-        config: buildPaginationConfig(),
-      }),
+      // Remove PaginationPlus extension
     ],
     content: existingContent || '',
     editorProps: {
@@ -2447,22 +2294,81 @@ function initializeEditor() {
 
   attachEditorEventListeners(editor.value);
   updateEditorEmptyState(editor.value);
-  applyPaginationConfig();
-  updatePaginationEnabledState();
+
+  // Register editor with pagination manager
+  if (paginationManager.value) {
+    const config = getPaginationConfig();
+    paginationManager.value.registerEditor('main-editor', editor.value as any, config);
+    // Enable pagination immediately after registration
+    paginationManager.value.enablePagination('main-editor');
+  }
+}
+
+function getPaginationConfig(): PaginationConfig {
+  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
+  return {
+    pageHeight: metrics.heightPx,
+    pageWidth: metrics.widthPx,
+    marginTop: 50,
+    marginBottom: 50,
+    marginLeft: 50,
+    marginRight: 50,
+    pageNumberPosition: 'bottom-right',
+    showPageNumbers: true,
+    pageBorder: true,
+    pageShadow: true,
+    enabled: true,
+    autoRecalculate: true,
+    debounceDelay: 100
+  };
 }
 
 onMounted(async () => {
+  // Initialize pagination manager and UI
+  paginationManager.value = PaginationManagerInstance;
+  // Create optional UI helper instance (not required for core visuals)
+  paginationUI.value = new PaginationUI(paginationManager.value);
+  // Inject optional UI styles (controls)
+  paginationUI.value.injectStyles?.();
+  
+  // Inject core pagination styles (visuals for pages and numbers)
+  if (typeof document !== 'undefined' && !document.getElementById('tiptap-pagination-core-styles')) {
+    const styleEl = document.createElement('style');
+    styleEl.id = 'tiptap-pagination-core-styles';
+    styleEl.textContent = paginationStyles;
+    document.head.appendChild(styleEl);
+  }
+
   // Initialize editor with default pagination matching current standard
   initializeEditor();
   updatePrintStyles();
+
+  // Enable pagination after editor is ready
+  await nextTick();
+  if (paginationManager.value) {
+    paginationManager.value.enablePagination('main-editor');
+  }
+
   // Initialize/load document
   await initializeDocument();
+
+  // Debug: Log pagination status
+  console.log('Pagination manager status:', {
+    registered: paginationManager.value?.getRegisteredEditors(),
+    config: paginationManager.value?.getConfig('main-editor'),
+    enabled: paginationManager.value?.getConfig('main-editor')?.enabled
+  });
 });
 
 watch([pageSize, pageOrientation], () => {
   if (!editor.value) return;
   initializeEditor();
   updatePrintStyles();
+
+  // Re-enable pagination after editor reinitialization
+  if (paginationManager.value) {
+    paginationManager.value.enablePagination('main-editor');
+  }
 });
 
 onUnmounted(() => {

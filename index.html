@@ -16,7 +16,7 @@
 /* ===== GLOBAL RESET FOR PRINT ===== */
 @media print {
   @page {
-    margin: 0;
+    margin: var(--print-margin-top, 20mm) var(--print-margin-right, 15mm) var(--print-margin-bottom, 20mm) var(--print-margin-left, 15mm);
     size: var(--page-width, 210mm) var(--page-height, 297mm);
   }
 
@@ -76,7 +76,7 @@
     width: 100% !important;
     max-width: var(--page-width, 210mm) !important;
     margin: 0 auto !important;
-    padding: var(--print-padding, 18mm 15mm) !important;
+    padding: 0 !important; /* Let @page margins handle spacing */
     background: #fff !important;
     border: none !important;
     box-shadow: none !important;

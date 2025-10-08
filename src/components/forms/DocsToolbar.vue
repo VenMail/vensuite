@@ -815,8 +815,14 @@ const chartInitialValue = ref<Partial<ChartAttrs> | null>(null);
 // Pagination settings
 const paginationSettings = ref({
   showPageNumbers: true,
-  pageNumberPosition: 'right', // 'left', 'center', 'right', 'none'
+  pageNumberPosition: 'bottom-right' as const,
   footerHeight: 30,
+  marginTop: 50,
+  marginBottom: 50,
+  marginLeft: 50,
+  marginRight: 50,
+  pageBorder: true,
+  pageShadow: true,
 });
 
 // Table insert state
