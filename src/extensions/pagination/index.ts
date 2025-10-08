@@ -1,232 +1,147 @@
 import { Extension } from '@tiptap/core';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { DecorationSet } from '@tiptap/pm/view';
-import type { PaginationOptions, PaginationState } from './types';
-import { calculatePageBreaks } from './layout-engine';
-import { createPageBreakDecorations } from './renderer';
+import type { Editor } from '@tiptap/core';
+import { PracticalPagination } from './practical-pagination';
+import type {
+  PracticalPaginationConfig,
+  PageNumberPosition,
+} from './practical-pagination';
 
-export * from './types';
+const DEFAULT_CONFIG: PracticalPaginationConfig = {
+  pageHeight: 1123,
+  marginTop: 48,
+  marginBottom: 48,
+  marginLeft: 56,
+  marginRight: 56,
+  pageHeaderHeight: 0,
+  pageFooterHeight: 30,
+  contentMarginTop: 32,
+  contentMarginBottom: 40,
+  pageGap: 24,
+  showPageNumbers: true,
+  pageNumberPosition: 'right',
+};
 
-const RECALC_DEBOUNCE_MS = 150;
-const IDLE_TIMEOUT_MS = 500;
+export interface PracticalPaginationOptions {
+  enabled?: boolean;
+  config?: Partial<PracticalPaginationConfig>;
+}
 
-export interface SmartPaginationOptions extends Partial<PaginationOptions> {}
+export interface PracticalPaginationStorage {
+  instance: PracticalPagination | null;
+  config: PracticalPaginationConfig;
+}
 
-// Create a single plugin key instance to share across all uses
-const paginationPluginKey = new PluginKey('smartPagination');
+function mergeConfig(partial?: Partial<PracticalPaginationConfig>): PracticalPaginationConfig {
+  return {
+    ...DEFAULT_CONFIG,
+    ...(partial ?? {}),
+  };
+}
 
-export const SmartPagination = Extension.create<SmartPaginationOptions>({
-  name: 'smartPagination',
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    practicalPagination: {
+      enablePagination: () => ReturnType;
+      disablePagination: () => ReturnType;
+      togglePagination: () => ReturnType;
+      updatePaginationConfig: (config: Partial<PracticalPaginationConfig>) => ReturnType;
+      setPaginationEnabled: (enabled: boolean) => ReturnType;
+    };
+  }
+
+  interface Storage {
+    practicalPagination: PracticalPaginationStorage;
+  }
+}
+
+export const PracticalPaginationExtension = Extension.create<PracticalPaginationOptions>({
+  name: 'practicalPagination',
 
   addOptions() {
     return {
-      pageSize: { width: 210, height: 297 }, // A4
-      margins: { top: 20, bottom: 20, left: 20, right: 20 },
-      headerHeight: 0,
-      footerHeight: 10,
-      showPageNumbers: true,
-      pageNumberPosition: 'right',
+      enabled: true,
+      config: DEFAULT_CONFIG,
+    } satisfies PracticalPaginationOptions;
+  },
+
+  addStorage() {
+    return {
+      practicalPagination: {
+        instance: null,
+        config: mergeConfig(this.options.config),
+      },
+    } satisfies { practicalPagination: PracticalPaginationStorage };
+  },
+
+  onCreate() {
+    const config = mergeConfig(this.options.config);
+    const storage = this.storage.practicalPagination;
+    storage.config = config;
+    const pagination = new PracticalPagination(this.editor, config);
+    storage.instance = pagination;
+
+    if (this.options.enabled !== false) {
+      void pagination.enable();
+    }
+  },
+
+  onDestroy() {
+    const { instance } = this.storage.practicalPagination;
+    instance?.destroy();
+    this.storage.practicalPagination.instance = null;
+  },
+
+  addCommands() {
+    const getInstance = (editor: Editor) => {
+      return editor.storage.practicalPagination.instance;
+    };
+
+    const applyUpdate = (editor: Editor, partial: Partial<PracticalPaginationConfig>) => {
+      const storage = editor.storage.practicalPagination;
+      storage.config = { ...storage.config, ...partial };
+      storage.instance?.updateConfig(storage.config);
+    };
+
+    return {
+      enablePagination: () => ({ editor }) => {
+        const instance = getInstance(editor);
+        if (!instance) return false;
+        void instance.enable();
+        return true;
+      },
+      disablePagination: () => ({ editor }) => {
+        const instance = getInstance(editor);
+        if (!instance) return false;
+        instance.disable();
+        return true;
+      },
+      togglePagination: () => ({ editor }) => {
+        const instance = getInstance(editor);
+        if (!instance) return false;
+        if (instance.enabled) {
+          instance.disable();
+        } else {
+          void instance.enable();
+        }
+        return true;
+      },
+      updatePaginationConfig: (config) => ({ editor }) => {
+        applyUpdate(editor, config);
+        return true;
+      },
+      setPaginationEnabled: (enabled) => ({ editor }) => {
+        const instance = getInstance(editor);
+        if (!instance) return false;
+        if (enabled) {
+          void instance.enable();
+        } else {
+          instance.disable();
+        }
+        return true;
+      },
     };
   },
-
-  addProseMirrorPlugins() {
-    const options = this.options as PaginationOptions;
-    console.log('[SmartPagination] Plugin initialized with options:', options);
-    
-    return [
-      new Plugin({
-        key: paginationPluginKey,
-        
-        state: {
-          init: (): PaginationState => {
-            console.log('[SmartPagination] Plugin state initialized');
-            return {
-              pageBreaks: [],
-              nodePositions: new Map(),
-              totalPages: 1,
-              contentHeight: 0,
-              isDirty: true,
-            };
-          },
-          
-          apply: (tr, oldState): PaginationState => {
-            // Check if we have new state from meta
-            const meta = tr.getMeta('smartPagination');
-            if (meta?.state) {
-              console.log('[SmartPagination] Applying new state from meta:', meta.state.pageBreaks.length, 'breaks');
-              return meta.state;
-            }
-            
-            // Mark as dirty if document changed
-            if (tr.docChanged) {
-              return { ...oldState, isDirty: true };
-            }
-            return oldState;
-          },
-        },
-        
-        view: (editorView) => {
-          let recalcTimeout: ReturnType<typeof setTimeout> | null = null;
-          let idleTimeout: ReturnType<typeof setTimeout> | null = null;
-          let rafId: number | null = null;
-          let isRecalculating = false;
-          
-          // Performant recalculation using RAF and idle detection
-          let lastDocSize = 0;
-          
-          const scheduleRecalc = () => {
-            // Check if document actually changed
-            const currentDocSize = editorView.state.doc.content.size;
-            if (currentDocSize === lastDocSize && lastDocSize > 0) {
-              console.log('[SmartPagination] Skipping recalc - no document changes');
-              return;
-            }
-            
-            // Clear existing timers
-            if (recalcTimeout) clearTimeout(recalcTimeout);
-            if (idleTimeout) clearTimeout(idleTimeout);
-            if (rafId) cancelAnimationFrame(rafId);
-            
-            // Debounce rapid changes
-            recalcTimeout = setTimeout(() => {
-              // Wait for idle
-              idleTimeout = setTimeout(() => {
-                // Use RAF to avoid blocking
-                rafId = requestAnimationFrame(() => {
-                  if (isRecalculating) return;
-                  
-                  isRecalculating = true;
-                  try {
-                    const newState = calculatePageBreaks(editorView, options);
-                    lastDocSize = editorView.state.doc.content.size;
-                    
-                    console.log('[SmartPagination] Calculated:', {
-                      totalPages: newState.totalPages,
-                      pageBreaks: newState.pageBreaks.length,
-                      contentHeight: Math.round(newState.contentHeight),
-                      nodePositions: newState.nodePositions.size,
-                    });
-                    
-                    // Update plugin state
-                    const tr = editorView.state.tr;
-                    tr.setMeta('smartPagination', { state: newState });
-                    editorView.dispatch(tr);
-                  } catch (error) {
-                    console.error('[SmartPagination] Error calculating page breaks:', error);
-                  } finally {
-                    isRecalculating = false;
-                  }
-                });
-              }, IDLE_TIMEOUT_MS);
-            }, RECALC_DEBOUNCE_MS);
-          };
-          
-          // Initial calculation
-          console.log('[SmartPagination] Editor view ready, scheduling initial calculation');
-          console.log('[SmartPagination] Editor DOM:', editorView.dom);
-          scheduleRecalc();
-          
-          // Recalculate on document changes
-          const updateHandler = () => {
-            scheduleRecalc();
-          };
-          
-          // Listen to editor updates (but ignore decoration changes)
-          const observer = new MutationObserver((mutations) => {
-            // Only trigger if actual content changed, not decorations
-            const hasContentChange = mutations.some(mutation => {
-              // Ignore changes to decoration elements
-              if (mutation.target instanceof HTMLElement) {
-                const classList = mutation.target.classList;
-                if (classList.contains('page-break-marker') || 
-                    classList.contains('page-number-display') ||
-                    classList.contains('page-numbers-preview')) {
-                  return false;
-                }
-              }
-              return true;
-            });
-            
-            if (hasContentChange) {
-              updateHandler();
-            }
-          });
-          observer.observe(editorView.dom, {
-            childList: true,
-            subtree: true,
-            characterData: true,
-          });
-          
-          // Recalculate on window resize
-          const resizeHandler = () => scheduleRecalc();
-          window.addEventListener('resize', resizeHandler);
-          
-          return {
-            update: (view, prevState) => {
-              // Only recalculate if document content actually changed
-              if (view.state.doc !== prevState.doc && view.state.doc.content.size !== prevState.doc.content.size) {
-                updateHandler();
-              }
-            },
-            
-            destroy: () => {
-              if (recalcTimeout) clearTimeout(recalcTimeout);
-              if (idleTimeout) clearTimeout(idleTimeout);
-              if (rafId) cancelAnimationFrame(rafId);
-              observer.disconnect();
-              window.removeEventListener('resize', resizeHandler);
-            },
-          };
-        },
-        
-        props: {
-          decorations: (state) => {
-            // Get plugin state using the shared key
-            const pluginState = paginationPluginKey.getState(state) as PaginationState | undefined;
-            
-            if (pluginState) {
-              console.log('[SmartPagination] Plugin state found:', {
-                pageBreaks: pluginState.pageBreaks.length,
-                totalPages: pluginState.totalPages,
-                isDirty: pluginState.isDirty,
-              });
-              
-              if (pluginState.pageBreaks.length > 0) {
-                console.log('[SmartPagination] Rendering', pluginState.pageBreaks.length, 'page break decorations');
-                const decoSet = createPageBreakDecorations(state, pluginState, options);
-                console.log('[SmartPagination] Returning decoration set');
-                return decoSet;
-              } else {
-                console.log('[SmartPagination] No page breaks to render yet');
-              }
-            } else {
-              console.warn('[SmartPagination] Plugin state not found!');
-            }
-            
-            return DecorationSet.empty;
-          },
-        },
-      }),
-    ];
-  },
-
-  addGlobalAttributes() {
-    return [
-      {
-        types: ['paragraph', 'heading', 'blockquote', 'codeBlock', 'listItem', 'taskItem'],
-        attributes: {
-          'data-page': {
-            default: null,
-            parseHTML: element => element.getAttribute('data-page'),
-            renderHTML: attributes => {
-              if (!attributes['data-page']) {
-                return {};
-              }
-              return { 'data-page': attributes['data-page'] };
-            },
-          },
-        },
-      },
-    ];
-  },
 });
+
+export type { PracticalPaginationConfig, PageNumberPosition };
+export { PracticalPagination };
