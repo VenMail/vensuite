@@ -665,7 +665,6 @@ onUnmounted(() => {
             class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4"
           >
             <div class="flex items-center space-x-2">
-              <Trash2 class="h-6 w-6 text-red-500" />
               <h2
                 :class="[
                   'text-xl sm:text-2xl font-semibold',
@@ -733,15 +732,15 @@ onUnmounted(() => {
                 ></div>
               </div>
               <!-- Selection actions -->
-              <!-- Selection actions -->
               <div class="flex items-center flex-wrap gap-2">
                 <Button
                   size="sm"
+                  variant="ghost"
                   @click.stop="handleBulkAction('restore')"
                   :class="[
                     theme.isDark.value
                       ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
-                      : 'bg-white hover:bg-gray-50 border-gray-200',
+                      : 'bg-white text-gray-900 hover:bg-gray-50 border-gray-200',
                     'border',
                   ]"
                 >
@@ -750,11 +749,12 @@ onUnmounted(() => {
                 </Button>
                 <Button
                   size="sm"
+                  variant="ghost"
                   @click.stop="handleBulkAction('delete')"
                   :class="[
                     theme.isDark.value
                       ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
-                      : 'bg-white hover:bg-gray-50 border-gray-200',
+                      : 'bg-white text-gray-900 hover:bg-gray-50 border-gray-200',
                     'border',
                   ]"
                 >
@@ -763,11 +763,12 @@ onUnmounted(() => {
                 </Button>
                 <Button
                   size="sm"
+                  variant="ghost"
                   @click.stop="clearSelection"
                   :class="[
                     theme.isDark.value
                       ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
-                      : 'bg-white hover:bg-gray-50 border-gray-200',
+                      : 'bg-white text-gray-900 hover:bg-gray-50 border-gray-200',
                     'border',
                   ]"
                 >

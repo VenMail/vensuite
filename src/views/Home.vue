@@ -902,11 +902,12 @@ function handleEscapeKey(event: KeyboardEvent) {
                   <Button
                     v-if="selectedFiles.size === 1"
                     size="sm"
+                    variant="ghost"
                     @click="openFile(Array.from(selectedFiles)[0])"
                     :class="[
                       theme.isDark.value
                         ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
-                        : 'bg-white hover:bg-gray-50 border-gray-200',
+                        : 'bg-white text-gray-900 hover:bg-gray-50 border-gray-200',
                       'border',
                     ]"
                   >
@@ -915,11 +916,12 @@ function handleEscapeKey(event: KeyboardEvent) {
                   </Button>
                   <Button
                     size="sm"
+                    variant="ghost"
                     @click="handleBulkDelete"
                     :class="[
                       theme.isDark.value
                         ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
-                        : 'bg-white hover:bg-gray-50 border-gray-200',
+                        : 'bg-white text-gray-900 hover:bg-gray-50 border-gray-200',
                       'border',
                     ]"
                   >
@@ -929,11 +931,12 @@ function handleEscapeKey(event: KeyboardEvent) {
                   <Button
                     v-if="selectedFiles.size === 1"
                     size="sm"
+                    variant="ghost"
                     @click="handleRename"
                     :class="[
                       theme.isDark.value
                         ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
-                        : 'bg-white hover:bg-gray-50 border-gray-200',
+                        : 'bg-white text-gray-900 hover:bg-gray-50 border-gray-200',
                       'border',
                     ]"
                   >
@@ -942,11 +945,12 @@ function handleEscapeKey(event: KeyboardEvent) {
                   </Button>
                   <Button
                     size="sm"
+                    variant="ghost"
                     @click="handleBulkDownload"
                     :class="[
                       theme.isDark.value
                         ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
-                        : 'bg-white hover:bg-gray-50 border-gray-200',
+                        : 'bg-white text-gray-900 hover:bg-gray-50 border-gray-200',
                       'border',
                     ]"
                   >
@@ -956,10 +960,11 @@ function handleEscapeKey(event: KeyboardEvent) {
                   <Button
                     v-if="selectedFiles.size === 1"
                     size="sm"
+                    variant="ghost"
                     :class="[
                       theme.isDark.value
                         ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
-                        : 'bg-white hover:bg-gray-50 border-gray-200',
+                        : 'bg-white text-gray-900 hover:bg-gray-50 border-gray-200',
                       'border',
                     ]"
                   >
@@ -968,11 +973,12 @@ function handleEscapeKey(event: KeyboardEvent) {
                   </Button>
                   <Button
                     size="sm"
+                    variant="ghost"
                     @click="clearSelection()"
                     :class="[
                       theme.isDark.value
                         ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 border-gray-600'
-                        : 'bg-white hover:bg-gray-50 border-gray-200',
+                        : 'bg-white text-gray-900 hover:bg-gray-50 border-gray-200',
                       'border',
                     ]"
                   >
@@ -1149,7 +1155,6 @@ function handleEscapeKey(event: KeyboardEvent) {
                   </DropdownMenu>
 
                   <!-- Inline View Toggle (matching other components) -->
-                  <!-- Inline View Toggle (matching other components) -->
                   <div
                     :class="[
                       'flex items-center rounded-lg p-1 shrink-0 border',
@@ -1169,7 +1174,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                             : 'bg-white shadow-sm text-gray-900'
                           : theme.isDark.value
                           ? 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
                       ]"
                       @click="viewMode = 'grid'"
                       title="Grid View"
@@ -1187,7 +1192,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                             : 'bg-white shadow-sm text-gray-900'
                           : theme.isDark.value
                           ? 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
                       ]"
                       @click="viewMode = 'list'"
                       title="List View"
@@ -1205,7 +1210,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                             : 'bg-white shadow-sm text-gray-900'
                           : theme.isDark.value
                           ? 'text-gray-400 hover:text-gray-100 hover:bg-gray-700/50'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50',
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
                       ]"
                       @click="viewMode = 'thumbnail'"
                       title="Thumbnail View"
