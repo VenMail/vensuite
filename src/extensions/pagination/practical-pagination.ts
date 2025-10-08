@@ -276,39 +276,13 @@ export class PracticalPagination {
     wrapper.style.pointerEvents = 'none';
     wrapper.style.marginBottom = '0';
 
-    // Create a visual page break that looks like a document page
+    // Use CSS variables for dark mode compatibility
+    const isDarkMode = document.documentElement.classList.contains('dark') ||
+                       document.body.classList.contains('dark');
+
+    // wrapper.style.border = `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`;
     wrapper.style.background = 'transparent';
-    wrapper.style.border = 'none';
-    wrapper.style.boxShadow = 'none';
-
-    // Create a page-like frame
-    const pageFrame = document.createElement('div');
-    pageFrame.className = 'page-frame';
-    pageFrame.style.position = 'absolute';
-    pageFrame.style.top = '0';
-    pageFrame.style.left = '0';
-    pageFrame.style.width = '100%';
-    pageFrame.style.height = '100%';
-    pageFrame.style.pointerEvents = 'none';
-
-    // Create page boundary lines (like Google Docs)
-    const topLine = document.createElement('div');
-    topLine.style.position = 'absolute';
-    topLine.style.top = '0';
-    topLine.style.left = '0';
-    topLine.style.width = '100%';
-    topLine.style.height = '1px';
-    topLine.style.background = 'repeating-linear-gradient(to right, #ccc 0px, #ccc 10px, transparent 10px, transparent 20px)';
-    topLine.style.zIndex = '1';
-
-    const bottomLine = document.createElement('div');
-    bottomLine.style.position = 'absolute';
-    bottomLine.style.bottom = '0';
-    bottomLine.style.left = '0';
-    bottomLine.style.width = '100%';
-    bottomLine.style.height = '1px';
-    bottomLine.style.background = 'repeating-linear-gradient(to right, #ccc 0px, #ccc 10px, transparent 10px, transparent 20px)';
-    bottomLine.style.zIndex = '1';
+    // wrapper.style.boxShadow = `${isDarkMode ? '0 0 8px rgba(0, 0, 0, 0.3)' : '0 0 8px rgba(0, 0, 0, 0.08)'}`;
 
     const contentFrame = document.createElement('div');
     contentFrame.className = 'page-indicator__content';
@@ -318,11 +292,7 @@ export class PracticalPagination {
     contentFrame.style.boxSizing = 'border-box';
     contentFrame.style.paddingTop = `${this.headerOffset}px`;
     contentFrame.style.paddingBottom = `${this.footerOffset}px`;
-    contentFrame.style.pointerEvents = 'none';
 
-    wrapper.appendChild(pageFrame);
-    wrapper.appendChild(topLine);
-    wrapper.appendChild(bottomLine);
     wrapper.appendChild(contentFrame);
 
     if (this.config.showPageNumbers) {
@@ -333,11 +303,13 @@ export class PracticalPagination {
       pageNumberEl.style.bottom = `${Math.max(4, this.config.marginBottom)}px`;
       pageNumberEl.style.padding = '2px 8px';
       pageNumberEl.style.borderRadius = '4px';
-      pageNumberEl.style.border = '1px solid #ddd';
-      pageNumberEl.style.fontSize = '11px';
+      pageNumberEl.style.border = `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.25)'}`;
+      pageNumberEl.style.fontSize = '12px';
       pageNumberEl.style.pointerEvents = 'none';
-      pageNumberEl.style.background = '#f8f9fa';
-      pageNumberEl.style.color = '#666';
+
+      // Use dark mode appropriate colors
+      pageNumberEl.style.background = `${isDarkMode ? 'rgba(55, 65, 81, 0.9)' : 'white'}`;
+      pageNumberEl.style.color = `${isDarkMode ? '#f9fafb' : '#4b5563'}`;
 
       switch (this.config.pageNumberPosition) {
         case 'left':
