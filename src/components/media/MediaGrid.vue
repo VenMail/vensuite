@@ -11,7 +11,6 @@
             ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
             : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
       )"
-      style="height: calc(100vh - 200px);"
     >
       <div
         v-for="file in mediaFiles"
@@ -33,7 +32,7 @@
     </div>
 
     <!-- List View -->
-    <div v-else-if="viewMode === 'list'" class="overflow-y-auto" style="height: calc(100vh - 200px);">
+    <div v-else-if="viewMode === 'list'" class="overflow-y-auto">
       <!-- List Header -->
       <div class="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400">
         <div class="col-span-1 flex items-center justify-center">

@@ -2,9 +2,8 @@
   <div
     :class="[
       'h-screen text-gray-900 transition-colors duration-200',
-      theme.isDark.value
-        ? 'bg-gradient-to-br from-gray-900 to-gray-800'
-        : 'bg-gradient-to-br from-gray-50 to-gray-100',
+      'bg-gradient-to-br from-gray-50 to-gray-100',
+      'dark:bg-gradient-to-br dark:from-gray-900 to-gray-800'
     ]"
   >
     <!-- Loading bar -->
@@ -19,15 +18,13 @@
         :subtitle="documentsSubtitle"
         :breadcrumbs="breadcrumbs"
         :can-navigate-up="canNavigateUp"
-        :is-dark="theme.isDark.value"
         :actions="topBarActions"
         @navigate-up="handleNavigateUp"
         @navigate-breadcrumb="handleBreadcrumbNavigate"
       >
         <template #stats>
           <div
-            class="flex items-center gap-2 text-sm"
-            :class="theme.isDark.value ? 'text-gray-300' : 'text-gray-600'"
+            class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
           >
             <span>{{ sortedDocuments.length }} items</span>
             <span v-if="selectedFiles.size > 0">• {{ selectedFiles.size }} selected</span>
@@ -40,9 +37,7 @@
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  :class="[
-                    theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
-                  ]"
+                  class="border-gray-300 dark:border-gray-600 dark:text-gray-100"
                 >
                   <ArrowUpDown class="h-4 w-4 mr-2" />
                   Sort: {{ sortLabel }}
@@ -65,9 +60,7 @@
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  :class="[
-                    theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
-                  ]"
+                  class="border-gray-300 dark:border-gray-600 dark:text-gray-100"
                 >
                   <Filter class="h-4 w-4 mr-2" />
                   {{ activeFilterLabel }}
@@ -116,16 +109,13 @@
             <DialogContent
               :class="[
                 'rounded-lg shadow-2xl border',
-                theme.isDark.value
-                  ? 'bg-gray-800 border-gray-700'
-                  : 'bg-white border-gray-200',
+                'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
               ]"
             >
               <DialogHeader>
                 <DialogTitle
                   :class="[
-                    'text-xl font-semibold',
-                    theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
+                    'text-xl font-semibold text-gray-800 dark:text-gray-100',
                   ]"
                 >
                   Create New Document
@@ -138,14 +128,12 @@
                   variant="outline"
                   :class="[
                     'h-24 flex flex-col items-center justify-center transition-all',
-                    theme.isDark.value
-                      ? 'hover:bg-gray-700 hover:border-primary-400'
-                      : 'hover:bg-gray-50 hover:border-primary-400',
+                    'hover:bg-gray-50 hover:border-primary-400 dark:hover:bg-gray-700 dark:hover:border-primary-400',
                   ]"
                   @click="createNewDocument(template.name)"
                 >
                   <component :is="template.icon" class="w-8 h-8 text-primary-600" />
-                  <span class="mt-2 text-sm font-medium">{{ template.name }}</span>
+                  <span class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-100">{{ template.name }}</span>
                 </Button>
               </div>
             </DialogContent>
@@ -157,7 +145,7 @@
       <ScrollArea
         :class="[
           'flex-1 min-h-0 rounded-lg shadow-sm border',
-          theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
+          'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700',
         ]"
       >
         <div v-if="sortedDocuments.length > 0">
@@ -166,7 +154,7 @@
             v-if="viewMode === 'list'"
             :class="[
               'flex items-center gap-3 px-4 py-3 border-b',
-              theme.isDark.value ? 'border-gray-700' : 'border-gray-200',
+              'border-gray-200 dark:border-gray-700',
             ]"
           >
             <input
@@ -178,8 +166,7 @@
             />
             <span
               :class="[
-                'text-sm font-medium',
-                theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
+                'text-sm font-medium text-gray-800 dark:text-gray-100',
               ]"
             >
               {{ isAllSelected ? "Deselect All" : "Select All" }}
@@ -191,7 +178,7 @@
             v-else-if="viewMode === 'grid'"
             :class="[
               'flex items-center justify-between px-4 py-3 border-b',
-              theme.isDark.value ? 'border-gray-700' : 'border-gray-200',
+              'border-gray-200 dark:border-gray-700',
             ]"
           >
             <Button
@@ -200,7 +187,7 @@
               @click="toggleSelectAll"
               :class="[
                 'flex items-center gap-2',
-                theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
+                'hover:bg-gray-100 dark:hover:bg-gray-700',
               ]"
             >
               <input
@@ -212,8 +199,7 @@
               />
               <span
                 :class="[
-                  'text-sm font-medium',
-                  theme.isDark.value ? 'text-gray-300' : 'text-gray-700',
+                  'text-sm font-medium text-gray-800 dark:text-gray-100',
                 ]"
               >
                 {{ isAllSelected ? "Deselect All" : "Select All" }}
@@ -222,7 +208,7 @@
 
             <!-- Optional: Show count of total files -->
             <span
-              :class="['text-xs', theme.isDark.value ? 'text-gray-400' : 'text-gray-500']"
+              :class="['text-xs', 'text-gray-500 dark:text-gray-400']"
             >
               {{ sortedDocuments.length }} document{{
                 sortedDocuments.length !== 1 ? "s" : ""
@@ -287,9 +273,10 @@
 
   <FileUploader
     v-if="isUploadDialogOpen"
+    :file-type-filter="'documents'"
+    :folder-id="currentFolderId"
     @close="isUploadDialogOpen = false"
     @upload="handleUploadComplete"
-    :file-type-filter="'documents'"
   />
 
   <FileContextMenu
@@ -300,7 +287,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, inject } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useExplorerNavigation } from "@/composables/useExplorerNavigation";
 import {
@@ -354,7 +341,6 @@ import type { FileData } from "@/types";
 
 const router = useRouter();
 const fileStore = useFileStore();
-const theme = inject("theme") as { isDark: { value: boolean } };
 
 type DocumentViewMode = "grid" | "list" | "thumbnail";
 type DocumentSort = "name" | "date";
@@ -786,11 +772,15 @@ function handleRename() {
 }
 
 onMounted(async () => {
-  document.title = "Documents";
+  document.title = currentTitle.value;
 
   document.addEventListener("click", handleOutsideClick);
 
   await initialize();
+});
+
+watch(currentTitle, (newTitle) => {
+  document.title = newTitle;
 });
 
 onUnmounted(() => {

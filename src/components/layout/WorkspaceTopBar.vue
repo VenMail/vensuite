@@ -1,5 +1,5 @@
 <template>
-  <header :class="wrapperClass">
+  <header class="px-4 sm:px-6 py-4 border-b transition-colors duration-200 bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800">
     <div class="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
       <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
         <div v-if="showNavigation" class="flex items-center gap-2">
@@ -19,20 +19,20 @@
             aria-label="Breadcrumb"
             class="hidden sm:flex items-center text-sm"
           >
-            <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.id ?? idx">
+            <template v-for="(crumb, idx) in breadcrumbs.slice(0, -1)" :key="crumb.id ?? idx">
               <button
                 class="text-primary-600 hover:underline"
                 @click="$emit('navigate-breadcrumb', idx)"
               >
                 {{ crumb.title }}
               </button>
-              <span v-if="idx < breadcrumbs.length - 1" class="mx-2 text-gray-400">/</span>
+              <span v-if="idx < breadcrumbs.slice(0, -1).length - 1" class="mx-2 text-gray-400">/</span>
             </template>
           </nav>
         </div>
 
         <div class="min-w-0">
-          <h2 :class="titleClass" class="truncate">
+          <h2 class="truncate text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100">
             {{ title }}
           </h2>
           <p v-if="subtitle" class="text-sm text-gray-500 dark:text-gray-400 truncate">
@@ -181,30 +181,14 @@ const props = defineProps({
   viewOptions: {
     type: Array as () => ViewOption[],
     default: () => []
-  },
-  isDark: {
-    type: Boolean,
-    default: false
   }
 })
 
 const emit = defineEmits(['navigate-up', 'navigate-breadcrumb', 'action', 'filter-select', 'view-change'])
 
-const wrapperClass = computed(() => [
-  'px-4 sm:px-6 py-4 border-b transition-colors duration-200',
-  props.isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'
-])
-
 const navigationButtonClass = computed(() => [
-  props.isDark
-    ? 'bg-gray-800 border-gray-700 hover:bg-gray-700'
-    : 'bg-white border-gray-200 hover:bg-gray-100',
+  'bg-white border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700',
   props.canNavigateUp ? 'opacity-100' : 'opacity-50 cursor-not-allowed'
-])
-
-const titleClass = computed(() => [
-  'text-xl sm:text-2xl font-semibold',
-  props.isDark ? 'text-gray-100' : 'text-gray-800'
 ])
 
 const emitAction = (action: ActionItem) => {

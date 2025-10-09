@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
-import { router } from '@/main'
+import { useRouter, useRoute } from 'vue-router'
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,8 @@ const items = [
   { name: 'Bin', icon: Trash2, route: '/bin' }
 ]
 
+const router = useRouter()
+const route = useRoute()
 const activeItem = ref('Home')
 const isMobile = ref(false)
 const collapsed = ref(props.isCollapsed)
@@ -43,6 +45,21 @@ const dialogRef = ref(null) // Reference to dialog component
 watch(() => props.isCollapsed, (value) => {
   collapsed.value = value
 })
+
+// Watch route changes and update active item
+watch(() => route.path, (path) => {
+  console.log('Route path changed:', path)
+  // Find the best matching item (longest route match)
+  const matchingItems = items.filter(item => path.startsWith(item.route))
+  if (matchingItems.length > 0) {
+    // Sort by route length (longest first) to get the most specific match
+    const bestMatch = matchingItems.sort((a, b) => b.route.length - a.route.length)[0]
+    console.log('Found matching item:', bestMatch.name)
+    activeItem.value = bestMatch.name
+  } else {
+    console.log('No matching item found for path:', path)
+  }
+}, { immediate: true })
 
 const toggleCollapse = () => {
   collapsed.value = !collapsed.value
@@ -54,12 +71,14 @@ const toggleSidebar = () => {
 }
 
 const setActiveItem = (item: string, route: string) => {
+  console.log('setActiveItem called:', item, route)
   activeItem.value = item
   router.push(route)
 }
 
 // Detect mobile screen size (do not auto-collapse; only change layout classes)
 onMounted(() => {
+  console.log('Sidebar mounted, initial route path:', route.path)
   const handleResize = () => {
     isMobile.value = window.innerWidth < 768
   }

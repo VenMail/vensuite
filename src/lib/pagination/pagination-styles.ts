@@ -47,6 +47,10 @@ export const paginationStyles = `
   box-shadow: none!important;
 }
 
+.pagination-overlay {
+  overflow: hidden;
+}
+
 .page-number {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(221, 221, 221, 0.95);

@@ -1,11 +1,10 @@
 <template>
-  <div class="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
+  <div class="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-gray-900 to-gray-800">
     <WorkspaceTopBar
       :title="currentTitle"
       :subtitle="mediaSubtitle"
       :breadcrumbs="breadcrumbs"
       :can-navigate-up="canNavigateUp"
-      :is-dark="theme.isDark.value"
       :actions="topBarActions"
       @navigate-up="handleNavigateUp"
       @navigate-breadcrumb="handleBreadcrumbNavigate"
@@ -24,9 +23,7 @@
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                :class="[
-                  theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
-                ]"
+                class="border-gray-300 dark:border-gray-600 dark:text-gray-100"
               >
                 <ArrowUpDown class="h-4 w-4 mr-2" />
                 Sort: {{ sortLabel }}
@@ -49,9 +46,7 @@
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                :class="[
-                  theme.isDark.value ? 'border-gray-600 text-gray-100' : 'border-gray-300'
-                ]"
+                class="border-gray-300 border-gray-600 text-gray-100"
               >
                 <Filter class="h-4 w-4 mr-2" />
                 {{ activeFilterLabel }}
@@ -88,11 +83,11 @@
     </WorkspaceTopBar>
 
     <!-- Main Content -->
-    <div class="flex-1 min-h-0 flex flex-col">
+    <div class="flex-1 min-h-0 flex flex-col mt-6">
       <ScrollArea
         :class="[
           'flex-1 min-h-0 rounded-lg shadow-sm border mx-6 mb-6',
-          theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
+          'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700',
         ]"
       >
         <!-- Select All Controls -->
@@ -167,6 +162,7 @@
     <FileUploader
       v-if="isUploadDialogOpen"
       :file-type-filter="'media'"
+      :folder-id="currentFolderId"
       @close="closeUploadDialog"
       @upload="handleUploadComplete"
     />
@@ -242,7 +238,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useExplorerNavigation } from '@/composables/useExplorerNavigation'
 import { useFileStore } from '@/store/files'
 import { toast } from '@/composables/useToast'
@@ -294,7 +290,6 @@ import {
 } from 'lucide-vue-next'
 
 const fileStore = useFileStore()
-const theme = inject('theme') as { isDark: { value: boolean } }
 const { isMediaFile, isViewable, isImage, isVideo, isAudio, formatFileSize } = useMediaTypes()
 
 type MediaViewMode = 'thumbnail' | 'grid' | 'list'
@@ -835,11 +830,16 @@ const handleUploadComplete = async (uploadedFiles: FileData[]) => {
 onMounted(async () => {
   try {
     await initialize()
+    document.title = currentTitle.value
   } catch (error) {
     toast.error('Failed to load media files')
   }
 
   document.addEventListener("click", handleOutsideClick);
+});
+
+watch(currentTitle, (newTitle) => {
+  document.title = newTitle;
 });
 
 onUnmounted(() => {

@@ -6,6 +6,7 @@ import {
   onUnmounted,
   nextTick,
   watchEffect,
+  watch,
 } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useExplorerNavigation } from "@/composables/useExplorerNavigation";
@@ -306,7 +307,11 @@ onMounted(async () => {
   }
 
   await initialize();
-  document.title = "Home";
+  document.title = currentTitle.value;
+});
+
+watch(currentTitle, (newTitle) => {
+  document.title = newTitle;
 });
 
 onUnmounted(() => {
@@ -712,11 +717,11 @@ function handleEscapeKey(event: KeyboardEvent) {
                 </button>
                 <!-- Breadcrumbs -->
                 <nav aria-label="Breadcrumb" class="hidden sm:flex items-center text-sm">
-                  <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.id ?? 'root'">
+                  <template v-for="(crumb, idx) in breadcrumbs.slice(0, -1)" :key="crumb.id ?? 'root'">
                     <button class="text-primary-600 hover:underline" @click="navigateToBreadcrumb(idx)">
                       {{ crumb.title }}
                     </button>
-                    <span v-if="idx < breadcrumbs.length - 1" class="mx-2 text-gray-400">/</span>
+                    <span v-if="idx < breadcrumbs.slice(0, -1).length - 1" class="mx-2 text-gray-400">/</span>
                   </template>
                 </nav>
               </div>
