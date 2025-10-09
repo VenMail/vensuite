@@ -731,7 +731,7 @@ function handleEscapeKey(event: KeyboardEvent) {
         </div>
 
         <!-- File browser -->
-        <div class="flex-1 p-4 sm:p-6 overflow-hidden">
+        <div class="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden">
           <!-- Header with responsive layout -->
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6">
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
@@ -1033,7 +1033,7 @@ function handleEscapeKey(event: KeyboardEvent) {
 
           <!-- Content area -->
           <ScrollArea :class="[
-            'h-[calc(100vh-240px)] sm:h-[calc(100vh-280px)] rounded-lg shadow-sm border',
+            'flex-1 min-h-0 rounded-lg shadow-sm border',
             theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
           ]">
             <div v-if="Object.keys(groupedItems).length > 0 && sortedItems.length > 0">

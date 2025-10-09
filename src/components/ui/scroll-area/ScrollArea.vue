@@ -20,10 +20,22 @@ const delegatedProps = computed(() => {
 
 <template>
   <ScrollAreaRoot v-bind="delegatedProps" :class="cn('relative overflow-hidden', props.class)">
-    <ScrollAreaViewport class="h-full w-full rounded-[inherit]">
+    <ScrollAreaViewport class="h-full w-full rounded-[inherit] [&>div]:!block">
       <slot />
     </ScrollAreaViewport>
     <ScrollBar />
     <ScrollAreaCorner />
   </ScrollAreaRoot>
 </template>
+
+<style>
+/* Hide native scrollbar for Radix ScrollArea */
+[data-radix-scroll-area-viewport] {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  display: none;
+}
+</style>

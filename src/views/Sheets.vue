@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'h-full text-gray-900 transition-colors duration-200',
+      'h-screen text-gray-900 transition-colors duration-200',
       theme.isDark.value
         ? 'bg-gradient-to-br from-gray-900 to-gray-800'
         : 'bg-gradient-to-br from-gray-50 to-gray-100',
@@ -13,7 +13,7 @@
     </div>
 
     <!-- File browser -->
-    <div class="h-full flex flex-col gap-6 p-4 sm:p-6 overflow-hidden">
+    <div class="flex-1 flex flex-col gap-6 p-4 sm:p-6 overflow-hidden">
       <WorkspaceTopBar
         :title="currentTitle"
         :subtitle="sheetsSubtitle"
@@ -381,7 +381,7 @@ type ViewModeOption = {
 };
 
 const viewMode = ref<SheetViewMode>("grid");
-const sortBy = ref<SheetSort>("name");
+const sortBy = ref<SheetSort>("date");
 const isUploadDialogOpen = ref(false);
 const searchQuery = ref("");
 const currentFilter = ref<SheetFilter>("all");
@@ -517,11 +517,8 @@ const spreadsheetTypes = computed(() => {
   return Array.from(types);
 });
 
-const folderItems = computed(() =>
-  fileStore.allFiles
-    .filter((file) => file.is_folder)
-    .sort((a, b) => (a.title || "").localeCompare(b.title || "")),
-);
+// Remove folder items - Sheets view should only show spreadsheet files
+const folderItems = computed(() => []);
 
 const spreadsheetFiles = computed(() => {
   return fileStore.allFiles.filter((file) => {
@@ -565,6 +562,7 @@ const sortedSpreadsheetFiles = computed(() => {
 
   if (sortBy.value === "date") {
     return files.sort((a, b) => {
+      // Sort by most recently accessed (last_viewed), then updated_at, then created_at
       const aTime = new Date(a.last_viewed || a.updated_at || a.created_at || 0).getTime();
       const bTime = new Date(b.last_viewed || b.updated_at || b.created_at || 0).getTime();
       return bTime - aTime;

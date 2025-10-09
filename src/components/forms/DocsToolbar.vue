@@ -1563,8 +1563,8 @@ function onBgColorChange(event: Event) {
 
 /* Custom scrollbar for dialogs */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {

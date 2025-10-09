@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-950">
+  <div class="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
     <WorkspaceTopBar
       :title="currentTitle"
       :subtitle="mediaSubtitle"
@@ -88,77 +88,62 @@
     </WorkspaceTopBar>
 
     <!-- Main Content -->
-    <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
-      <!-- Select All Controls -->
-      <div v-if="sortedMediaFiles.length > 0 || folderItems.length > 0" class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-        <!-- Select All header for list view -->
-        <div
-          v-if="viewMode === 'list'"
-          class="flex items-center gap-3 px-6 py-3"
-        >
-          <input
-            type="checkbox"
-            :checked="isAllSelected"
-            :indeterminate="isSomeSelected"
-            @change="handleSelectAll(!isAllSelected)"
-            class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-          />
-          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {{ isAllSelected ? 'Deselect All' : 'Select All' }}
-          </span>
-        </div>
-
-        <!-- Select All button for grid and thumbnail views -->
-        <div
-          v-else
-          class="flex items-center justify-between px-6 py-3"
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            @click="handleSelectAll(!isAllSelected)"
-            class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+    <div class="flex-1 min-h-0 flex flex-col">
+      <ScrollArea
+        :class="[
+          'flex-1 min-h-0 rounded-lg shadow-sm border mx-6 mb-6',
+          theme.isDark.value ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
+        ]"
+      >
+        <!-- Select All Controls -->
+        <div v-if="sortedMediaFiles.length > 0 || folderItems.length > 0" class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+          <!-- Select All header for list view -->
+          <div
+            v-if="viewMode === 'list'"
+            class="flex items-center gap-3 px-6 py-3"
           >
             <input
               type="checkbox"
               :checked="isAllSelected"
               :indeterminate="isSomeSelected"
-              @click.stop
-              class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
+              @change="handleSelectAll(!isAllSelected)"
+              class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
               {{ isAllSelected ? 'Deselect All' : 'Select All' }}
             </span>
-          </Button>
+          </div>
 
-          <!-- Show count of total files -->
-          <span class="text-xs text-gray-500 dark:text-gray-400">
-            {{ filteredMediaFiles.length }} media file{{ filteredMediaFiles.length !== 1 ? 's' : '' }}
-          </span>
+          <!-- Select All button for grid and thumbnail views -->
+          <div
+            v-else
+            class="flex items-center justify-between px-6 py-3"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              @click="handleSelectAll(!isAllSelected)"
+              class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <input
+                type="checkbox"
+                :checked="isAllSelected"
+                :indeterminate="isSomeSelected"
+                @click.stop
+                class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
+              />
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+              </span>
+            </Button>
+
+            <!-- Show count of total files -->
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+              {{ filteredMediaFiles.length }} media file{{ filteredMediaFiles.length !== 1 ? 's' : '' }}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div v-if="folderItems.length" class="px-6 py-4 overflow-auto max-h-[40vh]">
-        <div
-          :class="{
-            'space-y-2': viewMode === 'list',
-            'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4': viewMode === 'grid' || viewMode === 'thumbnail'
-          }"
-        >
-          <FileItem
-            v-for="folder in folderItems"
-            :key="folder.id"
-            :file="folder"
-            :viewMode="viewMode"
-            :isSelected="selectedFiles.has(folder.id || '')"
-            @select-file="handleSelect"
-            @open-file="openMediaItem"
-            @contextmenu-file="(event) => openContextMenu(event)"
-          />
-        </div>
-      </div>
-
-      <div class="flex-1 min-h-0 overflow-auto">
         <MediaGrid
           :media-files="sortedMediaFiles"
           :view-mode="viewMode"
@@ -174,7 +159,7 @@
           @upload="openUploadDialog"
           @context-menu="({ id, x, y }) => openContextMenu({ id, x, y })"
         />
-      </div>
+      </ScrollArea>
     </div>
 
     <!-- Upload Dialog -->
@@ -265,6 +250,7 @@ import FileItem from '@/components/FileItem.vue'
 import MediaViewer from '@/components/media/MediaViewer.vue'
 import FileUploader from '@/components/FileUploader.vue'
 import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Dialog,
   DialogContent,
@@ -337,7 +323,7 @@ const viewMode = ref<MediaViewMode>('thumbnail')
 const gridSize = ref<'small' | 'medium' | 'large'>('medium')
 const searchQuery = ref('')
 const currentFilter = ref<MediaFilter>('all')
-const currentSort = ref<MediaSort>('name')
+const currentSort = ref<MediaSort>('date')
 const isLoading = ref(false)
 
 const breadcrumbs = computed(() =>
@@ -436,11 +422,8 @@ function buildContextMenuActions({
   return actions;
 }
 
-const folderItems = computed(() =>
-  fileStore.allFiles
-    .filter((file) => file.is_folder)
-    .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
-)
+// Remove folder items - Media view should only show media files
+const folderItems = computed(() => [])
 
 const {
   selectedFiles,
@@ -501,8 +484,9 @@ const sortedMediaFiles = computed(() => {
   switch (currentSort.value) {
     case 'date':
       return files.sort((a, b) => {
-        const dateA = new Date(a.updated_at || a.created_at || 0).getTime()
-        const dateB = new Date(b.updated_at || b.created_at || 0).getTime()
+        // Sort by most recently accessed (last_viewed), then updated_at, then created_at
+        const dateA = new Date(a.last_viewed || a.updated_at || a.created_at || 0).getTime()
+        const dateB = new Date(b.last_viewed || b.updated_at || b.created_at || 0).getTime()
         return dateB - dateA
       })
     case 'size':

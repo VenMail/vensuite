@@ -27,6 +27,7 @@ import FilePicker from './views/FilePicker.vue'
 import DocsEditor from './views/DocsEditor.vue'
 import Login from './views/Login.vue'
 import SlidesEditor from './views/SlidesEditor.vue'
+import Media from './views/Media.vue'
 
 const routes = [
   {
@@ -54,10 +55,10 @@ const routes = [
       { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/:id', name: 'form', component: Editor },
-      { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
-      { path: 'picker', name: 'file-picker', component: FilePicker },
-      { path: 'media', name: 'media', component: () => import('./views/Media.vue') },
+      { path: 'picker', name: 'file-picker', component: FilePicker, meta: { hideLayout: true } },
       { path: 'import/:id', name: 'import', component: Home },
+      { path: 'media', name: 'media', component: Media },
+      { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
       { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
       { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
       { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },

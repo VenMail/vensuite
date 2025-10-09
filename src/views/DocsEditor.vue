@@ -424,7 +424,6 @@ import {
   Image as ImageIcon,
   Upload,
   Maximize,
-  Plus,
   ArrowDown,
   ArrowRight,
   Combine,
@@ -532,47 +531,47 @@ function updateEditorEmptyState(instance?: Editor) {
   }
 }
 
-function handleEditorContentChange(instance: Editor) {
-  updateEditorEmptyState(instance);
+// function handleEditorContentChange(instance: Editor) {
+//   updateEditorEmptyState(instance);
 
-  if (isJustLoaded.value) {
-    return;
-  }
+//   if (isJustLoaded.value) {
+//     return;
+//   }
 
-  if (!instance.isEmpty) {
-    hasUnsavedChanges.value = true;
-    scheduleSave();
-  }
-}
+//   if (!instance.isEmpty) {
+//     hasUnsavedChanges.value = true;
+//     scheduleSave();
+//   }
+// }
 
-function attachEditorEventListeners(instance: Editor) {
-  detachEditorListeners?.();
+// function attachEditorEventListeners(instance: Editor) {
+//   detachEditorListeners?.();
 
-  const handleUpdate = () => handleEditorContentChange(instance);
-  const handleSelection = () => {
-    updateEditorEmptyState(instance);
-    syncBubbleLinkFromEditor(instance);
-  };
-  const handleFocus = () => { isEditorFocused.value = true; };
-  const handleBlur = () => { isEditorFocused.value = false; };
+//   const handleUpdate = () => handleEditorContentChange(instance);
+//   const handleSelection = () => {
+//     updateEditorEmptyState(instance);
+//     syncBubbleLinkFromEditor(instance);
+//   };
+//   const handleFocus = () => { isEditorFocused.value = true; };
+//   const handleBlur = () => { isEditorFocused.value = false; };
 
-  instance.on('update', handleUpdate);
-  instance.on('selectionUpdate', handleSelection);
-  instance.on('transaction', handleSelection);
-  instance.on('focus', handleFocus);
-  instance.on('blur', handleBlur);
+//   instance.on('update', handleUpdate);
+//   instance.on('selectionUpdate', handleSelection);
+//   instance.on('transaction', handleSelection);
+//   instance.on('focus', handleFocus);
+//   instance.on('blur', handleBlur);
 
-  detachEditorListeners = () => {
-    instance.off('update', handleUpdate);
-    instance.off('selectionUpdate', handleSelection);
-    instance.off('transaction', handleSelection);
-    instance.off('focus', handleFocus);
-    instance.off('blur', handleBlur);
-    detachEditorListeners = null;
-  };
+//   detachEditorListeners = () => {
+//     instance.off('update', handleUpdate);
+//     instance.off('selectionUpdate', handleSelection);
+//     instance.off('transaction', handleSelection);
+//     instance.off('focus', handleFocus);
+//     instance.off('blur', handleBlur);
+//     detachEditorListeners = null;
+//   };
 
-  nextTick(() => updateEditorEmptyState(instance));
-}
+//   nextTick(() => updateEditorEmptyState(instance));
+// }
 
 // Chat state
 const isChatOpen = ref(false);
@@ -928,7 +927,7 @@ const tableActions = computed<BubbleAction[]>(() => {
     {
       key: 'add-row',
       icon: ArrowDown,
-      handler: () => instance.chain().focus().addRowBelow().run(),
+      handler: () => instance.chain().focus().addRowAfter().run(),
       tooltip: 'Add row below',
       label: 'Add row below',
     },
@@ -1770,25 +1769,25 @@ async function saveDocument(isManual = false) {
   }
 }
 
-function scheduleSave() {
-  // Clear existing idle timeout
-  if (saveTimeout) {
-    clearTimeout(saveTimeout);
-  }
+// function scheduleSave() {
+//   // Clear existing idle timeout
+//   if (saveTimeout) {
+//     clearTimeout(saveTimeout);
+//   }
   
-  // Schedule save after 3 seconds of idle (more responsive)
-  saveTimeout = setTimeout(() => {
-    saveDocument(false);
-  }, 3000);
+//   // Schedule save after 3 seconds of idle (more responsive)
+//   saveTimeout = setTimeout(() => {
+//     saveDocument(false);
+//   }, 3000);
   
-  // Ensure we save within 30 seconds regardless of activity
-  if (!maxWaitTimeout) {
-    maxWaitTimeout = setTimeout(() => {
-      saveDocument(false);
-      maxWaitTimeout = null;
-    }, 30000); // 30 seconds
-  }
-}
+//   // Ensure we save within 30 seconds regardless of activity
+//   if (!maxWaitTimeout) {
+//     maxWaitTimeout = setTimeout(() => {
+//       saveDocument(false);
+//       maxWaitTimeout = null;
+//     }, 30000); // 30 seconds
+//   }
+// }
 
 function handlePrint() {
   window.print();
@@ -2311,7 +2310,6 @@ function initializeEditor() {
       TaskItem.configure({ nested: true }),
       AdvancedTable.configure({
         resizable: true,
-        rowResizing: true,
         minRowHeight: 28,
       }),
       AdvancedTableRow,
@@ -2835,75 +2833,66 @@ onUnmounted(() => {
   z-index: 40!important;
 }
 
-/* Row resize handles - positioned on each row */
+/* Row resize handles - positioned at row boundaries */
 :deep(.ProseMirror table) {
   position: relative;
 }
 
-:deep(.ProseMirror table tr.has-row-resize-handle) {
+:deep(.ProseMirror table tr) {
   position: relative;
 }
 
-:deep(.ProseMirror table tr.has-row-resize-handle::after) {
-  content: '';
+:deep(.table-row-resize-handle) {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -2px;
-  height: 4px;
+  height: 6px;
+  cursor: row-resize;
   background: transparent;
   border-top: 2px solid transparent;
-  cursor: row-resize;
+  pointer-events: auto;
   opacity: 0;
   transition: opacity 0.12s ease, border-color 0.12s ease;
-  pointer-events: auto;
   z-index: 20;
 }
 
-:deep(.ProseMirror table tr.has-row-resize-handle:hover::after),
-:deep(.is-table-active .ProseMirror table tr.has-row-resize-handle::after) {
+:deep(.ProseMirror table:hover .table-row-resize-handle),
+:deep(.is-table-active .table-row-resize-handle) {
   opacity: 1;
-  border-top-color: rgba(59, 130, 246, 0.4);
+  border-top-color: rgba(59, 130, 246, 0.3);
 }
 
-:deep(.ProseMirror table tr.has-row-resize-handle.is-dragging::after) {
+:deep(.table-row-resize-handle:hover),
+:deep(.table-row-resize-handle.is-dragging) {
   border-top-color: rgba(59, 130, 246, 0.8) !important;
   opacity: 1 !important;
 }
 
-/* Column resize handles - positioned on first row cells */
-:deep(.ProseMirror table tr:first-child th.has-col-resize-handle,
-       .ProseMirror table tr:first-child td.has-col-resize-handle) {
-  position: relative;
-}
-
-:deep(.ProseMirror table tr:first-child th.has-col-resize-handle::after,
-       .ProseMirror table tr:first-child td.has-col-resize-handle::after) {
-  content: '';
+/* Column resize handles - widget decorations */
+:deep(.table-col-resize-handle) {
   position: absolute;
   right: -2px;
   top: 0;
   bottom: 0;
   width: 4px;
+  cursor: col-resize;
   background: transparent;
   border-right: 2px solid transparent;
-  cursor: col-resize;
   opacity: 0;
   transition: opacity 0.12s ease, border-color 0.12s ease;
-  pointer-events: auto;
   z-index: 20;
+  pointer-events: auto;
 }
 
-:deep(.ProseMirror table tr:first-child th.has-col-resize-handle:hover::after,
-       .ProseMirror table tr:first-child td.has-col-resize-handle:hover::after,
-       .is-table-active .ProseMirror table tr:first-child th.has-col-resize-handle::after,
-       .is-table-active .ProseMirror table tr:first-child td.has-col-resize-handle::after) {
+:deep(.ProseMirror table tr:first-child th:hover + .table-col-resize-handle),
+:deep(.ProseMirror table tr:first-child td:hover + .table-col-resize-handle),
+:deep(.is-table-active .table-col-resize-handle) {
   opacity: 1;
   border-right-color: rgba(59, 130, 246, 0.4);
 }
 
-:deep(.ProseMirror table tr:first-child th.has-col-resize-handle.is-dragging::after,
-       .ProseMirror table tr:first-child td.has-col-resize-handle.is-dragging::after) {
+:deep(.table-col-resize-handle:hover),
+:deep(.table-col-resize-handle.is-dragging) {
   border-right-color: rgba(59, 130, 246, 0.8) !important;
   opacity: 1 !important;
 }
@@ -2923,8 +2912,8 @@ onUnmounted(() => {
 
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
