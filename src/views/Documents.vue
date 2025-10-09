@@ -18,7 +18,7 @@
         :title="currentTitle"
         :subtitle="documentsSubtitle"
         :breadcrumbs="breadcrumbs"
-        :can-navigate-up="breadcrumbs.length > 1"
+        :can-navigate-up="canNavigateUp"
         :is-dark="theme.isDark.value"
         :actions="topBarActions"
         @navigate-up="handleNavigateUp"
@@ -296,13 +296,13 @@
     v-if="contextMenuState.visible"
     :state="contextMenuState"
     :actions="contextMenuActions"
-    :is-dark="theme.isDark.value"
   />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, inject } from "vue";
 import { useRouter } from "vue-router";
+import { useExplorerNavigation } from "@/composables/useExplorerNavigation";
 import {
   ArrowUpDown,
   Grid,
@@ -386,7 +386,21 @@ const isUploadDialogOpen = ref(false);
 const searchQuery = ref("");
 const currentFilter = ref<DocumentFilter>("all");
 
-const breadcrumbs = computed(() => fileStore.breadcrumbs);
+// Initialize explorer navigation
+const {
+  currentFolderId,
+  breadcrumbs,
+  currentTitle,
+  canNavigateUp,
+  openFolder,
+  navigateToBreadcrumb,
+  navigateUp,
+  refresh,
+  initialize,
+} = useExplorerNavigation({
+  rootTitle: 'Documents',
+  onNavigate: () => clearSelection(),
+});
 
 const documentsSubtitle = computed(() => {
   switch (currentFilter.value) {
@@ -584,11 +598,6 @@ const activeFilterLabel = computed(() => {
   return filterOptions.value.find((option) => option.value === currentFilter.value)?.label || "All";
 });
 
-const currentTitle = computed(() => {
-  const trail = breadcrumbs.value;
-  return trail[trail.length - 1]?.title || "Documents";
-});
-
 const viewControls = computed<ViewModeOption[]>(() => [
   { value: "grid", icon: Grid, label: "Grid", active: viewMode.value === "grid" },
   { value: "list", icon: List, label: "List", active: viewMode.value === "list" },
@@ -597,9 +606,7 @@ const viewControls = computed<ViewModeOption[]>(() => [
 
 const actionIconClass = computed(
   () =>
-    `relative group rounded-full transition-all duration-200 shrink-0 ${
-      theme.isDark.value ? "hover:bg-gray-700" : "hover:bg-gray-100"
-    }`,
+    "relative group rounded-full transition-all duration-200 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700",
 );
 
 const firstSelectedId = computed(() =>
@@ -691,13 +698,11 @@ const handleViewChange = (mode: DocumentViewMode) => {
 };
 
 const handleNavigateUp = async () => {
-  clearSelection();
-  await fileStore.goUpOneLevel();
+  await navigateUp();
 };
 
 const handleBreadcrumbNavigate = async (index: number) => {
-  clearSelection();
-  await fileStore.navigateToBreadcrumb(index);
+  await navigateToBreadcrumb(index);
 };
 
 function createNewDocument(template: string) {
@@ -713,12 +718,12 @@ async function createNewFolder() {
     const result = await fileStore.makeFolder({
       title: "New Folder",
       is_folder: true,
-      folder_id: fileStore.currentFolderId,
+      folder_id: currentFolderId.value,
       file_type: "folder",
     } as FileData);
     if (result?.id) {
       toast.success("Folder created");
-      await fileStore.openFolder(result.folder_id ?? null);
+      await refresh();
     }
   } catch (error) {
     console.error("Error creating document folder:", error);
@@ -735,14 +740,13 @@ async function handleUploadComplete(files: any[]) {
   toast.success(
     `Successfully uploaded ${files.length} file${files.length !== 1 ? "s" : ""}`
   );
-  await fileStore.openFolder(fileStore.currentFolderId);
+  await refresh();
 }
 
 async function openFile(id: string) {
   const file = fileStore.allFiles.find((f) => f.id === id);
   if (file?.is_folder) {
-    clearSelection();
-    await fileStore.openFolder(id);
+    await openFolder(id, file.title);
     return;
   }
   router.push(`/docs/${id}`);
@@ -754,7 +758,8 @@ async function handleBulkDelete() {
       fileStore.moveToTrash(id)
     );
     await Promise.all(promises);
-    selectedFiles.value.clear();
+    clearSelection();
+    await refresh();
     toast.success(
       `Successfully deleted ${promises.length} document${promises.length > 1 ? "s" : ""}`
     );
@@ -785,9 +790,7 @@ onMounted(async () => {
 
   document.addEventListener("click", handleOutsideClick);
 
-  if (fileStore.allFiles.length === 0) {
-    await fileStore.loadDocuments();
-  }
+  await initialize();
 });
 
 onUnmounted(() => {

@@ -4,7 +4,7 @@
       :title="currentTitle"
       :subtitle="mediaSubtitle"
       :breadcrumbs="breadcrumbs"
-      :can-navigate-up="breadcrumbs.length > 1"
+      :can-navigate-up="canNavigateUp"
       :is-dark="theme.isDark.value"
       :actions="topBarActions"
       @navigate-up="handleNavigateUp"
@@ -149,9 +149,10 @@
           :view-mode="viewMode"
           :selected-files="selectedFiles"
           :grid-size="gridSize"
-          :is-loading="isLoading"
+          :is-loading="navIsLoading"
           @select="handleSelect"
           @select-all="handleSelectAll"
+          @open-file="openFile"
           @preview="handlePreview"
           @download="handleDownload"
           @rename="handleRename"
@@ -165,7 +166,7 @@
     <!-- Upload Dialog -->
     <FileUploader
       v-if="isUploadDialogOpen"
-      :file-type-filter="'media'" 
+      :file-type-filter="'media'"
       @close="closeUploadDialog"
       @upload="handleUploadComplete"
     />
@@ -230,23 +231,23 @@
       </DialogContent>
     </Dialog>
 
-  <!-- Context Menu -->
-  <FileContextMenu
-    v-if="contextMenuState.visible"
-    :state="contextMenuState"
-    :actions="contextMenuActions"
-    :is-dark="false"
-  />
+    <!-- Context Menu -->
+    <FileContextMenu
+      v-if="contextMenuState.visible"
+      :state="contextMenuState"
+      :actions="contextMenuActions"
+      :is-dark="false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
+import { useExplorerNavigation } from '@/composables/useExplorerNavigation'
 import { useFileStore } from '@/store/files'
 import { toast } from '@/composables/useToast'
 import { useMediaTypes } from '@/composables/useMediaTypes'
 import MediaGrid from '@/components/media/MediaGrid.vue'
-import FileItem from '@/components/FileItem.vue'
 import MediaViewer from '@/components/media/MediaViewer.vue'
 import FileUploader from '@/components/FileUploader.vue'
 import { Input } from '@/components/ui/input'
@@ -315,7 +316,7 @@ type FilterOption = {
 type ViewModeOption = {
   value: MediaViewMode
   icon?: any
-  label: string
+  label?: any
   active: boolean
 }
 
@@ -324,18 +325,23 @@ const gridSize = ref<'small' | 'medium' | 'large'>('medium')
 const searchQuery = ref('')
 const currentFilter = ref<MediaFilter>('all')
 const currentSort = ref<MediaSort>('date')
-const isLoading = ref(false)
 
-const breadcrumbs = computed(() =>
-  fileStore.breadcrumbs.map((crumb, index) => ({
-    id: crumb.id,
-    title: index === 0 ? 'Media' : crumb.title
-  }))
-)
-
-const currentTitle = computed(() => {
-  const trail = breadcrumbs.value
-  return trail[trail.length - 1]?.title || 'Media'
+// Initialize explorer navigation
+const {
+  currentFolderId,
+  breadcrumbs,
+  explorerItems,
+  currentTitle,
+  canNavigateUp,
+  openFolder,
+  navigateToBreadcrumb,
+  navigateUp,
+  refresh,
+  initialize,
+  isLoading: navIsLoading,
+} = useExplorerNavigation({
+  rootTitle: 'Media',
+  onNavigate: () => clearSelection(),
 })
 
 const mediaSubtitle = computed(() => {
@@ -422,8 +428,10 @@ function buildContextMenuActions({
   return actions;
 }
 
-// Remove folder items - Media view should only show media files
-const folderItems = computed(() => [])
+// Include folders that contain media files
+const folderItems = computed(() => {
+  return explorerItems.value.filter(file => file.is_folder)
+})
 
 const {
   selectedFiles,
@@ -443,7 +451,7 @@ const {
 
 // Computed
 const mediaFiles = computed(() => {
-  return fileStore.allFiles.filter(file => {
+  return explorerItems.value.filter(file => {
     if (file.is_folder) return false
     return isMediaFile(file.file_type)
   })
@@ -571,27 +579,22 @@ const viewControls = computed<ViewModeOption[]>(() => [
   {
     value: 'thumbnail',
     icon: LayoutGrid,
-    label: 'Thumbnail',
     active: viewMode.value === 'thumbnail'
   },
   {
     value: 'grid',
     icon: Grid,
-    label: 'Grid',
     active: viewMode.value === 'grid'
   },
   {
     value: 'list',
     icon: List,
-    label: 'List',
     active: viewMode.value === 'list'
   }
 ])
 
 const actionClass = computed(() =>
-  `relative group rounded-full transition-all duration-200 shrink-0 ${
-    theme.isDark.value ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-  }`
+  "relative group rounded-full transition-all duration-200 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700"
 )
 
 const topBarActions = computed(() => {
@@ -667,13 +670,11 @@ const handleViewModeChange = (mode: MediaViewMode) => {
 }
 
 const handleNavigateUp = async () => {
-  clearSelection()
-  await fileStore.goUpOneLevel()
+  await navigateUp()
 }
 
 const handleBreadcrumbNavigate = async (index: number) => {
-  clearSelection()
-  await fileStore.navigateToBreadcrumb(index)
+  await navigateToBreadcrumb(index)
 }
 
 const handleCreateFolder = async () => {
@@ -681,17 +682,30 @@ const handleCreateFolder = async () => {
     const result = await fileStore.makeFolder({
       title: 'New Folder',
       is_folder: true,
-      folder_id: fileStore.currentFolderId,
+      folder_id: currentFolderId.value,
       file_type: 'folder',
     } as FileData)
     if (result?.id) {
       toast.success('Folder created')
-      await fileStore.openFolder(result.folder_id ?? null)
+      await refresh()
     }
   } catch (error) {
     console.error('Error creating media folder:', error)
     toast.error('Failed to create folder')
   }
+}
+
+async function openFile(id: string) {
+  const file = combinedItems.value.find((item) => item.id === id);
+  if (!file) return;
+
+  if (file.is_folder) {
+    await openFolder(id, file.title);
+    return;
+  }
+
+  // For media files, trigger preview
+  handlePreview(file);
 }
 
 const handleSelectAll = (selected: boolean) => {
@@ -747,7 +761,7 @@ const setRenameDialogOpen = (open: boolean) => {
 
 const confirmRename = async () => {
   if (!fileToRename.value || !newFileName.value.trim()) return
-  
+
   try {
     // Update file name
     const updatedFile = { ...fileToRename.value, title: newFileName.value.trim() }
@@ -787,6 +801,8 @@ const confirmDelete = async () => {
         selectedFiles.value.delete(file.id)
       }
     }
+    clearSelection()
+    await refresh()
     toast.success(`Deleted ${filesToDelete.value.length} file(s)`)
     setDeleteDialogOpen(false)
   } catch (error) {
@@ -805,7 +821,6 @@ const handleBulkDownload = () => {
 const openUploadDialog = () => {
   isUploadDialogOpen.value = true
 }
-
 const closeUploadDialog = () => {
   isUploadDialogOpen.value = false
 }
@@ -813,30 +828,15 @@ const closeUploadDialog = () => {
 const handleUploadComplete = async (uploadedFiles: FileData[]) => {
   toast.success(`Uploaded ${uploadedFiles.length} file(s)`)
   closeUploadDialog()
-  await fileStore.loadMediaFiles(fileStore.currentFolderId)
-}
-
-const openMediaItem = async (id: string) => {
-  const file = combinedItems.value.find(item => item.id === id)
-  if (!file) return
-
-  if (file.is_folder) {
-    clearSelection()
-    await fileStore.openFolder(id)
-  } else {
-    handlePreview(file)
-  }
+  await refresh()
 }
 
 // Lifecycle
 onMounted(async () => {
-  isLoading.value = true
   try {
-    await fileStore.loadMediaFiles()
+    await initialize()
   } catch (error) {
     toast.error('Failed to load media files')
-  } finally {
-    isLoading.value = false
   }
 
   document.addEventListener("click", handleOutsideClick);
