@@ -1,6 +1,6 @@
 <template>
   <div class="tiptap-toolbar bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700" :class="{ 'is-expanded': isExpanded }">
-    <div class="tiptap-toolbar__main">
+    <div class="tiptap-toolbar__main overflow-x-auto whitespace-nowrap flex-nowrap">
       <!-- Toggle Expand/Collapse -->
       <button
         class="tiptap-toolbar__crystal-toggle bg-gradient-to-br from-blue-400 via-blue-600 to-blue-800 dark:from-blue-500 dark:via-blue-700 dark:to-blue-900"
@@ -59,6 +59,15 @@
         >
           <Redo2 class="h-4 w-4" />
         </button>
+        <span class="tiptap-toolbar__divider" />
+        <!-- Save Action -->
+        <button
+          class="tiptap-toolbar__btn"
+          title="Save (Ctrl+S)"
+          @click="$emit('manual-save')"
+        >
+          <Save class="h-4 w-4" />
+        </button>
       </div>
 
       <span class="tiptap-toolbar__divider" />
@@ -93,7 +102,7 @@
       <span class="tiptap-toolbar__divider" />
 
       <!-- Text Formatting (label only in expanded) -->
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">Text Formatting</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">Text</div>
       <div class="tiptap-toolbar__group">
         <!-- Basic Formatting (Always visible) -->
         <button
@@ -280,22 +289,6 @@
           <option value="legal">Legal (8.5 × 14")</option>
           <option value="card">Card (3.5 × 2")</option>
         </select>
-        <button
-          class="tiptap-toolbar__btn"
-          :class="{ 'is-active': (pageOrientation || 'portrait') === 'portrait' }"
-          @click="handleOrientation('portrait')"
-          title="Portrait"
-        >
-          <FileType class="h-4 w-4" />
-        </button>
-        <button
-          class="tiptap-toolbar__btn"
-          :class="{ 'is-active': (pageOrientation || 'portrait') === 'landscape' }"
-          @click="handleOrientation('landscape')"
-          title="Landscape"
-        >
-          <Maximize class="h-4 w-4" />
-        </button>
       </div>
 
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
@@ -552,6 +545,16 @@
         <DialogTitle>Page Settings</DialogTitle>
       </DialogHeader>
       <div class="space-y-4">
+        <div class="space-y-3">
+          <label class="text-sm font-medium">Orientation</label>
+          <select
+            v-model="paginationSettings.orientation"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </div>
         <label class="flex items-center gap-2 text-sm font-medium">
           <input type="checkbox" v-model="paginationSettings.showPageNumbers" class="rounded" />
           Show Page Numbers
@@ -774,20 +777,19 @@ import {
   Code2,
   FileDown,
   FileText,
-  FileType,
   Image as ImageIcon,
   Italic,
   List,
   ListChecks,
   ListOrdered,
   Link2,
-  Maximize,
   MessageSquare,
   Minus,
   Plus,
   Printer,
   Quote,
   Redo2,
+  Save,
   Settings,
   SquareCode,
   Strikethrough,
@@ -818,11 +820,13 @@ import ImagePicker from '@/components/ImagePicker.vue';
 import type { ChartAttrs } from '@/extensions/chart';
 import { computeNextPageInsertionPosition, resolvePaginationOptions, INSERTION_PADDING_PX } from '@/extensions/pagination-utils';
 import { NodeSelection } from '@tiptap/pm/state';
+import { TiptapPaginationManager } from '@/lib/pagination/pagination-manager';
 
 const props = defineProps<{
   editor: Editor | null | undefined;
   pageSize?: string;
   pageOrientation?: 'portrait' | 'landscape';
+  paginationManager?: TiptapPaginationManager;
 }>();
 
 const emit = defineEmits<{
@@ -844,6 +848,7 @@ const emit = defineEmits<{
     printPageNumbers: boolean;
   }): void;
   (e: 'print'): void;
+  (e: 'manual-save'): void;
 }>();
 
 // State
@@ -875,6 +880,7 @@ const paginationSettings = ref({
   pageBorder: true,
   pageShadow: true,
   printPageNumbers: false,
+  orientation: (props.pageOrientation || 'portrait') as 'portrait' | 'landscape',
 });
 
 // Table insert state
@@ -1329,6 +1335,8 @@ async function createFromTemplate(template: string) {
 
 function applyPaginationSettings() {
   emit('update-pagination', paginationSettings.value);
+  // Also emit orientation update explicitly for parent convenience
+  emit('update:pageOrientation', paginationSettings.value.orientation);
   showPaginationDialog.value = false;
 }
 
@@ -1337,9 +1345,7 @@ function onPageSizeChange(event: Event) {
   emit('update:pageSize', target.value);
 }
 
-function handleOrientation(orientation: 'portrait' | 'landscape') {
-  emit('update:pageOrientation', orientation);
-}
+// handleOrientation removed; orientation now controlled via Page Settings dialog
 
 function onTextColorChange(event: Event) {
   if (!props.editor) return;

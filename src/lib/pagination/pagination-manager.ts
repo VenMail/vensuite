@@ -18,6 +18,7 @@ export interface PaginationConfig {
   enabled: boolean;
   autoRecalculate: boolean;
   debounceDelay: number;
+  orientation: 'portrait' | 'landscape';
 }
 
 export interface PaginationEditor {
@@ -50,7 +51,8 @@ export class TiptapPaginationManager {
     pageShadow: true,
     enabled: false,
     autoRecalculate: true,
-    debounceDelay: 100
+    debounceDelay: 100,
+    orientation: 'portrait'
   };
 
   private globalConfig: Record<string, PaginationConfig> = {};
@@ -111,7 +113,7 @@ export class TiptapPaginationManager {
       this.enablePagination(editorId);
     }
 
-    console.log(`TiptapPagination: Editor "${editorId}" registered`);
+    // console.log(`TiptapPagination: Editor "${editorId}" registered`);
     return true;
   }
 
@@ -160,6 +162,18 @@ export class TiptapPaginationManager {
       bottomMask.className = 'pagination-mask pagination-mask-bottom';
       overlay.appendChild(bottomMask);
     }
+    let leftMask = overlay.querySelector('.pagination-mask-left') as HTMLElement;
+    if (!leftMask) {
+      leftMask = document.createElement('div');
+      leftMask.className = 'pagination-mask pagination-mask-left';
+      overlay.appendChild(leftMask);
+    }
+    let rightMask = overlay.querySelector('.pagination-mask-right') as HTMLElement;
+    if (!rightMask) {
+      rightMask = document.createElement('div');
+      rightMask.className = 'pagination-mask pagination-mask-right';
+      overlay.appendChild(rightMask);
+    }
 
     // Register overlay for this editor so pagination can render into it
     this.overlays.set(editorId, overlay);
@@ -181,7 +195,7 @@ export class TiptapPaginationManager {
     await new Promise(resolve => requestAnimationFrame(resolve));
     await this.calculatePagination(editorId);
 
-    console.log(`TiptapPagination: Pagination enabled for "${editorId}"`);
+    // console.log(`TiptapPagination: Pagination enabled for "${editorId}"`);
     return true;
   }
 
@@ -197,7 +211,7 @@ export class TiptapPaginationManager {
     this.clearPagination(editorId);
     this.saveEditorConfig(editorId);
 
-    console.log(`TiptapPagination: Pagination disabled for "${editorId}"`);
+    // console.log(`TiptapPagination: Pagination disabled for "${editorId}"`);
     return true;
   }
 
@@ -231,19 +245,34 @@ export class TiptapPaginationManager {
       editorElement.classList.add('pagination-mode');
       wrapper?.classList.add('pagination-enabled');
 
-      // Apply page dimensions
-      editorElement.style.maxWidth = `${config.pageWidth}px`;
-      editorElement.style.minHeight = `${config.pageHeight}px`;
-      editorElement.style.padding = `${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px`;
+      // Set orientation data attribute
+      (editorElement as any).dataset.orientation = config.orientation;
+
+      // Apply page dimensions based on orientation
+      if (config.orientation === 'landscape') {
+        editorElement.style.maxHeight = `${config.pageHeight}px`;
+        editorElement.style.minWidth = `${config.pageWidth}px`;
+        editorElement.style.padding = `${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px`;
+      } else {
+        // Portrait (default vertical)
+        editorElement.style.maxWidth = `${config.pageWidth}px`;
+        editorElement.style.minHeight = `${config.pageHeight}px`;
+        editorElement.style.padding = `${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px`;
+      }
 
     } else {
       // Remove pagination mode
       editorElement.classList.remove('pagination-mode');
       wrapper?.classList.remove('pagination-enabled');
 
+      // Remove orientation data attribute
+      delete (editorElement as any).dataset.orientation;
+
       // Reset styles
       editorElement.style.maxWidth = '';
       editorElement.style.minHeight = '';
+      editorElement.style.maxHeight = '';
+      editorElement.style.minWidth = '';
       editorElement.style.padding = '';
     }
   }
@@ -256,33 +285,89 @@ export class TiptapPaginationManager {
     const config = this.configs.get(editorId);
     const overlay = this.overlays.get(editorId);
 
-    if (!editor || !config || !config.enabled || !overlay) return;
+    if (!editor || !config || !config.enabled || !overlay) {
+      // console.log(`TiptapPagination: Skipping calculation for "${editorId}" - missing requirements`);
+      return;
+    }
 
     // Wait for browser to complete rendering
     await new Promise(resolve => requestAnimationFrame(resolve));
     await new Promise(resolve => setTimeout(resolve, 50));
 
     const editorElement = editor.view.dom;
-    const contentHeight = editorElement.scrollHeight;
-    const effectivePageHeight = config.pageHeight - config.marginTop - config.marginBottom;
+    console.log(`TiptapPagination: Starting calculation for "${editorId}"`, {
+      orientation: config.orientation,
+      pageWidth: config.pageWidth,
+      pageHeight: config.pageHeight,
+      marginLeft: config.marginLeft,
+      marginRight: config.marginRight,
+      marginTop: config.marginTop,
+      marginBottom: config.marginBottom
+    });
+
+    // Calculate dimensions based on orientation
+    let contentSize: number;
+    let effectivePageSize: number;
+
+    if (config.orientation === 'landscape') {
+      // Horizontal pagination - use width for page breaks
+      contentSize = editorElement.scrollWidth;
+      effectivePageSize = config.pageWidth - config.marginLeft - config.marginRight;
+      console.log(`TiptapPagination: Landscape mode calculation`, {
+        contentSize,
+        effectivePageSize,
+        scrollWidth: editorElement.scrollWidth,
+        scrollHeight: editorElement.scrollHeight,
+        clientWidth: editorElement.clientWidth,
+        clientHeight: editorElement.clientHeight
+      });
+    } else {
+      // Vertical pagination (default) - use height for page breaks
+      contentSize = editorElement.scrollHeight;
+      effectivePageSize = config.pageHeight - config.marginTop - config.marginBottom;
+      console.log(`TiptapPagination: Portrait mode calculation`, {
+        contentSize,
+        effectivePageSize,
+        scrollWidth: editorElement.scrollWidth,
+        scrollHeight: editorElement.scrollHeight,
+        clientWidth: editorElement.clientWidth,
+        clientHeight: editorElement.clientHeight
+      });
+    }
 
     // Clear existing pagination
     this.clearPagination(editorId);
 
     // Calculate page breaks
-    let currentY = 0;
+    let currentPos = 0;
     let pageNumber = 1;
 
-    while (currentY < contentHeight) {
-      this.createPageIndicator(editorId, pageNumber, currentY, effectivePageHeight);
-      currentY += effectivePageHeight;
+    // console.log(`TiptapPagination: Calculating page breaks...`);
+    while (currentPos < contentSize) {
+      // console.log(`TiptapPagination: Creating page ${pageNumber} at position ${currentPos}`);
+      this.createPageIndicator(editorId, pageNumber, currentPos, effectivePageSize);
+      currentPos += effectivePageSize;
       pageNumber++;
     }
 
     // Update overlay dimensions
-    overlay.style.height = `${contentHeight}px`;
+    if (config.orientation === 'landscape') {
+      overlay.style.width = `${contentSize}px`;
+      overlay.style.height = `${config.pageHeight}px`;
+      console.log(`TiptapPagination: Landscape overlay dimensions`, {
+        width: contentSize,
+        height: config.pageHeight
+      });
+    } else {
+      overlay.style.height = `${contentSize}px`;
+      overlay.style.width = `${config.pageWidth}px`;
+      // console.log(`TiptapPagination: Portrait overlay dimensions`, {
+      //   height: contentSize,
+      //   width: config.pageWidth
+      // });
+    }
 
-    console.log(`TiptapPagination: Calculated ${pageNumber - 1} pages for "${editorId}"`);
+    // console.log(`TiptapPagination: Calculated ${pageNumber - 1} pages for "${editorId}"`);
 
     // After calculation, update visible pages/masks
     this.updateVisiblePages(editorId);
@@ -301,35 +386,99 @@ export class TiptapPaginationManager {
     const scrollContainer = this.findScrollContainer(editorElement);
     if (!scrollContainer) return;
 
-    const contentHeight = editorElement.scrollHeight;
-    const effectivePageHeight = config.pageHeight - config.marginTop - config.marginBottom;
+    // Calculate dimensions based on orientation
+    let contentSize: number;
+    let effectivePageSize: number;
+    let scrollPos: number;
 
-    const scrollTop = scrollContainer.scrollTop;
-    const currentPageIndex = Math.max(0, Math.floor(scrollTop / effectivePageHeight));
+    if (config.orientation === 'landscape') {
+      // Horizontal pagination
+      contentSize = editorElement.scrollWidth;
+      effectivePageSize = config.pageWidth - config.marginLeft - config.marginRight;
+      scrollPos = scrollContainer.scrollLeft;
+    } else {
+      // Vertical pagination (default)
+      contentSize = editorElement.scrollHeight;
+      effectivePageSize = config.pageHeight - config.marginTop - config.marginBottom;
+      scrollPos = scrollContainer.scrollTop;
+    }
 
-    // Position masks
+    const currentPageIndex = Math.max(0, Math.floor(scrollPos / effectivePageSize));
+
+    // Position masks based on orientation
     const topMask = overlay.querySelector('.pagination-mask-top') as HTMLElement | null;
     const bottomMask = overlay.querySelector('.pagination-mask-bottom') as HTMLElement | null;
-    const visibleStart = currentPageIndex * effectivePageHeight;
-    const visibleEnd = Math.min(contentHeight, (currentPageIndex + 2) * effectivePageHeight);
+    const leftMask = overlay.querySelector('.pagination-mask-left') as HTMLElement | null;
+    const rightMask = overlay.querySelector('.pagination-mask-right') as HTMLElement | null;
 
-    if (topMask) {
-      topMask.style.position = 'absolute';
-      topMask.style.left = '0';
-      topMask.style.right = '0';
-      topMask.style.top = '0';
-      topMask.style.height = `${visibleStart}px`;
-      topMask.style.pointerEvents = 'none';
-      topMask.style.zIndex = '90';
-    }
-    if (bottomMask) {
-      bottomMask.style.position = 'absolute';
-      bottomMask.style.left = '0';
-      bottomMask.style.right = '0';
-      bottomMask.style.top = `${visibleEnd}px`;
-      bottomMask.style.height = `${Math.max(0, contentHeight - visibleEnd)}px`;
-      bottomMask.style.pointerEvents = 'none';
-      bottomMask.style.zIndex = '90';
+    if (config.orientation === 'landscape') {
+      // Horizontal pagination - use left/right masks
+      const visibleStart = currentPageIndex * effectivePageSize;
+      const visibleEnd = Math.min(contentSize, (currentPageIndex + 2) * effectivePageSize);
+
+      // Hide top/bottom masks for horizontal mode
+      if (topMask) {
+        topMask.style.display = 'none';
+      }
+      if (bottomMask) {
+        bottomMask.style.display = 'none';
+      }
+
+      // Show left/right masks for horizontal scrolling
+      if (leftMask) {
+        leftMask.style.position = 'absolute';
+        leftMask.style.top = '0';
+        leftMask.style.bottom = '0';
+        leftMask.style.left = '0';
+        leftMask.style.width = `${visibleStart}px`;
+        leftMask.style.pointerEvents = 'none';
+        leftMask.style.zIndex = '90';
+        leftMask.style.display = 'block';
+      }
+      if (rightMask) {
+        rightMask.style.position = 'absolute';
+        rightMask.style.top = '0';
+        rightMask.style.bottom = '0';
+        rightMask.style.left = `${visibleEnd}px`;
+        rightMask.style.width = `${Math.max(0, contentSize - visibleEnd)}px`;
+        rightMask.style.pointerEvents = 'none';
+        rightMask.style.zIndex = '90';
+        rightMask.style.display = 'block';
+      }
+    } else {
+      // Vertical pagination (default) - use top/bottom masks
+      const visibleStart = currentPageIndex * effectivePageSize;
+      const visibleEnd = Math.min(contentSize, (currentPageIndex + 2) * effectivePageSize);
+
+      // Hide left/right masks for vertical mode
+      if (leftMask) {
+        leftMask.style.display = 'none';
+      }
+      if (rightMask) {
+        rightMask.style.display = 'none';
+      }
+
+      // Show top/bottom masks for vertical scrolling
+      if (topMask) {
+        topMask.style.position = 'absolute';
+        topMask.style.left = '0';
+        topMask.style.right = '0';
+        topMask.style.top = '0';
+        topMask.style.height = `${visibleStart}px`;
+        topMask.style.pointerEvents = 'none';
+        topMask.style.zIndex = '90';
+        topMask.style.display = 'block';
+      }
+      if (bottomMask) {
+        bottomMask.style.position = 'absolute';
+        bottomMask.style.left = '0';
+        bottomMask.style.right = '0';
+        bottomMask.style.top = `${visibleEnd}px`;
+        bottomMask.style.height = `${Math.max(0, contentSize - visibleEnd)}px`;
+        bottomMask.style.pointerEvents = 'none';
+        bottomMask.style.zIndex = '90';
+        bottomMask.style.display = 'block';
+      }
     }
 
     // Keep all page indicators visible (show all page numbers)
@@ -342,7 +491,10 @@ export class TiptapPaginationManager {
     const config = this.configs.get(editorId);
     const overlay = this.overlays.get(editorId);
     const editor = this.editors.get(editorId);
-    if (!config || !overlay || !editor) return;
+    if (!config || !overlay || !editor) {
+      // console.log(`TiptapPagination: Cannot create page indicator ${pageNumber} - missing requirements`);
+      return;
+    }
 
     const pageElement = document.createElement('div');
     pageElement.className = 'page-indicator';
@@ -357,14 +509,35 @@ export class TiptapPaginationManager {
 
     const styles: Record<string, string> = {
       position: 'absolute',
-      top: `${editorTop + config.marginTop + top}px`,
-      left: `${editorLeft}px`,
-      width: `${editorWidth}px`,
-      height: `${height}px`,
       pointerEvents: 'none',
       zIndex: '5',
       boxSizing: 'border-box'
     };
+
+    // console.log(`TiptapPagination: Creating page indicator ${pageNumber}`, {
+    //   top,
+    //   height,
+    //   editorLeft,
+    //   editorTop,
+    //   editorWidth,
+    //   orientation: config.orientation
+    // });
+
+    if (config.orientation === 'landscape') {
+      // Horizontal pagination
+      styles.left = `${editorLeft + config.marginLeft + top}px`;
+      styles.top = `${editorTop}px`;
+      styles.width = `${height}px`;
+      styles.height = `${config.pageHeight}px`;
+      console.log(`TiptapPagination: Landscape page indicator ${pageNumber} styles`, styles);
+    } else {
+      // Vertical pagination (default)
+      styles.top = `${editorTop + config.marginTop + top}px`;
+      styles.left = `${editorLeft}px`;
+      styles.width = `${editorWidth}px`;
+      styles.height = `${height}px`;
+      // console.log(`TiptapPagination: Portrait page indicator ${pageNumber} styles`, styles);
+    }
 
     if (config.pageBorder) {
       styles.border = '1px solid #e0e0e0';
@@ -382,6 +555,7 @@ export class TiptapPaginationManager {
     }
 
     overlay.appendChild(pageElement);
+    // console.log(`TiptapPagination: Added page indicator ${pageNumber} to overlay`);
   }
 
   /**

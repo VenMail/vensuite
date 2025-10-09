@@ -238,7 +238,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useExplorerNavigation } from '@/composables/useExplorerNavigation'
 import { useFileStore } from '@/store/files'
 import { toast } from '@/composables/useToast'

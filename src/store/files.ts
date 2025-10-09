@@ -641,6 +641,79 @@ export const useFileStore = defineStore("files", {
       return authStore.getToken() || localStorage.getItem("venAuthToken");
     },
 
+    /** Get version history for a file */
+    async listVersions(fileId: string): Promise<{
+      app_file_id: string;
+      app_file_title: string;
+      current_version: {
+        file_size: number;
+        updated_at: string;
+        updated_at_human: string;
+      };
+      versions: Array<{
+        id: string;
+        version_number: number;
+        file_size: number;
+        file_name: string;
+        mime_type: string;
+        change_note: string;
+        created_at: string;
+        created_at_human: string;
+        employee_id: string;
+      }>;
+      total_versions: number;
+    } | null> {
+      if (!fileId) return null;
+
+      try {
+        const response = await axios.get(`${FILES_ENDPOINT}/${fileId}/versions`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+
+        if (response.status === 200) {
+          return response.data.data;
+        }
+
+        return null;
+      } catch (error) {
+        console.error('Error fetching version history:', error);
+        return null;
+      }
+    },
+
+    /** Get a specific version of a file */
+    async getVersion(fileId: string, versionNumber: number): Promise<{
+      id: string;
+      app_file_id: string;
+      version_number: number;
+      file_size: number;
+      file_name: string;
+      file_url: string;
+      mime_type: string;
+      change_note: string;
+      created_at: string;
+      created_at_human: string;
+      employee_id: string;
+      content: string;
+    } | null> {
+      if (!fileId || !versionNumber) return null;
+
+      try {
+        const response = await axios.get(`${FILES_ENDPOINT}/${fileId}/versions/${versionNumber}`, {
+          headers: { Authorization: `Bearer ${this.getToken()}` }
+        });
+
+        if (response.status === 200) {
+          return response.data.data;
+        }
+
+        return null;
+      } catch (error) {
+        console.error('Error fetching version:', error);
+        return null;
+      }
+    },
+
     /** Clear all files state and offline caches (used during logout) */
     clearAll() {
       try {

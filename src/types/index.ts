@@ -1,6 +1,22 @@
 export * from "./docPersistence";
 export * from "./slides";
 
+export interface DocumentMetadata {
+  pagination?: {
+    orientation?: 'portrait' | 'landscape';
+    pageSize?: string;
+    showPageNumbers?: boolean;
+    pageNumberPosition?: string;
+    printPageNumbers?: boolean;
+    marginTop?: number;
+    marginBottom?: number;
+    marginLeft?: number;
+    marginRight?: number;
+    pageBorder?: boolean;
+    pageShadow?: boolean;
+  };
+}
+
 export interface FileData {
   id?: string;              // Primary ID - either local UUID or server ID
   server_id?: string;       // Server ID (only present for documents that exist on server)
@@ -16,6 +32,7 @@ export interface FileData {
   folder_id?: string | null;
   is_folder?: boolean;
   content?: string;
+  metadata?: DocumentMetadata;
   deleted_at?: Date | string;
   created_at?: Date | string;
   updated_at?: Date | string;

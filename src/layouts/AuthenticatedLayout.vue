@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
 import Sidebar from '@/views/Sidebar.vue'
 import { useFileStore } from '@/store/files'
-import { ToastProvider } from '@/components/ui/toast'
+// import { ToastProvider } from '@/components/ui/toast'
 import TopNav from '@/components/layout/TopNav.vue'
 import { cn } from '@/lib/utils'
 import { useSidebarStore } from '@/store/sidebar'
@@ -123,28 +123,26 @@ const mainContentClasses = computed(() =>
 </script>
 
 <template>
-  <ToastProvider>
-    <div class="min-h-screen flex flex-col">
-      <TopNav 
-        v-if="!hideLayout"
-        :isMobile="isMobile"
-        @toggleSidebar="toggleSidebar"
-      />
+  <div class="min-h-screen flex flex-col">
+    <TopNav 
+      v-if="!hideLayout"
+      :isMobile="isMobile"
+      @toggleSidebar="toggleSidebar"
+    />
 
-      <!-- Main Content Area with Sidebar -->
-      <div class="flex flex-1 overflow-hidden">
-        <Sidebar 
-          v-if="!hideLayout"
-          :isVisible="isVisible" 
-          :isCollapsed="isCollapsed"
-          @toggle="toggleSidebar"
-          @collapse="toggleCollapse"
-        />
-        
-        <main :class="mainContentClasses">
-          <router-view />
-        </main>
-      </div>
+    <!-- Main Content Area with Sidebar -->
+    <div class="flex flex-1 overflow-hidden">
+      <Sidebar 
+        v-if="!hideLayout"
+        :isVisible="isVisible" 
+        :isCollapsed="isCollapsed"
+        @toggle="toggleSidebar"
+        @collapse="toggleCollapse"
+      />
+      
+      <main :class="mainContentClasses">
+        <router-view />
+      </main>
     </div>
-  </ToastProvider>
+  </div>
 </template>

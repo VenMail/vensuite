@@ -12,6 +12,13 @@ type ToastOptions = {
   duration?: number
 }
 
+function normalizePosition(pos?: ToastOptions['position']): 'bottom-right' | 'bottom-left' | 'top-left' | 'top-right' {
+  if (!pos) return 'bottom-right'
+  // Avoid top positions to prevent off-screen slide-ups in some layouts
+  if (pos.startsWith('top')) return 'bottom-right'
+  return pos
+}
+
 export const toast = {
   custom: (message: string, options?: ToastOptions) =>
     sonnerToast.custom(
@@ -24,7 +31,7 @@ export const toast = {
       }),
       {
         ...options,
-        position: options?.position || 'bottom-right',
+        position: normalizePosition(options?.position),
         duration: options?.duration || 5000
       }
     ),
@@ -40,7 +47,7 @@ export const toast = {
       }),
       {
         ...options,
-        position: options?.position || 'bottom-right',
+        position: normalizePosition(options?.position),
         duration: options?.duration || 5000
       }
     ),
@@ -55,7 +62,7 @@ export const toast = {
       }),
       {
         ...options,
-        position: options?.position || 'bottom-right',
+        position: normalizePosition(options?.position),
         duration: options?.duration || 5000
       }
     ),
@@ -70,7 +77,7 @@ export const toast = {
       }),
       {
         ...options,
-        position: options?.position || 'bottom-right',
+        position: normalizePosition(options?.position),
         duration: options?.duration || 5000
       }
     ),
@@ -85,7 +92,7 @@ export const toast = {
       }),
       {
         ...options,
-        position: options?.position || 'bottom-right',
+        position: normalizePosition(options?.position),
         duration: options?.duration || 5000
       }
     ),

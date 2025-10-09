@@ -9,10 +9,12 @@
       :isSaving="isSaving"
       :has-unsaved-changes="hasUnsavedChanges"
       :is-offline="isOffline"
+      :current-file-id="currentDoc?.id"
       :last-saved-at="lastSavedAt"
       :share-link="shareLink"
       :privacy-type="privacyType"
       :share-members="shareMembers"
+      :show-version-history="true"
       @update:title="documentTitle = $event"
       @back="goBack"
       @manual-save="() => saveDocument(true)"
@@ -21,6 +23,7 @@
       @invite="handleInviteMember"
       @update-member="handleUpdateMember"
       @remove-member="handleRemoveMember"
+      @select-version="handleVersionSelect"
     />
 
     <!-- Docs Menu Bar -->
@@ -88,6 +91,12 @@
             @click="scrollToHeading(index)"
           >
             {{ item.text }}
+
+// Normalize and apply document title from a file name
+function setDocumentTitleFromName(name?: string | null) {
+  const clean = (name || '').replace(/\.[^/.]+$/, '').trim();
+  documentTitle.value = clean || 'Untitled Document';
+}
           </button>
         </div>
       </div>
@@ -97,6 +106,7 @@
     <div class="flex-1 overflow-auto bg-gray-50 p-6 transition-colors custom-scrollbar print:p-0 print:bg-white">
       <div 
         class="mx-auto bg-white shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
+        :class="{ 'landscape-mode': pageOrientation === 'landscape' }"
         :style="pageStyles"
       >
         <div :style="contentPadding" class="doc-page relative">
@@ -393,6 +403,8 @@
 import { ref, onMounted, onUnmounted, watch, computed, nextTick, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Editor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
+import { Dialog, DialogHeader, DialogTitle, DialogContent } from '@/components/ui/dialog';
+
 import type { Component } from 'vue';
 import {
   Bold,
@@ -462,6 +474,7 @@ import DocsTitleBar from '@/components/forms/DocsTitleBar.vue';
 import ShareCard from '@/components/ShareCard.vue';
 import ImagePicker from '@/components/ImagePicker.vue';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { applyContentToEditor, guardEditorBeforeSave } from '@/composables/useTiptapContent';
 import { saveAs } from 'file-saver';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
@@ -1721,6 +1734,8 @@ async function saveDocument(isManual = false) {
   isSaving.value = true;
   
   try {
+    // Guard against embedded stringified JSON before saving
+    guardEditorBeforeSave(editor.value);
     const json = editor.value.getJSON();
     const hasMeaningfulContent = Array.isArray(json.content)
       ? json.content.some((node: any) => {
@@ -1747,6 +1762,22 @@ async function saveDocument(isManual = false) {
     const updatedDoc: FileData = {
       ...currentDoc.value,
       content: JSON.stringify(json),
+      metadata: {
+        ...currentDoc.value?.metadata,
+        pagination: {
+          orientation: pageOrientation.value,
+          pageSize: pageSize.value,
+          showPageNumbers: true, // Default from getPaginationConfig
+          pageNumberPosition: 'bottom-right', // Default from getPaginationConfig
+          printPageNumbers: false, // Default from getPaginationConfig
+          marginTop: 50, // Default from getPaginationConfig
+          marginBottom: 50, // Default from getPaginationConfig
+          marginLeft: 50, // Default from getPaginationConfig
+          marginRight: 50, // Default from getPaginationConfig
+          pageBorder: true, // Default from getPaginationConfig
+          pageShadow: true, // Default from getPaginationConfig
+        }
+      },
       last_viewed: new Date(),
     };
     
@@ -2111,6 +2142,17 @@ async function initializeDocument() {
         documentTitle.value = doc.title || 'Untitled Document';
         document.title = documentTitle.value; // Set page title
         
+        // Restore pagination settings from metadata
+        if (doc.metadata?.pagination) {
+          const paginationSettings = doc.metadata.pagination;
+          if (paginationSettings.orientation) {
+            pageOrientation.value = paginationSettings.orientation;
+          }
+          if (paginationSettings.pageSize) {
+            pageSize.value = paginationSettings.pageSize;
+          }
+        }
+        
         // Load content into editor using helper function
         if (doc.content) {
           loadContentIntoEditor(doc.content);
@@ -2153,6 +2195,41 @@ function goBack() {
   router.push('/');
 }
 
+function handleVersionSelect(version: any) {
+  // Load the selected version content
+  loadVersionContent(version);
+}
+
+async function loadVersionContent(version: any) {
+  if (!currentDoc.value?.id || !version?.version_number) return;
+
+  try {
+    const fileStore = useFileStore();
+    const versionData = await fileStore.getVersion(currentDoc.value.id, version.version_number);
+
+    documentTitle.value = currentDoc.value.title;
+
+    if (versionData && typeof versionData.content === 'string') {
+      const raw = versionData.content;
+      const ed = editor.value;
+      if (!ed) return;
+      applyContentToEditor(ed, raw);
+
+      // Update the document title if needed
+      if (documentTitle.value == 'Untitled Document' && versionData.file_name && versionData.file_name !== documentTitle.value) {
+        documentTitle.value = versionData.file_name.replace(/\.[^/.]+$/, '');
+      }
+
+      toast.success(`Loaded version ${version.version_number}`);
+    } else {
+      toast.error('Failed to load version content');
+    }
+  } catch (error) {
+    console.error('Error loading version content:', error);
+    toast.error('Failed to load version content');
+  }
+}
+
 // Pagination settings update
 function updatePaginationSettings(settings: any) {
   if (paginationManager.value) {
@@ -2184,8 +2261,10 @@ function updatePaginationSettings(settings: any) {
     paginationConfig.footerLeft = isShow && pos === 'left' ? '{page}' : '';
     paginationConfig.footerRight = isShow && (pos === 'right' || pos === 'center') ? '{page}' : '';
 
-    // Ensure pagination is enabled
+    // Ensure pagination is enabled and recalculate
     paginationManager.value.enablePagination('main-editor');
+    // Force recalculation for orientation changes
+    paginationManager.value.updateConfig('main-editor', config);
   }
 
   if (editor.value) {
@@ -2358,7 +2437,8 @@ function getPaginationConfig(): PaginationConfig {
     pageShadow: true,
     enabled: true,
     autoRecalculate: true,
-    debounceDelay: 100
+    debounceDelay: 100,
+    orientation: pageOrientation.value
   };
 }
 
@@ -2412,6 +2492,15 @@ onMounted(async () => {
 
 watch([pageSize, pageOrientation], () => {
   if (!editor.value) return;
+
+  // Update pagination config with new orientation/page size
+  if (paginationManager.value) {
+    const config = getPaginationConfig();
+    paginationManager.value.updateConfig('main-editor', config);
+    // Force recalculation
+    paginationManager.value.enablePagination('main-editor');
+  }
+
   initializeEditor();
   updatePrintStyles();
 
@@ -2484,6 +2573,17 @@ onUnmounted(() => {
 :deep(.ProseMirror) {
   min-height: 500px;
   outline: none;
+}
+
+/* Landscape mode support */
+.landscape-mode {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.landscape-mode .doc-page {
+  min-width: fit-content;
+  display: inline-block;
 }
 
 :deep(.ProseMirror p.is-editor-empty:first-child::before) {

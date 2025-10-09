@@ -65,6 +65,28 @@ export const paginationStyles = `
   background: #f5f5f5; /* Match wrapper background to hide content outside visible pages */
 }
 
+.pagination-mask-left,
+.pagination-mask-right {
+  background: #f5f5f5; /* Match wrapper background to hide content outside visible pages */
+}
+
+/* Horizontal pagination mode */
+.pagination-mode[data-orientation="landscape"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.pagination-mode[data-orientation="landscape"] .ProseMirror {
+  min-width: fit-content;
+  display: inline-block;
+}
+
+/* Landscape wrapper adjustments */
+.pagination-wrapper:has(.pagination-mode[data-orientation="landscape"]) {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 /* Print styles - CRITICAL for actual printing */
 @media print {
   .pagination-wrapper {
@@ -109,6 +131,13 @@ export const paginationStyles = `
     padding: 0 !important;
     max-width: none !important;
     min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Horizontal pagination print styles */
+  .pagination-mode[data-orientation="landscape"] {
+    max-height: none !important;
+    min-width: auto !important;
   }
 
   /* Smart page breaks for print */
