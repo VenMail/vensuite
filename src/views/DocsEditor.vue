@@ -743,8 +743,16 @@ const isChartSelection = computed(() => !!editor.value && editor.value.isActive(
 
 // Make BubbleMenu appear when a table is clicked (even without a cell selection)
 const bubbleShouldShow = () => {
-  if (!editor.value) return false;
+  const instance = editor.value;
+  if (!instance) return false;
   if (isImageEditing.value) return false;
+  if (!isEditorFocused.value && !isTableActiveByClick.value) return false;
+
+  const hasSelection = !instance.state.selection.empty;
+  if (!hasSelection && !isTableSelection.value && !isTableActiveByClick.value) {
+    return false;
+  }
+
   return isTextSelection.value || isTableSelection.value || isTableActiveByClick.value;
 };
 
