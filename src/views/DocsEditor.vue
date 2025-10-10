@@ -360,7 +360,6 @@ function setDocumentTitleFromName(name?: string | null) {
       </div>
     </div>
 
-    <!-- Share Dialog -->
     <Dialog v-model:open="shareOpen">
       <DialogContent class="sm:max-w-2xl">
         <DialogHeader>
@@ -396,6 +395,55 @@ function setDocumentTitleFromName(name?: string | null) {
         />
       </DialogContent>
     </Dialog>
+
+    <!-- Local vs Online Conflict Dialog -->
+    <Dialog v-model:open="conflictDialogOpen">
+      <DialogContent class="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Content versions differ</DialogTitle>
+          <DialogDescription>
+            {{ conflictDialogMessage }}
+          </DialogDescription>
+        </DialogHeader>
+        <div class="space-y-4 text-sm text-gray-600 dark:text-gray-300">
+          <div class="space-y-2">
+            <p>
+              <span class="font-medium">Local copy:</span>
+              {{ conflictLocalLength }} bytes
+            </p>
+            <details class="rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900/70 dark:text-gray-200">
+              <summary class="cursor-pointer select-none px-3 py-2 font-medium">
+                Preview local version
+              </summary>
+              <div class="border-t border-gray-200 px-3 py-3 dark:border-gray-700">
+                {{ conflictLocalPreview ?? 'Preview unavailable.' }}
+              </div>
+            </details>
+          </div>
+          <div class="space-y-2">
+            <p>
+              <span class="font-medium">Online copy:</span>
+              {{ conflictRemoteLength }} bytes
+            </p>
+            <details class="rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900/70 dark:text-gray-200">
+              <summary class="cursor-pointer select-none px-3 py-2 font-medium">
+                Preview online version
+              </summary>
+              <div class="border-t border-gray-200 px-3 py-3 dark:border-gray-700">
+                {{ conflictRemotePreview ?? 'Preview unavailable.' }}
+              </div>
+            </details>
+          </div>
+          <p v-if="conflictDeltaLength > 0" class="text-xs text-gray-500 dark:text-gray-400">
+            Difference: {{ conflictDeltaLength }} bytes
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="secondary" @click="keepLocalVersion">Keep local version</Button>
+          <Button variant="default" @click="keepRemoteVersion">Keep online version</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
@@ -403,7 +451,7 @@ function setDocumentTitleFromName(name?: string | null) {
 import { ref, onMounted, onUnmounted, watch, computed, nextTick, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Editor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
-import { Dialog, DialogHeader, DialogTitle, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 import type { Component } from 'vue';
 import {
@@ -473,6 +521,8 @@ import DocsToolbar from '@/components/forms/DocsToolbar.vue';
 import DocsTitleBar from '@/components/forms/DocsTitleBar.vue';
 import ShareCard from '@/components/ShareCard.vue';
 import ImagePicker from '@/components/ImagePicker.vue';
+import { Button } from '@/components/ui/button';
+import { useDocumentConflictResolver } from '@/composables/useDocumentConflictResolver';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { applyContentToEditor, guardEditorBeforeSave } from '@/composables/useTiptapContent';
 import { saveAs } from 'file-saver';
@@ -1324,7 +1374,7 @@ const currentBubbleBgColor = computed(() => {
 // Priority keys for different contexts
 const textPrimaryKeys = ['bold', 'italic', 'underline', 'color', 'highlight', 'link', 'clear'];
 const textOverflowKeys = ['strike', 'bullet-list', 'ordered-list', 'align-left', 'align-center', 'align-right', 'text', 'h2', 'h3'];
-const headingPrimaryKeys = ['h2', 'h3', 'text', 'bold', 'italic', 'underline', 'clear'];
+const headingPrimaryKeys = ['h2', 'h3', 'clear', 'text', 'bold', 'italic', 'underline'];
 const headingOverflowKeys = ['strike', 'color', 'highlight', 'link', 'bullet-list', 'ordered-list', 'align-left', 'align-center', 'align-right'];
 const tablePrimaryKeys = ['add-col', 'add-row', 'merge', 'split', 'align-left-table', 'align-center-table', 'align-right-table'];
 const tableOverflowKeys = ['del-col', 'del-row'];
@@ -1482,6 +1532,50 @@ const shareLinkDoc = computed(() => {
   const id = String(idParam);
   return `${window.location.origin}/docs/${id}`;
 });
+
+const {
+  conflictDialogOpen,
+  conflictDialogMessage,
+  conflictLocalLength,
+  conflictRemoteLength,
+  conflictDeltaLength,
+  conflictLocalPreview,
+  conflictRemotePreview,
+  evaluateLoadedDocument,
+  checkConflictsAfterReconnect,
+  keepLocalVersion,
+  keepRemoteVersion,
+} = useDocumentConflictResolver({
+  fileStore,
+  applyLocalVersion: async (localDoc) => {
+    if (!currentDoc.value) return null;
+
+    const appliedDoc: FileData = {
+      ...currentDoc.value,
+      ...localDoc,
+      id: currentDoc.value.id,
+    } as FileData;
+
+    currentDoc.value = appliedDoc;
+    documentTitle.value = appliedDoc.title || 'Untitled Document';
+    loadContentIntoEditor(appliedDoc.content || '');
+    hasUnsavedChanges.value = true;
+    return appliedDoc;
+  },
+  applyRemoteVersion: async (remoteDoc) => {
+    currentDoc.value = { ...remoteDoc } as FileData;
+    documentTitle.value = remoteDoc.title || 'Untitled Document';
+    loadContentIntoEditor(remoteDoc.content || '');
+    hasUnsavedChanges.value = false;
+    lastSavedAt.value = remoteDoc.updated_at ? new Date(remoteDoc.updated_at as string) : new Date();
+    return remoteDoc;
+  },
+  notify: {
+    info: (message: string) => toast.info(message),
+    success: (message: string) => toast.success(message),
+    error: (message: string) => toast.error(message),
+  },
+});
 const tocItems = computed(() => {
   if (!editor.value) return [] as Array<{ level: number; text: string; id: string; pos: number }>;
 
@@ -1609,8 +1703,19 @@ let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 let maxWaitTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Track online/offline status
-window.addEventListener('online', () => isOffline.value = false);
-window.addEventListener('offline', () => isOffline.value = true);
+const handleOnline = () => {
+  isOffline.value = false;
+  if (currentDoc.value?.id) {
+    void checkConflictsAfterReconnect(currentDoc.value.id, currentDoc.value.file_type);
+  }
+};
+
+const handleOffline = () => {
+  isOffline.value = true;
+};
+
+window.addEventListener('online', handleOnline);
+window.addEventListener('offline', handleOffline);
 
 // Page dimension configurations (values in millimeters)
 const pageDimensions = {
@@ -2159,6 +2264,8 @@ async function initializeDocument() {
         }
         
         lastSavedAt.value = new Date();
+
+        await evaluateLoadedDocument(doc, 'initial');
         
         // Clear just loaded flag after a short delay
         setTimeout(() => {
@@ -2515,10 +2622,12 @@ onUnmounted(() => {
   if (editor.value && currentDoc.value) {
     saveDocument();
   }
-  
+
   // Cleanup
   if (saveTimeout) clearTimeout(saveTimeout);
   if (maxWaitTimeout) clearTimeout(maxWaitTimeout);
+  window.removeEventListener('online', handleOnline);
+  window.removeEventListener('offline', handleOffline);
   editor.value?.destroy();
 });
 </script>
