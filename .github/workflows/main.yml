@@ -31,9 +31,9 @@ jobs:
       # 5. Build the project with increased memory allocation
       - name: Build project
         env:
-          VITE_API_BASE_URL: https://app.venmail.io/api/v1
-          VITE_AUTH_URL: https://app.venmail.io/auth/oauth
-          SOCKET_BASE_URL: wss://app.venmail.io:8443
+          VITE_API_BASE_URL: https://m.venmail.io/api/v1
+          VITE_AUTH_URL: https://m.venmail.io/auth/oauth
+          SOCKET_BASE_URL: wss://w.venmail.io:8443
           NODE_OPTIONS: --max-old-space-size=8192
         run: pnpm run build
 

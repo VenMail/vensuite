@@ -328,7 +328,7 @@ function updateTitleRemote(newTitle: string) {
   }
 }
 
-const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || "ws://app.venmail.io:8443";
+const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || "wss://w.venmail.io:8443";
 
 function initializeWebSocketAndJoinSheet() {
   // Do not initialize collaboration for guests
