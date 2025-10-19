@@ -34,6 +34,8 @@ export const useAuthStore = defineStore('auth', {
       return this.token
     },
     async setUserInfo(user: any) {
+      if (!user) return;
+      if (!this.isAuthenticated) return;
       this.firstName = user.first_name || "";
       this.lastName = user.last_name || "";
       this.email = user.email || "";

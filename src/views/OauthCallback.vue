@@ -30,8 +30,8 @@ function authenticateWithCookie(authCookie: string) {
     .then((data) => {
       if (data.success) {
         console.log("setting token", data);
+        authStore.login(data.token);
         authStore.setUserInfo(data.user);
-        localStorage.setItem("venAuthToken", data.token);
         router.push("/");
       } else {
         console.log("Auth failed with cookie:", data);
@@ -62,7 +62,7 @@ function authenticateWithCode(code: string) {
       if (data.success) {
         console.log("Auth suc", data);
         document.cookie = `venAuthToken=${data.token}; path=/`;
-        localStorage.setItem("venAuthToken", data.token);
+        authStore.login(data.token);
         authStore.setUserInfo(data.user);
         router.push("/");
       } else {
