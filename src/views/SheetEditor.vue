@@ -411,8 +411,6 @@ onMounted(async () => {
         console.log('Set title from existing store data:', existingDoc.title)
       }
 
-      if (canJoinRealtime.value) initializeWebSocketAndJoinSheet()
-
       const loadedData = await loadData(route.params.id as string)
       if (loadedData) {
         data.value = loadedData
@@ -437,6 +435,9 @@ onMounted(async () => {
         document.title = currentTitle
         title.value = currentTitle
       }
+      
+      // Initialize WebSocket after data is loaded and privacyType is set
+      if (canJoinRealtime.value) initializeWebSocketAndJoinSheet()
     }
     // Handle completely new document without ID (route: /sheets)
     else {
@@ -987,13 +988,14 @@ watch(
       wsService.value.leaveSheet(oldId as string)
       isJoined.value = false
     }
-    if (authStore.isAuthenticated) {
-      initializeWebSocketAndJoinSheet()
-    }
     const loaded = await loadData(newId as string)
     if (loaded) {
       data.value = loaded
       title.value = loaded.name || title.value
+    }
+    // Initialize WebSocket after data is loaded and privacyType is set
+    if (canJoinRealtime.value) {
+      initializeWebSocketAndJoinSheet()
     }
   },
 )
