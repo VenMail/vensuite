@@ -65,7 +65,7 @@ const shareMembersForCard = computed(() =>
 // Note: editing restricted to authenticated users; guards are applied in save handlers
 
 const wsService = ref<IWebsocketService | null>(null)
-const isConnected = computed(() => WebSocketService?.isConnected.value)
+const isConnected = computed(() => wsService.value ? WebSocketService?.isConnected.value : false)
 const isJoined = ref(false)
 
 const chatMessages = ref<Message[]>([])
@@ -338,9 +338,14 @@ function updateTitleRemote(newTitle: string) {
 const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || 'wss://w.venmail.io:8443'
 
 function initializeWebSocketAndJoinSheet() {
-  if (!canJoinRealtime.value || !route.params.id) return
+  if (!canJoinRealtime.value || !route.params.id) {
+    console.log('Cannot join realtime:', { canJoin: canJoinRealtime.value, id: route.params.id, privacyType: privacyType.value })
+    return
+  }
   if (!wsService.value) {
-    wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${route.params.id}&userName=${userName.value}&userId=${userId.value}`)
+    const wsUrl = `${SOCKET_URI}?sheetId=${route.params.id}&userName=${userName.value}&userId=${userId.value}`
+    console.log('Initializing WebSocket for sheet:', { url: wsUrl, isGuest: !authStore.isAuthenticated })
+    wsService.value = initializeWebSocket(wsUrl)
   }
   joinSheet()
 }
@@ -479,7 +484,14 @@ onUnmounted(() => {
 })
 
 // Watch for changes in the connection status
-watch(isConnected, newIsConnected => {
+watch(isConnected, (newIsConnected, oldIsConnected) => {
+  console.log('WebSocket connection state changed:', { 
+    from: oldIsConnected, 
+    to: newIsConnected, 
+    wsServiceExists: !!wsService.value,
+    canJoinRealtime: canJoinRealtime.value,
+    isGuest: !authStore.isAuthenticated
+  })
   if (newIsConnected) {
     console.log('WebSocket connection established. Joining sheet...')
     if (canJoinRealtime.value) joinSheet()
