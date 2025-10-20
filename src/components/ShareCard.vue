@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import Button from '@/components/ui/button/Button.vue'
 
 type Member = {
@@ -11,7 +11,8 @@ type Member = {
   domain?: string
 }
 
-type GeneralPermission = 'restricted' | 'domain' | 'anyone'
+type GeneralPermission = 'restricted' | 'organization' | 'link' | 'public'
+type PermissionLevel = 'view' | 'comment' | 'edit'
 
 const props = defineProps<{
   mode?: 'doc' | 'sheet'
@@ -47,6 +48,76 @@ const emit = defineEmits<{
   }): void
 }>()
 
+// Permission helpers
+const DEFAULT_LEVEL_BY_SCOPE: Record<GeneralPermission, PermissionLevel> = {
+  restricted: 'view',
+  organization: 'view',
+  link: 'view',
+  public: 'view',
+}
+
+const PERMISSION_ACTION_VERB: Record<PermissionLevel, string> = {
+  view: 'view',
+  comment: 'comment',
+  edit: 'edit',
+}
+
+const PERMISSION_LABELS: Record<PermissionLevel, string> = {
+  view: 'Viewer',
+  comment: 'Commenter',
+  edit: 'Editor',
+}
+
+function resolveScopeFromPrivacy(type: number): GeneralPermission {
+  switch (type) {
+    case 1:
+    case 2:
+      return 'public'
+    case 3:
+    case 4:
+      return 'link'
+    case 5:
+    case 6:
+    case 8:
+      return 'organization'
+    case 7:
+    default:
+      return 'restricted'
+  }
+}
+
+function resolveLevelFromPrivacy(type: number): PermissionLevel {
+  switch (type) {
+    case 2:
+    case 4:
+    case 6:
+      return 'edit'
+    case 8:
+      return 'comment'
+    default:
+      return 'view'
+  }
+}
+
+function getPrivacyTypeFor(scope: GeneralPermission, level: PermissionLevel): number | null {
+  switch (scope) {
+    case 'restricted':
+      return 7
+    case 'organization':
+      if (level === 'edit') return 6
+      if (level === 'comment') return 8
+      return 5
+    case 'link':
+      if (level === 'edit') return 4
+      return 3
+    case 'public':
+      if (level === 'edit') return 2
+      return 1
+    default:
+      return null
+  }
+}
+
 // Current page state
 const currentPage = ref<'main' | 'invite' | 'settings'>('main')
 
@@ -63,6 +134,91 @@ const settingsForm = ref({
   allowEditorsToChangePermissions: props.allowEditorsToChangePermissions ?? false,
   allowEditorsToDownload: props.allowEditorsToDownload ?? true,
   allowCommentersToDownload: props.allowCommentersToDownload ?? true
+})
+
+const generalPermission = computed({
+  get(): GeneralPermission {
+    return resolveScopeFromPrivacy(props.privacyType)
+  },
+  set(value: GeneralPermission) {
+    const defaultLevel = DEFAULT_LEVEL_BY_SCOPE[value]
+    const targetType = getPrivacyTypeFor(value, defaultLevel)
+    if (targetType !== null) {
+      emit('change-privacy', targetType)
+    }
+    showGeneralPermissionDropdown.value = false
+  }
+})
+
+const generalPermissionLevel = computed<PermissionLevel>(() => {
+  return resolveLevelFromPrivacy(props.privacyType)
+})
+
+const availableLevels = computed<PermissionLevel[]>(() => {
+  const scope = generalPermission.value
+  switch (scope) {
+    case 'restricted':
+      return []
+    case 'organization':
+      return ['view', 'comment', 'edit']
+    case 'link':
+    case 'public':
+      return ['view', 'edit']
+    default:
+      return []
+  }
+})
+
+const restrictedHelpText = computed(() => {
+  const docWord = props.mode === 'sheet' ? 'sheet' : 'document'
+  return `Add people below to share this ${docWord}.`
+})
+
+const generalPermissionDescription = computed<string>(() => {
+  switch (generalPermission.value) {
+    case 'restricted':
+      return restrictedHelpText.value
+    case 'organization':
+      return `People in ${props.organizationDomain || 'your organization'} will see this in search results.`
+    case 'link':
+      return 'Share the link with anyone to give them access.'
+    case 'public':
+      return 'This may appear in search results and be visible to anyone.'
+    default:
+      return restrictedHelpText.value
+  }
+})
+
+function permissionLevelLabel(level: PermissionLevel): string {
+  return PERMISSION_LABELS[level]
+}
+
+function handleGeneralPermissionLevelChange(event: Event) {
+  const value = (event.target as HTMLSelectElement).value as PermissionLevel
+  const targetType = getPrivacyTypeFor(generalPermission.value, value)
+  if (targetType !== null) {
+    emit('change-privacy', targetType)
+  }
+}
+
+function onClickOutside(event: MouseEvent) {
+  if (!showGeneralPermissionDropdown.value) return
+  if (!(event.target instanceof HTMLElement)) return
+  const dropdown = dropdownRef.value
+  if (!dropdown) return
+  if (!dropdown.contains(event.target)) {
+    showGeneralPermissionDropdown.value = false
+  }
+}
+
+const dropdownRef = ref<HTMLDivElement | null>(null)
+
+onMounted(() => {
+  document.addEventListener('click', onClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside)
 })
 
 // Watch for prop changes to update settings form
@@ -103,49 +259,23 @@ const otherMembers = computed(() => {
   return allMembers.value.filter(m => m.email !== owner.email)
 })
 
-// General permission mapping
-const generalPermission = computed({
-  get(): GeneralPermission {
-    if (props.privacyType === 7) return 'restricted'
-    if (props.privacyType === 5 || props.privacyType === 6 || props.privacyType === 8) return 'domain'
-    return 'anyone'
-  },
-  set(value: GeneralPermission) {
-    let newPrivacyType: number
-    switch (value) {
-      case 'restricted':
-        newPrivacyType = 7
-        break
-      case 'domain':
-        newPrivacyType = 5 // Default to view
-        break
-      case 'anyone':
-        newPrivacyType = 3 // Default to view
-        break
-      default:
-        newPrivacyType = 7
-    }
-    emit('change-privacy', newPrivacyType)
-    showGeneralPermissionDropdown.value = false
-  }
-})
+const privacySummary = computed(() => {
+  const scope = generalPermission.value
+  const level = generalPermissionLevel.value
+  const action = PERMISSION_ACTION_VERB[level]
+  const docWord = props.mode === 'sheet' ? 'sheet' : 'document'
 
-// Domain permission for organization - FIXED: Handle comment permission properly
-const domainPermission = computed({
-  get(): 'view' | 'comment' | 'edit' {
-    if (props.privacyType === 6) return 'edit'
-    if (props.privacyType === 8) return 'comment'
-    return 'view' // privacyType === 5
-  },
-  set(value: 'view' | 'comment' | 'edit') {
-    let newPrivacyType: number
-    switch (value) {
-      case 'view': newPrivacyType = 5; break
-      case 'comment': newPrivacyType = 8; break
-      case 'edit': newPrivacyType = 6; break
-      default: newPrivacyType = 5
-    }
-    emit('change-privacy', newPrivacyType)
+  switch (scope) {
+    case 'restricted':
+      return `Only people explicitly added can access this ${docWord}.`
+    case 'organization':
+      return `${props.organizationDomain || 'People in your organization'} can ${action} this ${docWord}.`
+    case 'link':
+      return `Anyone with the link can ${action} this ${docWord}.`
+    case 'public':
+      return `Anyone on the internet can ${action} this ${docWord}.`
+    default:
+      return `Only people explicitly added can access this ${docWord}.`
   }
 })
 
@@ -167,17 +297,16 @@ const domainPermission = computed({
 // Permission labels for dropdown
 const getPermissionLabel = (permission: GeneralPermission): string => {
   switch (permission) {
-    case 'restricted': return 'Restricted'
-    case 'domain': return props.organizationDomain || 'Your organization'  
-    case 'anyone': return 'Anyone with the link'
-  }
-}
-
-const getPermissionDescription = (permission: GeneralPermission): string => {
-  switch (permission) {
-    case 'restricted': return 'Only people with access can open with the link'
-    case 'domain': return `People in ${props.organizationDomain || 'your organization'} can access`
-    case 'anyone': return 'Anyone on the internet with the link can access'
+    case 'restricted':
+      return 'Restricted'
+    case 'organization':
+      return props.organizationDomain || 'Your organization'
+    case 'link':
+      return 'Anyone with the link'
+    case 'public':
+      return 'Anyone on the internet'
+    default:
+      return 'Restricted'
   }
 }
 
@@ -310,6 +439,10 @@ function getStatusColor(status?: string) {
         </div>
       </div>
 
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+        {{ privacySummary }}
+      </p>
+
       <!-- Owner and People with Access Section -->
       <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
         <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">People with access</h4>
@@ -373,7 +506,7 @@ function getStatusColor(status?: string) {
         <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">General permissions</h4>
         
         <div class="flex items-center gap-3">
-          <div class="relative flex-1">
+          <div class="relative flex-1" ref="dropdownRef">
             <button
               @click="showGeneralPermissionDropdown = !showGeneralPermissionDropdown"
               class="w-full flex items-center justify-between p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-950 text-left"
@@ -396,21 +529,29 @@ function getStatusColor(status?: string) {
                 >
                   Restricted
                 </button>
-                
+
                 <button
-                  @click="generalPermission = 'domain'"
+                  @click="generalPermission = 'organization'"
                   class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm font-medium text-gray-900 dark:text-gray-100"
-                  :class="{ 'bg-gray-100 dark:bg-gray-800': generalPermission === 'domain' }"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800': generalPermission === 'organization' }"
                 >
                   {{ props.organizationDomain || 'Your organization' }}
                 </button>
-                
+
                 <button
-                  @click="generalPermission = 'anyone'"
+                  @click="generalPermission = 'link'"
                   class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm font-medium text-gray-900 dark:text-gray-100"
-                  :class="{ 'bg-gray-100 dark:bg-gray-800': generalPermission === 'anyone' }"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800': generalPermission === 'link' }"
                 >
                   Anyone with the link
+                </button>
+
+                <button
+                  @click="generalPermission = 'public'"
+                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm font-medium text-gray-900 dark:text-gray-100"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800': generalPermission === 'public' }"
+                >
+                  Anyone on the internet
                 </button>
               </div>
             </div>
@@ -418,19 +559,21 @@ function getStatusColor(status?: string) {
           
           <!-- Organization permission dropdown when domain is selected -->
           <select
-            v-if="generalPermission === 'domain'"
-            v-model="domainPermission"
+            v-if="availableLevels.length"
+            :value="generalPermissionLevel"
+            @change="handleGeneralPermissionLevelChange"
             class="text-sm border rounded-lg px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
           >
-            <option value="view">Viewer</option>
-            <option value="comment">Commenter</option>
-            <option value="edit">Editor</option>
+            <option v-for="level in availableLevels" :key="level" :value="level">
+              {{ permissionLevelLabel(level) }}
+            </option>
           </select>
         </div>
 
         <!-- Description shows below after selection -->
-        <div class="ml-3 text-xs text-gray-600 dark:text-gray-400 mt-2">
-          • {{ getPermissionDescription(generalPermission) }}
+        <div class="ml-3 text-xs text-gray-600 dark:text-gray-400 mt-2 space-y-1">
+          <div>• {{ privacySummary }}</div>
+          <div>{{ generalPermissionDescription }}</div>
         </div>
       </div>
 

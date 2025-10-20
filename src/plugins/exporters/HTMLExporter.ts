@@ -24,8 +24,75 @@ export class HTMLExporter implements IExporter {
     const rowData = worksheetData.rowData || {}
     const columnData = worksheetData.columnData || {}
     const { maxRow, maxCol } = ExportUtils.getDataBounds(cellData)
-    
-    let html = `<!DOCTYPE html>
+    const isNestedNumeric = Object.keys(cellData).every(key => /^\d+$/.test(key))
+
+    const getCell = (row: number, col: number) => {
+      if (isNestedNumeric) {
+        return cellData[String(row)]?.[String(col)]
+      }
+      return cellData[`R${row}C${col}`]
+    }
+
+    const getRowMeta = (row: number) => rowData[String(row)] ?? rowData[row]
+    const getColumnMeta = (col: number) => columnData[String(col)] ?? columnData[col]
+
+    const renderDataRows = (): string => {
+      let rowsHtml = ''
+      for (let row = 0; row <= maxRow; row++) {
+        const rowMeta = getRowMeta(row)
+        const rowHeight = rowMeta?.h
+        let rowHtml = '<tr'
+        if (rowHeight) {
+          rowHtml += ` style="height: ${rowHeight}px"`
+        }
+        rowHtml += '>'
+
+        for (let col = 0; col <= maxCol; col++) {
+          const cell = getCell(row, col)
+          const mergeInfo = ExportUtils.findMergeInfo(row, col, mergeData)
+          if (mergeInfo?.skip) continue
+
+          let cellValue = ''
+          if (cell?.v !== undefined) {
+            cellValue = options.includeFormulas && cell.f
+              ? `=${cell.f}`
+              : ExportUtils.formatCellValue(cell.v, options)
+          }
+
+          let cellStyle = ''
+          if (options.includeStyles && cell?.s) {
+            cellStyle += ExportUtils.generateCellStyle(cell.s)
+          }
+
+          const colMeta = getColumnMeta(col)
+          const colWidth = colMeta?.w
+          if (colWidth) {
+            cellStyle += `width: ${colWidth}px;`
+          }
+
+          if (rowHeight) {
+            cellStyle += `height: ${rowHeight}px;`
+          }
+
+          const attrs: string[] = []
+          if (mergeInfo?.colspan) attrs.push(`colspan="${mergeInfo.colspan}"`)
+          if (mergeInfo?.rowspan) attrs.push(`rowspan="${mergeInfo.rowspan}"`)
+          if (cellStyle) attrs.push(`style="${cellStyle}"`)
+
+          rowHtml += `<td ${attrs.join(' ')}>${ExportUtils.escapeHtml(cellValue)}</td>`
+        }
+
+        rowHtml += '</tr>'
+        rowsHtml += rowHtml
+      }
+      return rowsHtml
+    }
+
+    const headerHtml = options.includeHeaders
+      ? `<tr class="header-row">${this.renderColumnHeaders(maxCol)}</tr>`
+      : ''
+
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -36,55 +103,33 @@ export class HTMLExporter implements IExporter {
   </style>
 </head>
 <body>
-  <table id="export-table">`
-
-    for (let row = 0; row <= maxRow; row++) {
-      html += '<tr>'
-      for (let col = 0; col <= maxCol; col++) {
-        const cellKey = `R${row}C${col}`
-        const cell = cellData[cellKey]
-        
-        const mergeInfo = ExportUtils.findMergeInfo(row, col, mergeData)
-        if (mergeInfo?.skip) continue
-
-        let cellValue = ''
-        let cellStyle = ''
-
-        if (cell?.v !== undefined) {
-          if (options.includeFormulas && cell.f) {
-            cellValue = `=${cell.f}`
-          } else {
-            cellValue = ExportUtils.formatCellValue(cell.v, options)
-          }
-        }
-
-        if (options.includeStyles && cell?.s) {
-          cellStyle = ExportUtils.generateCellStyle(cell.s)
-        }
-
-        const colWidth = columnData[col]?.w
-        if (colWidth) {
-          cellStyle += `width: ${colWidth}px;`
-        }
-
-        const rowHeight = rowData[row]?.h
-        if (rowHeight) {
-          cellStyle += `height: ${rowHeight}px;`
-        }
-
-        const mergeAttrs = mergeInfo ? `colspan="${mergeInfo.colspan}" rowspan="${mergeInfo.rowspan}"` : ''
-        const styleAttr = cellStyle ? `style="${cellStyle}"` : ''
-        
-        html += `<td ${mergeAttrs} ${styleAttr}>${ExportUtils.escapeHtml(cellValue)}</td>`
-      }
-      html += '</tr>'
-    }
-
-    html += `</table>
+  <h1 class="sheet-title">${worksheetData.name || 'Sheet'}</h1>
+  <table id="export-table">
+    <tbody>
+      ${headerHtml}
+      ${renderDataRows()}
+    </tbody>
+  </table>
 </body>
 </html>`
+  }
 
-    return html
+  private renderColumnHeaders(maxCol: number): string {
+    const headers: string[] = []
+    for (let col = 0; col <= maxCol; col++) {
+      headers.push(`<th>${this.getColumnLabel(col)}</th>`)
+    }
+    return headers.join('')
+  }
+
+  private getColumnLabel(index: number): string {
+    let label = ''
+    let current = index
+    while (current >= 0) {
+      label = String.fromCharCode((current % 26) + 65) + label
+      current = Math.floor(current / 26) - 1
+    }
+    return label
   }
 
   private generateTableCSS(): string {
@@ -95,15 +140,25 @@ export class HTMLExporter implements IExporter {
         font-family: Arial, sans-serif;
         font-size: 12px;
       }
-      td {
+      .sheet-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+      th, td {
         border: 1px solid #ddd;
         padding: 4px 8px;
         vertical-align: top;
         white-space: pre-wrap;
+      }
+      th {
+        background-color: #f5f5f5;
+        font-weight: 600;
+        text-align: left;
       }
       tr:nth-child(even) {
         background-color: #f9f9f9;
       }
     `
   }
-} 
+}

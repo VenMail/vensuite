@@ -39,7 +39,8 @@ export class PDFExporter implements IExporter {
     const rowData = worksheetData.rowData || {}
     const columnData = worksheetData.columnData || {}
     const { maxRow, maxCol } = ExportUtils.getDataBounds(cellData)
-    
+    const isNestedNumeric = Object.keys(cellData).every(key => /^\d+$/.test(key))
+
     // Create container with fixed width (A4 landscape ~794px)
     const container = document.createElement('div')
     container.className = 'pdf-export-container'
@@ -49,7 +50,7 @@ export class PDFExporter implements IExporter {
     container.style.position = 'absolute'
     container.style.left = '-9999px'
     container.style.top = '-9999px'
-    
+
     // Add title if available
     if (worksheetData.name) {
       const title = document.createElement('div')
@@ -73,60 +74,85 @@ export class PDFExporter implements IExporter {
       border-collapse: collapse;
       margin: 0;
     `
-    
-    // Generate header row if needed
+
     if (options.includeHeaders && maxRow >= 0) {
-      const headerRow = this.createTableRow(0, maxCol, cellData, mergeData, rowData, columnData, options, true)
-      table.appendChild(headerRow)
+      const thead = document.createElement('thead')
+      const headerRow = this.createHeaderRow(maxCol)
+      thead.appendChild(headerRow)
+      table.appendChild(thead)
     }
-    
-    // Generate data rows - each row as a separate unit for pagination
-    const startRow = options.includeHeaders ? 1 : 0
-    for (let row = startRow; row <= maxRow; row++) {
-      const tableRow = this.createTableRow(row, maxCol, cellData, mergeData, rowData, columnData, options, false)
-      table.appendChild(tableRow)
+
+    const tbody = document.createElement('tbody')
+    for (let row = 0; row <= maxRow; row++) {
+      const tableRow = this.createDataRow(row, maxCol, cellData, isNestedNumeric, mergeData, rowData, columnData, options)
+      tbody.appendChild(tableRow)
     }
+    table.appendChild(tbody)
     
     container.appendChild(table)
     return container
   }
 
-  private createTableRow(
-    row: number, 
-    maxCol: number, 
-    cellData: any, 
-    mergeData: any, 
-    rowData: any, 
-    columnData: any, 
-    options: IExportOptions,
-    isHeader: boolean
-  ): HTMLElement {
+  private createHeaderRow(maxCol: number): HTMLTableRowElement {
     const tr = document.createElement('tr')
-    tr.className = 'table-row-unit' // Mark each row as a pagination unit
-    
-    // Apply row height
-    const rowHeight = rowData[row]?.h
+    tr.className = 'table-row-unit header-row'
+    tr.style.cssText = `
+      page-break-inside: avoid;
+      background-color: #f5f5f5;
+      font-weight: bold;
+      border-bottom: 1px solid #ddd;
+    `
+    for (let col = 0; col <= maxCol; col++) {
+      const th = document.createElement('th')
+      th.textContent = this.getColumnLabel(col)
+      th.style.cssText = `
+        border: 1px solid #ccc;
+        padding: 4px 6px;
+        text-align: left;
+        background-color: #f5f5f5;
+      `
+      tr.appendChild(th)
+    }
+    return tr
+  }
+
+  private createDataRow(
+    row: number,
+    maxCol: number,
+    cellData: any,
+    isNestedNumeric: boolean,
+    mergeData: any,
+    rowData: any,
+    columnData: any,
+    options: IExportOptions,
+  ): HTMLTableRowElement {
+    const tr = document.createElement('tr')
+    tr.className = 'table-row-unit'
+    tr.style.cssText = `
+      page-break-inside: avoid;
+      border-bottom: 1px solid #ddd;
+      ${row % 2 === 0 ? 'background-color: #fafafa;' : ''}
+    `
+
+    const rowMeta = rowData[String(row)] ?? rowData[row]
+    const rowHeight = rowMeta?.h
     if (rowHeight) {
       tr.style.height = `${Math.min(rowHeight, 100)}px`
     }
-    
-    // Base row styling
-    tr.style.cssText += `
-      page-break-inside: avoid;
-      border-bottom: 1px solid #ddd;
-      ${isHeader ? 'background-color: #f5f5f5; font-weight: bold;' : ''}
-      ${row % 2 === 0 && !isHeader ? 'background-color: #fafafa;' : ''}
-    `
-    
+
     for (let col = 0; col <= maxCol; col++) {
-      const cellKey = `R${row}C${col}`
-      const cell = cellData[cellKey]
-      
+      const cell = this.getCellAt(cellData, isNestedNumeric, row, col)
       const mergeInfo = ExportUtils.findMergeInfo(row, col, mergeData)
       if (mergeInfo?.skip) continue
 
       const td = document.createElement('td')
       let cellValue = ''
+      if (cell?.v !== undefined) {
+        cellValue = options.includeFormulas && cell.f
+          ? `=${cell.f}`
+          : ExportUtils.formatCellValue(cell.v, options)
+      }
+
       let cellStyle = `
         border: 1px solid #ccc;
         padding: 4px 6px;
@@ -134,38 +160,48 @@ export class PDFExporter implements IExporter {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 120px;
+        max-width: 160px;
       `
-
-      if (cell?.v !== undefined) {
-        if (options.includeFormulas && cell.f) {
-          cellValue = `=${cell.f}`
-        } else {
-          cellValue = ExportUtils.formatCellValue(cell.v, options)
-        }
-      }
 
       if (options.includeStyles && cell?.s) {
         cellStyle += ExportUtils.generateCellStyle(cell.s)
       }
 
-      // Apply column width
-      const colWidth = columnData[col]?.w
+      const colMeta = columnData[String(col)] ?? columnData[col]
+      const colWidth = colMeta?.w
       if (colWidth) {
-        cellStyle += `width: ${Math.min(colWidth, 120)}px;`
+        cellStyle += `width: ${Math.min(colWidth, 160)}px;`
       }
 
-      // Apply merge attributes
-      if (mergeInfo) {
-        if (mergeInfo.colspan && mergeInfo.colspan > 1) td.colSpan = mergeInfo.colspan
-        if (mergeInfo.rowspan && mergeInfo.rowspan > 1) td.rowSpan = mergeInfo.rowspan
+      if (rowHeight) {
+        cellStyle += `height: ${Math.min(rowHeight, 100)}px;`
       }
+
+      if (mergeInfo?.colspan) td.colSpan = mergeInfo.colspan
+      if (mergeInfo?.rowspan) td.rowSpan = mergeInfo.rowspan
 
       td.style.cssText = cellStyle
       td.textContent = cellValue
       tr.appendChild(td)
     }
-    
+
     return tr
   }
-} 
+
+  private getCellAt(cellData: any, isNestedNumeric: boolean, row: number, col: number) {
+    if (isNestedNumeric) {
+      return cellData?.[String(row)]?.[String(col)]
+    }
+    return cellData[`R${row}C${col}`]
+  }
+
+  private getColumnLabel(index: number): string {
+    let label = ''
+    let current = index
+    while (current >= 0) {
+      label = String.fromCharCode((current % 26) + 65) + label
+      current = Math.floor(current / 26) - 1
+    }
+    return label
+  }
+}
