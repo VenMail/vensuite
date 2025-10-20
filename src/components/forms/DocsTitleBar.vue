@@ -167,7 +167,7 @@
             @close="shareDialogOpen = false"
             mode="doc"
             :share-link="shareLink || ''"
-            :privacy-type="Number(privacyType) || 7"
+            :privacy-type="privacyType || 7"
             :members="shareMembers || []"
             @copy-link="$emit('copy-link')"
             @change-privacy="$emit('change-privacy', $event)"
@@ -197,7 +197,7 @@ const props = defineProps<{
   isOffline?: boolean;
   lastSavedAt?: Date | null;
   shareLink?: string;
-  privacyType?: string;
+  privacyType?: number;
   shareMembers?: any[];
   showVersionHistory?: boolean;
   versionCount?: number;
