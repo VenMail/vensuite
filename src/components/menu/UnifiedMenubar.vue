@@ -113,7 +113,7 @@ function colorForUser(uid: string) {
 </script>
 
 <template>
-  <Menubar class="border-none ml-0 pl-0 flex items-center gap-2 w-full">
+  <Menubar class="border-none ml-0 pl-0 flex items-center gap-2 w-full rounded-none">
     <!-- File Menu -->
     <MenubarMenu>
       <MenubarTrigger>File</MenubarTrigger>

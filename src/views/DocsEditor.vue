@@ -533,6 +533,7 @@ import PaginationManagerInstance, { TiptapPaginationManager, PaginationConfig } 
 import { paginationStyles } from '@/lib/pagination/pagination-styles';
 import { PaginationUI } from '@/lib/pagination/pagination-ui';
 import { NodeSelection } from '@tiptap/pm/state';
+import { IWebsocketService, Message, useWebSocket } from '@/lib/wsService';
 
 const route = useRoute();
 const router = useRouter();
@@ -563,6 +564,15 @@ const hasEnteredContent = ref(false);
 const showPlaceholderOverlay = computed(() => !isEditorFocused.value && isEditorEmpty.value && !hasEnteredContent.value);
 
 let detachEditorListeners: (() => void) | null = null;
+
+// WebSocket collaboration state
+const { initializeWebSocket } = useWebSocket();
+const wsService = ref<IWebsocketService | null>(null);
+const userId = ref(`user-${Math.random().toString(36).substr(2, 9)}`);
+const userName = ref(`User ${Math.floor(Math.random() * 1000)}`);
+const changesPending = ref(false);
+const isJoined = ref(false);
+const SOCKET_URI = import.meta.env.VITE_SOCKET_BASE_URL || "wss://w.venmail.io:8443";
 
 function focusEditor() {
   if (!editor.value) return;
@@ -635,6 +645,84 @@ function updateEditorEmptyState(instance?: Editor) {
 
 //   nextTick(() => updateEditorEmptyState(instance));
 // }
+
+// WebSocket collaboration functions
+function initializeWebSocketAndJoinDoc() {
+  if (!authStore.isAuthenticated) return;
+  const docId = route.params.appFileId as string;
+  if (docId && docId !== 'new' && !wsService.value) {
+    wsService.value = initializeWebSocket(`${SOCKET_URI}?docId=${docId}&userName=${userName.value}&userId=${userId.value}`);
+    joinDoc();
+  }
+}
+
+function joinDoc() {
+  if (isJoined.value) return;
+  const docId = route.params.appFileId as string;
+  if (wsService.value && docId && docId !== 'new') {
+    try {
+      isJoined.value = wsService.value.joinSheet(docId, handleIncomingMessage);
+      console.log('Joined document:', docId);
+    } catch (error) {
+      console.error('Error joining document:', error);
+    }
+  }
+}
+
+function handleIncomingMessage(message: Message) {
+  if (!message) return;
+  
+  switch (message.type) {
+    case 'change':
+      if (message.user?.id === userId.value) break;
+      if (message.content?.delta) {
+        applyRemoteChange(message.content.delta);
+      }
+      break;
+    case 'cursor':
+      if (message.user?.id !== userId.value) {
+        // Handle remote cursor updates (optional)
+      }
+      break;
+    case 'title':
+      if (message.user?.id !== userId.value && message.content?.title) {
+        documentTitle.value = message.content.title;
+      }
+      break;
+  }
+}
+
+function applyRemoteChange(delta: any) {
+  if (!editor.value || changesPending.value) return;
+  try {
+    changesPending.value = true;
+    // Apply the delta/JSON content from remote
+    if (delta && typeof delta === 'object') {
+      editor.value.commands.setContent(delta, false);
+    }
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        changesPending.value = false;
+      });
+    }, 10);
+  } catch (error) {
+    console.error('Error applying remote change:', error);
+    changesPending.value = false;
+  }
+}
+
+function broadcastChange() {
+  if (!editor.value || changesPending.value || !wsService.value) return;
+  const docId = route.params.appFileId as string;
+  if (!docId || docId === 'new') return;
+  
+  try {
+    const content = editor.value.getJSON();
+    wsService.value.sendMessage(docId, 'change', { delta: content }, userId.value, userName.value);
+  } catch (error) {
+    console.error('Error broadcasting change:', error);
+  }
+}
 
 // Chat state
 const isChatOpen = ref(false);
@@ -2183,6 +2271,11 @@ watch(documentTitle, (newTitle) => {
   document.title = newTitle || 'Untitled Document';
   if (!isJustLoaded.value) {
     hasUnsavedChanges.value = true;
+    // Broadcast title change to collaborators
+    const docId = route.params.appFileId as string;
+    if (wsService.value && docId && docId !== 'new') {
+      wsService.value.sendMessage(docId, 'title', { title: newTitle }, userId.value, userName.value);
+    }
   }
   if (currentDoc.value) {
     currentDoc.value.title = newTitle;
@@ -2527,6 +2620,13 @@ function initializeEditor() {
     }
   });
 
+  // Add collaboration update listener
+  editor.value.on('update', () => {
+    if (!changesPending.value && !isJustLoaded.value) {
+      broadcastChange();
+    }
+  });
+
   // Register editor with pagination manager
   if (paginationManager.value) {
     const config = getPaginationConfig();
@@ -2597,6 +2697,9 @@ onMounted(async () => {
   // Initialize/load document
   await initializeDocument();
 
+  // Initialize WebSocket collaboration after document is loaded
+  initializeWebSocketAndJoinDoc();
+
   // Debug: Log pagination status
   console.log('Pagination manager status:', {
     registered: paginationManager.value?.getRegisteredEditors(),
@@ -2629,6 +2732,12 @@ onUnmounted(() => {
   // Save before unmounting
   if (editor.value && currentDoc.value) {
     saveDocument();
+  }
+
+  // Cleanup WebSocket
+  const docId = route.params.appFileId as string;
+  if (wsService.value && docId && docId !== 'new') {
+    wsService.value.leaveSheet(docId);
   }
 
   // Cleanup
