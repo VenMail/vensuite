@@ -122,6 +122,15 @@ const shareLinkSheet = computed(() => {
   return `${window.location.origin}/sheets/${id}`
 })
 
+const guestAccessiblePrivacyTypes = new Set<number>([1, 2, 3, 4])
+
+const canJoinRealtime = computed(() => {
+  if (!route.params.id) return false
+  if (accessDenied.value) return false
+  if (authStore.isAuthenticated) return true
+  return guestAccessiblePrivacyTypes.has(privacyType.value)
+})
+
 // Handler for univerRefChange event
 function onUniverRefChange(childUniverRef: FUniver | null) {
   univerCoreRef.value = childUniverRef
@@ -198,6 +207,9 @@ async function loadData(id: string) {
     }
 
     const priv = Number((loadedData as any)?.privacy_type ?? (loadedData as any)?.privacyType)
+    if (!Number.isNaN(priv)) {
+      privacyType.value = priv
+    }
     if (!authStore.isAuthenticated) {
       if ([1, 2, 3, 4].includes(priv)) {
         const fallback = {
@@ -326,7 +338,7 @@ function updateTitleRemote(newTitle: string) {
 const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || 'wss://w.venmail.io:8443'
 
 function initializeWebSocketAndJoinSheet() {
-  if (!authStore.isAuthenticated || !route.params.id) return
+  if (!canJoinRealtime.value || !route.params.id) return
   if (!wsService.value) {
     wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${route.params.id}&userName=${userName.value}&userId=${userId.value}`)
   }
@@ -334,7 +346,7 @@ function initializeWebSocketAndJoinSheet() {
 }
 
 function joinSheet() {
-  if (isJoined.value) return
+  if (isJoined.value || !canJoinRealtime.value) return
   if (wsService.value && route.params.id) {
     try {
       isJoined.value = wsService.value.joinSheet(route.params.id as string, handleIncomingMessage)
@@ -388,7 +400,7 @@ onMounted(async () => {
 
       await router.replace(`/sheets/${newDoc.id}`)
 
-      if (authStore.isAuthenticated) initializeWebSocketAndJoinSheet()
+      if (canJoinRealtime.value) initializeWebSocketAndJoinSheet()
     }
     // Handle existing document with ID
     else if (route.params.id) {
@@ -399,7 +411,7 @@ onMounted(async () => {
         console.log('Set title from existing store data:', existingDoc.title)
       }
 
-      if (authStore.isAuthenticated) initializeWebSocketAndJoinSheet()
+      if (canJoinRealtime.value) initializeWebSocketAndJoinSheet()
 
       const loadedData = await loadData(route.params.id as string)
       if (loadedData) {
@@ -469,9 +481,18 @@ onUnmounted(() => {
 watch(isConnected, newIsConnected => {
   if (newIsConnected) {
     console.log('WebSocket connection established. Joining sheet...')
-    joinSheet()
+    if (canJoinRealtime.value) joinSheet()
   } else {
     console.log('WebSocket connection lost.')
+    isJoined.value = false
+  }
+})
+
+watch(canJoinRealtime, canJoin => {
+  if (canJoin) {
+    initializeWebSocketAndJoinSheet()
+  } else if (wsService.value && route.params.id && isJoined.value) {
+    wsService.value.leaveSheet(route.params.id as string)
     isJoined.value = false
   }
 })

@@ -449,7 +449,7 @@ function setDocumentTitleFromName(name?: string | null) {
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, nextTick, reactive } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { Editor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
@@ -559,6 +559,15 @@ const shareLink = ref('');
 const privacyType = ref<number>(7);
 const shareMembers = ref<ShareMember[]>([]);
 
+const guestAccessiblePrivacyTypes = new Set<number>([1, 2, 3, 4]);
+
+const canJoinRealtime = computed(() => {
+  const docId = route.params.appFileId as string;
+  if (!docId || docId === 'new') return false;
+  if (authStore.isAuthenticated) return true;
+  return guestAccessiblePrivacyTypes.has(privacyType.value);
+});
+
 const isEditorFocused = ref(false);
 const isEditorEmpty = ref(true);
 const hasEnteredContent = ref(false);
@@ -649,7 +658,7 @@ function updateEditorEmptyState(instance?: Editor) {
 
 // WebSocket collaboration functions
 function initializeWebSocketAndJoinDoc() {
-  if (!authStore.isAuthenticated) return;
+  if (!canJoinRealtime.value) return;
   const docId = route.params.appFileId as string;
   if (docId && docId !== 'new' && !wsService.value) {
     wsService.value = initializeWebSocket(`${SOCKET_URI}?docId=${docId}&userName=${userName.value}&userId=${userId.value}`);
@@ -658,7 +667,7 @@ function initializeWebSocketAndJoinDoc() {
 }
 
 function joinDoc() {
-  if (isJoined.value) return;
+  if (isJoined.value || !canJoinRealtime.value) return;
   const docId = route.params.appFileId as string;
   if (wsService.value && docId && docId !== 'new') {
     try {
@@ -1798,6 +1807,8 @@ function loadContentIntoEditor(content: string) {
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 let maxWaitTimeout: ReturnType<typeof setTimeout> | null = null;
+let autoSaveIdleDelay = 3000; // 3 seconds idle
+let autoSaveMaxWait = 30000; // 30 seconds max
 
 // Track online/offline status
 const handleOnline = () => {
@@ -1923,8 +1934,38 @@ function updatePrintStyles() {
   }`;
 }
 
+function scheduleSave() {
+  // Clear existing idle timeout
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  
+  // Schedule save after idle delay
+  saveTimeout = setTimeout(() => {
+    saveDocument(false);
+  }, autoSaveIdleDelay);
+  
+  // Ensure we save within max wait regardless of activity
+  if (!maxWaitTimeout) {
+    maxWaitTimeout = setTimeout(() => {
+      saveDocument(false);
+      maxWaitTimeout = null;
+    }, autoSaveMaxWait);
+  }
+}
+
 async function saveDocument(isManual = false) {
   if (!editor.value || !currentDoc.value) return;
+  
+  // Clear timers when save executes
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+  }
+  if (maxWaitTimeout) {
+    clearTimeout(maxWaitTimeout);
+    maxWaitTimeout = null;
+  }
 
   if (editor.value.isEmpty && !hasEnteredContent.value) {
     if (isManual) {
@@ -2349,6 +2390,20 @@ async function initializeDocument() {
         documentTitle.value = doc.title || 'Untitled Document';
         document.title = documentTitle.value; // Set page title
         
+        // Hydrate privacy type from loaded document
+        const priv = Number((doc as any)?.privacy_type ?? (doc as any)?.privacyType);
+        if (!Number.isNaN(priv)) {
+          privacyType.value = priv;
+        }
+        
+        // Hydrate sharing info if present
+        try {
+          const sharingInfo = (doc as any)?.sharing_info;
+          if (sharingInfo) {
+            shareMembers.value = parseSharingInfoString(sharingInfo);
+          }
+        } catch {}
+        
         // Restore pagination settings from metadata
         if (doc.metadata?.pagination) {
           const paginationSettings = doc.metadata.pagination;
@@ -2495,6 +2550,23 @@ function copyShareLink() {
   } catch {}
 }
 
+async function fetchSharingInfo() {
+  try {
+    const id = route.params.appFileId as string;
+    if (!id || id === 'new') return;
+    const token = fileStore.getToken?.();
+    const res = await axios.get(`${FILES_ENDPOINT}/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const payload = res.data?.data || res.data?.document || {};
+    const parsed = parseSharingInfoString(payload.sharing_info);
+    shareMembers.value = parsed;
+    if (typeof payload.privacy_type === 'number') {
+      privacyType.value = Number(payload.privacy_type);
+    }
+  } catch {}
+}
+
 async function handleInviteMember(payload: { email: string; permission?: 'view'|'comment'|'edit'|'owner'; shareLevel?: ShareLevel; note?: string }) {
   try {
     const id = route.params.appFileId as string;
@@ -2502,9 +2574,8 @@ async function handleInviteMember(payload: { email: string; permission?: 'view'|
     const level = payload.shareLevel ?? labelToShareLevel((payload.permission === 'owner' ? 'edit' : (payload.permission || 'view')) as any);
     const newMembers: ShareMember[] = [...shareMembers.value.filter(m => m.email !== payload.email), { email: payload.email, shareLevel: level }];
     const sharingInfo = serializeSharingInfoString(newMembers);
-    const response = await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
-    const info = response.data?.document?.sharing_info ?? sharingInfo;
-    shareMembers.value = parseSharingInfoString(info);
+    await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
+    await fetchSharingInfo();
     toast.success('Member invited');
   } catch {}
 }
@@ -2519,9 +2590,8 @@ async function handleRemoveMember(payload: { email: string }) {
     if (!id) return;
     const newMembers: ShareMember[] = shareMembers.value.filter(m => m.email !== payload.email);
     const sharingInfo = serializeSharingInfoString(newMembers);
-    const response = await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
-    const info = response.data?.document?.sharing_info ?? sharingInfo;
-    shareMembers.value = parseSharingInfoString(info);
+    await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
+    await fetchSharingInfo();
     toast.success('Member removed');
   } catch {}
 }
@@ -2531,11 +2601,9 @@ async function updateVisibility(value: number) {
     const id = route.params.appFileId as string;
     if (!id) return;
     
-    const response = await axios.patch(`${FILES_ENDPOINT}/${id}`, { privacy_type: value });
-    if (response.data?.document) {
-      privacyType.value = response.data.document.privacy_type;
-      toast.success('Visibility updated');
-    }
+    await axios.patch(`${FILES_ENDPOINT}/${id}`, { privacy_type: value });
+    await fetchSharingInfo();
+    toast.success('Visibility updated');
   } catch {}
 }
 
@@ -2602,6 +2670,11 @@ function initializeEditor() {
   editor.value.on('update', () => {
     if (!changesPending.value && !isJustLoaded.value) {
       broadcastChange();
+      // Trigger auto-save for authenticated users
+      if (authStore.isAuthenticated && currentDoc.value) {
+        hasUnsavedChanges.value = true;
+        scheduleSave();
+      }
     }
   });
 
@@ -2633,6 +2706,16 @@ function getPaginationConfig(): PaginationConfig {
     debounceDelay: 100,
     orientation: pageOrientation.value
   };
+}
+
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  try {
+    if (authStore.isAuthenticated && editor.value && currentDoc.value && hasUnsavedChanges.value) {
+      saveDocument(false);
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  } catch {}
 }
 
 onMounted(async () => {
@@ -2677,6 +2760,11 @@ onMounted(async () => {
 
   // Initialize WebSocket collaboration after document is loaded
   initializeWebSocketAndJoinDoc();
+  
+  // Add beforeunload listener for authenticated users
+  if (authStore.isAuthenticated) {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+  }
 
   // Debug: Log pagination status
   console.log('Pagination manager status:', {
@@ -2706,6 +2794,26 @@ watch([pageSize, pageOrientation], () => {
   }
 });
 
+watch(canJoinRealtime, canJoin => {
+  if (canJoin) {
+    initializeWebSocketAndJoinDoc();
+  } else {
+    const docId = route.params.appFileId as string;
+    if (wsService.value && docId && docId !== 'new' && isJoined.value) {
+      wsService.value.leaveSheet(docId);
+      isJoined.value = false;
+    }
+  }
+});
+
+onBeforeRouteLeave(async () => {
+  try {
+    if (authStore.isAuthenticated && editor.value && currentDoc.value && hasUnsavedChanges.value) {
+      await saveDocument(false);
+    }
+  } catch {}
+});
+
 onUnmounted(() => {
   // Save before unmounting
   if (editor.value && currentDoc.value) {
@@ -2721,6 +2829,9 @@ onUnmounted(() => {
   // Cleanup
   if (saveTimeout) clearTimeout(saveTimeout);
   if (maxWaitTimeout) clearTimeout(maxWaitTimeout);
+  if (authStore.isAuthenticated) {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  }
   window.removeEventListener('online', handleOnline);
   window.removeEventListener('offline', handleOffline);
   editor.value?.destroy();
