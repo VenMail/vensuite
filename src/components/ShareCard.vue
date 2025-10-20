@@ -14,10 +14,16 @@ type Member = {
 type GeneralPermission = 'restricted' | 'organization' | 'link' | 'public'
 type PermissionLevel = 'view' | 'comment' | 'edit'
 
+const INVITE_PERMISSION_CODES: Record<PermissionLevel, 'v' | 'c' | 'e'> = {
+  view: 'v',
+  comment: 'c',
+  edit: 'e',
+}
+
 const props = defineProps<{
   mode?: 'doc' | 'sheet'
   shareLink: string
-  privacyType: number // 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit,8=org_comment
+  privacyType: number // 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
   members?: Member[]
   canEditPrivacy?: boolean
   owner?: Member
@@ -78,7 +84,6 @@ function resolveScopeFromPrivacy(type: number): GeneralPermission {
       return 'link'
     case 5:
     case 6:
-    case 8:
       return 'organization'
     case 7:
     default:
@@ -92,8 +97,6 @@ function resolveLevelFromPrivacy(type: number): PermissionLevel {
     case 4:
     case 6:
       return 'edit'
-    case 8:
-      return 'comment'
     default:
       return 'view'
   }
@@ -105,7 +108,6 @@ function getPrivacyTypeFor(scope: GeneralPermission, level: PermissionLevel): nu
       return 7
     case 'organization':
       if (level === 'edit') return 6
-      if (level === 'comment') return 8
       return 5
     case 'link':
       if (level === 'edit') return 4
@@ -160,7 +162,7 @@ const availableLevels = computed<PermissionLevel[]>(() => {
     case 'restricted':
       return []
     case 'organization':
-      return ['view', 'comment', 'edit']
+      return ['view', 'edit']
     case 'link':
     case 'public':
       return ['view', 'edit']
@@ -363,6 +365,7 @@ function sendInvites() {
     emit('invite', {
       email: invitee.email,
       permission: invitee.permission,
+      code: INVITE_PERMISSION_CODES[invitee.permission],
       note: inviteNote.value.trim() || undefined
     })
   })
