@@ -23,11 +23,20 @@ export class CSVExporter implements IExporter {
     const { maxRow, maxCol } = ExportUtils.getDataBounds(cellData)
     const rows: string[][] = []
 
+    const isNestedNumeric = Object.keys(cellData).every(k => /^(\d+)$/.test(k) && typeof cellData[k] === 'object')
+
     for (let row = 0; row <= maxRow; row++) {
       const csvRow: string[] = []
       for (let col = 0; col <= maxCol; col++) {
-        const cellKey = `R${row}C${col}`
-        const cell = cellData[cellKey]
+        let cell: any
+        if (isNestedNumeric) {
+          const r = String(row)
+          const c = String(col)
+          cell = cellData[r]?.[c]
+        } else {
+          const cellKey = `R${row}C${col}`
+          cell = cellData[cellKey]
+        }
         let value = ''
 
         if (cell?.v !== undefined) {
@@ -45,4 +54,4 @@ export class CSVExporter implements IExporter {
 
     return rows.map(row => row.join(',')).join('\n')
   }
-} 
+}

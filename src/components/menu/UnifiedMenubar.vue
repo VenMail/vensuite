@@ -44,7 +44,29 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits(['save', 'toggleChat', 'export', 'undo', 'redo', 'toggle-page-layout', 'toggle-page-numbers', 'toggle-formatting-marks'])
+const emit = defineEmits([
+  'save',
+  'toggleChat',
+  'export',
+  'open-dialog',
+  'undo',
+  'redo',
+  'toggle-page-layout',
+  'toggle-page-numbers',
+  'toggle-formatting-marks',
+  // sheet-specific actions
+  'format-bold',
+  'format-italic',
+  'format-underline',
+  'format-strike',
+  'view-zoom-in',
+  'view-zoom-out',
+  'view-zoom-reset',
+  'data-sort',
+  'data-filter',
+  'data-group',
+  'print',
+])
 
 const router = useRouter()
 const fileStore = useFileStore()
@@ -73,7 +95,7 @@ async function handleNew() {
 }
 
 function handleOpenDialog() {
-  // Placeholder for an open dialog
+  emit('open-dialog')
 }
 
 function handleOpenRecent(id?: string) {
@@ -143,7 +165,7 @@ function colorForUser(uid: string) {
           </MenubarSubContent>
         </MenubarSub>
         <MenubarSeparator />
-        <MenubarItem>
+        <MenubarItem @click="emit('print')">
           <PrinterIcon class="h-4 w-4 mr-2" />
           Print
         </MenubarItem>
@@ -181,15 +203,15 @@ function colorForUser(uid: string) {
       <MenubarMenu>
         <MenubarTrigger>View</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem>
+          <MenubarItem @click="emit('view-zoom-in')">
             <ZoomInIcon class="h-4 w-4 mr-2" />
             Zoom In
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem @click="emit('view-zoom-out')">
             <ZoomOutIcon class="h-4 w-4 mr-2" />
             Zoom Out
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem @click="emit('view-zoom-reset')">
             <RefreshCcwIcon class="h-4 w-4 mr-2" />
             Reset Zoom
           </MenubarItem>
@@ -199,19 +221,19 @@ function colorForUser(uid: string) {
       <MenubarMenu>
         <MenubarTrigger>Format</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem>
+          <MenubarItem @click="emit('format-bold')">
             <BoldIcon class="h-4 w-4 mr-2" />
             Bold
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem @click="emit('format-italic')">
             <ItalicIcon class="h-4 w-4 mr-2" />
             Italic
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem @click="emit('format-underline')">
             <UnderlineIcon class="h-4 w-4 mr-2" />
             Underline
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem @click="emit('format-strike')">
             <StrikethroughIcon class="h-4 w-4 mr-2" />
             Strikethrough
           </MenubarItem>
@@ -221,15 +243,15 @@ function colorForUser(uid: string) {
       <MenubarMenu>
         <MenubarTrigger>Data</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem>
+          <MenubarItem @click="emit('data-sort')">
             <SortAscIcon class="h-4 w-4 mr-2" />
             Sort
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem @click="emit('data-filter')">
             <FilterIcon class="h-4 w-4 mr-2" />
             Filter
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem @click="emit('data-group')">
             <GroupIcon class="h-4 w-4 mr-2" />
             Group
           </MenubarItem>

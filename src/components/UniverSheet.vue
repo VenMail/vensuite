@@ -110,7 +110,23 @@ function scheduleCollaboration() {
       let serializedParams: any = undefined
       if (command.params !== undefined) {
         try {
-          serializedParams = JSON.parse(JSON.stringify(command.params))
+          const seen = new WeakSet()
+          const replacer = (_k: string, v: any) => {
+            if (typeof v === 'function') return undefined
+            if (v && typeof v === 'object') {
+              if (seen.has(v)) return undefined
+              seen.add(v)
+              // Drop internal/private props and rxjs internals
+              const clone: any = Array.isArray(v) ? [] : {}
+              for (const key of Object.keys(v)) {
+                if (key.startsWith('_') || key === 'source' || key === 'scheduler') continue
+                clone[key] = v[key]
+              }
+              return clone
+            }
+            return v
+          }
+          serializedParams = JSON.parse(JSON.stringify(command.params, replacer))
         } catch (error) {
           console.warn('Unable to serialize command params for broadcast, skipping command.', error)
           return
@@ -256,7 +272,13 @@ async function setData(data: IWorkbookData) {
     }
 
     let workbook = fUniver.value.getActiveWorkbook()
+    const incomingId = (data as any)?.id
+    const currentId = (workbook as any)?.getUnitId?.() || (await (async () => {
+      try { const s = typeof (workbook as any).save === 'function' ? await (workbook as any).save() : null; return s?.id } catch { return undefined }
+    })())
+
     if (!workbook) {
+      // No active workbook; create one
       workbook = fUniver.value.createWorkbook(data, { makeCurrent: true })
       activeWorkbook.value = workbook
       scheduleCollaboration()
@@ -266,9 +288,18 @@ async function setData(data: IWorkbookData) {
     if (typeof (workbook as any).fromJSON === 'function') {
       await (workbook as any).fromJSON(data)
     } else {
-      workbook = fUniver.value.createWorkbook(data, { makeCurrent: true })
-      activeWorkbook.value = workbook
-      scheduleCollaboration()
+      // Avoid duplicate unit creation if ids match; skip re-create
+      if (incomingId && currentId && incomingId === currentId) {
+        return await getData()
+      }
+      try {
+        workbook = fUniver.value.createWorkbook(data, { makeCurrent: true })
+        activeWorkbook.value = workbook
+        scheduleCollaboration()
+      } catch (e) {
+        console.error('Error setting data (createWorkbook):', e)
+        return await getData()
+      }
     }
 
     return await getData()

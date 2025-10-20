@@ -560,6 +560,103 @@ function handleRedo() {
   } catch {}
 }
 
+// Formatting actions using Univer facade selection
+function handleFormatBold() {
+  try {
+    const wb = univerCoreRef.value?.getActiveWorkbook()
+    const range = wb?.getActiveSheet()?.getSelection()?.getActiveRange()
+    range?.setFontWeight('bold')
+  } catch {}
+}
+
+function handleFormatItalic() {
+  try {
+    const wb = univerCoreRef.value?.getActiveWorkbook()
+    const range = wb?.getActiveSheet()?.getSelection()?.getActiveRange()
+    range?.setFontStyle('italic')
+  } catch {}
+}
+
+function handleFormatUnderline() {
+  try {
+    const wb = univerCoreRef.value?.getActiveWorkbook()
+    const range = wb?.getActiveSheet()?.getSelection()?.getActiveRange()
+    range?.setFontLine('underline')
+  } catch {}
+}
+
+function handleFormatStrike() {
+  try {
+    const wb = univerCoreRef.value?.getActiveWorkbook()
+    const range = wb?.getActiveSheet()?.getSelection()?.getActiveRange()
+    range?.setFontLine('line-through')
+  } catch {}
+}
+
+// View zoom controls (simple CSS zoom fallback)
+let _sheetZoom = 1
+function handleViewZoomIn() {
+  _sheetZoom = Math.min(2, _sheetZoom + 0.1)
+  document.body.style.transform = `scale(${_sheetZoom})`
+  document.body.style.transformOrigin = '0 0'
+}
+function handleViewZoomOut() {
+  _sheetZoom = Math.max(0.5, _sheetZoom - 0.1)
+  document.body.style.transform = `scale(${_sheetZoom})`
+  document.body.style.transformOrigin = '0 0'
+}
+function handleViewZoomReset() {
+  _sheetZoom = 1
+  document.body.style.transform = `scale(${_sheetZoom})`
+  document.body.style.transformOrigin = '0 0'
+}
+
+// Data tools
+function handleDataSort() {
+  try {
+    const wb = univerCoreRef.value?.getActiveWorkbook()
+    const ws = wb?.getActiveSheet()
+    const range = ws?.getSelection()?.getActiveRange()
+    if (!range) return
+    const cellData = [] as any[][]
+    range.forEach((row: number, col: number, cell: any) => {
+      if (!cellData[row]) cellData[row] = []
+      cellData[row][col] = cell
+    })
+    const nonNullRows = cellData.filter(r => r?.some(c => c != null))
+    const values = nonNullRows.map(row => row.map(c => c?.v ?? null))
+    const nonEmptyCols = values[0]?.map((_, i) => values.some(r => r[i] !== null)) || []
+    const filtered = values.map(r => r.filter((_, i) => nonEmptyCols[i]))
+    filtered.sort((a, b) => {
+      for (let i = 0; i < a.length; i++) {
+        const A = a[i], B = b[i]
+        if (A === null && B !== null) return 1
+        if (A !== null && B === null) return -1
+        if (A === null && B === null) continue
+        if (A < B) return -1
+        if (A > B) return 1
+      }
+      return 0
+    })
+    const sortedCells = filtered.map(row => row.map(v => ({ v })))
+    range.setValues(sortedCells)
+  } catch {}
+}
+
+function handleDataFilter() {
+  // Placeholder: Could toggle a header filter UI; for now, no-op with toast
+  toast.info('Filter: Coming soon')
+}
+
+function handleDataGroup() {
+  // Placeholder: Could group rows/columns; for now, no-op with toast
+  toast.info('Group: Coming soon')
+}
+
+function handlePrint() {
+  try { window.print() } catch {}
+}
+
 function handleBeforeUnload(e: BeforeUnloadEvent) {
   try {
     if (authStore.isAuthenticated && univerRef.value && route.params.id) {
@@ -1010,6 +1107,17 @@ watch(
       @export="handleExport"
       @undo="handleUndo"
       @redo="handleRedo"
+      @format-bold="handleFormatBold"
+      @format-italic="handleFormatItalic"
+      @format-underline="handleFormatUnderline"
+      @format-strike="handleFormatStrike"
+      @view-zoom-in="handleViewZoomIn"
+      @view-zoom-out="handleViewZoomOut"
+      @view-zoom-reset="handleViewZoomReset"
+      @data-sort="handleDataSort"
+      @data-filter="handleDataFilter"
+      @data-group="handleDataGroup"
+      @print="handlePrint"
     />
 
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">

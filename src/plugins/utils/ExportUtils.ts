@@ -1,10 +1,14 @@
 import type { ICellAddress, IMergeInfo, IExportOptions } from '../types/export'
 
 export class ExportUtils {
-  static parseCellAddress(cellKey: string): ICellAddress {
-    const match = cellKey.match(/R(\d+)C(\d+)/)
-    if (!match) throw new Error(`Invalid cell key: ${cellKey}`)
-    return { row: parseInt(match[1]), col: parseInt(match[2]) }
+  static parseCellAddress(cellKey: string | { row: number; col: number }): ICellAddress {
+    if (typeof cellKey === 'string') {
+      const match = cellKey.match(/R(\d+)C(\d+)/)
+      if (!match) throw new Error(`Invalid cell key: ${cellKey}`)
+      return { row: parseInt(match[1]), col: parseInt(match[2]) }
+    } else {
+      return cellKey
+    }
   }
 
   static formatCellValue(value: any, options: IExportOptions): string {
@@ -105,11 +109,24 @@ export class ExportUtils {
   static getDataBounds(cellData: any): { maxRow: number; maxCol: number } {
     const keys = Object.keys(cellData || {})
     if (keys.length === 0) return { maxRow: 0, maxCol: 0 }
-    
+
+    // Detect format: nested numeric rows -> cols or flat RnCm keys
+    const looksNestedNumeric = keys.every(k => /^\d+$/.test(k) && typeof cellData[k] === 'object')
+    if (looksNestedNumeric) {
+      const maxRow = Math.max(...keys.map(k => parseInt(k, 10)))
+      let maxCol = 0
+      for (const r of keys) {
+        const rowObj = cellData[r] || {}
+        const cols = Object.keys(rowObj).filter(c => /^\d+$/.test(c)).map(c => parseInt(c, 10))
+        if (cols.length) maxCol = Math.max(maxCol, Math.max(...cols))
+      }
+      return { maxRow, maxCol }
+    }
+
+    // Fallback to RnCm keys
     const addresses = keys.map(key => this.parseCellAddress(key))
     const maxRow = Math.max(...addresses.map(addr => addr.row))
     const maxCol = Math.max(...addresses.map(addr => addr.col))
-    
     return { maxRow, maxCol }
   }
-} 
+}

@@ -59,7 +59,10 @@ export class ExportService implements IExportService {
             throw new Error('No active workbook found')
           }
           const filename = options.filename || `export-${Date.now()}.xlsx`
-          const snapshot = workbook.getSnapshot()
+          const saved = typeof (workbook as any).save === 'function' ? await (workbook as any).save() : null
+          if (!saved) {
+            throw new Error('Workbook save() is not available')
+          }
 
           // Attempt primary export using univer-import-export
           try {
@@ -69,7 +72,7 @@ export class ExportService implements IExportService {
               await new Promise<void>((resolve, reject) => {
                 try {
                   mod.LuckyExcel.transformUniverToExcel({
-                    snapshot,
+                    snapshot: saved,
                     fileName: filename,
                     success: () => resolve(),
                     error: (err: any) => reject(err),
@@ -99,8 +102,12 @@ export class ExportService implements IExportService {
       if (!workbook) {
         throw new Error('No active workbook found')
       }
+      const saved = typeof (workbook as any).save === 'function' ? await (workbook as any).save() : null
+      if (!saved) {
+        throw new Error('Unable to get workbook data using save()')
+      }
 
-      const worksheetData = this.getWorksheetData(workbook, options.sheetIndex)
+      const worksheetData = this.getWorksheetDataFromSaved(saved, workbook, options.sheetIndex)
       const filename = options.filename || `export-${Date.now()}.${options.format}`
 
       await exporter.export(worksheetData, filename, options)
@@ -110,34 +117,26 @@ export class ExportService implements IExportService {
     }
   }
 
-  private getWorksheetData(workbook: any, sheetIndex?: number): any {
-    const sheets = workbook.getSheets()
-    if (!sheets || sheets.length === 0) {
-      throw new Error('No worksheets found in workbook')
+  private getWorksheetDataFromSaved(saved: any, workbook: any, sheetIndex?: number): any {
+    const order: string[] = Array.isArray(saved?.sheetOrder) ? saved.sheetOrder : []
+    if (!order.length || !saved?.sheets) {
+      throw new Error('No worksheets found in saved workbook')
     }
 
-    const targetIndex = sheetIndex ?? 0
-    if (targetIndex >= sheets.length) {
-      throw new Error(`Sheet index ${targetIndex} out of bounds`)
+    // Try active sheet id first
+    let activeSheetId: string | undefined
+    try {
+      const activeSheet = workbook?.getActiveSheet?.()
+      activeSheetId = activeSheet?.getSheetId?.()
+    } catch {}
+
+    let targetId = typeof sheetIndex === 'number' ? order[sheetIndex] : activeSheetId || order[0]
+    if (!targetId || !saved.sheets[targetId]) {
+      targetId = order[0]
     }
 
-    const worksheet = sheets[targetIndex]
-    const snapshot = workbook.getSnapshot()
-    
-    if (!snapshot || !snapshot.sheets) {
-      throw new Error('Unable to get workbook data snapshot')
-    }
-
-    const sheetId = worksheet.getSheetId()
-    const worksheetData = snapshot.sheets[sheetId]
-    
-    if (!worksheetData) {
-      throw new Error(`Worksheet data not found for sheet: ${sheetId}`)
-    }
-
-    return {
-      ...worksheetData,
-      name: worksheet.getName() || 'Sheet'
-    }
+    const worksheetData = saved.sheets[targetId]
+    const name = worksheetData?.name || 'Sheet'
+    return { ...worksheetData, name }
   }
 } 
