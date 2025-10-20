@@ -520,6 +520,7 @@ import type { FileData } from '@/types';
 import DocsToolbar from '@/components/forms/DocsToolbar.vue';
 import DocsTitleBar from '@/components/forms/DocsTitleBar.vue';
 import ShareCard from '@/components/ShareCard.vue';
+import { parseSharingInfoString, serializeSharingInfoString, labelToShareLevel, type ShareMember, type ShareLevel } from '@/utils/sharing';
 import ImagePicker from '@/components/ImagePicker.vue';
 import { Button } from '@/components/ui/button';
 import { useDocumentConflictResolver } from '@/composables/useDocumentConflictResolver';
@@ -555,8 +556,8 @@ const pageOrientation = ref<'portrait' | 'landscape'>('portrait');
 const hasUnsavedChanges = ref(false);
 const isOffline = ref(!navigator.onLine);
 const shareLink = ref('');
-const privacyType = ref('private');
-const shareMembers = ref<any[]>([]);
+const privacyType = ref<number>(7);
+const shareMembers = ref<ShareMember[]>([]);
 
 const isEditorFocused = ref(false);
 const isEditorEmpty = ref(true);
@@ -2486,24 +2487,6 @@ function updatePaginationSettings(settings: any) {
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
 
-const permToApi: Record<'view'|'comment'|'edit', 'v'|'c'|'e'> = { view: 'v', comment: 'c', edit: 'e' };
-const apiToPerm: Record<'v'|'c'|'e', 'view'|'comment'|'edit'> = { v: 'view', c: 'comment', e: 'edit' };
-
-function parseSharingInfoString(info?: string | null) {
-  const list: Array<{ email: string; permission: 'view'|'comment'|'edit' }> = [];
-  if (!info || typeof info !== 'string') return list;
-  info.split(',').map(s => s.trim()).filter(Boolean).forEach(pair => {
-    const [email, access] = pair.split(':').map(x => (x || '').trim());
-    if (email && access && access in apiToPerm) {
-      list.push({ email, permission: apiToPerm[access as 'v'|'c'|'e'] });
-    }
-  });
-  return list;
-}
-
-function serializeSharingInfoString(members: Array<{ email: string; permission: 'view'|'comment'|'edit' }>): string {
-  return members.map(m => `${m.email}:${permToApi[m.permission]}`).join(',');
-}
 
 function copyShareLink() {
   try {
@@ -2512,19 +2495,17 @@ function copyShareLink() {
   } catch {}
 }
 
-async function handleInviteMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner'; note?: string }) {
+async function handleInviteMember(payload: { email: string; permission?: 'view'|'comment'|'edit'|'owner'; shareLevel?: ShareLevel; note?: string }) {
   try {
     const id = route.params.appFileId as string;
     if (!id) return;
-    
-    const newMembers = [...shareMembers.value, { email: payload.email, permission: payload.permission as any }];
-    const sharingInfo = serializeSharingInfoString(newMembers as any);
-    
+    const level = payload.shareLevel ?? labelToShareLevel((payload.permission === 'owner' ? 'edit' : (payload.permission || 'view')) as any);
+    const newMembers: ShareMember[] = [...shareMembers.value.filter(m => m.email !== payload.email), { email: payload.email, shareLevel: level }];
+    const sharingInfo = serializeSharingInfoString(newMembers);
     const response = await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
-    if (response.data?.document) {
-      shareMembers.value = parseSharingInfoString(response.data.document.sharing_info) as any;
-      toast.success('Member invited');
-    }
+    const info = response.data?.document?.sharing_info ?? sharingInfo;
+    shareMembers.value = parseSharingInfoString(info);
+    toast.success('Member invited');
   } catch {}
 }
 
@@ -2536,15 +2517,12 @@ async function handleRemoveMember(payload: { email: string }) {
   try {
     const id = route.params.appFileId as string;
     if (!id) return;
-    
-    const newMembers = shareMembers.value.filter(m => m.email !== payload.email);
-    const sharingInfo = serializeSharingInfoString(newMembers as any);
-    
+    const newMembers: ShareMember[] = shareMembers.value.filter(m => m.email !== payload.email);
+    const sharingInfo = serializeSharingInfoString(newMembers);
     const response = await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
-    if (response.data?.document) {
-      shareMembers.value = parseSharingInfoString(response.data.document.sharing_info) as any;
-      toast.success('Member removed');
-    }
+    const info = response.data?.document?.sharing_info ?? sharingInfo;
+    shareMembers.value = parseSharingInfoString(info);
+    toast.success('Member removed');
   } catch {}
 }
 

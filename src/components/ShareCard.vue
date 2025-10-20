@@ -1,32 +1,28 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import Button from '@/components/ui/button/Button.vue'
-
-type Member = {
-  email: string
-  name?: string
-  avatarUrl?: string
-  permission: 'view' | 'comment' | 'edit' | 'owner'
-  status?: 'accepted' | 'pending' | 'declined'
-  domain?: string
-}
+import {
+  shareLevelToLabel,
+  labelToShareLevel,
+  resolveScopeFromPrivacy,
+  resolveLevelFromPrivacy,
+  type ShareMember,
+  type ShareLevel,
+  type ShareLevelLabel,
+} from '@/utils/sharing'
 
 type GeneralPermission = 'restricted' | 'organization' | 'link' | 'public'
-type PermissionLevel = 'view' | 'comment' | 'edit'
+type SharePermissionLabel = ShareLevelLabel
 
-const INVITE_PERMISSION_CODES: Record<PermissionLevel, 'v' | 'c' | 'e'> = {
-  view: 'v',
-  comment: 'c',
-  edit: 'e',
-}
+type DisplayMember = ShareMember & { permissionLabel: SharePermissionLabel }
 
 const props = defineProps<{
   mode?: 'doc' | 'sheet'
   shareLink: string
   privacyType: number // 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
-  members?: Member[]
+  members?: ShareMember[]
   canEditPrivacy?: boolean
-  owner?: Member
+  owner?: ShareMember
   organizationDomain?: string
   documentTitle?: string
   fileId?: string
@@ -39,9 +35,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'copy-link'): void
   (e: 'change-privacy', value: number): void
-  (e: 'update-member', payload: { email: string; permission: Member['permission'] }): void
+  (e: 'update-member', payload: { email: string; shareLevel: ShareLevel; label: SharePermissionLabel }): void
   (e: 'remove-member', payload: { email: string }): void
-  (e: 'invite', payload: { email: string; permission: Member['permission']; note?: string }): void
+  (e: 'invite', payload: { email: string; shareLevel: ShareLevel; label: SharePermissionLabel; note?: string }): void
   (e: 'done'): void
   (e: 'settings'): void
   (e: 'help'): void
@@ -50,84 +46,30 @@ const emit = defineEmits<{
   (e: 'update-permission-settings', payload: {
     allowEditorsToChangePermissions: boolean
     allowEditorsToDownload: boolean
-    allowCommentersToDownload: boolean
+    allowCommentersToDownload?: boolean
   }): void
 }>()
 
 // Permission helpers
-const DEFAULT_LEVEL_BY_SCOPE: Record<GeneralPermission, PermissionLevel> = {
-  restricted: 'view',
-  organization: 'view',
-  link: 'view',
-  public: 'view',
-}
+type PermissionAction = 'view' | 'edit'
 
-const PERMISSION_ACTION_VERB: Record<PermissionLevel, string> = {
+const PERMISSION_ACTION_VERB: Record<PermissionAction, string> = {
   view: 'view',
-  comment: 'comment',
   edit: 'edit',
 }
 
-const PERMISSION_LABELS: Record<PermissionLevel, string> = {
-  view: 'Viewer',
-  comment: 'Commenter',
-  edit: 'Editor',
-}
-
-function resolveScopeFromPrivacy(type: number): GeneralPermission {
-  switch (type) {
-    case 1:
-    case 2:
-      return 'public'
-    case 3:
-    case 4:
-      return 'link'
-    case 5:
-    case 6:
-      return 'organization'
-    case 7:
-    default:
-      return 'restricted'
-  }
-}
-
-function resolveLevelFromPrivacy(type: number): PermissionLevel {
-  switch (type) {
-    case 2:
-    case 4:
-    case 6:
-      return 'edit'
-    default:
-      return 'view'
-  }
-}
-
-function getPrivacyTypeFor(scope: GeneralPermission, level: PermissionLevel): number | null {
-  switch (scope) {
-    case 'restricted':
-      return 7
-    case 'organization':
-      if (level === 'edit') return 6
-      return 5
-    case 'link':
-      if (level === 'edit') return 4
-      return 3
-    case 'public':
-      if (level === 'edit') return 2
-      return 1
-    default:
-      return null
-  }
-}
 
 // Current page state
 const currentPage = ref<'main' | 'invite' | 'settings'>('main')
 
 // General permission dropdown state
 const showGeneralPermissionDropdown = ref(false)
+const localPrivacyType = ref<number | null>(null)
 
 // Form states for invite page
-const inviteEmails = ref<{ email: string; permission: Member['permission'] }[]>([])
+type Invitee = { email: string; label: SharePermissionLabel }
+
+const inviteEmails = ref<Invitee[]>([])
 const newInviteEmail = ref('')
 const inviteNote = ref('')
 
@@ -138,37 +80,18 @@ const settingsForm = ref({
   allowCommentersToDownload: props.allowCommentersToDownload ?? true
 })
 
-const generalPermission = computed({
-  get(): GeneralPermission {
-    return resolveScopeFromPrivacy(props.privacyType)
-  },
-  set(value: GeneralPermission) {
-    const defaultLevel = DEFAULT_LEVEL_BY_SCOPE[value]
-    const targetType = getPrivacyTypeFor(value, defaultLevel)
-    if (targetType !== null) {
-      emit('change-privacy', targetType)
-    }
-    showGeneralPermissionDropdown.value = false
-  }
+watch(() => props.privacyType, value => {
+  localPrivacyType.value = value
+}, { immediate: true })
+
+const effectivePrivacyType = computed(() => localPrivacyType.value ?? props.privacyType)
+
+const generalPermission = computed<GeneralPermission>(() => {
+  return resolveScopeFromPrivacy(effectivePrivacyType.value)
 })
 
-const generalPermissionLevel = computed<PermissionLevel>(() => {
-  return resolveLevelFromPrivacy(props.privacyType)
-})
-
-const availableLevels = computed<PermissionLevel[]>(() => {
-  const scope = generalPermission.value
-  switch (scope) {
-    case 'restricted':
-      return []
-    case 'organization':
-      return ['view', 'edit']
-    case 'link':
-    case 'public':
-      return ['view', 'edit']
-    default:
-      return []
-  }
+const generalPermissionLevel = computed<PermissionAction>(() => {
+  return resolveLevelFromPrivacy(effectivePrivacyType.value)
 })
 
 const restrictedHelpText = computed(() => {
@@ -190,18 +113,6 @@ const generalPermissionDescription = computed<string>(() => {
       return restrictedHelpText.value
   }
 })
-
-function permissionLevelLabel(level: PermissionLevel): string {
-  return PERMISSION_LABELS[level]
-}
-
-function handleGeneralPermissionLevelChange(event: Event) {
-  const value = (event.target as HTMLSelectElement).value as PermissionLevel
-  const targetType = getPrivacyTypeFor(generalPermission.value, value)
-  if (targetType !== null) {
-    emit('change-privacy', targetType)
-  }
-}
 
 function onClickOutside(event: MouseEvent) {
   if (!showGeneralPermissionDropdown.value) return
@@ -237,28 +148,32 @@ const documentDisplayTitle = computed(() => {
   return props.documentTitle || (props.mode === 'sheet' ? 'Sheet' : 'Document')
 })
 
-// Get all members including owner
-const allMembers = computed(() => {
-  const members = props.members || []
-  const owner = props.owner
-  if (!owner) return members
-  
-  // Check if owner is already in members list
-  const ownerInMembers = members.find(m => m.email === owner.email)
-  if (ownerInMembers) return members
-  
-  return [owner, ...members]
+function normalizeMember(member: Partial<ShareMember> | (Partial<ShareMember> & { permission?: string })): DisplayMember {
+  const explicitShareLevel = member.shareLevel
+  const permission = (member as any).permission as string | undefined
+  const shareLevel: ShareLevel = explicitShareLevel ?? (permission ? labelToShareLevel(permission === 'owner' ? 'edit' : permission as SharePermissionLabel) : 'v')
+  return {
+    email: member.email ?? '',
+    name: member.name,
+    avatarUrl: member.avatarUrl,
+    shareLevel,
+    status: member.status,
+    domain: member.domain,
+    isOwner: member.isOwner ?? permission === 'owner',
+    permissionLabel: shareLevelToLabel(shareLevel),
+  }
+}
+
+const normalizedMembers = computed<DisplayMember[]>(() => (props.members || []).map(normalizeMember))
+
+const ownerMember = computed<DisplayMember | undefined>(() => {
+  if (props.owner) return normalizeMember(props.owner)
+  return normalizedMembers.value.find(member => member.isOwner)
 })
 
-// Separate owner and other members
-const ownerMember = computed(() => {
-  return props.owner || allMembers.value.find(m => m.permission === 'owner')
-})
-
-const otherMembers = computed(() => {
-  const owner = ownerMember.value
-  if (!owner) return allMembers.value
-  return allMembers.value.filter(m => m.email !== owner.email)
+const otherMembers = computed<DisplayMember[]>(() => {
+  const ownerEmail = ownerMember.value?.email
+  return normalizedMembers.value.filter(member => member.email !== ownerEmail)
 })
 
 const privacySummary = computed(() => {
@@ -298,18 +213,49 @@ const privacySummary = computed(() => {
 
 // Permission labels for dropdown
 const getPermissionLabel = (permission: GeneralPermission): string => {
+  const level = generalPermissionLevel.value
+  const action = level === 'edit' ? 'can edit' : 'can view'
+  
   switch (permission) {
     case 'restricted':
       return 'Restricted'
     case 'organization':
-      return props.organizationDomain || 'Your organization'
+      return `${props.organizationDomain || 'Your organization'} ${action}`
     case 'link':
-      return 'Anyone with the link'
+      return `Anyone with the link ${action}`
     case 'public':
-      return 'Anyone on the internet'
+      return `Anyone on the internet ${action}`
     default:
-      return 'Restricted'
+      return 'Access settings'
   }
+}
+
+const accessSummaryTitle = computed(() => {
+  const scope = generalPermission.value
+  const level = generalPermissionLevel.value
+  
+  if (scope === 'restricted') {
+    return 'Private access'
+  }
+  
+  const action = level === 'edit' ? 'can edit' : 'can view'
+  
+  switch (scope) {
+    case 'organization':
+      return `${props.organizationDomain || 'Organization'} ${action}`
+    case 'link':
+      return `Link sharing: ${action}`
+    case 'public':
+      return `Public: ${action}`
+    default:
+      return 'Access settings'
+  }
+})
+
+function setPrivacyType(type: number) {
+  localPrivacyType.value = type
+  emit('change-privacy', type)
+  showGeneralPermissionDropdown.value = false
 }
 
 // Navigation functions
@@ -343,7 +289,7 @@ function addInvitee() {
   if (email && !inviteEmails.value.find(inv => inv.email === email)) {
     inviteEmails.value.push({
       email: email,
-      permission: 'view' // Default to viewer
+      label: 'view'
     })
     newInviteEmail.value = ''
   }
@@ -353,19 +299,20 @@ function removeInvitee(index: number) {
   inviteEmails.value.splice(index, 1)
 }
 
-function updateInviteePermission(index: number, permission: Member['permission']) {
+function updateInviteePermission(index: number, label: SharePermissionLabel) {
   if (inviteEmails.value[index]) {
-    inviteEmails.value[index].permission = permission
+    inviteEmails.value[index].label = label
   }
 }
 
 // FIXED: Use correct event emission and maintain full permission names
 function sendInvites() {
   inviteEmails.value.forEach(invitee => {
+    const shareLevel = labelToShareLevel(invitee.label)
     emit('invite', {
       email: invitee.email,
-      permission: invitee.permission,
-      code: INVITE_PERMISSION_CODES[invitee.permission],
+      shareLevel,
+      label: invitee.label,
       note: inviteNote.value.trim() || undefined
     })
   })
@@ -374,8 +321,9 @@ function sendInvites() {
   goBackToMain()
 }
 
-function updateMember(email: string, perm: Member['permission']) {
-  emit('update-member', { email, permission: perm })
+function updateMemberAccess(email: string, label: SharePermissionLabel) {
+  const shareLevel = labelToShareLevel(label)
+  emit('update-member', { email, shareLevel, label })
 }
 
 function removeMember(email: string) {
@@ -442,13 +390,15 @@ function getStatusColor(status?: string) {
         </div>
       </div>
 
-      <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-        {{ privacySummary }}
-      </p>
-
       <!-- Owner and People with Access Section -->
       <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
         <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">People with access</h4>
+        
+        <!-- Current Access Summary -->
+        <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p class="text-sm text-blue-900 dark:text-blue-100 font-medium mb-1">{{ accessSummaryTitle }}</p>
+          <p class="text-xs text-blue-700 dark:text-blue-300">{{ privacySummary }}</p>
+        </div>
         
         <!-- Owner -->
         <div v-if="ownerMember" class="mb-3">
@@ -485,8 +435,8 @@ function getStatusColor(status?: string) {
             </div>
             <div class="flex items-center gap-2 ml-4">
               <select
-                :value="member.permission"
-                @change="updateMember(member.email, ($event.target as HTMLSelectElement).value as any)"
+                :value="member.permissionLabel"
+                @change="updateMemberAccess(member.email, ($event.target as HTMLSelectElement).value as SharePermissionLabel)"
                 class="text-sm border rounded px-2 py-1 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="view">Viewer</option>
@@ -523,60 +473,85 @@ function getStatusColor(status?: string) {
             </button>
 
             <!-- Dropdown Menu -->
-            <div v-if="showGeneralPermissionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-10">
+            <div v-if="showGeneralPermissionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
               <div class="p-1">
                 <button
-                  @click="generalPermission = 'restricted'"
-                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm font-medium text-gray-900 dark:text-gray-100"
-                  :class="{ 'bg-gray-100 dark:bg-gray-800': generalPermission === 'restricted' }"
+                  @click="setPrivacyType(7)"
+                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 7 }"
                 >
-                  Restricted
+                  <div class="font-medium">Restricted</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Only people with access</div>
+                </button>
+
+                <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                <button
+                  @click="setPrivacyType(5)"
+                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 5 }"
+                >
+                  <div class="font-medium">{{ props.organizationDomain || 'Your organization' }} can view</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Anyone in your org can view</div>
                 </button>
 
                 <button
-                  @click="generalPermission = 'organization'"
-                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm font-medium text-gray-900 dark:text-gray-100"
-                  :class="{ 'bg-gray-100 dark:bg-gray-800': generalPermission === 'organization' }"
+                  @click="setPrivacyType(6)"
+                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 6 }"
                 >
-                  {{ props.organizationDomain || 'Your organization' }}
+                  <div class="font-medium">{{ props.organizationDomain || 'Your organization' }} can edit</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Anyone in your org can edit</div>
+                </button>
+
+                <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                <button
+                  @click="setPrivacyType(3)"
+                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 3 }"
+                >
+                  <div class="font-medium">Anyone with the link can view</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Anyone with link can view</div>
                 </button>
 
                 <button
-                  @click="generalPermission = 'link'"
-                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm font-medium text-gray-900 dark:text-gray-100"
-                  :class="{ 'bg-gray-100 dark:bg-gray-800': generalPermission === 'link' }"
+                  @click="setPrivacyType(4)"
+                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 4 }"
                 >
-                  Anyone with the link
+                  <div class="font-medium">Anyone with the link can edit</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Anyone with link can edit</div>
+                </button>
+
+                <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                <button
+                  @click="setPrivacyType(1)"
+                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 1 }"
+                >
+                  <div class="font-medium">Anyone on the internet can view</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Public on the web</div>
                 </button>
 
                 <button
-                  @click="generalPermission = 'public'"
-                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm font-medium text-gray-900 dark:text-gray-100"
-                  :class="{ 'bg-gray-100 dark:bg-gray-800': generalPermission === 'public' }"
+                  @click="setPrivacyType(2)"
+                  class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
+                  :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 2 }"
                 >
-                  Anyone on the internet
+                  <div class="font-medium">Anyone on the internet can edit</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Public and editable</div>
                 </button>
               </div>
             </div>
           </div>
           
-          <!-- Organization permission dropdown when domain is selected -->
-          <select
-            v-if="availableLevels.length"
-            :value="generalPermissionLevel"
-            @change="handleGeneralPermissionLevelChange"
-            class="text-sm border rounded-lg px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
-          >
-            <option v-for="level in availableLevels" :key="level" :value="level">
-              {{ permissionLevelLabel(level) }}
-            </option>
-          </select>
         </div>
 
         <!-- Description shows below after selection -->
-        <div class="ml-3 text-xs text-gray-600 dark:text-gray-400 mt-2 space-y-1">
-          <div>• {{ privacySummary }}</div>
-          <div>{{ generalPermissionDescription }}</div>
+        <div class="ml-3 text-xs text-gray-600 dark:text-gray-400 mt-2">
+          {{ generalPermissionDescription }}
         </div>
       </div>
 
@@ -706,8 +681,8 @@ function getStatusColor(status?: string) {
             </div>
             <!-- Individual permission dropdown for each email -->
             <select
-              :value="invitee.permission"
-              @change="updateInviteePermission(index, ($event.target as HTMLSelectElement).value as any)"
+              :value="invitee.label"
+              @change="updateInviteePermission(index, ($event.target as HTMLSelectElement).value as SharePermissionLabel)"
               class="text-sm border rounded px-2 py-1 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value="view">Viewer</option>

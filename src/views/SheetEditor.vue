@@ -22,6 +22,7 @@ import Button from '@/components/ui/button/Button.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import type { FileData } from '@/types'
 import { ExportService, ExportFormat, PDFEngine, type IExportOptions } from '@/plugins/ExportPlugin'
+import { parseSharingInfoString, labelToShareLevel, type ShareLevel, type ShareMember } from '@/utils/sharing'
 import { useAuthStore } from '@/store/auth'
 import ShareCard from '@/components/ShareCard.vue'
 import axios from 'axios'
@@ -51,8 +52,15 @@ const lastSavedAt = ref<Date | null>(null)
 const visibility = ref<'private' | 'link' | 'public'>('private')
 // privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
 const privacyType = ref<number>(7)
-// Share members state (placeholder, integrate API later)
-const shareMembers = ref<Array<{ email: string; name?: string; avatarUrl?: string; permission: 'view'|'comment'|'edit' }>>([])
+const shareMembers = ref<ShareMember[]>([])
+const shareMembersForCard = computed(() =>
+  shareMembers.value.map(m => ({
+    email: m.email,
+    name: m.name,
+    avatarUrl: m.avatarUrl,
+    shareLevel: m.shareLevel,
+  }))
+)
 
 // Note: editing restricted to authenticated users; guards are applied in save handlers
 
@@ -807,24 +815,7 @@ function copyShareLink() {
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`
 
-const permToApi: Record<'view' | 'comment' | 'edit', 'v' | 'c' | 'e'> = { view: 'v', comment: 'c', edit: 'e' }
-const apiToPerm: Record<'v' | 'c' | 'e', 'view' | 'comment' | 'edit'> = { v: 'view', c: 'comment', e: 'edit' }
-
-function parseSharingInfoString(info?: string | null) {
-  const list: Array<{ email: string; permission: 'view' | 'comment' | 'edit' }> = []
-  if (!info || typeof info !== 'string') return list
-  info
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
-    .forEach(pair => {
-      const [email, access] = pair.split(':').map(x => (x || '').trim())
-      if (email && (access === 'v' || access === 'c' || access === 'e')) {
-        list.push({ email, permission: apiToPerm[access] })
-      }
-    })
-  return list
-}
+// sharing helpers imported from '@/utils/sharing'
 
 async function fetchSharingInfo() {
   try {
@@ -841,16 +832,17 @@ async function fetchSharingInfo() {
   } catch {}
 }
 
-async function handleInviteMember(payload: { email: string; permission: 'view' | 'comment' | 'edit' | 'owner'; note?: string }) {
+async function handleInviteMember(payload: { email: string; permission?: 'view' | 'comment' | 'edit' | 'owner'; shareLevel?: ShareLevel; note?: string }) {
   try {
     const id = route.params.id as string
     if (!id) return
     const token = fileStore.getToken?.()
+    const shareLevel: ShareLevel = payload.shareLevel ?? labelToShareLevel((payload.permission === 'owner' ? 'edit' : (payload.permission || 'view')) as any)
     await axios.post(
       `${FILES_ENDPOINT}/${id}/share`,
       {
         email: payload.email,
-        access_level: payload.permission === 'owner' ? 'o' : permToApi[payload.permission],
+        access_level: shareLevel,
         note: payload.note,
       },
       { headers: token ? { Authorization: `Bearer ${token}` } : {} },
@@ -862,7 +854,7 @@ async function handleInviteMember(payload: { email: string; permission: 'view' |
   }
 }
 
-async function handleUpdateMember(payload: { email: string; permission: 'view' | 'comment' | 'edit' | 'owner' }) {
+async function handleUpdateMember(payload: { email: string; permission?: 'view' | 'comment' | 'edit' | 'owner'; shareLevel?: ShareLevel }) {
   return handleInviteMember(payload)
 }
 
@@ -1080,7 +1072,7 @@ watch(
               mode="sheet"
               :share-link="shareLinkSheet"
               :privacy-type="privacyType"
-              :members="shareMembers"
+              :members="shareMembersForCard"
               :can-edit-privacy="authStore.isAuthenticated"
               @copy-link="copyShareLink"
               @change-privacy="updateVisibility"
