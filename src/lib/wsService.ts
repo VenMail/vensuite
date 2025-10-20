@@ -132,14 +132,17 @@ export class WebSocketService implements IWebsocketService {
   }
 
   public joinSheet(sheetId: string, listener: MessageListener) {
-    if (!WebSocketService.activeSheets.has(sheetId)) {
+    const existingListener = WebSocketService.activeSheets.get(sheetId)
+    if (!existingListener || existingListener !== listener) {
       WebSocketService.activeSheets.set(sheetId, listener)
-      if (WebSocketService?.socket?.readyState === WebSocket.OPEN) {
-        this.sendMessage(sheetId, 'join', {}, 'system', 'System')
-        return true;
-      }
     }
-    return false;
+
+    if (WebSocketService?.socket?.readyState === WebSocket.OPEN) {
+      this.sendMessage(sheetId, 'join', {}, 'system', 'System')
+      return true
+    }
+
+    return false
   }
 
   public leaveSheet(sheetId: string) {
@@ -172,11 +175,20 @@ export class WebSocketService implements IWebsocketService {
 }
 
 let globalWsService: WebSocketService | null = null
+let activeWsUrl: string | null = null
 
 export function useWebSocket() {
   function initializeWebSocket(url: string) {
+    if (globalWsService && activeWsUrl !== url) {
+      globalWsService.disconnect()
+      globalWsService = null
+    }
+
     if (!globalWsService) {
       globalWsService = new WebSocketService(url)
+      activeWsUrl = url
+      globalWsService.connect()
+    } else if (!WebSocketService.isConnected.value) {
       globalWsService.connect()
     }
     return globalWsService

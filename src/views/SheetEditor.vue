@@ -123,6 +123,7 @@ const shareLinkSheet = computed(() => {
 })
 
 const guestAccessiblePrivacyTypes = new Set<number>([1, 2, 3, 4])
+const editablePrivacyTypes = new Set<number>([2, 4])
 
 const canJoinRealtime = computed(() => {
   if (!route.params.id) return false
@@ -130,6 +131,8 @@ const canJoinRealtime = computed(() => {
   if (authStore.isAuthenticated) return true
   return guestAccessiblePrivacyTypes.has(privacyType.value)
 })
+
+const canEditSheet = computed(() => authStore.isAuthenticated || editablePrivacyTypes.has(privacyType.value))
 
 // Handler for univerRefChange event
 function onUniverRefChange(childUniverRef: FUniver | null) {
@@ -286,7 +289,7 @@ async function saveTitle() {
   const newTitle = title.value.trim()
   if (newTitle && newTitle !== document.title) {
     document.title = newTitle
-    if (!authStore.isAuthenticated) return
+    if (!canEditSheet.value) return
     if (route.params.id && !isSaving.value) {
       try {
         try {
@@ -556,6 +559,7 @@ function handleChatMessage(messageInfo: Message) {
 }
 
 function sendChatMessage() {
+  if (!canEditSheet.value) return
   if (route.params.id) {
     const message = newChatMessage.value
     if (message.trim()) {
@@ -701,7 +705,7 @@ function handlePrint() {
 
 function handleBeforeUnload(e: BeforeUnloadEvent) {
   try {
-    if (authStore.isAuthenticated && univerRef.value && route.params.id) {
+    if (canEditSheet.value && univerRef.value && route.params.id) {
       saveData()
       e.preventDefault()
       e.returnValue = ''
@@ -710,20 +714,20 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 }
 
 onMounted(() => {
-  if (authStore.isAuthenticated) {
+  if (canEditSheet.value) {
     window.addEventListener('beforeunload', handleBeforeUnload)
   }
 })
 
 onUnmounted(() => {
-  if (authStore.isAuthenticated) {
+  if (canEditSheet.value) {
     window.removeEventListener('beforeunload', handleBeforeUnload)
   }
 })
 
 onBeforeRouteLeave(async () => {
   try {
-    if (authStore.isAuthenticated && univerRef.value && route.params.id) {
+    if (canEditSheet.value && univerRef.value && route.params.id) {
       await saveData()
     }
   } catch {}
@@ -770,7 +774,7 @@ function restoreCursorPosition(element: HTMLElement, offset: number) {
 }
 
 async function saveData() {
-  if (!authStore.isAuthenticated) {
+  if (!canEditSheet.value) {
     return
   }
   if (!univerRef.value || !route.params.id) {
@@ -1108,7 +1112,7 @@ watch(
               :share-link="shareLinkSheet"
               :privacy-type="privacyType"
               :members="shareMembersForCard"
-              :can-edit-privacy="authStore.isAuthenticated"
+              :can-edit-privacy="canEditSheet"
               @copy-link="copyShareLink"
               @change-privacy="updateVisibility"
               @invite="handleInviteMember"
