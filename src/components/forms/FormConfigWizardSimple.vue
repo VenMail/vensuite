@@ -23,7 +23,7 @@
         <!-- Progress Bar -->
         <div class="mt-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            class="h-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
+            class="h-full bg-primary-600 dark:bg-blue-500 transition-all duration-300"
             :style="{ width: `${((currentStepIndex + 1) / questions.length) * 100}%` }"
           />
         </div>
@@ -63,7 +63,7 @@
               </div>
               <div
                 v-if="config[currentQuestion.key] === option.value"
-                class="w-6 h-6 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center flex-shrink-0"
+                class="w-6 h-6 rounded-full bg-primary-600 dark:bg-blue-500 flex items-center justify-center flex-shrink-0"
               >
                 <Check class="w-4 h-4 text-white" />
               </div>
@@ -92,7 +92,7 @@
 
         <button
           v-if="currentStepIndex < questions.length - 1"
-          class="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg transition-colors"
+          class="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors"
           @click="goNext"
         >
           Next
@@ -100,7 +100,7 @@
         </button>
         <button
           v-else
-          class="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg transition-colors"
+          class="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors"
           @click="handleComplete"
         >
           <Check class="w-4 h-4 inline mr-1" />
@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import {
   X,
   ChevronLeft,
@@ -136,6 +136,10 @@ const emit = defineEmits<{
   (e: "skip"): void;
 }>();
 
+const props = defineProps<{
+  initialConfig?: Partial<FormConfig>;
+}>();
+
 export interface FormConfig {
   theme: "light" | "dark" | "auto";
   navigationType: "scroll" | "paginated";
@@ -154,7 +158,7 @@ export interface FormConfig {
 
 const currentStepIndex = ref(0);
 
-const config = ref<FormConfig>({
+const buildDefaultConfig = (): FormConfig => ({
   theme: "auto",
   navigationType: "scroll",
   responseView: "table",
@@ -169,6 +173,21 @@ const config = ref<FormConfig>({
   showFooter: false,
   footerImageUrl: "",
 });
+
+const buildConfigFromProps = (): FormConfig => ({
+  ...buildDefaultConfig(),
+  ...props.initialConfig,
+});
+
+const config = ref<FormConfig>(buildConfigFromProps());
+
+watch(
+  () => props.initialConfig,
+  () => {
+    config.value = buildConfigFromProps();
+  },
+  { deep: true }
+);
 
 interface Question {
   key: keyof FormConfig;

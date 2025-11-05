@@ -52,6 +52,7 @@ const createDefaultHeader = (): FormHeader => ({
   background: { type: "solid", color: "#0F172A" },
   overlay_color: "rgba(15, 23, 42, 0.55)",
   alignment: "center",
+  logo_width: 96,
 });
 
 const createDefaultTypography = (): FormTypography => ({

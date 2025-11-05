@@ -1,2183 +1,1436 @@
+<template>
+  <div class="form-builder-new min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Top Bar -->
+    <div class="form-builder-new__topbar sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800">
+      <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <button
+            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
+            @click="handleBack"
+          >
+            <ArrowLeft class="w-5 h-5" />
+          </button>
+          <div>
+            <input
+              v-model="formTitle"
+              type="text"
+              placeholder="Untitled Form"
+              class="text-lg font-semibold bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+              @input="handleTitleChange"
+            />
+            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <span v-if="isSaving">Saving...</span>
+              <span v-else-if="lastSaved">Saved {{ lastSaved }}</span>
+              <span v-else>Unsaved changes</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Logo Toggle -->
+          <button
+            class="p-2 rounded-lg transition-colors"
+            :class="settingsStore.state.header.enabled ? 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+            title="Logo"
+            @click="ensureLogoVisible"
+          >
+            <ImageIcon class="w-5 h-5" />
+          </button>
+
+          <!-- Payment Button (opens modal) -->
+          <button
+            class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors border border-gray-300 dark:border-gray-600"
+            :class="settingsStore.state.payment.enabled ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+            @click="openPaymentDialog"
+            title="Configure Payments"
+          >
+            <DollarSign class="w-4 h-4" />
+            <span>
+              {{ settingsStore.state.payment.enabled ? `$${paymentAmount}` : 'Enable payments' }}
+            </span>
+          </button>
+
+          <!-- Webhooks Button (modal) -->
+          <button
+            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+            @click="handleWebhooksClick"
+            title="Configure Webhooks"
+          >
+            <Webhook class="w-5 h-5" />
+          </button>
+
+          <button
+            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            @click="handleSettings"
+            title="Form Settings"
+          >
+            <Settings class="w-4 h-4 inline mr-2" />
+            Settings
+          </button>
+          <button
+            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            @click="handlePreview"
+          >
+            <Eye class="w-4 h-4 inline mr-2" />
+            Preview
+          </button>
+          <button
+            class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isPublishing || blocks.length === 0"
+            @click="handlePublish"
+          >
+            <Send class="w-4 h-4 inline mr-2" />
+            {{ isPublishing ? 'Publishing...' : 'Publish' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="form-builder-new__content max-w-3xl mx-auto px-6 py-12">
+      <!-- Form Header -->
+      <div class="form-builder-new__header mb-12">
+        <!-- Logo block inside document -->
+        <div v-if="formConfig?.showLogo !== false" class="mb-6">
+          <Transition name="fade" mode="out-in">
+            <div
+              v-if="settingsStore.state.header.logo_url"
+              key="logo-config"
+              class="space-y-4"
+            >
+              <div
+                class="flex flex-wrap items-center gap-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 px-4 py-3"
+              >
+                <div class="flex items-center gap-4">
+                  <div class="relative group flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl p-2">
+                    <img
+                      :src="settingsStore.state.header.logo_url"
+                      alt="Logo"
+                      class="rounded-lg object-contain"
+                      :style="logoStyle"
+                    />
+                    <div class="absolute inset-0 rounded-xl border border-dashed border-transparent group-hover:border-blue-400 group-hover:bg-blue-500/5 transition-colors"></div>
+                  </div>
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <button class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800" @click="handleLogoClick">
+                      Change
+                    </button>
+                    <button class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800" @click="removeLogo">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                  <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Align</span>
+                  <button
+                    class="p-2 rounded-lg border text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    :class="headerAlignment === 'left' ? 'bg-primary-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500' : 'border-gray-300 dark:border-gray-600'"
+                    @click="setLogoAlignment('left')"
+                    title="Align left"
+                  >
+                    <AlignLeft class="w-4 h-4" />
+                  </button>
+                  <button
+                    class="p-2 rounded-lg border text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    :class="headerAlignment === 'center' ? 'bg-primary-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500' : 'border-gray-300 dark:border-gray-600'"
+                    @click="setLogoAlignment('center')"
+                    title="Align center"
+                  >
+                    <AlignCenter class="w-4 h-4" />
+                  </button>
+                  <button
+                    class="p-2 rounded-lg border text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    :class="headerAlignment === 'right' ? 'bg-primary-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500' : 'border-gray-300 dark:border-gray-600'"
+                    @click="setLogoAlignment('right')"
+                    title="Align right"
+                  >
+                    <AlignRight class="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                  <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Size</span>
+                  <div class="flex items-center gap-2">
+                    <label class="sr-only" for="logo-size">Logo width</label>
+                    <input
+                      id="logo-size"
+                      type="range"
+                      min="40"
+                      max="200"
+                      step="4"
+                      v-model.number="logoWidth"
+                      class="w-32 accent-blue-600"
+                    />
+                    <span class="text-xs text-gray-500 dark:text-gray-400 w-12 text-right">{{ logoWidth }}px</span>
+                  </div>
+                  <button
+                    class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    @click="resetLogoSize"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+
+              <div class="rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 p-6">
+                <div
+                  class="w-full flex"
+                  :class="logoAlignmentClass"
+                >
+                  <img
+                    :src="settingsStore.state.header.logo_url"
+                    alt="Logo preview"
+                    class="rounded-xl object-contain shadow-sm"
+                    :style="logoStyle"
+                  />
+                </div>
+              </div>
+            </div>
+            <button
+              v-else
+              key="logo-add"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+              @click="ensureLogoVisible"
+            >
+              <ImageIcon class="w-4 h-4" />
+              <span class="text-sm">Add logo</span>
+            </button>
+          </Transition>
+        </div>
+
+        <input
+          v-model="formTitle"
+          type="text"
+          placeholder="Untitled Form"
+          class="text-5xl font-bold w-full bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 mb-4"
+          @input="handleTitleChange"
+        />
+        <textarea
+          v-model="formDescription"
+          placeholder="Add a description to help people understand your form..."
+          rows="2"
+          class="text-lg w-full bg-transparent border-none outline-none text-gray-600 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
+          @input="handleDescriptionChange"
+        />
+      </div>
+
+      <!-- Blocks -->
+      <div class="form-builder-new__blocks space-y-3">
+        <TransitionGroup name="block-list">
+          <div
+            v-for="(block, index) in blocks"
+            :key="block.id"
+            :class="[
+              'block-wrapper group rounded-2xl transition-shadow',
+              draggingBlockId === block.id ? 'opacity-60 cursor-grabbing' : 'cursor-grab',
+              dropIndex === index && draggingBlockId !== block.id ? 'ring-2 ring-blue-400 dark:ring-blue-500' : ''
+            ]"
+            draggable="true"
+            @dragstart="onDragStart($event, block.id)"
+            @dragenter="onDragEnter(index)"
+            @dragover="onDragOver($event, index)"
+            @dragleave="onDragLeave(index)"
+            @drop="onDrop($event, index)"
+            @dragend="onDragEnd"
+          >
+            <BlockItemNew
+              :block="block"
+              :index="index"
+              :is-focused="focusedBlockId === block.id"
+              @focus="handleBlockFocus(block.id)"
+              @blur="handleBlockBlur"
+              @update="handleBlockUpdate"
+              @delete="handleBlockDelete"
+              @duplicate="handleBlockDuplicate"
+              @move-up="handleMoveUp"
+              @move-down="handleMoveDown"
+              @insert-below="handleInsertBelow"
+              @request-slash-menu="openSlashMenu"
+              @close-slash-menu="closeSlashMenu"
+            />
+          </div>
+        </TransitionGroup>
+        <div
+          v-if="draggingBlockId"
+          class="h-6 border-2 border-dashed border-transparent rounded-xl transition-colors"
+          :class="dropIndex === blocks.length ? 'border-blue-400 dark:border-blue-500 bg-blue-500/10 dark:bg-blue-500/10' : 'border-gray-200 dark:border-gray-700'"
+          @dragenter="onDragEnter(blocks.length)"
+          @dragover.prevent="onDragOverEnd"
+          @drop.prevent="onDropToEnd"
+        ></div>
+      </div>
+
+      <!-- Add Block Button -->
+      <div class="mt-6">
+        <button
+          class="add-block-button group w-full flex items-center gap-3 px-4 py-4 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+          @click="handleAddBlock"
+        >
+          <Plus class="w-5 h-5" />
+          <span class="text-sm font-medium">Add a question</span>
+          <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto">or press <kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono">/</kbd></span>
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div
+        v-if="blocks.length === 0"
+        class="empty-state mt-20 text-center"
+      >
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 mb-6">
+          <Sparkles class="w-10 h-10 text-blue-600 dark:text-blue-400" />
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+          Start building your form
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+          Add questions, customize fields, and create the perfect form for your needs.
+        </p>
+        <div class="flex items-center justify-center gap-3">
+          <button
+            class="px-6 py-3 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors"
+            @click="handleAddBlock"
+          >
+            <Plus class="w-4 h-4 inline mr-2" />
+            Add First Question
+          </button>
+          <button
+            class="px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            @click="handleUseAI"
+          >
+            <Wand2 class="w-4 h-4 inline mr-2" />
+            Generate with AI
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slash Command Menu -->
+    <SlashMenu
+      v-if="showSlashMenu"
+      :filter="slashMenuFilter"
+      :position="slashMenuPosition"
+      @select="handleSlashSelect"
+      @close="closeSlashMenu"
+    />
+
+    <!-- Configuration Wizard -->
+    <FormConfigWizard
+      v-if="showConfigWizard"
+      :initial-config="formConfig ?? undefined"
+      @complete="handleConfigComplete"
+      @skip="handleConfigSkip"
+    />
+
+    <!-- Payment Modal -->
+    <Teleport to="body">
+      <div
+        v-if="showPaymentDialog"
+        class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
+        @click.self="closePaymentDialog"
+      >
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Payment settings</h3>
+            <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" @click="closePaymentDialog">
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount to charge</label>
+              <div class="flex items-center gap-2">
+                <span class="text-gray-600 dark:text-gray-400">$</span>
+                <input
+                  v-model="paymentAmount"
+                  type="number"
+                  min="1"
+                  max="100"
+                  step="0.01"
+                  class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Payments can be configured between $1 and $100.
+              </p>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <button
+                class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                @click="disablePayments"
+              >
+                Disable payments
+              </button>
+              <div class="flex items-center gap-3">
+                <button
+                  class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                  @click="closePaymentDialog"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
+                  @click="updatePaymentAmount"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Webhooks Modal -->
+    <Teleport to="body">
+      <div
+        v-if="showWebhooksPanel"
+        class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
+        @click.self="closeWebhooksModal"
+      >
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-3xl w-full p-0 md:p-6">
+          <div class="flex items-start flex-col md:flex-row gap-6">
+            <aside class="w-full md:w-64 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-800 px-6 py-4 md:py-0 md:px-0">
+              <nav class="flex md:flex-col gap-4 md:gap-3">
+                <div
+                  class="flex items-center gap-3"
+                  :class="webhookStep === 'intro' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-500 dark:text-gray-400'"
+                >
+                  <span class="flex items-center justify-center w-7 h-7 rounded-full border"
+                    :class="webhookStep === 'intro' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 dark:border-blue-500' : 'border-gray-300 dark:border-gray-700'"
+                  >1</span>
+                  <div>
+                    <p class="text-sm leading-none">Overview</p>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">Why webhooks?</span>
+                  </div>
+                </div>
+                <div
+                  class="flex items-center gap-3"
+                  :class="webhookStep === 'configure' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-500 dark:text-gray-400'"
+                >
+                  <span class="flex items-center justify-center w-7 h-7 rounded-full border"
+                    :class="webhookStep === 'configure' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 dark:border-blue-500' : 'border-gray-300 dark:border-gray-700'"
+                  >2</span>
+                  <div>
+                    <p class="text-sm leading-none">Configure</p>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">Add endpoints</span>
+                  </div>
+                </div>
+              </nav>
+            </aside>
+            <div class="flex-1 px-6 pb-6 md:px-0 md:pb-0">
+              <div class="flex items-center justify-between mb-6">
+                <div>
+                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {{ webhookStep === 'intro' ? 'Connect webhooks' : 'Configure webhook endpoints' }}
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400" v-if="webhookStep === 'intro'">
+                    Send form responses and payment events to your downstream systems in real time.
+                  </p>
+                </div>
+                <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" @click="closeWebhooksModal">
+                  <X class="w-5 h-5" />
+                </button>
+              </div>
+
+              <Transition name="fade" mode="out-in">
+                <div v-if="webhookStep === 'intro'" key="webhook-intro" class="space-y-6">
+                  <div class="grid gap-4">
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                      <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">When do webhooks fire?</h4>
+                      <ul class="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 space-y-1">
+                        <li>Form completed</li>
+                        <li>Payment succeeded or failed</li>
+                        <li>Charges refunded</li>
+                        <li>Any custom events you define</li>
+                      </ul>
+                    </div>
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+                      <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">How it works</h4>
+                      <p class="text-sm text-gray-600 dark:text-gray-400">
+                        Provide a secure HTTPS endpoint and we will POST a signed payload whenever the selected events occur.
+                        You can pause delivery at any time.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-3">
+                    <button class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" @click="closeWebhooksModal">
+                      Skip for now
+                    </button>
+                    <div class="flex items-center gap-3">
+                      <button class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg" @click="webhookStep = 'configure'">
+                        Set up webhooks
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div v-else key="webhook-configure" class="space-y-6">
+                  <WebhooksPanel :form-id="formId" key="webhooks-config" />
+                  <div class="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-3">
+                    <button class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" @click="webhookStep = 'intro'">
+                      Back
+                    </button>
+                    <div class="flex items-center gap-3">
+                      <button class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg" @click="closeWebhooksModal">
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </Transition>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Image Picker Modal -->
+    <Teleport to="body">
+      <div
+        v-if="showImagePicker"
+        class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
+        @click.self="handleImagePickerCancel"
+      >
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+              {{ imagePickerMode === 'logo' ? 'Choose a logo' : 'Choose a footer image' }}
+            </h3>
+            <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" @click="handleImagePickerCancel">
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+          <ImagePicker
+            :initial-url="imagePickerMode === 'logo' ? settingsStore.state.header.logo_url : settingsStore.state.header.footer_image_url"
+            :submit-label="imagePickerMode === 'logo' ? 'Use logo' : 'Use image'"
+            @submit="handleImageSelected"
+            @cancel="handleImagePickerCancel"
+          />
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- AI Generation Dialog -->
+    <Teleport to="body">
+      <div
+        v-if="showAIDialog"
+        class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
+        @click.self="showAIDialog = false"
+      >
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+              Generate with AI
+            </h3>
+            <button
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
+              @click="showAIDialog = false"
+            >
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+          <textarea
+            v-model="aiPrompt"
+            rows="4"
+            placeholder="Describe what questions you want to add..."
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-none mb-4"
+          />
+          <div class="flex justify-end gap-3">
+            <button
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+              @click="showAIDialog = false"
+            >
+              Cancel
+            </button>
+            <button
+              class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg disabled:opacity-50"
+              :disabled="!aiPrompt.trim() || isGenerating"
+              @click="handleGenerateAI"
+            >
+              {{ isGenerating ? 'Generating...' : 'Generate' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+  </div>
+</template>
+
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, computed, watch, reactive, type CSSProperties } from "vue";
-import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
-import { useFormStore } from "@/store/forms";
-import { useFormEditorStore } from "@/store/formEditor";
-import { useFormSettingsStore } from "@/store/formSettings";
-import { useFormPlayerStore } from "@/store/formPlayer";
-import { useFormAutosave } from "./../composables/useFormAutosave";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ArrowLeft, Eye, Send, Plus, Sparkles, Wand2, X, Settings, DollarSign, Image as ImageIcon, Webhook, AlignLeft, AlignCenter, AlignRight } from "lucide-vue-next";
 import { toast } from "@/composables/useToast";
-import { publishForm } from "@/services/forms";
-import type { FormPaymentMode, FormPaymentSettings } from "@/types";
-import ImagePicker from "@/components/ImagePicker.vue";
+import BlockItemNew from "@/components/forms/blocks/BlockItemNew.vue";
+import SlashMenu from "@/components/forms/blocks/SlashMenu.vue";
+import FormConfigWizard from "@/components/forms/FormConfigWizardSimple.vue";
 import WebhooksPanel from "@/components/forms/WebhooksPanel.vue";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Copy, Trash2, MoreVertical } from "lucide-vue-next";
-import BlockEditorWrapper from "@/components/forms/blocks/BlockEditorWrapper.vue";
+import ImagePicker from "@/components/ImagePicker.vue";
+import type { FormBlock } from "@/components/forms/blocks/types";
+import type { FormConfig } from "@/components/forms/FormConfigWizardSimple.vue";
+import { useFormStore } from "@/store/forms";
+import { useFormSettingsStore } from "@/store/formSettings";
+import { generateFormBlocks } from "../services/ai";
 
 const route = useRoute();
 const router = useRouter();
 const formStore = useFormStore();
-const editorStore = useFormEditorStore();
 const settingsStore = useFormSettingsStore();
-const playerStore = useFormPlayerStore();
 
-const isHydrated = ref(false);
-const autosave = useFormAutosave();
-const selectedPageId = ref<string | null>(null);
-const selectedQuestionId = ref<string | null>(null);
-const dragState = reactive({
-  kind: null as null | "page" | "question",
-  fromIndex: -1,
-  pageId: null as string | null,
-  questionId: null as string | null,
-  overIndex: -1,
-  questionOverIndex: -1,
-});
-const inspectorTab = ref<"inspector" | "logic" | "design" | "payments">("inspector");
+const formId = computed(() => route.params.id as string);
+const TEMPLATE_STORAGE_PREFIX = "VENX_FORM_TEMPLATE_";
+const formTitle = ref("");
+const formDescription = ref("");
+const blocks = ref<FormBlock[]>([]);
+const focusedBlockId = ref<string | null>(null);
+const showSlashMenu = ref(false);
+const slashMenuFilter = ref("");
+const slashMenuPosition = ref({ top: 0, left: 0 });
+const showAIDialog = ref(false);
+const aiPrompt = ref("");
+const isGenerating = ref(false);
+const isSaving = ref(false);
+const isPublishing = ref(false);
+const lastSaved = ref("");
+const showConfigWizard = ref(false);
+const isNewForm = ref(false);
+const formConfig = ref<FormConfig | null>(null);
+const showWebhooksPanel = ref(false);
+const webhookStep = ref<'intro' | 'configure'>('intro');
 const showImagePicker = ref(false);
+const imagePickerMode = ref<'logo' | 'footer'>('logo');
+const showPaymentDialog = ref(false);
+const paymentAmount = ref("5.00");
 
-const gradientPresets = [
-  ["#2563EB", "#9333EA"],
-  ["#0EA5E9", "#6366F1"],
-  ["#F97316", "#F43F5E"],
-  ["#22C55E", "#0EA5E9"],
-] as const;
+const DEFAULT_LOGO_WIDTH = 96;
+const MIN_LOGO_WIDTH = 40;
+const MAX_LOGO_WIDTH = 200;
+const clampLogoWidth = (value: number) => Math.round(Math.min(MAX_LOGO_WIDTH, Math.max(MIN_LOGO_WIDTH, value)));
 
-const applyGradientPreset = (preset: readonly [string, string]) => {
-  setHeaderGradientValue("color", preset[0], 0);
-  setHeaderGradientValue("color", preset[1], 1);
+const logoWidth = ref<number>(
+  typeof settingsStore.state.header.logo_width === 'number'
+    ? clampLogoWidth(settingsStore.state.header.logo_width)
+    : DEFAULT_LOGO_WIDTH,
+);
+
+const headerAlignment = computed(() => settingsStore.state.header.alignment ?? "center");
+
+const logoStyle = computed(() => ({
+  width: `${logoWidth.value}px`,
+  maxWidth: "200px",
+  height: "auto",
+  maxHeight: "120px",
+}));
+
+const logoAlignmentClass = computed(() => {
+  switch (headerAlignment.value) {
+    case "left":
+      return "justify-start";
+    case "right":
+      return "justify-end";
+    default:
+      return "justify-center";
+  }
+});
+
+const resetLogoSize = () => {
+  logoWidth.value = DEFAULT_LOGO_WIDTH;
 };
 
-const pages = computed(() => editorStore.orderedPages);
-const questionsByPage = (pageId: string) => editorStore.questionsByPage(pageId);
-const activePageId = computed(() => selectedPageId.value ?? pages.value[0]?.id ?? null);
-const activeQuestionId = computed(() => selectedQuestionId.value);
-const activeQuestion = computed(() => {
-  const id = activeQuestionId.value;
-  if (!id) return null as any;
-  const found = orderedQuestions.value.find((it) => it?.question?.id === id);
-  return (found?.question ?? null) as any;
-});
-const isSettingsView = computed(() => route.name === "form-settings");
-const headerSettings = computed(() => settingsStore.state.header);
-const typographySettings = computed(() => settingsStore.state.typography);
-const themeSettings = computed(() => settingsStore.state.theme);
-const orderedQuestions = computed(() => editorStore.orderedQuestions);
-const logicDiagnostics = computed(() => editorStore.logicDiagnostics);
-const inspectorTitle = computed(() => {
-  if (isSettingsView.value) return "Form settings";
-  if (inspectorTab.value === "logic") return "Logic";
-  if (inspectorTab.value === "design") return "Design";
-  if (inspectorTab.value === "payments") return "Payments";
-  return "Inspector";
-});
-const lastLogicMessage = computed(() => playerStore.state.lastLogicMessage);
-const lastLogicRuleId = computed(() => playerStore.state.lastLogicRuleId);
-
-const fontOptions = ["Inter", "Work Sans", "Poppins", "Roboto", "Lora", "Merriweather"] as const;
-const buttonStyleOptions = ["solid", "outline", "ghost"] as const;
-
-const hexToRgba = (hex: string, alpha = 1) => {
-  const sanitized = hex.replace(/^#/, "");
-  if (![3, 6].includes(sanitized.length)) {
-    return hex;
-  }
-  const full = sanitized.length === 3 ? sanitized.split("").map((char) => char + char).join("") : sanitized;
-  const r = parseInt(full.substring(0, 2), 16);
-  const g = parseInt(full.substring(2, 4), 16);
-  const b = parseInt(full.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
-const withAlpha = (color: string, alpha: number) => {
-  if (color.startsWith("#")) {
-    return hexToRgba(color, alpha);
-  }
-  return color;
-};
-
-const themeCssVars = computed<CSSProperties>(() => {
-  const typography = typographySettings.value;
-  const theme = themeSettings.value;
-  return {
-    "--builder-primary": theme.primary_color ?? "#2563EB",
-    "--builder-secondary": theme.secondary_color ?? "#1E293B",
-    "--builder-accent": theme.accent_color ?? "#D946EF",
-    "--builder-bg": theme.background_color ?? "#F8FAFC",
-    "--builder-background": theme.background_color ?? "#F8FAFC",
-    "--builder-border-radius": theme.border_radius ?? "0.75rem",
-    "--builder-heading-font": `'${typography.heading_font_family ?? "Inter"}', sans-serif`,
-    "--builder-heading-weight": typography.heading_font_weight ?? "600",
-    "--builder-body-font": `'${typography.body_font_family ?? "Inter"}', sans-serif`,
-    "--builder-body-weight": typography.body_font_weight ?? "400",
-    "--builder-line-height": String(typography.line_height ?? 1.6),
-    "--builder-letter-spacing": `${typography.letter_spacing ?? 0}px`,
-  } satisfies CSSProperties;
-});
-
-const headerBackgroundStyle = computed<CSSProperties>(() => {
-  const header = headerSettings.value;
-  const background = header.background;
-  if (!background) return {};
-  if (background.type === "solid") {
-    return {
-      backgroundColor: background.color ?? "#0F172A",
-    } satisfies CSSProperties;
-  }
-  if (background.type === "gradient") {
-    const angle = background.angle ?? 135;
-    const start = background.colors?.[0] ?? "#2563EB";
-    const end = background.colors?.[1] ?? "#9333EA";
-    return {
-      backgroundImage: `linear-gradient(${angle}deg, ${start}, ${end})`,
-    } satisfies CSSProperties;
-  }
-  return {
-    backgroundImage: background.url ? `url(${background.url})` : undefined,
-    backgroundSize: background.fit ?? "cover",
-    backgroundPosition: background.position ?? "center",
-    backgroundColor: "#0F172A",
-  } satisfies CSSProperties;
-});
-
-const headerOverlayStyle = computed<CSSProperties>(() => ({
-  background: headerSettings.value.overlay_color ?? "rgba(15, 23, 42, 0.45)",
-  opacity: headerSettings.value.enabled ? 1 : 0.55,
-} satisfies CSSProperties));
-
-const previewButtonStyle = computed<CSSProperties>(() => {
-  const theme = themeSettings.value;
-  const primary = theme.primary_color ?? "#2563EB";
-  const style = theme.button_style ?? "solid";
-  if (style === "outline") {
-    return {
-      backgroundColor: "transparent",
-      color: primary,
-      border: `1px solid ${primary}`,
-    } satisfies CSSProperties;
-  }
-  if (style === "ghost") {
-    return {
-      backgroundColor: withAlpha(primary, 0.12),
-      color: primary,
-      border: `1px solid ${withAlpha(primary, 0.2)}`,
-    } satisfies CSSProperties;
-  }
-  return {
-    backgroundColor: primary,
-    color: "#ffffff",
-    border: "none",
-  } satisfies CSSProperties;
-});
-
-const selectPage = (pageId: string) => {
-  selectedPageId.value = pageId;
-  if (questionsByPage(pageId).length) {
-    selectedQuestionId.value = questionsByPage(pageId)[0]?.id ?? null;
+const syncPaymentAmountFromStore = () => {
+  const cents = settingsStore.state.payment.amount_cents ?? 0;
+  if (cents > 0) {
+    paymentAmount.value = (cents / 100).toFixed(2);
   } else {
-    selectedQuestionId.value = null;
+    paymentAmount.value = "5.00";
   }
 };
 
-const selectQuestion = (questionId: string) => {
-  selectedQuestionId.value = questionId;
+const buildConfigFromSettings = (): FormConfig => ({
+  theme: "auto",
+  navigationType: settingsStore.state.navigation.allow_back ? "scroll" : "paginated",
+  responseView: "table",
+  showProgressBar: settingsStore.state.settings.progress_bar?.show ?? true,
+  enablePayments: settingsStore.state.payment.enabled,
+  fontFamily: (settingsStore.state.typography.body_font_family?.toLowerCase() as FormConfig["fontFamily"]) || "system",
+  primaryColor: settingsStore.state.theme.primary_color ?? "#3B82F6",
+  enableWebhooks: Boolean((settingsStore.state.settings as any)?.webhook_url),
+  webhookUrl: (settingsStore.state.settings as any)?.webhook_url || "",
+  showLogo: Boolean(settingsStore.state.header.enabled && settingsStore.state.header.logo_url),
+  logoUrl: settingsStore.state.header.logo_url || "",
+  showFooter: Boolean(settingsStore.state.header.footer_image_url),
+  footerImageUrl: settingsStore.state.header.footer_image_url || "",
+});
+
+const ensureLogoVisible = () => {
+  settingsStore.updateHeader({ enabled: true });
+  if (formConfig.value) {
+    formConfig.value.showLogo = true;
+  }
+  triggerSave();
+  handleLogoClick();
 };
 
-const addPage = () => {
-  const page = editorStore.createPage();
-  selectPage(page.id);
-  toast.success("Page added");
+const setLogoAlignment = (alignment: "left" | "center" | "right") => {
+  if (settingsStore.state.header.alignment === alignment) return;
+  settingsStore.updateHeader({ alignment });
+  triggerSave();
 };
 
-const addQuestion = (pageId: string) => {
-  const question = editorStore.createQuestion(pageId, {
+watch(logoWidth, (value) => {
+  const clamped = clampLogoWidth(value || DEFAULT_LOGO_WIDTH);
+  if (clamped !== value) {
+    logoWidth.value = clamped;
+    return;
+  }
+  if (settingsStore.state.header.logo_width !== clamped) {
+    settingsStore.updateHeader({ logo_width: clamped });
+    triggerSave();
+  }
+});
+
+const openPaymentDialog = () => {
+  if (!settingsStore.state.payment.enabled) {
+    settingsStore.setPaymentEnabled(true);
+    if (!settingsStore.state.payment.amount_cents) {
+      settingsStore.updatePayment({
+        amount_cents: 500,
+        currency: settingsStore.state.payment.currency || "USD",
+      });
+    }
+    triggerSave();
+  }
+  syncPaymentAmountFromStore();
+  showPaymentDialog.value = true;
+};
+
+const closePaymentDialog = () => {
+  syncPaymentAmountFromStore();
+  showPaymentDialog.value = false;
+};
+
+const disablePayments = () => {
+  settingsStore.setPaymentEnabled(false);
+  settingsStore.updatePayment({ amount_cents: 0 });
+  showPaymentDialog.value = false;
+  triggerSave();
+};
+
+const applyConfigToSettings = (config: FormConfig) => {
+  formConfig.value = { ...config };
+
+  settingsStore.updateTheme({
+    primary_color: config.primaryColor,
+  });
+
+  settingsStore.updateTypography({
+    body_font_family: config.fontFamily,
+  });
+
+  settingsStore.updateSettings({
+    progress_bar: {
+      ...(settingsStore.state.settings.progress_bar ?? { type: "percentage" }),
+      show: config.showProgressBar,
+    },
+    webhook_url: config.enableWebhooks ? config.webhookUrl : undefined,
+  } as any);
+
+  settingsStore.updateNavigation({
+    allow_back: config.navigationType === "scroll",
+    show_progress: config.showProgressBar,
+    progress_type: config.navigationType === "scroll" ? "percentage" : "steps",
+  });
+
+  if (config.enablePayments) {
+    settingsStore.setPaymentEnabled(true);
+    settingsStore.updatePayment({
+      amount_cents: settingsStore.state.payment.amount_cents || 500,
+      currency: settingsStore.state.payment.currency || "USD",
+    });
+  } else {
+    settingsStore.setPaymentEnabled(false);
+    settingsStore.updatePayment({ amount_cents: 0 });
+  }
+
+  settingsStore.updateHeader({
+    enabled: config.showLogo && !!config.logoUrl,
+    logo_url: config.showLogo ? config.logoUrl || undefined : undefined,
+    footer_image_url: config.showFooter ? config.footerImageUrl || undefined : undefined,
+  });
+
+  syncPaymentAmountFromStore();
+  triggerSave();
+};
+
+// Auto-save functionality
+let saveTimeout: NodeJS.Timeout | null = null;
+const triggerSave = () => {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    await saveForm();
+  }, 2000);
+};
+
+const saveForm = async () => {
+  if (!formId.value) return;
+  
+  isSaving.value = true;
+  try {
+    const pageId = crypto.randomUUID();
+    const questions = blocks.value.map((block) => ({
+      id: block.id,
+      type: block.type,
+      category: block.category,
+      question: block.question,
+      description: block.description,
+      placeholder: block.placeholder,
+      required: block.required,
+      options: block.options,
+      validation: block.validation,
+      icon_type: block.iconType || 'star',
+      allow_half: block.allowHalf,
+      min: block.min,
+      max: block.max,
+      allowed_types: block.allowedTypes,
+      max_size: block.maxSize,
+      multiple: block.multiple,
+      page_id: pageId,
+    } as any));
+
+    await formStore.updateForm(formId.value, {
+      title: formTitle.value,
+      pages: [
+        {
+          id: pageId,
+          title: "Page 1",
+          description: formDescription.value,
+          position: 1,
+          question_order: questions.map(q => q.id),
+        }
+      ],
+      questions,
+      // Persist all settings
+      layout_mode: settingsStore.state.layoutMode,
+      settings: {
+        ...settingsStore.state.settings,
+        webhook_url: formConfig.value?.webhookUrl,
+      } as any,
+      header: settingsStore.state.header,
+      typography: settingsStore.state.typography,
+      theme: settingsStore.state.theme,
+      navigation: settingsStore.state.navigation,
+      welcome_screen: settingsStore.state.welcomeScreen,
+      completion_screen: settingsStore.state.completionScreen,
+      sharing: settingsStore.state.sharing,
+      security: settingsStore.state.security,
+      payment: settingsStore.state.payment,
+    });
+
+    const now = new Date();
+    lastSaved.value = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  } catch (error) {
+    console.error("Failed to save form:", error);
+    console.error("Failed to save changes");
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const handleTitleChange = () => {
+  triggerSave();
+};
+
+const handleDescriptionChange = () => {
+  triggerSave();
+};
+
+const handleBlockFocus = (blockId: string) => {
+  focusedBlockId.value = blockId;
+};
+
+const handleBlockBlur = () => {
+  focusedBlockId.value = null;
+};
+
+const handleBlockUpdate = (updatedBlock: FormBlock) => {
+  const index = blocks.value.findIndex(b => b.id === updatedBlock.id);
+  if (index !== -1) {
+    blocks.value[index] = updatedBlock;
+    triggerSave();
+  }
+};
+
+const handleBlockDelete = (blockId: string) => {
+  blocks.value = blocks.value.filter(b => b.id !== blockId);
+  triggerSave();
+};
+
+const handleBlockDuplicate = (blockId: string) => {
+  const index = blocks.value.findIndex(b => b.id === blockId);
+  if (index !== -1) {
+    const original = blocks.value[index];
+    const duplicate = {
+      ...original,
+      id: crypto.randomUUID(),
+      question: `${original.question} (copy)`,
+    };
+    blocks.value.splice(index + 1, 0, duplicate);
+    triggerSave();
+  }
+};
+
+const handleMoveUp = (blockId: string) => {
+  const index = blocks.value.findIndex(b => b.id === blockId);
+  if (index > 0) {
+    // Create new array with swapped elements
+    const newBlocks = [...blocks.value];
+    const temp = newBlocks[index];
+    newBlocks[index] = newBlocks[index - 1];
+    newBlocks[index - 1] = temp;
+    blocks.value = newBlocks;
+    triggerSave();
+  }
+};
+
+const handleMoveDown = (blockId: string) => {
+  const index = blocks.value.findIndex(b => b.id === blockId);
+  if (index < blocks.value.length - 1) {
+    // Create new array with swapped elements
+    const newBlocks = [...blocks.value];
+    const temp = newBlocks[index];
+    newBlocks[index] = newBlocks[index + 1];
+    newBlocks[index + 1] = temp;
+    blocks.value = newBlocks;
+    triggerSave();
+  }
+};
+
+const handleInsertBelow = (blockId: string) => {
+  const index = blocks.value.findIndex((b) => b.id === blockId);
+  const newBlock: FormBlock = {
+    id: crypto.randomUUID(),
     type: "short",
     category: "text",
-  });
-  if (question) {
-    selectPage(pageId);
-    selectQuestion(question.id);
-    toast.success("Question added");
-  }
+    question: "",
+    required: false,
+  };
+  blocks.value.splice(index + 1, 0, newBlock);
+  focusedBlockId.value = newBlock.id;
 };
 
-const movePage = (pageId: string, direction: "up" | "down") => {
-  editorStore.movePage(pageId, direction);
+const handleAddBlock = () => {
+  const newBlock: FormBlock = {
+    id: crypto.randomUUID(),
+    type: "short",
+    category: "text",
+    question: "",
+    required: false,
+  };
+  blocks.value.push(newBlock);
+  focusedBlockId.value = newBlock.id;
+  closeSlashMenu();
+  triggerSave();
 };
 
-const moveQuestion = (pageId: string, questionId: string, direction: "up" | "down") => {
-  editorStore.moveQuestion(pageId, questionId, direction);
+const openSlashMenu = (payload: { blockId: string; filter: string; position: { top: number; left: number } }) => {
+  showSlashMenu.value = true;
+  slashMenuFilter.value = payload.filter;
+  slashMenuPosition.value = payload.position;
+  focusedBlockId.value = payload.blockId;
 };
 
-const duplicatePageItem = (pageId: string) => {
-  if (isSettingsView.value) return;
-  const copy = editorStore.duplicatePage(pageId);
-  if (copy) {
-    selectPage(copy.id);
-    toast.success("Page duplicated");
-  } else {
-    toast.error("Unable to duplicate page");
-  }
-};
+const draggingBlockId = ref<string | null>(null);
+const dropIndex = ref<number | null>(null);
 
-const duplicateQuestionItem = (pageId: string, questionId: string, insertIndex: number) => {
-  if (isSettingsView.value) return;
-  const copy = editorStore.duplicateQuestion(pageId, questionId, pageId, insertIndex + 1);
-  if (copy) {
-    selectPage(pageId);
-    selectQuestion(copy.id);
-    toast.success("Question duplicated");
-  } else {
-    toast.error("Unable to duplicate question");
-  }
-};
-
-const deleteQuestionItem = (pageId: string, questionId: string) => {
-  if (isSettingsView.value) return;
-  const questions = [...questionsByPage(pageId)];
-  const removedIndex = questions.findIndex((question) => question?.id === questionId);
-  editorStore.removeQuestion(questionId);
-  const remaining = questionsByPage(pageId);
-  const next = remaining[removedIndex] ?? remaining[removedIndex - 1] ?? remaining[0] ?? null;
-  if (next) {
-    selectQuestion(next.id);
-  } else {
-    selectedQuestionId.value = null;
-  }
-  toast.success("Question removed");
-};
-
-const openInspectorTab = (tab: "inspector" | "logic" | "design" | "payments") => {
-  if (tab === "logic" && isSettingsView.value) return;
-  if (tab === "design" && isSettingsView.value) return;
-  inspectorTab.value = tab;
-};
-
-const openDesignTab = () => {
-  if (isSettingsView.value) return;
-  inspectorTab.value = "design";
-};
-
-const openPaymentsTab = () => {
-  inspectorTab.value = "payments";
-};
-
-const setHeaderEnabled = (enabled: boolean) => {
-  settingsStore.updateHeader({ enabled });
-};
-
-const setHeaderBackgroundType = (type: "solid" | "gradient" | "image") => {
-  const current = headerSettings.value.background;
-  if (type === "solid") {
-    settingsStore.updateHeader({ background: { type: "solid", color: "color" in current ? current.color ?? "#2563EB" : "#2563EB" } });
-    return;
-  }
-  if (type === "gradient") {
-    settingsStore.updateHeader({
-      background: {
-        type: "gradient",
-        angle: current.type === "gradient" ? current.angle ?? 135 : 135,
-        colors: current.type === "gradient" ? current.colors ?? ["#2563EB", "#9333EA"] : ["#2563EB", "#9333EA"],
-      },
-    });
-    return;
-  }
-  settingsStore.updateHeader({
-    background: {
-      type: "image",
-      url: current.type === "image" ? current.url ?? "" : "",
-      position: current.type === "image" ? current.position : "center",
-      fit: current.type === "image" ? current.fit ?? "cover" : "cover",
-    },
-  });
-};
-
-const setHeaderSolidColor = (color: string) => {
-  if (headerSettings.value.background?.type !== "solid") return;
-  settingsStore.updateHeader({
-    background: {
-      ...headerSettings.value.background,
-      color,
-    },
-  });
-};
-
-const setHeaderGradientValue = (key: "angle" | "color", value: number | string, colorIndex = 0) => {
-  const background = headerSettings.value.background;
-  if (!background || background.type !== "gradient") return;
-  if (key === "angle" && typeof value === "number") {
-    settingsStore.updateHeader({
-      background: {
-        ...background,
-        angle: Math.min(Math.max(value, 0), 360),
-      },
-    });
+const applyBlockReorder = (fromIndex: number, toIndex: number) => {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= blocks.value.length) {
     return;
   }
 
-  if (key === "color" && typeof value === "string") {
-    const colors = [...background.colors];
-    colors[colorIndex] = value;
-    settingsStore.updateHeader({
-      background: {
-        ...background,
-        colors,
-      },
-    });
+  const updated = [...blocks.value];
+  const [moved] = updated.splice(fromIndex, 1);
+
+  if (toIndex >= updated.length) {
+    updated.push(moved);
+  } else {
+    updated.splice(toIndex, 0, moved);
+  }
+
+  blocks.value = updated;
+  triggerSave();
+};
+
+const onDragStart = (event: DragEvent, blockId: string) => {
+  draggingBlockId.value = blockId;
+  const fromIndex = blocks.value.findIndex((b) => b.id === blockId);
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(fromIndex));
   }
 };
 
-const setHeaderOverlayColor = (overlay: string) => {
-  settingsStore.updateHeader({ overlay_color: overlay });
+const onDragEnter = (index: number) => {
+  if (draggingBlockId.value !== null) {
+    dropIndex.value = index;
+  }
 };
 
-const updateTypographyValue = <K extends keyof typeof typographySettings.value>(
-  key: K,
-  value: typeof typographySettings.value[K],
-) => {
-  settingsStore.updateTypography({
-    [key]: value,
-  } as Partial<typeof typographySettings.value>);
+const onDragOver = (event: DragEvent, index: number) => {
+  if (!draggingBlockId.value) return;
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "move";
+  }
+  dropIndex.value = index;
 };
 
-const updateThemeValue = <K extends keyof typeof themeSettings.value>(
-  key: K,
-  value: typeof themeSettings.value[K],
-) => {
-  settingsStore.updateTheme({
-    [key]: value,
-  } as Partial<typeof themeSettings.value>);
+const onDragLeave = (index: number) => {
+  if (dropIndex.value === index) {
+    dropIndex.value = null;
+  }
 };
 
-const chooseHeaderImage = () => {
+const onDrop = (event: DragEvent, index: number) => {
+  if (!draggingBlockId.value) return;
+  event.preventDefault();
+  const fromIndex = blocks.value.findIndex((b) => b.id === draggingBlockId.value);
+  let targetIndex = index;
+  if (fromIndex < targetIndex) {
+    targetIndex -= 1;
+  }
+  applyBlockReorder(fromIndex, targetIndex);
+  draggingBlockId.value = null;
+  dropIndex.value = null;
+};
+
+const onDragOverEnd = (event: DragEvent) => {
+  if (!draggingBlockId.value) return;
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "move";
+  }
+  dropIndex.value = blocks.value.length;
+};
+
+const onDropToEnd = () => {
+  if (!draggingBlockId.value) return;
+  const fromIndex = blocks.value.findIndex((b) => b.id === draggingBlockId.value);
+  applyBlockReorder(fromIndex, blocks.value.length);
+  draggingBlockId.value = null;
+  dropIndex.value = null;
+};
+
+const onDragEnd = () => {
+  draggingBlockId.value = null;
+  dropIndex.value = null;
+};
+
+const handleSlashSelect = (type: FormBlock["type"]) => {
+  if (!focusedBlockId.value) {
+    closeSlashMenu();
+    return;
+  }
+
+  const index = blocks.value.findIndex((block) => block.id === focusedBlockId.value);
+  if (index === -1) {
+    closeSlashMenu();
+    return;
+  }
+
+  const block = { ...blocks.value[index] };
+  if (block.question?.includes("/")) {
+    const slashIndex = block.question.lastIndexOf("/");
+    block.question = block.question.slice(0, slashIndex).trimEnd();
+  }
+
+  block.type = type;
+
+  const categoryMap: Record<string, FormBlock["category"]> = {
+    short: "text",
+    long: "text",
+    email: "text",
+    phone: "text",
+    date: "text",
+    time: "text",
+    radio: "choice",
+    checkbox: "choices",
+    select: "choice",
+    rating: "rating",
+    slider: "rating",
+    file: "file",
+    yesno: "switch",
+  };
+  block.category = categoryMap[type] ?? "text";
+
+  if ((type === "radio" || type === "checkbox" || type === "select") && (!block.options || block.options.length === 0)) {
+    block.options = ["Option 1", "Option 2", "Option 3"];
+  }
+
+  blocks.value.splice(index, 1, block);
+  closeSlashMenu();
+  triggerSave();
+};
+
+const closeSlashMenu = () => {
+  showSlashMenu.value = false;
+  slashMenuFilter.value = "";
+};
+
+const handleUseAI = () => {
+  showAIDialog.value = true;
+};
+
+const handleGenerateAI = async () => {
+  if (!aiPrompt.value.trim()) return;
+  
+  isGenerating.value = true;
+  try {
+    const generatedBlocks = await generateFormBlocks(aiPrompt.value);
+    blocks.value.push(...generatedBlocks);
+    showAIDialog.value = false;
+    aiPrompt.value = "";
+    console.log("Questions generated successfully!");
+    triggerSave();
+  } catch (error) {
+    console.error("Failed to generate blocks:", error);
+    console.error("Failed to generate questions. Please try again.");
+  } finally {
+    isGenerating.value = false;
+  }
+};
+
+const handleBack = () => {
+  if (isSaving.value) {
+    console.log("Saving changes before leaving...");
+    setTimeout(() => {
+      router.push({ name: "forms" });
+    }, 1000);
+  } else {
+    router.push({ name: "forms" });
+  }
+};
+
+const handleConfigComplete = (config: FormConfig) => {
+  showConfigWizard.value = false;
+  applyConfigToSettings(config);
+  // Focus first block after config
+  setTimeout(() => {
+    if (blocks.value.length > 0) {
+      focusedBlockId.value = blocks.value[0].id;
+    }
+  }, 100);
+};
+
+const handleConfigSkip = () => {
+  showConfigWizard.value = false;
+  formConfig.value = buildConfigFromSettings();
+  // Focus first block after skip
+  setTimeout(() => {
+    if (blocks.value.length > 0) {
+      focusedBlockId.value = blocks.value[0].id;
+    }
+  }, 100);
+};
+
+const handleSettings = () => {
+  formConfig.value = buildConfigFromSettings();
+  showConfigWizard.value = true;
+};
+
+const updatePaymentAmount = () => {
+  const amount = parseFloat(paymentAmount.value) || 5;
+  const clamped = Math.max(1, Math.min(100, amount));
+  paymentAmount.value = clamped.toFixed(2);
+  settingsStore.updatePayment({
+    amount_cents: Math.round(clamped * 100),
+  });
+  showPaymentDialog.value = false;
+  triggerSave();
+};
+
+const handleLogoClick = () => {
+  imagePickerMode.value = 'logo';
   showImagePicker.value = true;
 };
 
-const handleHeaderImageSelect = (url: string) => {
-  showImagePicker.value = false;
-  settingsStore.updateHeader({
-    background: {
-      type: "image",
-      url,
-      position: headerSettings.value.background.type === "image" ? headerSettings.value.background.position : "center",
-      fit: headerSettings.value.background.type === "image" ? headerSettings.value.background.fit ?? "cover" : "cover",
-    },
-  });
-  toast.success("Header image updated");
-};
-
-const closeHeaderImagePicker = () => {
-  showImagePicker.value = false;
-};
-
-const togglePayments = (enabled: boolean) => {
-  settingsStore.setPaymentEnabled(enabled);
-  if (!enabled) {
-    inspectorTab.value = inspectorTab.value === "payments" ? "inspector" : inspectorTab.value;
+const handleImageSelected = (url: string) => {
+  if (imagePickerMode.value === 'logo') {
+    settingsStore.updateHeader({
+      logo_url: url,
+      enabled: true,
+    });
+  } else {
+    settingsStore.updateHeader({
+      footer_image_url: url,
+    });
   }
+  showImagePicker.value = false;
+  triggerSave();
 };
 
-const clampAmount = (value: number) => {
-  if (Number.isNaN(value) || value < 0) return 0;
-  if (value > 100) return 100;
-  return value;
+const handleImagePickerCancel = () => {
+  showImagePicker.value = false;
 };
 
-const updatePaymentAmount = (rawValue: string) => {
-  const dollars = clampAmount(parseFloat(rawValue));
-  settingsStore.updatePayment({ amount_cents: Math.round(dollars * 100) });
+const removeLogo = () => {
+  settingsStore.updateHeader({ logo_url: undefined, enabled: false });
+  if (formConfig.value) {
+    formConfig.value.showLogo = false;
+    formConfig.value.logoUrl = "";
+  }
+  triggerSave();
 };
 
-const updatePaymentValue = <K extends keyof FormPaymentSettings>(
-  key: K,
-  value: FormPaymentSettings[K],
-) => {
-  settingsStore.updatePayment({ [key]: value } as Partial<FormPaymentSettings>);
+const handleWebhooksClick = () => {
+  webhookStep.value = 'intro';
+  showWebhooksPanel.value = true;
 };
 
-const demandFreshValidation = () => {
-  paymentErrors.value = validatePaymentSettings(paymentSettings.value);
-  return paymentErrors.value.length === 0;
+const closeWebhooksModal = () => {
+  showWebhooksPanel.value = false;
+};
+
+const ensurePublishedSlug = async (): Promise<string | null> => {
+  if (!formId.value) return null;
+  const latest = await formStore.fetchForm(formId.value);
+  if (latest?.slug) {
+    return latest.slug;
+  }
+
+  const published = await formStore.publishForm(formId.value);
+  if (published?.slug) {
+    return published.slug;
+  }
+
+  toast.error("Publish failed. Please try again.");
+  return null;
+};
+
+const handlePreview = async () => {
+  if (!formId.value) return;
+
+  await saveForm();
+
+  const slug = await ensurePublishedSlug();
+  if (slug) {
+    window.open(`/f/${slug}`, "_blank");
+  }
 };
 
 const handlePublish = async () => {
-  if (!formId.value) return;
-  const canPublish = demandFreshValidation();
-  if (!canPublish) {
-    inspectorTab.value = "payments";
-    toast.error("Resolve payment issues before publishing.");
-    return;
-  }
+  if (!formId.value || blocks.value.length === 0) return;
 
-  if (editorStore.state.dirty || settingsStore.state.dirty) {
-    toast.info("Saving changes before publishing…");
-    await flushAutosave();
-  }
-
+  isPublishing.value = true;
   try {
-    isPublishing.value = true;
-    const response = await publishForm(formId.value);
-    editorStore.setForm(response);
-    settingsStore.hydrateFromDefinition(response);
-    toast.success("Form published successfully");
-  } catch (error: any) {
-    toast.error(error?.data?.message ?? "Failed to publish form");
+    await saveForm();
+    const slug = await ensurePublishedSlug();
+    if (slug) {
+      toast.success("Form published and ready to share");
+    }
+  } catch (error) {
+    console.error("Failed to publish form:", error);
+    const fallbackMessage = "Failed to publish form";
+    if (error && typeof error === "object" && "data" in error && typeof (error as any).data?.message === "string") {
+      toast.error((error as any).data.message as string);
+    } else if (error instanceof Error && error.message) {
+      toast.error(error.message);
+    } else {
+      toast.error(fallbackMessage);
+    }
   } finally {
     isPublishing.value = false;
   }
 };
 
-const logicRulesForQuestion = (questionId: string) =>
-  editorStore.logicRulesForOwner(questionId, "question");
-
-const addLogicRule = (questionId: string) => {
-  if (!questionId) return;
-  const rule = editorStore.createLogicRule({ ownerId: questionId, scope: "question" });
-  editorStore.updateLogicRule(rule.id, {
-    conditions: [
-      {
-        question_id: questionId,
-        operator: "equals",
-        value: true,
-      },
-    ],
-    actions: [
-      {
-        type: "jump_to_question",
-        target_id: questionId,
-      },
-    ],
-  });
-  toast.success("Logic rule created");
-};
-
-const toggleLogicType = (ruleId: string) => {
-  const rule = editorStore.state.logicRules.byId[ruleId];
-  if (!rule) return;
-  const nextType = rule.logic_type === "AND" ? "OR" : "AND";
-  editorStore.updateLogicRule(ruleId, { logic_type: nextType });
-};
-
-const removeLogicRule = (ruleId: string) => {
-  editorStore.removeLogicRule(ruleId);
-  toast.success("Logic rule removed");
-};
-
-watch(isSettingsView, (value) => {
-  if (value) {
-    inspectorTab.value = "inspector";
-  }
-});
-
-const beginPageDrag = (event: DragEvent, index: number) => {
-  if (isSettingsView.value) return;
-  dragState.kind = "page";
-  dragState.fromIndex = index;
-  dragState.pageId = pages.value[index]?.id ?? null;
-  dragState.overIndex = index;
-  if (event.dataTransfer) {
-    event.dataTransfer.setData("text/plain", "page");
-    event.dataTransfer.setData("application/x-builder", "page");
-    event.dataTransfer.effectAllowed = "move";
-    const dragImage = createDragImage(pages.value[index]?.title ?? "Page");
-    event.dataTransfer.setDragImage(dragImage, 0, 0);
-  }
-};
-
-const completePageDrop = (event: DragEvent, index: number) => {
-  event.preventDefault();
-  if (dragState.kind !== "page" || dragState.fromIndex === -1) return;
-  const targetIndex = dragState.overIndex !== -1 ? dragState.overIndex : index;
-  const clampedIndex = clamp(targetIndex, 0, pages.value.length - 1);
-  editorStore.reorderPages(dragState.fromIndex, clampedIndex);
-  selectedPageId.value = dragState.pageId;
-  resetDragState();
-};
-
-const hoverPage = (index: number) => {
-  if (dragState.kind === "page") {
-    dragState.overIndex = index;
-  }
-};
-
-const hoverQuestion = (index: number) => {
-  if (dragState.kind === "question") {
-    dragState.questionOverIndex = index;
-  }
-};
-
-const beginQuestionDrag = (event: DragEvent, pageId: string, index: number) => {
-  if (isSettingsView.value) return;
-  const question = questionsByPage(pageId)[index];
-  dragState.kind = "question";
-  dragState.pageId = pageId;
-  dragState.fromIndex = index;
-  dragState.questionId = question?.id ?? null;
-  dragState.questionOverIndex = index;
-  const label = question?.question ?? "Question";
-  if (event.dataTransfer) {
-    event.dataTransfer.setData("text/plain", label);
-    event.dataTransfer.setData("application/x-builder", `question:${pageId}`);
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setDragImage(createDragImage(label), 0, 0);
-  }
-};
-
-const completeQuestionDrop = (event: DragEvent, pageId: string, index: number) => {
-  event.preventDefault();
-  if (dragState.kind !== "question" || dragState.pageId !== pageId || dragState.fromIndex === -1) {
-    resetDragState();
-    return;
-  }
-  const questions = questionsByPage(pageId);
-  const targetIndex =
-    dragState.questionOverIndex !== -1 ? dragState.questionOverIndex : index;
-  const clampedIndex = clamp(targetIndex, 0, Math.max(questions.length - 1, 0));
-  editorStore.reorderQuestions(pageId, dragState.fromIndex, clampedIndex);
-  if (dragState.questionId) {
-    selectedQuestionId.value = dragState.questionId;
-  }
-  resetDragState();
-};
-
-const resetDragState = () => {
-  dragState.kind = null;
-  dragState.fromIndex = -1;
-  dragState.pageId = null;
-  dragState.questionId = null;
-  dragState.overIndex = -1;
-  dragState.questionOverIndex = -1;
-};
-
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-
-const createDragImage = (label: string) => {
-  const el = document.createElement("div");
-  el.textContent = label;
-  el.style.position = "absolute";
-  el.style.pointerEvents = "none";
-  el.style.background = "rgba(37, 99, 235, 0.9)";
-  el.style.color = "white";
-  el.style.padding = "4px 8px";
-  el.style.borderRadius = "6px";
-  el.style.fontSize = "12px";
-  document.body.appendChild(el);
-  setTimeout(() => document.body.removeChild(el), 0);
-  return el;
-};
-
-const pageDisplayName = (index: number, title?: string) => title || `Page ${index + 1}`;
-
-const questionDisplayName = (questionIndex: number, questionType: string, title?: string) => {
-  if (title) return title;
-  const formatted = questionType.charAt(0).toUpperCase() + questionType.slice(1);
-  return `${formatted} question ${questionIndex + 1}`;
-};
-
-const formId = computed(() => (route.params.id as string) ?? "");
-
-const isDirty = computed(() => editorStore.state.dirty || settingsStore.state.dirty);
-const isSaving = computed(() => autosave.isSaving.value);
-const lastSavedAt = computed(() => autosave.lastSavedAt.value);
-const lastError = computed(() => autosave.lastError.value);
-const paymentSettings = computed(() => settingsStore.state.payment);
-const paymentErrors = ref<string[]>([]);
-
-const validatePaymentSettings = (payment: FormPaymentSettings) => {
-  if (!payment.enabled) return [];
-  const errors: string[] = [];
-  if (payment.amount_cents <= 0) {
-    errors.push("Payment amount must be greater than zero.");
-  }
-  if (payment.amount_cents > 10000) {
-    errors.push("Payment amount cannot exceed $100.00.");
-  }
-  if (!payment.currency) {
-    errors.push("Select a currency.");
-  }
-  if (payment.mode === "custom") {
-    if (!payment.stripe_publishable_key?.trim()) {
-      errors.push("Stripe publishable key is required for custom mode.");
-    }
-    if (!payment.stripe_account_id?.trim()) {
-      errors.push("Stripe account ID is required for custom mode.");
-    }
-  }
-  return errors;
-};
-
+// Load form data
 watch(
-  paymentSettings,
+  () => settingsStore.state.payment.amount_cents,
   () => {
-    paymentErrors.value = validatePaymentSettings(paymentSettings.value);
+    syncPaymentAmountFromStore();
   },
-  { deep: true, immediate: true },
+  { immediate: true }
 );
 
-const publishBlocked = computed(() => paymentErrors.value.length > 0);
-const isPublishing = ref(false);
-
-const handleQuestionsUpdate = (questions: any[]) => {
-  if (!activePageId.value) return;
-  
-  // Remove all existing questions for this page
-  const existingQuestions = questionsByPage(activePageId.value);
-  existingQuestions.forEach((q) => {
-    editorStore.removeQuestion(q.id);
-  });
-  
-  // Add updated questions
-  questions.forEach((question, index) => {
-    editorStore.createQuestion(activePageId.value!, {
-      ...question,
-      page_id: activePageId.value,
-      position: index,
-    });
-  });
-};
-
-const handleTitleUpdate = (title: string) => {
-  editorStore.state.metadata.title = title;
-  editorStore.state.dirty = true;
-};
-
-const handleDescriptionUpdate = (description: string) => {
-  // Store description in page metadata for now
-  if (activePageId.value) {
-    const page = editorStore.state.pages.byId[activePageId.value];
-    if (page) {
-      page.description = description;
-      editorStore.state.dirty = true;
+watch(
+  () => settingsStore.state.header.logo_url,
+  () => {
+    if (!formConfig.value) return;
+    formConfig.value.logoUrl = settingsStore.state.header.logo_url || "";
+    formConfig.value.showLogo = Boolean(settingsStore.state.header.enabled && settingsStore.state.header.logo_url);
+    if (typeof settingsStore.state.header.logo_width === 'number') {
+      logoWidth.value = clampLogoWidth(settingsStore.state.header.logo_width);
     }
   }
-};
+);
 
-const hydrate = async () => {
-  if (!formId.value) return;
-  autosave.toggleAutosave(false);
-  const definition = await formStore.fetchForm(formId.value);
-  if (!definition) {
-    toast.error("Failed to load form.");
-    router.replace({ name: "forms" });
-    return;
+watch(
+  () => settingsStore.state.header.footer_image_url,
+  () => {
+    if (!formConfig.value) return;
+    formConfig.value.footerImageUrl = settingsStore.state.header.footer_image_url || "";
+    formConfig.value.showFooter = Boolean(settingsStore.state.header.footer_image_url);
   }
+);
 
-  editorStore.setForm(definition);
-  settingsStore.hydrateFromDefinition(definition);
-  playerStore.setFormDefinition(definition, definition.slug ?? "");
-  
-  // Auto-select first page
-  const firstPageId = definition.pages?.[0]?.id ?? null;
-  selectedPageId.value = firstPageId;
-  selectedQuestionId.value = definition.pages?.[0]?.question_order?.[0] ?? null;
-  
-  isHydrated.value = true;
-  autosave.prime();
-  autosave.toggleAutosave(true);
-};
-
-const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-  if (!isDirty.value) return;
-  event.preventDefault();
-  event.returnValue = "";
-};
-
-const flushAutosave = async () => {
-  await autosave.flush();
-  toast.success("All changes saved");
-};
+const normalizeTemplateBlock = (block: any): FormBlock => ({
+  id: block.id ?? crypto.randomUUID(),
+  type: block.type ?? "short",
+  category: block.category ?? "text",
+  question: block.question ?? "Untitled question",
+  description: block.description ?? "",
+  placeholder: block.placeholder ?? "",
+  required: Boolean(block.required),
+  options: block.options ? [...block.options] : undefined,
+  validation: block.validation,
+  iconType: block.iconType,
+  allowHalf: block.allowHalf,
+  min: block.min,
+  max: block.max,
+  allowedTypes: block.allowedTypes,
+  maxSize: block.maxSize,
+  multiple: block.multiple,
+});
 
 onMounted(async () => {
-  await hydrate();
-  window.addEventListener("beforeunload", handleBeforeUnload);
+  if (formId.value) {
+    const form = await formStore.fetchForm(formId.value);
+    if (form) {
+      formTitle.value = form.title || "";
+      
+      // Load settings from form
+      settingsStore.hydrateFromDefinition(form as any);
+      formConfig.value = buildConfigFromSettings();
+      syncPaymentAmountFromStore();
+      
+      // Check if this is a new form (no questions yet)
+      isNewForm.value = !form.questions || form.questions.length === 0;
+
+      let hydratedFromTemplate = false;
+
+      if (isNewForm.value && form.id) {
+        const storageKey = `${TEMPLATE_STORAGE_PREFIX}${form.id}`;
+        const templatePayload = sessionStorage.getItem(storageKey);
+        if (templatePayload) {
+          try {
+            const parsed = JSON.parse(templatePayload) as {
+              title?: string;
+              description?: string;
+              blocks?: any[];
+            };
+
+            formTitle.value = parsed.title || formTitle.value;
+            formDescription.value = parsed.description || formDescription.value;
+            const templateBlocks = parsed.blocks?.map(normalizeTemplateBlock) ?? [];
+            if (templateBlocks.length) {
+              blocks.value = templateBlocks;
+              hydratedFromTemplate = true;
+              showConfigWizard.value = false;
+              isNewForm.value = false;
+              focusedBlockId.value = templateBlocks[0].id;
+            }
+          } catch (error) {
+            console.error("Failed to hydrate template payload:", error);
+          } finally {
+            sessionStorage.removeItem(storageKey);
+          }
+        }
+      }
+      
+      if (isNewForm.value && !hydratedFromTemplate) {
+        // Show configuration wizard for new forms
+        showConfigWizard.value = true;
+      }
+      
+      // Convert all pages and questions to blocks
+      const allBlocks: FormBlock[] = [];
+      
+      if (!hydratedFromTemplate && form.pages && form.pages.length > 0) {
+        // Sort pages by position
+        const sortedPages = [...form.pages].sort((a, b) => a.position - b.position);
+        
+        sortedPages.forEach((page, pageIndex) => {
+          // Add page description as first block if exists
+          if (pageIndex === 0 && page.description) {
+            formDescription.value = page.description;
+          }
+          
+          // Get questions for this page
+          const pageQuestions = form.questions?.filter(q => q.page_id === page.id) || [];
+          const sortedQuestions = [...pageQuestions].sort((a, b) => {
+            const posA = (a as any).position || 0;
+            const posB = (b as any).position || 0;
+            return posA - posB;
+          });
+          
+          // Convert questions to blocks
+          sortedQuestions.forEach(q => {
+            allBlocks.push({
+              id: q.id,
+              type: q.type as any,
+              category: q.category as any,
+              question: q.question || "",
+              description: q.description,
+              placeholder: q.placeholder,
+              required: q.required || false,
+              options: (q as any).options?.map((opt: any) => 
+                typeof opt === "string" ? opt : opt.label || opt.value
+              ),
+            });
+          });
+          
+          // Add page break block after each page except the last
+          if (pageIndex < sortedPages.length - 1) {
+            allBlocks.push({
+              id: `pagebreak-${page.id}`,
+              type: "pagebreak" as any,
+              category: "text" as any,
+              question: `Page ${pageIndex + 2}`,
+              description: page.title || `Page ${pageIndex + 2}`,
+              required: false,
+            });
+          }
+        });
+      }
+      
+      if (!hydratedFromTemplate) {
+        blocks.value = allBlocks;
+        
+        // Auto-focus first block after loading
+        setTimeout(() => {
+          if (!isNewForm.value && blocks.value.length > 0) {
+            focusedBlockId.value = blocks.value[0].id;
+          }
+        }, 300);
+      }
+    }
+  }
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener("beforeunload", handleBeforeUnload);
-  autosave.stopWatching();
+  if (saveTimeout) clearTimeout(saveTimeout);
 });
-
-onBeforeRouteLeave((_to, _from, next) => {
-  if (!isDirty.value) {
-    next();
-    return;
-  }
-  const confirmed = window.confirm(
-    "You have unsaved changes. Are you sure you want to leave without saving?",
-  );
-  if (confirmed) {
-    next();
-  } else {
-    next(false);
-  }
-});
-
-watch(
-  () => route.params.id,
-  async (newId, oldId) => {
-    if (newId && newId !== oldId) {
-      isHydrated.value = false;
-      await hydrate();
-    }
-  },
-);
 </script>
 
-<template>
-  <div class="builder text-slate-900 dark:text-slate-100" v-if="isHydrated" :style="themeCssVars">
-    <header class="builder__topbar bg-white/60 border-b border-slate-200 backdrop-blur-lg dark:bg-slate-900/80 dark:border-slate-700">
-      <div class="builder__title">
-        <h1>{{ editorStore.state.metadata.title }}</h1>
-        <span v-if="lastSavedAt" class="builder__timestamp">Saved {{ new Date(lastSavedAt).toLocaleTimeString() }}</span>
-        <span v-else class="builder__timestamp">Unsaved changes</span>
-      </div>
-      <div class="builder__actions">
-        <span v-if="isSaving" class="builder__indicator builder__indicator--saving text-primary-600 dark:text-primary-400">Saving…</span>
-        <span v-else-if="lastError" class="builder__indicator builder__indicator--error text-red-600 dark:text-red-400">{{ lastError }}</span>
-        <button class="builder__button border border-gray-200 bg-white text-slate-900 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-slate-100 dark:hover:bg-gray-700" type="button" @click="flushAutosave">Save now</button>
-        <button
-          class="builder__button builder__button--primary text-white dark:text-white dark:shadow-primary-900/30"
-          type="button"
-          :disabled="publishBlocked || isPublishing"
-          @click="handlePublish"
-        >
-          {{ isPublishing ? "Publishing…" : publishBlocked ? "Resolve issues" : "Publish" }}
-        </button>
-      </div>
-    </header>
-
-    <div class="builder__body">
-      <aside class="builder__sidebar border border-slate-200 dark:bg-gray-900 dark:border-gray-700">
-        <header class="builder__panel-header">
-          <h2 class="builder__panel-title">Structure</h2>
-          <button class="builder__panel-action border border-gray-200 bg-white text-slate-900 rounded-md px-2.5 py-1.5 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-slate-100 dark:hover:bg-gray-700" type="button" @click="addPage">+ Page</button>
-        </header>
-        <div class="builder__panel-content builder__panel-content--list">
-          <ul
-            class="builder__page-list"
-            @dragover.prevent
-            @dragenter="dragState.kind === 'page' && hoverPage(pages.length - 1)"
-            @drop="!isSettingsView && completePageDrop($event, pages.length - 1)"
-          >
-            <li
-              v-for="(page, pageIndex) in pages"
-              :key="page.id"
-              class="builder__page-item"
-              :class="{
-                'is-dragging': dragState.kind === 'page' && dragState.pageId === page.id,
-                'is-drop-target': dragState.kind === 'page' && dragState.overIndex === pageIndex,
-              }"
-              :draggable="!isSettingsView"
-              @dragstart="beginPageDrag($event, pageIndex)"
-              @dragover.prevent
-              @dragenter="hoverPage(pageIndex)"
-              @drop="completePageDrop($event, pageIndex)"
-              @dragend="resetDragState"
-            >
-              <button
-                type="button"
-                class="builder__page-button dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
-                :class="{
-                  'builder__page-button--active': !isSettingsView && page.id === activePageId,
-                  'builder__page-button--disabled': isSettingsView,
-                }"
-                :disabled="isSettingsView"
-                @click="!isSettingsView && selectPage(page.id)"
-              >
-                <span class="builder__page-index">{{ pageIndex + 1 }}</span>
-                <span class="builder__page-title text-slate-700 dark:text-slate-300">{{ pageDisplayName(pageIndex, page.title) }}</span>
-              </button>
-
-              <div class="builder__page-controls">
-                <button
-                  type="button"
-                  class="builder__icon-button dark:text-slate-300 hover:dark:text-slate-100"
-                  :disabled="isSettingsView"
-                  @click="movePage(page.id, 'up')"
-                >
-                  ▲
-                </button>
-                <button
-                  type="button"
-                  class="builder__icon-button dark:text-slate-300 hover:dark:text-slate-100"
-                  :disabled="isSettingsView"
-                  @click="movePage(page.id, 'down')"
-                >
-                  ▼
-                </button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger as-child>
-                    <button class="builder__icon-button dark:text-slate-300 hover:dark:text-slate-100" type="button" :disabled="isSettingsView">
-                      <MoreVertical class="builder__icon" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" :side-offset="4">
-                    <DropdownMenuItem @select.prevent="() => duplicatePageItem(page.id)">
-                      <Copy class="builder__menu-icon" />
-                      Duplicate page
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <ul
-                class="builder__question-list"
-                @dragover.prevent
-                @dragenter="dragState.kind === 'question' && hoverQuestion(questionsByPage(page.id).length - 1)"
-                @drop="!isSettingsView && completeQuestionDrop($event, page.id, questionsByPage(page.id).length - 1)"
-              >
-                <li
-                  v-for="(question, questionIndex) in questionsByPage(page.id)"
-                  :key="question?.id ?? `${page.id}-${questionIndex}`"
-                  class="builder__question-item"
-                  :class="{
-                    'is-dragging':
-                      dragState.kind === 'question' && dragState.questionId === (question?.id ?? null),
-                    'is-drop-target':
-                      dragState.kind === 'question' && dragState.questionOverIndex === questionIndex,
-                  }"
-                  :draggable="!isSettingsView"
-                  @dragstart="beginQuestionDrag($event, page.id, questionIndex)"
-                  @dragover.prevent
-                  @dragenter="hoverQuestion(questionIndex)"
-                  @drop="completeQuestionDrop($event, page.id, questionIndex)"
-                  @dragend="resetDragState"
-                >
-                  <button
-                    type="button"
-                    class="builder__question-button dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
-                    :class="{
-                      'builder__question-button--active': !isSettingsView && question?.id === activeQuestionId,
-                      'builder__question-button--disabled': isSettingsView,
-                    }"
-                    :disabled="isSettingsView"
-                    @click="!isSettingsView && question && selectQuestion(question.id)"
-                  >
-                    <span class="builder__question-index">Q{{ questionIndex + 1 }}</span>
-                    <span class="builder__question-title text-slate-700 dark:text-slate-300">
-                      {{ questionDisplayName(questionIndex, question?.type ?? "question", question?.question) }}
-                    </span>
-                  </button>
-
-                  <div class="builder__question-controls">
-                    <button
-                      type="button"
-                      class="builder__icon-button dark:text-slate-300 hover:dark:text-slate-100"
-                      :disabled="!question || isSettingsView"
-                      @click="question && !isSettingsView && moveQuestion(page.id, question.id, 'up')"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      type="button"
-                      class="builder__icon-button dark:text-slate-300 hover:dark:text-slate-100"
-                      :disabled="!question || isSettingsView"
-                      @click="question && !isSettingsView && moveQuestion(page.id, question.id, 'down')"
-                    >
-                      ▼
-                    </button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger as-child>
-                        <button class="builder__icon-button dark:text-slate-300 hover:dark:text-slate-100" type="button" :disabled="isSettingsView || !question">
-                          <MoreVertical class="builder__icon" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" :side-offset="4">
-                        <DropdownMenuItem
-                          @select.prevent="() => question && duplicateQuestionItem(page.id, question.id, questionIndex)"
-                        >
-                          <Copy class="builder__menu-icon" />
-                          Duplicate question
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          class="builder__menu-item--destructive"
-                          @select.prevent="() => question && deleteQuestionItem(page.id, question.id)"
-                        >
-                          <Trash2 class="builder__menu-icon" />
-                          Delete question
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </li>
-              </ul>
-
-              <button class="builder__add-question border border-dashed border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800/60" type="button" :disabled="isSettingsView" @click="!isSettingsView && addQuestion(page.id)">+ Question</button>
-            </li>
-          </ul>
-        </div>
-      </aside>
-
-      <main class="builder__canvas dark:bg-slate-900 dark:border-slate-600">
-        <div class="builder__canvas-inner dark:bg-gray-900 dark:border-gray-700 text-slate-500 dark:text-slate-400">
-          <BlockEditorWrapper
-            v-if="activePageId && !isSettingsView"
-            :questions="questionsByPage(activePageId)"
-            :title="editorStore.state.metadata.title"
-            :description="editorStore.state.pages.byId[activePageId]?.description"
-            @update:questions="handleQuestionsUpdate"
-            @update:title="handleTitleUpdate"
-            @update:description="handleDescriptionUpdate"
-          />
-          <div v-else class="builder__canvas-content">
-            <p class="builder__placeholder text-slate-500 dark:text-slate-400">Select a page to edit questions</p>
-            <div
-              v-if="lastLogicRuleId"
-              class="builder__logic-feedback dark:bg-primary-900/20 dark:text-primary-300"
-            >
-              <strong>Last logic rule:</strong>
-              <span>{{ lastLogicRuleId }}</span>
-              <span v-if="lastLogicMessage" class="builder__logic-feedback-message text-slate-700 dark:text-slate-300">{{ lastLogicMessage }}</span>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <aside class="builder__inspector border border-slate-200 dark:bg-gray-900 dark:border-gray-700">
-        <div class="builder__inspector-tabs">
-          <button
-            type="button"
-            class="builder__inspector-tab dark:bg-slate-700 dark:text-slate-300"
-            :class="{ 'builder__inspector-tab--active': inspectorTab === 'inspector' }"
-            @click="openInspectorTab('inspector')"
-          >
-            Inspector
-          </button>
-          <button
-            type="button"
-            class="builder__inspector-tab dark:bg-slate-700 dark:text-slate-300"
-            :class="{ 'builder__inspector-tab--active': inspectorTab === 'logic' }"
-            :disabled="isSettingsView"
-            @click="openInspectorTab('logic')"
-          >
-            Logic
-          </button>
-          <button
-            type="button"
-            class="builder__inspector-tab dark:bg-slate-700 dark:text-slate-300"
-            :class="{ 'builder__inspector-tab--active': inspectorTab === 'design' }"
-            :disabled="isSettingsView"
-            @click="openDesignTab"
-          >
-            Design
-          </button>
-          <button
-            type="button"
-            class="builder__inspector-tab dark:bg-slate-700 dark:text-slate-300"
-            :class="{ 'builder__inspector-tab--active': inspectorTab === 'payments' }"
-            @click="openPaymentsTab"
-          >
-            Payments
-          </button>
-        </div>
-        <h2 class="builder__panel-title dark:text-slate-200">{{ inspectorTitle }}</h2>
-        <div class="builder__panel-content text-slate-600 dark:text-slate-300">
-          <template v-if="isSettingsView || inspectorTab === 'inspector'">
-            <p v-if="isSettingsView" class="builder__placeholder">Form settings controls coming soon.</p>
-            <div v-else class="builder__inspector-stack">
-              <p class="builder__placeholder">Contextual settings inspector.</p>
-              <div v-if="activeQuestion && activeQuestion.type === 'file'" class="builder__preview">
-                <p class="builder__preview-title">File question preview</p>
-                <input class="builder__preview-input" type="file" disabled />
-                <ul class="builder__preview-files">
-                  <li>example.pdf</li>
-                </ul>
-              </div>
-              <WebhooksPanel :formId="String(route.params.id || '')" />
-            </div>
-          </template>
-
-          <template v-else-if="inspectorTab === 'logic'">
-            <div v-if="orderedQuestions.length" class="logic-list">
-              <section
-                v-for="item in orderedQuestions"
-                :key="item.question.id"
-                class="logic-list__group dark:bg-slate-900 dark:border-slate-700"
-              >
-                <header class="logic-list__header">
-                  <div>
-                    <h3 class="logic-list__title dark:text-slate-200">{{ item.question.question }}</h3>
-                    <p class="logic-list__subtitle text-slate-500 dark:text-slate-400">Q{{ item.pageIndex + 1 }}.{{ item.questionIndex + 1 }}</p>
-                  </div>
-                  <button
-                    type="button"
-                    class="builder__button builder__button--sm border-gray-200 bg-white text-slate-900 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-slate-100 dark:hover:bg-gray-700"
-                    @click="addLogicRule(item.question.id)"
-                  >
-                    + Rule
-                  </button>
-                </header>
-
-                <ul v-if="logicRulesForQuestion(item.question.id).length" class="logic-rule-list">
-                  <li
-                    v-for="(rule, ruleIndex) in logicRulesForQuestion(item.question.id)"
-                    :key="rule.id"
-                    class="logic-rule dark:bg-gray-900 dark:border-gray-700"
-                  >
-                    <div class="logic-rule__header">
-                      <span class="logic-rule__label dark:text-slate-200">Rule {{ ruleIndex + 1 }} · {{ rule.logic_type }}</span>
-                      <div class="logic-rule__badges">
-                        <span v-if="logicDiagnostics[rule.id]?.length" class="logic-rule__badge logic-rule__badge--error">
-                          {{ logicDiagnostics[rule.id].length }} issue{{ logicDiagnostics[rule.id].length > 1 ? "s" : "" }}
-                        </span>
-                        <button
-                          type="button"
-                          class="builder__icon-button builder__icon-button--ghost dark:text-slate-300 hover:dark:text-slate-100"
-                          @click="toggleLogicType(rule.id)"
-                        >
-                          ↻ Type
-                        </button>
-                        <button
-                          type="button"
-                          class="builder__icon-button builder__icon-button--ghost dark:text-slate-300 hover:dark:text-slate-100"
-                          @click="removeLogicRule(rule.id)"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                    <p class="logic-rule__meta text-slate-600 dark:text-slate-400">
-                      {{ rule.conditions.length }} condition{{ rule.conditions.length === 1 ? "" : "s" }} ·
-                      {{ rule.actions.length }} action{{ rule.actions.length === 1 ? "" : "s" }}
-                    </p>
-                  </li>
-                </ul>
-
-                <p v-else class="logic-list__empty text-slate-600 dark:text-slate-400">No rules yet. Add a rule to control flow from this question.</p>
-              </section>
-            </div>
-
-            <p v-else class="builder__placeholder">Add questions to configure logic.</p>
-          </template>
-
-          <template v-else-if="inspectorTab === 'design'">
-            <section class="design-section dark:bg-gray-900 dark:border-gray-700">
-              <header class="design-section__header">
-                <div>
-                  <h3 class="design-section__title dark:text-slate-200">Header</h3>
-                  <p class="design-section__subtitle text-slate-600 dark:text-slate-400">Control hero background and overlay.</p>
-                </div>
-                <label class="design-toggle">
-                  <input
-                    type="checkbox"
-                    :checked="headerSettings.enabled"
-                    @change="setHeaderEnabled(($event.target as HTMLInputElement).checked)"
-                  />
-                  <span>Enabled</span>
-                </label>
-              </header>
-
-              <div class="design-grid">
-                <label class="design-field">
-                  <span>Background type</span>
-                  <select
-                    class="design-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    :value="headerSettings.background.type"
-                    @change="setHeaderBackgroundType(($event.target as HTMLSelectElement).value as 'solid' | 'gradient' | 'image')"
-                  >
-                    <option value="solid">Solid color</option>
-                    <option value="gradient">Gradient</option>
-                    <option value="image">Image</option>
-                  </select>
-                </label>
-
-                <template v-if="headerSettings.background.type === 'solid'">
-                  <label class="design-field">
-                    <span>Color</span>
-                    <input
-                      class="design-field__control design-field__control--color"
-                      type="color"
-                      :value="headerSettings.background.color"
-                      @input="setHeaderSolidColor(($event.target as HTMLInputElement).value)"
-                    />
-                  </label>
-                </template>
-
-                <template v-else-if="headerSettings.background.type === 'gradient'">
-                  <label class="design-field">
-                    <span>Angle</span>
-                    <input
-                      class="design-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      type="number"
-                      min="0"
-                      max="360"
-                      :value="headerSettings.background.angle ?? 135"
-                      @input="setHeaderGradientValue('angle', Number(($event.target as HTMLInputElement).value))"
-                    />
-                  </label>
-                  <label class="design-field">
-                    <span>Start color</span>
-                    <input
-                      class="design-field__control design-field__control--color dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      type="color"
-                      :value="headerSettings.background.colors?.[0] ?? '#2563EB'"
-                      @input="setHeaderGradientValue('color', ($event.target as HTMLInputElement).value, 0)"
-                    />
-                  </label>
-                  <label class="design-field">
-                    <span>End color</span>
-                    <input
-                      class="design-field__control design-field__control--color"
-                      type="color"
-                      :value="headerSettings.background.colors?.[1] ?? '#9333EA'"
-                      @input="setHeaderGradientValue('color', ($event.target as HTMLInputElement).value, 1)"
-                    />
-                  </label>
-                  <div class="design-field design-field--full">
-                    <span>Presets</span>
-                    <div class="design-gradient-swatches">
-                      <button
-                        v-for="(preset, index) in gradientPresets"
-                        :key="`gradient-${index}`"
-                        type="button"
-                        class="design-gradient-swatches__item"
-                        :style="{
-                          backgroundImage: `linear-gradient(135deg, ${preset[0]}, ${preset[1]})`,
-                        }"
-                        @click="applyGradientPreset(preset)"
-                      ></button>
-                    </div>
-                  </div>
-                </template>
-
-                <template v-else>
-                  <div class="design-field design-field--full">
-                    <span>Background image</span>
-                    <button class="builder__button builder__button--sm" type="button" @click="chooseHeaderImage">
-                      Select image
-                    </button>
-                    <p class="design-field__hint" v-if="!headerSettings.background.url">
-                      No image selected yet.
-                    </p>
-                    <p class="design-field__hint" v-else>{{ headerSettings.background.url }}</p>
-                  </div>
-                </template>
-
-                <label class="design-field design-field--full">
-                  <span>Overlay color</span>
-                  <input
-                    class="design-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    type="text"
-                    placeholder="rgba(15, 23, 42, 0.55)"
-                    :value="headerSettings.overlay_color ?? ''"
-                    @input="setHeaderOverlayColor(($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-              </div>
-            </section>
-
-            <div class="design-preview">
-              <div class="design-preview__header" :style="headerBackgroundStyle">
-                <div class="design-preview__overlay" :style="headerOverlayStyle"></div>
-                <div class="design-preview__content">
-                  <h4>Preview title</h4>
-                  <p>Engaging subtitle showcasing typography.</p>
-                  <button type="button" class="design-preview__button" :style="previewButtonStyle">Primary CTA</button>
-                </div>
-              </div>
-            </div>
-
-            <section class="design-section dark:bg-gray-900 dark:border-gray-700">
-              <header class="design-section__header">
-                <div>
-                  <h3 class="design-section__title dark:text-slate-200">Typography</h3>
-                  <p class="design-section__subtitle text-slate-600 dark:text-slate-400">Choose fonts and adjust rhythm.</p>
-                </div>
-              </header>
-
-              <div class="design-grid">
-                <label class="design-field">
-                  <span>Heading font</span>
-                  <select
-                    class="design-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    :value="typographySettings.heading_font_family"
-                    @change="updateTypographyValue('heading_font_family', ($event.target as HTMLSelectElement).value)"
-                  >
-                    <option v-for="font in fontOptions" :key="`heading-${font}`" :value="font">
-                      {{ font }}
-                    </option>
-                  </select>
-                </label>
-
-                <label class="design-field">
-                  <span>Heading weight</span>
-                  <input
-                    class="design-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    type="text"
-                    :value="typographySettings.heading_font_weight ?? ''"
-                    placeholder="600"
-                    @input="updateTypographyValue('heading_font_weight', ($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-
-                <label class="design-field">
-                  <span>Body font</span>
-                  <select
-                    class="design-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    :value="typographySettings.body_font_family"
-                    @change="updateTypographyValue('body_font_family', ($event.target as HTMLSelectElement).value)"
-                  >
-                    <option v-for="font in fontOptions" :key="`body-${font}`" :value="font">
-                      {{ font }}
-                    </option>
-                  </select>
-                </label>
-
-                <label class="design-field">
-                  <span>Body weight</span>
-                  <input
-                    class="design-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    type="text"
-                    :value="typographySettings.body_font_weight ?? ''"
-                    placeholder="400"
-                    @input="updateTypographyValue('body_font_weight', ($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-
-                <label class="design-field">
-                  <span>Line height</span>
-                  <input
-                    class="design-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    type="number"
-                    step="0.05"
-                    min="1"
-                    max="3"
-                    :value="typographySettings.line_height ?? 1.6"
-                    @input="updateTypographyValue('line_height', Number(($event.target as HTMLInputElement).value))"
-                  />
-                </label>
-
-                <label class="design-field">
-                  <span>Letter spacing</span>
-                  <input
-                    class="design-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    type="number"
-                    step="0.1"
-                    min="-2"
-                    max="10"
-                    :value="typographySettings.letter_spacing ?? 0"
-                    @input="updateTypographyValue('letter_spacing', Number(($event.target as HTMLInputElement).value))"
-                  />
-                </label>
-              </div>
-            </section>
-
-            <section class="design-section dark:bg-gray-900 dark:border-gray-700">
-              <header class="design-section__header">
-                <div>
-                  <h3 class="design-section__title dark:text-slate-200">Theme</h3>
-                  <p class="design-section__subtitle text-slate-600 dark:text-slate-400">Update brand colors and UI details.</p>
-                </div>
-              </header>
-
-              <div class="design-grid">
-                <label class="design-field">
-                  <span>Primary color</span>
-                  <input
-                    class="design-field__control design-field__control--color"
-                    type="color"
-                    :value="themeSettings.primary_color"
-                    @input="updateThemeValue('primary_color', ($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-
-                <label class="design-field">
-                  <span>Secondary color</span>
-                  <input
-                    class="design-field__control design-field__control--color"
-                    type="color"
-                    :value="themeSettings.secondary_color ?? '#1E293B'"
-                    @input="updateThemeValue('secondary_color', ($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-
-                <label class="design-field">
-                  <span>Accent color</span>
-                  <input
-                    class="design-field__control design-field__control--color"
-                    type="color"
-                    :value="themeSettings.accent_color ?? '#D946EF'"
-                    @input="updateThemeValue('accent_color', ($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-
-                <label class="design-field">
-                  <span>Button style</span>
-                  <select
-                    class="design-field__control"
-                    :value="themeSettings.button_style ?? 'solid'"
-                    @change="updateThemeValue('button_style', ($event.target as HTMLSelectElement).value as typeof buttonStyleOptions[number])"
-                  >
-                    <option v-for="style in buttonStyleOptions" :key="style" :value="style">
-                      {{ style.charAt(0).toUpperCase() + style.slice(1) }}
-                    </option>
-                  </select>
-                </label>
-
-                <label class="design-field">
-                  <span>Border radius</span>
-                  <input
-                    class="design-field__control"
-                    type="text"
-                    placeholder="0.75rem"
-                    :value="themeSettings.border_radius ?? '0.75rem'"
-                    @input="updateThemeValue('border_radius', ($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-
-                <label class="design-field design-field--full">
-                  <span>Background color</span>
-                  <input
-                    class="design-field__control design-field__control--color"
-                    type="color"
-                    :value="themeSettings.background_color ?? '#FFFFFF'"
-                    @input="updateThemeValue('background_color', ($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-              </div>
-            </section>
-          </template>
-
-          <template v-else>
-            <section class="payments-section">
-              <header class="payments-section__header">
-                <div>
-                  <h3>Collect payments</h3>
-                  <p>Enable to require respondents to pay before submitting.</p>
-                </div>
-                <label class="payments-toggle">
-                  <input
-                    type="checkbox"
-                    :checked="paymentSettings.enabled"
-                    @change="togglePayments(($event.target as HTMLInputElement).checked)"
-                  />
-                  <span>{{ paymentSettings.enabled ? "Enabled" : "Disabled" }}</span>
-                </label>
-              </header>
-
-              <p v-if="paymentErrors.length" class="payments-warning text-red-600 dark:text-red-400">
-                Resolve the issues below before publishing.
-              </p>
-
-              <div class="payments-grid" :class="{ 'payments-grid--disabled': !paymentSettings.enabled }">
-                <label class="payments-field">
-                  <span>Amount</span>
-                  <div class="payments-amount">
-                    <input
-                      class="payments-field__control payments-field__control--amount dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      type="number"
-                      min="1"
-                      max="10000"
-                      step="1"
-                      :value="paymentSettings.amount_cents / 100"
-                      :disabled="!paymentSettings.enabled"
-                      @input="updatePaymentAmount(($event.target as HTMLInputElement).value)"
-                    />
-                    <select
-                      class="payments-field__control payments-field__control--currency dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      :value="paymentSettings.currency"
-                      :disabled="!paymentSettings.enabled"
-                      @change="updatePaymentValue('currency', ($event.target as HTMLSelectElement).value)"
-                    >
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
-                    </select>
-                  </div>
-                  <small class="payments-field__hint">Maximum $100.00 (or currency equivalent).</small>
-                </label>
-
-                <label class="payments-field">
-                  <span>Mode</span>
-                  <select
-                    class="payments-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    :value="paymentSettings.mode"
-                    :disabled="!paymentSettings.enabled"
-                    @change="updatePaymentValue('mode', ($event.target as HTMLSelectElement).value as FormPaymentMode)"
-                  >
-                    <option value="platform">Use platform (5% fee)</option>
-                    <option value="custom">Use my Stripe account</option>
-                  </select>
-                </label>
-
-                <label class="payments-field payments-field--full" v-if="paymentSettings.mode === 'custom'">
-                  <span>Stripe publishable key</span>
-                  <input
-                    class="payments-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    type="text"
-                    placeholder="pk_live_..."
-                    :value="paymentSettings.stripe_publishable_key ?? ''"
-                    :disabled="!paymentSettings.enabled"
-                    @input="updatePaymentValue('stripe_publishable_key', ($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-
-                <label class="payments-field payments-field--full" v-if="paymentSettings.mode === 'custom'">
-                  <span>Stripe account ID</span>
-                  <input
-                    class="payments-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    type="text"
-                    placeholder="acct_..."
-                    :value="paymentSettings.stripe_account_id ?? ''"
-                    :disabled="!paymentSettings.enabled"
-                    @input="updatePaymentValue('stripe_account_id', ($event.target as HTMLInputElement).value)"
-                  />
-                </label>
-
-                <label class="payments-field payments-field--full">
-                  <span>Thank you message</span>
-                  <textarea
-                    class="payments-field__control dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    rows="3"
-                    placeholder="Shown once payment succeeds"
-                    :value="paymentSettings.thank_you_message ?? ''"
-                    :disabled="!paymentSettings.enabled"
-                    @input="updatePaymentValue('thank_you_message', ($event.target as HTMLTextAreaElement).value)"
-                  ></textarea>
-                </label>
-
-                <label class="payments-checkbox">
-                  <input
-                    type="checkbox"
-                    :checked="paymentSettings.require_billing_details"
-                    :disabled="!paymentSettings.enabled"
-                    @change="updatePaymentValue('require_billing_details', ($event.target as HTMLInputElement).checked)"
-                  />
-                  <span>Require billing address</span>
-                </label>
-              </div>
-
-              <ul v-if="paymentErrors.length" class="payments-errors">
-                <li v-for="error in paymentErrors" :key="error">{{ error }}</li>
-              </ul>
-            </section>
-          </template>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <div v-else class="builder__loading">
-    <span>Loading form…</span>
-  </div>
-
-  <Teleport to="body">
-    <Transition name="fade">
-      <div v-if="showImagePicker" class="design-modal-backdrop" @click.self="closeHeaderImagePicker">
-        <div class="design-modal">
-          <header class="design-modal__header">
-            <h3>Choose header image</h3>
-            <button type="button" class="design-modal__close" @click="closeHeaderImagePicker">×</button>
-          </header>
-          <ImagePicker
-            :initial-url="headerSettings.background.type === 'image' ? headerSettings.background.url : ''"
-            submit-label="Select image"
-            @submit="handleHeaderImageSelect"
-            @cancel="closeHeaderImagePicker"
-          />
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
-</template>
-
 <style scoped>
-.builder__topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  background: #ffffffd9;
-  backdrop-filter: blur(12px);
+.block-list-move,
+.block-list-enter-active,
+.block-list-leave-active {
+  transition: all 0.3s ease;
 }
 
-.builder__title h1 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 0;
-  color: #0f172a;
-}
-
-.builder__timestamp {
-  display: block;
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-top: 0.25rem;
-}
-
-.builder__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.builder__indicator {
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.builder__indicator--saving {
-  color: #2563eb;
-}
-
-.builder__indicator--error {
-  color: #dc2626;
-}
-
-.builder__button {
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: white;
-  padding: 0.5rem 0.9rem;
-  border-radius: 0.5rem;
-  font-size: 0.85rem;
-  color: #0f172a;
-  cursor: pointer;
-  transition: background 0.12s ease;
-}
-
-.builder__button:hover {
-  background: rgba(37, 99, 235, 0.08);
-}
-
-.builder__button--primary {
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  color: #fff;
-  border: none;
-  box-shadow: 0 8px 18px -8px rgba(37, 99, 235, 0.48);
-}
-
-.builder__button--primary:hover {
-  background: linear-gradient(135deg, #1d4ed8, #4338ca);
-}
-
-.builder__body {
-  display: grid;
-  grid-template-columns: 320px 1fr 360px;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  flex: 1;
-  overflow: hidden;
-}
-
-.builder__sidebar,
-.builder__inspector {
-  background: #ffffff;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 16px 40px -24px rgba(15, 23, 42, 0.45);
-  display: flex;
-  flex-direction: column;
-}
-
-.builder__canvas {
-  background: #f8fafc;
-  border-radius: 1rem;
-  border: 2px dashed rgba(148, 163, 184, 0.4);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  overflow: auto;
-}
-
-:deep(.dark) .builder__canvas {
-  background: #0f172a;
-  border-color: rgba(71, 85, 105, 0.4);
-}
-
-.builder__canvas-inner {
-  width: 100%;
-  min-height: 100%;
-  background: white;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  color: #94a3b8;
-}
-
-:deep(.dark) .builder__canvas-inner {
-  background: #1e293b;
-}
-
-.builder__canvas-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.builder__logic-feedback {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem 1rem;
-  background: rgba(37, 99, 235, 0.08);
-  border-radius: 0.75rem;
-  color: #1d4ed8;
-  font-size: 0.8rem;
-  text-align: center;
-}
-
-.builder__logic-feedback-message {
-  color: #0f172a;
-  font-weight: 500;
-}
-
-.builder__panel-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 1rem 1.25rem 0.5rem;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-  color: #1f2937;
-}
-
-.builder__panel-content {
-  flex: 1;
-  padding: 1rem 1.25rem;
-  overflow-y: auto;
-  color: #64748b;
-}
-
-.builder__inspector {
-  position: relative;
-}
-
-.builder__inspector-tabs {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem 0.25rem;
-}
-
-.builder__inspector-tab {
-  border: none;
-  background: rgba(15, 23, 42, 0.06);
-  color: #475569;
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-
-.builder__inspector-tab--active {
-  background: #2563eb;
-  color: #fff;
-}
-
-.builder__inspector-tab:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Dark mode overrides */
-:global(.dark) .builder__sidebar,
-:global(.dark) .builder__inspector {
-  background: #0b1220;
-  border-color: rgba(148, 163, 184, 0.15);
-}
-
-:global(.dark) .builder__canvas {
-  background: #0f172a;
-  border-color: rgba(148, 163, 184, 0.25);
-}
-
-:global(.dark) .builder__canvas-inner {
-  background: #0b1220;
-  border-color: rgba(148, 163, 184, 0.15);
-}
-
-.logic-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.logic-list__group {
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: rgba(248, 250, 252, 0.6);
-}
-
-.logic-list__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.logic-list__title {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #1f2937;
-}
-
-.logic-list__subtitle {
-  margin: 0.15rem 0 0;
-  font-size: 0.75rem;
-  color: #94a3b8;
-}
-
-.logic-list__empty {
-  margin-top: 0.5rem;
-  font-size: 0.78rem;
-  color: #94a3b8;
-}
-
-.logic-rule-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-}
-
-.logic-rule {
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 0.6rem;
-  padding: 0.6rem 0.75rem;
-  background: #fff;
-}
-
-.logic-rule__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.logic-rule__label {
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: #1e293b;
-}
-
-.logic-rule__badges {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.logic-rule__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  padding: 0.15rem 0.5rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  background: rgba(148, 163, 184, 0.2);
-  color: #475569;
-}
-
-.logic-rule__badge--error {
-  background: rgba(220, 38, 38, 0.12);
-  color: #b91c1c;
-}
-
-.logic-rule__meta {
-  margin: 0.5rem 0 0;
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.builder__button--sm {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.75rem;
-}
-
-.builder__icon-button--ghost {
-  border: none;
-  background: transparent;
-  color: #475569;
-  font-size: 0.8rem;
-  padding: 0.2rem 0.35rem;
-}
-
-.builder__icon-button--ghost:hover {
-  color: #1f2937;
-}
-
-.design-section {
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 0.75rem;
-  padding: 1rem 1.1rem;
-  background: rgba(255, 255, 255, 0.9);
-  margin-bottom: 1rem;
-  box-shadow: 0 10px 30px -25px rgba(15, 23, 42, 0.6);
-}
-
-.design-section__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.design-section__title {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.design-section__subtitle {
-  margin: 0.15rem 0 0;
-  font-size: 0.78rem;
-  color: #94a3b8;
-}
-
-.design-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  color: #475569;
-}
-
-.design-toggle input {
-  width: 38px;
-  height: 20px;
-}
-
-.design-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.design-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-  color: #475569;
-}
-
-.design-field--full {
-  grid-column: 1 / -1;
-}
-
-.design-field__control {
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 0.6rem;
-  padding: 0.5rem 0.65rem;
-  font-size: 0.8rem;
-  color: #0f172a;
-  background: #fff;
-}
-
-.design-field__control:focus {
-  outline: 2px solid rgba(37, 99, 235, 0.25);
-  border-color: rgba(37, 99, 235, 0.4);
-}
-
-.design-field__control--color {
-  padding: 0.2rem;
-  height: 2.25rem;
-}
-
-.design-field__hint {
-  margin: 0;
-  font-size: 0.72rem;
-  color: #94a3b8;
-}
-
-.design-gradient-swatches {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.design-gradient-swatches__item {
-  width: 40px;
-  height: 24px;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
-}
-
-.design-gradient-swatches__item:hover {
-  transform: translateY(-1px);
-  border-color: rgba(37, 99, 235, 0.65);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-}
-
-.design-preview {
-  border: 1px dashed rgba(148, 163, 184, 0.35);
-  border-radius: 1rem;
-  overflow: hidden;
-  margin-bottom: 1.25rem;
-  position: relative;
-}
-
-.design-preview__header {
-  position: relative;
-  min-height: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2.5rem 2rem;
-  color: #fff;
-}
-
-.design-preview__overlay {
-  position: absolute;
-  inset: 0;
-  opacity: 0.85;
-  border-radius: inherit;
-}
-
-.design-preview__content {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  font-family: var(--builder-heading-font, "Inter"), sans-serif;
-  min-width: 220px;
-}
-
-.design-preview__content h4 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: var(--builder-heading-weight, 600);
-}
-
-.design-preview__content p {
-  margin: 0.6rem 0 1rem;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.85);
-  font-family: var(--builder-body-font, "Inter"), sans-serif;
-  font-weight: var(--builder-body-weight, 400);
-  line-height: var(--builder-line-height, 1.6);
-  letter-spacing: var(--builder-letter-spacing, 0px);
-}
-
-.design-preview__button {
-  border-radius: var(--builder-border-radius, 0.75rem);
-  padding: 0.55rem 1.6rem;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-
-.design-preview__button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 25px -18px rgba(15, 23, 42, 0.6);
-}
-
-.payments-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.payments-section__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.payments-section__header h3 {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.payments-section__header p {
-  margin: 0.2rem 0 0;
-  font-size: 0.8rem;
-  color: #64748b;
-}
-
-.payments-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  color: #475569;
-}
-
-.payments-toggle input {
-  width: 40px;
-  height: 20px;
-}
-
-.payments-warning {
-  margin: 0;
-  padding: 0.6rem 0.75rem;
-  background: rgba(220, 38, 38, 0.08);
-  color: #b91c1c;
-  border-radius: 0.65rem;
-  font-size: 0.78rem;
-}
-
-.payments-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.payments-grid--disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.payments-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  color: #475569;
-}
-
-.payments-field--full {
-  grid-column: 1 / -1;
-}
-
-.payments-field__control {
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 0.65rem;
-  padding: 0.5rem 0.65rem;
-  font-size: 0.85rem;
-  color: #0f172a;
-  background: #fff;
-}
-
-.payments-field__control:focus {
-  outline: 2px solid rgba(37, 99, 235, 0.18);
-  border-color: rgba(37, 99, 235, 0.35);
-}
-
-.payments-field__control--amount {
-  width: 100%;
-  padding-right: 0.4rem;
-}
-
-.payments-amount {
-  display: grid;
-  grid-template-columns: 1fr 100px;
-  gap: 0.45rem;
-}
-
-.payments-field__control--currency {
-  padding: 0.5rem 0.45rem;
-}
-
-.payments-field__hint {
-  margin: 0;
-  font-size: 0.72rem;
-  color: #94a3b8;
-}
-
-.payments-checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  color: #475569;
-}
-
-.payments-checkbox input {
-  width: 16px;
-  height: 16px;
-}
-
-.payments-errors {
-  margin: 0;
-  padding-left: 1.2rem;
-  font-size: 0.78rem;
-  color: #b91c1c;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-.design-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  z-index: 60;
-}
-
-.design-modal {
-  width: min(720px, 100%);
-  max-height: 90vh;
-  background: #fff;
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.45);
-  display: flex;
-  flex-direction: column;
-}
-
-.design-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.design-modal__header h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.design-modal__close {
-  border: none;
-  background: transparent;
-  font-size: 1.5rem;
-  line-height: 1;
-  color: #64748b;
-  cursor: pointer;
-}
-
-.design-modal__close:hover {
-  color: #0f172a;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.12s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
+.block-list-enter-from {
   opacity: 0;
+  transform: translateY(-10px);
 }
 
-.builder__placeholder {
-  color: #94a3b8;
-  font-size: 0.85rem;
-  text-align: center;
+.block-list-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
-.builder__loading {
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  color: #64748b;
-  background: #f8fafc;
+.block-list-leave-active {
+  position: absolute;
 }
 </style>

@@ -351,7 +351,7 @@ function setDocumentTitleFromName(name?: string | null) {
           />
           <button
             type="button"
-            class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
+            class="px-4 py-2 bg-primary-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
             disabled
           >
             Send

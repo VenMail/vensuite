@@ -1,61 +1,83 @@
 <template>
-  <div class="player-host">
-    <header class="player-host__header" v-if="formTitle">
-      <h1>{{ formTitle }}</h1>
-      <p v-if="formDescription">{{ formDescription }}</p>
-    </header>
+  <div class="player-host" :style="rootStyle">
+    <div class="player-host__shell">
+      <header
+        v-if="showBrand"
+        class="player-host__brand"
+        :class="`player-host__brand--${logoAlignment}`"
+      >
+        <img :src="logoUrl" :style="logoStyle" alt="Form logo" />
+      </header>
 
-    <section v-if="stage === 'loading'" class="player-host__state">
-      <span>Loading form…</span>
-    </section>
+      <section v-if="formTitle" class="player-host__header">
+        <h1>{{ formTitle }}</h1>
+        <p v-if="formDescription">{{ formDescription }}</p>
+      </section>
 
-    <section v-else-if="stage === 'error'" class="player-host__state player-host__state--error">
-      <p>{{ loadError }}</p>
-      <button type="button" class="player-host__button" @click="reload">Retry</button>
-    </section>
-
-    <section v-else-if="stage === 'welcome'" class="player-host__welcome">
-      <div class="welcome-card">
-        <h2>{{ welcomeScreen?.title ?? 'Welcome' }}</h2>
-        <p v-if="welcomeScreen?.subtitle">{{ welcomeScreen?.subtitle }}</p>
-        <button type="button" class="player-host__button player-host__button--primary" @click="startForm">
-          {{ welcomeScreen?.button_text ?? 'Start' }}
-        </button>
+      <div v-if="emailRequired" class="player-host__callout">
+        <h3>Email required</h3>
+        <p>We will ask for your email address so we can send confirmations and receipts.</p>
       </div>
-    </section>
 
-    <FocusPlayer
-      v-else-if="stage === 'playing' && mode === 'focus'"
-      :is-submitting="isSubmitting"
-      @complete="handleCompletionRequest"
-    />
-
-    <ClassicPlayer
-      v-else-if="stage === 'playing' && mode === 'classic'"
-      :is-submitting="isSubmitting"
-      @submit="handleCompletionRequest"
-    />
-
-    <PaymentStep
-      v-else-if="stage === 'payment' && formDefinition"
-      :form="formDefinition"
-      :client="paymentClient"
-      :is-submitting="isSubmitting"
-      :response-id="playerState.responseId"
-      @success="handlePaymentSuccess"
-      @cancel="handlePaymentCancel"
-      @retry="handlePaymentRetry"
-    />
-
-    <section v-else-if="stage === 'completed'" class="player-host__completion">
-      <div class="completion-card">
-        <h2>{{ completionTitle }}</h2>
-        <p v-if="completionMessage">{{ completionMessage }}</p>
-        <button v-if="completionButtonText" type="button" class="player-host__button" @click="reload">
-          {{ completionButtonText }}
-        </button>
+      <div v-if="showPaymentReminder" class="player-host__callout player-host__callout--payment">
+        <h3>Payment due</h3>
+        <p>{{ paymentSummaryText }}</p>
       </div>
-    </section>
+
+      <main class="player-host__body">
+        <section v-if="stage === 'loading'" class="player-host__state">
+          <span>Loading form…</span>
+        </section>
+
+        <section v-else-if="stage === 'error'" class="player-host__state player-host__state--error">
+          <p>{{ loadError }}</p>
+          <button type="button" class="player-host__button" @click="reload">Retry</button>
+        </section>
+
+        <section v-else-if="stage === 'welcome'" class="player-host__welcome">
+          <div class="welcome-card">
+            <h2>{{ welcomeScreen?.title ?? 'Welcome' }}</h2>
+            <p v-if="welcomeScreen?.subtitle">{{ welcomeScreen?.subtitle }}</p>
+            <button type="button" class="player-host__button player-host__button--primary" @click="startForm">
+              {{ welcomeScreen?.button_text ?? 'Start' }}
+            </button>
+          </div>
+        </section>
+
+        <FocusPlayer
+          v-else-if="stage === 'playing' && mode === 'focus'"
+          :is-submitting="isSubmitting"
+          @complete="handleCompletionRequest"
+        />
+
+        <ClassicPlayer
+          v-else-if="stage === 'playing' && mode === 'classic'"
+          :is-submitting="isSubmitting"
+          @submit="handleCompletionRequest"
+        />
+
+        <PaymentStep
+          v-else-if="stage === 'payment' && formDefinition"
+          :form="formDefinition"
+          :client="paymentClient"
+          :is-submitting="isSubmitting"
+          :response-id="playerState.responseId"
+          @success="handlePaymentSuccess"
+          @cancel="handlePaymentCancel"
+          @retry="handlePaymentRetry"
+        />
+
+        <section v-else-if="stage === 'completed'" class="player-host__completion">
+          <div class="completion-card">
+            <h2>{{ completionTitle }}</h2>
+            <p v-if="completionMessage">{{ completionMessage }}</p>
+            <button v-if="completionButtonText" type="button" class="player-host__button" @click="reload">
+              {{ completionButtonText }}
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
   </div>
 </template>
 
@@ -67,18 +89,22 @@ import FocusPlayer from '@/components/forms/player/FocusPlayer.vue';
 import ClassicPlayer from '@/components/forms/player/ClassicPlayer.vue';
 import PaymentStep from '@/components/forms/player/PaymentStep.vue';
 import { fetchPublicForm, submitResponse, updateResponseDraft } from '@/services/responses';
+import { fetchForm } from '@/services/forms';
 import { useFormPlayerStore } from '@/store/formPlayer';
 import { usePaymentClient } from '@/composables/usePaymentClient';
 import { toast } from '@/composables/useToast';
 import type { FormCompletionScreen, FormDefinition, FormWelcomeScreen } from '@/types';
 
 const route = useRoute();
-const slug = computed(() => route.params.slug as string);
+const slug = computed(() => route.params.slug as string | undefined);
+const formIdParam = computed(() => route.params.id as string | undefined);
 
 const playerStore = useFormPlayerStore();
 const { state: playerState, mode } = storeToRefs(playerStore);
 
-const paymentClient = usePaymentClient({ slug });
+const paymentSlug = computed(() => slug.value ?? formIdParam.value ?? '');
+const paymentClient = usePaymentClient({ slug: paymentSlug });
+const submissionSlug = computed(() => formDefinition.value?.slug ?? slug.value ?? '');
 
 const formDefinition = ref<FormDefinition | null>(null);
 const isSubmitting = ref(false);
@@ -100,6 +126,69 @@ const completionTitle = computed(() => completionScreen.value?.title ?? 'Thank y
 const completionMessage = computed(() => completionScreen.value?.message ?? 'Your response has been recorded.');
 const completionButtonText = computed(() => completionScreen.value?.button_text ?? null);
 
+const theme = computed(() => formDefinition.value?.theme);
+const typography = computed(() => formDefinition.value?.typography);
+const header = computed(() => formDefinition.value?.header);
+const settings = computed(() => formDefinition.value?.settings);
+const paymentSettings = computed(() => formDefinition.value?.payment);
+
+const adjustColor = (hex: string | undefined, percent: number): string | undefined => {
+  if (!hex) return undefined;
+  const sanitized = hex.replace('#', '');
+  const normalized = sanitized.length === 3
+    ? sanitized.split('').map((char) => `${char}${char}`).join('')
+    : sanitized;
+  if (normalized.length !== 6) return hex;
+
+  const num = parseInt(normalized, 16);
+  const amt = Math.round(2.55 * percent);
+  const r = Math.min(255, Math.max(0, (num >> 16) + amt));
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00ff) + amt));
+  const b = Math.min(255, Math.max(0, (num & 0x0000ff) + amt));
+
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+};
+
+const accentColor = computed(() => theme.value?.primary_color || '#2563eb');
+const accentColorStrong = computed(() => {
+  if (theme.value?.secondary_color) return theme.value.secondary_color;
+  return adjustColor(accentColor.value, -12) || '#1d4ed8';
+});
+
+const rootStyle = computed(() => {
+  const styles: Record<string, string> = {
+    background: theme.value?.background_color ?? '#f4f5f9',
+    color: theme.value?.text_color ?? '#0f172a',
+    '--player-accent': accentColor.value,
+    '--player-accent-strong': accentColorStrong.value,
+    '--player-surface': theme.value?.surface_color ?? 'rgba(255, 255, 255, 0.95)',
+  };
+
+  if (typography.value?.body_font_family) {
+    styles.fontFamily = typography.value.body_font_family;
+  }
+
+  return styles;
+});
+
+const showBrand = computed(() => Boolean(header.value?.enabled && header.value?.logo_url));
+const logoUrl = computed(() => header.value?.logo_url ?? '');
+const logoWidth = computed(() => header.value?.logo_width ?? 120);
+const logoStyle = computed(() => ({
+  width: `${Math.min(Math.max(40, logoWidth.value), 220)}px`,
+}));
+const logoAlignment = computed(() => header.value?.alignment ?? 'center');
+
+const emailRequired = computed(() => Boolean(settings.value?.collect_email));
+
+const showPaymentReminder = computed(() => Boolean(paymentSettings.value?.enabled && paymentSettings.value.amount_cents));
+const paymentSummaryText = computed(() => {
+  if (!paymentSettings.value?.amount_cents) return '';
+  const amount = (paymentSettings.value.amount_cents / 100).toFixed(2);
+  const currency = paymentSettings.value.currency ?? 'USD';
+  return `You’ll be asked to pay ${currency.toUpperCase()} ${amount} before submitting.`;
+});
+
 const ensureWelcomeStage = () => {
   if (welcomeScreen.value) {
     stage.value = 'welcome';
@@ -118,17 +207,23 @@ const resetState = () => {
 
 const applyDefinition = (definition: FormDefinition) => {
   formDefinition.value = definition;
-  playerStore.setFormDefinition(definition, definition.slug ?? slug.value);
+  playerStore.setFormDefinition(definition, definition.slug ?? slug.value ?? formIdParam.value ?? '');
   playerStore.setPaymentRequired(!!definition.payment?.enabled);
   ensureWelcomeStage();
 };
 
 const loadForm = async () => {
-  if (!slug.value) return;
   resetState();
 
   try {
-    const definition = await fetchPublicForm(slug.value);
+    let definition: FormDefinition;
+    if (slug.value) {
+      definition = await fetchPublicForm(slug.value);
+    } else if (formIdParam.value) {
+      definition = await fetchForm(formIdParam.value);
+    } else {
+      throw new Error('Missing form identifier');
+    }
     applyDefinition(definition);
   } catch (error: any) {
     loadError.value = error?.data?.message ?? 'Failed to load form.';
@@ -161,14 +256,21 @@ const submitAnswers = async () => {
   isSubmitting.value = true;
   loadError.value = null;
 
+  const currentSlug = submissionSlug.value;
+  if (!currentSlug) {
+    toast.error('This form is not publicly accessible yet. Publish to allow submissions.');
+    isSubmitting.value = false;
+    return;
+  }
+
   try {
     const payload = {
       answers: { ...playerState.value.answers },
     };
 
     const responseResult = playerState.value.responseId
-      ? await updateResponseDraft(slug.value, playerState.value.responseId, payload)
-      : await submitResponse(slug.value, payload);
+      ? await updateResponseDraft(currentSlug, playerState.value.responseId, payload)
+      : await submitResponse(currentSlug, payload);
 
     playerStore.setResponseId(String(responseResult.response.id));
 
@@ -227,9 +329,9 @@ onMounted(() => {
 });
 
 watch(
-  () => slug.value,
-  (value, oldValue) => {
-    if (value && value !== oldValue) {
+  () => [slug.value, formIdParam.value],
+  ([newSlug, newId], [oldSlug, oldId]) => {
+    if ((newSlug && newSlug !== oldSlug) || (newId && newId !== oldId)) {
       loadForm();
     }
   },
@@ -247,25 +349,96 @@ watch(
 
 <style scoped>
 .player-host {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
-  color: #111827;
+  min-height: 100vh;
+  padding: clamp(2rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3rem);
+  display: flex;
+  justify-content: center;
+  color: #0f172a;
+}
+
+.player-host__shell {
+  width: min(960px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.player-host__brand {
+  display: flex;
+  align-items: center;
+}
+
+.player-host__brand img {
+  max-height: 72px;
+  object-fit: contain;
+}
+
+.player-host__brand--left {
+  justify-content: flex-start;
+}
+
+.player-host__brand--center {
+  justify-content: center;
+}
+
+.player-host__brand--right {
+  justify-content: flex-end;
 }
 
 .player-host__header {
   text-align: center;
-  margin-bottom: 2rem;
+  padding: 1.25rem clamp(1rem, 4vw, 2.5rem);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
 }
 
 .player-host__header h1 {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  margin-bottom: 0.75rem;
 }
 
 .player-host__header p {
-  margin-top: 0.5rem;
-  color: #4b5563;
+  max-width: 640px;
+  margin: 0 auto;
+  color: rgba(15, 23, 42, 0.72);
+}
+
+.player-host__callout {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  background: rgba(99, 102, 241, 0.08);
+  padding: 1rem 1.5rem;
+  color: #312e81;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.player-host__callout h3 {
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.player-host__callout p {
+  font-size: 0.925rem;
+}
+
+.player-host__callout--payment {
+  border-color: rgba(22, 163, 74, 0.2);
+  background: rgba(34, 197, 94, 0.08);
+  color: #166534;
+}
+
+.player-host__body {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 1.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
 }
 
 .player-host__state {
@@ -273,9 +446,9 @@ watch(
   justify-content: center;
   align-items: center;
   min-height: 240px;
-  background: #f9fafb;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
+  background: rgba(241, 245, 249, 0.6);
+  border-radius: 1rem;
+  border: 1px dashed rgba(148, 163, 184, 0.5);
   padding: 2rem;
 }
 
@@ -290,28 +463,29 @@ watch(
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.8rem 1.75rem;
   border-radius: 9999px;
-  border: 1px solid #d1d5db;
-  background: white;
+  border: 1px solid rgba(100, 116, 139, 0.35);
+  background: rgba(255, 255, 255, 0.9);
   color: #1f2937;
-  font-weight: 500;
+  font-weight: 600;
   transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .player-host__button:hover {
-  background: #f3f4f6;
+  background: rgba(248, 250, 252, 0.85);
   transform: translateY(-1px);
 }
 
 .player-host__button--primary {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: var(--player-accent, #2563eb);
+  border-color: transparent;
   color: white;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
 }
 
 .player-host__button--primary:hover {
-  background: #1d4ed8;
+  background: var(--player-accent-strong, #1d4ed8);
 }
 
 .player-host__welcome,
@@ -324,24 +498,24 @@ watch(
 
 .welcome-card,
 .completion-card {
-  max-width: 420px;
+  width: min(480px, 100%);
   text-align: center;
   background: white;
   padding: 2.5rem 2rem;
-  border-radius: 1rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
 }
 
 .welcome-card h2,
 .completion-card h2 {
-  font-size: 1.75rem;
+  font-size: clamp(1.8rem, 3.5vw, 2.4rem);
   margin-bottom: 0.75rem;
 }
 
 .welcome-card p,
 .completion-card p {
-  color: #4b5563;
+  color: rgba(15, 23, 42, 0.7);
   margin-bottom: 1.5rem;
 }
 </style>

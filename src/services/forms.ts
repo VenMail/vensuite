@@ -193,3 +193,16 @@ export const deleteWebhook = async (
     withRequestOptions(options),
   );
 };
+
+export const sendWebhookSample = async (
+  id: string,
+  payload: { url: string; event: string },
+  options?: RequestOptions,
+): Promise<{ success: boolean }> => {
+  const response = await apiClient.post(
+    `${BASE_PATH}/${id}/webhooks/test`,
+    payload,
+    withRequestOptions(options),
+  );
+  return response.data?.data ?? { success: true };
+};

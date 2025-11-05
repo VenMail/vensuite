@@ -27,9 +27,11 @@ import { router } from "@/main";
 
 const searchValue = ref("");
 const debouncedSearch = ref("");
-const viewMode = ref<"grid" | "tree" | "thumbnail" | "list">("grid");
+const viewMode = ref<"grid" | "list">("grid");
 const selectedForm = ref<string | null>(null);
 const showWizard = ref(false);
+
+const TEMPLATE_STORAGE_PREFIX = "VENX_FORM_TEMPLATE_";
 
 const formStore = useFormStore();
 
@@ -43,6 +45,12 @@ const filteredForms = computed(() => {
   if (!query) return forms.value;
   return forms.value.filter((form) => form.title?.toLowerCase().includes(query));
 });
+
+const cardsContainerClass = computed(() =>
+  viewMode.value === "list"
+    ? "flex flex-col gap-4"
+    : "grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3",
+);
 
 const showContextMenu = computed(() => !!selectedForm.value);
 
@@ -75,31 +83,152 @@ function createNewForm() {
 }
 
 async function handleWizardCreate(data: { title: string; description: string; blocks: any[] }) {
-  const pageId = crypto.randomUUID();
-  
-  // Convert blocks to questions
-  const questions = data.blocks.map((block, index) => ({
-    ...block,
-    page_id: pageId,
-    position: index,
-  }));
-  
-  const form = await formStore.createForm({ 
-    title: data.title,
-    pages: [
-      {
-        id: pageId,
-        title: "Page 1",
-        description: data.description,
-        position: 1,
-        question_order: questions.map(q => q.id),
+  let pageId: string = crypto.randomUUID();
+
+  const normalizeOption = (option: any, index: number) => {
+    if (typeof option === 'string') {
+      const value = option.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `option-${index + 1}`;
+      return { value, label: option };
+    }
+    const value = option?.value || option?.label || `option-${index + 1}`;
+    const label = option?.label || option?.value || `Option ${index + 1}`;
+    return { value, label };
+  };
+
+  const mapType = (type: string | undefined): string => {
+    switch (type) {
+      case 'dropdown':
+        return 'select';
+      case 'toggle':
+        return 'yesno';
+      default:
+        return type || 'short';
+    }
+  };
+
+  const mapCategory = (type: string): string => {
+    const categoryMap: Record<string, string> = {
+      radio: 'choice',
+      select: 'choice',
+      dropdown: 'choice',
+      checkbox: 'choices',
+      yesno: 'switch',
+      rating: 'rating',
+      slider: 'choice',
+      range: 'choice',
+      file: 'file',
+    };
+    return categoryMap[type] || 'text';
+  };
+
+  const buildQuestionPayload = (block: any, index: number) => {
+    const id = block.id || crypto.randomUUID();
+    const type = mapType(block.type);
+    const category = block.category || mapCategory(type);
+
+    const base: any = {
+      id,
+      page_id: pageId,
+      position: index,
+      type,
+      category,
+      question: block.question || 'Untitled question',
+      description: block.description ?? '',
+      placeholder: block.placeholder ?? '',
+      required: Boolean(block.required),
+    };
+
+    if (category === 'choice' || category === 'choices' || category === 'switch') {
+      const rawOptions = block.options && block.options.length ? block.options : type === 'yesno'
+        ? ['Yes', 'No']
+        : ['Option 1', 'Option 2'];
+      base.options = rawOptions.map((opt: any, optIndex: number) => normalizeOption(opt, optIndex));
+    }
+
+    if (type === 'rating') {
+      base.icon_type = block.iconType || 'star';
+      base.min = typeof block.min === 'number' ? block.min : 1;
+      base.max = typeof block.max === 'number' ? block.max : 5;
+      base.allow_half = Boolean(block.allowHalf);
+    }
+
+    if (type === 'slider' || type === 'range') {
+      base.min = typeof block.min === 'number' ? block.min : 0;
+      base.max = typeof block.max === 'number' ? block.max : 10;
+      base.step = typeof block.step === 'number' && block.step > 0 ? block.step : 1;
+      base.show_labels = Boolean(block.showLabels);
+      if (block.options?.length) {
+        base.options = block.options.map((opt: any, optIndex: number) => normalizeOption(opt, optIndex));
       }
-    ],
-    questions,
+    }
+
+    return base;
+  };
+
+  const questions = data.blocks.map((block, index) => buildQuestionPayload(block, index));
+
+  let pagePayload = {
+    id: pageId,
+    title: "Page 1",
+    description: data.description,
+    position: 1,
+    question_order: questions.map(q => q.id),
+  };
+
+  const form = await formStore.createForm({
+    title: data.title,
+    description: data.description,
+    pages: [pagePayload],
     logic_rules: [],
   });
-  
+
   if (form?.id) {
+    const persistedPageId = form.pages?.[0]?.id ?? pageId;
+    if (persistedPageId !== pageId) {
+      pageId = persistedPageId;
+      pagePayload = {
+        ...pagePayload,
+        id: persistedPageId,
+        description: data.description,
+        title: form.pages?.[0]?.title || pagePayload.title,
+      };
+      questions.forEach((question) => {
+        question.page_id = persistedPageId;
+      });
+    }
+
+    const needsBackfill = !form.questions || form.questions.length === 0;
+
+    if (needsBackfill) {
+      sessionStorage.setItem(
+        `${TEMPLATE_STORAGE_PREFIX}${form.id}`,
+        JSON.stringify({
+          title: data.title,
+          description: data.description,
+          blocks: data.blocks,
+        }),
+      );
+
+      await formStore.updateForm(form.id, {
+        title: data.title,
+        description: data.description,
+        layout_mode: form.layout_mode ?? "auto",
+        pages: [pagePayload],
+        questions,
+        logic_rules: [],
+        settings: form.settings,
+        header: form.header,
+        typography: form.typography,
+        theme: form.theme,
+        navigation: form.navigation,
+        welcome_screen: form.welcome_screen,
+        completion_screen: form.completion_screen,
+        sharing: form.sharing,
+        security: form.security,
+        payment: form.payment,
+      });
+    }
+
     showWizard.value = false;
     router.replace({ name: 'form-edit', params: { id: form.id } });
   }
@@ -247,9 +376,14 @@ const contextMenuActions = computed(() => {
           {{ errorMessage }}
         </div>
 
-        <!-- Forms grid display -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <QuickViewCard v-for="form in filteredForms" :key="form.id" :form="form" />
+        <!-- Forms grid/list display -->
+        <div :class="cardsContainerClass">
+          <QuickViewCard
+            v-for="form in filteredForms"
+            :key="form.id"
+            :form="form"
+            :view-mode="viewMode"
+          />
         </div>
 
         <!-- Loading spinner for infinite scroll -->

@@ -18,7 +18,7 @@ import MediaViewer from './views/MediaViewer.vue'
 import Sheets from './views/Sheets.vue'
 import Documents from './views/Documents.vue'
 import Forms from './views/Forms.vue'
-import FormBuilderNew from './views/FormBuilderNew.vue'
+import FormBuilder from './views/FormBuilder.vue'
 import Bin from './views/Bin.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
@@ -65,10 +65,10 @@ const routes = [
         path: 'forms/:id/edit',
         name: 'form-edit',
         alias: ['forms/:id'],
-        component: FormBuilderNew,
+        component: FormBuilder,
         meta: { hideLayout: true },
       },
-      { path: 'forms/:id/settings', name: 'form-settings', component: FormBuilderNew, meta: { hideLayout: true } },
+      { path: 'forms/:id/settings', name: 'form-settings', component: FormBuilder, meta: { hideLayout: true } },
       { path: 'forms/:id/responses', name: 'form-responses', component: () => import('./views/FormResponses.vue'), meta: { hideLayout: true } },
       { path: 'picker', name: 'file-picker', component: FilePicker, meta: { hideLayout: true } },
       { path: 'import/:id', name: 'import', component: Home },

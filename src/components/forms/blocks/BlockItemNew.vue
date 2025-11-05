@@ -40,8 +40,9 @@
           :placeholder="getPlaceholder()"
           class="w-full text-lg font-medium bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           @focus="$emit('focus')"
-          @blur="$emit('blur')"
+          @blur="handleBlur"
           @input="handleUpdate"
+          @keydown="handleKeyDown"
         />
       </div>
 
@@ -263,6 +264,8 @@ const emit = defineEmits<{
   (e: "move-up", id: string): void;
   (e: "move-down", id: string): void;
   (e: "insert-below", id: string): void;
+  (e: "request-slash-menu", payload: { blockId: string; filter: string; position: { top: number; left: number } }): void;
+  (e: "close-slash-menu"): void;
 }>();
 
 const localBlock = ref<FormBlock>({ ...props.block });
@@ -326,6 +329,43 @@ const getPlaceholder = () => {
   return "Type your question here...";
 };
 
+const handleBlur = () => {
+  emit("blur");
+  emit("close-slash-menu");
+};
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === "Escape") {
+    emit("close-slash-menu");
+    return;
+  }
+
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    emit("insert-below", localBlock.value.id);
+    emit("close-slash-menu");
+    return;
+  }
+
+  if (event.key === "Tab") {
+    emit("close-slash-menu");
+    return;
+  }
+
+  if (event.key === "/" && !event.altKey && !event.ctrlKey && !event.metaKey) {
+    nextTick(() => {
+      updateSlashMenuState();
+    });
+    return;
+  }
+
+  if (event.key.length === 1 || event.key === "Backspace" || event.key === "Delete") {
+    nextTick(() => {
+      updateSlashMenuState();
+    });
+  }
+};
+
 const getInputPlaceholder = () => {
   const placeholders: Record<string, string> = {
     short: "Short answer text",
@@ -337,13 +377,11 @@ const getInputPlaceholder = () => {
 
 const handleUpdate = () => {
   emit("update", localBlock.value);
+  updateSlashMenuState();
 };
 
 const changeType = (newType: FormBlock["type"]) => {
-  localBlock.value.type = newType;
-  
-  // Update category based on type
-  const categoryMap: Record<string, FormBlock["category"]> = {
+  const categoryMap: Record<FormBlock["type"], FormBlock["category"]> = {
     short: "text",
     long: "text",
     email: "text",
@@ -352,23 +390,55 @@ const changeType = (newType: FormBlock["type"]) => {
     time: "text",
     radio: "choice",
     checkbox: "choices",
-    dropdown: "choice",
+    select: "choice",
     rating: "rating",
     slider: "rating",
     file: "file",
     yesno: "switch",
   };
+
+  localBlock.value.type = newType;
   localBlock.value.category = categoryMap[newType] || "text";
-  
-  // Add default options for choice types
-  if (newType === "radio" || newType === "checkbox" || newType === "select") {
-    if (!localBlock.value.options || localBlock.value.options.length === 0) {
-      localBlock.value.options = ["Option 1", "Option 2", "Option 3"];
-    }
+
+  if ((newType === "radio" || newType === "checkbox" || newType === "select") && (!localBlock.value.options || localBlock.value.options.length === 0)) {
+    localBlock.value.options = ["Option 1", "Option 2", "Option 3"];
   }
-  
+
   showTypeMenu.value = false;
+  emit("close-slash-menu");
   handleUpdate();
+};
+
+const updateSlashMenuState = () => {
+  const value = localBlock.value.question ?? "";
+  const slashIndex = value.lastIndexOf("/");
+  if (slashIndex === -1) {
+    emit("close-slash-menu");
+    return;
+  }
+
+  const prefix = value.slice(0, slashIndex);
+  if (prefix && !/\s$/.test(prefix)) {
+    emit("close-slash-menu");
+    return;
+  }
+
+  const filter = value.slice(slashIndex + 1);
+  const input = questionInput.value;
+  if (!input) {
+    emit("close-slash-menu");
+    return;
+  }
+
+  const rect = input.getBoundingClientRect();
+  emit("request-slash-menu", {
+    blockId: localBlock.value.id,
+    filter,
+    position: {
+      top: rect.bottom + window.scrollY,
+      left: rect.left + window.scrollX,
+    },
+  });
 };
 
 const addOption = (afterIndex?: number) => {

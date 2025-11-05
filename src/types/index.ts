@@ -135,6 +135,9 @@ export interface FormHeader {
   call_to_action_text?: string;
   call_to_action_url?: string;
   alignment?: "left" | "center" | "right";
+  logo_url?: string;
+  logo_width?: number;
+  footer_image_url?: string;
 }
 
 export type FormHeaderBackground =
@@ -158,6 +161,8 @@ export interface FormTheme {
   button_style?: "solid" | "outline" | "ghost";
   border_radius?: string;
   background_color?: string;
+  text_color?: string;
+  surface_color?: string;
 }
 
 export interface FormNavigation {

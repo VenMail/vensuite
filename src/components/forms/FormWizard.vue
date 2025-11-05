@@ -1,46 +1,44 @@
 <template>
   <div class="form-wizard-overlay fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
-    <div class="form-wizard bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+    <div
+      class="form-wizard flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
       <!-- Header -->
       <div class="form-wizard__header px-6 py-5 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {{ currentStep === 'describe' ? 'Create Your Form' : currentStep === 'generating' ? 'Generating Form...' : 'Review Your Form' }}
+              {{ currentStep === 'describe' ? 'Create Your Form' : currentStep === 'generating' ? 'Generating Form...' :
+              'Review Your Form' }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {{ currentStep === 'describe' ? 'Describe what you want to create in plain English' : currentStep === 'generating' ? 'AI is building your form structure' : 'Review and customize your form' }}
+              {{ currentStep === 'describe' ? 'Describe what you want to create in plain English' : currentStep ===
+                'generating' ? 'AI is building your form structure' : 'Review and customize your form' }}
             </p>
           </div>
-          <button
-            v-if="currentStep !== 'generating'"
+          <button v-if="currentStep !== 'generating'"
             class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
-            @click="$emit('close')"
-          >
+            @click="$emit('close')">
             <X class="w-5 h-5" />
           </button>
         </div>
       </div>
 
       <!-- Content -->
-      <div class="form-wizard__content p-6">
+      <div class="form-wizard__content p-6 flex-1 overflow-y-auto">
         <!-- Step 1: Describe Form -->
         <div v-if="currentStep === 'describe'" class="space-y-6">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               What kind of form do you want to create?
             </label>
-            <textarea
-              ref="descriptionInput"
-              v-model="description"
-              rows="6"
+            <textarea ref="descriptionInput" v-model="description" rows="6"
               placeholder="Example: A customer feedback form with name, email, rating, and comments..."
               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-none"
-              @keydown.meta.enter="handleGenerate"
-              @keydown.ctrl.enter="handleGenerate"
-            />
+              @keydown.meta.enter="handleGenerate" @keydown.ctrl.enter="handleGenerate" />
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Press <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs">Ctrl+Enter</kbd> to generate
+              Press <kbd
+                class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs">Ctrl+Enter</kbd>
+              to generate
             </p>
           </div>
 
@@ -50,12 +48,9 @@
               Or choose a template:
             </p>
             <div class="grid grid-cols-2 gap-3">
-              <button
-                v-for="template in quickTemplates"
-                :key="template.name"
+              <button v-for="template in quickTemplates" :key="template.name"
                 class="p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all text-left"
-                @click="useTemplate(template)"
-              >
+                @click="useTemplate(template)">
                 <component :is="template.icon" class="w-5 h-5 text-gray-600 dark:text-gray-400 mb-2" />
                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ template.name }}</div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ template.description }}</div>
@@ -66,7 +61,8 @@
 
         <!-- Step 2: Generating -->
         <div v-else-if="currentStep === 'generating'" class="py-12 text-center">
-          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4 animate-pulse">
+          <div
+            class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4 animate-pulse">
             <Sparkles class="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
@@ -77,28 +73,31 @@
           </p>
           <div class="mt-6 flex justify-center">
             <div class="flex gap-1">
-              <div class="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-              <div class="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-              <div class="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+              <div class="w-2 h-2 bg-primary-600 dark:bg-blue-400 rounded-full animate-bounce"
+                style="animation-delay: 0ms"></div>
+              <div class="w-2 h-2 bg-primary-600 dark:bg-blue-400 rounded-full animate-bounce"
+                style="animation-delay: 150ms"></div>
+              <div class="w-2 h-2 bg-primary-600 dark:bg-blue-400 rounded-full animate-bounce"
+                style="animation-delay: 300ms"></div>
             </div>
           </div>
         </div>
 
         <!-- Step 3: Preview -->
         <div v-else-if="currentStep === 'preview'" class="space-y-6">
-          <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex-1">
+          <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="flex items-start justify-between gap-3 border-b border-gray-200 dark:border-gray-700 px-5 py-4">
+              <div class="flex-1 space-y-1">
                 <input
                   v-model="generatedForm.title"
                   type="text"
-                  class="text-xl font-bold w-full bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 px-0"
+                  class="text-xl font-semibold w-full bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="Form Title"
                 />
                 <input
                   v-model="generatedForm.description"
                   type="text"
-                  class="text-sm w-full bg-transparent border-none outline-none text-gray-600 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 px-0 mt-1"
+                  class="text-sm w-full bg-transparent border-none outline-none text-gray-600 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="Form description"
                 />
               </div>
@@ -111,35 +110,37 @@
               </button>
             </div>
 
-            <!-- Preview Blocks -->
-            <div class="space-y-3 max-h-96 overflow-y-auto">
+            <div class="max-h-64 overflow-y-auto space-y-3 px-5 py-4">
               <div
                 v-for="(block, index) in generatedForm.blocks"
                 :key="index"
-                class="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4"
               >
-                <div class="flex items-start justify-between mb-2">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex-1 space-y-1">
+                    <div class="flex items-center gap-2">
                       <component :is="getBlockIcon(block.type)" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
                       <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ block.question }}</span>
                       <span v-if="block.required" class="text-xs text-red-500">*</span>
                     </div>
                     <p v-if="block.description" class="text-xs text-gray-500 dark:text-gray-400">{{ block.description }}</p>
+                    <div v-if="block.options && block.options.length" class="space-y-1 mt-1">
+                      <div
+                        v-for="(option, optIndex) in block.options.slice(0, 3)"
+                        :key="optIndex"
+                        class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"
+                      >
+                        <div class="w-3 h-3 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
+                        {{ option }}
+                      </div>
+                      <div v-if="block.options.length > 3" class="text-xs text-gray-500 dark:text-gray-400 ml-5">
+                        +{{ block.options.length - 3 }} more
+                      </div>
+                    </div>
                   </div>
                   <span class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
                     {{ getBlockTypeLabel(block.type) }}
                   </span>
-                </div>
-                <!-- Preview options for choice blocks -->
-                <div v-if="block.options && block.options.length" class="mt-2 space-y-1">
-                  <div v-for="(option, optIndex) in block.options.slice(0, 3)" :key="optIndex" class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                    <div class="w-3 h-3 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
-                    {{ option }}
-                  </div>
-                  <div v-if="block.options.length > 3" class="text-xs text-gray-500 dark:text-gray-400 ml-5">
-                    +{{ block.options.length - 3 }} more
-                  </div>
                 </div>
               </div>
             </div>
@@ -162,7 +163,8 @@
       </div>
 
       <!-- Footer -->
-      <div class="form-wizard__footer px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+      <div
+        class="form-wizard__footer px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
         <div class="flex items-center justify-between">
           <button
             v-if="currentStep === 'preview'"
@@ -327,10 +329,10 @@ const handleGenerate = async () => {
     // Call AI service to generate form structure
     const result = await generateFormFromDescription(description.value);
     generatedForm.value = result;
-    
+
     // Simulate AI processing time for better UX
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     currentStep.value = "preview";
   } catch (error) {
     console.error("Failed to generate form:", error);
@@ -372,7 +374,7 @@ async function generateFormFromDescription(description: string): Promise<{
 }> {
   // Call the real backend API
   const { generateCompleteForm } = await import("@/services/ai");
-  
+
   try {
     const result = await generateCompleteForm(description);
     return result;
@@ -390,7 +392,7 @@ function mockGenerateForm(description: string): {
   blocks: FormBlock[];
 } {
   const lowerDesc = description.toLowerCase();
-  
+
   // Detect form type and generate appropriate structure
   if (lowerDesc.includes("contact") || lowerDesc.includes("get in touch")) {
     return {
@@ -510,7 +512,7 @@ function mockGenerateForm(description: string): {
       ],
     };
   }
-  
+
   // Default generic form
   return {
     title: "New Form",
@@ -550,9 +552,12 @@ onMounted(() => {
 
 <style scoped>
 @keyframes bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-0.5rem);
   }

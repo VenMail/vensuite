@@ -6,6 +6,7 @@ import {
   fetchResponses as fetchResponsesApi,
   createForm as createFormApi,
   updateForm as updateFormApi,
+  publishForm as publishFormApi,
   type FetchResponsesParams,
 } from "@/services/forms";
 import type { AppForm, FormDefinition, FormResponsesPage } from "@/types";
@@ -75,6 +76,25 @@ export const useFormStore = defineStore("forms", {
         this.error = error?.data?.message ?? "Failed to load forms";
       } finally {
         this.loading = false;
+      }
+    },
+
+    async publishForm(id: string): Promise<FormDefinition | null> {
+      const authStore = useAuthStore();
+      const token = authStore.getToken();
+
+      try {
+        const form = await publishFormApi(id, {
+          auth: token ? { token } : undefined,
+        });
+        this.updateRecentForms(form as unknown as AppForm);
+        this.allForms = this.allForms.map((existing) =>
+          existing.id === form.id ? { ...existing, ...(form as unknown as AppForm) } : existing,
+        );
+        return form;
+      } catch (error: any) {
+        this.error = error?.data?.message ?? "Failed to publish form.";
+        return null;
       }
     },
 
