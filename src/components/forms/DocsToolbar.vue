@@ -3,7 +3,7 @@
     <div class="tiptap-toolbar__main overflow-x-auto whitespace-nowrap flex-nowrap">
       <!-- Toggle Expand/Collapse -->
       <button
-        class="tiptap-toolbar__crystal-toggle bg-gradient-to-br from-blue-400 via-blue-600 to-blue-800 dark:from-blue-500 dark:via-blue-700 dark:to-blue-900"
+        class="tiptap-toolbar__crystal-toggle border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
         :class="{ 'is-expanded': isExpanded }"
         :title="isExpanded ? 'Collapse toolbar' : 'Expand toolbar'"
         @click="toggleExpanded"
@@ -1436,22 +1436,16 @@ function onBgColorChange(event: Event) {
 .tiptap-toolbar__select:focus {
   outline: none;
 }
-
 .tiptap-toolbar__select--small {
   min-width: 80px;
 }
 
-/* Crystal Toggle Button - Office-style */
+/* Crystal Toggle Button */
 .tiptap-toolbar__crystal-toggle {
   --orb-size: 40px;
-  --office-blue: #0078d4;
-  --office-blue-dark: #005a9e;
-  --office-blue-light: #50a0e0;
-
   width: var(--orb-size);
   height: var(--orb-size);
   border-radius: 50%;
-  border: 2px solid #e1e1e1;
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -1460,15 +1454,10 @@ function onBgColorChange(event: Event) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
-  background: linear-gradient(135deg, var(--office-blue-light) 0%, var(--office-blue) 50%, var(--office-blue-dark) 100%);
-  
   box-shadow: 
     0 2px 4px rgba(0, 0, 0, 0.1),
     0 1px 2px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
-
-  transition: all 0.2s ease;
 }
 
 .tiptap-toolbar__crystal-toggle::before {
@@ -1485,7 +1474,7 @@ function onBgColorChange(event: Event) {
 
 .tiptap-toolbar__crystal-toggle .crystal-icon {
   font-size: 0.875rem;
-  color: white;
+  color: currentColor;
   position: relative;
   z-index: 2;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -1494,9 +1483,8 @@ function onBgColorChange(event: Event) {
 
 .tiptap-toolbar__crystal-toggle:hover {
   transform: translateY(-1px);
-  border-color: var(--office-blue);
   box-shadow: 
-    0 4px 8px rgba(0, 120, 212, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.2),
     0 2px 4px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
@@ -1509,19 +1497,13 @@ function onBgColorChange(event: Event) {
 }
 
 .tiptap-toolbar__crystal-toggle.is-expanded {
-  background: linear-gradient(135deg, #e74856 0%, #d13438 50%, #a72828 100%);
-  border-color: #d13438;
   transform: rotate(180deg);
-  box-shadow: 
-    0 2px 4px rgba(215, 52, 56, 0.3),
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .tiptap-toolbar__crystal-toggle.is-expanded:hover {
   transform: translateY(-1px) rotate(180deg);
   box-shadow: 
-    0 4px 8px rgba(215, 52, 56, 0.3),
+    0 4px 8px rgba(0, 0, 0, 0.2),
     0 2px 4px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }

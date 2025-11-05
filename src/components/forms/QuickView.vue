@@ -1,19 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { PropType } from "vue";
-import { AppForm, FormResponseData, QuestionStatistics } from "@/types";
+import { AppForm, type FormResponsesPage } from "@/types";
 import { useFormStore } from "@/store/forms";
-import { Bar, Pie } from "vue-chartjs";
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  ArcElement,
-} from "chart.js";
+// charts removed (not used in pagination summary)
 import {
   Dialog,
   DialogContent,
@@ -25,15 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { router } from "@/main";
 
-ChartJS.register(
-  Title,
-  Tooltip,
-  Legend,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  ArcElement
-);
+// no chart registration needed
 
 // Props received from parent component
 const props = defineProps({
@@ -44,8 +26,7 @@ const props = defineProps({
 });
 
 const formStore = useFormStore();
-const responseData = ref<FormResponseData | null>(null);
-const statistics = ref<Record<string, QuestionStatistics>>({});
+const responseData = ref<FormResponsesPage | null>(null);
 const loadingResponses = ref<boolean>(false);
 const errorMessage = ref<string | null>(null);
 
@@ -54,9 +35,8 @@ const fetchFormResponses = async () => {
     loadingResponses.value = true;
     errorMessage.value = null;
 
-    const response = await formStore.fetchResponses(props.form.id!);
+    const response = await formStore.fetchResponses(props.form.id!, { page: 1 });
     responseData.value = response;
-    statistics.value = response.statistics;
   } catch (error) {
     errorMessage.value =
       error instanceof Error ? error.message : "Failed to load response data";
@@ -67,16 +47,7 @@ const fetchFormResponses = async () => {
 
 onMounted(fetchFormResponses);
 
-// Dynamic chart options
-const chartOptions = {
-  responsive: true,
-  plugins: {
-    title: {
-      display: true,
-      text: "Form Completion Rate",
-    },
-  },
-};
+// no chart options
 
 const launchEditor = () => {
   router.push(`/forms/${props.form.id}`);
@@ -86,38 +57,23 @@ const launchEditor = () => {
 
 <template>
   <div
-    class="bg-white shadow-lg rounded-xl p-6 transform transition duration-300 hover:scale-105 hover:shadow-2xl space-y-4">
-    <h2 class="text-3xl font-semibold text-gray-900">{{ form.title }}</h2>
-    <p class="text-sm text-gray-500">
+    class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 transform transition duration-300 hover:scale-105 hover:shadow-2xl space-y-4 border border-gray-200 dark:border-gray-700">
+    <h2 class="text-3xl font-semibold text-gray-900 dark:text-gray-100">{{ form.title }}</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400">
       Created: {{ form.created_at ? new Date(form.created_at).toLocaleDateString() : "N/A" }}
     </p>
-    <p class="text-sm text-gray-500">
+    <p class="text-sm text-gray-500 dark:text-gray-400">
       Last Viewed: {{ form.last_view_date ? new Date(form.last_view_date).toLocaleDateString() : "N/A" }}
     </p>
 
     <div class="space-y-1">
-      <p class="text-lg font-semibold">{{ responseData?.meta.total_responses || 0 }} Total Responses</p>
-      <p class="text-sm text-gray-600">
-        Completed: {{ responseData?.meta.completed_responses || 0 }} | Incomplete: {{
-          responseData?.meta.incomplete_responses || 0 }}
-      </p>
+      <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ responseData?.meta.total || 0 }} Total Responses</p>
     </div>
 
-    <div v-if="loadingResponses" class="text-center text-gray-500">Loading responses...</div>
-    <div v-if="errorMessage" class="text-center text-red-500">{{ errorMessage }}</div>
+    <div v-if="loadingResponses" class="text-center text-gray-500 dark:text-gray-400">Loading responses...</div>
+    <div v-if="errorMessage" class="text-center text-red-500 dark:text-red-400">{{ errorMessage }}</div>
 
-    <div v-if="statistics['completion']">
-      <h3 class="text-lg font-semibold mb-2">Completion Statistics</h3>
-      <pie :data="statistics['completion'].chart_data.data" :options="chartOptions"></pie>
-    </div>
-
-    <div v-if="statistics && Object.keys(statistics).length > 0" class="space-y-6 mt-6">
-      <div v-for="(stat, questionId) in statistics" :key="questionId">
-        <h3 class="text-lg font-medium text-gray-800">Question ID: {{ questionId }}</h3>
-        <bar v-if="stat.chart_data.data.labels.length > 6" :data="stat.chart_data.data"></bar>
-        <pie v-else :data="stat.chart_data.data" :options="chartOptions"></pie>
-      </div>
-    </div>
+    <!-- Analytics per-question not available from pagination response; omitted intentionally -->
 
     <div class="flex space-x-4 mt-6">
       <Button variant="outline" @click="launchEditor">Edit Form</Button>
@@ -137,9 +93,10 @@ const launchEditor = () => {
           <div v-if="loadingResponses" class="text-center">
             Loading responses...
           </div>
-          <div v-else-if="responseData" class="space-y-4">
-            <div v-for="(response, index) in responseData.responses" :key="index">
-              <p>{{ response.question_id }}: {{ response.value }}</p>
+          <div v-else-if="responseData" class="space-y-2 text-sm">
+            <div v-for="row in responseData.data" :key="row.id" class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 py-2">
+              <span class="text-gray-700 dark:text-gray-300">ID: {{ row.id }}</span>
+              <span class="text-gray-500 dark:text-gray-400">Status: {{ row.status || 'n/a' }}</span>
             </div>
           </div>
 

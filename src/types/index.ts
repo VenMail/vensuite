@@ -54,12 +54,392 @@ export interface FileData {
 
 export interface AppForm {
   id?: string;
+  organization_id?: string;
+  owner_id?: string;
+  slug?: string;
   title: string;
+  status?: FormStatus;
+  layout_mode?: FormLayoutMode;
   file_url?: string;
-  last_view_date?: Date;
-  created_at?: Date;
-  form?: FormData;
+  last_view_date?: Date | string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+  form?: FormDefinition | FormData;
   content?: string;
+}
+
+export type FormStatus = "draft" | "published" | "archived";
+
+export type FormLayoutMode = "focus" | "classic" | "auto";
+
+export interface FormDefinition {
+  id: string;
+  title?: string;
+  description?: string;
+  slug?: string;
+  status?: FormStatus;
+  owner_id?: string;
+  organization_id?: string;
+  layout_mode: FormLayoutMode;
+  settings: FormSettings;
+  payment?: FormPaymentSettings;
+  header?: FormHeader;
+  typography?: FormTypography;
+  theme?: FormTheme;
+  navigation?: FormNavigation;
+  welcome_screen?: FormWelcomeScreen;
+  completion_screen?: FormCompletionScreen;
+  pages: FormPage[];
+  questions?: FormQuestion[];
+  logic_rules: LogicRule[];
+  sharing?: FormSharingSettings;
+  security?: FormSecuritySettings;
+  metadata?: Record<string, unknown>;
+  version?: number;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+}
+
+export interface FormSettings {
+  progress_bar?: ProgressBar;
+  navigation?: FormNavigation;
+  auto_focus?: boolean;
+  show_question_number?: boolean;
+  collect_email?: boolean;
+  save_partial_responses?: boolean;
+  locale?: string;
+  timezone?: string;
+}
+
+export type FormPaymentMode = "custom" | "platform";
+
+export interface FormPaymentSettings {
+  enabled: boolean;
+  amount_cents: number;
+  currency: string;
+  mode: FormPaymentMode;
+  stripe_publishable_key?: string;
+  stripe_account_id?: string;
+  application_fee_percent?: number;
+  product_description?: string;
+  require_billing_details?: boolean;
+  thank_you_message?: string;
+}
+
+export interface FormHeader {
+  enabled: boolean;
+  background: FormHeaderBackground;
+  overlay_color?: string;
+  title?: string;
+  subtitle?: string;
+  call_to_action_text?: string;
+  call_to_action_url?: string;
+  alignment?: "left" | "center" | "right";
+}
+
+export type FormHeaderBackground =
+  | { type: "image"; url: string; position?: string; fit?: "cover" | "contain" }
+  | { type: "gradient"; angle: number; colors: string[] }
+  | { type: "solid"; color: string };
+
+export interface FormTypography {
+  heading_font_family: string;
+  heading_font_weight?: string;
+  body_font_family: string;
+  body_font_weight?: string;
+  line_height?: number;
+  letter_spacing?: number;
+}
+
+export interface FormTheme {
+  primary_color: string;
+  secondary_color?: string;
+  accent_color?: string;
+  button_style?: "solid" | "outline" | "ghost";
+  border_radius?: string;
+  background_color?: string;
+}
+
+export interface FormNavigation {
+  allow_back: boolean;
+  allow_skip: boolean;
+  show_progress?: boolean;
+  progress_type?: "percentage" | "steps";
+  redirect_on_submit?: string;
+}
+
+export interface FormWelcomeScreen {
+  enabled: boolean;
+  title?: string;
+  subtitle?: string;
+  button_text?: string;
+  background_url?: string;
+}
+
+export interface FormCompletionScreen {
+  enabled: boolean;
+  title?: string;
+  message?: string;
+  button_text?: string;
+  button_url?: string;
+  show_summary?: boolean;
+}
+
+export interface FormSharingSettings {
+  share_slug?: string;
+  is_public?: boolean;
+  allow_resubmit?: boolean;
+  embed_allowed?: boolean;
+  notify_on_submission?: boolean;
+  notification_emails?: string[];
+}
+
+export interface FormSecuritySettings {
+  captcha_enabled?: boolean;
+  password_required?: boolean;
+  password?: string;
+  domain_restrictions?: string[];
+  max_submissions?: number;
+  submission_window_start?: string;
+  submission_window_end?: string;
+}
+
+export interface FormPage {
+  id: string;
+  form_id?: string;
+  title?: string;
+  description?: string;
+  position: number;
+  question_order?: string[];
+  metadata?: Record<string, unknown>;
+  clone_of?: string;
+  questions?: FormQuestion[];
+}
+
+export type FormQuestion =
+  | FormRadioQuestion
+  | FormSelectQuestion
+  | FormTextQuestion
+  | FormEmailQuestion
+  | FormMultiChoiceQuestion
+  | FormFileQuestion
+  | FormSliderQuestion
+  | FormRatingQuestion
+  | FormYesNoQuestion
+  | FormDateQuestion
+  | FormTimeQuestion
+  | FormAddressQuestion
+  | FormPhoneQuestion
+  | FormWebsiteQuestion
+  | FormNumberQuestion
+  | FormStatementBlock;
+
+export type FormQuestionType =
+  | "radio"
+  | "select"
+  | "checkbox"
+  | "tags"
+  | "slider"
+  | "range"
+  | "rating"
+  | "short"
+  | "long"
+  | "fname"
+  | "lname"
+  | "fullName"
+  | "email"
+  | "date"
+  | "time"
+  | "address"
+  | "phone"
+  | "website"
+  | "number"
+  | "statement"
+  | "file"
+  | "yesno";
+
+export type FormFieldCategory =
+  | "choice"
+  | "choices"
+  | "text"
+  | "file"
+  | "rating"
+  | "switch"
+  | "info";
+
+export interface FormBaseQuestion {
+  id: string;
+  page_id?: string;
+  category: FormFieldCategory;
+  type: FormQuestionType;
+  question: string;
+  description?: string;
+  placeholder?: string;
+  required: boolean;
+  help_text?: string;
+  logic?: LogicRule;
+  visibility_condition?: LogicCondition;
+  metadata?: Record<string, unknown>;
+}
+
+export interface FormRadioQuestion extends FormBaseQuestion {
+  category: "choice";
+  type: "radio";
+  options: Option[];
+  randomize_options?: boolean;
+}
+
+export interface FormSelectQuestion extends FormBaseQuestion {
+  category: "choice";
+  type: "select";
+  options: Option[];
+  allow_search?: boolean;
+}
+
+export interface FormMultiChoiceQuestion extends FormBaseQuestion {
+  category: "choices";
+  type: "checkbox" | "tags";
+  options: Option[];
+  max_selections?: number;
+  min_selections?: number;
+  supports_new?: boolean;
+}
+
+export interface FormFileQuestion extends FormBaseQuestion {
+  category: "file";
+  type: "file";
+  allowed_types?: string[];
+  max_size_mb?: number;
+  multiple?: boolean;
+  capture_mode?: "camera" | "upload" | "both";
+}
+
+export interface FormSliderQuestion extends FormBaseQuestion {
+  category: "choice";
+  type: "slider" | "range";
+  min: number;
+  max: number;
+  step: number;
+  show_labels?: boolean;
+  left_label?: string;
+  right_label?: string;
+}
+
+export interface FormRatingQuestion extends FormBaseQuestion {
+  category: "rating";
+  type: "rating";
+  icon_type: "star" | "heart" | "thumb";
+  min: number;
+  max: number;
+  allow_half?: boolean;
+  orientation?: "horizontal" | "vertical";
+}
+
+export interface FormYesNoQuestion extends FormBaseQuestion {
+  category: "switch";
+  type: "yesno";
+  options: Option[];
+}
+
+export interface FormTextQuestion extends FormBaseQuestion {
+  category: "text";
+  type: "short" | "long";
+  validation?: TextValidation;
+  suffix?: string;
+  prefix?: string;
+}
+
+export interface FormEmailQuestion extends FormBaseQuestion {
+  category: "text";
+  type: "email";
+  validation?: TextValidation;
+}
+
+export interface FormDateQuestion extends FormBaseQuestion {
+  category: "text";
+  type: "date";
+  min_date?: string;
+  max_date?: string;
+}
+
+export interface FormTimeQuestion extends FormBaseQuestion {
+  category: "text";
+  type: "time";
+  time_format?: "12h" | "24h";
+}
+
+export interface FormAddressQuestion extends FormBaseQuestion {
+  category: "text";
+  type: "address";
+  fields?: ("line1" | "line2" | "city" | "state" | "postal_code" | "country")[];
+}
+
+export interface FormPhoneQuestion extends FormBaseQuestion {
+  category: "text";
+  type: "phone";
+  validation?: TextValidation;
+  allow_international?: boolean;
+}
+
+export interface FormWebsiteQuestion extends FormBaseQuestion {
+  category: "text";
+  type: "website";
+  validation?: TextValidation;
+}
+
+export interface FormNumberQuestion extends FormBaseQuestion {
+  category: "text";
+  type: "number";
+  min?: number;
+  max?: number;
+  step?: number;
+  validation?: TextValidation;
+}
+
+export interface FormStatementBlock extends FormBaseQuestion {
+  category: "info";
+  type: "statement";
+  rich_text?: string;
+}
+
+export interface LogicRule {
+  id: string;
+  scope: "form" | "page" | "question";
+  owner_id?: string;
+  conditions: LogicCondition[];
+  logic_type: "AND" | "OR";
+  actions: LogicAction[];
+  order?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export type LogicOperator =
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "greater_than"
+  | "less_than"
+  | "greater_or_equal"
+  | "less_or_equal"
+  | "matches_regex";
+
+export interface LogicCondition {
+  question_id: string;
+  operator: LogicOperator;
+  value?: string | number | boolean;
+}
+
+export type LogicActionType =
+  | "jump_to_question"
+  | "jump_to_page"
+  | "end_form"
+  | "show_message";
+
+export interface LogicAction {
+  type: LogicActionType;
+  target_id?: string;
+  message?: string;
 }
 
 export interface FormData {
@@ -96,143 +476,30 @@ interface WelcomeScreen {
   buttonText: string;
 }
 
-interface VisibilityCondition {
-  id: string;
-  value: string;
-}
-
-export type Question =
-  | RadioQuestion
-  | SelectQuestion
-  | TextQuestion
-  | EmailQuestion
-  | MultiChoiceQuestion
-  | FileQuestion
-  | SliderQuestion
-  | RatingQuestion
-  | YesNoQuestion;
-
-export type QuestionType =
-  | "radio"
-  | "select"
-  | "checkbox"
-  | "tags"
-  | "slider"
-  | "range"
-  | "rating"
-  | "fname"
-  | "lname"
-  | "fullName"
-  | "short"
-  | "long"
-  | "email"
-  | "date"
-  | "time"
-  | "address"
-  | "phone"
-  | "website"
-  | "file"
-  | "yesno";
-
-export type FieldCategory =
-  | "choice"
-  | "text"
-  | "choices"
-  | "file"
-  | "rating"
-  | "switch";
-
-export interface BaseQuestion {
-  id: string;
-  category: string;
-  type: QuestionType;
-  question: string;
-  placeholder?: string;
-  required: boolean;
-  logic?: Logic; // Flow logic for conditional rendering
-  condition?: VisibilityCondition; // Flow logic for conditional rendering
-}
-
-export interface RadioQuestion extends BaseQuestion {
-  category: "choice";
-  type: "radio";
-  options: Option[];
-}
-
-export interface SelectQuestion extends BaseQuestion {
-  type: "select";
-  category: "choice";
-  options: Option[];
-}
-
-export interface MultiChoiceQuestion extends BaseQuestion {
-  category: "choices";
-  type: "checkbox" | "tags";
-  options: Option[];
-  supports_new?: boolean;
-}
-
-export interface FileQuestion extends BaseQuestion {
-  type: "file";
-  category: "file";
-  allowedTypes?: string[];
-  maxSize?: number;
-  multiple?: boolean;
-}
-
-export interface SliderQuestion extends BaseQuestion {
-  type: "slider" | "range";
-  category: "choice" | "choices";
-  options?: Option[];
-  showLabels: boolean;
-  min: number;
-  max: number;
-  step: number;
-}
-
-export interface RatingQuestion extends BaseQuestion {
-  type: "rating";
-  category: "rating";
-  iconType: "heart" | "thumb" | "star";
-  allowHalf?: boolean;
-  min: number;
-  max: number;
-}
-
-export interface YesNoQuestion extends BaseQuestion {
-  type: "yesno";
-  category: "switch";
-  options: Option[];
-}
+export type Question = FormQuestion;
+export type QuestionType = FormQuestionType;
+export type FieldCategory = FormFieldCategory;
+export type BaseQuestion = FormBaseQuestion;
+export type RadioQuestion = FormRadioQuestion;
+export type SelectQuestion = FormSelectQuestion;
+export type MultiChoiceQuestion = FormMultiChoiceQuestion;
+export type FileQuestion = FormFileQuestion;
+export type SliderQuestion = FormSliderQuestion;
+export type RatingQuestion = FormRatingQuestion;
+export type YesNoQuestion = FormYesNoQuestion;
+export type TextQuestion = FormTextQuestion;
+export type EmailQuestion = FormEmailQuestion;
+export type DateQuestion = FormDateQuestion;
+export type TimeQuestion = FormTimeQuestion;
+export type AddressQuestion = FormAddressQuestion;
+export type PhoneQuestion = FormPhoneQuestion;
+export type WebsiteQuestion = FormWebsiteQuestion;
+export type NumberQuestion = FormNumberQuestion;
+export type StatementBlock = FormStatementBlock;
 
 export interface Option {
   value: string;
   label: string;
-}
-
-export interface TextQuestion extends BaseQuestion {
-  category: "text";
-  type:
-    | "fname"
-    | "lname"
-    | "fullName"
-    | "short"
-    | "date"
-    | "time"
-    | "address"
-    | "phone"
-    | "website"
-    | "long"
-    | "email";
-  suffix?: string;
-  validation?: TextValidation;
-}
-
-interface EmailQuestion extends TextQuestion {
-  prefix?: string;
-  validation: {
-    inputType: "email";
-  };
 }
 
 export interface TextValidation {
@@ -280,6 +547,11 @@ interface Footer {
 interface Link {
   text: string;
   url: string;
+}
+
+export interface VisibilityCondition {
+  id: string;
+  value: string;
 }
 
 export const defaultValidations: Record<string, TextValidation> = {
@@ -361,6 +633,8 @@ const typeToLabelMap: Record<QuestionType, string> = {
   address: "Address",
   phone: "Phone Number",
   website: "Website",
+  number: "Number",
+  statement: "Statement",
   file: "File Upload",
   rating: "Rating",
   yesno: "Yes/No",
@@ -384,6 +658,8 @@ export const typeToCategoryMap: Record<QuestionType, FieldCategory> = {
   address: "text",
   phone: "text",
   website: "text",
+  number: "text",
+  statement: "info",
   file: "file",
   rating: "rating",
   yesno: "switch",
@@ -422,6 +698,56 @@ export interface FormResponseData {
   responses: FormResponse[];
   meta: ResponseMeta;
   statistics: Record<string, QuestionStatistics>;
+}
+
+export interface PaginationMeta {
+  current_page: number;
+  per_page: number;
+  total: number;
+}
+
+export interface FormResponseSummary {
+  id: number;
+  status?: string | null;
+  submitted_at?: string | null;
+  payment_status?: string | null;
+  [key: string]: unknown;
+}
+
+export interface FormResponsesPage {
+  data: FormResponseSummary[];
+  meta: PaginationMeta;
+}
+
+export interface AppFormResponseAnswer {
+  id: number;
+  question_id: number;
+  value: unknown;
+  question?: FormQuestion;
+  meta?: Record<string, unknown> | null;
+  file_url?: string | null;
+  file_path?: string | null;
+}
+
+export interface AppFormResponseDetail {
+  id: number;
+  status: string;
+  created_at?: string | null;
+  submitted_at?: string | null;
+  payment_status?: string | null;
+  payment_intent_id?: string | null;
+  answers: AppFormResponseAnswer[];
+  respondent?: Record<string, unknown> | null;
+  meta?: Record<string, unknown> | null;
+}
+
+export interface FormWebhook {
+  id: number;
+  url: string;
+  events?: string[] | null;
+  status?: 'active' | 'disabled';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type DeletedItem = 

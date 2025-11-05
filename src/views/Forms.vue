@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useFormStore } from "@/store/forms";
-import { AppForm } from "@/types";
 import QuickViewCard from "@/components/forms/QuickView.vue";
 import {
-  ActivitySquare,
-  Newspaper,
-  UserCheck2,
   Grid,
   List,
   Share2,
@@ -14,66 +10,45 @@ import {
   Edit2,
   BookOpen,
   Edit3,
-  BookPlus,
   FilePlus2,
   SearchIcon,
   Settings,
 } from "lucide-vue-next";
+import FormWizard from "@/components/forms/FormWizard.vue";
 import Input from "@/components/ui/input/Input.vue";
 import Button from "@/components/ui/button/Button.vue";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { router } from "@/main";
 
-const forms = ref<AppForm[]>([]);
-const loading = ref<boolean>(false);
-const errorMessage = ref<string | null>(null);
-const currentPage = ref<number>(1);
-const isFetching = ref<boolean>(false);
-const hasMore = ref<boolean>(true);
-
 const searchValue = ref("");
+const debouncedSearch = ref("");
 const viewMode = ref<"grid" | "tree" | "thumbnail" | "list">("grid");
 const selectedForm = ref<string | null>(null);
-
-const showContextMenu = computed(() => !!selectedForm.value);
+const showWizard = ref(false);
 
 const formStore = useFormStore();
 
-// Fetch forms data for the current page
+const loading = computed(() => formStore.loading);
+const errorMessage = computed(() => formStore.error);
+const hasMore = computed(() => formStore.pagination.hasMore);
+const forms = computed(() => formStore.allForms);
+
+const filteredForms = computed(() => {
+  const query = debouncedSearch.value.trim().toLowerCase();
+  if (!query) return forms.value;
+  return forms.value.filter((form) => form.title?.toLowerCase().includes(query));
+});
+
+const showContextMenu = computed(() => !!selectedForm.value);
+
 const fetchMoreForms = async () => {
-  if (isFetching.value || !hasMore.value) return;
-
-  isFetching.value = true;
-  loading.value = true;
-  errorMessage.value = null;
-
-  try {
-    const response = await formStore.fetchForms(currentPage.value);
-    if (response.length > 0) {
-      forms.value = [...forms.value, ...response];
-      currentPage.value += 1;
-    } else {
-      hasMore.value = false; // No more forms to fetch
-    }
-  } catch (error) {
-    errorMessage.value = "Failed to load forms. Please try again later.";
-  } finally {
-    isFetching.value = false;
-    loading.value = false;
-  }
+  if (loading.value || !hasMore.value) return;
+  await formStore.fetchForms();
 };
 
 const handleScroll = () => {
@@ -81,61 +56,101 @@ const handleScroll = () => {
   const currentScroll = window.scrollY + window.innerHeight;
 
   if (currentScroll + 100 >= scrollableHeight) {
-    // If near the bottom, load more forms
     fetchMoreForms();
   }
 };
 
-let debounceTimer: NodeJS.Timeout;
-const debouncedSearch = ref(searchValue.value);
-
-// Watcher for debouncing the search input
+let debounceTimer: number | null = null;
 watch(searchValue, (newValue) => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
+  if (debounceTimer !== null) {
+    window.clearTimeout(debounceTimer);
+  }
+  debounceTimer = window.setTimeout(() => {
     debouncedSearch.value = newValue;
-  }, 300);
+  }, 300) as unknown as number;
 });
 
-const templates = {
-  General: [
-    { name: "Blank Form", icon: Newspaper },
-    { name: "Signup Form", icon: UserCheck2 },
-    { name: "Survey Form", icon: ActivitySquare },
-  ],
-};
+function createNewForm() {
+  showWizard.value = true;
+}
 
-function createNewForm(template?: string) {
-  if (template == "blank") {
-    formStore.saveForm({title: "Blank Form"}, router);
-  } else {
-    //better to just fetch template from api
-    router.push("/forms/" + template || "blank");
+async function handleWizardCreate(data: { title: string; description: string; blocks: any[] }) {
+  const pageId = crypto.randomUUID();
+  
+  // Convert blocks to questions
+  const questions = data.blocks.map((block, index) => ({
+    ...block,
+    page_id: pageId,
+    position: index,
+  }));
+  
+  const form = await formStore.createForm({ 
+    title: data.title,
+    pages: [
+      {
+        id: pageId,
+        title: "Page 1",
+        description: data.description,
+        position: 1,
+        question_order: questions.map(q => q.id),
+      }
+    ],
+    questions,
+    logic_rules: [],
+  });
+  
+  if (form?.id) {
+    showWizard.value = false;
+    router.replace({ name: 'form-edit', params: { id: form.id } });
+  }
+}
+
+async function handleWizardCreateBlank() {
+  const form = await formStore.createForm({ 
+    title: "Blank Form",
+    pages: [
+      {
+        id: crypto.randomUUID(),
+        title: "Untitled page",
+        position: 1,
+        question_order: [],
+      }
+    ],
+    logic_rules: [],
+  });
+  
+  if (form?.id) {
+    showWizard.value = false;
+    router.replace({ name: 'form-edit', params: { id: form.id } });
   }
 }
 
 function previewForm(id: string) {
-  router.push("/forms/v/" + id);
+  router.push(`/f/${id}`);
 }
 
 function editForm() {
-  router.push("/forms/edit/" + selectedForm.value);
+  if (!selectedForm.value) return;
+  router.push({ name: 'form-edit', params: { id: selectedForm.value } });
 }
 
 function viewResponses() {
-  router.push("/forms/" + selectedForm.value);
+  if (!selectedForm.value) return;
+  router.push({ name: 'form-responses', params: { id: selectedForm.value } });
 }
 
 onMounted(() => {
-  fetchMoreForms(); // Fetch the first page of forms
+  formStore.fetchForms(true);
   window.addEventListener("scroll", handleScroll);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener("scroll", handleScroll); // Cleanup
+  window.removeEventListener("scroll", handleScroll);
+  if (debounceTimer !== null) {
+    window.clearTimeout(debounceTimer);
+  }
 });
 
-// Update the contextMenuActions computed property
 const contextMenuActions = computed(() => {
   if (!selectedForm.value) return [];
 
@@ -170,20 +185,26 @@ const contextMenuActions = computed(() => {
 </script>
 
 <template>
-  <div class="flex h-screen bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900">
+  <div
+    :class="[
+      'flex h-screen text-gray-900 transition-colors duration-200',
+      'bg-gradient-to-br from-gray-50 to-gray-100',
+      'dark:bg-gradient-to-br dark:from-gray-900 to-gray-800'
+    ]"
+  >
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Top menubar -->
       <div
-        class="bg-white bg-opacity-50 backdrop-blur-lg border-b border-gray-200 p-4 flex items-center justify-between">
+        class="bg-white/60 dark:bg-gray-900/60 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 p-4 flex items-center justify-between text-gray-800 dark:text-gray-100">
         <div class="flex items-center space-x-4">
           <div class="relative">
-            <SearchIcon class="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
-            <Input v-model="searchValue" placeholder="Search forms..." class="pl-8 w-64" />
+            <SearchIcon class="absolute left-2 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <Input v-model="searchValue" placeholder="Search forms..." class="pl-8 w-64 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400" />
           </div>
         </div>
         <!-- Context-aware menu -->
         <div v-if="showContextMenu"
-          class="context-menu bg-white bg-opacity-50 backdrop-blur-sm border border-gray-200 rounded-lg p-2 flex items-center space-x-2">
+          class="context-menu bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-lg p-2 flex items-center space-x-2 text-gray-800 dark:text-gray-100">
           <Button v-for="action in contextMenuActions" :key="action.label" variant="ghost" size="sm"
             @click="action.action" class="flex items-center">
             <component :is="action.icon" class="mr-2 h-4 w-4" />
@@ -191,41 +212,10 @@ const contextMenuActions = computed(() => {
           </Button>
         </div>
         <div v-else class="flex items-center space-x-4">
-          <Button variant="outline" @click="() => createNewForm('blank')">
+          <Button variant="outline" @click="createNewForm">
             <FilePlus2 class="mr-2 h-4 w-4" />
             New Form
           </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <BookPlus class="mr-2 h-4 w-4" />
-                New from Template
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Choose a Template</DialogTitle>
-              </DialogHeader>
-              <Tabs default-value="Documents">
-                <TabsList>
-                  <TabsTrigger v-for="category in Object.keys(templates)" :key="category" :value="category">
-                    {{ category }}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent v-for="(items, category) in templates" :key="category" :value="category">
-                  <div class="grid grid-cols-2 gap-4">
-                    <Button v-for="template in items" :key="template.name" variant="outline"
-                      class="h-24 flex flex-col items-center justify-center" @click="
-                        createNewForm(template.name)
-                        ">
-                      <component :is="template.icon" class="w-8 h-8" />
-                      <span class="mt-2 text-sm">{{ template.name }}</span>
-                    </Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </DialogContent>
-          </Dialog>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
@@ -250,7 +240,7 @@ const contextMenuActions = computed(() => {
       </div>
 
       <div class="flex-1 p-6 overflow-hidden">
-        <h1 v-if="forms.length < 1" class="text-4xl font-bold text-center mb-8">Create and Manage Forms</h1>
+        <h1 v-if="forms.length < 1" class="text-4xl font-bold text-center mb-8 dark:text-white">Create and Manage Forms</h1>
 
         <!-- Error message -->
         <div v-if="errorMessage" class="text-red-500 text-center">
@@ -259,24 +249,30 @@ const contextMenuActions = computed(() => {
 
         <!-- Forms grid display -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <QuickViewCard v-for="form in forms" :key="form.id" :form="form" />
+          <QuickViewCard v-for="form in filteredForms" :key="form.id" :form="form" />
         </div>
 
         <!-- Loading spinner for infinite scroll -->
         <div v-if="loading && hasMore" class="text-center mt-6">
-          <div class="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-blue-500"
-            role="status">
-          </div>
-          <span class="ml-2 text-gray-600" v-if="forms.length > 0">Loading more forms...</span>
-          <span class="ml-2 text-gray-600" v-else>Loading...</span>
+          <div class="inline-block w-8 h-8 rounded-full border-4 border-gray-300 dark:border-gray-600 border-r-transparent animate-spin" role="status"></div>
+          <span class="ml-2 text-gray-600 dark:text-gray-400" v-if="forms.length > 0">Loading more forms...</span>
+          <span class="ml-2 text-gray-600 dark:text-gray-400" v-else>Loading...</span>
         </div>
 
         <!-- No more forms to load -->
-        <div v-if="!hasMore && !loading" class="text-center mt-6 text-gray-500">
+        <div v-if="!hasMore && !loading" class="text-center mt-6 text-gray-500 dark:text-gray-400">
           No more forms to load.
         </div>
       </div>
     </div>
+
+    <!-- Form Wizard -->
+    <FormWizard
+      v-if="showWizard"
+      @create="handleWizardCreate"
+      @create-blank="handleWizardCreateBlank"
+      @close="showWizard = false"
+    />
   </div>
 </template>
 

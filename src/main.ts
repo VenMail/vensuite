@@ -18,11 +18,11 @@ import MediaViewer from './views/MediaViewer.vue'
 import Sheets from './views/Sheets.vue'
 import Documents from './views/Documents.vue'
 import Forms from './views/Forms.vue'
+import FormBuilderNew from './views/FormBuilderNew.vue'
 import Bin from './views/Bin.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
 // Import utils as needed
-import Editor from './components/forms/Editor.vue'
 import FilePicker from './views/FilePicker.vue'
 import DocsEditor from './views/DocsEditor.vue'
 import Login from './views/Login.vue'
@@ -30,6 +30,12 @@ import SlidesEditor from './views/SlidesEditor.vue'
 import Media from './views/Media.vue'
 
 const routes = [
+  {
+    path: '/f/:slug',
+    name: 'form-player',
+    component: () => import('./views/FormPlayerHost.vue'),
+    meta: { public: true },
+  },
   {
     path: '/login',
     name: 'login',
@@ -54,7 +60,16 @@ const routes = [
       { path: 'slides/t/:template', name: 'slides-template', component: SlidesEditor, meta: { hideLayout: true } },
       { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'forms', name: 'forms', component: Forms },
-      { path: 'forms/:id', name: 'form', component: Editor },
+      { path: 'forms/t/:template', name: 'form-template', component: () => import('./views/FormTemplateHandler.vue'), meta: { hideLayout: true } },
+      {
+        path: 'forms/:id/edit',
+        name: 'form-edit',
+        alias: ['forms/:id'],
+        component: FormBuilderNew,
+        meta: { hideLayout: true },
+      },
+      { path: 'forms/:id/settings', name: 'form-settings', component: FormBuilderNew, meta: { hideLayout: true } },
+      { path: 'forms/:id/responses', name: 'form-responses', component: () => import('./views/FormResponses.vue'), meta: { hideLayout: true } },
       { path: 'picker', name: 'file-picker', component: FilePicker, meta: { hideLayout: true } },
       { path: 'import/:id', name: 'import', component: Home },
       { path: 'media', name: 'media', component: Media },
