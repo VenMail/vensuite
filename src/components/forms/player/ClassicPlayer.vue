@@ -62,7 +62,7 @@
       </ol>
     </nav>
 
-    <main class="flex flex-col gap-8 py-6">
+    <main :class="questionSectionContainerClass">
       <section
         v-for="(section, index) in questionSections"
         :id="`section-${section.id}`"
@@ -100,15 +100,17 @@
           {{ section.description }}
         </p>
 
-        <div class="grid gap-5">
+        <div :class="questionGridClass">
           <article
             v-for="question in section.questions"
             :key="question.id"
-            class="rounded-2xl border border-slate-200/80 bg-white/95 px-5 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200/70 hover:shadow-md dark:border-slate-700/70 dark:bg-slate-900/60 dark:hover:border-primary-500/40"
+            :class="questionCardClass"
           >
             <QuestionRenderer
               :question="question"
               :model-value="playerStore.getAnswerValue(question.id)"
+              :label-placement="resolvedLabelPlacement"
+              :density="resolvedDensity"
               :disabled="isSubmitting"
               @update:model-value="(value) => updateAnswer(question.id, value)"
             />
@@ -157,11 +159,13 @@ import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import QuestionRenderer from '@/components/forms/player/QuestionRenderer.vue';
 import { useFormPlayerStore } from '@/store/formPlayer';
-import type { FormPage, FormQuestion } from '@/types';
+import type { FormDensity, FormLabelPlacement, FormPage, FormQuestion } from '@/types';
 import { Moon, Sun } from 'lucide-vue-next';
 
 const props = defineProps<{
   isSubmitting?: boolean;
+  labelPlacement?: FormLabelPlacement;
+  density?: FormDensity;
 }>();
 
 const emit = defineEmits<{
@@ -172,6 +176,31 @@ const playerStore = useFormPlayerStore();
 const { state: playerState } = storeToRefs(playerStore);
 
 const isSubmitting = computed(() => props.isSubmitting ?? false);
+
+const resolvedLabelPlacement = computed<FormLabelPlacement>(() => props.labelPlacement ?? 'stacked');
+const resolvedDensity = computed<FormDensity>(() => props.density ?? 'comfortable');
+
+const questionSectionContainerClass = computed(() => {
+  const base = ['flex', 'flex-col'];
+  base.push(resolvedDensity.value === 'compact' ? 'gap-4 py-4' : 'gap-8 py-6');
+  return base.join(' ');
+});
+
+const questionGridClass = computed(() => {
+  const base = ['grid'];
+  base.push(resolvedDensity.value === 'compact' ? 'gap-4' : 'gap-6');
+  return base.join(' ');
+});
+
+const questionCardClass = computed(() => {
+  const base = ['rounded-2xl border border-slate-200/80 bg-white/95 shadow-sm transition hover:-translate-y-0.5 dark:border-slate-700/70 dark:bg-slate-900/60'];
+  if (resolvedDensity.value === 'compact') {
+    base.push('px-4 py-3 hover:border-primary-200/60 dark:hover:border-primary-500/30');
+  } else {
+    base.push('px-5 py-4 hover:border-primary-200/70 dark:hover:border-primary-500/40');
+  }
+  return base.join(' ');
+});
 
 const THEME_EVENT = 'theme-change';
 const THEME_STORAGE_KEY = 'theme';

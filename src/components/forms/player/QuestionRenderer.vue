@@ -1,18 +1,19 @@
 <template>
-  <div class="space-y-3">
-    <div class="space-y-1.5">
+  <div :class="containerClass">
+    <div :class="labelWrapperClass">
       <label :for="inputId" class="flex items-baseline gap-1.5 text-sm font-semibold text-slate-900 dark:text-white">
         <span>{{ label }}</span>
         <span v-if="required" class="text-rose-500" aria-label="required">*</span>
       </label>
-      
+
       <p v-if="description" class="text-sm text-slate-600 dark:text-slate-400">
         {{ description }}
       </p>
     </div>
 
-    <!-- Short Text Inputs -->
-    <input
+    <div :class="fieldWrapperClass">
+      <!-- Short Text Inputs -->
+      <input
       v-if="isShortInput"
       :id="inputId"
       :type="inputType"
@@ -25,7 +26,7 @@
     />
 
     <!-- Long Text Input -->
-    <textarea
+      <textarea
       v-else-if="isLongInput"
       :id="inputId"
       class="min-h-[140px] w-full resize-y rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
@@ -37,8 +38,8 @@
     />
 
     <!-- Radio Buttons -->
-    <fieldset v-else-if="type === 'radio'" class="space-y-2.5">
-      <label
+      <fieldset v-else-if="type === 'radio'" class="space-y-2.5">
+        <label
         v-for="(option, idx) in options"
         :key="option.value"
         class="flex items-center gap-3 cursor-pointer group"
@@ -53,14 +54,14 @@
           class="h-4 w-4 cursor-pointer border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500 dark:focus:ring-primary-400"
           @change="updateValue(option.value)"
         />
-        <span class="text-sm text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white transition-colors">
+          <span class="text-sm text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
           {{ option.label }}
         </span>
       </label>
-    </fieldset>
+      </fieldset>
 
-    <!-- Select Dropdown -->
-    <select
+      <!-- Select Dropdown -->
+      <select
       v-else-if="type === 'select'"
       :id="inputId"
       class="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:focus:border-primary-400 dark:focus:ring-primary-400 dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
@@ -75,9 +76,9 @@
       </option>
     </select>
 
-    <!-- Checkboxes -->
-    <fieldset v-else-if="isMultiChoice" class="space-y-2.5">
-      <label
+      <!-- Checkboxes -->
+      <fieldset v-else-if="isMultiChoice" class="space-y-2.5">
+        <label
         v-for="(option, idx) in options"
         :key="option.value"
         class="flex items-center gap-3 cursor-pointer group"
@@ -91,14 +92,14 @@
           class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500 dark:focus:ring-primary-400"
           @change="toggleCheckbox(option.value, ($event.target as HTMLInputElement).checked)"
         />
-        <span class="text-sm text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white transition-colors">
+          <span class="text-sm text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
           {{ option.label }}
         </span>
       </label>
-    </fieldset>
+      </fieldset>
 
-    <!-- Yes/No Toggle -->
-    <label v-else-if="type === 'yesno'" class="flex items-center gap-3 cursor-pointer group">
+      <!-- Yes/No Toggle -->
+      <label v-else-if="type === 'yesno'" class="flex items-center gap-3 cursor-pointer group">
       <input
         :id="inputId"
         type="checkbox"
@@ -107,13 +108,13 @@
         class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500 dark:focus:ring-primary-400"
         @change="updateValue(($event.target as HTMLInputElement).checked)"
       />
-      <span class="text-sm text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white transition-colors">
+        <span class="text-sm text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
         {{ yesNoLabel }}
       </span>
     </label>
 
-    <!-- Slider -->
-    <div v-else-if="isSlider" class="space-y-2">
+      <!-- Slider -->
+      <div v-else-if="isSlider" class="space-y-2">
       <input
         :id="inputId"
         type="range"
@@ -125,15 +126,15 @@
         :disabled="disabled"
         @input="updateValue(Number(($event.target as HTMLInputElement).value))"
       />
-      <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>{{ sliderConfig?.min ?? 0 }}</span>
         <output class="font-semibold text-slate-900 dark:text-white">{{ numberValue }}</output>
         <span>{{ sliderConfig?.max ?? 100 }}</span>
       </div>
-    </div>
+      </div>
 
-    <!-- Rating -->
-    <div v-else-if="type === 'rating'" class="flex flex-wrap gap-2">
+      <!-- Rating -->
+      <div v-else-if="type === 'rating'" class="flex flex-wrap gap-2">
       <button
         v-for="ratingValue in ratingScale"
         :key="ratingValue"
@@ -146,20 +147,20 @@
         ]"
         :disabled="disabled"
         @click="updateValue(ratingValue)"
-      >
+        >
         {{ ratingValue }}
       </button>
-    </div>
+      </div>
 
-    <!-- Statement -->
-    <div 
+      <!-- Statement -->
+      <div 
       v-else-if="type === 'statement'"
       class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300" 
       v-html="statementHtml"
     />
 
-    <!-- File Upload -->
-    <div v-else-if="type === 'file'" class="space-y-3">
+      <!-- File Upload -->
+      <div v-else-if="type === 'file'" class="space-y-3">
       <input
         :id="inputId"
         type="file"
@@ -177,10 +178,10 @@
           <span class="truncate">{{ name }}</span>
         </li>
       </ul>
-    </div>
+      </div>
 
-    <!-- Fallback Input -->
-    <input
+      <!-- Fallback Input -->
+      <input
       v-else
       :id="inputId"
       type="text"
@@ -192,21 +193,24 @@
       @input="updateValue(($event.target as HTMLInputElement).value)"
     />
 
-    <!-- Help Text -->
-    <p v-if="question.help_text" class="text-xs text-slate-500 dark:text-slate-400">
-      {{ question.help_text }}
-    </p>
+      <!-- Help Text -->
+      <p v-if="question.help_text" class="text-xs text-slate-500 dark:text-slate-400">
+        {{ question.help_text }}
+      </p>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { FormQuestion, Option } from '@/types';
+import type { FormDensity, FormLabelPlacement, FormQuestion, Option } from '@/types';
 
 const props = defineProps<{
   question: FormQuestion;
   modelValue: unknown;
   disabled?: boolean;
+  labelPlacement?: FormLabelPlacement;
+  density?: FormDensity;
 }>();
 
 const emit = defineEmits<{
@@ -315,6 +319,33 @@ const handleFileChange = (event: Event) => {
   const files = Array.from(input.files);
   emit('update:modelValue', isMultipleFiles.value ? files : files[0] ?? null);
 };
+
+const labelPlacement = computed<FormLabelPlacement>(() => props.labelPlacement ?? 'stacked');
+const density = computed<FormDensity>(() => props.density ?? 'comfortable');
+
+const containerClass = computed(() => {
+  const classes = ['flex', 'flex-col'];
+  classes.push(density.value === 'compact' ? 'gap-3' : 'gap-4');
+  if (labelPlacement.value === 'inline') {
+    classes.push('md:grid', 'md:grid-cols-[minmax(0,220px)_1fr]', 'md:gap-6', 'md:items-start');
+  }
+  return classes.join(' ');
+});
+
+const labelWrapperClass = computed(() => {
+  const classes = ['flex', 'flex-col'];
+  classes.push(density.value === 'compact' ? 'gap-1' : 'gap-1.5');
+  if (labelPlacement.value === 'inline') {
+    classes.push('md:pt-1');
+  }
+  return classes.join(' ');
+});
+
+const fieldWrapperClass = computed(() => {
+  const classes = ['flex', 'flex-col'];
+  classes.push(density.value === 'compact' ? 'gap-2.5' : 'gap-3');
+  return classes.join(' ');
+});
 </script>
 
 <style scoped>

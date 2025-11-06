@@ -1394,12 +1394,15 @@ const ensurePublishedShareSlug = async (): Promise<FormDefinition | null> => {
   if (!formId.value) return null;
   const latest = await formStore.fetchForm(formId.value);
 
-  if (latest?.sharing?.share_slug) {
+  const alreadyPublished = latest?.status === "published";
+  const existingShareSlug = latest?.sharing?.share_slug;
+
+  if (alreadyPublished && existingShareSlug) {
     return latest;
   }
 
   const published = await formStore.publishForm(formId.value);
-  if (published?.sharing?.share_slug) {
+  if (published?.status === "published" && published?.sharing?.share_slug) {
     return published;
   }
 

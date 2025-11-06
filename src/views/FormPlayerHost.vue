@@ -42,12 +42,16 @@
         <FocusPlayer
           v-else-if="stage === 'playing' && mode === 'focus'"
           :is-submitting="isSubmitting"
+          :label-placement="labelPlacement"
+          :density="formDensity"
           @complete="handleCompletionRequest"
         />
 
         <ClassicPlayer
           v-else-if="stage === 'playing' && mode === 'classic'"
           :is-submitting="isSubmitting"
+          :label-placement="labelPlacement"
+          :density="formDensity"
           @submit="handleCompletionRequest"
         />
 
@@ -88,7 +92,7 @@ import { fetchForm } from '@/services/forms';
 import { useFormPlayerStore } from '@/store/formPlayer';
 import { usePaymentClient } from '@/composables/usePaymentClient';
 import { toast } from '@/composables/useToast';
-import type { FormCompletionScreen, FormDefinition, FormWelcomeScreen } from '@/types';
+import type { FormCompletionScreen, FormDefinition, FormWelcomeScreen, FormDensity, FormLabelPlacement } from '@/types';
 import { useAuthStore } from '@/store/auth';
 
 const route = useRoute();
@@ -127,6 +131,16 @@ const header = computed(() => formDefinition.value?.header);
 const settings = computed(() => formDefinition.value?.settings);
 const paymentSettings = computed(() => formDefinition.value?.payment);
 
+const labelPlacement = computed<FormLabelPlacement>(() => {
+  const setting = settings.value?.label_placement;
+  return setting === 'inline' ? 'inline' : 'stacked';
+});
+
+const formDensity = computed<FormDensity>(() => {
+  const setting = settings.value?.form_density;
+  return setting === 'compact' ? 'compact' : 'comfortable';
+});
+
 const adjustColor = (hex: string | undefined, percent: number): string | undefined => {
   if (!hex) return undefined;
   const sanitized = hex.replace('#', '');
@@ -161,6 +175,11 @@ const rootStyle = computed(() => {
 
   if (typography.value?.body_font_family) {
     styles.fontFamily = typography.value.body_font_family;
+    styles['--player-body-font'] = typography.value.body_font_family;
+  }
+
+  if (typography.value?.heading_font_family) {
+    styles['--player-heading-font'] = typography.value.heading_font_family;
   }
 
   return styles;
@@ -211,6 +230,53 @@ const applyDefinition = (definition: FormDefinition) => {
   playerStore.setPaymentRequired(!!definition.payment?.enabled);
   ensureWelcomeStage();
 };
+
+const customFontLinkId = 'form-player-custom-font';
+let customFontLinkEl: HTMLLinkElement | null = null;
+
+const removeCustomFontLink = () => {
+  if (customFontLinkEl && customFontLinkEl.parentNode) {
+    customFontLinkEl.parentNode.removeChild(customFontLinkEl);
+  }
+  customFontLinkEl = null;
+};
+
+const attachCustomFontLink = (href: string) => {
+  removeCustomFontLink();
+  const link = document.createElement('link');
+  link.id = customFontLinkId;
+  link.rel = 'stylesheet';
+  link.href = href;
+  document.head.appendChild(link);
+  customFontLinkEl = link;
+};
+
+const isValidGoogleFontUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:') return false;
+    const host = url.hostname.toLowerCase();
+    return host.endsWith('fonts.googleapis.com') || host.endsWith('fonts.gstatic.com');
+  } catch {
+    return false;
+  }
+};
+
+const customFontUrl = computed(() => {
+  const query = route.query.fontUrl ?? route.query.font_url;
+  if (typeof query === 'string' && isValidGoogleFontUrl(query)) {
+    return query;
+  }
+  return null;
+});
+
+watch(customFontUrl, (url) => {
+  if (url) {
+    attachCustomFontLink(url);
+  } else {
+    removeCustomFontLink();
+  }
+}, { immediate: true });
 
 const loadForm = async () => {
   resetState();

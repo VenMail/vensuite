@@ -45,6 +45,8 @@
           <QuestionRenderer
             :question="currentQuestion"
             :model-value="answerValue"
+            :label-placement="labelPlacement"
+            :density="density"
             :disabled="isSubmitting"
             @update:model-value="onAnswerInput"
           />
@@ -115,10 +117,12 @@ import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import QuestionRenderer from '@/components/forms/player/QuestionRenderer.vue';
 import { useFormPlayerStore } from '@/store/formPlayer';
-import type { FormQuestion } from '@/types';
+import type { FormDensity, FormLabelPlacement, FormQuestion } from '@/types';
 
-defineProps<{
+const props = defineProps<{
   isSubmitting?: boolean;
+  labelPlacement?: FormLabelPlacement;
+  density?: FormDensity;
 }>();
 
 const emit = defineEmits<{
@@ -127,6 +131,9 @@ const emit = defineEmits<{
 
 const playerStore = useFormPlayerStore();
 const { currentQuestion, questionOrder, state: playerState } = storeToRefs(playerStore);
+
+const labelPlacement = computed<FormLabelPlacement>(() => props.labelPlacement ?? 'stacked');
+const density = computed<FormDensity>(() => props.density ?? 'comfortable');
 
 const navigationSettings = computed(() => playerState.value.formDefinition?.navigation);
 const allowBack = computed(() => navigationSettings.value?.allow_back ?? false);
