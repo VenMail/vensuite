@@ -1,14 +1,8 @@
 <template>
   <div class="choice-editor">
     <h3>Options</h3>
-    <div
-      v-if="modelValue.category == 'choice' || modelValue.category == 'choices'"
-    >
-      <div
-        v-for="(option, index) in modelValue.options"
-        :key="index"
-        class="option"
-      >
+    <div v-if="isChoice">
+      <div v-for="(option, index) in optionOptions" :key="index" class="option">
         <input v-model="option.label" type="text" placeholder="Label" />
         <input v-model="option.value" type="text" placeholder="Value" />
         <button @click="removeOption(index)">Remove</button>
@@ -16,29 +10,26 @@
     </div>
     <button @click="addOption">Add Option</button>
 
-    <div
-      v-if="modelValue.type == 'slider' || modelValue.type == 'range'"
-      class="range-properties"
-    >
+    <div v-if="isRangeLike" class="range-properties">
       <label>
         Min:
-        <input v-model.number="modelValue.min" type="number" />
+        <input v-model.number="(modelValue as any).min" type="number" />
       </label>
       <label>
         Max:
-        <input v-model.number="modelValue.max" type="number" />
+        <input v-model.number="(modelValue as any).max" type="number" />
       </label>
       <label>
         Step:
-        <input v-model.number="modelValue.step" type="number" />
+        <input v-model.number="(modelValue as any).step" type="number" />
       </label>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
-import { Question } from "@/types";
+import { defineComponent, PropType, computed } from "vue";
+import type { Question, Option } from "@/types";
 
 export default defineComponent({
   name: "ChoicePropertyEditor",
@@ -50,21 +41,36 @@ export default defineComponent({
   },
   emits: ["update:modelValue"],
   setup(props, { emit }) {
+    const isChoice = computed(() => props.modelValue.category === 'choice' || props.modelValue.category === 'choices');
+    const isRangeLike = computed(() => (props.modelValue as any).type === 'slider' || (props.modelValue as any).type === 'range');
+
+    const optionOptions = computed<Option[]>(() => {
+      const anyModel = props.modelValue as any;
+      if (isChoice.value && Array.isArray(anyModel.options)) return anyModel.options as Option[];
+      return [];
+    });
+
     const addOption = () => {
-      if (props.modelValue.category == "choices" && props.modelValue.options) {
-        props.modelValue.options.push({ value: "", label: "" });
+      const anyModel = props.modelValue as any;
+      if (isChoice.value) {
+        anyModel.options = Array.isArray(anyModel.options) ? anyModel.options : [];
+        anyModel.options.push({ value: "", label: "" });
         emit("update:modelValue", { ...props.modelValue });
       }
     };
 
     const removeOption = (index: number) => {
-      if (props.modelValue.category == "choices" && props.modelValue.options) {
-        props.modelValue.options.splice(index, 1);
+      const anyModel = props.modelValue as any;
+      if (isChoice.value && Array.isArray(anyModel.options)) {
+        anyModel.options.splice(index, 1);
         emit("update:modelValue", { ...props.modelValue });
       }
     };
 
     return {
+      isChoice,
+      isRangeLike,
+      optionOptions,
       addOption,
       removeOption,
     };

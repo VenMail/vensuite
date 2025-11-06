@@ -61,8 +61,9 @@ onMounted(async () => {
   const name = router.currentRoute.value.name as string | undefined
   const params: any = router.currentRoute.value.params
   const isPublicViewer = (
-    (name === 'doc' && typeof params.id === 'string') ||
-    (name === 'sheet' && typeof params.id === 'string') ||
+    (router.currentRoute.value.meta as any)?.public === true ||
+    (name === 'docs-edit' && typeof params.appFileId === 'string' && params.appFileId !== 'new') ||
+    (name === 'sheet' && typeof params.id === 'string' && params.id !== 'new') ||
     (name === 'file' && typeof params.id === 'string')
   )
 
@@ -96,8 +97,9 @@ watch(isAuthenticated, async (newValue) => {
     const name = router.currentRoute.value.name as string | undefined
     const params: any = router.currentRoute.value.params
     const isPublicViewer = (
-      (name === 'doc' && typeof params.id === 'string') ||
-      (name === 'sheet' && typeof params.id === 'string') ||
+      (router.currentRoute.value.meta as any)?.public === true ||
+      (name === 'docs-edit' && typeof params.appFileId === 'string' && params.appFileId !== 'new') ||
+      (name === 'sheet' && typeof params.id === 'string' && params.id !== 'new') ||
       (name === 'file' && typeof params.id === 'string')
     )
     if (!isPublicViewer) {

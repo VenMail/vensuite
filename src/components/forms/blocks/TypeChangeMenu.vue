@@ -55,7 +55,7 @@ import {
 } from "lucide-vue-next";
 import { slashMenuItems, type BlockType } from "./types";
 
-const props = defineProps<{
+defineProps<{
   currentType: BlockType;
 }>();
 

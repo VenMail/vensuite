@@ -53,7 +53,7 @@ const routes = [
       { path: 'sheets', name: 'sheets-view', component: Sheets },
       { path: 'bin', name: 'bin-view', component: Bin },
       { path: 'docs/new', name: 'docs-new', component: DocsEditor, meta: { hideLayout: true } },
-      { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true } },
+      { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true, public: true } },
       { path: 'docs/t/:template', name: 'docs-template', component: DocsEditor, meta: { hideLayout: true } },
       { path: 'slides/new', name: 'slides-new', component: SlidesEditor, meta: { hideLayout: true } },
       { path: 'slides/:deckId', name: 'slides-edit', component: SlidesEditor, meta: { hideLayout: true } },
@@ -73,9 +73,9 @@ const routes = [
       { path: 'picker', name: 'file-picker', component: FilePicker, meta: { hideLayout: true } },
       { path: 'import/:id', name: 'import', component: Home },
       { path: 'media', name: 'media', component: Media },
-      { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true } },
+      { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true, public: true } },
       { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
-      { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true } },
+      { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true, public: true } },
       { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },
       { path: '', name: 'home', component: Home },
     ],
@@ -104,9 +104,14 @@ authStore.hydrate()
 
 // Router guard
 router.beforeEach(async (to, _from, next) => {
-  // Allow unauthenticated viewing of public docs/sheets by direct link
+  // Allow explicit public routes
+  if (to.meta && (to.meta as any).public === true) {
+    return next()
+  }
+
+  // Allow unauthenticated viewing of public/link docs/sheets by direct link
   const isPublicViewer = (
-    (to.name === 'doc' && typeof to.params.id === 'string' && to.params.id !== 'new') ||
+    (to.name === 'docs-edit' && typeof (to.params as any).appFileId === 'string' && (to.params as any).appFileId !== 'new') ||
     (to.name === 'sheet' && typeof to.params.id === 'string' && to.params.id !== 'new') ||
     (to.name === 'file' && typeof to.params.id === 'string')
   )

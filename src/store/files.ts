@@ -984,7 +984,18 @@ export const useFileStore = defineStore("files", {
         const token = this.getToken();
         const headers: Record<string, string> = {};
         if (token) headers.Authorization = `Bearer ${token}`;
-        const response = await axios.get(`${FILES_ENDPOINT}/${id}`, {
+        // For guests (no token), allow backend to evaluate link/member access using email query param
+        let url = `${FILES_ENDPOINT}/${id}`
+        if (!token) {
+          try {
+            const params = new URLSearchParams(window.location.search)
+            const email = params.get('email')
+            if (email) {
+              url += `?email=${encodeURIComponent(email)}`
+            }
+          } catch {}
+        }
+        const response = await axios.get(url, {
           headers,
         });
         const data = response.data.data;

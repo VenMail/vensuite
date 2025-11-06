@@ -117,7 +117,7 @@
           <!-- Choice Inputs (Radio, Checkbox, Select) -->
           <div v-else-if="localBlock.category === 'choice' || localBlock.category === 'choices'" class="space-y-2">
             <div
-              v-for="(option, index) in localBlock.options"
+              v-for="(_, index) in localBlock.options"
               :key="index"
               class="flex items-center gap-2"
             >
@@ -231,7 +231,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, watch, nextTick } from "vue";
 import {
   GripVertical,
   Plus,
@@ -253,7 +253,7 @@ import {
   Upload,
   ToggleLeft,
 } from "lucide-vue-next";
-import type { FormBlock, BlockType } from "./types";
+import type { FormBlock, BlockType } from "@/components/forms/blocks/types";
 import SlashMenu from "./SlashMenu.vue";
 import TypeChangeMenu from "./TypeChangeMenu.vue";
 

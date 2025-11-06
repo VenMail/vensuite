@@ -136,6 +136,7 @@ const fieldTypes: Record<FieldCategory, QuestionType[]> = {
   file: ["file"],
   rating: ["rating"],
   switch: ["yesno"],
+  info: ["statement"],
 };
 
 const selectedFieldTypes = computed(() => {

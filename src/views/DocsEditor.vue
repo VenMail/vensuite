@@ -26,6 +26,41 @@
       @select-version="handleVersionSelect"
     />
 
+    <!-- Show Access Request Panel for guests without access -->
+    <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-8">
+      <div class="w-full max-w-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Request access</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+          You don’t have access to this document. Enter your email to request access from the owner.
+        </p>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <input v-model="requestEmail" type="email" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="you@example.com" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Message (optional)</label>
+            <textarea v-model="requestMessage" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="I’d like to view this document."></textarea>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Requested access</label>
+            <select v-model="accessLevel" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+              <option value="v">View</option>
+              <option value="c">Comment</option>
+              <option value="e">Edit</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <button @click="submitAccessRequestDoc" :disabled="requestSubmitting || !requestEmail" class="px-4 py-2 bg-primary-600 text-white rounded-md disabled:opacity-50">
+              {{ requestSubmitting ? 'Sending…' : 'Request access' }}
+            </button>
+            <a :href="shareLinkDoc" class="text-sm text-blue-600 dark:text-blue-400 underline" target="_blank" rel="noopener">Open direct link</a>
+          </div>
+          <p v-if="requestSuccess" class="text-sm text-green-600 dark:text-green-400">{{ requestSuccess }}</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Docs Menu Bar -->
     <DocsToolbar 
       ref="toolbarRef"
@@ -92,6 +127,36 @@
           >
             {{ item.text }}
 
+// Request access API call (docs)
+async function submitAccessRequestDoc() {
+  const idParam = route.params.appFileId as string | undefined;
+  if (!idParam) return;
+  requestSubmitting.value = true;
+  requestSuccess.value = null;
+  try {
+    const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const res = await fetch(`${API_BASE_URI}/app-files/${idParam}/request-access`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: requestEmail.value,
+        access_level: accessLevel.value,
+        message: requestMessage.value || undefined,
+      }),
+    });
+    const payload = await res.json();
+    if (res.ok && (payload?.requested || payload?.success)) {
+      requestSuccess.value = 'Access request sent. You will receive an email when approved.';
+    } else {
+      requestSuccess.value = payload?.message || 'Request sent (if the email is valid).';
+    }
+  } catch (e) {
+    requestSuccess.value = 'Request submitted. Please check your email later.';
+  } finally {
+    requestSubmitting.value = false;
+  }
+}
+
 // Normalize and apply document title from a file name
 function setDocumentTitleFromName(name?: string | null) {
   const clean = (name || '').replace(/\.[^/.]+$/, '').trim();
@@ -103,7 +168,7 @@ function setDocumentTitleFromName(name?: string | null) {
     </div>
 
     <!-- Editor Content -->
-    <div class="flex-1 overflow-auto bg-gray-50 p-6 transition-colors custom-scrollbar print:p-0 print:bg-white">
+    <div v-if="!accessDenied" class="flex-1 overflow-auto bg-gray-50 p-6 transition-colors custom-scrollbar print:p-0 print:bg-white">
       <div 
         class="mx-auto bg-white shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
         :class="{ 'landscape-mode': pageOrientation === 'landscape' }"
@@ -583,6 +648,14 @@ const userName = ref(`User ${Math.floor(Math.random() * 1000)}`);
 const changesPending = ref(false);
 const isJoined = ref(false);
 const SOCKET_URI = import.meta.env.VITE_SOCKET_BASE_URL || "wss://w.venmail.io:8443";
+
+// Public access / interstitial state for private docs
+const accessDenied = ref(false);
+const requestEmail = ref('');
+const accessLevel = ref<'v' | 'c' | 'e'>('v');
+const requestMessage = ref('');
+const requestSubmitting = ref(false);
+const requestSuccess = ref<string | null>(null);
 
 function focusEditor() {
   if (!editor.value) return;
@@ -2394,6 +2467,11 @@ async function initializeDocument() {
         const priv = Number((doc as any)?.privacy_type ?? (doc as any)?.privacyType);
         if (!Number.isNaN(priv)) {
           privacyType.value = priv;
+        }
+        // If unauthenticated and not guest-accessible, show access request panel
+        if (!authStore.isAuthenticated && !guestAccessiblePrivacyTypes.has(privacyType.value)) {
+          accessDenied.value = true;
+          try { requestEmail.value = authStore.email || ''; } catch {}
         }
         
         // Hydrate sharing info if present

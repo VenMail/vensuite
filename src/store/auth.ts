@@ -160,7 +160,13 @@ export const useAuthStore = defineStore('auth', {
           if (error.response) {
             const status = error.response.status
             if (status === 401 || status === 403) {
-              await this.handleTokenExpiration();
+              // Only redirect to login if we actually had a token/session
+              // Guests viewing public/link resources should not be forced to login
+              const hadToken = !!this.getToken()
+              if (hadToken && this.isAuthenticated) {
+                await this.handleTokenExpiration();
+              }
+              // Otherwise, let the caller handle access-denied state
             }
           }
           return Promise.reject(error);

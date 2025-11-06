@@ -1,140 +1,131 @@
 <template>
-    <div class="slider-editor">
-      <h3>{{ modelValue.type === 'slider' ? 'Slider' : 'Range' }} Properties</h3>
-      <label>
-        Min Value:
-        <input v-model.number="modelValue.min" type="number" @input="updateOptions" />
-      </label>
-      <label>
-        Max Value:
-        <input v-model.number="modelValue.max" type="number" @input="updateOptions" />
-      </label>
-      <label>
-        Step:
-        <input v-model.number="modelValue.step" type="number" />
-      </label>
-      <label>
-        Show Labels:
-        <input v-model="modelValue.showLabels" type="checkbox" />
-      </label>
-      
-      <div v-if="modelValue.showLabels">
-        <h4>Customize Labels</h4>
-        <div v-for="(option, index) in modelValue.options" :key="index" class="label-option">
-          <input v-model.number="option.value" type="number" @input="validateOptionValue(index)" />
-          <input v-model="option.label" type="text" placeholder="Label" />
-          <button @click="removeOption(index)" :disabled="modelValue.options && modelValue.options.length <= 2">Remove</button>
-        </div>
-        <button @click="addOption" :disabled="!canAddOption">Add Label</button>
+  <div class="slider-editor">
+    <h3>{{ modelValue.type === 'slider' ? 'Slider' : 'Range' }} Properties</h3>
+
+    <label>
+      Min Value:
+      <input :value="modelValue.min" type="number" @input="onMinInput" />
+    </label>
+
+    <label>
+      Max Value:
+      <input :value="modelValue.max" type="number" @input="onMaxInput" />
+    </label>
+
+    <label>
+      Step:
+      <input :value="modelValue.step" type="number" @input="onStepInput" />
+    </label>
+
+    <label>
+      Show Labels:
+      <input :checked="modelValue.show_labels === true" type="checkbox" @change="onShowLabelsChange" />
+    </label>
+
+    <div v-if="modelValue.show_labels">
+      <h4>Customize Labels</h4>
+      <div class="label-option">
+        <input :value="modelValue.left_label || ''" type="text" placeholder="Left label" @input="onLeftLabelInput" />
+        <input :value="modelValue.right_label || ''" type="text" placeholder="Right label" @input="onRightLabelInput" />
       </div>
     </div>
-  </template>
-  
-  <script lang="ts">
-  import { defineComponent, PropType, computed } from 'vue';
-  import { SliderQuestion } from '@/types';
-  
-  export default defineComponent({
-    name: 'SliderEditor',
-    props: {
-      modelValue: {
-        type: Object as PropType<SliderQuestion>,
-        required: true,
-      },
+  </div>
+</template>
+
+<script lang="ts">
+import { defineComponent, PropType } from 'vue';
+import { SliderQuestion } from '@/types';
+
+export default defineComponent({
+  name: 'SliderEditor',
+  props: {
+    modelValue: {
+      type: Object as PropType<SliderQuestion>,
+      required: true,
     },
-    emits: ['update:modelValue'],
-    setup(props, { emit }) {
-      const updateOptions = () => {
-        if (!props.modelValue.options || props.modelValue.options.length === 0) {
-          props.modelValue.options = [
-            { value: props.modelValue.min.toString(10), label: props.modelValue.min.toString() },
-            { value: props.modelValue.max.toString(10), label: props.modelValue.max.toString() }
-          ];
-        } else {
-          props.modelValue.options[0].value = props.modelValue.min.toString(10);
-          props.modelValue.options[props.modelValue.options.length - 1].value = props.modelValue.max.toString(10);
-        }
-        emit('update:modelValue', { ...props.modelValue });
-      };
-  
-      const validateOptionValue = (index: number) => {
-        const options = props.modelValue.options;
-        if (!options) return;
-  
-        options[index].value = Math.max(props.modelValue.min, Math.min(props.modelValue.max, Number.parseInt(options[index].value))).toString(10);
-        
-        if (index > 0) {
-          options[index].value = Math.max(Number.parseInt(options[index - 1].value) + props.modelValue.step, Number.parseInt(options[index].value)).toString(10);
-        }
-        if (index < options.length - 1) {
-          options[index].value = Math.min(Number.parseInt(options[index + 1].value) - props.modelValue.step, Number.parseInt(options[index].value)).toString(10);
-        }
-  
-        emit('update:modelValue', { ...props.modelValue });
-      };
-  
-      const addOption = () => {
-        if (!props.modelValue.options) return;
-        const lastOption = props.modelValue.options[props.modelValue.options.length - 1];
-        const newValue = Math.min(props.modelValue.max, Number.parseInt(lastOption.value) + props.modelValue.step);
-        props.modelValue.options.push({ value: newValue.toString(10), label: newValue.toString() });
-        emit('update:modelValue', { ...props.modelValue });
-      };
-  
-      const removeOption = (index: number) => {
-        if (!props.modelValue.options) return;
-        props.modelValue.options.splice(index, 1);
-        emit('update:modelValue', { ...props.modelValue });
-      };
-  
-      const canAddOption = computed(() => {
-        if (!props.modelValue.options) return false;
-        const lastOption = props.modelValue.options[props.modelValue.options.length - 1];
-        return Number.parseInt(lastOption.value) < props.modelValue.max;
-      });
-  
-      return {
-        updateOptions,
-        validateOptionValue,
-        addOption,
-        removeOption,
-        canAddOption,
-      };
-    },
-  });
-  </script>
-  
-  <style scoped>
-  .slider-editor {
-    margin-top: 20px;
-  }
-  
-  label {
-    display: block;
-    margin-bottom: 10px;
-  }
-  
-  input[type="number"], input[type="text"] {
-    width: 100%;
-    padding: 5px;
-    margin-top: 5px;
-  }
-  
-  input[type="checkbox"] {
-    margin-right: 5px;
-  }
-  
-  .label-option {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  
-  .label-option input {
-    margin-right: 10px;
-  }
-  
-  button {
-    margin-left: 10px;
-  }
-  </style>
+  },
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    function emitUpdate(patch: Partial<SliderQuestion>) {
+      emit('update:modelValue', { ...props.modelValue, ...patch });
+    }
+
+    function onMinInput(event: Event) {
+      const target = event.target as HTMLInputElement;
+      const min = Number(target.value);
+      emitUpdate({ min });
+    }
+
+    function onMaxInput(event: Event) {
+      const target = event.target as HTMLInputElement;
+      const max = Number(target.value);
+      emitUpdate({ max });
+    }
+
+    function onStepInput(event: Event) {
+      const target = event.target as HTMLInputElement;
+      const step = Number(target.value);
+      emitUpdate({ step });
+    }
+
+    function onShowLabelsChange(event: Event) {
+      const target = event.target as HTMLInputElement;
+      emitUpdate({ show_labels: target.checked });
+    }
+
+    function onLeftLabelInput(event: Event) {
+      const target = event.target as HTMLInputElement;
+      emitUpdate({ left_label: target.value });
+    }
+
+    function onRightLabelInput(event: Event) {
+      const target = event.target as HTMLInputElement;
+      emitUpdate({ right_label: target.value });
+    }
+
+    return {
+      onMinInput,
+      onMaxInput,
+      onStepInput,
+      onShowLabelsChange,
+      onLeftLabelInput,
+      onRightLabelInput,
+    };
+  },
+});
+</script>
+
+<style scoped>
+.slider-editor {
+  margin-top: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+input[type="number"], input[type="text"] {
+  width: 100%;
+  padding: 5px;
+  margin-top: 5px;
+}
+
+input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+.label-option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.label-option input {
+  margin-right: 10px;
+}
+
+button {
+  margin-left: 10px;
+}
+</style>
