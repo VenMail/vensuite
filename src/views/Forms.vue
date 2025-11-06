@@ -257,8 +257,9 @@ async function handleWizardCreateBlank() {
 function previewForm(id: string) {
   const form = formStore.allForms.find((item) => item.id === id);
   const isPublished = form?.status === "published";
-  const target = isPublished
-    ? `/f/${form?.sharing?.share_slug ?? form?.slug ?? id}`
+  const shareSlug = form?.sharing?.share_slug;
+  const target = isPublished && shareSlug
+    ? `/f/${shareSlug}`
     : `/f/by-id/${id}`;
 
   router.push(target);

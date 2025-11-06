@@ -113,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
+import type { FormDensity, FormLabelPlacement } from "@/types";
 import {
   X,
   ChevronLeft,
@@ -154,6 +155,8 @@ export interface FormConfig {
   logoUrl: string;
   showFooter: boolean;
   footerImageUrl: string;
+  labelPlacement: FormLabelPlacement;
+  formDensity: FormDensity;
 }
 
 const currentStepIndex = ref(0);
@@ -172,6 +175,8 @@ const buildDefaultConfig = (): FormConfig => ({
   logoUrl: "",
   showFooter: false,
   footerImageUrl: "",
+  labelPlacement: "stacked",
+  formDensity: "comfortable",
 });
 
 const buildConfigFromProps = (): FormConfig => ({
@@ -255,6 +260,44 @@ const questions: Question[] = [
         label: "Poppins",
         description: "Friendly and approachable",
         icon: Type,
+      },
+    ],
+  },
+  {
+    key: "labelPlacement",
+    title: "Label Placement",
+    description: "Choose how labels should align with inputs.",
+    options: [
+      {
+        value: "stacked",
+        label: "Stacked Labels",
+        description: "Labels sit above each field for maximum clarity.",
+        icon: List,
+      },
+      {
+        value: "inline",
+        label: "Inline Labels",
+        description: "Place labels beside inputs for a tighter layout.",
+        icon: ArrowRight,
+      },
+    ],
+  },
+  {
+    key: "formDensity",
+    title: "Form Spacing",
+    description: "Control how much breathing room each field uses.",
+    options: [
+      {
+        value: "comfortable",
+        label: "Comfortable",
+        description: "Standard spacing that balances readability and space.",
+        icon: Palette,
+      },
+      {
+        value: "compact",
+        label: "Compact",
+        description: "Reduce spacing to fit more fields on screen.",
+        icon: Check,
       },
     ],
   },

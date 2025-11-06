@@ -38,6 +38,8 @@ const createDefaultSettings = (): FormSettings => ({
   show_question_number: false,
   collect_email: false,
   save_partial_responses: true,
+  label_placement: "stacked",
+  form_density: "comfortable",
   progress_bar: { show: true, type: "percentage" },
   navigation: {
     allow_back: true,

@@ -101,6 +101,10 @@ export interface FormDefinition {
   updated_at?: Date | string;
 }
 
+export type FormLabelPlacement = "stacked" | "inline";
+
+export type FormDensity = "comfortable" | "compact";
+
 export interface FormSettings {
   progress_bar?: ProgressBar;
   navigation?: FormNavigation;
@@ -110,6 +114,8 @@ export interface FormSettings {
   save_partial_responses?: boolean;
   locale?: string;
   timezone?: string;
+  label_placement?: FormLabelPlacement;
+  form_density?: FormDensity;
 }
 
 export type FormPaymentMode = "custom" | "platform";

@@ -1,155 +1,147 @@
 <template>
-  <div v-if="questionSections.length" class="mx-auto my-6 w-full max-w-4xl px-3 sm:px-5 lg:px-6">
-    <article
-      class="relative overflow-hidden rounded-[2.25rem] border border-slate-200 bg-white shadow-xl shadow-slate-200/60 transition dark:border-slate-800 dark:bg-slate-950 dark:shadow-none"
-    >
-      <header
-        class="border-b border-slate-200 px-5 py-8 sm:px-10 backdrop-blur-md dark:border-slate-800"
-      >
-        <div class="flex flex-col gap-3">
+  <div v-if="questionSections.length" class="mx-auto my-4 w-full max-w-4xl px-3 sm:px-5 lg:px-6">
+    <header class="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div class="flex flex-col gap-2.5">
           <span class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400">
             {{ definition?.organization_id ? 'Form Preview' : 'Form Response' }}
           </span>
-          <h1 class="font-serif text-4xl font-semibold text-slate-900 sm:text-[2.75rem] dark:text-white">
+          <h1 class="font-serif text-[2.25rem] font-semibold leading-tight text-slate-900 sm:text-[2.6rem] dark:text-white">
             {{ definition?.title || 'Untitled Form' }}
           </h1>
-          <p v-if="definition?.description" class="max-w-3xl text-base text-slate-600 dark:text-slate-400">
+          <p v-if="definition?.description" class="max-w-3xl text-sm text-slate-600 dark:text-slate-400">
             {{ definition?.description }}
-          </p>
-        </div>
-
-        <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            class="inline-flex items-center justify-center self-end rounded-full border border-slate-300/70 bg-slate-50/90 p-2 transition hover:-translate-y-0.5 hover:bg-slate-100 dark:border-slate-600/70 dark:bg-slate-800/80 dark:hover:bg-slate-700"
-            :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-            @click="toggleTheme"
-          >
-            <Sun v-if="isDarkMode" class="h-5 w-5 text-amber-400" />
-            <Moon v-else class="h-5 w-5 text-slate-700 dark:text-slate-300" />
-          </button>
-
-          <div v-if="showProgress && totalQuestions" class="flex flex-1 flex-col gap-1.5">
-            <div class="flex items-center justify-between text-[0.65rem] font-medium uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-              <span>{{ answeredCount }} of {{ totalQuestions }} answered</span>
-              <span>{{ progressPercent }}%</span>
-            </div>
-            <div class="h-1.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-slate-200 via-slate-200 to-slate-300 dark:from-slate-700 dark:via-slate-700 dark:to-slate-600">
-              <div
-                class="h-full bg-gradient-to-r from-[var(--player-accent)] to-[var(--player-accent-strong)] transition-all duration-500 ease-out"
-                :style="{ width: `${progressPercent}%` }"
-              />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <nav
-        v-if="sectionSummaries.length > 1"
-        class="border-b border-slate-200 bg-white/80 px-5 py-4 sm:px-10 dark:border-slate-800 dark:bg-slate-950/60"
-        aria-label="Form sections"
-      >
-        <ol class="flex flex-wrap gap-3">
-          <li
-            v-for="(section, idx) in sectionSummaries"
-            :key="section.id"
-            :class="[
-              'flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm text-slate-600 transition hover:border-primary-200 hover:bg-primary-50/80 hover:text-primary-700 dark:text-slate-300 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-300',
-              section.hasErrors ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500 dark:bg-rose-900/30 dark:text-rose-300' : ''
-            ]"
-          >
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-500 dark:border-slate-600 dark:text-slate-300">
-              {{ idx + 1 }}
-            </span>
-            <div class="flex flex-col gap-0.5">
-              <p class="font-semibold text-slate-800 dark:text-slate-100">{{ section.title || `Section ${idx + 1}` }}</p>
-              <p class="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
-                {{ section.answered }} of {{ section.total }} answered
-              </p>
-            </div>
-          </li>
-        </ol>
-      </nav>
-
-      <main
-        class="flex flex-col gap-7 bg-gradient-to-b from-white via-slate-50 to-white px-5 py-8 sm:px-10 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950"
-      >
-        <section
-          v-for="(section, index) in questionSections"
-          :id="`section-${section.id}`"
-          :key="section.id"
-          :class="[
-            'flex flex-col gap-8 border-b border-slate-200 pb-10 last:border-none last:pb-0 dark:border-slate-800',
-            sectionStateMap.get(section.id)?.hasErrors ? 'border-b-2 border-rose-400/70 dark:border-rose-500/70' : ''
-          ]"
-        >
-          <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div class="flex max-w-3xl flex-col gap-1.5">
-              <span
-                v-if="questionSections.length > 1"
-                class="text-[0.6rem] font-semibold uppercase tracking-[0.38em] text-slate-400 dark:text-slate-500"
-              >
-                Section {{ index + 1 }}
-              </span>
-              <h2 class="text-2xl font-semibold text-slate-900 sm:text-[2.15rem] dark:text-white">
-                {{ section.title || defaultSectionTitle(index) }}
-              </h2>
-            </div>
-            <span
-              class="inline-flex h-9 items-center rounded-full border border-slate-200 px-4 text-xs font-semibold text-slate-500 dark:border-slate-700 dark:text-slate-300"
-            >
-              {{ section.questions.length }}
-              {{ section.questions.length === 1 ? 'question' : 'questions' }}
-            </span>
-          </header>
-
-          <p v-if="section.description" class="text-sm text-slate-600 dark:text-slate-400">
-            {{ section.description }}
-          </p>
-
-          <div class="grid gap-6">
-            <article
-              v-for="question in section.questions"
-              :key="question.id"
-              class="rounded-2xl border border-slate-200 bg-slate-50/90 p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary-200 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-primary-500/40"
-            >
-              <QuestionRenderer
-                :question="question"
-                :model-value="playerStore.getAnswerValue(question.id)"
-                :disabled="isSubmitting"
-                @update:model-value="(value) => updateAnswer(question.id, value)"
-              />
-            </article>
-          </div>
-        </section>
-      </main>
-
-      <footer
-        class="flex flex-col gap-4 border-t border-slate-200 bg-slate-50/90 px-5 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-10 dark:border-slate-800 dark:bg-slate-900/70"
-      >
-        <div class="flex flex-col gap-1">
-          <p class="text-base font-semibold text-slate-800 dark:text-white">
-            {{ canSubmit ? 'Ready to submit' : 'Please complete required fields' }}
-          </p>
-          <p class="text-xs text-slate-500 dark:text-slate-400">
-            {{ canSubmit ? 'Review your responses before submitting.' : 'Required fields are marked with *' }}
           </p>
         </div>
 
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-primary-500 dark:shadow-primary-900/40 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-900"
-          :disabled="isSubmitting || !canSubmit"
-          @click="emitSubmit"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 transition hover:-translate-y-0.5 hover:bg-slate-100 dark:border-slate-600/70 dark:bg-slate-800/70 dark:hover:bg-slate-700"
+          :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+          @click="toggleTheme"
         >
-          <svg v-if="isSubmitting" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          <span>{{ isSubmitting ? 'Submitting…' : canSubmit ? 'Submit form' : 'Complete required fields' }}</span>
+          <Sun v-if="isDarkMode" class="h-5 w-5 text-amber-400" />
+          <Moon v-else class="h-5 w-5 text-slate-700 dark:text-slate-200" />
         </button>
-      </footer>
-    </article>
+      </div>
+
+      <div v-if="showProgress && totalQuestions" class="mt-1 flex flex-col gap-1">
+        <div class="flex items-center justify-between text-[0.6rem] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+          <span>{{ answeredCount }} of {{ totalQuestions }} answered</span>
+          <span>{{ progressPercent }}%</span>
+        </div>
+        <div class="h-1.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-slate-200 via-slate-200 to-slate-300 dark:from-slate-700 dark:via-slate-700 dark:to-slate-600">
+          <div
+            class="h-full bg-gradient-to-r from-[var(--player-accent)] to-[var(--player-accent-strong)] transition-all duration-500 ease-out"
+            :style="{ width: `${progressPercent}%` }"
+          />
+        </div>
+      </div>
+    </header>
+
+    <nav v-if="sectionSummaries.length > 1" class="py-3" aria-label="Form sections">
+      <ol class="flex flex-wrap gap-3">
+        <li
+          v-for="(section, idx) in sectionSummaries"
+          :key="section.id"
+          :class="[
+            'flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm text-slate-600 transition hover:border-primary-200 hover:bg-primary-50/80 hover:text-primary-700 dark:text-slate-300 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-300',
+            section.hasErrors ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500 dark:bg-rose-900/30 dark:text-rose-300' : ''
+          ]"
+        >
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-500 dark:border-slate-600 dark:text-slate-300">
+            {{ idx + 1 }}
+          </span>
+          <div class="flex flex-col gap-0.5">
+            <p class="font-semibold text-slate-800 dark:text-slate-100">{{ section.title || `Section ${idx + 1}` }}</p>
+            <p class="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+              {{ section.answered }} of {{ section.total }} answered
+            </p>
+          </div>
+        </li>
+      </ol>
+    </nav>
+
+    <main class="flex flex-col gap-8 py-6">
+      <section
+        v-for="(section, index) in questionSections"
+        :id="`section-${section.id}`"
+        :key="section.id"
+        :class="[
+          'flex flex-col gap-6 border-b border-slate-200 pb-8 last:border-none last:pb-0 dark:border-slate-800',
+          sectionStateMap.get(section.id)?.hasErrors ? 'border-b-2 border-rose-400/70 dark:border-rose-500/70' : ''
+        ]"
+      >
+        <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="flex max-w-3xl flex-col gap-1.5">
+            <span
+              v-if="sectionCount > 1"
+              class="text-[0.55rem] font-semibold uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500"
+            >
+              Section {{ index + 1 }}
+            </span>
+            <h2
+              v-if="getSectionTitle(section, index)"
+              class="text-xl font-semibold text-slate-900 sm:text-[1.9rem] dark:text-white"
+            >
+              {{ getSectionTitle(section, index) }}
+            </h2>
+          </div>
+          <span
+            v-if="sectionCount > 1"
+            class="inline-flex h-8 items-center rounded-full border border-slate-200 px-3 text-[0.65rem] font-semibold text-slate-500 dark:border-slate-700 dark:text-slate-300"
+          >
+            {{ section.questions.length }}
+            {{ section.questions.length === 1 ? 'question' : 'questions' }}
+          </span>
+        </header>
+
+        <p v-if="section.description" class="text-[0.95rem] text-slate-600 dark:text-slate-400">
+          {{ section.description }}
+        </p>
+
+        <div class="grid gap-5">
+          <article
+            v-for="question in section.questions"
+            :key="question.id"
+            class="rounded-2xl border border-slate-200/80 bg-white/95 px-5 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200/70 hover:shadow-md dark:border-slate-700/70 dark:bg-slate-900/60 dark:hover:border-primary-500/40"
+          >
+            <QuestionRenderer
+              :question="question"
+              :model-value="playerStore.getAnswerValue(question.id)"
+              :disabled="isSubmitting"
+              @update:model-value="(value) => updateAnswer(question.id, value)"
+            />
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer
+      class="flex flex-col gap-3 border-t border-slate-200 pt-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div class="flex flex-col gap-1">
+        <p class="text-sm font-semibold text-slate-800 dark:text-white">
+          {{ canSubmit ? 'Ready to submit' : 'Please complete required fields' }}
+        </p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          {{ canSubmit ? 'Review your responses before submitting.' : 'Required fields are marked with *' }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-900"
+        :disabled="isSubmitting || !canSubmit"
+        @click="emitSubmit"
+      >
+        <svg v-if="isSubmitting" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <span>{{ isSubmitting ? 'Submitting…' : canSubmit ? 'Submit form' : 'Complete required fields' }}</span>
+      </button>
+    </footer>
   </div>
 
   <div
@@ -280,6 +272,8 @@ const questionSections = computed<QuestionSection[]>(() => {
   return sections;
 });
 
+const sectionCount = computed(() => questionSections.value.length);
+
 const totalQuestions = computed(() => allQuestions.value.length);
 
 const isAnswerEmpty = (question: FormQuestion, value: unknown) => {
@@ -336,10 +330,24 @@ const sectionStateMap = computed(() => {
   return new Map(sectionSummaries.value.map((summary) => [summary.id, summary]));
 });
 
-const defaultSectionTitle = (index: number) => {
-  const fallback = `Section ${index + 1}`;
-  const formTitle = definition.value?.title?.trim();
-  return formTitle ? `${formTitle} — ${fallback}` : fallback;
+const defaultSectionTitle = (index: number): string => `Section ${index + 1}`;
+
+const GENERIC_SECTION_TITLE = /^page\s+\d+$/i;
+
+const getSectionTitle = (section: QuestionSection, index: number): string => {
+  const rawTitle = section.title?.trim() ?? '';
+  const isGeneric = GENERIC_SECTION_TITLE.test(rawTitle);
+
+  if (sectionCount.value <= 1) {
+    if (!rawTitle || isGeneric) return '';
+    return rawTitle;
+  }
+
+  if (!rawTitle || isGeneric) {
+    return defaultSectionTitle(index);
+  }
+
+  return rawTitle;
 };
 
 const updateAnswer = (questionId: string, value: unknown) => {

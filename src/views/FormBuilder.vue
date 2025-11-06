@@ -860,6 +860,8 @@ const buildConfigFromSettings = (): FormConfig => ({
   logoUrl: settingsStore.state.header.logo_url || "",
   showFooter: Boolean(settingsStore.state.header.footer_image_url),
   footerImageUrl: settingsStore.state.header.footer_image_url || "",
+  labelPlacement: settingsStore.state.settings.label_placement ?? "stacked",
+  formDensity: settingsStore.state.settings.form_density ?? "comfortable",
 });
 
 const ensureLogoVisible = () => {
@@ -933,6 +935,8 @@ const applyConfigToSettings = (config: FormConfig) => {
       show: config.showProgressBar,
     },
     webhook_url: config.enableWebhooks ? config.webhookUrl : undefined,
+    label_placement: config.labelPlacement,
+    form_density: config.formDensity,
   } as any);
 
   settingsStore.updateNavigation({
@@ -1386,16 +1390,16 @@ const closeWebhooksModal = () => {
   showWebhooksPanel.value = false;
 };
 
-const ensurePublishedSlug = async (): Promise<FormDefinition | null> => {
+const ensurePublishedShareSlug = async (): Promise<FormDefinition | null> => {
   if (!formId.value) return null;
   const latest = await formStore.fetchForm(formId.value);
 
-  if (latest?.sharing?.share_slug || latest?.slug) {
+  if (latest?.sharing?.share_slug) {
     return latest;
   }
 
   const published = await formStore.publishForm(formId.value);
-  if (published) {
+  if (published?.sharing?.share_slug) {
     return published;
   }
 
@@ -1410,8 +1414,9 @@ const handlePreview = async () => {
 
   const definition = await formStore.fetchForm(formId.value);
   const isPublished = definition?.status === "published";
-  const target = isPublished
-    ? `/f/${definition?.sharing?.share_slug ?? definition?.slug}`
+  const shareSlug = definition?.sharing?.share_slug;
+  const target = isPublished && shareSlug
+    ? `/f/${shareSlug}`
     : `/f/by-id/${formId.value}`;
 
   window.open(target, "_blank");
@@ -1423,13 +1428,13 @@ const handlePublish = async () => {
   isPublishing.value = true;
   try {
     await saveForm();
-    const definition = await ensurePublishedSlug();
+    const definition = await ensurePublishedShareSlug();
     if (definition) {
-      const shareSlug = definition.sharing?.share_slug ?? definition.slug;
+      const shareSlug = definition.sharing?.share_slug;
       toast.success(
         shareSlug
           ? `Form published. Share link: /f/${shareSlug}`
-          : "Form published and ready to share"
+          : "Form published but share slug is unavailable"
       );
     }
   } catch (error) {

@@ -132,11 +132,10 @@ const launchEditor = () => {
 
 const previewForm = () => {
   if (!props.form.id) return;
-  const target = isDraft.value
-    ? `/f/by-id/${props.form.id}`
-    : shareSlug.value
-      ? `/f/${shareSlug.value}`
-      : `/f/${props.form.id}`;
+  const shareSlugValue = shareSlug.value;
+  const target = !isDraft.value && shareSlugValue
+    ? `/f/${shareSlugValue}`
+    : `/f/by-id/${props.form.id}`;
   router.push(target);
 };
 
