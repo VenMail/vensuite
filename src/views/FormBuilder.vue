@@ -1394,11 +1394,13 @@ const handlePreview = async () => {
 
   await saveForm();
 
-  const definition = await ensurePublishedSlug();
-  const targetSlug = definition?.sharing?.share_slug ?? definition?.slug;
-  if (targetSlug) {
-    window.open(`/f/${targetSlug}`, "_blank");
-  }
+  const definition = await formStore.fetchForm(formId.value);
+  const isPublished = definition?.status === "published";
+  const target = isPublished
+    ? `/f/${definition?.sharing?.share_slug ?? definition?.slug}`
+    : `/f/by-id/${formId.value}`;
+
+  window.open(target, "_blank");
 };
 
 const handlePublish = async () => {

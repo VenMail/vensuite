@@ -254,8 +254,14 @@ async function handleWizardCreateBlank() {
   }
 }
 
-function previewForm(id: string, shareSlug?: string | null) {
-  router.push(`/f/${shareSlug ?? id}`);
+function previewForm(id: string) {
+  const form = formStore.allForms.find((item) => item.id === id);
+  const isPublished = form?.status === "published";
+  const target = isPublished
+    ? `/f/${form?.sharing?.share_slug ?? form?.slug ?? id}`
+    : `/f/by-id/${id}`;
+
+  router.push(target);
 }
 
 function editForm() {
@@ -288,8 +294,7 @@ const contextMenuActions = computed(() => {
       label: "Preview",
       icon: BookOpen,
       action: () => {
-        const form = formStore.allForms.find((f) => f.id === selectedForm.value);
-        previewForm(selectedForm.value!, form?.sharing?.share_slug ?? form?.slug ?? null);
+        previewForm(selectedForm.value!);
       },
     },
     {

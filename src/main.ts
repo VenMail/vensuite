@@ -37,6 +37,11 @@ const routes = [
     meta: { public: true },
   },
   {
+    path: '/f/by-id/:id',
+    name: 'form-player-by-id',
+    component: () => import('./views/FormPlayerHost.vue'),
+  },
+  {
     path: '/login',
     name: 'login',
     component: Login,

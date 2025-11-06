@@ -39,7 +39,7 @@ const fieldCount = computed(() => {
   }
   return 0;
 });
-const slugOrId = computed(() => props.form.slug ?? props.form.id ?? null);
+const shareSlug = computed(() => props.form.sharing?.share_slug ?? props.form.slug ?? null);
 const isList = computed(() => props.viewMode === "list");
 const isDraft = computed(() => (props.form.status ?? "draft") === "draft");
 
@@ -131,8 +131,13 @@ const launchEditor = () => {
 };
 
 const previewForm = () => {
-  if (!slugOrId.value) return;
-  router.push(`/f/${slugOrId.value}`);
+  if (!props.form.id) return;
+  const target = isDraft.value
+    ? `/f/by-id/${props.form.id}`
+    : shareSlug.value
+      ? `/f/${shareSlug.value}`
+      : `/f/${props.form.id}`;
+  router.push(target);
 };
 
 const viewResponses = () => {
@@ -290,7 +295,7 @@ function formatRelative(value?: string | Date | null) {
       </Button>
       
       <Button
-        v-if="slugOrId"
+        v-if="props.form.id"
         size="sm"
         variant="ghost"
         class="gap-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"

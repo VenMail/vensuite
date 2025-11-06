@@ -127,36 +127,6 @@
           >
             {{ item.text }}
 
-// Request access API call (docs)
-async function submitAccessRequestDoc() {
-  const idParam = route.params.appFileId as string | undefined;
-  if (!idParam) return;
-  requestSubmitting.value = true;
-  requestSuccess.value = null;
-  try {
-    const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
-    const res = await fetch(`${API_BASE_URI}/app-files/${idParam}/request-access`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: requestEmail.value,
-        access_level: accessLevel.value,
-        message: requestMessage.value || undefined,
-      }),
-    });
-    const payload = await res.json();
-    if (res.ok && (payload?.requested || payload?.success)) {
-      requestSuccess.value = 'Access request sent. You will receive an email when approved.';
-    } else {
-      requestSuccess.value = payload?.message || 'Request sent (if the email is valid).';
-    }
-  } catch (e) {
-    requestSuccess.value = 'Request submitted. Please check your email later.';
-  } finally {
-    requestSubmitting.value = false;
-  }
-}
-
 // Normalize and apply document title from a file name
 function setDocumentTitleFromName(name?: string | null) {
   const clean = (name || '').replace(/\.[^/.]+$/, '').trim();
@@ -585,7 +555,7 @@ import type { FileData } from '@/types';
 import DocsToolbar from '@/components/forms/DocsToolbar.vue';
 import DocsTitleBar from '@/components/forms/DocsTitleBar.vue';
 import ShareCard from '@/components/ShareCard.vue';
-import { parseSharingInfoString, serializeSharingInfoString, labelToShareLevel, type ShareMember, type ShareLevel } from '@/utils/sharing';
+import { parseSharingInfoString, serializeSharingInfoString, labelToShareLevel, type ShareMember, type ShareLevel, type ShareLevelLabel } from '@/utils/sharing';
 import ImagePicker from '@/components/ImagePicker.vue';
 import { Button } from '@/components/ui/button';
 import { useDocumentConflictResolver } from '@/composables/useDocumentConflictResolver';
@@ -656,6 +626,35 @@ const accessLevel = ref<'v' | 'c' | 'e'>('v');
 const requestMessage = ref('');
 const requestSubmitting = ref(false);
 const requestSuccess = ref<string | null>(null);
+
+async function submitAccessRequestDoc() {
+  const idParam = route.params.appFileId as string | undefined;
+  if (!idParam) return;
+  requestSubmitting.value = true;
+  requestSuccess.value = null;
+  try {
+    const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+    const res = await fetch(`${API_BASE_URI}/app-files/${idParam}/request-access`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: requestEmail.value,
+        access_level: accessLevel.value,
+        message: requestMessage.value || undefined,
+      }),
+    });
+    const payload = await res.json();
+    if (res.ok && (payload?.requested || payload?.success)) {
+      requestSuccess.value = 'Access request sent. You will receive an email when approved.';
+    } else {
+      requestSuccess.value = payload?.message || 'Request sent (if the email is valid).';
+    }
+  } catch (error) {
+    requestSuccess.value = 'Request submitted. Please check your email later.';
+  } finally {
+    requestSubmitting.value = false;
+  }
+}
 
 function focusEditor() {
   if (!editor.value) return;
@@ -2645,12 +2644,30 @@ async function fetchSharingInfo() {
   } catch {}
 }
 
-async function handleInviteMember(payload: { email: string; permission?: 'view'|'comment'|'edit'|'owner'; shareLevel?: ShareLevel; note?: string }) {
+type ShareCardPayload = {
+  email: string;
+  shareLevel: ShareLevel;
+  label: ShareLevelLabel;
+  note?: string;
+  permission?: 'view' | 'comment' | 'edit' | 'owner';
+};
+
+async function handleInviteMember(payload: ShareCardPayload) {
   try {
     const id = route.params.appFileId as string;
     if (!id) return;
-    const level = payload.shareLevel ?? labelToShareLevel((payload.permission === 'owner' ? 'edit' : (payload.permission || 'view')) as any);
-    const newMembers: ShareMember[] = [...shareMembers.value.filter(m => m.email !== payload.email), { email: payload.email, shareLevel: level }];
+    const resolvedLevel = (() => {
+      if (payload.shareLevel) return payload.shareLevel;
+      if (payload.permission) {
+        const mapped = payload.permission === 'owner' ? 'edit' : payload.permission;
+        return labelToShareLevel(mapped as ShareLevelLabel);
+      }
+      return labelToShareLevel(payload.label);
+    })();
+    const newMembers: ShareMember[] = [
+      ...shareMembers.value.filter((member) => member.email !== payload.email),
+      { email: payload.email, shareLevel: resolvedLevel },
+    ];
     const sharingInfo = serializeSharingInfoString(newMembers);
     await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
     await fetchSharingInfo();
@@ -2658,7 +2675,7 @@ async function handleInviteMember(payload: { email: string; permission?: 'view'|
   } catch {}
 }
 
-async function handleUpdateMember(payload: { email: string; permission: 'view'|'comment'|'edit'|'owner' }) {
+async function handleUpdateMember(payload: ShareCardPayload) {
   return handleInviteMember(payload);
 }
 
