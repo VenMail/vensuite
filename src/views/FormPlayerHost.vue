@@ -9,11 +9,6 @@
         <img :src="logoUrl" :style="logoStyle" alt="Form logo" />
       </header>
 
-      <section v-if="formTitle" class="player-host__header">
-        <h1>{{ formTitle }}</h1>
-        <p v-if="formDescription">{{ formDescription }}</p>
-      </section>
-
       <div v-if="emailRequired" class="player-host__callout">
         <h3>Email required</h3>
         <p>We will ask for your email address so we can send confirmations and receipts.</p>
@@ -94,6 +89,7 @@ import { useFormPlayerStore } from '@/store/formPlayer';
 import { usePaymentClient } from '@/composables/usePaymentClient';
 import { toast } from '@/composables/useToast';
 import type { FormCompletionScreen, FormDefinition, FormWelcomeScreen } from '@/types';
+import { useAuthStore } from '@/store/auth';
 
 const route = useRoute();
 const slug = computed(() => route.params.slug as string | undefined);
@@ -101,6 +97,7 @@ const formIdParam = computed(() => route.params.id as string | undefined);
 
 const playerStore = useFormPlayerStore();
 const { state: playerState, mode } = storeToRefs(playerStore);
+const authStore = useAuthStore();
 
 const paymentSlug = computed(() => slug.value ?? formIdParam.value ?? '');
 const paymentClient = usePaymentClient({ slug: paymentSlug });
@@ -111,8 +108,6 @@ const isSubmitting = ref(false);
 const loadError = ref<string | null>(null);
 const stage = ref<'loading' | 'welcome' | 'playing' | 'payment' | 'completed' | 'error'>('loading');
 
-const formTitle = computed(() => formDefinition.value?.title ?? 'Form');
-const formDescription = computed(() => formDefinition.value?.description ?? '');
 const welcomeScreen = computed<FormWelcomeScreen | null>(() => {
   const screen = formDefinition.value?.welcome_screen;
   return screen?.enabled ? screen : null;
@@ -205,6 +200,11 @@ const resetState = () => {
   formDefinition.value = null;
 };
 
+const resolveAuthOptions = () => {
+  const token = authStore.getToken?.() ?? authStore.token ?? null;
+  return token ? { auth: { token } } : undefined;
+};
+
 const applyDefinition = (definition: FormDefinition) => {
   formDefinition.value = definition;
   playerStore.setFormDefinition(definition, definition.slug ?? slug.value ?? formIdParam.value ?? '');
@@ -220,7 +220,12 @@ const loadForm = async () => {
     if (slug.value) {
       definition = await fetchPublicForm(slug.value);
     } else if (formIdParam.value) {
-      definition = await fetchForm(formIdParam.value);
+      const authOptions = resolveAuthOptions();
+      if (!authOptions) {
+        toast.error('Authentication required to preview this form.');
+        throw { data: { message: 'Authentication required to preview this form.' } };
+      }
+      definition = await fetchForm(formIdParam.value, authOptions);
     } else {
       throw new Error('Missing form identifier');
     }

@@ -86,7 +86,19 @@
     </div>
 
     <!-- Main Content -->
-    <div class="form-builder-new__content max-w-3xl mx-auto px-6 py-12">
+    <div v-if="isLoading" class="max-w-3xl mx-auto px-6 py-24 animate-pulse">
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+      <div class="h-4 w-96 bg-gray-200 dark:bg-gray-700 rounded mb-8"></div>
+      <div class="space-y-6">
+        <div v-for="n in 4" :key="n" class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 p-6">
+          <div class="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+          <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+          <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="form-builder-new__content max-w-3xl mx-auto px-6 py-12">
       <!-- Form Header -->
       <div class="form-builder-new__header mb-12">
         <!-- Logo block inside document -->
@@ -555,6 +567,7 @@
         </div>
       </div>
     </Teleport>
+
   </div>
 </template>
 
@@ -590,6 +603,7 @@ const TEMPLATE_STORAGE_PREFIX = "VENX_FORM_TEMPLATE_";
 const formTitle = ref("");
 const formDescription = ref("");
 const pagesState = ref<FormPage[]>([]);
+const isLoading = ref(true);
 
 const blocks = ref<FormBlock[]>([]);
 const focusedBlockId = ref<string | null>(null);
@@ -1584,6 +1598,7 @@ onMounted(async () => {
       }
     }
   }
+  isLoading.value = false;
 });
 
 onBeforeUnmount(() => {

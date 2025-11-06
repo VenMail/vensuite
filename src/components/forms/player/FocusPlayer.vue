@@ -1,67 +1,111 @@
 <template>
-  <div class="focus-player text-gray-900 dark:text-gray-100" v-if="currentQuestion">
-    <div class="focus-player__progress" v-if="showProgress">
-      <div class="focus-player__progress-bar w-full h-2 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
-        <div class="h-full bg-primary-600 transition-all" :style="{ width: `${progressPercent}%` }" />
+  <div
+    v-if="currentQuestion"
+    class="focus-player relative mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col gap-10 rounded-[2.75rem] border border-slate-200 bg-white/95 px-8 py-10 shadow-2xl shadow-slate-200/70 transition dark:border-slate-800 dark:bg-slate-950/90 dark:shadow-none"
+  >
+    <div class="space-y-6">
+      <div v-if="showProgress" class="space-y-4">
+        <div class="flex flex-col items-center gap-2 text-center">
+          <span class="text-sm font-semibold uppercase tracking-[0.32em] text-slate-400 dark:text-slate-500">
+            Step {{ currentStep }} of {{ totalSteps }}
+          </span>
+          <h2 class="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+            {{ encouragementMessage }}
+          </h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            {{ Math.round(progressPercent) }}% complete
+          </p>
+        </div>
+
+        <div class="focus-progress-track relative h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+          <div
+            class="absolute inset-y-0 left-0 rounded-full bg-primary-500 transition-all duration-500 ease-out"
+            :style="{ width: `${progressPercent}%` }"
+          />
+        </div>
+
+        <ol class="flex items-center justify-between gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <li
+            v-for="dot in stepDots"
+            :key="dot.id"
+            class="flex-1"
+          >
+            <div
+              class="mx-auto flex h-2 w-full max-w-[42px] items-center justify-center rounded-full transition"
+              :class="[
+                dot.status === 'complete' ? 'bg-primary-500' : dot.status === 'current' ? 'bg-primary-400' : 'bg-slate-200 dark:bg-slate-800',
+              ]"
+            />
+          </li>
+        </ol>
       </div>
-      <span class="focus-player__progress-label text-sm text-gray-600 dark:text-gray-300">
-        {{ Math.round(progressPercent) }}% completed
-      </span>
+
+      <Transition name="focus-slide" mode="out-in">
+        <div :key="currentQuestion.id" class="focus-question space-y-6">
+          <QuestionRenderer
+            :question="currentQuestion"
+            :model-value="answerValue"
+            :disabled="isSubmitting"
+            @update:model-value="onAnswerInput"
+          />
+        </div>
+      </Transition>
     </div>
 
-    <QuestionRenderer
-      :question="currentQuestion"
-      :model-value="answerValue"
-      :disabled="isSubmitting"
-      @update:model-value="onAnswerInput"
-    />
+    <div class="mt-auto flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-6 py-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ footerMessage }}
+        </p>
+        <div class="flex items-center gap-3">
+          <button
+            v-if="allowBack"
+            type="button"
+            class="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+            :disabled="isSubmitting || !canGoBack"
+            @click="handleBack"
+          >
+            Back
+          </button>
 
-    <div class="focus-player__actions">
-      <button
-        v-if="allowBack"
-        type="button"
-        class="focus-player__button rounded-full px-6 py-2 border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-        :disabled="isSubmitting || !canGoBack"
-        @click="handleBack"
-      >
-        Back
-      </button>
+          <button
+            v-if="showSkip"
+            type="button"
+            class="inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-600 transition hover:-translate-y-0.5 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="isSubmitting"
+            @click="handleSkip"
+          >
+            Skip
+          </button>
 
-      <div class="focus-player__spacer" />
+          <button
+            v-if="hasNextQuestion"
+            type="button"
+            class="inline-flex items-center rounded-full bg-primary-600 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:-translate-y-0.5 hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-primary-900/40"
+            :disabled="isSubmitting || !canProceed"
+            @click="handleNext"
+          >
+            Next
+          </button>
 
-      <button
-        v-if="showSkip"
-        type="button"
-        class="focus-player__button rounded-full px-6 py-2 border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-        :disabled="isSubmitting"
-        @click="handleSkip"
-      >
-        Skip
-      </button>
-
-      <button
-        v-if="hasNextQuestion"
-        type="button"
-        class="focus-player__button focus-player__button--primary rounded-full px-6 py-2 bg-primary-600 border border-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        :disabled="isSubmitting || !canProceed"
-        @click="handleNext"
-      >
-        Next
-      </button>
-
-      <button
-        v-else
-        type="button"
-        class="focus-player__button focus-player__button--primary rounded-full px-6 py-2 bg-primary-600 border border-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        :disabled="isSubmitting || !canProceed"
-        @click="emitComplete"
-      >
-        {{ isSubmitting ? 'Submitting…' : 'Submit' }}
-      </button>
+          <button
+            v-else
+            type="button"
+            class="inline-flex items-center rounded-full bg-primary-600 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:-translate-y-0.5 hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-primary-900/40"
+            :disabled="isSubmitting || !canProceed"
+            @click="emitComplete"
+          >
+            {{ isSubmitting ? 'Submitting…' : 'Submit form' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div v-else class="focus-player__empty text-gray-600 dark:text-gray-400">
+  <div
+    v-else
+    class="rounded-3xl border border-dashed border-slate-200 p-12 text-center text-slate-500 dark:border-slate-800 dark:text-slate-400"
+  >
     <p>No questions available.</p>
   </div>
 </template>
@@ -113,6 +157,14 @@ const progressPercent = computed(() => {
   return Math.round(progress * 100);
 });
 
+const totalSteps = computed(() => questionOrder.value.length || (currentQuestion.value ? 1 : 0));
+
+const currentStep = computed(() => {
+  if (!currentQuestion.value) return 0;
+  const index = questionOrder.value.indexOf(currentQuestion.value.id);
+  return index === -1 ? 1 : index + 1;
+});
+
 const showSkip = computed(() => allowSkip.value && hasNextQuestion.value);
 
 const isAnswerEmpty = (question: FormQuestion, value: unknown) => {
@@ -129,6 +181,35 @@ const canProceed = computed(() => {
   if (!currentQuestion.value) return false;
   if (!currentQuestion.value.required) return true;
   return !isAnswerEmpty(currentQuestion.value, answerValue.value);
+});
+
+const stepDots = computed(() => {
+  return questionOrder.value.map((id, index) => {
+    const status = index + 1 < currentStep.value ? 'complete' : index + 1 === currentStep.value ? 'current' : 'pending';
+    return {
+      id,
+      status,
+    };
+  });
+});
+
+const encouragementMessage = computed(() => {
+  if (!totalSteps.value) return 'Let’s get started';
+  if (progressPercent.value >= 90) return 'Almost there!';
+  if (progressPercent.value >= 60) return 'Great progress!';
+  if (progressPercent.value >= 30) return 'You’re doing well';
+  return 'Let’s get started';
+});
+
+const footerMessage = computed(() => {
+  if (!currentQuestion.value) return '';
+  if (currentQuestion.value.required) {
+    return 'This question is required. Provide an answer to continue.';
+  }
+  if (showSkip.value) {
+    return 'You can skip this question or come back later.';
+  }
+  return 'Provide your answer and use Next when you are ready.';
 });
 
 const setCurrentQuestionId = (targetId: string | null) => {
@@ -178,70 +259,27 @@ const emitComplete = () => {
 </script>
 
 <style scoped>
-.focus-player {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+.focus-fade-enter-active,
+.focus-fade-leave-active,
+.focus-slide-enter-active,
+.focus-slide-leave-active {
+  transition: all 0.35s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
-.focus-player__progress {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.focus-slide-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
 }
 
-.focus-player__progress-bar {
-  width: 100%;
-  height: 0.5rem;
-  border-radius: 9999px;
-  background: #e5e7eb;
-  overflow: hidden;
+.focus-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-12px);
 }
 
-.focus-player__progress-fill {
-  height: 100%;
-  background: #2563eb;
-  transition: width 0.3s ease;
-}
-
-.focus-player__progress-label {
-  font-size: 0.85rem;
-  color: #4b5563;
-}
-
-.focus-player__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.focus-player__button {
-  border-radius: 9999px;
-  padding: 0.6rem 1.5rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #1f2937;
-  font-weight: 500;
-  transition: background 0.2s ease;
-}
-
-.focus-player__button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.focus-player__button--primary {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: white;
-}
-
-.focus-player__button--primary:hover:not(:disabled) {
-  background: #1d4ed8;
-}
-
-.focus-player__spacer {
-  flex: 1 1 auto;
+.focus-slide-enter-to,
+.focus-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .focus-player__empty {
