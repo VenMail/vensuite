@@ -43,16 +43,16 @@ const slugOrId = computed(() => props.form.slug ?? props.form.id ?? null);
 const isList = computed(() => props.viewMode === "list");
 const isDraft = computed(() => (props.form.status ?? "draft") === "draft");
 
-const statusLabel = computed(() => {
-  switch (props.form.status) {
-    case "published":
-      return "Published";
-    case "archived":
-      return "Archived";
-    default:
-      return "Draft";
-  }
-});
+// const statusLabel = computed(() => {
+//   switch (props.form.status) {
+//     case "published":
+//       return "Published";
+//     case "archived":
+//       return "Archived";
+//     default:
+//       return "Draft";
+//   }
+// });
 
 const statusConfig = computed(() => {
   switch (props.form.status) {

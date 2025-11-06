@@ -17,7 +17,7 @@
               </CardHeader>
               <CardContent>
                 <component :is="getPropertyEditor(field.type)" v-if="getPropertyEditor(field.type)" :modelValue="field"
-                  @update:modelValue="(newValue) => updateField(index, newValue)" />
+                  @update:modelValue="handleFieldModelUpdate(index, $event)" />
                 <!-- Logic Editor -->
                 <div class="logic-editor mt-4">
                   <h4 class="text-sm font-medium mb-2">Logic Rule</h4>
@@ -28,28 +28,32 @@
                     </Label>
                   </div>
                   <div v-if="field.logic" class="mt-2">
-                    <Select v-model="field.logic.matchType" class="mb-2">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select condition" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem v-for="type in logicMatchTypes" :key="type" :value="type">
-                          {{ type }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input v-model="field.logic.value" placeholder="Enter value or field id" class="mb-2" />
-                    <Select v-model="field.logic.jump">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select jump to field" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem v-for="option in getFieldOptions(index + 1)" :key="option.value"
-                          :value="option.value">
-                          {{ option.label }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div class="mb-2">
+                      <Select v-model="field.logic.conditions[0].operator" class="mb-2">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select operator" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem v-for="op in logicOperators" :key="op" :value="op">
+                            {{ op }}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input v-model="(field.logic.conditions[0].value as any)" placeholder="Enter value" class="mb-2" />
+                    </div>
+                    
+                    <div>
+                      <Select v-model="field.logic.actions[0].target_id">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select jump to field" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem v-for="option in getFieldOptions(index + 1)" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -77,25 +81,20 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, onMounted, onUnmounted } from "vue";
+
 import { useRoute } from "vue-router";
 import { useFormStore } from "@/store/forms";
-import {
+import type {
   AppForm,
-  FormData,
-  Question,
-  QuestionType,
-  FieldCategory,
-  RadioQuestion,
-  SelectQuestion,
-  FileQuestion,
-  MultiChoiceQuestion,
-  RatingQuestion,
-  SliderQuestion,
-  TextQuestion,
-  YesNoQuestion,
-  typeToCategoryMap,
-  typeToLabelMap
+  FormDefinition,
+  FormData as BuilderFormData,
+  FormQuestion,
+  FormQuestionType,
+  FormFieldCategory,
+  LogicRule,
+  Option,
 } from "@/types";
+import { typeToCategoryMap, typeToLabelMap, defaultValidations } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -130,28 +129,46 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "save", formData: FormData): void;
+  (e: "save", formData: BuilderFormData): void;
   (e: "delete", index: number): void;
   (e: "close"): void;
-  (e: "autosave", formData: FormData): void;
+  (e: "autosave", formData: BuilderFormData): void;
 }>();
 
-const form = ref<AppForm | null>(props.initialFormData || {
-  title: "New Form",
-  form: {
-    id: "",
-    fields: [],
-  }
-});
-const formData = ref<FormData>(props.initialFormData?.form || {
+const createEmptyFormData = (): BuilderFormData => ({
   id: "",
   fields: [],
 });
 
-const selectedCategory = ref<FieldCategory | null>(null);
+const normalizeFormData = (source?: unknown): BuilderFormData => {
+  if (source && typeof source === "object") {
+    if ("fields" in (source as any)) {
+      const data = source as BuilderFormData;
+      return {
+        id: data.id ?? "",
+        fields: Array.isArray(data.fields) ? [...data.fields] : [],
+        metadata: data.metadata,
+        settings: data.settings,
+      };
+    }
+    if ("questions" in (source as any)) {
+      const definition = source as FormDefinition;
+      return {
+        id: definition.id ?? "",
+        fields: [...(definition.questions ?? [])],
+      };
+    }
+  }
+  return createEmptyFormData();
+};
+
+const form = ref<AppForm | FormDefinition | null>(props.initialFormData ?? null);
+const formData = ref<BuilderFormData>(normalizeFormData(props.initialFormData?.form));
+
+const selectedCategory = ref<FormFieldCategory | null>(null);
 const showFieldTypeSelector = ref(false);
 
-const recentlyUsedTypes = ref<QuestionType[]>([]);
+const recentlyUsedTypes = ref<FormQuestionType[]>([]);
 const formStore = useFormStore();
 const isExpanded = ref(false);
 const isDropdown = ref(false);
@@ -161,129 +178,101 @@ const formID = route.params.id as string;
 
 const resizeListener = () => {
   isDropdown.value = window.innerWidth <= 768;
-}
+};
 
 onMounted(() => {
-  if (formID && !formData.value) {
+  if (formID && formData.value.fields.length === 0) {
     formStore
       .fetchForm(formID)
       .then((appForm) => {
         if (appForm) {
           form.value = appForm;
-          formData.value = appForm.form || { id: "", fields: [] };
+          const rawForm = (appForm as AppForm).form ?? appForm;
+          formData.value = normalizeFormData(rawForm);
         }
       })
       .catch((err) => {
         console.error("Error fetching form:", err);
         form.value = {
           title: "New Form",
-          form: {
-            id: "",
-            fields: [],
-          },
-        };
+          form: createEmptyFormData(),
+        } as AppForm;
+        formData.value = createEmptyFormData();
       });
   }
-  window.addEventListener('resize', resizeListener);
+  window.addEventListener("resize", resizeListener);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeListener)
+  window.removeEventListener("resize", resizeListener);
 });
 
-const getFieldCategory = (type: QuestionType): FieldCategory =>
-  typeToCategoryMap[type];
+const getFieldCategory = (type: FormQuestionType): FormFieldCategory =>
+  typeToCategoryMap[type] ?? "text";
 
-const selectCategory = (category: FieldCategory) => {
+const selectCategory = (category: FormFieldCategory) => {
   selectedCategory.value = category;
   showFieldTypeSelector.value = true;
 };
 
-const updateRecentlyUsedTypes = (type: QuestionType) => {
+const updateRecentlyUsedTypes = (type: FormQuestionType) => {
   recentlyUsedTypes.value = [
     type,
     ...recentlyUsedTypes.value.filter((t) => t !== type),
   ].slice(0, 2);
 };
 
-const createNewField = (type: QuestionType): Question => {
-  console.log("Creating: ", type);
-  const baseField = {
+const createNewField = (type: FormQuestionType): FormQuestion => {
+  const base = {
     id: `field_${Date.now()}`,
     type,
     category: getFieldCategory(type),
     question: "",
+    description: undefined,
+    placeholder: undefined,
     required: false,
+    help_text: undefined,
     logic: undefined,
-  };
+    metadata: undefined,
+  } as FormQuestion & Record<string, any>;
 
   switch (type) {
     case "radio":
     case "select":
     case "checkbox":
     case "tags":
-      return {
-        ...baseField,
-        options: [],
-      } as RadioQuestion | MultiChoiceQuestion | SelectQuestion;
-
-    case "fname":
-    case "lname":
-    case "fullName":
-    case "short":
-    case "long":
-    case "email":
-    case "date":
-    case "time":
-    case "address":
-    case "phone":
-    case "website":
-      return {
-        ...baseField,
-        validation: {
-          inputType: "text",
-        },
-      } as TextQuestion;
-
-    case "file":
-      return {
-        ...baseField,
-        allowedTypes: [],
-        maxSize: 10,
-        multiple: false,
-      } as FileQuestion;
-
+      base.options = [] as Option[];
+      break;
+    case "yesno":
+      base.options = [
+        { value: "yes", label: "Yes" },
+        { value: "no", label: "No" },
+      ] as Option[];
+      break;
     case "slider":
     case "range":
-      return {
-        ...baseField,
-        min: 0,
-        max: 100,
-        step: 1,
-        showLabels: true,
-      } as SliderQuestion;
-
+      base.min = 0;
+      base.max = 100;
+      base.step = 1;
+      base.show_labels = true;
+      break;
     case "rating":
-      return {
-        ...baseField,
-        iconType: "star",
-        allowHalf: false,
-        min: 1,
-        max: 5,
-      } as RatingQuestion;
-
-    case "yesno":
-      return {
-        ...baseField,
-        options: [
-          { value: "yes", label: "Yes" },
-          { value: "no", label: "No" },
-        ],
-      } as YesNoQuestion;
-
+      base.icon_type = "star";
+      base.allow_half = false;
+      base.min = 1;
+      base.max = 5;
+      break;
+    case "file":
+      base.allowed_types = [];
+      base.max_size_mb = 10;
+      base.multiple = false;
+      break;
     default:
-      throw new Error(`Unknown field type: ${type}`);
+      base.validation = defaultValidations[type] ?? { inputType: "text" };
+      break;
   }
+
+  return base as FormQuestion;
 };
 
 const toggleExpand = () => {
@@ -294,7 +283,7 @@ const toggleExpand = () => {
   }
 };
 
-const addNewField = (type: QuestionType) => {
+const addNewField = (type: FormQuestionType) => {
   if (!formData.value) return;
   const newField = createNewField(type);
   formData.value.fields.push(newField);
@@ -309,9 +298,13 @@ const deleteField = (index: number) => {
   emit("delete", index);
 };
 
-const updateField = (index: number, updatedField: Question) => {
+const updateField = (index: number, updatedField: FormQuestion) => {
   if (!formData.value) return;
   formData.value.fields[index] = updatedField;
+};
+
+const handleFieldModelUpdate = (index: number, updatedField: FormQuestion) => {
+  updateField(index, updatedField);
 };
 
 watch(
@@ -332,27 +325,53 @@ const propertyEditorComponents = computed(() => ({
   file: FileEditor,
   rating: RatingEditor,
   switch: ChoiceEditor,
+  info: TextEditor,
 }));
 
-const getPropertyEditor = (type: QuestionType) => {
+const getPropertyEditor = (type: FormQuestionType) => {
   const category = getFieldCategory(type);
   return propertyEditorComponents.value[category] || null;
 };
 
 // Logic editor related functions and data
-const logicMatchTypes = ['equal', 'greater', 'less', 'contains', 'regex'] as const;
+const logicOperators = [
+  'equals',
+  'not_equals',
+  'contains',
+  'not_contains',
+  'greater_than',
+  'less_than',
+  'greater_or_equal',
+  'less_or_equal',
+  'matches_regex',
+] as const;
 
-const toggleLogic = (field: Question) => {
+const buildDefaultLogicRule = (fieldId: string): LogicRule => ({
+  id: `logic_${fieldId}`,
+  scope: 'question',
+  owner_id: fieldId,
+  conditions: [
+    {
+      question_id: fieldId,
+      operator: 'equals',
+      value: '',
+    },
+  ],
+  logic_type: 'AND',
+  actions: [
+    {
+      type: 'jump_to_question',
+      target_id: '',
+    },
+  ],
+});
+
+const toggleLogic = (field: FormQuestion) => {
   if (field.logic) {
     field.logic = undefined;
-  } else {
-    field.logic = {
-      if: '',
-      value: '',
-      matchType: 'equal',
-      jump: '',
-    };
+    return;
   }
+  field.logic = buildDefaultLogicRule(field.id);
 };
 
 const getFieldOptions = (currentFieldIndex: number) => {

@@ -570,6 +570,11 @@ import WebhooksPanel from "@/components/forms/WebhooksPanel.vue";
 import ImagePicker from "@/components/ImagePicker.vue";
 import type { FormBlock } from "@/components/forms/blocks/types";
 import type { FormConfig } from "@/components/forms/FormConfigWizardSimple.vue";
+import type {
+  FormPage,
+  FormQuestion,
+  Option,
+} from "@/types";
 import { useFormStore } from "@/store/forms";
 import { useFormSettingsStore } from "@/store/formSettings";
 import { generateFormBlocks } from "../services/ai";
@@ -583,6 +588,8 @@ const formId = computed(() => route.params.id as string);
 const TEMPLATE_STORAGE_PREFIX = "VENX_FORM_TEMPLATE_";
 const formTitle = ref("");
 const formDescription = ref("");
+const pagesState = ref<FormPage[]>([]);
+
 const blocks = ref<FormBlock[]>([]);
 const focusedBlockId = ref<string | null>(null);
 const showSlashMenu = ref(false);
@@ -637,6 +644,182 @@ const logoAlignmentClass = computed(() => {
 
 const resetLogoSize = () => {
   logoWidth.value = DEFAULT_LOGO_WIDTH;
+};
+
+const mapToSupportedType = (t: string): FormBlock["type"] => {
+  if ((ALLOWED_BLOCK_TYPES as readonly string[]).includes(t)) {
+    return t as FormBlock["type"];
+  }
+  switch (t) {
+    case "fname":
+    case "lname":
+    case "fullName":
+    case "website":
+    case "number":
+      return "short";
+    case "address":
+      return "long";
+    case "range":
+      return "slider";
+    case "tags":
+      return "checkbox";
+    case "statement":
+      return "long";
+    default:
+      return "short";
+  }
+};
+
+const normalizeBlock = (block: FormBlock): NormalizedFormBlock => {
+  const type = mapToSupportedType(block.type as unknown as string);
+  const category = BLOCK_CATEGORY_BY_TYPE[type];
+  return { ...(block as any), type, category } as NormalizedFormBlock;
+};
+
+const ALLOWED_BLOCK_TYPES: FormBlock["type"][] = [
+  "short",
+  "long",
+  "email",
+  "phone",
+  "date",
+  "time",
+  "radio",
+  "checkbox",
+  "select",
+  "rating",
+  "slider",
+  "file",
+  "yesno",
+];
+
+type SupportedType = typeof ALLOWED_BLOCK_TYPES[number];
+type NormalizedFormBlock = Omit<FormBlock, "type" | "category"> & {
+  type: SupportedType;
+  category: FormBlock["category"]; // derived from type map
+};
+
+const BLOCK_CATEGORY_BY_TYPE: Record<FormBlock["type"], FormBlock["category"]> = {
+  short: "text",
+  long: "text",
+  email: "text",
+  phone: "text",
+  date: "text",
+  time: "text",
+  radio: "choice",
+  checkbox: "choices",
+  select: "choice",
+  rating: "rating",
+  slider: "rating",
+  file: "file",
+  yesno: "switch",
+};
+
+const ensurePagesInitialized = (description: string) => {
+  if (pagesState.value.length === 0) {
+    pagesState.value = [
+      {
+        id: crypto.randomUUID(),
+        title: "Page 1",
+        description,
+        position: 1,
+        question_order: [],
+      },
+    ];
+  }
+};
+
+const getPrimaryPageId = (description: string) => {
+  ensurePagesInitialized(description);
+  return pagesState.value[0].id;
+};
+
+const assignBlockToPage = (block: FormBlock, description: string): string => {
+  if (block.pageId) {
+    const existing = pagesState.value.find((page) => page.id === block.pageId);
+    if (existing) {
+      return existing.id;
+    }
+  }
+
+  const fallbackPageId = getPrimaryPageId(description);
+  block.pageId = fallbackPageId;
+  return fallbackPageId;
+};
+
+const serializeBlockToQuestion = (block: NormalizedFormBlock, pageId: string): Partial<FormQuestion> => {
+  const question: Partial<FormQuestion> & Record<string, unknown> = {
+    id: block.id,
+    page_id: pageId,
+    type: (block.type as any),
+    category: (block.category as any),
+    question: block.question,
+    description: block.description,
+    placeholder: block.placeholder,
+    required: block.required,
+    help_text: block.helpText,
+    logic: block.logic,
+    visibility_condition: block.visibilityCondition,
+    metadata: block.metadata,
+  };
+
+  if (block.options || block.optionValues) {
+    const options: Option[] = block.optionValues
+      ? block.optionValues
+      : (block.options ?? []).map((value) => ({ value, label: value }));
+    question.options = options;
+  }
+
+  if (block.validation) {
+    question.validation = block.validation;
+  }
+
+  if (block.type === "rating") {
+    question.icon_type = block.iconType ?? "star";
+    question.allow_half = block.allowHalf;
+    question.min = block.min ?? 1;
+    question.max = block.max ?? 5;
+  }
+
+  if (block.type === "slider") {
+    question.min = block.min ?? 0;
+    question.max = block.max ?? 100;
+    question.step = block.step ?? 1;
+    question.show_labels = block.showLabels;
+  }
+
+  if (block.type === "file") {
+    question.allowed_types = block.allowedTypes;
+    question.max_size_mb = block.maxSize;
+    question.multiple = block.multiple;
+  }
+
+  return question;
+};
+
+const buildPagesPayload = (description: string, blockList: FormBlock[]): FormPage[] => {
+  ensurePagesInitialized(description);
+
+  const clonedPages: FormPage[] = pagesState.value.map((page, index) => ({
+    id: page.id,
+    title: page.title || `Page ${index + 1}`,
+    description: index === 0 ? description : page.description,
+    position: page.position ?? index + 1,
+    question_order: [],
+    ...(page.metadata ? { metadata: page.metadata } : {}),
+  }));
+
+  const pagesById = new Map(clonedPages.map((page) => [page.id, page]));
+
+  blockList.forEach((block) => {
+    const pageId = assignBlockToPage(block, description);
+    const page = pagesById.get(pageId);
+    if (page) {
+      page.question_order = page.question_order ?? [];
+      page.question_order.push(block.id);
+    }
+  });
+
+  return clonedPages;
 };
 
 const syncPaymentAmountFromStore = () => {
@@ -775,42 +958,25 @@ const triggerSave = () => {
 
 const saveForm = async () => {
   if (!formId.value) return;
-  
+
   isSaving.value = true;
   try {
-    const pageId = crypto.randomUUID();
-    const questions = blocks.value.map((block) => ({
-      id: block.id,
-      type: block.type,
-      category: block.category,
-      question: block.question,
-      description: block.description,
-      placeholder: block.placeholder,
-      required: block.required,
-      options: block.options,
-      validation: block.validation,
-      icon_type: block.iconType || 'star',
-      allow_half: block.allowHalf,
-      min: block.min,
-      max: block.max,
-      allowed_types: block.allowedTypes,
-      max_size: block.maxSize,
-      multiple: block.multiple,
-      page_id: pageId,
-    } as any));
+    ensurePagesInitialized(formDescription.value);
+
+    const sanitizedBlocks = blocks.value
+      .map((block) => normalizeBlock(block))
+      .filter((block) => ALLOWED_BLOCK_TYPES.includes(block.type));
+
+    const pagesPayload = buildPagesPayload(formDescription.value, sanitizedBlocks);
+    const questionsPayload = sanitizedBlocks.map((block) => {
+      const pageId = assignBlockToPage(block, formDescription.value);
+      return serializeBlockToQuestion(block, pageId);
+    });
 
     await formStore.updateForm(formId.value, {
       title: formTitle.value,
-      pages: [
-        {
-          id: pageId,
-          title: "Page 1",
-          description: formDescription.value,
-          position: 1,
-          question_order: questions.map(q => q.id),
-        }
-      ],
-      questions,
+      pages: pagesPayload,
+      questions: questionsPayload as FormQuestion[],
       // Persist all settings
       layout_mode: settingsStore.state.layoutMode,
       settings: {
@@ -1324,7 +1490,7 @@ onMounted(async () => {
             formDescription.value = parsed.description || formDescription.value;
             const templateBlocks = parsed.blocks?.map(normalizeTemplateBlock) ?? [];
             if (templateBlocks.length) {
-              blocks.value = templateBlocks;
+              blocks.value = templateBlocks.map((b) => normalizeBlock(b as any));
               hydratedFromTemplate = true;
               showConfigWizard.value = false;
               isNewForm.value = false;
@@ -1343,30 +1509,32 @@ onMounted(async () => {
         showConfigWizard.value = true;
       }
       
-      // Convert all pages and questions to blocks
+      // Convert backend pages and questions to blocks; preserve page IDs
       const allBlocks: FormBlock[] = [];
-      
       if (!hydratedFromTemplate && form.pages && form.pages.length > 0) {
-        // Sort pages by position
         const sortedPages = [...form.pages].sort((a, b) => a.position - b.position);
-        
+        // hydrate pages state
+        pagesState.value = sortedPages.map((p, idx) => ({
+          id: p.id,
+          title: p.title || `Page ${idx + 1}`,
+          description: p.description,
+          position: p.position ?? idx + 1,
+          question_order: Array.isArray((p as any).question_order) ? (p as any).question_order : [],
+          ...(p as any).metadata ? { metadata: (p as any).metadata } : {},
+        }));
+
         sortedPages.forEach((page, pageIndex) => {
-          // Add page description as first block if exists
           if (pageIndex === 0 && page.description) {
             formDescription.value = page.description;
           }
-          
-          // Get questions for this page
           const pageQuestions = form.questions?.filter(q => q.page_id === page.id) || [];
           const sortedQuestions = [...pageQuestions].sort((a, b) => {
             const posA = (a as any).position || 0;
             const posB = (b as any).position || 0;
             return posA - posB;
           });
-          
-          // Convert questions to blocks
           sortedQuestions.forEach(q => {
-            allBlocks.push({
+            allBlocks.push(normalizeBlock({
               id: q.id,
               type: q.type as any,
               category: q.category as any,
@@ -1374,29 +1542,16 @@ onMounted(async () => {
               description: q.description,
               placeholder: q.placeholder,
               required: q.required || false,
-              options: (q as any).options?.map((opt: any) => 
-                typeof opt === "string" ? opt : opt.label || opt.value
-              ),
-            });
+              options: (q as any).options?.map((opt: any) => typeof opt === "string" ? opt : (opt.label || opt.value)),
+              pageId: q.page_id,
+            } as any));
           });
-          
-          // Add page break block after each page except the last
-          if (pageIndex < sortedPages.length - 1) {
-            allBlocks.push({
-              id: `pagebreak-${page.id}`,
-              type: "pagebreak" as any,
-              category: "text" as any,
-              question: `Page ${pageIndex + 2}`,
-              description: page.title || `Page ${pageIndex + 2}`,
-              required: false,
-            });
-          }
         });
       }
-      
+
       if (!hydratedFromTemplate) {
         blocks.value = allBlocks;
-        
+
         // Auto-focus first block after loading
         setTimeout(() => {
           if (!isNewForm.value && blocks.value.length > 0) {

@@ -217,9 +217,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'add-page', templateSlug?: string): void;
-  (e: 'duplicate-page', pageId?: string | null): void;
-  (e: 'delete-page', pageId?: string | null): void;
-  (e: 'move-page', direction: 'up' | 'down', pageId?: string | null): void;
+  (e: 'duplicate-page', pageId?: string): void;
+  (e: 'delete-page', pageId?: string): void;
+  (e: 'move-page', direction: 'up' | 'down', pageId?: string): void;
   (e: 'select-page', pageId: string): void;
   (e: 'update-snap-settings', settings: Partial<SnapSettings>): void;
   (e: 'import-powerpoint'): void;
@@ -268,17 +268,17 @@ function selectTemplate(slug: string) {
 
 function emitDuplicate() {
   if (props.disabled) return;
-  emit('duplicate-page', props.activePageId);
+  emit('duplicate-page', props.activePageId ?? undefined);
 }
 
 function emitDelete() {
   if (props.disabled) return;
-  emit('delete-page', props.activePageId);
+  emit('delete-page', props.activePageId ?? undefined);
 }
 
 function emitMove(direction: 'up' | 'down') {
   if (props.disabled) return;
-  emit('move-page', direction, props.activePageId);
+  emit('move-page', direction, props.activePageId ?? undefined);
 }
 
 function emitImportPptx() {

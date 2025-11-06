@@ -1,3 +1,5 @@
+import type { LogicCondition, LogicRule, Option } from "@/types";
+
 export type BlockType =
   | "short"
   | "long"
@@ -24,6 +26,7 @@ export interface FormBlock {
   placeholder?: string;
   required: boolean;
   options?: string[];
+  optionValues?: Option[];
   validation?: {
     min?: number;
     max?: number;
@@ -34,10 +37,18 @@ export interface FormBlock {
   allowHalf?: boolean;
   min?: number;
   max?: number;
+  step?: number;
+  showLabels?: boolean;
   // File specific
   allowedTypes?: string[];
   maxSize?: number;
   multiple?: boolean;
+  // Metadata
+  helpText?: string;
+  logic?: LogicRule;
+  visibilityCondition?: LogicCondition;
+  metadata?: Record<string, unknown>;
+  pageId?: string;
 }
 
 export interface SlashMenuItem {

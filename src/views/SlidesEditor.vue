@@ -360,21 +360,25 @@ function handleAddPage(templateSlug?: string) {
   slidesStore.scheduleAutosave();
 }
 
-function handleDuplicatePage(pageId?: string) {
+function handleDuplicatePage(pageId?: string | null) {
+  if (!pageId) return;
   slidesStore.duplicatePage(pageId);
   slidesStore.scheduleAutosave();
 }
 
-function handleDeletePage(pageId?: string) {
+function handleDeletePage(pageId?: string | null) {
+  if (!pageId) return;
   slidesStore.deletePage(pageId);
   slidesStore.scheduleAutosave();
 }
 
-function handleSelectPage(pageId: string) {
+function handleSelectPage(pageId?: string | null) {
+  if (!pageId) return;
   slidesStore.setActivePage(pageId);
 }
 
-function handleMovePage(direction: 'up' | 'down', pageId?: string) {
+function handleMovePage(direction: 'up' | 'down', pageId?: string | null) {
+  if (!pageId) return;
   slidesStore.movePage(pageId, direction);
   slidesStore.scheduleAutosave();
 }

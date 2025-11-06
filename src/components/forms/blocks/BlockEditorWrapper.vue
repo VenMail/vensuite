@@ -12,10 +12,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, watch } from "vue";
 import BlockEditor from "./BlockEditor.vue";
-import type { FormBlock } from "./types";
-import type { FormQuestion } from "@/types";
+import type { FormBlock } from "@/components/forms/blocks/types";
+import type { FormQuestion, FormQuestionType, Option } from "@/types";
 
 const props = defineProps<{
   questions?: FormQuestion[];
@@ -33,65 +33,183 @@ const formTitle = ref(props.title || "");
 const formDescription = ref(props.description || "");
 const formBlocks = ref<FormBlock[]>([]);
 
+const SUPPORTED_BLOCK_TYPES: FormBlock["type"][] = [
+  "short",
+  "long",
+  "email",
+  "phone",
+  "date",
+  "time",
+  "radio",
+  "checkbox",
+  "select",
+  "rating",
+  "slider",
+  "file",
+  "yesno",
+];
+
+const mapQuestionTypeToBlockType = (type: FormQuestionType): FormBlock["type"] => {
+  if (SUPPORTED_BLOCK_TYPES.includes(type as FormBlock["type"])) {
+    return type as FormBlock["type"];
+  }
+  switch (type) {
+    case "fname":
+    case "lname":
+    case "fullName":
+    case "website":
+    case "number":
+      return "short";
+    case "address":
+    case "statement":
+      return "long";
+    case "tags":
+      return "checkbox";
+    case "range":
+      return "slider";
+    default:
+      return "short";
+  }
+};
+
+const getBlockCategory = (type: FormBlock["type"]): FormBlock["category"] => {
+  const categoryMap: Record<FormBlock["type"], FormBlock["category"]> = {
+    short: "text",
+    long: "text",
+    email: "text",
+    phone: "text",
+    date: "text",
+    time: "text",
+    radio: "choice",
+    checkbox: "choices",
+    select: "choice",
+    rating: "rating",
+    slider: "rating",
+    file: "file",
+    yesno: "switch",
+  };
+  return categoryMap[type];
+};
+
 // Convert FormQuestion to FormBlock
 const convertQuestionToBlock = (question: FormQuestion): FormBlock => {
-  return {
+  const blockType = mapQuestionTypeToBlockType(question.type);
+  const block: FormBlock = {
     id: question.id,
-    type: question.type as FormBlock["type"],
-    category: question.category as FormBlock["category"],
+    type: blockType,
+    category: getBlockCategory(blockType),
     question: question.question || "",
     description: question.description,
     placeholder: question.placeholder,
-    required: question.required || false,
-    options: question.options?.map((opt) => 
-      typeof opt === "string" ? opt : opt.label || opt.value
-    ),
-    validation: question.validation,
-    iconType: (question as any).iconType,
-    allowHalf: (question as any).allowHalf,
-    min: (question as any).min,
-    max: (question as any).max,
-    allowedTypes: (question as any).allowedTypes,
-    maxSize: (question as any).maxSize,
-    multiple: (question as any).multiple,
+    required: Boolean(question.required),
+    optionValues: undefined,
+    options: undefined,
+    validation: undefined,
+    iconType: undefined,
+    allowHalf: undefined,
+    min: undefined,
+    max: undefined,
+    step: undefined,
+    showLabels: undefined,
+    allowedTypes: undefined,
+    maxSize: undefined,
+    multiple: undefined,
   };
+
+  if ("options" in question && Array.isArray((question as any).options)) {
+    const opts = (question as any).options as Option[];
+    block.optionValues = opts;
+    block.options = opts.map((opt) => opt.label ?? opt.value ?? "");
+  }
+
+  if ("validation" in question && (question as any).validation) {
+    const { min, max, pattern } = (question as any).validation as Record<string, number | string | undefined>;
+    block.validation = { min: min as number | undefined, max: max as number | undefined, pattern: pattern as string | undefined };
+  }
+
+  if (question.type === "rating") {
+    block.iconType = (question as any).icon_type ?? "star";
+    block.allowHalf = (question as any).allow_half ?? false;
+    block.min = (question as any).min ?? 1;
+    block.max = (question as any).max ?? 5;
+  }
+
+  if (question.type === "slider" || question.type === "range") {
+    block.min = (question as any).min ?? 0;
+    block.max = (question as any).max ?? 100;
+    block.step = (question as any).step ?? 1;
+    block.showLabels = Boolean((question as any).show_labels);
+  }
+
+  if (question.type === "file") {
+    block.allowedTypes = (question as any).allowed_types ?? [];
+    block.maxSize = (question as any).max_size_mb ?? 10;
+    block.multiple = Boolean((question as any).multiple);
+  }
+
+  return block;
 };
 
 // Convert FormBlock to FormQuestion
 const convertBlockToQuestion = (block: FormBlock): FormQuestion => {
-  const baseQuestion: FormQuestion = {
+  const question = {
     id: block.id,
-    type: block.type as any,
-    category: block.category as any,
+    type: block.type,
+    category: block.category,
     question: block.question,
     description: block.description,
     placeholder: block.placeholder,
     required: block.required,
-    validation: block.validation,
-  };
+  } as unknown as FormQuestion;
 
-  // Add type-specific properties
-  if (block.category === "choice" || block.category === "choices") {
-    (baseQuestion as any).options = block.options?.map((opt) => ({
-      value: opt.toLowerCase().replace(/\s+/g, "_"),
-      label: opt,
+  if (block.optionValues && block.optionValues.length) {
+    (question as any).options = block.optionValues;
+  } else if (block.options && block.options.length) {
+    const opts: Option[] = block.options.map((label) => ({
+      label,
+      value: label.toLowerCase().replace(/\s+/g, "_"),
     }));
+    (question as any).options = opts;
   }
 
-  if (block.category === "rating") {
-    (baseQuestion as any).iconType = block.iconType || "star";
-    (baseQuestion as any).allowHalf = block.allowHalf || false;
-    (baseQuestion as any).min = block.min || 1;
-    (baseQuestion as any).max = block.max || 5;
+  if (block.validation) {
+    (question as any).validation = {
+      min: block.validation.min,
+      max: block.validation.max,
+      pattern: block.validation.pattern,
+      inputType: "text",
+    };
   }
 
-  if (block.category === "file") {
-    (baseQuestion as any).allowedTypes = block.allowedTypes || [];
-    (baseQuestion as any).maxSize = block.maxSize || 10;
-    (baseQuestion as any).multiple = block.multiple || false;
+  if (block.type === "rating") {
+    (question as any).icon_type = block.iconType ?? "star";
+    (question as any).allow_half = Boolean(block.allowHalf);
+    (question as any).min = block.min ?? 1;
+    (question as any).max = block.max ?? 5;
   }
 
-  return baseQuestion;
+  if (block.type === "slider") {
+    (question as any).min = block.min ?? 0;
+    (question as any).max = block.max ?? 100;
+    (question as any).step = block.step ?? 1;
+    (question as any).show_labels = block.showLabels ?? false;
+  }
+
+  if (block.type === "file") {
+    (question as any).allowed_types = block.allowedTypes ?? [];
+    (question as any).max_size_mb = block.maxSize ?? 10;
+    (question as any).multiple = block.multiple ?? false;
+  }
+
+  if (block.type === "yesno") {
+    const yesNoOptions: Option[] = block.optionValues ?? [
+      { label: "Yes", value: "yes" },
+      { label: "No", value: "no" },
+    ];
+    (question as any).options = yesNoOptions;
+  }
+
+  return question;
 };
 
 // Initialize blocks from questions

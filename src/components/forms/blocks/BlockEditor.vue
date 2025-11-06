@@ -73,10 +73,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, watch } from "vue";
 import { Plus, FileQuestion } from "lucide-vue-next";
 import BlockItem from "./BlockItem.vue";
-import type { FormBlock } from "./types";
+import type { FormBlock } from "@/components/forms/blocks/types";
 
 const props = defineProps<{
   initialBlocks?: FormBlock[];
@@ -160,7 +160,7 @@ const handleBlockBlur = () => {
 };
 
 const handleBlockUpdate = (updatedBlock: FormBlock) => {
-  const index = blocks.value.findIndex((b) => b.id === updatedBlock.id);
+  const index = blocks.value.findIndex((b: FormBlock) => b.id === updatedBlock.id);
   if (index !== -1) {
     blocks.value[index] = updatedBlock;
     emit("update:blocks", blocks.value);
@@ -168,7 +168,7 @@ const handleBlockUpdate = (updatedBlock: FormBlock) => {
 };
 
 const handleBlockDelete = (blockId: string) => {
-  const index = blocks.value.findIndex((b) => b.id === blockId);
+  const index = blocks.value.findIndex((b: FormBlock) => b.id === blockId);
   if (index !== -1) {
     blocks.value.splice(index, 1);
     emit("update:blocks", blocks.value);
@@ -184,7 +184,7 @@ const handleBlockDelete = (blockId: string) => {
 };
 
 const handleInsertBelow = (blockId: string) => {
-  const index = blocks.value.findIndex((b) => b.id === blockId);
+  const index = blocks.value.findIndex((b: FormBlock) => b.id === blockId);
   if (index !== -1) {
     const newBlock = createNewBlock();
     blocks.value.splice(index + 1, 0, newBlock);
@@ -194,7 +194,7 @@ const handleInsertBelow = (blockId: string) => {
 };
 
 const handleMoveUp = (blockId: string) => {
-  const index = blocks.value.findIndex((b) => b.id === blockId);
+  const index = blocks.value.findIndex((b: FormBlock) => b.id === blockId);
   if (index > 0) {
     const block = blocks.value[index];
     blocks.value.splice(index, 1);
@@ -204,7 +204,7 @@ const handleMoveUp = (blockId: string) => {
 };
 
 const handleMoveDown = (blockId: string) => {
-  const index = blocks.value.findIndex((b) => b.id === blockId);
+  const index = blocks.value.findIndex((b: FormBlock) => b.id === blockId);
   if (index < blocks.value.length - 1) {
     const block = blocks.value[index];
     blocks.value.splice(index, 1);
