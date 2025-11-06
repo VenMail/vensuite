@@ -1,9 +1,24 @@
-import { apiClient } from "./apiClient";
+import { apiClient, withRequestOptions } from "./apiClient";
 import type { FormBlock } from "@/components/forms/blocks/types";
+import { useAuthStore } from "@/store/auth";
 
 export interface AIGenerateFormRequest {
   description: string;
   context?: string;
+}
+
+function buildAuthRequestConfig() {
+  try {
+    const authStore = useAuthStore();
+    const token = authStore.getToken?.() ?? authStore.token;
+    if (token) {
+      return withRequestOptions({ auth: { token } });
+    }
+  } catch (error) {
+    console.warn("Failed to resolve auth token for AI request:", error);
+  }
+
+  return withRequestOptions();
 }
 
 export interface AIGenerateFormResponse {
@@ -23,12 +38,14 @@ export async function generateFormBlocks(
   context?: string
 ): Promise<FormBlock[]> {
   try {
+    const requestConfig = buildAuthRequestConfig();
     const response = await apiClient.post<{ data: AIGenerateFormResponse }>(
-      "/api/v1/ai/generate-form",
+      "/ai/generate-form",
       {
         description,
         context,
-      }
+      },
+      requestConfig
     );
 
     return response.data.data.blocks;
@@ -47,11 +64,13 @@ export async function generateCompleteForm(
   description: string
 ): Promise<AIGenerateFormResponse> {
   try {
+    const requestConfig = buildAuthRequestConfig();
     const response = await apiClient.post<{ data: AIGenerateFormResponse }>(
-      "/api/v1/ai/generate-form",
+      "/ai/generate-form",
       {
         description,
-      }
+      },
+      requestConfig
     );
 
     return response.data.data;

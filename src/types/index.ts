@@ -57,6 +57,7 @@ export interface AppForm {
   organization_id?: string;
   owner_id?: string;
   slug?: string;
+  sharing?: FormSharingSettings;
   title: string;
   status?: FormStatus;
   layout_mode?: FormLayoutMode;

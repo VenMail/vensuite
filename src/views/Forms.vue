@@ -254,8 +254,8 @@ async function handleWizardCreateBlank() {
   }
 }
 
-function previewForm(id: string) {
-  router.push(`/f/${id}`);
+function previewForm(id: string, shareSlug?: string | null) {
+  router.push(`/f/${shareSlug ?? id}`);
 }
 
 function editForm() {
@@ -287,7 +287,10 @@ const contextMenuActions = computed(() => {
     {
       label: "Preview",
       icon: BookOpen,
-      action: () => previewForm(selectedForm.value!),
+      action: () => {
+        const form = formStore.allForms.find((f) => f.id === selectedForm.value);
+        previewForm(selectedForm.value!, form?.sharing?.share_slug ?? form?.slug ?? null);
+      },
     },
     {
       label: "Edit",

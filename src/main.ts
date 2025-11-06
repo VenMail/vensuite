@@ -31,7 +31,7 @@ import Media from './views/Media.vue'
 
 const routes = [
   {
-    path: '/f/:slug',
+    path: '/f/:slug(.*)',
     name: 'form-player',
     component: () => import('./views/FormPlayerHost.vue'),
     meta: { public: true },

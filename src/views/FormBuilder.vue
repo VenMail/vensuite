@@ -571,13 +571,14 @@ import ImagePicker from "@/components/ImagePicker.vue";
 import type { FormBlock } from "@/components/forms/blocks/types";
 import type { FormConfig } from "@/components/forms/FormConfigWizardSimple.vue";
 import type {
+  FormDefinition,
   FormPage,
   FormQuestion,
   Option,
 } from "@/types";
 import { useFormStore } from "@/store/forms";
 import { useFormSettingsStore } from "@/store/formSettings";
-import { generateFormBlocks } from "../services/ai";
+import { generateCompleteForm } from "../services/ai";
 
 const route = useRoute();
 const router = useRouter();
@@ -1253,8 +1254,21 @@ const handleGenerateAI = async () => {
   
   isGenerating.value = true;
   try {
-    const generatedBlocks = await generateFormBlocks(aiPrompt.value);
-    blocks.value.push(...generatedBlocks);
+    const result = await generateCompleteForm(aiPrompt.value);
+    if (result.title) {
+      formTitle.value = result.title;
+    }
+    if (result.description) {
+      formDescription.value = result.description;
+      if (pagesState.value.length > 0) {
+        pagesState.value[0].description = result.description;
+      }
+    }
+
+    if (Array.isArray(result.blocks) && result.blocks.length > 0) {
+      const normalizedBlocks = result.blocks.map((block) => normalizeBlock(block));
+      blocks.value.push(...normalizedBlocks);
+    }
     showAIDialog.value = false;
     aiPrompt.value = "";
     console.log("Questions generated successfully!");
@@ -1358,16 +1372,17 @@ const closeWebhooksModal = () => {
   showWebhooksPanel.value = false;
 };
 
-const ensurePublishedSlug = async (): Promise<string | null> => {
+const ensurePublishedSlug = async (): Promise<FormDefinition | null> => {
   if (!formId.value) return null;
   const latest = await formStore.fetchForm(formId.value);
-  if (latest?.slug) {
-    return latest.slug;
+
+  if (latest?.sharing?.share_slug || latest?.slug) {
+    return latest;
   }
 
   const published = await formStore.publishForm(formId.value);
-  if (published?.slug) {
-    return published.slug;
+  if (published) {
+    return published;
   }
 
   toast.error("Publish failed. Please try again.");
@@ -1379,9 +1394,10 @@ const handlePreview = async () => {
 
   await saveForm();
 
-  const slug = await ensurePublishedSlug();
-  if (slug) {
-    window.open(`/f/${slug}`, "_blank");
+  const definition = await ensurePublishedSlug();
+  const targetSlug = definition?.sharing?.share_slug ?? definition?.slug;
+  if (targetSlug) {
+    window.open(`/f/${targetSlug}`, "_blank");
   }
 };
 
@@ -1391,9 +1407,14 @@ const handlePublish = async () => {
   isPublishing.value = true;
   try {
     await saveForm();
-    const slug = await ensurePublishedSlug();
-    if (slug) {
-      toast.success("Form published and ready to share");
+    const definition = await ensurePublishedSlug();
+    if (definition) {
+      const shareSlug = definition.sharing?.share_slug ?? definition.slug;
+      toast.success(
+        shareSlug
+          ? `Form published. Share link: /f/${shareSlug}`
+          : "Form published and ready to share"
+      );
     }
   } catch (error) {
     console.error("Failed to publish form:", error);
