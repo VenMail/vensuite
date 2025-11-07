@@ -184,17 +184,67 @@ interface SubmitResponseApiResult {
   nextQuestionId?: string | null;
   requires_payment?: boolean;
   requiresPayment?: boolean;
+  payment_required?: boolean | string;
   payment_intent_id?: string | null;
   paymentIntentId?: string | null;
 }
 
+const coerceBoolean = (value: unknown): boolean => {
+  if (typeof value === "string") {
+    return value === "true" || value === "1" || value.toLowerCase() === "yes";
+  }
+  return Boolean(value);
+};
+
+const isSubmitResponseApiResult = (value: unknown): value is SubmitResponseApiResult => {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "response" in value,
+  );
+};
+
 const normalizeSubmitResponseResult = (raw: SubmitResponseApiResult): SubmitResponseResult => {
+  const requiresPaymentRaw =
+    raw.requiresPayment ??
+    raw.requires_payment ??
+    raw.payment_required ??
+    (raw.response as any)?.requires_payment ??
+    (raw.response as any)?.requiresPayment;
+
+  const paymentIntentRaw =
+    raw.paymentIntentId ??
+    raw.payment_intent_id ??
+    (raw.response as any)?.payment_intent_id ??
+    (raw.response as any)?.paymentIntentId ??
+    null;
+
   return {
     response: raw.response,
     nextQuestionId: raw.nextQuestionId ?? raw.next_question_id ?? null,
-    requiresPayment: raw.requiresPayment ?? raw.requires_payment ?? false,
-    paymentIntentId: raw.paymentIntentId ?? raw.payment_intent_id ?? null,
+    requiresPayment: coerceBoolean(requiresPaymentRaw),
+    paymentIntentId: paymentIntentRaw ? String(paymentIntentRaw) : null,
   };
+};
+
+const unwrapSubmitResponsePayload = (payload: unknown): SubmitResponseApiResult => {
+  if (!payload || typeof payload !== "object") {
+    return { response: payload as FormResponse } as SubmitResponseApiResult;
+  }
+
+  const record = payload as Record<string, unknown>;
+  if (record.data && typeof record.data === "object") {
+    const data = record.data as Record<string, unknown>;
+    if (isSubmitResponseApiResult(data)) {
+      return data;
+    }
+  }
+
+  if (isSubmitResponseApiResult(record)) {
+    return record;
+  }
+
+  return { response: record as unknown as FormResponse } as SubmitResponseApiResult;
 };
 
 export const fetchPublicForm = async (
@@ -218,7 +268,8 @@ export const submitResponse = async (
     payload,
     withRequestOptions(options),
   );
-  return normalizeSubmitResponseResult(response.data?.data as SubmitResponseApiResult);
+  const result = unwrapSubmitResponsePayload(response.data ?? {});
+  return normalizeSubmitResponseResult(result);
 };
 
 export const updateResponseDraft = async (
@@ -232,7 +283,8 @@ export const updateResponseDraft = async (
     payload,
     withRequestOptions(options),
   );
-  return normalizeSubmitResponseResult(response.data?.data as SubmitResponseApiResult);
+  const result = unwrapSubmitResponsePayload(response.data ?? {});
+  return normalizeSubmitResponseResult(result);
 };
 
 export const fetchResponseAnalytics = async (
