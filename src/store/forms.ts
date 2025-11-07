@@ -24,7 +24,21 @@ interface FormsState {
   loading: boolean;
   error: string | null;
   pagination: PaginationState;
+  formDetailsCache: Record<string, FormDefinition>;
 }
+
+const isFormDefinitionLike = (value: unknown): value is FormDefinition => {
+  return Boolean(value && typeof value === "object" && "pages" in value);
+};
+
+const definitionHasQuestionData = (definition: FormDefinition | undefined): definition is FormDefinition => {
+  if (!definition) return false;
+  if (Array.isArray(definition.questions) && definition.questions.length > 0) return true;
+  if (Array.isArray(definition.pages)) {
+    return definition.pages.some((page) => Array.isArray((page as any)?.questions) && ((page as any).questions as unknown[]).length > 0);
+  }
+  return false;
+};
 
 export const useFormStore = defineStore("forms", {
   state: (): FormsState => ({
@@ -37,6 +51,7 @@ export const useFormStore = defineStore("forms", {
       perPage: 20,
       hasMore: true,
     },
+    formDetailsCache: {},
   }),
   actions: {
     async fetchForms(reset = false) {
@@ -71,7 +86,21 @@ export const useFormStore = defineStore("forms", {
           this.pagination.page += 1;
         }
 
-        this.allForms = reset ? forms : [...this.allForms, ...forms];
+        const hydratedForms = await Promise.all(
+          forms.map((form) => this.hydrateFormDefinition(form, token ?? null)),
+        );
+
+        const updatedForms = reset ? [] : [...this.allForms];
+        hydratedForms.forEach((form) => {
+          const existingIndex = updatedForms.findIndex((item) => item.id === form.id);
+          if (existingIndex !== -1) {
+            updatedForms[existingIndex] = form;
+          } else {
+            updatedForms.push(form);
+          }
+        });
+
+        this.allForms = updatedForms;
       } catch (error: any) {
         this.error = error?.data?.message ?? "Failed to load forms";
       } finally {
@@ -182,6 +211,42 @@ export const useFormStore = defineStore("forms", {
       }
     },
 
+    async hydrateFormDefinition(form: AppForm, token?: string | null): Promise<AppForm> {
+      const formId = form.id;
+      if (!formId) {
+        return form;
+      }
+
+      const inlineDefinition = isFormDefinitionLike(form.form) ? form.form : undefined;
+
+      if (definitionHasQuestionData(inlineDefinition)) {
+        if (!this.formDetailsCache[formId]) {
+          this.formDetailsCache[formId] = inlineDefinition;
+        }
+        return form;
+      }
+
+      const cached = this.formDetailsCache[formId];
+      if (cached) {
+        return { ...form, form: cached };
+      }
+
+      try {
+        const detailed = await fetchFormApi(formId, {
+          auth: token ? { token } : undefined,
+        });
+        if (detailed) {
+          this.formDetailsCache[formId] = detailed;
+          return { ...form, form: detailed };
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to hydrate form definition", error);
+      }
+
+      return form;
+    },
+
     updateRecentForms(form: AppForm) {
       const existingIndex = this.recentForms.findIndex((f) => f.id === form.id);
       if (existingIndex !== -1) {
@@ -189,6 +254,10 @@ export const useFormStore = defineStore("forms", {
       }
       this.recentForms.unshift(form);
       this.recentForms = this.recentForms.slice(0, 10);
+
+      if (form.id && isFormDefinitionLike(form.form)) {
+        this.formDetailsCache[form.id] = form.form;
+      }
 
       localStorage.setItem(
         "VENX_RECENT_FORMS",
