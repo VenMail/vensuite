@@ -67,6 +67,15 @@ export interface AppForm {
   updated_at?: Date | string;
   form?: FormDefinition | FormData;
   content?: string;
+  responses_count?: number;
+  response_count?: number;
+  questions_count?: number;
+  question_count?: number;
+  metrics?: {
+    responses?: number;
+    questions?: number;
+    fields?: number;
+  };
 }
 
 export type FormStatus = "draft" | "published" | "archived";

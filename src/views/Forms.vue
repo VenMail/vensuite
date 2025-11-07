@@ -2,6 +2,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useFormStore } from "@/store/forms";
 import QuickViewCard from "@/components/forms/QuickView.vue";
+import type { AppForm, FormDefinition } from "@/types";
 import {
   Grid,
   List,
@@ -45,6 +46,47 @@ const filteredForms = computed(() => {
   if (!query) return forms.value;
   return forms.value.filter((form) => form.title?.toLowerCase().includes(query));
 });
+
+const computeFieldCount = (form: AppForm): number | null => {
+  if (typeof form.questions_count === "number") {
+    return form.questions_count;
+  }
+
+  if (typeof form.question_count === "number") {
+    return form.question_count;
+  }
+
+  const definition = form.form as FormDefinition | undefined;
+  if (!definition) return null;
+
+  if (Array.isArray(definition.questions)) {
+    return definition.questions.length;
+  }
+
+  if (Array.isArray(definition.pages)) {
+    return definition.pages.reduce<number>((total, page) => {
+      const pageQuestions = Array.isArray((page as any)?.questions) ? (page as any).questions.length : 0;
+      const orderIds = Array.isArray(page?.question_order) ? page.question_order.length : 0;
+      return total + Math.max(pageQuestions, orderIds);
+    }, 0);
+  }
+
+  return null;
+};
+
+const computeResponseCount = (form: AppForm): number | null => {
+  const withCounts = form as unknown as {
+    responses_count?: number;
+    response_count?: number;
+    metrics?: { responses?: number };
+  };
+
+  if (typeof withCounts.responses_count === "number") return withCounts.responses_count;
+  if (typeof withCounts.response_count === "number") return withCounts.response_count;
+  if (typeof withCounts.metrics?.responses === "number") return withCounts.metrics.responses;
+
+  return null;
+};
 
 const cardsContainerClass = computed(() =>
   viewMode.value === "list"
@@ -392,6 +434,8 @@ const contextMenuActions = computed(() => {
             :key="form.id"
             :form="form"
             :view-mode="viewMode"
+            :field-count="computeFieldCount(form) ?? undefined"
+            :response-count="computeResponseCount(form) ?? undefined"
           />
         </div>
 

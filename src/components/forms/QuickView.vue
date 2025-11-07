@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { PropType } from "vue";
-import { AppForm, FormDefinition, type FormResponsesPage } from "@/types";
-import { useFormStore } from "@/store/forms";
+import { AppForm, FormDefinition, FormData } from "@/types";
 import { Button } from "@/components/ui/button";
 import { router } from "@/main";
 import { Trash2, Edit3 } from "lucide-vue-next";
+import { useFormStore } from "@/store/forms";
 
 const props = defineProps({
   form: {
@@ -16,25 +16,52 @@ const props = defineProps({
     type: String as PropType<"grid" | "list">,
     default: "grid",
   },
+  fieldCount: {
+    type: Number,
+    default: null,
+  },
+  responseCount: {
+    type: Number,
+    default: null,
+  },
 });
 
 const formStore = useFormStore();
-const responseData = ref<FormResponsesPage | null>(null);
-const loadingResponses = ref<boolean>(false);
-const errorMessage = ref<string | null>(null);
+const hydratedDef = ref<FormDefinition | null>(null);
 
-const totalResponses = computed(() => responseData.value?.meta?.total ?? 0);
+const totalResponses = computed(() => {
+  if (props.responseCount != null) {
+    return props.responseCount;
+  }
+  const metricsResponses = (props.form as any)?.metrics?.responses;
+  if (typeof metricsResponses === "number") {
+    return metricsResponses;
+  }
+  const responsesCount = (props.form as any)?.responses_count ?? (props.form as any)?.response_count;
+  if (typeof responsesCount === "number") {
+    return responsesCount;
+  }
+  return 0;
+});
 const hasResponses = computed(() => totalResponses.value > 0);
 const fieldCount = computed(() => {
-  const definition = props.form.form as FormDefinition;
-  if (!definition) return 0;
-  if (Array.isArray(definition.questions)) {
-    return definition.questions.length;
+  if (props.fieldCount != null) {
+    return props.fieldCount;
   }
-  if (Array.isArray(definition.pages)) {
-    return definition.pages.reduce((total: number, page: any) => {
+  const source = (hydratedDef.value as any) ?? (props.form.form as any);
+  const formData = source as FormDefinition | FormData | undefined;
+  if (!formData) return 0;
+  if (Array.isArray((formData as FormData).fields)) {
+    return (formData as FormData).fields.length;
+  }
+  if (Array.isArray((formData as FormDefinition).questions)) {
+    return ((formData as FormDefinition).questions as any[]).length;
+  }
+  if (Array.isArray((formData as FormDefinition).pages)) {
+    return ((formData as FormDefinition).pages as any[]).reduce((total: number, page: any) => {
       const pageQuestions = Array.isArray(page?.questions) ? page.questions.length : 0;
-      return total + pageQuestions;
+      const orderIds = Array.isArray(page?.question_order) ? page.question_order.length : 0;
+      return total + Math.max(pageQuestions, orderIds);
     }, 0);
   }
   return 0;
@@ -106,24 +133,6 @@ const actionsClass = computed(() => [
 ]);
 
 const deleting = ref(false);
-
-const fetchFormResponses = async () => {
-  if (!props.form.id) return;
-  try {
-    loadingResponses.value = true;
-    errorMessage.value = null;
-
-    const response = await formStore.fetchResponses(props.form.id, { page: 1 });
-    responseData.value = response;
-  } catch (error) {
-    errorMessage.value =
-      error instanceof Error ? error.message : "Failed to load response data";
-  } finally {
-    loadingResponses.value = false;
-  }
-};
-
-onMounted(fetchFormResponses);
 
 const launchEditor = () => {
   if (!props.form.id) return;
@@ -246,10 +255,7 @@ function formatRelative(value?: string | Date | null) {
           <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
             Responses
           </span>
-          <span v-if="loadingResponses" class="text-sm font-medium tabular-nums text-slate-300 dark:text-slate-600">
-            —
-          </span>
-          <span v-else class="text-sm font-medium tabular-nums text-slate-900 dark:text-white">
+          <span class="text-sm font-medium tabular-nums text-slate-900 dark:text-white">
             {{ totalResponses.toLocaleString() }}
           </span>
         </div>
@@ -264,11 +270,6 @@ function formatRelative(value?: string | Date | null) {
         </div>
       </div>
     </div>
-
-    <!-- Error Message -->
-    <p v-if="errorMessage" class="text-xs font-medium text-rose-600 dark:text-rose-400 mt-3">
-      {{ errorMessage }}
-    </p>
 
     <!-- Actions Footer -->
     <footer :class="actionsClass">

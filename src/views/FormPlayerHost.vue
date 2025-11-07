@@ -19,7 +19,7 @@
         <p>{{ paymentSummaryText }}</p>
       </div>
 
-      <main class="player-host__body">
+      <main :class="['player-host__body', isClassicMode ? 'player-host__body--classic' : 'player-host__body--focus']">
         <section v-if="stage === 'loading'" class="player-host__state">
           <span>Loading form…</span>
         </section>
@@ -67,12 +67,25 @@
         />
 
         <section v-else-if="stage === 'completed'" class="player-host__completion">
-          <div class="completion-card">
-            <h2>{{ completionTitle }}</h2>
-            <p v-if="completionMessage">{{ completionMessage }}</p>
-            <button v-if="completionButtonText" type="button" class="player-host__button" @click="reload">
-              {{ completionButtonText }}
-            </button>
+          <div :class="['completion-card', isClassicMode ? 'completion-card--classic' : 'completion-card--focus']">
+            <div :class="['completion-card__badge', isClassicMode ? 'completion-card__badge--classic' : 'completion-card__badge--focus']">
+              <svg viewBox="0 0 52 52" aria-hidden="true">
+                <circle cx="26" cy="26" r="25" />
+                <polyline points="16 26 23 33 36 20" />
+              </svg>
+            </div>
+            <div class="completion-card__body">
+              <h2>{{ completionTitle }}</h2>
+              <p v-if="completionMessage">{{ completionMessage }}</p>
+              <button
+                v-if="completionButtonText"
+                type="button"
+                class="player-host__button completion-card__button"
+                @click="reload"
+              >
+                {{ completionButtonText }}
+              </button>
+            </div>
           </div>
         </section>
       </main>
@@ -81,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import FocusPlayer from '@/components/forms/player/FocusPlayer.vue';
@@ -103,14 +116,37 @@ const playerStore = useFormPlayerStore();
 const { state: playerState, mode } = storeToRefs(playerStore);
 const authStore = useAuthStore();
 
-const paymentSlug = computed(() => slug.value ?? formIdParam.value ?? '');
+const submissionSlug = computed(() => formDefinition.value?.sharing?.share_slug ?? slug.value ?? '');
+const paymentSlug = computed(() => submissionSlug.value);
 const paymentClient = usePaymentClient({ slug: paymentSlug });
-const submissionSlug = computed(() => formDefinition.value?.slug ?? slug.value ?? '');
 
 const formDefinition = ref<FormDefinition | null>(null);
 const isSubmitting = ref(false);
 const loadError = ref<string | null>(null);
 const stage = ref<'loading' | 'welcome' | 'playing' | 'payment' | 'completed' | 'error'>('loading');
+const isDarkMode = ref(false);
+
+const THEME_EVENT = 'theme-change';
+
+const applyDocumentTheme = (mode: 'light' | 'dark') => {
+  if (mode === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+  isDarkMode.value = mode === 'dark';
+};
+
+const syncThemeFromDocument = () => {
+  isDarkMode.value = document.documentElement.classList.contains('dark');
+};
+
+const handleThemeEvent = (event: Event) => {
+  const detail = (event as CustomEvent<'light' | 'dark'>).detail;
+  if (detail === 'light' || detail === 'dark') {
+    applyDocumentTheme(detail);
+  }
+};
 
 const welcomeScreen = computed<FormWelcomeScreen | null>(() => {
   const screen = formDefinition.value?.welcome_screen;
@@ -141,6 +177,8 @@ const formDensity = computed<FormDensity>(() => {
   return setting === 'compact' ? 'compact' : 'comfortable';
 });
 
+const isClassicMode = computed(() => mode.value === 'classic');
+
 const adjustColor = (hex: string | undefined, percent: number): string | undefined => {
   if (!hex) return undefined;
   const sanitized = hex.replace('#', '');
@@ -165,12 +203,30 @@ const accentColorStrong = computed(() => {
 });
 
 const rootStyle = computed(() => {
+  const dark = isDarkMode.value;
+  const backgroundColor = theme.value?.background_color ?? (dark ? '#0f172a' : '#f4f5f9');
+  const textColor = theme.value?.text_color ?? (dark ? '#e2e8f0' : '#0f172a');
+  const surfaceColor = theme.value?.surface_color ?? (dark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)');
+  const surfaceBorder = (theme.value as any)?.surface_border_color ?? (dark ? 'rgba(51, 65, 85, 0.6)' : 'rgba(148, 163, 184, 0.35)');
+  const mutedSurface = (theme.value as any)?.muted_surface_color ?? (dark ? 'rgba(17, 24, 39, 0.78)' : 'rgba(248, 250, 252, 0.85)');
+  const mutedBorder = (theme.value as any)?.muted_border_color ?? (dark ? 'rgba(71, 85, 105, 0.55)' : 'rgba(203, 213, 225, 0.6)');
+  const progressTrack = (theme.value as any)?.progress_track_color ?? (dark ? 'rgba(71, 85, 105, 0.65)' : 'rgba(226, 232, 240, 0.95)');
+  const elevation = (theme.value as any)?.elevation ?? (dark ? '0 20px 45px rgba(0, 0, 0, 0.5)' : '0 25px 60px rgba(15, 23, 42, 0.12)');
+  const mutedElevation = (theme.value as any)?.muted_elevation ?? (dark ? '0 12px 30px rgba(0, 0, 0, 0.4)' : '0 12px 32px rgba(15, 23, 42, 0.08)');
+
   const styles: Record<string, string> = {
-    background: theme.value?.background_color ?? '#f4f5f9',
-    color: theme.value?.text_color ?? '#0f172a',
+    background: backgroundColor,
+    color: textColor,
+    '--player-text-color': textColor,
     '--player-accent': accentColor.value,
     '--player-accent-strong': accentColorStrong.value,
-    '--player-surface': theme.value?.surface_color ?? 'rgba(255, 255, 255, 0.95)',
+    '--player-surface': surfaceColor,
+    '--player-surface-border': surfaceBorder,
+    '--player-muted-surface': mutedSurface,
+    '--player-muted-border': mutedBorder,
+    '--player-progress-track': progressTrack,
+    '--player-elevation': elevation,
+    '--player-muted-elevation': mutedElevation,
   };
 
   if (typography.value?.body_font_family) {
@@ -226,7 +282,10 @@ const resolveAuthOptions = () => {
 
 const applyDefinition = (definition: FormDefinition) => {
   formDefinition.value = definition;
-  playerStore.setFormDefinition(definition, definition.slug ?? slug.value ?? formIdParam.value ?? '');
+  playerStore.setFormDefinition(
+    definition,
+    definition.sharing?.share_slug ?? definition.slug ?? slug.value ?? formIdParam.value ?? ''
+  );
   playerStore.setPaymentRequired(!!definition.payment?.enabled);
   ensureWelcomeStage();
 };
@@ -345,16 +404,19 @@ const submitAnswers = async () => {
 
     playerStore.setResponseId(String(responseResult.response.id));
 
+    if (responseResult.requiresPayment) {
+      playerStore.setPaymentRequired(true);
+      if (responseResult.paymentIntentId) {
+        playerStore.setPaymentIntent(responseResult.paymentIntentId);
+      }
+      await startPaymentFlow(String(responseResult.response.id));
+      return;
+    }
+
     if (responseResult.nextQuestionId) {
       playerStore.advanceToQuestion(responseResult.nextQuestionId);
     } else {
       playerStore.advanceToQuestion(null);
-    }
-
-    if (responseResult.requiresPayment) {
-      playerStore.setPaymentRequired(true);
-      await startPaymentFlow(String(responseResult.response.id));
-      return;
     }
 
     stage.value = 'completed';
@@ -396,7 +458,22 @@ const reload = () => {
 };
 
 onMounted(() => {
+  try {
+    const stored = localStorage.getItem('theme');
+    if (stored === 'dark') document.documentElement.classList.add('dark');
+    else if (stored === 'light') document.documentElement.classList.remove('dark');
+    if (stored === 'dark' || stored === 'light') {
+      applyDocumentTheme(stored);
+    } else {
+      syncThemeFromDocument();
+    }
+  } catch {}
+  window.addEventListener(THEME_EVENT, handleThemeEvent as EventListener);
   loadForm();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener(THEME_EVENT, handleThemeEvent as EventListener);
 });
 
 watch(
@@ -505,11 +582,26 @@ watch(
 }
 
 .player-host__body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0;
+}
+
+.player-host__body--classic {
   background: rgba(255, 255, 255, 0.92);
   border-radius: 1.75rem;
   border: 1px solid rgba(148, 163, 184, 0.25);
   padding: clamp(1.5rem, 4vw, 3rem);
   box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+}
+
+.player-host__body--focus {
+  background: transparent;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
 }
 
 .player-host__state {
@@ -576,6 +668,8 @@ watch(
   border-radius: 1.5rem;
   border: 1px solid rgba(148, 163, 184, 0.2);
   box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
+  display: grid;
+  gap: 2rem;
 }
 
 .welcome-card h2,
@@ -588,5 +682,110 @@ watch(
 .completion-card p {
   color: rgba(15, 23, 42, 0.7);
   margin-bottom: 1.5rem;
+}
+
+.completion-card__badge {
+  width: 104px;
+  height: 104px;
+  margin: 0 auto;
+  border-radius: 32px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 45px rgba(37, 99, 235, 0.18);
+}
+
+.completion-card__badge svg {
+  width: 64px;
+  height: 64px;
+  stroke: white;
+  stroke-width: 5;
+  fill: none;
+}
+
+.completion-card__badge svg circle {
+  stroke: rgba(255, 255, 255, 0.2);
+}
+
+.completion-card__badge svg polyline {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.completion-card__badge--classic {
+  background: linear-gradient(135deg, var(--player-accent, #2563eb), var(--player-accent-strong, #1d4ed8));
+}
+
+.completion-card__badge--focus {
+  background: white;
+  border: 2px solid var(--player-accent, #2563eb);
+  box-shadow: none;
+}
+
+.completion-card__badge--focus svg circle {
+  stroke: rgba(37, 99, 235, 0.18);
+}
+
+.completion-card__badge--focus svg polyline {
+  stroke: var(--player-accent, #2563eb);
+}
+
+.completion-card__body {
+  display: grid;
+  gap: 1rem;
+}
+
+.completion-card__body p {
+  margin: 0;
+}
+
+.completion-card__button {
+  justify-self: center;
+}
+
+.completion-card--classic {
+  background: radial-gradient(circle at top, rgba(37, 99, 235, 0.08), transparent 60%), white;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+}
+
+.completion-card--focus {
+  background: white;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+/* Dark mode alignment with Classic */
+:global(.dark) .player-host {
+  color: #e2e8f0;
+}
+
+:global(.dark) .player-host__body--classic {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(51, 65, 85, 0.6);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+:global(.dark) .player-host__state {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(71, 85, 105, 0.55);
+  color: #cbd5e1;
+}
+
+:global(.dark) .welcome-card,
+:global(.dark) .completion-card {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(51, 65, 85, 0.6);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+  color: #e2e8f0;
+}
+
+:global(.dark) .player-host__button {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(71, 85, 105, 0.6);
+  color: #e2e8f0;
+}
+
+:global(.dark) .player-host__button:hover {
+  background: rgba(51, 65, 85, 0.9);
 }
 </style>

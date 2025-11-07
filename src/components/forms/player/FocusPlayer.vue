@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="currentQuestion"
-    class="focus-player relative mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col gap-10 rounded-[2.75rem] border border-slate-200 bg-white/95 px-8 py-10 shadow-2xl shadow-slate-200/70 transition dark:border-slate-800 dark:bg-slate-950/90 dark:shadow-none"
+    class="focus-player relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 rounded-3xl border px-6 py-8 transition"
   >
     <div class="space-y-6">
       <div v-if="showProgress" class="space-y-4">
@@ -9,7 +9,7 @@
           <span class="text-sm font-semibold uppercase tracking-[0.32em] text-slate-400 dark:text-slate-500">
             Step {{ currentStep }} of {{ totalSteps }}
           </span>
-          <h2 class="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+          <h2 class="text-2xl font-semibold text-slate-900 dark:text-white">
             {{ encouragementMessage }}
           </h2>
           <p class="text-sm text-slate-500 dark:text-slate-400">
@@ -17,9 +17,9 @@
           </p>
         </div>
 
-        <div class="focus-progress-track relative h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+        <div class="focus-player__progress-track relative h-2 w-full overflow-hidden rounded-full">
           <div
-            class="absolute inset-y-0 left-0 rounded-full bg-primary-500 transition-all duration-500 ease-out"
+            class="focus-player__progress-bar absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
             :style="{ width: `${progressPercent}%` }"
           />
         </div>
@@ -31,9 +31,13 @@
             class="flex-1"
           >
             <div
-              class="mx-auto flex h-2 w-full max-w-[42px] items-center justify-center rounded-full transition"
+              class="focus-player__step-dot mx-auto flex h-2 w-full max-w-[42px] items-center justify-center rounded-full transition"
               :class="[
-                dot.status === 'complete' ? 'bg-primary-500' : dot.status === 'current' ? 'bg-primary-400' : 'bg-slate-200 dark:bg-slate-800',
+                dot.status === 'complete'
+                  ? 'focus-player__step-dot--complete'
+                  : dot.status === 'current'
+                    ? 'focus-player__step-dot--current'
+                    : 'focus-player__step-dot--pending',
               ]"
             />
           </li>
@@ -54,7 +58,7 @@
       </Transition>
     </div>
 
-    <div class="mt-auto flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-6 py-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+    <div class="focus-player__footer mt-auto flex flex-col gap-4 rounded-2xl border px-6 py-5 transition">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-slate-500 dark:text-slate-400">
           {{ footerMessage }}
@@ -63,7 +67,7 @@
           <button
             v-if="allowBack"
             type="button"
-            class="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-medium text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+            class="focus-player__button focus-player__button--ghost disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="isSubmitting || !canGoBack"
             @click="handleBack"
           >
@@ -73,7 +77,7 @@
           <button
             v-if="showSkip"
             type="button"
-            class="inline-flex items-center rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-600 transition hover:-translate-y-0.5 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            class="focus-player__button focus-player__button--ghost disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="isSubmitting"
             @click="handleSkip"
           >
@@ -83,7 +87,7 @@
           <button
             v-if="hasNextQuestion"
             type="button"
-            class="inline-flex items-center rounded-full bg-primary-600 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:-translate-y-0.5 hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-primary-900/40"
+            class="focus-player__button focus-player__button--primary disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isSubmitting || !canProceed"
             @click="handleNext"
           >
@@ -93,7 +97,7 @@
           <button
             v-else
             type="button"
-            class="inline-flex items-center rounded-full bg-primary-600 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:-translate-y-0.5 hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-primary-900/40"
+            class="focus-player__button focus-player__button--primary disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="isSubmitting || !canProceed"
             @click="emitComplete"
           >
@@ -295,5 +299,86 @@ const emitComplete = () => {
   align-items: center;
   min-height: 200px;
   color: #6b7280;
+}
+
+.focus-player {
+  background: var(--player-surface, rgba(255, 255, 255, 0.95));
+  border-color: var(--player-surface-border, rgba(148, 163, 184, 0.35));
+  box-shadow: var(--player-elevation, 0 25px 60px rgba(15, 23, 42, 0.12));
+  color: var(--player-text-color, #0f172a);
+  font-family: var(--player-body-font, inherit);
+}
+
+.focus-player h2 {
+  font-family: var(--player-heading-font, var(--player-body-font, inherit));
+}
+
+.focus-player__progress-track {
+  background: var(--player-progress-track, rgba(226, 232, 240, 0.95));
+}
+
+.focus-player__progress-bar {
+  background: var(--player-accent, #2563eb);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+}
+
+.focus-player__step-dot--pending {
+  background: var(--player-progress-track, rgba(226, 232, 240, 0.95));
+}
+
+.focus-player__step-dot--current {
+  background: var(--player-accent-strong, #1d4ed8);
+}
+
+.focus-player__step-dot--complete {
+  background: var(--player-accent, #2563eb);
+}
+
+.focus-player__footer {
+  background: var(--player-muted-surface, rgba(248, 250, 252, 0.85));
+  border-color: var(--player-muted-border, rgba(203, 213, 225, 0.6));
+  box-shadow: var(--player-muted-elevation, 0 12px 32px rgba(15, 23, 42, 0.08));
+}
+
+.focus-player__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.55rem 1.6rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.focus-player__button:focus-visible {
+  outline: 2px solid var(--player-accent, #2563eb);
+  outline-offset: 2px;
+}
+
+.focus-player__button--ghost {
+  background: var(--player-muted-surface, rgba(248, 250, 252, 0.85));
+  border-color: var(--player-muted-border, rgba(203, 213, 225, 0.6));
+  color: var(--player-text-color, #0f172a);
+}
+
+.focus-player__button--ghost:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--player-surface, rgba(255, 255, 255, 0.95));
+}
+
+.focus-player__button--primary {
+  background: var(--player-accent, #2563eb);
+  color: white;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.3);
+}
+
+.focus-player__button--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--player-accent-strong, #1d4ed8);
+  box-shadow: 0 14px 32px rgba(37, 99, 235, 0.35);
 }
 </style>
