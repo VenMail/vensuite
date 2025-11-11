@@ -32,6 +32,7 @@ interface FormPlayerState {
   publishableKey: string | null;
   lastLogicRuleId: string | null;
   lastLogicMessage: string | null;
+  captchaToken: string | null;
 }
 
 const createInitialState = (): FormPlayerState => ({
@@ -54,6 +55,7 @@ const createInitialState = (): FormPlayerState => ({
   publishableKey: null,
   lastLogicRuleId: null,
   lastLogicMessage: null,
+  captchaToken: null,
 });
 
 export const useFormPlayerStore = defineStore("form-player", () => {
@@ -117,6 +119,7 @@ export const useFormPlayerStore = defineStore("form-player", () => {
     state.value.publishableKey = form.payment?.mode === "custom" ? form.payment?.stripe_publishable_key ?? null : null;
     state.value.paymentStatus = "idle";
     state.value.paymentError = null;
+    state.value.captchaToken = null;
   };
 
   const answerQuestion = (questionId: string, value: AnswerValue) => {
@@ -202,6 +205,10 @@ export const useFormPlayerStore = defineStore("form-player", () => {
     state.value.modeOverride = override;
   };
 
+  const setCaptchaToken = (token: string | null) => {
+    state.value.captchaToken = token;
+  };
+
   const hydrateFromServer = (
     payload: {
       form: FormDefinition;
@@ -278,6 +285,7 @@ export const useFormPlayerStore = defineStore("form-player", () => {
     setPaymentRequired,
     setResponseId,
     setModeOverride,
+    setCaptchaToken,
     hydrateFromServer,
     setLoading,
     reset,

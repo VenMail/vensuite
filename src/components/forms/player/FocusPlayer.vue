@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="currentQuestion"
-    class="focus-player relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 rounded-3xl border px-6 py-8 transition"
+    class="relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 rounded-3xl border px-6 py-8 transition bg-white/95 dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-700/70 shadow-xl"
   >
     <div class="space-y-6">
       <div v-if="showProgress" class="space-y-4">
@@ -17,31 +17,12 @@
           </p>
         </div>
 
-        <div class="focus-player__progress-track relative h-2 w-full overflow-hidden rounded-full">
+        <div class="relative h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
           <div
-            class="focus-player__progress-bar absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
+            class="h-full bg-gradient-to-r from-[var(--player-accent)] to-[var(--player-accent-strong)] transition-all duration-500 ease-out"
             :style="{ width: `${progressPercent}%` }"
           />
         </div>
-
-        <ol class="flex items-center justify-between gap-2 text-xs text-slate-400 dark:text-slate-500">
-          <li
-            v-for="dot in stepDots"
-            :key="dot.id"
-            class="flex-1"
-          >
-            <div
-              class="focus-player__step-dot mx-auto flex h-2 w-full max-w-[42px] items-center justify-center rounded-full transition"
-              :class="[
-                dot.status === 'complete'
-                  ? 'focus-player__step-dot--complete'
-                  : dot.status === 'current'
-                    ? 'focus-player__step-dot--current'
-                    : 'focus-player__step-dot--pending',
-              ]"
-            />
-          </li>
-        </ol>
       </div>
 
       <Transition name="focus-slide" mode="out-in">
@@ -53,12 +34,13 @@
             :density="density"
             :disabled="isSubmitting"
             @update:model-value="onAnswerInput"
+            @enter="handleEnter"
           />
         </div>
       </Transition>
     </div>
 
-    <div class="focus-player__footer mt-auto flex flex-col gap-4 rounded-2xl border px-6 py-5 transition">
+    <div class="mt-auto flex flex-col gap-4 rounded-2xl border px-6 py-5 transition bg-slate-50/80 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 shadow">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-slate-500 dark:text-slate-400">
           {{ footerMessage }}
@@ -67,7 +49,7 @@
           <button
             v-if="allowBack"
             type="button"
-            class="focus-player__button focus-player__button--ghost disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/40 hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="isSubmitting || !canGoBack"
             @click="handleBack"
           >
@@ -77,7 +59,7 @@
           <button
             v-if="showSkip"
             type="button"
-            class="focus-player__button focus-player__button--ghost disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/40 hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="isSubmitting"
             @click="handleSkip"
           >
@@ -87,7 +69,7 @@
           <button
             v-if="hasNextQuestion"
             type="button"
-            class="focus-player__button focus-player__button--primary disabled:cursor-not-allowed disabled:opacity-60"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-900"
             :disabled="isSubmitting || !canProceed"
             @click="handleNext"
           >
@@ -97,7 +79,7 @@
           <button
             v-else
             type="button"
-            class="focus-player__button focus-player__button--primary disabled:cursor-not-allowed disabled:opacity-60"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-900"
             :disabled="isSubmitting || !canProceed"
             @click="emitComplete"
           >
@@ -121,7 +103,8 @@ import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import QuestionRenderer from '@/components/forms/player/QuestionRenderer.vue';
 import { useFormPlayerStore } from '@/store/formPlayer';
-import type { FormDensity, FormLabelPlacement, FormQuestion } from '@/types';
+import type { FormDensity, FormLabelPlacement, FormQuestion, TextValidation, FormPhoneQuestion } from '@/types';
+import { defaultValidations } from '@/types';
 
 const props = defineProps<{
   isSubmitting?: boolean;
@@ -188,21 +171,40 @@ const isAnswerEmpty = (question: FormQuestion, value: unknown) => {
   return false;
 };
 
-const canProceed = computed(() => {
-  if (!currentQuestion.value) return false;
-  if (!currentQuestion.value.required) return true;
-  return !isAnswerEmpty(currentQuestion.value, answerValue.value);
+const activeValidation = computed<TextValidation | undefined>(() => {
+  const q = currentQuestion.value;
+  if (!q) return undefined;
+  const t = q.type as keyof typeof defaultValidations;
+  let base = defaultValidations[t as string];
+  const qVal = (q as any).validation as TextValidation | undefined;
+  if (q.type === 'phone') {
+    const allowIntl = (q as FormPhoneQuestion).allow_international ?? true;
+    const phoneRegex = allowIntl ? /^\+?[0-9\s()-]{10,20}$/ : /^[0-9\s()-]{10,15}$/;
+    base = { inputType: 'phone', regex: phoneRegex, minLength: allowIntl ? 10 : 10, maxLength: allowIntl ? 20 : 15 } as TextValidation;
+  }
+  return { ...(base || {}), ...(qVal || {}) } as TextValidation | undefined;
 });
 
-const stepDots = computed(() => {
-  return questionOrder.value.map((id, index) => {
-    const status = index + 1 < currentStep.value ? 'complete' : index + 1 === currentStep.value ? 'current' : 'pending';
-    return {
-      id,
-      status,
-    };
-  });
+const isFormatValid = computed(() => {
+  const q = currentQuestion.value;
+  const val = answerValue.value;
+  if (!q) return false;
+  if (val == null || val === '') return !q.required; // empty is valid if not required
+  if (typeof val !== 'string') return true; // non-string types handled elsewhere
+  const rules = activeValidation.value;
+  if (!rules) return true;
+  if (rules.minLength && val.length < rules.minLength) return false;
+  if (rules.maxLength && val.length > rules.maxLength) return false;
+  if (rules.regex && !rules.regex.test(val)) return false;
+  return true;
 });
+
+const canProceed = computed(() => {
+  if (!currentQuestion.value) return false;
+  if (currentQuestion.value.required && isAnswerEmpty(currentQuestion.value, answerValue.value)) return false;
+  return isFormatValid.value;
+});
+
 
 const encouragementMessage = computed(() => {
   if (!totalSteps.value) return 'Let’s get started';
@@ -245,9 +247,19 @@ const handleNext = () => {
     emitComplete();
     return;
   }
+  if (!canProceed.value) return;
   playerStore.answerQuestion(currentQuestion.value.id, playerStore.getAnswerValue(currentQuestion.value.id));
   if (!playerState.value.currentQuestionId) {
     emitComplete();
+  }
+};
+
+const handleEnter = () => {
+  // In focus (wizard) mode, Enter should attempt to advance if valid
+  if (hasNextQuestion.value) {
+    handleNext();
+  } else {
+    if (canProceed.value) emitComplete();
   }
 };
 
@@ -270,115 +282,4 @@ const emitComplete = () => {
 </script>
 
 <style scoped>
-.focus-fade-enter-active,
-.focus-fade-leave-active,
-.focus-slide-enter-active,
-.focus-slide-leave-active {
-  transition: all 0.35s cubic-bezier(0.33, 1, 0.68, 1);
-}
-
-.focus-slide-enter-from {
-  opacity: 0;
-  transform: translateY(12px);
-}
-
-.focus-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-12px);
-}
-
-.focus-slide-enter-to,
-.focus-slide-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.focus-player__empty {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-  color: #6b7280;
-}
-
-.focus-player {
-  background: var(--player-surface, rgba(255, 255, 255, 0.95));
-  border-color: var(--player-surface-border, rgba(148, 163, 184, 0.35));
-  box-shadow: var(--player-elevation, 0 25px 60px rgba(15, 23, 42, 0.12));
-  color: var(--player-text-color, #0f172a);
-  font-family: var(--player-body-font, inherit);
-}
-
-.focus-player h2 {
-  font-family: var(--player-heading-font, var(--player-body-font, inherit));
-}
-
-.focus-player__progress-track {
-  background: var(--player-progress-track, rgba(226, 232, 240, 0.95));
-}
-
-.focus-player__progress-bar {
-  background: var(--player-accent, #2563eb);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
-}
-
-.focus-player__step-dot--pending {
-  background: var(--player-progress-track, rgba(226, 232, 240, 0.95));
-}
-
-.focus-player__step-dot--current {
-  background: var(--player-accent-strong, #1d4ed8);
-}
-
-.focus-player__step-dot--complete {
-  background: var(--player-accent, #2563eb);
-}
-
-.focus-player__footer {
-  background: var(--player-muted-surface, rgba(248, 250, 252, 0.85));
-  border-color: var(--player-muted-border, rgba(203, 213, 225, 0.6));
-  box-shadow: var(--player-muted-elevation, 0 12px 32px rgba(15, 23, 42, 0.08));
-}
-
-.focus-player__button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 9999px;
-  padding: 0.55rem 1.6rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  text-decoration: none;
-  border: 1px solid transparent;
-}
-
-.focus-player__button:focus-visible {
-  outline: 2px solid var(--player-accent, #2563eb);
-  outline-offset: 2px;
-}
-
-.focus-player__button--ghost {
-  background: var(--player-muted-surface, rgba(248, 250, 252, 0.85));
-  border-color: var(--player-muted-border, rgba(203, 213, 225, 0.6));
-  color: var(--player-text-color, #0f172a);
-}
-
-.focus-player__button--ghost:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: var(--player-surface, rgba(255, 255, 255, 0.95));
-}
-
-.focus-player__button--primary {
-  background: var(--player-accent, #2563eb);
-  color: white;
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.3);
-}
-
-.focus-player__button--primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: var(--player-accent-strong, #1d4ed8);
-  box-shadow: 0 14px 32px rgba(37, 99, 235, 0.35);
-}
 </style>

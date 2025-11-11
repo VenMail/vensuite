@@ -6,6 +6,7 @@ export interface CreatePaymentIntentPayload {
   currency: string;
   metadata?: Record<string, unknown>;
   customer_email?: string;
+  captcha_token?: string;
 }
 
 export interface PaymentIntentResult {

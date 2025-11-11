@@ -68,6 +68,14 @@
           </button>
           <button
             class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            @click="handleShare"
+            title="Share Form"
+          >
+            <Share2 class="w-4 h-4 inline mr-2" />
+            Share
+          </button>
+          <button
+            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             @click="handlePreview"
           >
             <Eye class="w-4 h-4 inline mr-2" />
@@ -574,7 +582,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowLeft, Eye, Send, Plus, Sparkles, Wand2, X, Settings, DollarSign, Image as ImageIcon, Webhook, AlignLeft, AlignCenter, AlignRight } from "lucide-vue-next";
+import { ArrowLeft, Eye, Send, Plus, Sparkles, Wand2, X, Settings, DollarSign, Image as ImageIcon, Webhook, AlignLeft, AlignCenter, AlignRight, Share2 } from "lucide-vue-next";
 import { toast } from "@/composables/useToast";
 import BlockItemNew from "@/components/forms/blocks/BlockItemNew.vue";
 import SlashMenu from "@/components/forms/blocks/SlashMenu.vue";
@@ -1413,6 +1421,31 @@ const ensurePublishedShareSlug = async (): Promise<FormDefinition | null> => {
 
   toast.error("Publish failed. Please try again.");
   return null;
+};
+
+const handleShare = async () => {
+  if (!formId.value) return;
+  await saveForm();
+  const def = await formStore.fetchForm(formId.value);
+  const isPublished = def?.status === 'published';
+  const shareSlug = def?.sharing?.share_slug;
+  if (!isPublished || !shareSlug) {
+    toast.info('Publishing form to generate a share link…');
+    const published = await ensurePublishedShareSlug();
+    if (!published?.sharing?.share_slug) {
+      toast.error('Could not generate share link');
+      return;
+    }
+    const url = `${window.location.origin}/f/${published.sharing.share_slug}`;
+    try { await navigator.clipboard.writeText(url); } catch {}
+    toast.success('Share link copied to clipboard');
+    window.open(url, '_blank');
+    return;
+  }
+  const url = `${window.location.origin}/f/${shareSlug}`;
+  try { await navigator.clipboard.writeText(url); } catch {}
+  toast.success('Share link copied to clipboard');
+  window.open(url, '_blank');
 };
 
 const handlePreview = async () => {

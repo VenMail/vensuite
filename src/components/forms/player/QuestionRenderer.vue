@@ -22,6 +22,8 @@
       :value="stringValue"
       :disabled="disabled"
       :required="required"
+      :aria-invalid="hasError ? 'true' : 'false'"
+      @keydown.enter.prevent="emitEnter"
       @input="updateValue(($event.target as HTMLInputElement).value)"
     />
 
@@ -34,6 +36,8 @@
       :value="stringValue"
       :disabled="disabled"
       :required="required"
+      :aria-invalid="hasError ? 'true' : 'false'"
+      @keydown.enter.prevent="emitEnter"
       @input="updateValue(($event.target as HTMLTextAreaElement).value)"
     />
 
@@ -190,6 +194,8 @@
       :value="stringValue"
       :disabled="disabled"
       :required="required"
+      :aria-invalid="hasError ? 'true' : 'false'"
+      @keydown.enter.prevent="emitEnter"
       @input="updateValue(($event.target as HTMLInputElement).value)"
     />
 
@@ -197,13 +203,20 @@
       <p v-if="question.help_text" class="text-xs text-slate-500 dark:text-slate-400">
         {{ question.help_text }}
       </p>
+      <p v-if="lengthHint" class="text-xs text-slate-500 dark:text-slate-400">
+        {{ lengthHint }}
+      </p>
+      <p v-if="errorMessage" class="text-xs font-semibold text-rose-600 dark:text-rose-400">
+        {{ errorMessage }}
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { FormDensity, FormLabelPlacement, FormQuestion, Option } from '@/types';
+import type { FormDensity, FormLabelPlacement, FormQuestion, Option, TextValidation, FormPhoneQuestion } from '@/types';
+import { defaultValidations } from '@/types';
 
 const props = defineProps<{
   question: FormQuestion;
@@ -215,6 +228,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: unknown): void;
+  (e: 'enter'): void;
 }>();
 
 const inputId = computed(() => `question-${props.question.id}`);
@@ -299,6 +313,8 @@ const fileNames = computed(() => {
 
 const updateValue = (value: unknown) => emit('update:modelValue', value);
 
+const emitEnter = () => emit('enter');
+
 const toggleCheckbox = (optionValue: string, checked: boolean) => {
   const current = arrayValue.value.slice();
   if (checked) {
@@ -345,6 +361,47 @@ const fieldWrapperClass = computed(() => {
   const classes = ['flex', 'flex-col'];
   classes.push(density.value === 'compact' ? 'gap-2.5' : 'gap-3');
   return classes.join(' ');
+});
+
+// Validation and hints
+const activeValidation = computed<TextValidation | undefined>(() => {
+  const t = type.value as keyof typeof defaultValidations;
+  let base = defaultValidations[t as string];
+  const qVal = (props.question as any).validation as TextValidation | undefined;
+  if (type.value === 'phone') {
+    const allowIntl = (props.question as FormPhoneQuestion).allow_international ?? true;
+    const phoneRegex = allowIntl ? /^\+?[0-9\s()-]{10,20}$/ : /^[0-9\s()-]{10,15}$/;
+    base = { inputType: 'phone', regex: phoneRegex, minLength: allowIntl ? 10 : 10, maxLength: allowIntl ? 20 : 15 } as TextValidation;
+  }
+  return { ...(base || {}), ...(qVal || {}) } as TextValidation | undefined;
+});
+
+const hasError = computed(() => Boolean((errorMessage.value || '').length));
+
+const errorMessage = computed(() => {
+  const val = stringValue.value;
+  if (!required.value && !val) return '';
+  if (required.value && !val) return 'This field is required';
+  const rules = activeValidation.value;
+  if (!rules) return '';
+  if (rules.minLength && val.length < rules.minLength) return `Minimum length is ${rules.minLength} characters`;
+  if (rules.maxLength && val.length > rules.maxLength) return `Maximum length is ${rules.maxLength} characters`;
+  if (rules.regex && !rules.regex.test(val)) {
+    if (type.value === 'email') return 'Enter a valid email address';
+    if (type.value === 'phone') return 'Enter a valid phone number';
+    if (type.value === 'website') return 'Enter a valid URL';
+    return 'Invalid format';
+  }
+  return '';
+});
+
+const lengthHint = computed(() => {
+  if (!isLongInput.value) return '';
+  const rules = activeValidation.value;
+  const hints: string[] = [];
+  if (rules?.minLength) hints.push(`Min ${rules.minLength}`);
+  if (rules?.maxLength) hints.push(`Max ${rules.maxLength}`);
+  return hints.length ? `${hints.join(' · ')} characters` : '';
 });
 </script>
 

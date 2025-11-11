@@ -100,12 +100,12 @@ import { storeToRefs } from 'pinia';
 import FocusPlayer from '@/components/forms/player/FocusPlayer.vue';
 import ClassicPlayer from '@/components/forms/player/ClassicPlayer.vue';
 import PaymentStep from '@/components/forms/player/PaymentStep.vue';
-import { fetchPublicForm, submitResponse, updateResponseDraft } from '@/services/responses';
+import { fetchPublicForm, submitResponse, updateResponseDraft, finalizeResponseSubmission } from '@/services/responses';
 import { fetchForm } from '@/services/forms';
 import { useFormPlayerStore } from '@/store/formPlayer';
 import { usePaymentClient } from '@/composables/usePaymentClient';
 import { toast } from '@/composables/useToast';
-import type { FormCompletionScreen, FormDefinition, FormWelcomeScreen, FormDensity, FormLabelPlacement } from '@/types';
+import type { FormCompletionScreen, FormDefinition, FormWelcomeScreen, FormDensity, FormLabelPlacement, FormResponse } from '@/types';
 import { useAuthStore } from '@/store/auth';
 
 const route = useRoute();
@@ -259,6 +259,24 @@ const paymentSummaryText = computed(() => {
   return `You’ll be asked to pay ${currency.toUpperCase()} ${amount} before submitting.`;
 });
 
+const findCustomerEmail = (): string | null => {
+  const definition = formDefinition.value;
+  if (!definition) return null;
+
+  const emailQuestion = definition.questions?.find((question) => question.type === 'email');
+  if (emailQuestion) {
+    const answer = playerState.value.answers[emailQuestion.id];
+    if (typeof answer === 'string' && answer.includes('@')) {
+      return answer;
+    }
+  }
+
+  const maybeEmail = Object.values(playerState.value.answers).find(
+    (value) => typeof value === 'string' && value.includes('@'),
+  );
+  return typeof maybeEmail === 'string' ? maybeEmail : null;
+};
+
 const ensureWelcomeStage = () => {
   if (welcomeScreen.value) {
     stage.value = 'welcome';
@@ -369,10 +387,21 @@ const startPaymentFlow = async (responseId: string) => {
   if (!formDefinition.value?.payment) return;
 
   try {
+    if (playerState.value.paymentIntentId) {
+      await paymentClient.cancelPayment();
+    }
+    const customerEmail = findCustomerEmail();
     await paymentClient.loadPaymentIntent({
       response_id: responseId,
       amount_cents: formDefinition.value.payment.amount_cents,
       currency: formDefinition.value.payment.currency,
+      customer_email: customerEmail ?? undefined,
+      metadata: {
+        form_id: formDefinition.value.id,
+        layout_mode: formDefinition.value.layout_mode,
+        responder_email: customerEmail ?? undefined,
+      },
+      captcha_token: playerState.value.captchaToken ?? undefined,
     });
     stage.value = 'payment';
   } catch (error) {
@@ -396,29 +425,66 @@ const submitAnswers = async () => {
   try {
     const payload = {
       answers: { ...playerState.value.answers },
+      captcha_token: playerState.value.captchaToken ?? undefined,
     };
 
     const responseResult = playerState.value.responseId
       ? await updateResponseDraft(currentSlug, playerState.value.responseId, payload)
       : await submitResponse(currentSlug, payload);
 
-    playerStore.setResponseId(String(responseResult.response.id));
+    const responseId = String(responseResult.response.id);
+    playerStore.setResponseId(responseId);
 
-    if (responseResult.requiresPayment) {
+    if (responseResult.nextQuestionId) {
+      playerStore.advanceToQuestion(responseResult.nextQuestionId);
+      return;
+    }
+
+    let finalizedResponse: FormResponse | null = null;
+    try {
+      finalizedResponse = await finalizeResponseSubmission(currentSlug, responseId, {
+        captcha_token: playerState.value.captchaToken ?? undefined,
+      });
+    } catch (error: any) {
+      const message = error?.data?.message ?? 'Failed to finalize response.';
+      toast.error(message);
+      loadError.value = message;
+      stage.value = 'playing';
+      return;
+    }
+
+    const finalStatus =
+      finalizedResponse && typeof finalizedResponse === 'object' && 'status' in finalizedResponse
+        ? (finalizedResponse as { status?: unknown }).status
+        : undefined;
+    let paymentIntentFromFinal: string | undefined;
+    if (finalizedResponse && typeof finalizedResponse === 'object' && 'payment_intent_id' in finalizedResponse) {
+      const candidate = (finalizedResponse as { payment_intent_id?: unknown }).payment_intent_id;
+      if (typeof candidate === 'string') {
+        paymentIntentFromFinal = candidate;
+      } else if (candidate != null) {
+        paymentIntentFromFinal = String(candidate);
+      }
+    }
+    if (!responseResult.paymentIntentId && paymentIntentFromFinal) {
+      playerStore.setPaymentIntent(paymentIntentFromFinal);
+    }
+
+    const requiresPayment = Boolean(
+      responseResult.requiresPayment ?? finalStatus === 'pending_payment',
+    );
+
+    if (requiresPayment) {
       playerStore.setPaymentRequired(true);
       if (responseResult.paymentIntentId) {
         playerStore.setPaymentIntent(responseResult.paymentIntentId);
       }
-      await startPaymentFlow(String(responseResult.response.id));
+      await startPaymentFlow(responseId);
       return;
     }
 
-    if (responseResult.nextQuestionId) {
-      playerStore.advanceToQuestion(responseResult.nextQuestionId);
-    } else {
-      playerStore.advanceToQuestion(null);
-    }
-
+    paymentClient.clearPayment();
+    playerStore.advanceToQuestion(null);
     stage.value = 'completed';
     toast.success('Response submitted successfully.');
   } catch (error: any) {
@@ -457,7 +523,13 @@ const reload = () => {
   loadForm();
 };
 
-onMounted(() => {
+watch(formDefinition, (newDefinition) => {
+  if (newDefinition?.title) {
+    document.title = newDefinition.title;
+  }
+});
+
+onMounted(async () => {
   try {
     const stored = localStorage.getItem('theme');
     if (stored === 'dark') document.documentElement.classList.add('dark');

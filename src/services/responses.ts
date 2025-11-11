@@ -4,6 +4,7 @@ import type {
   FormQuestion,
   FormResponse,
   FormResponseData,
+  FormResponseSummary,
 } from "@/types";
 
 const PUBLIC_BASE_PATH = "/forms";
@@ -178,6 +179,35 @@ export interface SubmitResponseResult {
   paymentIntentId?: string | null;
 }
 
+export interface FinalizeResponsePayload {
+  captcha_token?: string;
+}
+
+type CreateResponseAnswers =
+  | Record<string, unknown>
+  | Array<{ question_id: string | number; value: unknown; meta?: Record<string, unknown> }>;
+
+export interface CreateResponsePayload {
+  source?: string;
+  meta?: Record<string, unknown>;
+  answers?: CreateResponseAnswers;
+  submit?: boolean;
+  captcha_token?: string;
+}
+
+const unwrapFinalizeResponse = (payload: unknown): FormResponse => {
+  if (!payload || typeof payload !== "object") {
+    return payload as FormResponse;
+  }
+
+  const record = payload as Record<string, unknown>;
+  if (record.data && typeof record.data === "object") {
+    return record.data as FormResponse;
+  }
+
+  return record as unknown as FormResponse;
+};
+
 interface SubmitResponseApiResult {
   response: FormResponse;
   next_question_id?: string | null;
@@ -194,6 +224,91 @@ const coerceBoolean = (value: unknown): boolean => {
     return value === "true" || value === "1" || value.toLowerCase() === "yes";
   }
   return Boolean(value);
+};
+
+const toNumericId = (value: unknown): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return undefined;
+};
+
+const buildSubmitResponseResultFromRecord = (
+  record: Record<string, unknown>,
+): SubmitResponseApiResult => {
+  const rawResponse =
+    record.response && typeof record.response === "object" && !Array.isArray(record.response)
+      ? { ...(record.response as Record<string, unknown>) }
+      : {};
+
+  const fallbackIdCandidates = [
+    record.response_id,
+    record.responseId,
+    record.id,
+  ];
+
+  for (const candidate of fallbackIdCandidates) {
+    const numericId = toNumericId(candidate);
+    if (typeof numericId === "number" && rawResponse.id == null) {
+      rawResponse.id = numericId;
+      break;
+    }
+  }
+
+  const statusCandidate = record.status;
+  if (typeof statusCandidate === "string" && rawResponse.status == null) {
+    rawResponse.status = statusCandidate;
+  }
+
+  const submittedAtCandidate = record.submitted_at ?? record.submittedAt;
+  if (submittedAtCandidate != null && rawResponse.submitted_at == null) {
+    rawResponse.submitted_at = submittedAtCandidate as unknown as string;
+  }
+
+  const paymentIntentField =
+    record.payment_intent_id ?? record.paymentIntentId ?? record.payment_intent ?? null;
+  if (paymentIntentField != null && (rawResponse as Record<string, unknown>).payment_intent_id == null) {
+    (rawResponse as Record<string, unknown>).payment_intent_id = paymentIntentField;
+  }
+
+  const nextCandidate = record.nextQuestionId ?? record.next_question_id ?? record.next ?? null;
+  const requiresPaymentCandidate =
+    record.requiresPayment ?? record.requires_payment ?? record.payment_required ?? null;
+  const paymentIntentCandidate =
+    record.paymentIntentId ?? record.payment_intent_id ?? record.payment_intent ?? null;
+
+  const response: FormResponseSummary = {
+    id: (rawResponse.id as number | undefined) ?? 0,
+    status: (rawResponse.status as string | undefined) ?? undefined,
+    submitted_at: (rawResponse.submitted_at as string | undefined) ?? undefined,
+    payment_status: (rawResponse.payment_status as string | undefined) ?? undefined,
+  };
+
+  const result: SubmitResponseApiResult = {
+    response: response as unknown as FormResponse,
+  };
+
+  if (typeof nextCandidate === "string") {
+    result.nextQuestionId = nextCandidate;
+  } else if (typeof nextCandidate === "number") {
+    result.nextQuestionId = String(nextCandidate);
+  }
+
+  if (requiresPaymentCandidate != null) {
+    result.requiresPayment = coerceBoolean(requiresPaymentCandidate);
+  }
+
+  if (paymentIntentCandidate != null) {
+    result.paymentIntentId = String(paymentIntentCandidate);
+  }
+
+  return result;
 };
 
 const isSubmitResponseApiResult = (value: unknown): value is SubmitResponseApiResult => {
@@ -233,18 +348,14 @@ const unwrapSubmitResponsePayload = (payload: unknown): SubmitResponseApiResult 
   }
 
   const record = payload as Record<string, unknown>;
-  if (record.data && typeof record.data === "object") {
-    const data = record.data as Record<string, unknown>;
-    if (isSubmitResponseApiResult(data)) {
-      return data;
-    }
-  }
-
   if (isSubmitResponseApiResult(record)) {
     return record;
   }
+  if (record.data && typeof record.data === "object" && !Array.isArray(record.data)) {
+    return buildSubmitResponseResultFromRecord(record.data as Record<string, unknown>);
+  }
 
-  return { response: record as unknown as FormResponse } as SubmitResponseApiResult;
+  return buildSubmitResponseResultFromRecord(record);
 };
 
 export const fetchPublicForm = async (
@@ -263,6 +374,14 @@ export const submitResponse = async (
   payload: SubmitResponsePayload,
   options?: RequestOptions,
 ): Promise<SubmitResponseResult> => {
+  return createOrSubmitResponse(slug, { ...payload, submit: false }, options);
+};
+
+export const createOrSubmitResponse = async (
+  slug: string,
+  payload: CreateResponsePayload,
+  options?: RequestOptions,
+): Promise<SubmitResponseResult> => {
   const response = await apiClient.post(
     `${PUBLIC_BASE_PATH}/${slug}/responses`,
     payload,
@@ -270,6 +389,20 @@ export const submitResponse = async (
   );
   const result = unwrapSubmitResponsePayload(response.data ?? {});
   return normalizeSubmitResponseResult(result);
+};
+
+export const finalizeResponseSubmission = async (
+  slug: string,
+  responseId: string,
+  payload: FinalizeResponsePayload = {},
+  options?: RequestOptions,
+): Promise<FormResponse> => {
+  const response = await apiClient.post(
+    `${PUBLIC_BASE_PATH}/${slug}/responses/${encodeURIComponent(String(responseId))}/submit`,
+    payload,
+    withRequestOptions(options),
+  );
+  return unwrapFinalizeResponse(response.data ?? {});
 };
 
 export const updateResponseDraft = async (
