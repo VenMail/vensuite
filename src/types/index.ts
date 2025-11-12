@@ -65,11 +65,10 @@ export interface AppForm {
   last_view_date?: Date | string;
   created_at?: Date | string;
   updated_at?: Date | string;
+  last_response_at?: Date | string;
   form?: FormDefinition | FormData;
   content?: string;
-  responses_count?: number;
   response_count?: number;
-  questions_count?: number;
   question_count?: number;
   metrics?: {
     responses?: number;

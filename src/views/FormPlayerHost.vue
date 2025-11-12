@@ -61,6 +61,7 @@
           :client="paymentClient"
           :is-submitting="isSubmitting"
           :response-id="playerState.responseId"
+          :success-url="paymentSuccessUrl"
           @success="handlePaymentSuccess"
           @cancel="handlePaymentCancel"
           @retry="handlePaymentRetry"
@@ -95,7 +96,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import FocusPlayer from '@/components/forms/player/FocusPlayer.vue';
 import ClassicPlayer from '@/components/forms/player/ClassicPlayer.vue';
@@ -109,6 +110,7 @@ import type { FormCompletionScreen, FormDefinition, FormWelcomeScreen, FormDensi
 import { useAuthStore } from '@/store/auth';
 
 const route = useRoute();
+const router = useRouter();
 const slug = computed(() => route.params.slug as string | undefined);
 const formIdParam = computed(() => route.params.id as string | undefined);
 
@@ -166,6 +168,9 @@ const typography = computed(() => formDefinition.value?.typography);
 const header = computed(() => formDefinition.value?.header);
 const settings = computed(() => formDefinition.value?.settings);
 const paymentSettings = computed(() => formDefinition.value?.payment);
+const requiresPaymentConfigured = computed(() =>
+  Boolean(paymentSettings.value?.enabled && (paymentSettings.value.amount_cents ?? 0) > 0),
+);
 
 const labelPlacement = computed<FormLabelPlacement>(() => {
   const setting = settings.value?.label_placement;
@@ -304,7 +309,8 @@ const applyDefinition = (definition: FormDefinition) => {
     definition,
     definition.sharing?.share_slug ?? definition.slug ?? slug.value ?? formIdParam.value ?? ''
   );
-  playerStore.setPaymentRequired(!!definition.payment?.enabled);
+  const paymentEnabled = Boolean(definition.payment?.enabled && (definition.payment?.amount_cents ?? 0) > 0);
+  playerStore.setPaymentRequired(paymentEnabled);
   ensureWelcomeStage();
 };
 
@@ -470,12 +476,17 @@ const submitAnswers = async () => {
       playerStore.setPaymentIntent(paymentIntentFromFinal);
     }
 
-    const requiresPayment = Boolean(
+    let requiresPayment = Boolean(
       responseResult.requiresPayment ?? finalStatus === 'pending_payment',
     );
 
+    if (!requiresPayment && requiresPaymentConfigured.value) {
+      requiresPayment = true;
+    }
+
+    playerStore.setPaymentRequired(requiresPayment);
+
     if (requiresPayment) {
-      playerStore.setPaymentRequired(true);
       if (responseResult.paymentIntentId) {
         playerStore.setPaymentIntent(responseResult.paymentIntentId);
       }
@@ -501,10 +512,51 @@ const handleCompletionRequest = () => {
   submitAnswers();
 };
 
+const buildSuccessRoute = () => {
+  const baseQuery: Record<string, string> = { payment: 'succeeded' };
+  if (playerState.value.responseId) {
+    baseQuery.responseId = String(playerState.value.responseId);
+  }
+  if (playerState.value.paymentIntentId) {
+    baseQuery.intentId = String(playerState.value.paymentIntentId);
+  }
+
+  if (route.name === 'form-player-by-id' || formIdParam.value) {
+    const idTarget = formIdParam.value ?? formDefinition.value?.id;
+    if (idTarget) {
+      return { name: 'form-success-by-id', params: { id: idTarget }, query: baseQuery } as const;
+    }
+  }
+
+  if (submissionSlug.value) {
+    return { name: 'form-success', params: { slug: submissionSlug.value }, query: baseQuery } as const;
+  }
+
+  return null;
+};
+
+const paymentSuccessUrl = computed(() => {
+  const target = buildSuccessRoute();
+  if (!target) return undefined;
+  try {
+    const resolved = router.resolve(target);
+    return `${window.location.origin}${resolved.href}`;
+  } catch (error) {
+    console.error('Failed to resolve payment success URL', error);
+    return undefined;
+  }
+});
+
 const handlePaymentSuccess = () => {
   playerStore.setPaymentState('succeeded');
+  playerStore.advanceToQuestion(null);
   stage.value = 'completed';
   toast.success('Payment confirmed. Thank you!');
+  const target = buildSuccessRoute();
+  paymentClient.clearPayment();
+  if (target) {
+    router.replace(target);
+  }
 };
 
 const handlePaymentCancel = () => {

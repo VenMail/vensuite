@@ -141,6 +141,7 @@ const props = defineProps<{
   client: PaymentClient;
   isSubmitting?: boolean;
   responseId: string | null;
+  successUrl?: string;
 }>();
 
 const emit = defineEmits<{
@@ -224,11 +225,13 @@ const confirmPayment = async () => {
   errorMessage.value = null;
 
   try {
+    const returnUrl = props.successUrl || window.location.href;
+
     const result = await stripeInstance.value.confirmPayment({
       elements: stripeElements.value,
       clientSecret: clientSecret.value,
       confirmParams: {
-        return_url: window.location.href,
+        return_url: returnUrl,
       },
       redirect: 'if_required',
     });

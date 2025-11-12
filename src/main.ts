@@ -31,6 +31,17 @@ import Media from './views/Media.vue'
 
 const routes = [
   {
+    path: '/f/:slug/success',
+    name: 'form-success',
+    component: () => import('./views/FormPaymentSuccess.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/f/by-id/:id/success',
+    name: 'form-success-by-id',
+    component: () => import('./views/FormPaymentSuccess.vue'),
+  },
+  {
     path: '/f/:slug(.*)',
     name: 'form-player',
     component: () => import('./views/FormPlayerHost.vue'),

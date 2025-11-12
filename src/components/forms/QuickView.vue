@@ -103,6 +103,9 @@ const statusConfig = computed(() => {
 
 const createdLabel = computed(() => formatDate(props.form.created_at));
 const updatedLabel = computed(() => formatRelative(props.form.updated_at ?? props.form.last_view_date ?? props.form.created_at));
+const lastResponseLabel = computed(() =>
+  props.form.last_response_at ? formatRelative(props.form.last_response_at) : '—',
+);
 
 const cardClass = computed(() => [
   "group relative flex flex-col rounded-xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md",
@@ -260,6 +263,15 @@ function formatRelative(value?: string | Date | null) {
           </span>
         </div>
         
+        <div class="flex flex-col gap-1 min-w-[90px]">
+          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+            Last response
+          </span>
+          <span class="text-sm font-medium tabular-nums text-slate-700 dark:text-slate-300">
+            {{ lastResponseLabel }}
+          </span>
+        </div>
+
         <div class="flex flex-col gap-1 min-w-[90px]">
           <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
             Updated
