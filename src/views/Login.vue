@@ -11,7 +11,7 @@ const authStore = useAuthStore()
 const processing = ref(false)
 const error = ref<string | null>(null)
 
-const redirectUri = `${window.location.origin}/oauth/callback`
+const redirectUri = import.meta.env.VITE_OAUTH_REDIRECT_URI
 const authUrl = ref(authStore.getAuthUrl(redirectUri))
 
 function loginWithVenmail() {
