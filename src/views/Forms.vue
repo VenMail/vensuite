@@ -24,12 +24,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { toast } from "@/components/ui/toast";
 import { router } from "@/main";
 
 const searchValue = ref("");
 const debouncedSearch = ref("");
 const viewMode = ref<"grid" | "list">("grid");
 const selectedForm = ref<string | null>(null);
+const shareTarget = ref<AppForm | null>(null);
+const showShareModal = ref(false);
+const isPublishingShare = ref(false);
 const showWizard = ref(false);
 
 const TEMPLATE_STORAGE_PREFIX = "VENX_FORM_TEMPLATE_";
@@ -48,10 +61,6 @@ const filteredForms = computed(() => {
 });
 
 const computeFieldCount = (form: AppForm): number | null => {
-  if (typeof form.questions_count === "number") {
-    return form.questions_count;
-  }
-
   if (typeof form.question_count === "number") {
     return form.question_count;
   }
@@ -75,17 +84,133 @@ const computeFieldCount = (form: AppForm): number | null => {
 };
 
 const computeResponseCount = (form: AppForm): number | null => {
-  const withCounts = form as unknown as {
-    responses_count?: number;
-    response_count?: number;
-    metrics?: { responses?: number };
-  };
-
-  if (typeof withCounts.responses_count === "number") return withCounts.responses_count;
-  if (typeof withCounts.response_count === "number") return withCounts.response_count;
-  if (typeof withCounts.metrics?.responses === "number") return withCounts.metrics.responses;
+  if (typeof form.response_count === "number") return form.response_count;
+  if (typeof form.responses?.length === "number") return form.responses.length;
 
   return null;
+};
+
+const computedShareLink = computed(() => {
+  if (!shareTarget.value) return "";
+  const shareSlug = shareTarget.value.sharing?.share_slug ?? shareTarget.value.slug;
+  if (shareSlug) {
+    return `${window.location.origin}/f/${shareSlug}`;
+  }
+  if (shareTarget.value.id) {
+    return `${window.location.origin}/f/by-id/${shareTarget.value.id}`;
+  }
+  return "";
+});
+
+const shareHelperItems = computed(() => {
+  const link = computedShareLink.value;
+  if (!link) return [];
+  return [
+    {
+      label: "Open form",
+      action: () => {
+        window.open(link, "_blank", "noopener,noreferrer");
+      },
+    },
+  ];
+});
+
+const copyShareLink = async () => {
+  const link = computedShareLink.value;
+  if (!link) {
+    toast({ title: "Share link unavailable", description: "Publish the form to get a shareable link.", variant: "destructive" });
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(link);
+    toast({ title: "Share link copied", description: "The form link was copied to your clipboard." });
+  } catch {
+    toast({ title: "Copy failed", description: "Unable to copy link. Try copying manually.", variant: "destructive" });
+  }
+};
+
+const handleShareLinkFocus = (event: FocusEvent) => {
+  const target = event.target as HTMLInputElement | null;
+  target?.select();
+};
+
+const closeShareModal = () => {
+  if (isPublishingShare.value) return;
+  showShareModal.value = false;
+  shareTarget.value = null;
+};
+
+const ensurePublishedShareSlug = async (form: AppForm) => {
+  if (!form.id) return null;
+
+  const latest = formStore.allForms.find((item) => item.id === form.id) ?? form;
+  const hasExistingShare =
+    latest.status !== "draft" &&
+    Boolean(latest.sharing?.share_slug ?? latest.slug);
+
+  if (hasExistingShare) {
+    return latest;
+  }
+
+  const published = await formStore.publishForm(form.id);
+  if (!published) {
+    return latest ?? null;
+  }
+
+  const merged: AppForm = {
+    ...latest,
+    ...(published as unknown as Partial<AppForm>),
+    id: form.id,
+    slug: published.slug ?? latest.slug ?? form.slug,
+    status: (published.status ?? latest.status ?? "published") as AppForm["status"],
+    sharing: {
+      ...latest.sharing,
+      ...(published as any)?.sharing,
+    },
+  };
+
+  return merged;
+};
+
+const openShareModal = async (form: AppForm) => {
+  if (!form.id) {
+    toast({ title: "Share unavailable", description: "Form is missing an identifier.", variant: "destructive" });
+    return;
+  }
+
+  shareTarget.value = form;
+  showShareModal.value = true;
+
+  const hasShareSlug = form.sharing?.share_slug || form.slug;
+  if (hasShareSlug || form.status !== "draft") {
+    return;
+  }
+
+  try {
+    isPublishingShare.value = true;
+    const updated = await ensurePublishedShareSlug(form);
+    if (updated?.sharing?.share_slug) {
+      shareTarget.value = updated;
+      await navigator.clipboard.writeText(`${window.location.origin}/f/${updated.sharing.share_slug}`);
+      toast({ title: "Form published", description: "Share link copied to clipboard." });
+    } else {
+      toast({ title: "Publish incomplete", description: "Unable to generate share slug. Please publish manually.", variant: "destructive" });
+    }
+  } catch (error: any) {
+    const message = error?.data?.message ?? "Failed to publish form for sharing";
+    toast({ title: "Share failed", description: message, variant: "destructive" });
+  } finally {
+    isPublishingShare.value = false;
+  }
+};
+
+const handleQuickViewResponses = (form: AppForm) => {
+  if (!form.id) return;
+  router.push({ name: "form-responses", params: { id: form.id } });
+};
+
+const handleQuickViewShare = (form: AppForm) => {
+  openShareModal(form);
 };
 
 const cardsContainerClass = computed(() =>
@@ -358,7 +483,12 @@ const contextMenuActions = computed(() => {
     {
       label: "Share",
       icon: Share2,
-      action: () => console.log("Share"),
+      action: async () => {
+        const target = formStore.allForms.find((item) => item.id === selectedForm.value);
+        if (target) {
+          await openShareModal(target);
+        }
+      },
     },
   ];
 });
@@ -436,6 +566,8 @@ const contextMenuActions = computed(() => {
             :view-mode="viewMode"
             :field-count="computeFieldCount(form) ?? undefined"
             :response-count="computeResponseCount(form) ?? undefined"
+            @view-responses="handleQuickViewResponses"
+            @share="handleQuickViewShare"
           />
         </div>
 
@@ -451,6 +583,69 @@ const contextMenuActions = computed(() => {
           No more forms to load.
         </div>
       </div>
+
+      <Dialog :open="showShareModal" @update:open="value => value ? null : closeShareModal()">
+        <DialogContent class="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Share form</DialogTitle>
+            <DialogDescription>
+              Share this form with participants or collaborators using the link below.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div class="space-y-4 py-2">
+            <div class="space-y-2">
+              <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Share link
+              </label>
+              <div class="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  :model-value="computedShareLink"
+                  readonly
+                  class="sm:flex-1 font-mono text-sm"
+                  @focus="handleShareLinkFocus"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  :disabled="!computedShareLink"
+                  @click="copyShareLink"
+                >
+                  Copy
+                </Button>
+              </div>
+              <p class="text-xs text-slate-500">
+                Anyone with this link can access the form based on its publish settings.
+              </p>
+            </div>
+
+            <div v-if="shareHelperItems.length" class="grid gap-2 sm:grid-cols-2">
+              <Button
+                v-for="item in shareHelperItems"
+                :key="item.label"
+                type="button"
+                variant="outline"
+                class="justify-start"
+                @click="item.action"
+              >
+                {{ item.label }}
+              </Button>
+            </div>
+
+            <div v-if="isPublishingShare" class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+              Publishing form to generate share link…
+            </div>
+          </div>
+
+          <DialogFooter>
+            <DialogClose as-child>
+              <Button type="button" variant="secondary" :disabled="isPublishingShare">
+                Close
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
 
     <!-- Form Wizard -->

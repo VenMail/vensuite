@@ -70,11 +70,7 @@ export interface AppForm {
   content?: string;
   response_count?: number;
   question_count?: number;
-  metrics?: {
-    responses?: number;
-    questions?: number;
-    fields?: number;
-  };
+  responses?: FormResponse[];
 }
 
 export type FormStatus = "draft" | "published" | "archived";

@@ -4,7 +4,7 @@ import { PropType } from "vue";
 import { AppForm, FormDefinition, FormData } from "@/types";
 import { Button } from "@/components/ui/button";
 import { router } from "@/main";
-import { Trash2, Edit3 } from "lucide-vue-next";
+import { Trash2, Edit3, Share2 } from "lucide-vue-next";
 import { useFormStore } from "@/store/forms";
 
 const props = defineProps({
@@ -26,6 +26,11 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits<{
+  (e: "view-responses", form: AppForm): void;
+  (e: "share", form: AppForm): void;
+}>();
+
 const formStore = useFormStore();
 const hydratedDef = ref<FormDefinition | null>(null);
 
@@ -33,17 +38,16 @@ const totalResponses = computed(() => {
   if (props.responseCount != null) {
     return props.responseCount;
   }
-  const metricsResponses = (props.form as any)?.metrics?.responses;
-  if (typeof metricsResponses === "number") {
-    return metricsResponses;
-  }
-  const responsesCount = (props.form as any)?.responses_count ?? (props.form as any)?.response_count;
-  if (typeof responsesCount === "number") {
-    return responsesCount;
-  }
-  return 0;
+  const count = props.form?.responses?.length ?? 0;
+  return count;
 });
 const hasResponses = computed(() => totalResponses.value > 0);
+const responseValueClass = computed(() => [
+  "text-sm font-medium tabular-nums transition-colors text-left",
+  hasResponses.value
+    ? "text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
+    : "text-slate-400 dark:text-slate-500 cursor-not-allowed",
+]);
 const fieldCount = computed(() => {
   if (props.fieldCount != null) {
     return props.fieldCount;
@@ -151,9 +155,13 @@ const previewForm = () => {
   router.push(target);
 };
 
-const viewResponses = () => {
-  if (!props.form.id) return;
-  router.push({ name: "form-responses", params: { id: props.form.id } });
+const handleResponsesClick = () => {
+  if (!hasResponses.value) return;
+  emit("view-responses", props.form);
+};
+
+const handleShareClick = () => {
+  emit("share", props.form);
 };
 
 const deleteDraft = async () => {
@@ -254,14 +262,20 @@ function formatRelative(value?: string | Date | null) {
           </span>
         </div>
         
-        <div class="flex flex-col gap-1 min-w-[90px]">
+        <button
+          type="button"
+          class="flex flex-col gap-1 min-w-[90px] text-left transition-colors"
+          :class="hasResponses ? 'cursor-pointer text-slate-900 dark:text-white' : 'cursor-not-allowed text-slate-400 dark:text-slate-500'"
+          :disabled="!hasResponses"
+          @click="handleResponsesClick"
+        >
           <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
             Responses
           </span>
-          <span class="text-sm font-medium tabular-nums text-slate-900 dark:text-white">
+          <span :class="responseValueClass">
             {{ totalResponses.toLocaleString() }}
           </span>
-        </div>
+        </button>
         
         <div class="flex flex-col gap-1 min-w-[90px]">
           <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
@@ -301,7 +315,7 @@ function formatRelative(value?: string | Date | null) {
         variant="ghost"
         class="gap-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         :disabled="!hasResponses || deleting"
-        @click="viewResponses"
+        @click="handleResponsesClick"
       >
         Responses
       </Button>
@@ -317,10 +331,22 @@ function formatRelative(value?: string | Date | null) {
         Preview
       </Button>
       
+      <Button
+        v-if="props.form.id"
+        size="sm"
+        variant="ghost"
+        class="ml-auto gap-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        :disabled="deleting"
+        @click="handleShareClick"
+      >
+        <Share2 class="h-3.5 w-3.5" />
+        Share
+      </Button>
+      
       <button
         v-if="isDraft"
         type="button"
-        class="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-400"
+        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-400"
         :disabled="deleting"
         @click.stop="deleteDraft"
         aria-label="Delete draft form"
