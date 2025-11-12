@@ -1,188 +1,305 @@
 <template>
-  <div class="responses-view text-gray-900 dark:text-gray-100 transition-colors duration-200">
-    <header class="responses-view__header">
-      <button type="button" class="responses-view__back text-gray-600 dark:text-gray-300" @click="goBack">
-        ← Back to Forms
-      </button>
-      <div class="responses-view__heading">
-        <h1 class="text-gray-900 dark:text-gray-100">{{ formTitle }}</h1>
-        <p v-if="formDescription" class="text-gray-600 dark:text-gray-300">{{ formDescription }}</p>
-      </div>
-      <div class="responses-view__actions">
-        <button
-          type="button"
-          class="responses-view__button border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-          :disabled="isLoading"
-          @click="refresh"
-        >
-          Refresh
-        </button>
-        <button
-          type="button"
-          class="responses-view__button responses-view__button--primary bg-primary-600 border border-primary-600 text-white hover:bg-primary-700"
-          :disabled="isExporting || !responseRows.length"
-          @click="exportCsv"
-        >
-          {{ isExporting ? 'Exporting…' : 'Export CSV' }}
-        </button>
-      </div>
-    </header>
+  <div class="flex h-full w-full flex-col gap-6 overflow-hidden bg-background text-foreground">
+    <div class="relative overflow-hidden border-b border-border/80 bg-gradient-to-br from-background via-background to-background dark:from-background dark:via-background">
+      <div class="absolute inset-y-0 right-0 hidden w-2/5 rounded-l-full bg-primary/10 blur-3xl dark:bg-primary/15 lg:block" />
+      <div class="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div class="space-y-5">
+            <div class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary dark:border-primary/40 dark:bg-primary/15 dark:text-primary-foreground">
+              <span class="inline-flex h-2 w-2 rounded-full bg-primary"></span>
+              Response Analytics
+            </div>
+            <div class="space-y-2">
+              <div class="flex flex-wrap items-center gap-3">
+                <Button variant="ghost" size="sm" class="gap-2 text-muted-foreground" @click="goBack">
+                  <ArrowLeft class="h-4 w-4" />
+                  Back to Forms
+                </Button>
+                <Badge variant="outline" class="rounded-full border-muted-foreground/40 bg-muted/50 px-3 py-1 text-xs font-medium uppercase tracking-wide">
+                  Responses dashboard
+                </Badge>
+              </div>
+              <h1 class="text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
+                {{ formTitle }}
+              </h1>
+              <p class="max-w-2xl text-sm text-muted-foreground">
+                {{ formDescription || 'Monitor how respondents engage with your form and spot trends across completion states.' }}
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                Completed: <span class="font-semibold text-foreground">{{ responseMeta.completed_responses }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+                Incomplete: <span class="font-semibold text-foreground">{{ responseMeta.incomplete_responses }}</span>
+              </div>
+              <Separator orientation="vertical" class="hidden h-5 lg:block" />
+              <div class="flex items-center gap-2">
+                <span class="text-xs uppercase tracking-wide text-muted-foreground">Last refreshed</span>
+                <span class="rounded-full bg-muted px-2 py-1 text-xs font-medium text-foreground">Just now</span>
+              </div>
+            </div>
+          </div>
 
-    <section class="responses-view__summary">
-      <div class="summary-card bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:border-gray-700">
-        <span class="summary-card__label">Total Responses</span>
-        <strong class="summary-card__value">{{ responseMeta.total_responses }}</strong>
+          <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+            <Button variant="outline" size="sm" class="min-w-[110px]" :disabled="isLoading" @click="refresh">
+              Refresh
+            </Button>
+            <Button size="sm" class="min-w-[140px]" :disabled="isExporting || !responseRows.length" @click="exportCsv">
+              <Download class="mr-2 h-4 w-4" />
+              {{ isExporting ? 'Exporting…' : 'Export CSV' }}
+            </Button>
+          </div>
+        </div>
+
+        <div class="grid gap-4 lg:grid-cols-[2fr,1fr]">
+          <div class="grid gap-4 sm:grid-cols-3">
+            <Card class="border-none bg-gradient-to-br from-primary/10 via-primary/5 to-background shadow-sm ring-1 ring-primary/20 dark:via-primary/10 dark:to-background">
+              <CardContent class="flex items-center justify-between gap-4 p-5">
+                <div>
+                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total responses</span>
+                  <p class="mt-2 text-3xl font-semibold text-foreground">
+                    {{ responseMeta.total_responses.toLocaleString() }}
+                  </p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary dark:bg-primary/20 dark:text-primary-foreground">
+                  <PieChart class="h-6 w-6" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card class="border-none bg-gradient-to-br from-emerald-500/15 via-emerald-500/10 to-background shadow-sm ring-1 ring-emerald-500/20 dark:to-muted/20">
+              <CardContent class="flex items-center justify-between gap-4 p-5">
+                <div>
+                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Completed</span>
+                  <p class="mt-2 text-3xl font-semibold text-emerald-600 dark:text-emerald-400">
+                    {{ responseMeta.completed_responses.toLocaleString() }}
+                  </p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
+                  <CheckCircle2 class="h-6 w-6" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card class="border-none bg-gradient-to-br from-amber-500/15 via-amber-500/10 to-background shadow-sm ring-1 ring-amber-500/20 dark:to-muted/20">
+              <CardContent class="flex items-center justify-between gap-4 p-5">
+                <div>
+                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Incomplete</span>
+                  <p class="mt-2 text-3xl font-semibold text-amber-600 dark:text-amber-400">
+                    {{ responseMeta.incomplete_responses.toLocaleString() }}
+                  </p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/20 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
+                  <AlertTriangle class="h-6 w-6" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card class="flex flex-col border-none bg-card/90 shadow-sm ring-1 ring-border/60">
+            <CardHeader class="pb-2">
+              <CardTitle class="text-base font-semibold">Response breakdown</CardTitle>
+              <CardDescription>Visualize completion ratio at a glance</CardDescription>
+            </CardHeader>
+            <CardContent class="flex flex-1 items-center justify-center">
+              <div class="relative h-48 w-48">
+                <Doughnut :data="doughnutData" :options="doughnutOptions" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-      <div class="summary-card bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:border-gray-700">
-        <span class="summary-card__label">Completed</span>
-        <strong class="summary-card__value">{{ responseMeta.completed_responses }}</strong>
-      </div>
-      <div class="summary-card bg-white border border-gray-200 rounded-md dark:bg-gray-800 dark:border-gray-700">
-        <span class="summary-card__label">Incomplete</span>
-        <strong class="summary-card__value">{{ responseMeta.incomplete_responses }}</strong>
-      </div>
-      <div class="summary-chart">
-        <Doughnut :data="doughnutData" :options="doughnutOptions" />
-      </div>
-    </section>
+    </div>
 
-    <section class="responses-view__filters">
-      <label class="filter text-gray-700 dark:text-gray-300" for="status-filter">Status</label>
-      <select id="status-filter" v-model="filters.status" @change="applyFilters"
-        class="border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-800 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600">
-        <option value="">All</option>
-        <option value="submitted">Submitted</option>
-        <option value="pending_payment">Pending Payment</option>
-        <option value="draft">Draft</option>
-      </select>
-    </section>
+    <div class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 pb-10">
+      <Card class="flex-1 overflow-hidden border-none bg-card/95 shadow-lg shadow-primary/5 ring-1 ring-border/60">
+        <CardHeader class="flex flex-col gap-6 border-b border-border/60 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div class="space-y-1.5">
+            <CardTitle class="text-xl font-semibold">Responses</CardTitle>
+            <CardDescription class="text-sm text-muted-foreground">
+              Manage submissions, monitor payment status, and drill into individual answers.
+            </CardDescription>
+          </div>
+          <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-3 rounded-full border border-muted-foreground/30 bg-muted/40 px-3 py-2">
+              <Label class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground" for="status-filter">
+                Status Filter
+              </Label>
+              <Select :model-value="filters.status" @update:model-value="handleStatusChange">
+                <SelectTrigger id="status-filter" class="w-44 border-none bg-background/60 text-sm shadow-none">
+                  <SelectValue placeholder="All responses" />
+                </SelectTrigger>
+                <SelectContent class="rounded-lg border border-border bg-card shadow-md">
+                  <SelectItem value="">All responses</SelectItem>
+                  <SelectItem value="submitted">Submitted</SelectItem>
+                  <SelectItem value="pending_payment">Pending payment</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div class="hidden h-10 w-px bg-border/70 sm:block" />
+            <div class="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Showing</span>
+              <span class="rounded-full bg-muted px-2 py-1 font-medium text-foreground">{{ responseRows.length }}</span>
+              <span>of</span>
+              <span class="font-semibold text-foreground">{{ responseMeta.total_responses }}</span>
+              <span>responses</span>
+            </div>
+          </div>
+        </CardHeader>
 
-    <section class="responses-view__table" v-if="!isLoading && !loadError">
-      <table class="w-full border-collapse bg-white dark:bg-gray-900">
-        <thead class="bg-gray-50 dark:bg-gray-800">
-          <tr class="text-left text-gray-700 dark:text-gray-300">
-            <th class="border-b border-gray-200 dark:border-gray-700 px-3 py-2">ID</th>
-            <th class="border-b border-gray-200 dark:border-gray-700 px-3 py-2">Status</th>
-            <th class="border-b border-gray-200 dark:border-gray-700 px-3 py-2">Submitted At</th>
-            <th class="border-b border-gray-200 dark:border-gray-700 px-3 py-2">Payment Status</th>
-            <th class="border-b border-gray-200 dark:border-gray-700 px-3 py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="!responseRows.length">
-            <td colspan="5" class="responses-view__empty text-gray-600 dark:text-gray-400">No responses yet.</td>
-          </tr>
-          <tr v-for="response in responseRows" :key="response.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
-            <td class="border-b border-gray-200 dark:border-gray-700 px-3 py-2">{{ response.id }}</td>
-            <td class="border-b border-gray-200 dark:border-gray-700 px-3 py-2">{{ response.statusLabel }}</td>
-            <td class="border-b border-gray-200 dark:border-gray-700 px-3 py-2">{{ response.submittedAtLabel }}</td>
-            <td class="border-b border-gray-200 dark:border-gray-700 px-3 py-2">{{ response.paymentStatusLabel }}</td>
-            <td class="responses-view__row-action border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-              <button type="button" class="responses-view__link text-primary-600 dark:text-primary-400" @click="openDetail(response.id)">View</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <CardContent class="flex h-full flex-col gap-4 overflow-hidden p-0">
+          <div v-if="isLoading" class="flex flex-1 items-center justify-center rounded-none border-none bg-muted/30 py-16 text-sm text-muted-foreground">
+            Loading responses…
+          </div>
 
-      <footer class="responses-view__pagination text-gray-700 dark:text-gray-300" v-if="hasPagination">
-        <button
-          type="button"
-          class="border border-gray-300 bg-white text-gray-800 px-3 py-1 rounded-md dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-          :disabled="pagination.page === 1"
-          @click="changePage(pagination.page - 1)"
-        >
-          Previous
-        </button>
-        <span class="mx-2">Page {{ pagination.page }} of {{ totalPages }}</span>
-        <button
-          type="button"
-          class="border border-gray-300 bg-white text-gray-800 px-3 py-1 rounded-md dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-          :disabled="pagination.page === totalPages"
-          @click="changePage(pagination.page + 1)"
-        >
-          Next
-        </button>
-      </footer>
-    </section>
+          <div v-else-if="loadError" class="flex flex-1 flex-col items-center justify-center gap-4 rounded-none border-none bg-destructive/5 py-20 text-center">
+            <p class="max-w-sm text-sm font-medium text-destructive">{{ loadError }}</p>
+            <Button variant="outline" size="sm" @click="refresh">Retry</Button>
+          </div>
 
-    <section v-else-if="isLoading" class="responses-view__loading text-gray-600 dark:text-gray-400">
-      <span>Loading responses…</span>
-    </section>
+          <div v-else class="flex flex-1 flex-col overflow-hidden">
+            <div v-if="!responseRows.length" class="flex flex-1 items-center justify-center bg-muted/10 py-20 text-sm text-muted-foreground">
+              No responses yet. Share your form to start collecting submissions.
+            </div>
 
-    <section v-else class="responses-view__error text-red-600 dark:text-red-400">
-      <p>{{ loadError }}</p>
-      <button type="button" class="responses-view__button" @click="refresh">Retry</button>
-    </section>
+            <div v-else class="flex h-full flex-col overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-border/80 text-sm">
+                  <thead class="bg-muted/60 text-muted-foreground">
+                    <tr>
+                      <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">ID</th>
+                      <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">Status</th>
+                      <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">Submitted</th>
+                      <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">Payment</th>
+                      <th scope="col" class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide"></th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-border/80 bg-card text-card-foreground">
+                    <tr
+                      v-for="response in responseRows"
+                      :key="response.id"
+                      class="transition-colors hover:bg-muted/40"
+                    >
+                      <td class="px-6 py-4 text-sm font-semibold text-foreground">#{{ response.id }}</td>
+                      <td class="px-6 py-4">
+                        <Badge variant="outline" :class="statusBadgeClasses(response.status)">
+                          {{ response.statusLabel }}
+                        </Badge>
+                      </td>
+                      <td class="px-6 py-4 text-sm text-muted-foreground">{{ response.submittedAtLabel }}</td>
+                      <td class="px-6 py-4 text-sm text-muted-foreground">{{ response.paymentStatusLabel }}</td>
+                      <td class="px-6 py-4 text-right">
+                        <Button variant="ghost" size="sm" class="gap-1 text-primary" @click="openDetail(response.id)">
+                          View details
+                        </Button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div v-if="hasPagination" class="flex flex-col gap-3 border-t border-border/70 bg-muted/30 px-6 py-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <span class="text-muted-foreground">Page {{ pagination.page }} of {{ totalPages }}</span>
+                <div class="flex items-center gap-3">
+                  <Button variant="outline" size="sm" class="min-w-[90px]" :disabled="pagination.page === 1" @click="changePage(pagination.page - 1)">
+                    Previous
+                  </Button>
+                  <Button variant="outline" size="sm" class="min-w-[90px]" :disabled="pagination.page === totalPages" @click="changePage(pagination.page + 1)">
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
 
     <Dialog v-model:open="detailDialogOpen">
-      <DialogContent class="responses-detail">
-        <DialogHeader>
-          <DialogTitle>
-            Response {{ detailState.response?.id ?? activeResponseId ?? '' }}
+      <DialogContent class="max-w-3xl border-none bg-card/95 p-0 shadow-xl shadow-primary/10 ring-1 ring-border/60">
+        <DialogHeader class="space-y-1 rounded-t-xl border-b border-border/60 bg-muted/30 px-6 py-5">
+          <DialogTitle class="text-lg font-semibold">
+            Response #{{ detailState.response?.id ?? activeResponseId ?? '' }}
           </DialogTitle>
+          <DialogDescription class="text-sm text-muted-foreground">
+            Review submission metadata and answers.
+          </DialogDescription>
         </DialogHeader>
 
-        <div v-if="detailState.isLoading" class="responses-detail__loading">
-          Loading response…
-        </div>
-        <div v-else-if="detailState.error" class="responses-detail__error">
-          <p>{{ detailState.error }}</p>
-          <button type="button" class="responses-view__button" @click="retryDetail">Retry</button>
-        </div>
-        <div v-else-if="detailState.response" class="responses-detail__body">
-          <div class="responses-detail__meta">
-            <div>
-              <span class="responses-detail__label">Status</span>
-              <strong>{{ formatStatus(detailState.response.status ?? 'draft') }}</strong>
-            </div>
-            <div>
-              <span class="responses-detail__label">Submitted</span>
-              <strong>{{ detailState.response.submitted_at ? formatDate(detailState.response.submitted_at) : '—' }}</strong>
-            </div>
-            <div>
-              <span class="responses-detail__label">Payment</span>
-              <strong>{{ formatPaymentStatus(detailState.response.payment_status ?? null) }}</strong>
-            </div>
+        <div class="px-6 py-5">
+          <div v-if="detailState.isLoading" class="flex items-center justify-center rounded-lg bg-muted/30 py-12 text-sm text-muted-foreground">
+            Loading response…
           </div>
-
-          <div v-if="respondentDetails.length" class="responses-detail__section">
-            <h3>Respondent</h3>
-            <dl>
-              <div v-for="detail in respondentDetails" :key="detail.key">
-                <dt>{{ detail.key }}</dt>
-                <dd>{{ detail.value }}</dd>
+          <div v-else-if="detailState.error" class="flex flex-col items-center justify-center gap-4 rounded-lg bg-destructive/5 py-12 text-center">
+            <p class="max-w-sm text-sm font-medium text-destructive">{{ detailState.error }}</p>
+            <Button variant="outline" size="sm" @click="retryDetail">Retry</Button>
+          </div>
+          <div v-else-if="detailState.response" class="space-y-6">
+            <div class="grid gap-4 rounded-xl border border-border/60 bg-muted/20 p-4 sm:grid-cols-3">
+              <div class="space-y-1">
+                <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</span>
+                <Badge
+                  variant="outline"
+                  :class="statusBadgeClasses(detailState.response.status ?? 'draft')"
+                >
+                  {{ formatStatus(detailState.response.status ?? 'draft') }}
+                </Badge>
               </div>
-            </dl>
-          </div>
-
-          <div class="responses-detail__section">
-            <h3>Answers</h3>
-            <div v-if="detailAnswers.length" class="responses-detail__answers">
-              <article v-for="answer in detailAnswers" :key="answer.id">
-                <header>
-                  <h4>{{ answer.questionTitle }}</h4>
-                  <p v-if="answer.description" class="responses-detail__description">{{ answer.description }}</p>
-                </header>
-                <div class="responses-detail__answer">
-                  <button
-                    v-if="answer.fileUrl"
-                    type="button"
-                    class="responses-detail__download"
-                    @click="downloadFileAnswer(answer)"
-                  >
-                    Download {{ answer.formatted }}
-                  </button>
-                  <pre v-else-if="answer.isMultiline">{{ answer.formatted }}</pre>
-                  <p v-else>{{ answer.formatted }}</p>
-                </div>
-              </article>
+              <div class="space-y-1">
+                <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Submitted</span>
+                <p class="text-sm text-foreground">
+                  {{ detailState.response.submitted_at ? formatDate(detailState.response.submitted_at) : '—' }}
+                </p>
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Payment</span>
+                <p class="text-sm text-foreground">{{ formatPaymentStatus(detailState.response.payment_status ?? null) }}</p>
+              </div>
             </div>
-            <p v-else class="responses-detail__empty">No answers captured for this response.</p>
+
+            <div v-if="respondentDetails.length" class="space-y-3">
+              <h3 class="text-sm font-semibold text-foreground">Respondent</h3>
+              <dl class="grid gap-2 rounded-xl border border-border/60 bg-muted/15 p-4 text-sm text-foreground">
+                <div v-for="detail in respondentDetails" :key="detail.key" class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <dt class="text-muted-foreground">{{ detail.key }}</dt>
+                  <dd class="font-medium">{{ detail.value }}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="space-y-4">
+              <h3 class="text-sm font-semibold text-foreground">Answers</h3>
+              <div v-if="detailAnswers.length" class="grid gap-3">
+                <article
+                  v-for="answer in detailAnswers"
+                  :key="answer.id"
+                  class="rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm"
+                >
+                  <header class="flex flex-col gap-1">
+                    <h4 class="text-sm font-semibold text-foreground">{{ answer.questionTitle }}</h4>
+                    <p v-if="answer.description" class="text-xs text-muted-foreground">{{ answer.description }}</p>
+                  </header>
+                  <div class="mt-3 text-sm">
+                    <Button v-if="answer.fileUrl" variant="outline" size="sm" class="shadow-sm" @click="downloadFileAnswer(answer)">
+                      <Download class="mr-2 h-4 w-4" />
+                      Download {{ answer.formatted }}
+                    </Button>
+                    <pre v-else-if="answer.isMultiline" class="rounded-lg bg-muted/40 p-3 text-sm leading-relaxed text-foreground">{{ answer.formatted }}</pre>
+                    <p v-else class="text-foreground">{{ answer.formatted }}</p>
+                  </div>
+                </article>
+              </div>
+              <p v-else class="rounded-xl border border-dashed border-muted-foreground/40 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                No answers captured for this response.
+              </p>
+            </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <button type="button" class="responses-view__button" @click="closeDetail">Close</button>
+        <DialogFooter class="flex items-center justify-end gap-2 border-t border-border/60 bg-muted/30 px-6 py-4">
+          <Button variant="ghost" @click="closeDetail">Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -207,13 +324,33 @@ import type {
   FormResponseSummary,
 } from '@/types';
 import { saveAs } from 'file-saver';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Download, PieChart } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
@@ -397,6 +534,19 @@ const formatStatus = (status: string) => {
   }
 };
 
+function statusBadgeClasses(status: string): string {
+  switch (status) {
+    case 'submitted':
+      return 'border-emerald-200 text-emerald-700 bg-emerald-50 dark:border-emerald-800/50 dark:text-emerald-300 dark:bg-emerald-500/10';
+    case 'pending_payment':
+      return 'border-amber-200 text-amber-700 bg-amber-50 dark:border-amber-800/50 dark:text-amber-300 dark:bg-amber-500/10';
+    case 'draft':
+      return 'border-slate-200 text-slate-600 bg-slate-50 dark:border-slate-700/50 dark:text-slate-300 dark:bg-slate-800/40';
+    default:
+      return 'border-slate-200 text-slate-600 bg-slate-50 dark:border-slate-700/50 dark:text-slate-300 dark:bg-slate-800/40';
+  }
+}
+
 const formatDate = (value: string) => {
   try {
     const date = new Date(value);
@@ -528,7 +678,8 @@ const refresh = () => {
   Promise.all([loadResponses(), loadSummary()]);
 };
 
-const applyFilters = () => {
+const handleStatusChange = (value: string) => {
+  filters.status = value;
   pagination.page = 1;
   loadResponses();
 };
