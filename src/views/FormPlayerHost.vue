@@ -168,9 +168,6 @@ const typography = computed(() => formDefinition.value?.typography);
 const header = computed(() => formDefinition.value?.header);
 const settings = computed(() => formDefinition.value?.settings);
 const paymentSettings = computed(() => formDefinition.value?.payment);
-const requiresPaymentConfigured = computed(() =>
-  Boolean(paymentSettings.value?.enabled && (paymentSettings.value.amount_cents ?? 0) > 0),
-);
 
 const labelPlacement = computed<FormLabelPlacement>(() => {
   const setting = settings.value?.label_placement;
