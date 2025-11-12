@@ -5,10 +5,10 @@
       <div class="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
         <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div class="space-y-5">
-            <div class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary dark:border-primary/40 dark:bg-primary/15 dark:text-primary-foreground">
+            <!-- <div class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary dark:border-primary/40 dark:bg-primary/15 dark:text-primary-foreground">
               <span class="inline-flex h-2 w-2 rounded-full bg-primary"></span>
               Response Analytics
-            </div>
+            </div> -->
             <div class="space-y-2">
               <div class="flex flex-wrap items-center gap-3">
                 <Button variant="ghost" size="sm" class="gap-2 text-muted-foreground" @click="goBack">
@@ -50,6 +50,15 @@
             <Button size="sm" class="min-w-[140px]" :disabled="isExporting || !responseRows.length" @click="exportCsv">
               <Download class="mr-2 h-4 w-4" />
               {{ isExporting ? 'Exporting…' : 'Export CSV' }}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="min-w-[48px] rounded-full border border-transparent text-muted-foreground hover:border-border"
+              @click="toggleTheme"
+            >
+              <SunMedium v-if="!isDarkMode" class="h-4 w-4" />
+              <MoonStar v-else class="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -307,7 +316,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue';
 import {
   useRoute,
   useRouter,
@@ -320,11 +329,21 @@ import { fetchResponseDetail } from '@/services/forms';
 import type {
   AppFormResponseDetail,
   AppFormResponseAnswer,
+  FormDefinition,
+  FormQuestion,
   FormResponsesPage,
   FormResponseSummary,
 } from '@/types';
 import { saveAs } from 'file-saver';
-import { AlertTriangle, ArrowLeft, CheckCircle2, Download, PieChart } from 'lucide-vue-next';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  Download,
+  MoonStar,
+  PieChart,
+  SunMedium,
+} from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -389,6 +408,28 @@ const isExporting = ref(false);
 const loadError = ref<string | null>(null);
 const formTitle = ref('Form Responses');
 const formDescription = ref<string>('');
+
+const questionLookup = ref<Record<string, string>>({});
+const questionOrder = ref<string[]>([]);
+
+const themeContext = inject<{
+  isDark?: { value: boolean };
+  toggleTheme?: () => void;
+} | null>('theme', null);
+const fallbackDarkMode = ref<boolean>(
+  typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false,
+);
+const isDarkMode = computed(() => themeContext?.isDark?.value ?? fallbackDarkMode.value);
+const toggleTheme = () => {
+  if (themeContext?.toggleTheme) {
+    themeContext.toggleTheme();
+  } else {
+    fallbackDarkMode.value = !fallbackDarkMode.value;
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', fallbackDarkMode.value);
+    }
+  }
+};
 
 const responsesPage = ref<FormResponsesPage | null>(null);
 const summary = reactive<ResponsesMeta>({
@@ -480,7 +521,7 @@ const detailAnswers = computed<DetailAnswerItem[]>(() => {
   if (!detailState.response?.answers?.length) return [];
 
   return detailState.response.answers.map((answer) => {
-    const questionTitle = answer.question?.question ?? `Question ${answer.question_id}`;
+    const questionTitle = getQuestionTitle(answer.question_id, answer.question?.question);
     const formatted = formatAnswerValue(answer);
 
     return {
@@ -580,6 +621,58 @@ const formatAnswerValue = (answer: AppFormResponseAnswer): string => {
   return formatBasicValue(answer.value);
 };
 
+const registerQuestion = (id: string, title?: string | null) => {
+  const normalizedTitle = title?.trim() || `Question ${id}`;
+  if (questionLookup.value[id] !== normalizedTitle) {
+    questionLookup.value = { ...questionLookup.value, [id]: normalizedTitle };
+  }
+  if (!questionOrder.value.includes(id)) {
+    questionOrder.value = [...questionOrder.value, id];
+  }
+};
+
+const getQuestionTitle = (questionId: number | string | undefined, fallback?: string | null) => {
+  const idString = questionId ? String(questionId) : null;
+  if (idString) {
+    if (questionLookup.value[idString]) {
+      return questionLookup.value[idString];
+    }
+    registerQuestion(idString, fallback ?? undefined);
+    return questionLookup.value[idString];
+  }
+  return fallback ?? 'Untitled Question';
+};
+
+const buildQuestionLookup = (definition: FormDefinition | null | undefined) => {
+  if (!definition) return;
+  const map: Record<string, string> = {};
+  const order: string[] = [];
+
+  const pushQuestion = (question: FormQuestion | undefined) => {
+    if (!question?.id) return;
+    const id = String(question.id);
+    if (!map[id]) {
+      map[id] = question.question ?? `Question ${id}`;
+      order.push(id);
+    }
+  };
+
+  if (Array.isArray(definition.questions)) {
+    definition.questions.forEach((question) => pushQuestion(question));
+  }
+
+  if (Array.isArray(definition.pages)) {
+    definition.pages.forEach((page) => {
+      if (Array.isArray(page?.questions)) {
+        page.questions.forEach((question) => pushQuestion(question as FormQuestion));
+      }
+    });
+  }
+
+  questionLookup.value = map;
+  questionOrder.value = order;
+};
+
 const formatBasicValue = (value: unknown): string => {
   if (value === null || value === undefined || value === '') return '—';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
@@ -662,6 +755,7 @@ const loadFormInfo = async () => {
     if (form) {
       formTitle.value = form.title ?? 'Form Responses';
       formDescription.value = form.description ?? '';
+      buildQuestionLookup(form as unknown as FormDefinition);
     }
   } catch (error) {
     // Fallback to default titles if form metadata cannot be loaded.
@@ -703,18 +797,63 @@ const exportCsv = async () => {
 
   isExporting.value = true;
   try {
+    if (!questionOrder.value.length && Object.keys(questionLookup.value).length === 0) {
+      await loadFormInfo();
+    }
+
     const rows: ResponseRow[] = hasPagination.value
       ? await fetchAllResponsesRows()
       : responseRows.value;
 
+    const token = authStore.getToken?.();
+    const answersByResponse: Record<number, Record<string, string>> = {};
+
+    for (const row of rows) {
+      try {
+        const detail = await fetchResponseDetail(formId.value, String(row.id), {
+          auth: token ? { token } : undefined,
+        });
+
+        const answerMap: Record<string, string> = {};
+        detail?.answers?.forEach((answer) => {
+          const id = answer.question?.id ?? answer.question_id;
+          if (id == null) return;
+          const idString = String(id);
+          registerQuestion(idString, answer.question?.question ?? null);
+          answerMap[idString] = formatAnswerValue(answer);
+        });
+
+        answersByResponse[row.id] = answerMap;
+      } catch (error) {
+        answersByResponse[row.id] = {};
+      }
+    }
+
+    const orderedQuestionIds = questionOrder.value.length
+      ? questionOrder.value
+      : Object.keys(questionLookup.value);
+
+    const header = [
+      'ID',
+      'Status',
+      'Submitted At',
+      'Payment Status',
+      ...orderedQuestionIds.map((id) => questionLookup.value[id] ?? `Question ${id}`),
+    ];
+
     const csvRows = [
-      ['ID', 'Status', 'Submitted At', 'Payment Status'],
-      ...rows.map((row) => [
-        String(row.id),
-        row.statusLabel,
-        row.submittedAtLabel,
-        row.paymentStatusLabel,
-      ]),
+      header,
+      ...rows.map((row) => {
+        const answerMap = answersByResponse[row.id] ?? {};
+        const answerCells = orderedQuestionIds.map((id) => answerMap[id] ?? '—');
+        return [
+          String(row.id),
+          row.statusLabel,
+          row.submittedAtLabel,
+          row.paymentStatusLabel,
+          ...answerCells,
+        ];
+      }),
     ];
 
     const csvContent = csvRows.map((cells) => cells.map((cell) => escapeCsvValue(cell)).join(',')).join('\n');
