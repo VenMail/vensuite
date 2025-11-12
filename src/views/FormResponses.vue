@@ -51,6 +51,10 @@
               <Download class="mr-2 h-4 w-4" />
               {{ isExporting ? 'Exporting…' : 'Export CSV' }}
             </Button>
+            <Button size="sm" class="min-w-[160px]" :disabled="isExporting || !responseRows.length" @click="exportToSheet">
+              <FileSpreadsheet class="mr-2 h-4 w-4" />
+              Export to Sheet
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -324,6 +328,7 @@ import {
   type LocationQueryValueRaw,
 } from 'vue-router';
 import { useFormStore } from '@/store/forms';
+import { useFileStore } from '@/store/files';
 import { useAuthStore } from '@/store/auth';
 import { fetchResponseDetail } from '@/services/forms';
 import type {
@@ -335,6 +340,8 @@ import type {
   FormResponseSummary,
 } from '@/types';
 import { saveAs } from 'file-saver';
+import { toast } from '@/composables/useToast';
+import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -343,6 +350,7 @@ import {
   MoonStar,
   PieChart,
   SunMedium,
+  FileSpreadsheet,
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -399,6 +407,7 @@ interface PaginationState {
 const route = useRoute();
 const router = useRouter();
 const formStore = useFormStore();
+const fileStore = useFileStore();
 const authStore = useAuthStore();
 
 const formId = computed(() => route.params.id as string);
@@ -797,6 +806,7 @@ const exportCsv = async () => {
 
   isExporting.value = true;
   try {
+    const promise = (async () => {
     if (!questionOrder.value.length && Object.keys(questionLookup.value).length === 0) {
       await loadFormInfo();
     }
@@ -860,6 +870,112 @@ const exportCsv = async () => {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
     saveAs(blob, `form-${formId.value}-responses-${timestamp}.csv`);
+    })();
+
+    await toast.promise(promise, {
+      loading: 'Exporting responses…',
+      success: 'CSV exported successfully',
+      error: (e: any) => e?.message || 'Failed to export CSV',
+    });
+  } finally {
+    isExporting.value = false;
+  }
+};
+
+const exportToSheet = async () => {
+  if (!responseRows.value.length || !formId.value) return;
+
+  isExporting.value = true;
+  try {
+    const promise = (async () => {
+      if (!questionOrder.value.length && Object.keys(questionLookup.value).length === 0) {
+        await loadFormInfo();
+      }
+
+      const rows: ResponseRow[] = hasPagination.value
+        ? await fetchAllResponsesRows()
+        : responseRows.value;
+
+      const token = authStore.getToken?.();
+      const answersByResponse: Record<number, Record<string, string>> = {};
+
+      for (const row of rows) {
+        try {
+          const detail = await fetchResponseDetail(formId.value, String(row.id), {
+            auth: token ? { token } : undefined,
+          });
+          const map: Record<string, string> = {};
+          detail?.answers?.forEach((answer) => {
+            const qid = String(answer.question?.id ?? answer.question_id);
+            registerQuestion(qid, answer.question?.question ?? null);
+            map[qid] = formatAnswerValue(answer);
+          });
+          answersByResponse[row.id] = map;
+        } catch {
+          answersByResponse[row.id] = {};
+        }
+      }
+
+      const orderedQuestionIds = questionOrder.value.length
+        ? questionOrder.value
+        : Object.keys(questionLookup.value);
+
+      const header = [
+        'ID',
+        'Status',
+        'Submitted At',
+        'Payment Status',
+        ...orderedQuestionIds.map((id) => questionLookup.value[id] ?? `Question ${id}`),
+      ];
+
+      const matrix: string[][] = [
+        header,
+        ...rows.map((row) => {
+          const map = answersByResponse[row.id] ?? {};
+          return [
+            String(row.id),
+            row.statusLabel,
+            row.submittedAtLabel,
+            row.paymentStatusLabel,
+            ...orderedQuestionIds.map((id) => map[id] ?? '—'),
+          ];
+        }),
+      ];
+
+      // Build Univer workbook from DEFAULT_WORKBOOK_DATA
+      const workbook: any = JSON.parse(JSON.stringify(DEFAULT_WORKBOOK_DATA));
+      const firstSheetId = workbook.sheetOrder?.[0] || 'sheet-01';
+      workbook.id = workbook.id || 'ven-wkbook-strt-01';
+      workbook.name = formTitle.value || 'Responses';
+      if (!workbook.sheets[firstSheetId]) {
+        workbook.sheets[firstSheetId] = { type: 1, id: firstSheetId, name: 'Sheet1', cellData: {} };
+      }
+      const cellData: Record<number, Record<number, any>> = {};
+      matrix.forEach((row, rIdx) => {
+        cellData[rIdx] = {} as any;
+        row.forEach((val, cIdx) => {
+          const asNum = Number(val);
+          const isNum = !Number.isNaN(asNum) && val.trim() !== '' && /^-?\d+(\.\d+)?$/.test(val);
+          cellData[rIdx][cIdx] = { v: isNum ? asNum : val, t: isNum ? 2 : 1 };
+        });
+      });
+      workbook.sheets[firstSheetId].cellData = cellData;
+
+      // Create and save new spreadsheet file
+      const title = `${formTitle.value || 'Form'} Responses (${new Date().toLocaleDateString()})`;
+      const newDoc = await fileStore.createNewDocument('xlsx', title);
+      const saved = await fileStore.saveDocument({ ...newDoc, content: JSON.stringify(workbook) } as any);
+      const targetId = saved?.document?.id || saved?.document?.server_id || newDoc.id;
+      if (targetId) {
+        router.push(`/sheets/${targetId}`);
+      }
+    })();
+
+    await toast.promise(promise, {
+      loading: 'Preparing spreadsheet…',
+      success: 'Sheet created successfully',
+      error: (e: any) => e?.message || 'Failed to export to sheet',
+    });
   } finally {
     isExporting.value = false;
   }
