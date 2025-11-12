@@ -532,6 +532,13 @@ const buildSuccessRoute = () => {
   if (playerState.value.paymentIntentId) {
     baseQuery.intentId = String(playerState.value.paymentIntentId);
   }
+  const paymentSettings = formDefinition.value?.payment;
+  if (paymentSettings?.amount_cents) {
+    baseQuery.amountCents = String(paymentSettings.amount_cents);
+  }
+  if (paymentSettings?.currency) {
+    baseQuery.currency = paymentSettings.currency;
+  }
 
   if (route.name === 'form-player-by-id' || formIdParam.value) {
     const idTarget = formIdParam.value ?? formDefinition.value?.id;

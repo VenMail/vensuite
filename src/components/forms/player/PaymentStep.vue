@@ -20,19 +20,20 @@
     </section>
 
     <section
-      v-if="client.publishableKey.value && client.clientSecret.value"
-      class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      v-if="isPreparing"
+      class="flex flex-col items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
     >
-      <div class="min-h-[80px]" ref="cardElementContainer"></div>
-      <p v-if="errorMessage" class="mt-3 text-sm text-red-600 dark:text-red-400">{{ errorMessage }}</p>
+      <div class="h-6 w-40 animate-pulse rounded bg-slate-200 dark:bg-slate-700"></div>
+      <div class="h-20 w-full animate-pulse rounded-md bg-slate-100 dark:bg-slate-800"></div>
+      <p class="text-sm text-slate-500 dark:text-slate-400">{{ statusText }}</p>
     </section>
 
     <section
       v-else
-      class="flex min-h-[120px] items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400"
+      class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
     >
-      <span v-if="client.isLoadingIntent.value">Preparing payment…</span>
-      <span v-else>Payment is not ready. Please retry.</span>
+      <div class="min-h-[80px]" ref="cardElementContainer"></div>
+      <p v-if="errorMessage" class="mt-3 text-sm text-red-600 dark:text-red-400">{{ errorMessage }}</p>
     </section>
 
     <footer class="flex justify-end gap-3">
@@ -47,7 +48,7 @@
       <button
         type="button"
         class="rounded-full border border-primary-600 bg-primary-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
-        :disabled="isSubmitting || !isCardReady"
+        :disabled="isSubmitting || !isCardReady || isPreparing"
         @click="confirmPayment"
       >
         {{ isSubmitting ? 'Processing…' : 'Pay & Submit' }}
@@ -75,6 +76,7 @@ interface StripePaymentElement {
 
 interface StripeElements {
   create(type: 'payment'): StripePaymentElement;
+  submit(): Promise<{ error?: { message?: string } }>;
 }
 
 interface StripeInstance {
@@ -156,6 +158,8 @@ const stripeElements = ref<StripeElements | null>(null);
 const cardElement = ref<StripePaymentElement | null>(null);
 const errorMessage = ref<string | null>(null);
 const isConfirming = ref(false);
+const isLoadingStripe = ref(false);
+const isMountingElements = ref(false);
 
 const playerStore = useFormPlayerStore();
 
@@ -163,6 +167,14 @@ const publishableKey = computed(() => props.client.publishableKey.value);
 const clientSecret = computed(() => props.client.clientSecret.value);
 
 const isCardReady = computed(() => !!publishableKey.value && !!clientSecret.value && !!cardElement.value);
+const isPreparing = computed(() => props.client.isLoadingIntent.value || isLoadingStripe.value || isMountingElements.value || !isCardReady.value);
+const statusText = computed(() => {
+  if (props.client.isLoadingIntent.value) return 'Creating payment intent…';
+  if (isLoadingStripe.value) return 'Loading Stripe…';
+  if (isMountingElements.value) return 'Preparing payment form…';
+  if (!isCardReady.value) return 'Payment is not ready. Please retry.';
+  return '';
+});
 
 const centsToCurrency = (amount: number, currency: string) => {
   return new Intl.NumberFormat(undefined, {
@@ -185,11 +197,13 @@ const mountCard = async () => {
   if (!publishableKey.value || !clientSecret.value || !cardElementContainer.value) return;
 
   try {
+    isLoadingStripe.value = true;
     stripeInstance.value = await getStripeInstance(publishableKey.value);
     if (!stripeInstance.value) {
       throw new Error('Unable to initialize Stripe.');
     }
 
+    isMountingElements.value = true;
     stripeElements.value = stripeInstance.value.elements({ clientSecret: clientSecret.value });
     cardElement.value = stripeElements.value.create('payment');
     cardElement.value.mount(cardElementContainer.value);
@@ -200,6 +214,9 @@ const mountCard = async () => {
     console.error('Failed to mount Stripe payment element', error);
     errorMessage.value = 'Unable to render payment form. Please refresh and try again.';
     emit('retry');
+  } finally {
+    isLoadingStripe.value = false;
+    isMountingElements.value = false;
   }
 };
 
@@ -225,6 +242,13 @@ const confirmPayment = async () => {
   errorMessage.value = null;
 
   try {
+    const submitResult = await stripeElements.value.submit();
+    if ((submitResult as any)?.error?.message) {
+      errorMessage.value = (submitResult as any).error.message;
+      playerStore.setPaymentState('failed', errorMessage.value);
+      return;
+    }
+
     const returnUrl = props.successUrl || window.location.href;
 
     const result = await stripeInstance.value.confirmPayment({

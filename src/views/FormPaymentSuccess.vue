@@ -31,14 +31,18 @@
               <dt>Response ID</dt>
               <dd>{{ responseId }}</dd>
             </div>
+            <div v-if="amountLabel">
+              <dt>Amount paid</dt>
+              <dd>{{ amountLabel }}</dd>
+            </div>
             <div v-if="paymentIntentId">
               <dt>Payment intent</dt>
               <dd>{{ paymentIntentId }}</dd>
             </div>
-            <div v-if="normalizedSlug">
+            <!-- <div v-if="normalizedSlug">
               <dt>Form</dt>
               <dd>{{ normalizedSlug }}</dd>
-            </div>
+            </div> -->
             <div>
               <dt>Completed</dt>
               <dd>{{ completedAtLabel }}</dd>
@@ -48,9 +52,9 @@
       </section>
 
       <footer class="success-host__actions">
-        <button type="button" class="success-host__button success-host__button--primary" @click="goToDashboard">
-          Go to forms dashboard
-        </button>
+        <!-- <button type="button" class="success-host__button success-host__button--primary" @click="goToDashboard">
+          Go to Venmail
+        </button> -->
         <button
           v-if="returnTarget"
           type="button"
@@ -125,6 +129,22 @@ const completedAtLabel = computed(() => new Intl.DateTimeFormat(undefined, {
   timeStyle: 'short',
 }).format(new Date()));
 
+const amountLabel = computed(() => {
+  const amountCents = route.query.amountCents;
+  if (typeof amountCents !== 'string') return null;
+  const cents = Number(amountCents);
+  if (!Number.isFinite(cents)) return null;
+  const currency = typeof route.query.currency === 'string' ? route.query.currency : 'usd';
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(cents / 100);
+  } catch {
+    return `$${(cents / 100).toFixed(2)}`;
+  }
+});
+
 const returnTarget = computed(() => {
   if (route.name === 'form-success-by-id') {
     const id = formIdParam.value;
@@ -143,9 +163,9 @@ const goToForm = () => {
   router.push(returnTarget.value as any);
 };
 
-const goToDashboard = () => {
-  router.push({ name: 'forms' });
-};
+// const goToDashboard = () => {
+//   router.push({ name: 'forms' });
+// };
 
 const themeClass = computed(() => (isSuccess.value ? 'success-host--ok' : 'success-host--warn'));
 

@@ -376,6 +376,38 @@
               </p>
             </div>
 
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment mode</label>
+              <select
+                v-model="paymentMode"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="platform">Use platform account</option>
+                <option value="custom">Use my own Stripe account</option>
+              </select>
+            </div>
+
+            <div v-if="paymentMode === 'custom'" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Stripe publishable key</label>
+                <input
+                  v-model="publishableKey"
+                  type="text"
+                  placeholder="pk_live_... or pk_test_..."
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Stripe account ID</label>
+                <input
+                  v-model="stripeAccountId"
+                  type="text"
+                  placeholder="acct_..."
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
             <div class="flex items-center justify-between">
               <button
                 class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
@@ -633,6 +665,9 @@ const showImagePicker = ref(false);
 const imagePickerMode = ref<'logo' | 'footer'>('logo');
 const showPaymentDialog = ref(false);
 const paymentAmount = ref("5.00");
+const paymentMode = ref(settingsStore.state.payment.mode || "platform");
+const publishableKey = ref(settingsStore.state.payment.stripe_publishable_key || "");
+const stripeAccountId = ref(settingsStore.state.payment.stripe_account_id || "");
 
 const DEFAULT_LOGO_WIDTH = 96;
 const MIN_LOGO_WIDTH = 40;
@@ -911,6 +946,9 @@ const openPaymentDialog = () => {
     triggerSave();
   }
   syncPaymentAmountFromStore();
+  paymentMode.value = settingsStore.state.payment.mode || "platform";
+  publishableKey.value = settingsStore.state.payment.stripe_publishable_key || "";
+  stripeAccountId.value = settingsStore.state.payment.stripe_account_id || "";
   showPaymentDialog.value = true;
 };
 
@@ -1351,6 +1389,9 @@ const updatePaymentAmount = () => {
   paymentAmount.value = clamped.toFixed(2);
   settingsStore.updatePayment({
     amount_cents: Math.round(clamped * 100),
+    mode: paymentMode.value as any,
+    stripe_publishable_key: paymentMode.value === "custom" ? (publishableKey.value || undefined) : undefined,
+    stripe_account_id: paymentMode.value === "custom" ? (stripeAccountId.value || undefined) : undefined,
   });
   showPaymentDialog.value = false;
   triggerSave();
