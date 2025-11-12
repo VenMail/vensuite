@@ -170,6 +170,7 @@ const normalizePublicFormDefinition = (raw: any): FormDefinition => {
 export interface SubmitResponsePayload {
   answers: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  captcha_token?: string;
 }
 
 export interface SubmitResponseResult {
@@ -239,6 +240,18 @@ const toNumericId = (value: unknown): number | undefined => {
     }
   }
   return undefined;
+};
+
+const normalizeCreateAnswers = (
+  answers: CreateResponseAnswers | undefined,
+): CreateResponseAnswers | undefined => {
+  if (!answers) return undefined;
+  if (Array.isArray(answers)) return answers;
+  const entries = Object.entries(answers as Record<string, unknown>);
+  return entries.map(([key, value]) => {
+    const numeric = toNumericId(key);
+    return { question_id: typeof numeric === "number" ? numeric : key, value } as any;
+  });
 };
 
 const buildSubmitResponseResultFromRecord = (
@@ -433,9 +446,13 @@ export const createOrSubmitResponse = async (
   payload: CreateResponsePayload,
   options?: RequestOptions,
 ): Promise<SubmitResponseResult> => {
+  const normalizedPayload: CreateResponsePayload = {
+    ...payload,
+    answers: normalizeCreateAnswers(payload.answers),
+  };
   const response = await apiClient.post(
     `${PUBLIC_BASE_PATH}/${slug}/responses`,
-    payload,
+    normalizedPayload,
     withRequestOptions(options),
   );
   const result = unwrapSubmitResponsePayload(response.data ?? {});
@@ -462,9 +479,13 @@ export const updateResponseDraft = async (
   payload: SubmitResponsePayload,
   options?: RequestOptions,
 ): Promise<SubmitResponseResult> => {
+  const normalizedPayload: SubmitResponsePayload = {
+    ...payload,
+    answers: normalizeCreateAnswers(payload.answers) as any,
+  } as any;
   const response = await apiClient.patch(
     `${PUBLIC_BASE_PATH}/${slug}/responses/${responseId}`,
-    payload,
+    normalizedPayload,
     withRequestOptions(options),
   );
   const result = unwrapSubmitResponsePayload(response.data ?? {});

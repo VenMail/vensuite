@@ -51,7 +51,7 @@ export const usePaymentClient = (options: UsePaymentClientOptions) => {
 
   const applyPaymentIntent = (result: PaymentIntentResult) => {
     lastResult.value = result;
-    formPlayer.setPaymentIntent(result.payment_intent_id);
+    formPlayer.setPaymentIntent(result.payment_intent_id ?? null);
     formPlayer.setPaymentClientSecret(result.client_secret);
     formPlayer.setPublishableKey(result.publishable_key);
     const mappedStatus = mapPaymentIntentStatus(result.status);

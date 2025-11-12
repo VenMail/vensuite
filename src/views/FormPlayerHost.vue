@@ -452,8 +452,16 @@ const submitAnswers = async () => {
     }
     playerStore.setResponseId(responseId);
 
-    if (responseResult.nextQuestionId) {
+    if (responseResult.nextType === 'question' && responseResult.nextQuestionId) {
       playerStore.advanceToQuestion(responseResult.nextQuestionId);
+      return;
+    }
+
+    if (responseResult.nextType === 'payment') {
+      if (responseResult.paymentIntentId) {
+        playerStore.setPaymentIntent(responseResult.paymentIntentId);
+      }
+      await startPaymentFlow(responseId);
       return;
     }
 
@@ -490,10 +498,6 @@ const submitAnswers = async () => {
     let requiresPayment = Boolean(
       responseResult.requiresPayment ?? finalStatus === 'pending_payment',
     );
-
-    if (!requiresPayment && requiresPaymentConfigured.value) {
-      requiresPayment = true;
-    }
 
     playerStore.setPaymentRequired(requiresPayment);
 

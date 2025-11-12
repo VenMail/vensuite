@@ -3,7 +3,7 @@ import { apiClient, withRequestOptions, type RequestOptions } from "./apiClient"
 export interface CreatePaymentIntentPayload {
   response_id: string;
   amount_cents: number;
-  currency: string;
+  currency?: string;
   metadata?: Record<string, unknown>;
   customer_email?: string;
   captcha_token?: string;
