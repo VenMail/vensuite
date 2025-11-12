@@ -10,11 +10,13 @@ export interface CreatePaymentIntentPayload {
 }
 
 export interface PaymentIntentResult {
-  payment_intent_id: string;
   client_secret: string;
   publishable_key: string;
-  status: "requires_payment_method" | "requires_confirmation" | "succeeded" | "processing" | "requires_action";
-  mode: "custom" | "platform";
+  currency: string;
+  amount_cents: number;
+  payment_intent_id?: string;
+  status?: "requires_payment_method" | "requires_confirmation" | "succeeded" | "processing" | "requires_action";
+  mode?: "custom" | "platform";
 }
 
 export const createPaymentIntent = async (

@@ -175,6 +175,7 @@ export interface SubmitResponsePayload {
 export interface SubmitResponseResult {
   response: FormResponse;
   nextQuestionId?: string | null;
+  nextType?: "question" | "payment" | "submit";
   requiresPayment?: boolean;
   paymentIntentId?: string | null;
 }
@@ -212,6 +213,7 @@ interface SubmitResponseApiResult {
   response: FormResponse;
   next_question_id?: string | null;
   nextQuestionId?: string | null;
+  next?: { type?: string; id?: string | number | null } | null;
   requires_payment?: boolean;
   requiresPayment?: boolean;
   payment_required?: boolean | string;
@@ -255,7 +257,7 @@ const buildSubmitResponseResultFromRecord = (
 
   for (const candidate of fallbackIdCandidates) {
     const numericId = toNumericId(candidate);
-    if (typeof numericId === "number" && rawResponse.id == null) {
+    if (typeof numericId === "number" && numericId > 0 && rawResponse.id == null) {
       rawResponse.id = numericId;
       break;
     }
@@ -277,14 +279,15 @@ const buildSubmitResponseResultFromRecord = (
     (rawResponse as Record<string, unknown>).payment_intent_id = paymentIntentField;
   }
 
-  const nextCandidate = record.nextQuestionId ?? record.next_question_id ?? record.next ?? null;
+  const nextCandidate = record.nextQuestionId ?? record.next_question_id ?? null;
   const requiresPaymentCandidate =
     record.requiresPayment ?? record.requires_payment ?? record.payment_required ?? null;
   const paymentIntentCandidate =
     record.paymentIntentId ?? record.payment_intent_id ?? record.payment_intent ?? null;
 
+  const numericRawId = toNumericId((rawResponse as Record<string, unknown>).id);
   const response: FormResponseSummary = {
-    id: (rawResponse.id as number | undefined) ?? 0,
+    id: typeof numericRawId === "number" && numericRawId > 0 ? numericRawId : 0,
     status: (rawResponse.status as string | undefined) ?? undefined,
     submitted_at: (rawResponse.submitted_at as string | undefined) ?? undefined,
     payment_status: (rawResponse.payment_status as string | undefined) ?? undefined,
@@ -293,6 +296,22 @@ const buildSubmitResponseResultFromRecord = (
   const result: SubmitResponseApiResult = {
     response: response as unknown as FormResponse,
   };
+
+  if (record.next && typeof record.next === "object" && !Array.isArray(record.next)) {
+    const next = record.next as Record<string, unknown>;
+    const type = typeof next.type === "string" ? next.type : undefined;
+    const idRaw = next.id as unknown;
+    const id =
+      typeof idRaw === "string"
+        ? idRaw
+        : typeof idRaw === "number"
+        ? String(idRaw)
+        : undefined;
+    result.next = { type, id } as any;
+    if (type === "question" && id) {
+      result.nextQuestionId = id;
+    }
+  }
 
   if (typeof nextCandidate === "string") {
     result.nextQuestionId = nextCandidate;
@@ -334,10 +353,39 @@ const normalizeSubmitResponseResult = (raw: SubmitResponseApiResult): SubmitResp
     (raw.response as any)?.paymentIntentId ??
     null;
 
+  let nextType: "question" | "payment" | "submit" | undefined;
+  let nextQuestionId: string | null = null;
+  if (raw.next && typeof raw.next === "object") {
+    const typeCandidate = (raw.next as any).type;
+    if (typeof typeCandidate === "string") {
+      const lowered = typeCandidate.toLowerCase();
+      if (lowered === "question" || lowered === "payment" || lowered === "submit") {
+        nextType = lowered as typeof nextType;
+      }
+    }
+    const idCandidate = (raw.next as any).id;
+    if (nextType === "question") {
+      if (typeof idCandidate === "string") nextQuestionId = idCandidate;
+      else if (typeof idCandidate === "number") nextQuestionId = String(idCandidate);
+    }
+  }
+
+  if (!nextQuestionId) {
+    const legacyNext = raw.nextQuestionId ?? (raw as any).next_question_id ?? null;
+    if (typeof legacyNext === "string") nextQuestionId = legacyNext;
+    else if (typeof legacyNext === "number") nextQuestionId = String(legacyNext);
+  }
+
+  let requiresPayment = coerceBoolean(requiresPaymentRaw);
+  if (nextType === "payment") {
+    requiresPayment = true;
+  }
+
   return {
     response: raw.response,
-    nextQuestionId: raw.nextQuestionId ?? raw.next_question_id ?? null,
-    requiresPayment: coerceBoolean(requiresPaymentRaw),
+    nextQuestionId,
+    nextType,
+    requiresPayment,
     paymentIntentId: paymentIntentRaw ? String(paymentIntentRaw) : null,
   };
 };
@@ -352,7 +400,10 @@ const unwrapSubmitResponsePayload = (payload: unknown): SubmitResponseApiResult 
     return record;
   }
   if (record.data && typeof record.data === "object" && !Array.isArray(record.data)) {
-    return buildSubmitResponseResultFromRecord(record.data as Record<string, unknown>);
+    const inner = record.data as Record<string, unknown>;
+    const combined: Record<string, unknown> = { ...record, ...inner };
+    delete combined.data;
+    return buildSubmitResponseResultFromRecord(combined);
   }
 
   return buildSubmitResponseResultFromRecord(record);

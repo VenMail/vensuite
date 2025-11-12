@@ -390,6 +390,11 @@ const startForm = () => {
 };
 
 const startPaymentFlow = async (responseId: string) => {
+  if (!responseId || Number(responseId) <= 0) {
+    toast.error('Invalid response. Please retry submission.');
+    stage.value = 'playing';
+    return;
+  }
   if (!formDefinition.value?.payment) return;
 
   try {
@@ -439,6 +444,12 @@ const submitAnswers = async () => {
       : await submitResponse(currentSlug, payload);
 
     const responseId = String(responseResult.response.id);
+    if (!responseId || Number(responseId) <= 0) {
+      toast.error('Could not create response. Please try again.');
+      loadError.value = 'Missing response ID';
+      stage.value = 'playing';
+      return;
+    }
     playerStore.setResponseId(responseId);
 
     if (responseResult.nextQuestionId) {
