@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-full w-full flex-col gap-6 overflow-hidden bg-background text-foreground">
     <div class="relative overflow-hidden border-b border-border/80 bg-gradient-to-br from-background via-background to-background dark:from-background dark:via-background">
-      <div class="absolute inset-y-0 right-0 hidden w-2/5 rounded-l-full bg-primary/10 blur-3xl dark:bg-primary/15 lg:block" />
+      <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-2/5 -z-10 rounded-l-full bg-primary/10 blur-3xl dark:bg-primary/15 lg:block" aria-hidden="true" />
       <div class="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
         <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div class="space-y-5">
@@ -135,12 +135,12 @@
               <Label class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground" for="status-filter">
                 Status Filter
               </Label>
-              <Select :model-value="filters.status" @update:model-value="handleStatusChange">
+              <Select :model-value="filters.status || 'all'" @update:model-value="handleStatusChange">
                 <SelectTrigger id="status-filter" class="w-44 border-none bg-background/60 text-sm shadow-none">
                   <SelectValue placeholder="All responses" />
                 </SelectTrigger>
                 <SelectContent class="rounded-lg border border-border bg-card shadow-md">
-                  <SelectItem value="">All responses</SelectItem>
+                  <SelectItem value="all">All responses</SelectItem>
                   <SelectItem value="submitted">Submitted</SelectItem>
                   <SelectItem value="pending_payment">Pending payment</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
@@ -773,7 +773,7 @@ const refresh = () => {
 };
 
 const handleStatusChange = (value: string) => {
-  filters.status = value;
+  filters.status = value === 'all' ? '' : value;
   pagination.page = 1;
   loadResponses();
 };
