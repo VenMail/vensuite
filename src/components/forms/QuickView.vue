@@ -112,7 +112,7 @@ const lastResponseLabel = computed(() =>
 );
 
 const cardClass = computed(() => [
-  "group relative flex flex-col rounded-xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md",
+  "group relative flex flex-col rounded-xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden",
   "dark:bg-slate-900 dark:border-slate-800",
   isList.value 
     ? "p-5 md:flex-row md:items-center md:justify-between md:gap-8" 
@@ -245,7 +245,7 @@ function formatRelative(value?: string | Date | null) {
         
         <p 
           v-if="form.form?.metadata?.description" 
-          class="text-sm leading-relaxed text-slate-500 line-clamp-2 dark:text-slate-400"
+          class="text-sm leading-relaxed text-slate-500 line-clamp-2 break-words dark:text-slate-400"
         >
           {{ form.form.metadata.description }}
         </p>

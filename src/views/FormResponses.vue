@@ -55,6 +55,17 @@
               <FileSpreadsheet class="mr-2 h-4 w-4" />
               Export to Sheet
             </Button>
+            <div class="flex items-center gap-3 rounded-full border border-border/60 bg-muted/40 px-3 py-2">
+              <Label for="auto-sync-switch" class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Auto-sync</Label>
+              <Switch id="auto-sync-switch" :checked="sheetSettings.autoSync" @update:checked="toggleAutoSync" />
+              <div class="hidden h-4 w-px bg-border/60 sm:block" />
+              <Button size="sm" variant="ghost" class="px-2 text-sm" :disabled="!sheetSettings.sheetId" @click="openSheet">
+                Open
+              </Button>
+              <Button size="sm" variant="ghost" class="px-2 text-sm" @click="clearSheetMapping">
+                Change
+              </Button>
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -380,6 +391,7 @@ import {
 } from '@/components/ui/select';
 import { Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import Switch from '@/components/ui/switch/Switch.vue';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -417,6 +429,9 @@ const isExporting = ref(false);
 const loadError = ref<string | null>(null);
 const formTitle = ref('Form Responses');
 const formDescription = ref<string>('');
+const formSettings = ref<any>(null);
+const sheetSettings = reactive<{ sheetId: string | null; autoSync: boolean }>({ sheetId: null, autoSync: false });
+const hasAutoSynced = ref(false);
 
 const questionLookup = ref<Record<string, string>>({});
 const questionOrder = ref<string[]>([]);
@@ -439,6 +454,8 @@ const toggleTheme = () => {
     }
   }
 };
+
+const SHEET_MAP_PREFIX = 'VENX_FORM_RESP_SHEET_';
 
 const responsesPage = ref<FormResponsesPage | null>(null);
 const summary = reactive<ResponsesMeta>({
@@ -764,6 +781,10 @@ const loadFormInfo = async () => {
     if (form) {
       formTitle.value = form.title ?? 'Form Responses';
       formDescription.value = form.description ?? '';
+      formSettings.value = (form as any).settings || null;
+      const sheetsCfg = (formSettings.value?.integrations?.sheets) || {};
+      sheetSettings.sheetId = typeof sheetsCfg.sheet_id === 'string' && sheetsCfg.sheet_id ? sheetsCfg.sheet_id : null;
+      sheetSettings.autoSync = !!sheetsCfg.auto_sync;
       buildQuestionLookup(form as unknown as FormDefinition);
     }
   } catch (error) {
@@ -778,7 +799,11 @@ const changePage = (page: number) => {
 
 const refresh = () => {
   pagination.page = 1;
-  Promise.all([loadResponses(), loadSummary()]);
+  Promise.all([loadResponses(), loadSummary()]).then(() => {
+    if (sheetSettings.autoSync && !isExporting.value) {
+      exportToSheet();
+    }
+  });
 };
 
 const handleStatusChange = (value: string) => {
@@ -961,19 +986,67 @@ const exportToSheet = async () => {
       });
       workbook.sheets[firstSheetId].cellData = cellData;
 
-      // Create and save new spreadsheet file
-      const title = `${formTitle.value || 'Form'} Responses (${new Date().toLocaleDateString()})`;
-      const newDoc = await fileStore.createNewDocument('xlsx', title);
-      const saved = await fileStore.saveDocument({ ...newDoc, content: JSON.stringify(workbook) } as any);
-      const targetId = saved?.document?.id || saved?.document?.server_id || newDoc.id;
-      if (targetId) {
-        router.push(`/sheets/${targetId}`);
+      const mapKey = `${SHEET_MAP_PREFIX}${formId.value}`;
+      const lsId = localStorage.getItem(mapKey);
+      let targetId: string | null = null;
+      const preferredId = sheetSettings.sheetId || lsId || null;
+
+      if (preferredId) {
+        const existing = await fileStore.loadDocument(preferredId, 'xlsx');
+        if (existing?.id) {
+          const savedExisting = await fileStore.saveDocument({ ...(existing as any), content: JSON.stringify(workbook) } as any);
+          const tid = (savedExisting?.document?.id as string | undefined)
+            ?? (savedExisting?.document?.server_id as string | undefined)
+            ?? (existing.id as string | undefined)
+            ?? null;
+          targetId = tid;
+        } else {
+          localStorage.removeItem(mapKey);
+          if (preferredId === sheetSettings.sheetId) {
+            sheetSettings.sheetId = null;
+          }
+        }
       }
+
+      if (!targetId) {
+        const title = `${formTitle.value || 'Form'} Responses`;
+        const newDoc = await fileStore.createNewDocument('xlsx', title);
+        const savedNew = await fileStore.saveDocument({ ...newDoc, content: JSON.stringify(workbook) } as any);
+        const tid = (savedNew?.document?.id as string | undefined)
+          ?? (savedNew?.document?.server_id as string | undefined)
+          ?? (newDoc.id as string | undefined)
+          ?? null;
+        targetId = tid;
+        if (targetId) {
+          localStorage.setItem(mapKey, targetId);
+          if (targetId !== sheetSettings.sheetId) {
+            sheetSettings.sheetId = targetId;
+            // Persist to form settings so it syncs across devices/users
+            const current = formSettings.value || {};
+            const nextSettings = {
+              ...current,
+              integrations: {
+                ...(current.integrations || {}),
+                sheets: {
+                  ...((current.integrations && current.integrations.sheets) || {}),
+                  sheet_id: targetId,
+                  auto_sync: true,
+                },
+              },
+            };
+            await formStore.updateForm(formId.value, { settings: nextSettings } as any).catch(() => undefined);
+            formSettings.value = nextSettings;
+            sheetSettings.autoSync = true;
+          }
+        }
+      }
+
+      if (targetId) router.push(`/sheets/${targetId}`);
     })();
 
     await toast.promise(promise, {
       loading: 'Preparing spreadsheet…',
-      success: 'Sheet created successfully',
+      success: 'Sheet updated successfully',
       error: (e: any) => e?.message || 'Failed to export to sheet',
     });
   } finally {
@@ -1066,6 +1139,10 @@ const retryDetail = () => {
 
 onMounted(async () => {
   await Promise.all([loadFormInfo(), loadResponses(), loadSummary()]);
+  if (sheetSettings.autoSync && !hasAutoSynced.value && !isExporting.value && responseRows.value.length) {
+    hasAutoSynced.value = true;
+    exportToSheet();
+  }
 });
 
 watch(
@@ -1098,6 +1175,54 @@ watch(
 const downloadFileAnswer = (answer: DetailAnswerItem) => {
   if (!answer.fileUrl) return;
   window.open(answer.fileUrl, '_blank');
+};
+
+const toggleAutoSync = async (checked: boolean) => {
+  sheetSettings.autoSync = !!checked;
+  const current = formSettings.value || {};
+  const nextSettings = {
+    ...current,
+    integrations: {
+      ...(current.integrations || {}),
+      sheets: {
+        ...((current.integrations && current.integrations.sheets) || {}),
+        sheet_id: sheetSettings.sheetId || null,
+        auto_sync: sheetSettings.autoSync,
+      },
+    },
+  };
+  await formStore.updateForm(formId.value, { settings: nextSettings } as any).catch(() => undefined);
+  formSettings.value = nextSettings;
+  if (sheetSettings.autoSync && responseRows.value.length && !isExporting.value) {
+    exportToSheet();
+  }
+};
+
+const openSheet = () => {
+  if (sheetSettings.sheetId) {
+    router.push(`/sheets/${sheetSettings.sheetId}`);
+  }
+};
+
+const clearSheetMapping = async () => {
+  const mapKey = `${SHEET_MAP_PREFIX}${formId.value}`;
+  localStorage.removeItem(mapKey);
+  sheetSettings.sheetId = null;
+  const current = formSettings.value || {};
+  const nextSettings = {
+    ...current,
+    integrations: {
+      ...(current.integrations || {}),
+      sheets: {
+        ...((current.integrations && current.integrations.sheets) || {}),
+        sheet_id: null,
+        auto_sync: false,
+      },
+    },
+  };
+  await formStore.updateForm(formId.value, { settings: nextSettings } as any).catch(() => undefined);
+  formSettings.value = nextSettings;
+  sheetSettings.autoSync = false;
 };
 </script>
 
