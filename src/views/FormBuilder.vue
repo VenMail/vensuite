@@ -68,7 +68,21 @@
           </button>
           <button
             class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            @click="handleShare"
+            @click="handleToggleAccepting"
+            :title="acceptingResponses ? 'Stop accepting responses' : 'Resume accepting responses'"
+          >
+            {{ acceptingResponses ? 'Stop responses' : 'Resume responses' }}
+          </button>
+          <button
+            class="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            @click="handleDeleteForm"
+            title="Delete Form"
+          >
+            Delete
+          </button>
+          <button
+            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            @click="openShareModal"
             title="Share Form"
           >
             <Share2 class="w-4 h-4 inline mr-2" />
@@ -608,6 +622,47 @@
       </div>
     </Teleport>
 
+    <!-- Share Dialog -->
+    <Dialog :open="showShareModal" @update:open="value => value ? null : closeShareModal()">
+      <DialogContent class="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Share form</DialogTitle>
+          <DialogDescription>
+            Share this form with participants or collaborators using the link below.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-4 py-2">
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Share link
+            </label>
+            <div class="flex flex-col gap-2 sm:flex-row">
+              <Input :model-value="computedShareLink" readonly class="sm:flex-1 font-mono text-sm" @focus="handleShareLinkFocus" />
+              <Button type="button" variant="outline" :disabled="!computedShareLink" @click="copyShareLink">Copy</Button>
+            </div>
+            <p class="text-xs text-slate-500">Anyone with this link can access the form based on its publish settings.</p>
+          </div>
+
+          <div v-if="shareHelperItems.length" class="grid gap-2 sm:grid-cols-2">
+            <Button v-for="item in shareHelperItems" :key="item.label" type="button" variant="outline" class="justify-start" @click="item.action">
+              {{ item.label }}
+            </Button>
+          </div>
+
+          <div v-if="isPublishingShare" class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+            Publishing form to generate share link…
+          </div>
+        </div>
+
+        <DialogFooter>
+          <DialogClose as-child>
+            <Button type="button" variant="secondary" :disabled="isPublishingShare">Close</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
   </div>
 </template>
 
@@ -632,6 +687,9 @@ import type {
 import { useFormStore } from "@/store/forms";
 import { useFormSettingsStore } from "@/store/formSettings";
 import { generateCompleteForm } from "../services/ai";
+import Input from "@/components/ui/input/Input.vue";
+import Button from "@/components/ui/button/Button.vue";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 
 const route = useRoute();
 const router = useRouter();
@@ -669,6 +727,66 @@ const paymentMode = ref(settingsStore.state.payment.mode || "platform");
 const publishableKey = ref(settingsStore.state.payment.stripe_publishable_key || "");
 const stripeAccountId = ref(settingsStore.state.payment.stripe_account_id || "");
 
+const acceptingResponses = ref(true);
+const showShareModal = ref(false);
+const isPublishingShare = ref(false);
+const shareTarget = ref<any>(null);
+const computedShareLink = computed(() => {
+  const target: any = shareTarget.value;
+  if (!target) return "";
+  const shareSlug = target?.sharing?.share_slug ?? target?.slug;
+  if (shareSlug) return `${window.location.origin}/f/${shareSlug}`;
+  if (target?.id) return `${window.location.origin}/f/by-id/${target.id}`;
+  return "";
+});
+const shareHelperItems = computed(() => {
+  const link = computedShareLink.value;
+  if (!link) return [] as any[];
+  return [{ label: "Open form", action: () => window.open(link, "_blank", "noopener,noreferrer") }];
+});
+const copyShareLink = async () => {
+  const link = computedShareLink.value;
+  if (!link) {
+    toast.error("Share link unavailable. Publish the form to get a shareable link.");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(link);
+    toast.success("Share link copied to clipboard");
+  } catch {
+    toast.error("Unable to copy link. Try copying manually.");
+  }
+};
+const handleShareLinkFocus = (event: FocusEvent) => {
+  const target = event.target as HTMLInputElement | null;
+  target?.select();
+};
+const closeShareModal = () => {
+  if (isPublishingShare.value) return;
+  showShareModal.value = false;
+  shareTarget.value = null;
+};
+const openShareModal = async () => {
+  const target = formStore.allForms.find((f) => f.id === formId.value) ?? { id: formId.value };
+  shareTarget.value = target;
+  showShareModal.value = true;
+  const hasShareSlug = (target as any).sharing?.share_slug || (target as any).slug;
+  if (hasShareSlug) return;
+  try {
+    isPublishingShare.value = true;
+    const updated = await ensurePublishedShareSlug();
+    if (updated?.sharing?.share_slug) {
+      shareTarget.value = updated;
+      await navigator.clipboard.writeText(`${window.location.origin}/f/${updated.sharing.share_slug}`);
+      toast.success("Form published. Share link copied to clipboard.");
+    } else {
+      toast.error("Unable to generate share slug. Please publish manually.");
+    }
+  } finally {
+    isPublishingShare.value = false;
+  }
+};
+
 const DEFAULT_LOGO_WIDTH = 96;
 const MIN_LOGO_WIDTH = 40;
 const MAX_LOGO_WIDTH = 200;
@@ -702,6 +820,33 @@ const logoAlignmentClass = computed(() => {
 
 const resetLogoSize = () => {
   logoWidth.value = DEFAULT_LOGO_WIDTH;
+};
+
+const handleToggleAccepting = async () => {
+  const next = !acceptingResponses.value;
+  const nextSettings: any = { integrations: undefined, responses: { accepting: next } };
+  const updated = await formStore.updateForm(formId.value, { settings: nextSettings } as unknown as FormDefinition);
+  if (updated) {
+    acceptingResponses.value = next;
+    if (next) {
+      toast.success('Form will accept new submissions.');
+    } else {
+      toast.info('Form will not accept new submissions.');
+    }
+  } else {
+    toast.error('Unable to update response settings.');
+  }
+};
+
+const handleDeleteForm = async () => {
+  if (!formId.value) return;
+  if (!window.confirm('Delete this form? This action cannot be undone.')) return;
+  const ok = await formStore.deleteForm(formId.value);
+  if (ok) {
+    router.push({ name: 'forms' });
+  } else {
+    toast.error('Could not delete form.');
+  }
 };
 
 const mapToSupportedType = (t: string): FormBlock["type"] => {
@@ -1464,30 +1609,6 @@ const ensurePublishedShareSlug = async (): Promise<FormDefinition | null> => {
   return null;
 };
 
-const handleShare = async () => {
-  if (!formId.value) return;
-  await saveForm();
-  const def = await formStore.fetchForm(formId.value);
-  const isPublished = def?.status === 'published';
-  const shareSlug = def?.sharing?.share_slug;
-  if (!isPublished || !shareSlug) {
-    toast.info('Publishing form to generate a share link…');
-    const published = await ensurePublishedShareSlug();
-    if (!published?.sharing?.share_slug) {
-      toast.error('Could not generate share link');
-      return;
-    }
-    const url = `${window.location.origin}/f/${published.sharing.share_slug}`;
-    try { await navigator.clipboard.writeText(url); } catch {}
-    toast.success('Share link copied to clipboard');
-    window.open(url, '_blank');
-    return;
-  }
-  const url = `${window.location.origin}/f/${shareSlug}`;
-  try { await navigator.clipboard.writeText(url); } catch {}
-  toast.success('Share link copied to clipboard');
-  window.open(url, '_blank');
-};
 
 const handlePreview = async () => {
   if (!formId.value) return;
@@ -1590,6 +1711,13 @@ onMounted(async () => {
     const form = await formStore.fetchForm(formId.value);
     if (form) {
       formTitle.value = form.title || "";
+      // Initialize accepting responses from form settings if present
+      try {
+        const accepting = (form as any)?.settings?.responses?.accepting;
+        if (typeof accepting === 'boolean') {
+          acceptingResponses.value = accepting;
+        }
+      } catch {}
       
       // Load settings from form
       settingsStore.hydrateFromDefinition(form as any);
