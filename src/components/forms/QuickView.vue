@@ -4,7 +4,7 @@ import { PropType } from "vue";
 import { AppForm, FormDefinition, FormData } from "@/types";
 import { Button } from "@/components/ui/button";
 import { router } from "@/main";
-import { Trash2, Edit3, Share2 } from "lucide-vue-next";
+import { Trash2, Edit3, Share2, BarChart2, Eye } from "lucide-vue-next";
 import { useFormStore } from "@/store/forms";
 
 const props = defineProps({
@@ -79,25 +79,24 @@ const statusConfig = computed(() => {
     case "published":
       return {
         label: "Published",
-        classes: "text-emerald-600 dark:text-emerald-400"
+        classes: "text-emerald-600 dark:text-emerald-400",
       };
     case "archived":
       return {
         label: "Archived",
-        classes: "text-slate-500 dark:text-slate-400"
+        classes: "text-slate-500 dark:text-slate-400",
       };
     default:
       return {
         label: "Draft",
-        classes: "text-amber-600 dark:text-amber-400"
+        classes: "text-amber-600 dark:text-amber-400",
       };
   }
 });
 
 const createdLabel = computed(() => formatDate(props.form.created_at));
-const updatedLabel = computed(() => formatRelative(props.form.updated_at ?? props.form.last_view_date ?? props.form.created_at));
 const lastResponseLabel = computed(() =>
-  props.form.last_response_at ? formatRelative(props.form.last_response_at) : '—',
+  props.form.last_response_at ? formatRelative(props.form.last_response_at) : "—",
 );
 
 // Mobile-first responsive classes
@@ -105,8 +104,8 @@ const cardClass = computed(() => [
   "group relative flex flex-col rounded-xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden",
   "dark:bg-slate-900 dark:border-slate-800",
   "p-4 sm:p-5",
-  isList.value 
-    ? "lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:p-5" 
+  isList.value
+    ? "lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:p-5"
     : "md:p-6",
 ]);
 
@@ -126,8 +125,8 @@ const statsClass = computed(() => [
 
 const actionsClass = computed(() => [
   "flex flex-wrap items-center gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800",
-  isList.value 
-    ? "lg:w-auto lg:flex-nowrap lg:border-0 lg:pt-0 lg:mt-0 lg:pl-6 lg:border-l lg:border-slate-100 dark:lg:border-slate-800" 
+  isList.value
+    ? "lg:w-auto lg:flex-nowrap lg:border-0 lg:pt-0 lg:mt-0 lg:pl-6 lg:border-l lg:border-slate-100 dark:lg:border-slate-800"
     : "sm:pt-5 sm:mt-5",
 ]);
 
@@ -229,14 +228,14 @@ function formatRelative(value?: string | Date | null) {
               {{ statusConfig.label }}
             </span>
           </div>
-          
+
           <h3 class="text-lg sm:text-xl font-semibold leading-tight text-slate-900 line-clamp-2 dark:text-white break-words">
             {{ form.title || "Untitled Form" }}
           </h3>
         </div>
-        
-        <p 
-          v-if="form.form?.metadata?.description" 
+
+        <p
+          v-if="form.form?.metadata?.description"
           class="text-xs sm:text-sm leading-relaxed text-slate-500 line-clamp-2 break-words dark:text-slate-400"
         >
           {{ form.form.metadata.description }}
@@ -253,7 +252,7 @@ function formatRelative(value?: string | Date | null) {
             {{ fieldCount }}
           </span>
         </div>
-        
+
         <button
           type="button"
           class="flex flex-col gap-1 min-w-0 text-left transition-colors"
@@ -268,7 +267,7 @@ function formatRelative(value?: string | Date | null) {
             {{ totalResponses.toLocaleString() }}
           </span>
         </button>
-        
+
         <div class="flex flex-col gap-1 min-w-0">
           <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
             Last response
@@ -277,77 +276,72 @@ function formatRelative(value?: string | Date | null) {
             {{ lastResponseLabel }}
           </span>
         </div>
-
-        <div class="flex flex-col gap-1 min-w-0">
-          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
-            Updated
-          </span>
-          <span class="text-sm font-medium tabular-nums text-slate-700 dark:text-slate-300 truncate">
-            {{ updatedLabel }}
-          </span>
-        </div>
       </div>
     </div>
 
     <!-- Actions Footer -->
     <footer :class="actionsClass">
-      <Button 
-        size="sm" 
+      <Button
+        size="sm"
         variant="default"
         class="gap-1.5 font-medium text-xs sm:text-sm whitespace-nowrap"
-        :disabled="deleting" 
+        :disabled="deleting"
         @click="launchEditor"
       >
         <Edit3 class="h-3.5 w-3.5 flex-shrink-0" />
         <span class="hidden xs:inline sm:inline">Edit</span>
         <span class="xs:hidden sm:hidden">Edit</span>
       </Button>
-      
-      <Button
-        size="sm"
-        variant="ghost"
-        class="gap-1.5 text-xs sm:text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 whitespace-nowrap"
-        :disabled="!hasResponses || deleting"
-        @click="handleResponsesClick"
-      >
-        Responses
-      </Button>
-      
-      <Button
-        v-if="props.form.id"
-        size="sm"
-        variant="ghost"
-        class="gap-1.5 text-xs sm:text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 whitespace-nowrap"
-        :disabled="deleting"
-        @click="previewForm"
-      >
-        Preview
-      </Button>
-      
-      <Button
-        v-if="props.form.id"
-        size="sm"
-        variant="ghost"
-        class="gap-1.5 text-xs sm:text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 whitespace-nowrap sm:ml-auto"
-        :disabled="deleting"
-        @click="handleShareClick"
-      >
-        <Share2 class="h-3.5 w-3.5 flex-shrink-0" />
-        Share
-      </Button>
-      
-      <button
-        v-if="isDraft"
-        type="button"
-        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-400 flex-shrink-0"
-        :disabled="deleting"
-        @click.stop="deleteDraft"
-        aria-label="Delete draft form"
-      >
-        <Trash2 class="h-4 w-4" />
-      </button>
-      
-      <span v-if="deleting" class="text-xs font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
+
+      <div class="flex items-center gap-1 sm:gap-1.5 ml-auto">
+        <Button
+          size="icon"
+          variant="ghost"
+          class="h-8 w-8 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          :disabled="!hasResponses || deleting"
+          @click="handleResponsesClick"
+          aria-label="View responses"
+        >
+          <BarChart2 class="h-4 w-4" />
+        </Button>
+
+        <Button
+          v-if="props.form.id"
+          size="icon"
+          variant="ghost"
+          class="h-8 w-8 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          :disabled="deleting"
+          @click="previewForm"
+          aria-label="Preview form"
+        >
+          <Eye class="h-4 w-4" />
+        </Button>
+
+        <Button
+          v-if="props.form.id"
+          size="icon"
+          variant="ghost"
+          class="h-8 w-8 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          :disabled="deleting"
+          @click="handleShareClick"
+          aria-label="Share form"
+        >
+          <Share2 class="h-4 w-4" />
+        </Button>
+
+        <button
+          v-if="isDraft"
+          type="button"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-400 flex-shrink-0"
+          :disabled="deleting"
+          @click.stop="deleteDraft"
+          aria-label="Delete draft form"
+        >
+          <Trash2 class="h-4 w-4" />
+        </button>
+      </div>
+
+      <span v-if="deleting" class="mt-2 text-xs font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
         Deleting…
       </span>
     </footer>
