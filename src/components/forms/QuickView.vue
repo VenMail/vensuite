@@ -74,17 +74,6 @@ const shareSlug = computed(() => props.form.sharing?.share_slug ?? props.form.sl
 const isList = computed(() => props.viewMode === "list");
 const isDraft = computed(() => (props.form.status ?? "draft") === "draft");
 
-// const statusLabel = computed(() => {
-//   switch (props.form.status) {
-//     case "published":
-//       return "Published";
-//     case "archived":
-//       return "Archived";
-//     default:
-//       return "Draft";
-//   }
-// });
-
 const statusConfig = computed(() => {
   switch (props.form.status) {
     case "published":
@@ -111,32 +100,35 @@ const lastResponseLabel = computed(() =>
   props.form.last_response_at ? formatRelative(props.form.last_response_at) : '—',
 );
 
+// Mobile-first responsive classes
 const cardClass = computed(() => [
   "group relative flex flex-col rounded-xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden",
   "dark:bg-slate-900 dark:border-slate-800",
+  "p-4 sm:p-5",
   isList.value 
-    ? "p-5 md:flex-row md:items-center md:justify-between md:gap-8" 
-    : "p-6",
+    ? "lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:p-5" 
+    : "md:p-6",
 ]);
 
 const contentClass = computed(() => [
-  "flex flex-col gap-5",
-  isList.value ? "flex-1 md:flex-row md:items-start md:gap-8" : "",
+  "flex flex-col gap-4 sm:gap-5 min-w-0",
+  isList.value ? "lg:flex-row lg:items-start lg:gap-8 lg:flex-1" : "",
 ]);
 
 const headerClass = computed(() => [
-  "flex-1 space-y-3",
-  isList.value ? "md:min-w-0" : "",
+  "flex-1 space-y-2 sm:space-y-3 min-w-0",
 ]);
 
 const statsClass = computed(() => [
-  "flex gap-8",
-  isList.value ? "md:w-auto md:gap-6" : "justify-start",
+  "grid grid-cols-2 gap-3 sm:gap-4",
+  isList.value ? "sm:flex sm:gap-4 lg:w-auto lg:gap-6" : "sm:flex sm:justify-start sm:gap-6 md:gap-8",
 ]);
 
 const actionsClass = computed(() => [
-  "flex items-center gap-2 pt-5 mt-5 border-t border-slate-100 dark:border-slate-800",
-  isList.value ? "md:w-auto md:border-0 md:pt-0 md:mt-0 md:pl-6 md:border-l md:border-slate-100 dark:md:border-slate-800" : "",
+  "flex flex-wrap items-center gap-2 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800",
+  isList.value 
+    ? "lg:w-auto lg:flex-nowrap lg:border-0 lg:pt-0 lg:mt-0 lg:pl-6 lg:border-l lg:border-slate-100 dark:lg:border-slate-800" 
+    : "sm:pt-5 sm:mt-5",
 ]);
 
 const deleting = ref(false);
@@ -227,25 +219,25 @@ function formatRelative(value?: string | Date | null) {
     <div :class="contentClass">
       <!-- Header Section -->
       <div :class="headerClass">
-        <div class="space-y-3">
-          <div class="flex items-center gap-3">
-            <span class="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+        <div class="space-y-2 sm:space-y-3">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <span class="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500 whitespace-nowrap">
               {{ createdLabel }}
             </span>
-            <span class="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-            <span :class="['text-[10px] font-semibold uppercase tracking-[0.12em]', statusConfig.classes]">
+            <span class="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600 flex-shrink-0"></span>
+            <span :class="['text-[10px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap', statusConfig.classes]">
               {{ statusConfig.label }}
             </span>
           </div>
           
-          <h3 class="text-xl font-semibold leading-tight text-slate-900 line-clamp-2 dark:text-white">
+          <h3 class="text-lg sm:text-xl font-semibold leading-tight text-slate-900 line-clamp-2 dark:text-white break-words">
             {{ form.title || "Untitled Form" }}
           </h3>
         </div>
         
         <p 
           v-if="form.form?.metadata?.description" 
-          class="text-sm leading-relaxed text-slate-500 line-clamp-2 break-words dark:text-slate-400"
+          class="text-xs sm:text-sm leading-relaxed text-slate-500 line-clamp-2 break-words dark:text-slate-400"
         >
           {{ form.form.metadata.description }}
         </p>
@@ -253,23 +245,23 @@ function formatRelative(value?: string | Date | null) {
 
       <!-- Stats Section -->
       <div :class="statsClass">
-        <div class="flex flex-col gap-1 min-w-[90px]">
-          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+        <div class="flex flex-col gap-1 min-w-0">
+          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
             Fields
           </span>
-          <span class="text-sm font-medium tabular-nums text-slate-900 dark:text-white">
+          <span class="text-sm font-medium tabular-nums text-slate-900 dark:text-white truncate">
             {{ fieldCount }}
           </span>
         </div>
         
         <button
           type="button"
-          class="flex flex-col gap-1 min-w-[90px] text-left transition-colors"
+          class="flex flex-col gap-1 min-w-0 text-left transition-colors"
           :class="hasResponses ? 'cursor-pointer text-slate-900 dark:text-white' : 'cursor-not-allowed text-slate-400 dark:text-slate-500'"
           :disabled="!hasResponses"
           @click="handleResponsesClick"
         >
-          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
             Responses
           </span>
           <span :class="responseValueClass">
@@ -277,20 +269,20 @@ function formatRelative(value?: string | Date | null) {
           </span>
         </button>
         
-        <div class="flex flex-col gap-1 min-w-[90px]">
-          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+        <div class="flex flex-col gap-1 min-w-0">
+          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
             Last response
           </span>
-          <span class="text-sm font-medium tabular-nums text-slate-700 dark:text-slate-300">
+          <span class="text-sm font-medium tabular-nums text-slate-700 dark:text-slate-300 truncate">
             {{ lastResponseLabel }}
           </span>
         </div>
 
-        <div class="flex flex-col gap-1 min-w-[90px]">
-          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+        <div class="flex flex-col gap-1 min-w-0">
+          <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
             Updated
           </span>
-          <span class="text-sm font-medium tabular-nums text-slate-700 dark:text-slate-300">
+          <span class="text-sm font-medium tabular-nums text-slate-700 dark:text-slate-300 truncate">
             {{ updatedLabel }}
           </span>
         </div>
@@ -302,18 +294,19 @@ function formatRelative(value?: string | Date | null) {
       <Button 
         size="sm" 
         variant="default"
-        class="gap-1.5 font-medium"
+        class="gap-1.5 font-medium text-xs sm:text-sm whitespace-nowrap"
         :disabled="deleting" 
         @click="launchEditor"
       >
-        <Edit3 class="h-3.5 w-3.5" />
-        Edit
+        <Edit3 class="h-3.5 w-3.5 flex-shrink-0" />
+        <span class="hidden xs:inline sm:inline">Edit</span>
+        <span class="xs:hidden sm:hidden">Edit</span>
       </Button>
       
       <Button
         size="sm"
         variant="ghost"
-        class="gap-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        class="gap-1.5 text-xs sm:text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 whitespace-nowrap"
         :disabled="!hasResponses || deleting"
         @click="handleResponsesClick"
       >
@@ -324,7 +317,7 @@ function formatRelative(value?: string | Date | null) {
         v-if="props.form.id"
         size="sm"
         variant="ghost"
-        class="gap-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        class="gap-1.5 text-xs sm:text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 whitespace-nowrap"
         :disabled="deleting"
         @click="previewForm"
       >
@@ -335,18 +328,18 @@ function formatRelative(value?: string | Date | null) {
         v-if="props.form.id"
         size="sm"
         variant="ghost"
-        class="ml-auto gap-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        class="gap-1.5 text-xs sm:text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 whitespace-nowrap sm:ml-auto"
         :disabled="deleting"
         @click="handleShareClick"
       >
-        <Share2 class="h-3.5 w-3.5" />
+        <Share2 class="h-3.5 w-3.5 flex-shrink-0" />
         Share
       </Button>
       
       <button
         v-if="isDraft"
         type="button"
-        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-400"
+        class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-400 flex-shrink-0"
         :disabled="deleting"
         @click.stop="deleteDraft"
         aria-label="Delete draft form"
@@ -354,9 +347,33 @@ function formatRelative(value?: string | Date | null) {
         <Trash2 class="h-4 w-4" />
       </button>
       
-      <span v-if="deleting" class="text-xs font-medium text-slate-400 dark:text-slate-500">
+      <span v-if="deleting" class="text-xs font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
         Deleting…
       </span>
     </footer>
   </article>
 </template>
+
+<style scoped>
+/* Ensure proper text wrapping and overflow handling */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Prevent text overflow in all contexts */
+* {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Ensure min-w-0 works properly in flex containers */
+.min-w-0 {
+  min-width: 0;
+}
+</style>

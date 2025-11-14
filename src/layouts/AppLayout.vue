@@ -63,7 +63,11 @@ const handleExternalTheme = (event: Event) => {
 const handleResize = () => {
   isMobile.value = window.innerWidth < 768
   if (isMobile.value) {
+    sidebarVisible.value = false
     sidebarCollapsed.value = true
+  } else {
+    sidebarVisible.value = true
+    sidebarCollapsed.value = false
   }
 }
 

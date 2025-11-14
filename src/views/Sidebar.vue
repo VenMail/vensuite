@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, X } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useRouter, useRoute } from 'vue-router'
 import {
@@ -16,11 +16,11 @@ import * as defaultIcons from '@iconify-prerendered/vue-file-icons'
 const props = defineProps({
   isVisible: {
     type: Boolean,
-    default: true
+    required: true
   },
   isCollapsed: {
     type: Boolean,
-    default: false
+    required: true
   }
 })
 
@@ -39,21 +39,13 @@ const router = useRouter()
 const route = useRoute()
 const activeItem = ref('Home')
 const isMobile = ref(false)
-const collapsed = ref(props.isCollapsed)
-const isDialogOpen = ref(false) // Add dialog state management
-const dialogRef = ref(null) // Reference to dialog component
+const isDialogOpen = ref(false)
+const dialogRef = ref(null)
 
-watch(() => props.isCollapsed, (value) => {
-  collapsed.value = value
-})
-
-// Watch route changes and update active item
 watch(() => route.path, (path) => {
   console.log('Route path changed:', path)
-  // Find the best matching item (longest route match)
   const matchingItems = items.filter(item => path.startsWith(item.route))
   if (matchingItems.length > 0) {
-    // Sort by route length (longest first) to get the most specific match
     const bestMatch = matchingItems.sort((a, b) => b.route.length - a.route.length)[0]
     console.log('Found matching item:', bestMatch.name)
     activeItem.value = bestMatch.name
@@ -63,11 +55,10 @@ watch(() => route.path, (path) => {
 }, { immediate: true })
 
 const toggleCollapse = () => {
-  collapsed.value = !collapsed.value
-  emit('collapse', collapsed.value)
+  emit('collapse', !props.isCollapsed)
 }
 
-const toggleSidebar = () => {
+const closeSidebar = () => {
   emit('toggle')
 }
 
@@ -75,9 +66,11 @@ const setActiveItem = (item: string, route: string) => {
   console.log('setActiveItem called:', item, route)
   activeItem.value = item
   router.push(route)
+  if (isMobile.value) {
+    closeSidebar()
+  }
 }
 
-// Detect mobile screen size (do not auto-collapse; only change layout classes)
 onMounted(() => {
   console.log('Sidebar mounted, initial route path:', route.path)
   const handleResize = () => {
@@ -87,14 +80,13 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
 })
 
-// Sidebar classes
 const sidebarClasses = computed(() =>
   cn(
     'h-full border-r transition-all duration-200',
     'bg-white dark:bg-gray-900',
     'border-gray-200 dark:border-gray-800',
     props.isVisible ? 'translate-x-0' : '-translate-x-full',
-    collapsed.value ? 'w-16' : 'w-64',
+    props.isCollapsed ? 'w-16' : 'w-64',
     isMobile.value ? 'fixed top-0 left-0 z-40' : ''
   )
 )
@@ -113,28 +105,27 @@ const templates = {
 }
 
 function handleTemplateClick(category: string, templateName: string) {
-  // Immediately close the dialog and navigate
   isDialogOpen.value = false
   createNewFile(category, templateName)
 }
 
 function createNewFile(type: string, template?: string) {
-  console.log('Creating new file:', type, template) // Debug log
+  console.log('Creating new file:', type, template)
   
   if (type === "Spreadsheets") {
     if (template?.toLowerCase().includes("blank")) {
-      console.log('Navigating directly to /sheets/new') // Debug log
+      console.log('Navigating directly to /sheets/new')
       router.push("/sheets/new")
     } else {
-      console.log('Navigating to /sheets/t/' + template) // Debug log
+      console.log('Navigating to /sheets/t/' + template)
       router.push("/sheets/t/" + template)
     }
   } else if (type === "Documents") {
     if (template?.toLowerCase().includes("blank")) {
-      console.log('Navigating directly to /docs/new') // Debug log
+      console.log('Navigating directly to /docs/new')
       router.push("/docs/new")
     } else {
-      console.log('Navigating to /docs/t/' + template) // Debug log
+      console.log('Navigating to /docs/t/' + template)
       router.push("/docs/t/" + template)
     }
   }
@@ -143,19 +134,19 @@ function createNewFile(type: string, template?: string) {
 
 <template>
   <div>
-    <!-- Collapsed Sidebar -->
+    <!-- Sidebar -->
     <div :class="sidebarClasses">
       <div class="flex flex-col h-full">
-        <!-- Top Section with New Button and Collapse Toggle -->
-        <div class="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800">
+        <!-- Top Section with New Button and Controls -->
+        <div class="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800 gap-2">
           <Dialog v-model:open="isDialogOpen" ref="dialogRef">
             <DialogTrigger asChild>
               <button
                 class="flex items-center justify-center rounded-sm bg-primary-600 text-white hover:bg-primary-700 transition-colors py-2"
-                :class="collapsed ? 'w-8 -ml-2' : 'w-full'"
+                :class="props.isCollapsed ? 'w-8' : 'flex-1'"
               >
-                <Plus class="h-5 w-5" :class="collapsed ? 'w-7' : 'mr-2'" />
-                <span v-if="!collapsed">New</span>
+                <Plus class="h-5 w-5" :class="props.isCollapsed ? '' : 'mr-2'" />
+                <span v-if="!props.isCollapsed">New</span>
               </button>
             </DialogTrigger>
             <DialogContent>
@@ -183,12 +174,17 @@ function createNewFile(type: string, template?: string) {
             </DialogContent>
           </Dialog>
           
+          <!-- Desktop: Collapse Toggle -->
           <button v-if="!isMobile" @click="toggleCollapse" :class="cn(
-            'p-1 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800',
-            collapsed ? 'w-6' : 'ml-2'
+            'p-1 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0'
           )">
-            <ChevronLeft v-if="!collapsed" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            <ChevronLeft v-if="!props.isCollapsed" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
             <ChevronRight v-else class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+          </button>
+
+          <!-- Mobile: Close Button -->
+          <button v-else @click="closeSidebar" class="p-1 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0">
+            <X class="h-5 w-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
@@ -202,14 +198,14 @@ function createNewFile(type: string, template?: string) {
               @click.prevent="setActiveItem(item.name, item.route)"
               :class="cn(
                 'flex items-center rounded-sm transition-colors',
-                collapsed ? 'justify-center py-3 px-2' : 'px-3 py-2',
+                props.isCollapsed ? 'justify-center py-3 px-2' : 'px-3 py-2',
                 activeItem === item.name
                   ? 'bg-gray-100 dark:bg-gray-800 text-primary-600 dark:text-primary-400'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
               )"
             >
-              <component :is="item.icon" class="h-5 w-5" :class="collapsed ? '' : 'mr-3'" />
-              <span v-if="!collapsed">{{ item.name }}</span>
+              <component :is="item.icon" class="h-5 w-5" :class="props.isCollapsed ? '' : 'mr-3'" />
+              <span v-if="!props.isCollapsed">{{ item.name }}</span>
             </a>
           </nav>
         </div>
@@ -217,7 +213,7 @@ function createNewFile(type: string, template?: string) {
     </div>
 
     <!-- Mobile Hamburger Icon -->
-    <button v-if="isMobile && !props.isVisible" @click="toggleSidebar" class="fixed top-4 left-4 z-50 p-2 rounded-sm bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-lg">
+    <button v-if="isMobile && !props.isVisible" @click="emit('toggle')" class="fixed top-4 left-4 z-50 p-2 rounded-sm bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-lg">
       <Menu class="h-5 w-5 text-gray-900 dark:text-gray-100" />
     </button>
   </div>

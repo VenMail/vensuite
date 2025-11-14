@@ -1,118 +1,372 @@
 <template>
   <div class="form-builder-new min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Top Bar -->
-    <div class="form-builder-new__topbar sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800">
-      <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div class="flex items-center gap-4">
+    <div
+      class="form-builder-new__topbar sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800"
+    >
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
           <button
-            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
+            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 shrink-0"
             @click="handleBack"
           >
             <ArrowLeft class="w-5 h-5" />
           </button>
-          <div>
+          <div class="min-w-0 flex-1">
             <input
               v-model="formTitle"
               type="text"
               placeholder="Untitled Form"
-              class="text-lg font-semibold bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+              class="text-base sm:text-lg font-semibold bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 w-full"
               @input="handleTitleChange"
             />
-            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <div
+              class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1"
+            >
               <span v-if="isSaving">Saving...</span>
               <span v-else-if="lastSaved">Saved {{ lastSaved }}</span>
               <span v-else>Unsaved changes</span>
             </div>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+
+        <!-- Desktop Actions (hidden on mobile) -->
+        <div class="hidden lg:flex items-center gap-3">
           <!-- Logo Toggle -->
           <button
             class="p-2 rounded-lg transition-colors"
-            :class="settingsStore.state.header.enabled ? 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+            :class="
+              settingsStore.state.header.enabled
+                ? 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+            "
             title="Logo"
             @click="ensureLogoVisible"
           >
             <ImageIcon class="w-5 h-5" />
           </button>
 
-          <!-- Payment Button (opens modal) -->
+          <!-- Preview Button -->
           <button
-            class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors border border-gray-300 dark:border-gray-600"
-            :class="settingsStore.state.payment.enabled ? 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
-            @click="openPaymentDialog"
-            title="Configure Payments"
-          >
-            <DollarSign class="w-4 h-4" />
-            <span>
-              {{ settingsStore.state.payment.enabled ? `$${paymentAmount}` : 'Enable payments' }}
-            </span>
-          </button>
-
-          <!-- Webhooks Button (modal) -->
-          <button
-            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
-            @click="handleWebhooksClick"
-            title="Configure Webhooks"
-          >
-            <Webhook class="w-5 h-5" />
-          </button>
-
-          <button
-            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            @click="handleSettings"
-            title="Form Settings"
-          >
-            <Settings class="w-4 h-4 inline mr-2" />
-            Settings
-          </button>
-          <button
-            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            @click="handleToggleAccepting"
-            :title="acceptingResponses ? 'Stop accepting responses' : 'Resume accepting responses'"
-          >
-            {{ acceptingResponses ? 'Stop responses' : 'Resume responses' }}
-          </button>
-          <button
-            class="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-            @click="handleDeleteForm"
-            title="Delete Form"
-          >
-            Delete
-          </button>
-          <button
-            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            @click="openShareModal"
-            title="Share Form"
-          >
-            <Share2 class="w-4 h-4 inline mr-2" />
-            Share
-          </button>
-          <button
-            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             @click="handlePreview"
           >
-            <Eye class="w-4 h-4 inline mr-2" />
+            <Eye class="w-4 h-4" />
             Preview
           </button>
+
+          <!-- Share Button -->
           <button
-            class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            @click="openShareModal"
+          >
+            <Share2 class="w-4 h-4" />
+            Share
+          </button>
+
+          <!-- Stop/Resume (conditional) -->
+          <button
+            v-if="isFormPublished && acceptingResponses"
+            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            @click="handleToggleAccepting"
+            title="Stop accepting responses"
+          >
+            Stop responses
+          </button>
+
+          <!-- Publish Button -->
+          <button
+            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="isPublishing || blocks.length === 0"
             @click="handlePublish"
           >
-            <Send class="w-4 h-4 inline mr-2" />
-            {{ isPublishing ? 'Publishing...' : 'Publish' }}
+            <Send class="w-4 h-4" />
+            {{ isPublishing ? "Publishing..." : "Publish" }}
           </button>
+
+          <!-- More Menu Dropdown -->
+          <div class="relative">
+            <button
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+              @click="toggleDropdown('more')"
+              title="More options"
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="5" r="2"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+                <circle cx="12" cy="19" r="2"></circle>
+              </svg>
+            </button>
+            <div
+              v-if="openDropdown === 'more'"
+              class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+              @click.stop
+            >
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  handleSettings();
+                  openDropdown = null;
+                "
+              >
+                <Settings class="w-4 h-4" />
+                Form Settings
+              </button>
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  openPaymentDialog();
+                  openDropdown = null;
+                "
+              >
+                <DollarSign class="w-4 h-4" />
+                <span>Payment</span>
+                <span class="ml-auto text-xs text-gray-500 dark:text-gray-400">{{
+                  settingsStore.state.payment.enabled ? `$${paymentAmount}` : "Off"
+                }}</span>
+              </button>
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  handleWebhooksClick();
+                  openDropdown = null;
+                "
+              >
+                <Webhook class="w-4 h-4" />
+                Webhooks
+              </button>
+              <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
+                @click="
+                  handleDeleteForm();
+                  openDropdown = null;
+                "
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  ></path>
+                </svg>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Actions (hamburger + more menu side by side) -->
+        <div class="flex lg:hidden items-center gap-2 shrink-0">
+          <!-- Hamburger Menu -->
+          <div class="relative">
+            <button
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+              @click="toggleDropdown('hamburger')"
+              title="Menu"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                ></path>
+              </svg>
+            </button>
+            <div
+              v-if="openDropdown === 'hamburger'"
+              class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+              @click.stop
+            >
+              <!-- Logo Toggle -->
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"
+                :class="
+                  settingsStore.state.header.enabled
+                    ? 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60'
+                "
+                @click="
+                  ensureLogoVisible();
+                  openDropdown = null;
+                "
+              >
+                <ImageIcon class="w-4 h-4" />
+                Logo
+              </button>
+
+              <!-- Preview -->
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  handlePreview();
+                  openDropdown = null;
+                "
+              >
+                <Eye class="w-4 h-4" />
+                Preview
+              </button>
+
+              <!-- Share -->
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  openShareModal();
+                  openDropdown = null;
+                "
+              >
+                <Share2 class="w-4 h-4" />
+                Share
+              </button>
+
+              <!-- Stop/Resume responses -->
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  handleToggleAccepting();
+                  openDropdown = null;
+                "
+                :title="
+                  acceptingResponses
+                    ? 'Stop accepting responses'
+                    : 'Resume accepting responses'
+                "
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
+                  ></path>
+                </svg>
+                {{ acceptingResponses ? "Stop responses" : "Resume responses" }}
+              </button>
+
+              <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+              <!-- Publish -->
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="isPublishing || blocks.length === 0"
+                @click="
+                  handlePublish();
+                  openDropdown = null;
+                "
+              >
+                <Send class="w-4 h-4" />
+                {{ isPublishing ? "Publishing..." : "Publish" }}
+              </button>
+            </div>
+          </div>
+
+          <!-- More Menu (vertical dots) -->
+          <div class="relative">
+            <button
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+              @click="toggleDropdown('more')"
+              title="More options"
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="5" r="2"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+                <circle cx="12" cy="19" r="2"></circle>
+              </svg>
+            </button>
+            <div
+              v-if="openDropdown === 'more'"
+              class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+              @click.stop
+            >
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  handleSettings();
+                  openDropdown = null;
+                "
+              >
+                <Settings class="w-4 h-4" />
+                Form Settings
+              </button>
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  openPaymentDialog();
+                  openDropdown = null;
+                "
+              >
+                <DollarSign class="w-4 h-4" />
+                <span>Payment</span>
+                <span class="ml-auto text-xs text-gray-500 dark:text-gray-400">{{
+                  settingsStore.state.payment.enabled ? `$${paymentAmount}` : "Off"
+                }}</span>
+              </button>
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  handleWebhooksClick();
+                  openDropdown = null;
+                "
+              >
+                <Webhook class="w-4 h-4" />
+                Webhooks
+              </button>
+              <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
+                @click="
+                  handleDeleteForm();
+                  openDropdown = null;
+                "
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  ></path>
+                </svg>
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-
     <!-- Main Content -->
     <div v-if="isLoading" class="max-w-3xl mx-auto px-6 py-24 animate-pulse">
       <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
       <div class="h-4 w-96 bg-gray-200 dark:bg-gray-700 rounded mb-8"></div>
       <div class="space-y-6">
-        <div v-for="n in 4" :key="n" class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 p-6">
+        <div
+          v-for="n in 4"
+          :key="n"
+          class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 p-6"
+        >
           <div class="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
           <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
           <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -135,30 +389,47 @@
                 class="flex flex-wrap items-center gap-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 px-4 py-3"
               >
                 <div class="flex items-center gap-4">
-                  <div class="relative group flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl p-2">
+                  <div
+                    class="relative group flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl p-2"
+                  >
                     <img
                       :src="settingsStore.state.header.logo_url"
                       alt="Logo"
                       class="rounded-lg object-contain"
                       :style="logoStyle"
                     />
-                    <div class="absolute inset-0 rounded-xl border border-dashed border-transparent group-hover:border-blue-400 group-hover:bg-blue-500/5 transition-colors"></div>
+                    <div
+                      class="absolute inset-0 rounded-xl border border-dashed border-transparent group-hover:border-blue-400 group-hover:bg-blue-500/5 transition-colors"
+                    ></div>
                   </div>
                   <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <button class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800" @click="handleLogoClick">
+                    <button
+                      class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      @click="handleLogoClick"
+                    >
                       Change
                     </button>
-                    <button class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800" @click="removeLogo">
+                    <button
+                      class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      @click="removeLogo"
+                    >
                       Remove
                     </button>
                   </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
-                  <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Align</span>
+                  <span
+                    class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                    >Align</span
+                  >
                   <button
                     class="p-2 rounded-lg border text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    :class="headerAlignment === 'left' ? 'bg-primary-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500' : 'border-gray-300 dark:border-gray-600'"
+                    :class="
+                      headerAlignment === 'left'
+                        ? 'bg-primary-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    "
                     @click="setLogoAlignment('left')"
                     title="Align left"
                   >
@@ -166,7 +437,11 @@
                   </button>
                   <button
                     class="p-2 rounded-lg border text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    :class="headerAlignment === 'center' ? 'bg-primary-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500' : 'border-gray-300 dark:border-gray-600'"
+                    :class="
+                      headerAlignment === 'center'
+                        ? 'bg-primary-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    "
                     @click="setLogoAlignment('center')"
                     title="Align center"
                   >
@@ -174,7 +449,11 @@
                   </button>
                   <button
                     class="p-2 rounded-lg border text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    :class="headerAlignment === 'right' ? 'bg-primary-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500' : 'border-gray-300 dark:border-gray-600'"
+                    :class="
+                      headerAlignment === 'right'
+                        ? 'bg-primary-600 text-white border-blue-600 dark:bg-blue-500 dark:border-blue-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    "
                     @click="setLogoAlignment('right')"
                     title="Align right"
                   >
@@ -183,7 +462,10 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
-                  <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Size</span>
+                  <span
+                    class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                    >Size</span
+                  >
                   <div class="flex items-center gap-2">
                     <label class="sr-only" for="logo-size">Logo width</label>
                     <input
@@ -195,7 +477,9 @@
                       v-model.number="logoWidth"
                       class="w-32 accent-blue-600"
                     />
-                    <span class="text-xs text-gray-500 dark:text-gray-400 w-12 text-right">{{ logoWidth }}px</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 w-12 text-right"
+                      >{{ logoWidth }}px</span
+                    >
                   </div>
                   <button
                     class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -206,11 +490,10 @@
                 </div>
               </div>
 
-              <div class="rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 p-6">
-                <div
-                  class="w-full flex"
-                  :class="logoAlignmentClass"
-                >
+              <div
+                class="rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 p-6"
+              >
+                <div class="w-full flex" :class="logoAlignmentClass">
                   <img
                     :src="settingsStore.state.header.logo_url"
                     alt="Logo preview"
@@ -257,7 +540,9 @@
             :class="[
               'block-wrapper group rounded-2xl transition-shadow',
               draggingBlockId === block.id ? 'opacity-60 cursor-grabbing' : 'cursor-grab',
-              dropIndex === index && draggingBlockId !== block.id ? 'ring-2 ring-blue-400 dark:ring-blue-500' : ''
+              dropIndex === index && draggingBlockId !== block.id
+                ? 'ring-2 ring-blue-400 dark:ring-blue-500'
+                : '',
             ]"
             draggable="true"
             @dragstart="onDragStart($event, block.id)"
@@ -287,7 +572,11 @@
         <div
           v-if="draggingBlockId"
           class="h-6 border-2 border-dashed border-transparent rounded-xl transition-colors"
-          :class="dropIndex === blocks.length ? 'border-blue-400 dark:border-blue-500 bg-blue-500/10 dark:bg-blue-500/10' : 'border-gray-200 dark:border-gray-700'"
+          :class="
+            dropIndex === blocks.length
+              ? 'border-blue-400 dark:border-blue-500 bg-blue-500/10 dark:bg-blue-500/10'
+              : 'border-gray-200 dark:border-gray-700'
+          "
           @dragenter="onDragEnter(blocks.length)"
           @dragover.prevent="onDragOverEnd"
           @drop.prevent="onDropToEnd"
@@ -302,16 +591,21 @@
         >
           <Plus class="w-5 h-5" />
           <span class="text-sm font-medium">Add a question</span>
-          <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto">or press <kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono">/</kbd></span>
+          <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto"
+            >or press
+            <kbd
+              class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono"
+              >/</kbd
+            ></span
+          >
         </button>
       </div>
 
       <!-- Empty State -->
-      <div
-        v-if="blocks.length === 0"
-        class="empty-state mt-20 text-center"
-      >
-        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 mb-6">
+      <div v-if="blocks.length === 0" class="empty-state mt-20 text-center">
+        <div
+          class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 mb-6"
+        >
           <Sparkles class="w-10 h-10 text-blue-600 dark:text-blue-400" />
         </div>
         <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
@@ -363,17 +657,27 @@
         class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
         @click.self="closePaymentDialog"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6">
+        <div
+          class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6"
+        >
           <div class="flex items-center justify-between">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Payment settings</h3>
-            <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" @click="closePaymentDialog">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+              Payment settings
+            </h3>
+            <button
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              @click="closePaymentDialog"
+            >
               <X class="w-5 h-5" />
             </button>
           </div>
 
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount to charge</label>
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >Amount to charge</label
+              >
               <div class="flex items-center gap-2">
                 <span class="text-gray-600 dark:text-gray-400">$</span>
                 <input
@@ -391,7 +695,10 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment mode</label>
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >Payment mode</label
+              >
               <select
                 v-model="paymentMode"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -403,7 +710,10 @@
 
             <div v-if="paymentMode === 'custom'" class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Stripe publishable key</label>
+                <label
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >Stripe publishable key</label
+                >
                 <input
                   v-model="publishableKey"
                   type="text"
@@ -412,7 +722,10 @@
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Stripe account ID</label>
+                <label
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >Stripe account ID</label
+                >
                 <input
                   v-model="stripeAccountId"
                   type="text"
@@ -456,32 +769,60 @@
         class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
         @click.self="closeWebhooksModal"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-3xl w-full p-0 md:p-6">
+        <div
+          class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-3xl w-full p-0 md:p-6"
+        >
           <div class="flex items-start flex-col md:flex-row gap-6">
-            <aside class="w-full md:w-64 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-800 px-6 py-4 md:py-0 md:px-0">
+            <aside
+              class="w-full md:w-64 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-800 px-6 py-4 md:py-0 md:px-0"
+            >
               <nav class="flex md:flex-col gap-4 md:gap-3">
                 <div
                   class="flex items-center gap-3"
-                  :class="webhookStep === 'intro' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-500 dark:text-gray-400'"
+                  :class="
+                    webhookStep === 'intro'
+                      ? 'text-blue-600 dark:text-blue-400 font-medium'
+                      : 'text-gray-500 dark:text-gray-400'
+                  "
                 >
-                  <span class="flex items-center justify-center w-7 h-7 rounded-full border"
-                    :class="webhookStep === 'intro' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 dark:border-blue-500' : 'border-gray-300 dark:border-gray-700'"
-                  >1</span>
+                  <span
+                    class="flex items-center justify-center w-7 h-7 rounded-full border"
+                    :class="
+                      webhookStep === 'intro'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 dark:border-blue-500'
+                        : 'border-gray-300 dark:border-gray-700'
+                    "
+                    >1</span
+                  >
                   <div>
                     <p class="text-sm leading-none">Overview</p>
-                    <span class="text-xs text-gray-400 dark:text-gray-500">Why webhooks?</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500"
+                      >Why webhooks?</span
+                    >
                   </div>
                 </div>
                 <div
                   class="flex items-center gap-3"
-                  :class="webhookStep === 'configure' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-500 dark:text-gray-400'"
+                  :class="
+                    webhookStep === 'configure'
+                      ? 'text-blue-600 dark:text-blue-400 font-medium'
+                      : 'text-gray-500 dark:text-gray-400'
+                  "
                 >
-                  <span class="flex items-center justify-center w-7 h-7 rounded-full border"
-                    :class="webhookStep === 'configure' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 dark:border-blue-500' : 'border-gray-300 dark:border-gray-700'"
-                  >2</span>
+                  <span
+                    class="flex items-center justify-center w-7 h-7 rounded-full border"
+                    :class="
+                      webhookStep === 'configure'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/40 dark:border-blue-500'
+                        : 'border-gray-300 dark:border-gray-700'
+                    "
+                    >2</span
+                  >
                   <div>
                     <p class="text-sm leading-none">Configure</p>
-                    <span class="text-xs text-gray-400 dark:text-gray-500">Add endpoints</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500"
+                      >Add endpoints</span
+                    >
                   </div>
                 </div>
               </nav>
@@ -490,13 +831,24 @@
               <div class="flex items-center justify-between mb-6">
                 <div>
                   <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-                    {{ webhookStep === 'intro' ? 'Connect webhooks' : 'Configure webhook endpoints' }}
+                    {{
+                      webhookStep === "intro"
+                        ? "Connect webhooks"
+                        : "Configure webhook endpoints"
+                    }}
                   </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400" v-if="webhookStep === 'intro'">
-                    Send form responses and payment events to your downstream systems in real time.
+                  <p
+                    class="text-sm text-gray-600 dark:text-gray-400"
+                    v-if="webhookStep === 'intro'"
+                  >
+                    Send form responses and payment events to your downstream systems in
+                    real time.
                   </p>
                 </div>
-                <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" @click="closeWebhooksModal">
+                <button
+                  class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  @click="closeWebhooksModal"
+                >
                   <X class="w-5 h-5" />
                 </button>
               </div>
@@ -504,29 +856,48 @@
               <Transition name="fade" mode="out-in">
                 <div v-if="webhookStep === 'intro'" key="webhook-intro" class="space-y-6">
                   <div class="grid gap-4">
-                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                      <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">When do webhooks fire?</h4>
-                      <ul class="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 space-y-1">
+                    <div
+                      class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50"
+                    >
+                      <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                        When do webhooks fire?
+                      </h4>
+                      <ul
+                        class="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 space-y-1"
+                      >
                         <li>Form completed</li>
                         <li>Payment succeeded or failed</li>
                         <li>Charges refunded</li>
                         <li>Any custom events you define</li>
                       </ul>
                     </div>
-                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800">
-                      <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">How it works</h4>
+                    <div
+                      class="p-4 rounded-xl border border-gray-200 dark:border-gray-800"
+                    >
+                      <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                        How it works
+                      </h4>
                       <p class="text-sm text-gray-600 dark:text-gray-400">
-                        Provide a secure HTTPS endpoint and we will POST a signed payload whenever the selected events occur.
-                        You can pause delivery at any time.
+                        Provide a secure HTTPS endpoint and we will POST a signed payload
+                        whenever the selected events occur. You can pause delivery at any
+                        time.
                       </p>
                     </div>
                   </div>
-                  <div class="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-3">
-                    <button class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" @click="closeWebhooksModal">
+                  <div
+                    class="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-3"
+                  >
+                    <button
+                      class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                      @click="closeWebhooksModal"
+                    >
                       Skip for now
                     </button>
                     <div class="flex items-center gap-3">
-                      <button class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg" @click="webhookStep = 'configure'">
+                      <button
+                        class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
+                        @click="webhookStep = 'configure'"
+                      >
                         Set up webhooks
                       </button>
                     </div>
@@ -534,12 +905,20 @@
                 </div>
                 <div v-else key="webhook-configure" class="space-y-6">
                   <WebhooksPanel :form-id="formId" key="webhooks-config" />
-                  <div class="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-3">
-                    <button class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200" @click="webhookStep = 'intro'">
+                  <div
+                    class="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-3"
+                  >
+                    <button
+                      class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                      @click="webhookStep = 'intro'"
+                    >
                       Back
                     </button>
                     <div class="flex items-center gap-3">
-                      <button class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg" @click="closeWebhooksModal">
+                      <button
+                        class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
+                        @click="closeWebhooksModal"
+                      >
                         Done
                       </button>
                     </div>
@@ -559,17 +938,26 @@
         class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
         @click.self="handleImagePickerCancel"
       >
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6">
+        <div
+          class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6"
+        >
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {{ imagePickerMode === 'logo' ? 'Choose a logo' : 'Choose a footer image' }}
+              {{ imagePickerMode === "logo" ? "Choose a logo" : "Choose a footer image" }}
             </h3>
-            <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800" @click="handleImagePickerCancel">
+            <button
+              class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              @click="handleImagePickerCancel"
+            >
               <X class="w-5 h-5" />
             </button>
           </div>
           <ImagePicker
-            :initial-url="imagePickerMode === 'logo' ? settingsStore.state.header.logo_url : settingsStore.state.header.footer_image_url"
+            :initial-url="
+              imagePickerMode === 'logo'
+                ? settingsStore.state.header.logo_url
+                : settingsStore.state.header.footer_image_url
+            "
             :submit-label="imagePickerMode === 'logo' ? 'Use logo' : 'Use image'"
             @submit="handleImageSelected"
             @cancel="handleImagePickerCancel"
@@ -615,7 +1003,7 @@
               :disabled="!aiPrompt.trim() || isGenerating"
               @click="handleGenerateAI"
             >
-              {{ isGenerating ? 'Generating...' : 'Generate' }}
+              {{ isGenerating ? "Generating..." : "Generate" }}
             </button>
           </div>
         </div>
@@ -623,7 +1011,10 @@
     </Teleport>
 
     <!-- Share Dialog -->
-    <Dialog :open="showShareModal" @update:open="value => value ? null : closeShareModal()">
+    <Dialog
+      :open="showShareModal"
+      @update:open="(value) => (value ? null : closeShareModal())"
+    >
       <DialogContent class="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Share form</DialogTitle>
@@ -638,38 +1029,78 @@
               Share link
             </label>
             <div class="flex flex-col gap-2 sm:flex-row">
-              <Input :model-value="computedShareLink" readonly class="sm:flex-1 font-mono text-sm" @focus="handleShareLinkFocus" />
-              <Button type="button" variant="outline" :disabled="!computedShareLink" @click="copyShareLink">Copy</Button>
+              <Input
+                :model-value="computedShareLink"
+                readonly
+                class="sm:flex-1 font-mono text-sm"
+                @focus="handleShareLinkFocus"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                :disabled="!computedShareLink"
+                @click="copyShareLink"
+                >Copy</Button
+              >
             </div>
-            <p class="text-xs text-slate-500">Anyone with this link can access the form based on its publish settings.</p>
+            <p class="text-xs text-slate-500">
+              Anyone with this link can access the form based on its publish settings.
+            </p>
           </div>
 
           <div v-if="shareHelperItems.length" class="grid gap-2 sm:grid-cols-2">
-            <Button v-for="item in shareHelperItems" :key="item.label" type="button" variant="outline" class="justify-start" @click="item.action">
+            <Button
+              v-for="item in shareHelperItems"
+              :key="item.label"
+              type="button"
+              variant="outline"
+              class="justify-start"
+              @click="item.action"
+            >
               {{ item.label }}
             </Button>
           </div>
 
-          <div v-if="isPublishingShare" class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+          <div
+            v-if="isPublishingShare"
+            class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500"
+          >
             Publishing form to generate share link…
           </div>
         </div>
 
         <DialogFooter>
           <DialogClose as-child>
-            <Button type="button" variant="secondary" :disabled="isPublishingShare">Close</Button>
+            <Button type="button" variant="secondary" :disabled="isPublishingShare"
+              >Close</Button
+            >
           </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowLeft, Eye, Send, Plus, Sparkles, Wand2, X, Settings, DollarSign, Image as ImageIcon, Webhook, AlignLeft, AlignCenter, AlignRight, Share2 } from "lucide-vue-next";
+import {
+  ArrowLeft,
+  Eye,
+  Send,
+  Plus,
+  Sparkles,
+  Wand2,
+  X,
+  Settings,
+  DollarSign,
+  Image as ImageIcon,
+  Webhook,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Share2,
+} from "lucide-vue-next";
 import { toast } from "@/composables/useToast";
 import BlockItemNew from "@/components/forms/blocks/BlockItemNew.vue";
 import SlashMenu from "@/components/forms/blocks/SlashMenu.vue";
@@ -678,18 +1109,21 @@ import WebhooksPanel from "@/components/forms/WebhooksPanel.vue";
 import ImagePicker from "@/components/ImagePicker.vue";
 import type { FormBlock } from "@/components/forms/blocks/types";
 import type { FormConfig } from "@/components/forms/FormConfigWizardSimple.vue";
-import type {
-  FormDefinition,
-  FormPage,
-  FormQuestion,
-  Option,
-} from "@/types";
+import type { FormDefinition, FormPage, FormQuestion, Option } from "@/types";
 import { useFormStore } from "@/store/forms";
 import { useFormSettingsStore } from "@/store/formSettings";
 import { generateCompleteForm } from "../services/ai";
 import Input from "@/components/ui/input/Input.vue";
 import Button from "@/components/ui/button/Button.vue";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const route = useRoute();
 const router = useRouter();
@@ -718,9 +1152,9 @@ const showConfigWizard = ref(false);
 const isNewForm = ref(false);
 const formConfig = ref<FormConfig | null>(null);
 const showWebhooksPanel = ref(false);
-const webhookStep = ref<'intro' | 'configure'>('intro');
+const webhookStep = ref<"intro" | "configure">("intro");
 const showImagePicker = ref(false);
-const imagePickerMode = ref<'logo' | 'footer'>('logo');
+const imagePickerMode = ref<"logo" | "footer">("logo");
 const showPaymentDialog = ref(false);
 const paymentAmount = ref("5.00");
 const paymentMode = ref(settingsStore.state.payment.mode || "platform");
@@ -731,6 +1165,19 @@ const acceptingResponses = ref(true);
 const showShareModal = ref(false);
 const isPublishingShare = ref(false);
 const shareTarget = ref<any>(null);
+
+// Dropdown state management
+const openDropdown = ref<string | null>(null);
+const toggleDropdown = (dropdownName: string) => {
+  openDropdown.value = openDropdown.value === dropdownName ? null : dropdownName;
+};
+
+// Check if form is published
+const isFormPublished = computed(() => {
+  const form = formStore.allForms.find((f) => f.id === formId.value);
+  return form?.status === "published";
+});
+
 const computedShareLink = computed(() => {
   const target: any = shareTarget.value;
   if (!target) return "";
@@ -742,7 +1189,12 @@ const computedShareLink = computed(() => {
 const shareHelperItems = computed(() => {
   const link = computedShareLink.value;
   if (!link) return [] as any[];
-  return [{ label: "Open form", action: () => window.open(link, "_blank", "noopener,noreferrer") }];
+  return [
+    {
+      label: "Open form",
+      action: () => window.open(link, "_blank", "noopener,noreferrer"),
+    },
+  ];
 });
 const copyShareLink = async () => {
   const link = computedShareLink.value;
@@ -767,7 +1219,9 @@ const closeShareModal = () => {
   shareTarget.value = null;
 };
 const openShareModal = async () => {
-  const target = formStore.allForms.find((f) => f.id === formId.value) ?? { id: formId.value };
+  const target = formStore.allForms.find((f) => f.id === formId.value) ?? {
+    id: formId.value,
+  };
   shareTarget.value = target;
   showShareModal.value = true;
   const hasShareSlug = (target as any).sharing?.share_slug || (target as any).slug;
@@ -777,7 +1231,9 @@ const openShareModal = async () => {
     const updated = await ensurePublishedShareSlug();
     if (updated?.sharing?.share_slug) {
       shareTarget.value = updated;
-      await navigator.clipboard.writeText(`${window.location.origin}/f/${updated.sharing.share_slug}`);
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/f/${updated.sharing.share_slug}`
+      );
       toast.success("Form published. Share link copied to clipboard.");
     } else {
       toast.error("Unable to generate share slug. Please publish manually.");
@@ -790,12 +1246,13 @@ const openShareModal = async () => {
 const DEFAULT_LOGO_WIDTH = 96;
 const MIN_LOGO_WIDTH = 40;
 const MAX_LOGO_WIDTH = 200;
-const clampLogoWidth = (value: number) => Math.round(Math.min(MAX_LOGO_WIDTH, Math.max(MIN_LOGO_WIDTH, value)));
+const clampLogoWidth = (value: number) =>
+  Math.round(Math.min(MAX_LOGO_WIDTH, Math.max(MIN_LOGO_WIDTH, value)));
 
 const logoWidth = ref<number>(
-  typeof settingsStore.state.header.logo_width === 'number'
+  typeof settingsStore.state.header.logo_width === "number"
     ? clampLogoWidth(settingsStore.state.header.logo_width)
-    : DEFAULT_LOGO_WIDTH,
+    : DEFAULT_LOGO_WIDTH
 );
 
 const headerAlignment = computed(() => settingsStore.state.header.alignment ?? "center");
@@ -825,27 +1282,29 @@ const resetLogoSize = () => {
 const handleToggleAccepting = async () => {
   const next = !acceptingResponses.value;
   const nextSettings: any = { integrations: undefined, responses: { accepting: next } };
-  const updated = await formStore.updateForm(formId.value, { settings: nextSettings } as unknown as FormDefinition);
+  const updated = await formStore.updateForm(formId.value, ({
+    settings: nextSettings,
+  } as unknown) as FormDefinition);
   if (updated) {
     acceptingResponses.value = next;
     if (next) {
-      toast.success('Form will accept new submissions.');
+      toast.success("Form will accept new submissions.");
     } else {
-      toast.info('Form will not accept new submissions.');
+      toast.info("Form will not accept new submissions.");
     }
   } else {
-    toast.error('Unable to update response settings.');
+    toast.error("Unable to update response settings.");
   }
 };
 
 const handleDeleteForm = async () => {
   if (!formId.value) return;
-  if (!window.confirm('Delete this form? This action cannot be undone.')) return;
+  if (!window.confirm("Delete this form? This action cannot be undone.")) return;
   const ok = await formStore.deleteForm(formId.value);
   if (ok) {
-    router.push({ name: 'forms' });
+    router.push({ name: "forms" });
   } else {
-    toast.error('Could not delete form.');
+    toast.error("Could not delete form.");
   }
 };
 
@@ -874,7 +1333,7 @@ const mapToSupportedType = (t: string): FormBlock["type"] => {
 };
 
 const normalizeBlock = (block: FormBlock): NormalizedFormBlock => {
-  const type = mapToSupportedType(block.type as unknown as string);
+  const type = mapToSupportedType((block.type as unknown) as string);
   const category = BLOCK_CATEGORY_BY_TYPE[type];
   return { ...(block as any), type, category } as NormalizedFormBlock;
 };
@@ -949,12 +1408,15 @@ const assignBlockToPage = (block: FormBlock, description: string): string => {
   return fallbackPageId;
 };
 
-const serializeBlockToQuestion = (block: NormalizedFormBlock, pageId: string): Partial<FormQuestion> => {
+const serializeBlockToQuestion = (
+  block: NormalizedFormBlock,
+  pageId: string
+): Partial<FormQuestion> => {
   const question: Partial<FormQuestion> & Record<string, unknown> = {
     id: block.id,
     page_id: pageId,
-    type: (block.type as any),
-    category: (block.category as any),
+    type: block.type as any,
+    category: block.category as any,
     question: block.question,
     description: block.description,
     placeholder: block.placeholder,
@@ -1040,11 +1502,15 @@ const buildConfigFromSettings = (): FormConfig => ({
   responseView: "table",
   showProgressBar: settingsStore.state.settings.progress_bar?.show ?? true,
   enablePayments: settingsStore.state.payment.enabled,
-  fontFamily: (settingsStore.state.typography.body_font_family?.toLowerCase() as FormConfig["fontFamily"]) || "system",
+  fontFamily:
+    (settingsStore.state.typography.body_font_family?.toLowerCase() as FormConfig["fontFamily"]) ||
+    "system",
   primaryColor: settingsStore.state.theme.primary_color ?? "#3B82F6",
   enableWebhooks: Boolean((settingsStore.state.settings as any)?.webhook_url),
   webhookUrl: (settingsStore.state.settings as any)?.webhook_url || "",
-  showLogo: Boolean(settingsStore.state.header.enabled && settingsStore.state.header.logo_url),
+  showLogo: Boolean(
+    settingsStore.state.header.enabled && settingsStore.state.header.logo_url
+  ),
   logoUrl: settingsStore.state.header.logo_url || "",
   showFooter: Boolean(settingsStore.state.header.footer_image_url),
   footerImageUrl: settingsStore.state.header.footer_image_url || "",
@@ -1205,7 +1671,10 @@ const saveForm = async () => {
     });
 
     const now = new Date();
-    lastSaved.value = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    lastSaved.value = now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } catch (error) {
     console.error("Failed to save form:", error);
     console.error("Failed to save changes");
@@ -1231,7 +1700,7 @@ const handleBlockBlur = () => {
 };
 
 const handleBlockUpdate = (updatedBlock: FormBlock) => {
-  const index = blocks.value.findIndex(b => b.id === updatedBlock.id);
+  const index = blocks.value.findIndex((b) => b.id === updatedBlock.id);
   if (index !== -1) {
     blocks.value[index] = updatedBlock;
     triggerSave();
@@ -1239,12 +1708,12 @@ const handleBlockUpdate = (updatedBlock: FormBlock) => {
 };
 
 const handleBlockDelete = (blockId: string) => {
-  blocks.value = blocks.value.filter(b => b.id !== blockId);
+  blocks.value = blocks.value.filter((b) => b.id !== blockId);
   triggerSave();
 };
 
 const handleBlockDuplicate = (blockId: string) => {
-  const index = blocks.value.findIndex(b => b.id === blockId);
+  const index = blocks.value.findIndex((b) => b.id === blockId);
   if (index !== -1) {
     const original = blocks.value[index];
     const duplicate = {
@@ -1258,7 +1727,7 @@ const handleBlockDuplicate = (blockId: string) => {
 };
 
 const handleMoveUp = (blockId: string) => {
-  const index = blocks.value.findIndex(b => b.id === blockId);
+  const index = blocks.value.findIndex((b) => b.id === blockId);
   if (index > 0) {
     // Create new array with swapped elements
     const newBlocks = [...blocks.value];
@@ -1271,7 +1740,7 @@ const handleMoveUp = (blockId: string) => {
 };
 
 const handleMoveDown = (blockId: string) => {
-  const index = blocks.value.findIndex(b => b.id === blockId);
+  const index = blocks.value.findIndex((b) => b.id === blockId);
   if (index < blocks.value.length - 1) {
     // Create new array with swapped elements
     const newBlocks = [...blocks.value];
@@ -1310,7 +1779,11 @@ const handleAddBlock = () => {
   triggerSave();
 };
 
-const openSlashMenu = (payload: { blockId: string; filter: string; position: { top: number; left: number } }) => {
+const openSlashMenu = (payload: {
+  blockId: string;
+  filter: string;
+  position: { top: number; left: number };
+}) => {
   showSlashMenu.value = true;
   slashMenuFilter.value = payload.filter;
   slashMenuPosition.value = payload.position;
@@ -1321,7 +1794,12 @@ const draggingBlockId = ref<string | null>(null);
 const dropIndex = ref<number | null>(null);
 
 const applyBlockReorder = (fromIndex: number, toIndex: number) => {
-  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= blocks.value.length) {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= blocks.value.length
+  ) {
     return;
   }
 
@@ -1440,7 +1918,10 @@ const handleSlashSelect = (type: FormBlock["type"]) => {
   };
   block.category = categoryMap[type] ?? "text";
 
-  if ((type === "radio" || type === "checkbox" || type === "select") && (!block.options || block.options.length === 0)) {
+  if (
+    (type === "radio" || type === "checkbox" || type === "select") &&
+    (!block.options || block.options.length === 0)
+  ) {
     block.options = ["Option 1", "Option 2", "Option 3"];
   }
 
@@ -1460,7 +1941,7 @@ const handleUseAI = () => {
 
 const handleGenerateAI = async () => {
   if (!aiPrompt.value.trim()) return;
-  
+
   isGenerating.value = true;
   try {
     const result = await generateCompleteForm(aiPrompt.value);
@@ -1535,20 +2016,22 @@ const updatePaymentAmount = () => {
   settingsStore.updatePayment({
     amount_cents: Math.round(clamped * 100),
     mode: paymentMode.value as any,
-    stripe_publishable_key: paymentMode.value === "custom" ? (publishableKey.value || undefined) : undefined,
-    stripe_account_id: paymentMode.value === "custom" ? (stripeAccountId.value || undefined) : undefined,
+    stripe_publishable_key:
+      paymentMode.value === "custom" ? publishableKey.value || undefined : undefined,
+    stripe_account_id:
+      paymentMode.value === "custom" ? stripeAccountId.value || undefined : undefined,
   });
   showPaymentDialog.value = false;
   triggerSave();
 };
 
 const handleLogoClick = () => {
-  imagePickerMode.value = 'logo';
+  imagePickerMode.value = "logo";
   showImagePicker.value = true;
 };
 
 const handleImageSelected = (url: string) => {
-  if (imagePickerMode.value === 'logo') {
+  if (imagePickerMode.value === "logo") {
     settingsStore.updateHeader({
       logo_url: url,
       enabled: true,
@@ -1576,7 +2059,7 @@ const removeLogo = () => {
 };
 
 const handleWebhooksClick = () => {
-  webhookStep.value = 'intro';
+  webhookStep.value = "intro";
   showWebhooksPanel.value = true;
 };
 
@@ -1609,7 +2092,6 @@ const ensurePublishedShareSlug = async (): Promise<FormDefinition | null> => {
   return null;
 };
 
-
 const handlePreview = async () => {
   if (!formId.value) return;
 
@@ -1618,9 +2100,8 @@ const handlePreview = async () => {
   const definition = await formStore.fetchForm(formId.value);
   const isPublished = definition?.status === "published";
   const shareSlug = definition?.sharing?.share_slug;
-  const target = isPublished && shareSlug
-    ? `/f/${shareSlug}`
-    : `/f/by-id/${formId.value}`;
+  const target =
+    isPublished && shareSlug ? `/f/${shareSlug}` : `/f/by-id/${formId.value}`;
 
   window.open(target, "_blank");
 };
@@ -1645,7 +2126,12 @@ const handlePublish = async () => {
   } catch (error) {
     console.error("Failed to publish form:", error);
     const fallbackMessage = "Failed to publish form";
-    if (error && typeof error === "object" && "data" in error && typeof (error as any).data?.message === "string") {
+    if (
+      error &&
+      typeof error === "object" &&
+      "data" in error &&
+      typeof (error as any).data?.message === "string"
+    ) {
       toast.error((error as any).data.message as string);
     } else if (error instanceof Error && error.message) {
       toast.error(error.message);
@@ -1656,6 +2142,14 @@ const handlePublish = async () => {
     isPublishing.value = false;
   }
 };
+
+// Close dropdowns on route change
+watch(
+  () => route.path,
+  () => {
+    openDropdown.value = null;
+  }
+);
 
 // Load form data
 watch(
@@ -1671,8 +2165,10 @@ watch(
   () => {
     if (!formConfig.value) return;
     formConfig.value.logoUrl = settingsStore.state.header.logo_url || "";
-    formConfig.value.showLogo = Boolean(settingsStore.state.header.enabled && settingsStore.state.header.logo_url);
-    if (typeof settingsStore.state.header.logo_width === 'number') {
+    formConfig.value.showLogo = Boolean(
+      settingsStore.state.header.enabled && settingsStore.state.header.logo_url
+    );
+    if (typeof settingsStore.state.header.logo_width === "number") {
       logoWidth.value = clampLogoWidth(settingsStore.state.header.logo_width);
     }
   }
@@ -1714,16 +2210,16 @@ onMounted(async () => {
       // Initialize accepting responses from form settings if present
       try {
         const accepting = (form as any)?.settings?.responses?.accepting;
-        if (typeof accepting === 'boolean') {
+        if (typeof accepting === "boolean") {
           acceptingResponses.value = accepting;
         }
       } catch {}
-      
+
       // Load settings from form
       settingsStore.hydrateFromDefinition(form as any);
       formConfig.value = buildConfigFromSettings();
       syncPaymentAmountFromStore();
-      
+
       // Check if this is a new form (no questions yet)
       isNewForm.value = !form.questions || form.questions.length === 0;
 
@@ -1757,12 +2253,12 @@ onMounted(async () => {
           }
         }
       }
-      
+
       if (isNewForm.value && !hydratedFromTemplate) {
         // Show configuration wizard for new forms
         showConfigWizard.value = true;
       }
-      
+
       // Convert backend pages and questions to blocks; preserve page IDs
       const allBlocks: FormBlock[] = [];
       if (!hydratedFromTemplate && form.pages && form.pages.length > 0) {
@@ -1773,32 +2269,39 @@ onMounted(async () => {
           title: p.title || `Page ${idx + 1}`,
           description: p.description,
           position: p.position ?? idx + 1,
-          question_order: Array.isArray((p as any).question_order) ? (p as any).question_order : [],
-          ...(p as any).metadata ? { metadata: (p as any).metadata } : {},
+          question_order: Array.isArray((p as any).question_order)
+            ? (p as any).question_order
+            : [],
+          ...((p as any).metadata ? { metadata: (p as any).metadata } : {}),
         }));
 
         sortedPages.forEach((page, pageIndex) => {
           if (pageIndex === 0 && page.description) {
             formDescription.value = page.description;
           }
-          const pageQuestions = form.questions?.filter(q => q.page_id === page.id) || [];
+          const pageQuestions =
+            form.questions?.filter((q) => q.page_id === page.id) || [];
           const sortedQuestions = [...pageQuestions].sort((a, b) => {
             const posA = (a as any).position || 0;
             const posB = (b as any).position || 0;
             return posA - posB;
           });
-          sortedQuestions.forEach(q => {
-            allBlocks.push(normalizeBlock({
-              id: q.id,
-              type: q.type as any,
-              category: q.category as any,
-              question: q.question || "",
-              description: q.description,
-              placeholder: q.placeholder,
-              required: q.required || false,
-              options: (q as any).options?.map((opt: any) => typeof opt === "string" ? opt : (opt.label || opt.value)),
-              pageId: q.page_id,
-            } as any));
+          sortedQuestions.forEach((q) => {
+            allBlocks.push(
+              normalizeBlock({
+                id: q.id,
+                type: q.type as any,
+                category: q.category as any,
+                question: q.question || "",
+                description: q.description,
+                placeholder: q.placeholder,
+                required: q.required || false,
+                options: (q as any).options?.map((opt: any) =>
+                  typeof opt === "string" ? opt : opt.label || opt.value
+                ),
+                pageId: q.page_id,
+              } as any)
+            );
           });
         });
       }
@@ -1816,6 +2319,26 @@ onMounted(async () => {
     }
   }
   isLoading.value = false;
+
+  // Close dropdowns on outside click and Escape
+  const handleClickOutside = (e: MouseEvent) => {
+    const topbar = document.querySelector(".form-builder-new__topbar");
+    if (topbar && !topbar.contains(e.target as Node)) {
+      openDropdown.value = null;
+    }
+  };
+  const handleEscape = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      openDropdown.value = null;
+    }
+  };
+  document.addEventListener("click", handleClickOutside);
+  document.addEventListener("keydown", handleEscape);
+
+  onBeforeUnmount(() => {
+    document.removeEventListener("click", handleClickOutside);
+    document.removeEventListener("keydown", handleEscape);
+  });
 });
 
 onBeforeUnmount(() => {

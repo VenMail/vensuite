@@ -44,6 +44,7 @@ const shareTarget = ref<AppForm | null>(null);
 const showShareModal = ref(false);
 const isPublishingShare = ref(false);
 const showWizard = ref(false);
+const isMobile = ref(false);
 
 const TEMPLATE_STORAGE_PREFIX = "VENX_FORM_TEMPLATE_";
 
@@ -213,11 +214,12 @@ const handleQuickViewShare = (form: AppForm) => {
   openShareModal(form);
 };
 
-const cardsContainerClass = computed(() =>
-  viewMode.value === "list"
-    ? "flex flex-col gap-4"
-    : "grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3",
-);
+const cardsContainerClass = computed(() => {
+  if (viewMode.value === "list") {
+    return "flex flex-col gap-3 sm:gap-4";
+  }
+  return "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+});
 
 const showContextMenu = computed(() => !!selectedForm.value);
 
@@ -442,13 +444,20 @@ function viewResponses() {
   router.push({ name: 'form-responses', params: { id: selectedForm.value } });
 }
 
+const handleResize = () => {
+  isMobile.value = window.innerWidth < 768;
+};
+
 onMounted(() => {
+  handleResize();
+  window.addEventListener('resize', handleResize);
   formStore.fetchForms(true);
   window.addEventListener("scroll", handleScroll);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener('resize', handleResize);
   if (debounceTimer !== null) {
     window.clearTimeout(debounceTimer);
   }
@@ -497,38 +506,79 @@ const contextMenuActions = computed(() => {
 <template>
   <div
     :class="[
-      'flex h-screen text-gray-900 transition-colors duration-200',
+      'flex h-screen text-gray-900 transition-colors duration-200 flex-col',
       'bg-gradient-to-br from-gray-50 to-gray-100',
       'dark:bg-gradient-to-br dark:from-gray-900 to-gray-800'
     ]"
   >
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- Top menubar -->
-      <div
-        class="bg-white/60 dark:bg-gray-900/60 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 p-4 flex items-center justify-between text-gray-800 dark:text-gray-100">
-        <div class="flex items-center space-x-4">
-          <div class="relative">
+    <!-- Top Menubar - Mobile First -->
+    <div
+      class="bg-white/60 dark:bg-gray-900/60 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 p-3 sm:p-4 text-gray-800 dark:text-gray-100 shrink-0"
+    >
+      <!-- Mobile Layout -->
+      <div class="flex flex-col gap-3 sm:hidden">
+        <div class="flex items-center justify-between gap-2">
+          <div class="relative flex-1">
             <SearchIcon class="absolute left-2 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500" />
-            <Input v-model="searchValue" placeholder="Search forms..." class="pl-8 w-64 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400" />
+            <Input v-model="searchValue" placeholder="Search..." class="pl-8 w-full text-sm dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400" />
           </div>
-        </div>
-        <!-- Context-aware menu -->
-        <div v-if="showContextMenu"
-          class="context-menu bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-lg p-2 flex items-center space-x-2 text-gray-800 dark:text-gray-100">
-          <Button v-for="action in contextMenuActions" :key="action.label" variant="ghost" size="sm"
-            @click="action.action" class="flex items-center">
-            <component :is="action.icon" class="mr-2 h-4 w-4" />
-            {{ action.label }}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <component :is="viewMode === 'grid' ? Grid : List" class="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem @click="viewMode = 'grid'">
+                <Grid class="mr-2 h-4 w-4" />
+                Grid View
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="viewMode = 'list'">
+                <List class="mr-2 h-4 w-4" />
+                List View
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="ghost" size="icon">
+            <Settings class="h-4 w-4" />
           </Button>
         </div>
-        <div v-else class="flex items-center space-x-4">
-          <Button variant="outline" @click="createNewForm">
+        <Button variant="outline" @click="createNewForm" class="w-full">
+          <FilePlus2 class="h-4 w-4 mr-2" />
+          New Form
+        </Button>
+      </div>
+
+      <!-- Tablet and Desktop Layout -->
+      <div class="hidden sm:flex items-center justify-between">
+        <div class="flex items-center gap-4 flex-1">
+          <div class="relative max-w-xs lg:max-w-sm">
+            <SearchIcon class="absolute left-2 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <Input v-model="searchValue" placeholder="Search forms..." class="pl-8 w-full dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400" />
+          </div>
+        </div>
+
+        <!-- Context Menu -->
+        <div v-if="showContextMenu" class="flex items-center gap-2 ml-auto">
+          <Button v-for="action in contextMenuActions" :key="action.label" variant="ghost" size="sm"
+            @click="action.action" class="flex items-center text-xs lg:text-sm">
+            <component :is="action.icon" class="mr-2 h-4 w-4" />
+            <span class="hidden lg:inline">{{ action.label }}</span>
+          </Button>
+        </div>
+
+        <!-- Default Actions -->
+        <div v-else class="flex items-center gap-2 ml-auto">
+          <Button variant="outline" @click="createNewForm" class="hidden lg:flex">
             <FilePlus2 class="mr-2 h-4 w-4" />
             New Form
           </Button>
+          <Button variant="outline" @click="createNewForm" size="icon" class="lg:hidden">
+            <FilePlus2 class="h-4 w-4" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" size="icon">
                 <component :is="viewMode === 'grid' ? Grid : List" class="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -548,105 +598,111 @@ const contextMenuActions = computed(() => {
           </Button>
         </div>
       </div>
+    </div>
 
-      <div class="flex-1 p-6 overflow-hidden">
-        <h1 v-if="forms.length < 1" class="text-4xl font-bold text-center mb-8 dark:text-white">Create and Manage Forms</h1>
+    <!-- Main Content Area -->
+    <div class="flex-1 overflow-auto p-3 sm:p-6">
+      <!-- Empty State Title -->
+      <h1 v-if="forms.length < 1" class="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-8 dark:text-white">
+        Create and Manage Forms
+      </h1>
 
-        <!-- Error message -->
-        <div v-if="errorMessage" class="text-red-500 text-center">
-          {{ errorMessage }}
-        </div>
-
-        <!-- Forms grid/list display -->
-        <div :class="cardsContainerClass">
-          <QuickViewCard
-            v-for="form in filteredForms"
-            :key="form.id"
-            :form="form"
-            :view-mode="viewMode"
-            :field-count="computeFieldCount(form) ?? undefined"
-            :response-count="computeResponseCount(form) ?? undefined"
-            @view-responses="handleQuickViewResponses"
-            @share="handleQuickViewShare"
-          />
-        </div>
-
-        <!-- Loading spinner for infinite scroll -->
-        <div v-if="loading && hasMore" class="text-center mt-6">
-          <div class="inline-block w-8 h-8 rounded-full border-4 border-gray-300 dark:border-gray-600 border-r-transparent animate-spin" role="status"></div>
-          <span class="ml-2 text-gray-600 dark:text-gray-400" v-if="forms.length > 0">Loading more forms...</span>
-          <span class="ml-2 text-gray-600 dark:text-gray-400" v-else>Loading...</span>
-        </div>
-
-        <!-- No more forms to load -->
-        <div v-if="!hasMore && !loading" class="text-center mt-6 text-gray-500 dark:text-gray-400">
-          No more forms to load.
-        </div>
+      <!-- Error Message -->
+      <div v-if="errorMessage" class="text-red-500 text-center text-sm sm:text-base mb-4">
+        {{ errorMessage }}
       </div>
 
-      <Dialog :open="showShareModal" @update:open="value => value ? null : closeShareModal()">
-        <DialogContent class="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Share form</DialogTitle>
-            <DialogDescription>
-              Share this form with participants or collaborators using the link below.
-            </DialogDescription>
-          </DialogHeader>
+      <!-- Forms Grid/List -->
+      <div :class="cardsContainerClass">
+        <QuickViewCard
+          v-for="form in filteredForms"
+          :key="form.id"
+          :form="form"
+          :view-mode="viewMode"
+          :field-count="computeFieldCount(form) ?? undefined"
+          :response-count="computeResponseCount(form) ?? undefined"
+          @view-responses="handleQuickViewResponses"
+          @share="handleQuickViewShare"
+        />
+      </div>
 
-          <div class="space-y-4 py-2">
-            <div class="space-y-2">
-              <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Share link
-              </label>
-              <div class="flex flex-col gap-2 sm:flex-row">
-                <Input
-                  :model-value="computedShareLink"
-                  readonly
-                  class="sm:flex-1 font-mono text-sm"
-                  @focus="handleShareLinkFocus"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  :disabled="!computedShareLink"
-                  @click="copyShareLink"
-                >
-                  Copy
-                </Button>
-              </div>
-              <p class="text-xs text-slate-500">
-                Anyone with this link can access the form based on its publish settings.
-              </p>
-            </div>
+      <!-- Loading Spinner -->
+      <div v-if="loading && hasMore" class="text-center mt-6 sm:mt-8">
+        <div class="inline-block w-8 h-8 rounded-full border-4 border-gray-300 dark:border-gray-600 border-r-transparent animate-spin" role="status"></div>
+        <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-if="forms.length > 0">Loading more forms...</span>
+        <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-else>Loading...</span>
+      </div>
 
-            <div v-if="shareHelperItems.length" class="grid gap-2 sm:grid-cols-2">
+      <!-- No More Forms -->
+      <div v-if="!hasMore && !loading && forms.length > 0" class="text-center mt-6 sm:mt-8 text-gray-500 dark:text-gray-400 text-sm sm:text-base">
+        No more forms to load.
+      </div>
+    </div>
+
+    <!-- Share Modal -->
+    <Dialog :open="showShareModal" @update:open="value => value ? null : closeShareModal()">
+      <DialogContent class="w-full max-w-sm sm:max-w-lg mx-auto">
+        <DialogHeader>
+          <DialogTitle>Share form</DialogTitle>
+          <DialogDescription>
+            Share this form with participants or collaborators using the link below.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-4 py-2">
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Share link
+            </label>
+            <div class="flex flex-col gap-2 sm:flex-row">
+              <Input
+                :model-value="computedShareLink"
+                readonly
+                class="flex-1 font-mono text-xs sm:text-sm"
+                @focus="handleShareLinkFocus"
+              />
               <Button
-                v-for="item in shareHelperItems"
-                :key="item.label"
                 type="button"
                 variant="outline"
-                class="justify-start"
-                @click="item.action"
+                :disabled="!computedShareLink"
+                @click="copyShareLink"
+                class="text-xs sm:text-sm"
               >
-                {{ item.label }}
+                Copy
               </Button>
             </div>
-
-            <div v-if="isPublishingShare" class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-              Publishing form to generate share link…
-            </div>
+            <p class="text-xs text-slate-500">
+              Anyone with this link can access the form based on its publish settings.
+            </p>
           </div>
 
-          <DialogFooter>
-            <DialogClose as-child>
-              <Button type="button" variant="secondary" :disabled="isPublishingShare">
-                Close
-              </Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          <div v-if="shareHelperItems.length" class="grid gap-2 sm:grid-cols-2">
+            <Button
+              v-for="item in shareHelperItems"
+              :key="item.label"
+              type="button"
+              variant="outline"
+              class="justify-start text-xs sm:text-sm"
+              @click="item.action"
+            >
+              {{ item.label }}
+            </Button>
+          </div>
+
+          <div v-if="isPublishingShare" class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+            Publishing form to generate share link…
+          </div>
+        </div>
+
+        <DialogFooter class="flex gap-2">
+          <DialogClose as-child>
+            <Button type="button" variant="secondary" :disabled="isPublishingShare" class="text-xs sm:text-sm">
+              Close
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Form Wizard -->
     <FormWizard
@@ -659,10 +715,6 @@ const contextMenuActions = computed(() => {
 </template>
 
 <style scoped>
-.container {
-  max-width: 1200px;
-}
-
 .spinner-border {
   border-right-color: transparent;
 }
