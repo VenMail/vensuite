@@ -89,6 +89,8 @@ export const useAuthStore = defineStore('auth', {
         try { localStorage.removeItem('venUserEmail'); } catch {}
         try { localStorage.removeItem('venUserId'); } catch {}
         try { localStorage.removeItem('venEmployeeId'); } catch {}
+        try { document.cookie = 'venAuthToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
+        try { document.cookie = 'vn_auth_sessid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
 
         // Eject axios interceptors and clear default Authorization header
         try {
@@ -122,13 +124,55 @@ export const useAuthStore = defineStore('auth', {
       return `${AUTH_URL}?redirect_uri=${encodeURIComponent(redirectUri)}`;
     },
     async handleTokenExpiration() {
-      await this.logout();
-      if (this.router) {
-        console.log("current", this.router.currentRoute)
-        const currentPath = this.router.currentRoute.fullPath;
-        await this.router.push({
+      const router = this.router;
+      let redirectPath = '/';
+
+      // Capture the route where the session actually expired, but avoid
+      // redirect loops when already on auth routes.
+      try {
+        if (router && router.currentRoute) {
+          const current = router.currentRoute;
+          const name = current.name as string | undefined;
+          if (name !== 'login' && name !== 'oauthCallback') {
+            redirectPath = current.fullPath || '/';
+          }
+        }
+      } catch {}
+
+      // Clear authentication state and tokens, but intentionally preserve
+      // offline file data so drafts can sync after re-login.
+      try {
+        this.token = null;
+        this.isAuthenticated = false;
+        this.firstName = "";
+        this.lastName = "";
+        this.email = "";
+        this.userId = "";
+        this.employeeId = "";
+
+        try { localStorage.removeItem('venAuthToken'); } catch {}
+        try { localStorage.removeItem('venUserFirstName'); } catch {}
+        try { localStorage.removeItem('venUserLastName'); } catch {}
+        try { localStorage.removeItem('venUserEmail'); } catch {}
+        try { localStorage.removeItem('venUserId'); } catch {}
+        try { localStorage.removeItem('venEmployeeId'); } catch {}
+        try { document.cookie = 'venAuthToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
+        try { document.cookie = 'vn_auth_sessid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
+
+        try {
+          if (this._axiosInterceptorIds.req != null) axios.interceptors.request.eject(this._axiosInterceptorIds.req)
+          if (this._axiosInterceptorIds.res != null) axios.interceptors.response.eject(this._axiosInterceptorIds.res)
+          this._axiosInterceptorIds = { req: null, res: null }
+        } catch {}
+        try { delete (axios.defaults.headers as any)?.common?.Authorization; } catch {}
+      } catch (e) {
+        console.warn('Token expiration cleanup encountered an issue:', e);
+      }
+
+      if (router) {
+        await router.push({
           name: 'login',
-          query: { redirect: currentPath },
+          query: { redirect: redirectPath, reason: 'session-expired' },
         });
       }
     },
@@ -153,13 +197,13 @@ export const useAuthStore = defineStore('auth', {
         return config
       })
 
-      // Response: handle 401/403
+      // Response: handle auth failures (401/403/419)
       const resId = axios.interceptors.response.use(
         (response) => response,
         async (error) => {
           if (error.response) {
             const status = error.response.status
-            if (status === 401 || status === 403) {
+            if (status === 401 || status === 403 || status === 419) {
               // Only redirect to login if we actually had a token/session
               // Guests viewing public/link resources should not be forced to login
               const hadToken = !!this.getToken()

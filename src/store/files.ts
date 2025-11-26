@@ -1220,8 +1220,17 @@ export const useFileStore = defineStore("files", {
           await this.reconcileOfflineDocuments(serverIds);
         } catch { }
         return processedDocs;
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading documents:", error);
+
+        // If authentication failed, do not silently fall back to offline mode.
+        // Let the global axios auth interceptor trigger a logout + re-login flow instead.
+        const status = error?.response?.status ?? error?.status;
+        if (status === 401 || status === 403) {
+          this.lastError = "Authentication required";
+          throw error;
+        }
+
         this.lastError = "Failed to load documents";
 
         // Load offline documents if online fetch fails
@@ -1492,6 +1501,7 @@ export const useFileStore = defineStore("files", {
         const response = await axios.get(`${FILES_ENDPOINT}/import/${attachId}`, {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
+        console.log("Imported attachment:", response.data.data);
         const doc = response.data.data as FileData;
         doc.id = uuidv4();
         doc.last_viewed = new Date();

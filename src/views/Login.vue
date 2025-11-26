@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/button'
 import { LoaderCircle } from 'lucide-vue-next'
+import { toast } from '@/composables/useToast'
 
 const router = useRouter()
 const route = useRoute()
@@ -25,6 +26,12 @@ function loginWithVenmail() {
 }
 
 onMounted(async () => {
+  // Show a minimal toast if we arrived here because the session expired
+  const reason = route.query.reason as string | undefined
+  if (reason === 'session-expired') {
+    toast.info('Session expired. Please sign in again to continue.')
+  }
+
   try {
     const token = authStore.getToken() || route.query.token as string
     if (!token) return
