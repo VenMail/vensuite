@@ -3275,7 +3275,7 @@ onUnmounted(() => {
 }
 
 :deep(.breaker[data-collapsed='true'] .rm-pagination-gap::before) {
-  content: 'Page break - click to expand';
+  content: 'Page break';
   font-size: 11px;
   line-height: 1;
   color: #6b7280; /* gray-600 */
