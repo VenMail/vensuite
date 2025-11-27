@@ -52,6 +52,8 @@ const userIdToTokens = new Map();        // userId -> Set<token>
 const meetingRooms = new Map();          // meetingCode -> Set<WebSocket>
 const guestConnections = new Map();      // guestEmail -> WebSocket
 const meetingChatMessages = new Map();   // meetingCode -> Array<ChatMessage>
+const orgRooms = new Map();              // orgId -> Set<WebSocket>
+const orgChatMessages = new Map();       // orgId -> Array<ChatMessage>
 
 const decoder = new TextDecoder();
 //const md5 = (data) => createHash("md5").update(data).digest("hex");
@@ -59,7 +61,7 @@ const decoder = new TextDecoder();
 // Graceful shutdown
 function cleanup() {
   logger.info("Initiating graceful shutdown");
-  
+
   // Close all WebSocket connections
   activeTokens.forEach(({ ws }, token) => {
     try {
@@ -68,7 +70,7 @@ function cleanup() {
       logger.error("Error closing connection", { token, error: e.message });
     }
   });
-  
+
   // Clear state
   sheetSockets.clear();
   accountConnections.clear();
@@ -77,11 +79,60 @@ function cleanup() {
   meetingRooms.clear();
   guestConnections.clear();
   meetingChatMessages.clear();
-  
+  orgRooms.clear();
+  orgChatMessages.clear();
+
   // Close Memcached connection
   cache.end();
 }
 
+// Org Chat Utilities
+async function storeOrgChatMessage(orgId, message) {
+  try {
+    if (!orgChatMessages.has(orgId)) {
+      orgChatMessages.set(orgId, []);
+    }
+    const messages = orgChatMessages.get(orgId);
+    messages.push(message);
+    if (messages.length > config.messageLimit) {
+      messages.splice(0, messages.length - config.messageLimit);
+    }
+    await new Promise((resolve, reject) => {
+      cache.set(
+        `org_chat_${orgId}`,
+        JSON.stringify(messages),
+        86400,
+        err => err ? reject(err) : resolve()
+      );
+    });
+    logger.debug('Stored org chat message', { orgId, messageId: message.id, messagesCount: messages.length });
+  } catch (error) {
+    logger.error('Failed to store org chat message', { orgId, error: error.message });
+  }
+}
+
+function getOrgChatMessages(orgId) {
+  return new Promise((resolve) => {
+    if (orgChatMessages.has(orgId)) {
+      return resolve(orgChatMessages.get(orgId));
+    }
+    cache.get(`org_chat_${orgId}`, (err, data) => {
+      if (err) {
+        logger.error('Error fetching org chat messages from cache', { orgId, error: err.message });
+        return resolve([]);
+      }
+      try {
+        const messages = data ? JSON.parse(data) : [];
+        orgChatMessages.set(orgId, messages);
+        resolve(messages);
+      } catch (e) {
+        logger.error('Corrupted org chat cache data', { orgId, error: e.message });
+        orgChatMessages.set(orgId, []);
+        resolve([]);
+      }
+    });
+  });
+}
 process.on("SIGTERM", () => {
   logger.info("Received SIGTERM");
   cleanup();
@@ -99,15 +150,15 @@ let app;
 // WebSocket application
 function createWebSocketApp() {
   app = App();
-  
+
   // Special endpoint for server-to-server communication
   app.post("/special", (res, req) => {
-    readJson(res, 
+    readJson(res,
       (data) => handleSpecialRequest(res, data),
       () => handleInvalidRequest(res)
     );
   });
-  
+
   // Meeting notification endpoint
   app.post("/meeting-notification", (res, req) => {
     readJson(res,
@@ -123,16 +174,16 @@ function createWebSocketApp() {
     maxPayloadLength: config.maxPayload,
     compression: DEDICATED_DECOMPRESSOR_4KB,
     sendPingsAutomatically: true,
-    
+
     upgrade: (res, req, context) => {
       const meetingCode = req.getQuery('code');
       const guestEmail = req.getQuery("email");
       const guestName = req.getQuery("name");
-      
+
       if (!meetingCode) {
         return res.cork(() => res.writeStatus("400 Bad Request").end("Missing meeting code"));
       }
-      
+
       res.upgrade(
         {
           meetingCode,
@@ -147,31 +198,31 @@ function createWebSocketApp() {
         context
       );
     },
-    
+
     open: (ws) => {
       ws.isAlive = true;
-      
+
       // Add to meeting room connections
       if (ws.meetingCode) {
         if (!meetingRooms.has(ws.meetingCode)) {
           meetingRooms.set(ws.meetingCode, new Set());
         }
         meetingRooms.get(ws.meetingCode).add(ws);
-        
+
         // Subscribe the client to the meeting topic
         ws.subscribe(`meeting:${ws.meetingCode}`);
-        
+
         logger.info(`Client joined meeting room and subscribed to topic`, {
           meetingCode: ws.meetingCode,
           isGuest: ws.isGuest,
           guestEmail: ws.guestEmail
         });
-        
+
         // Track guest connection separately for direct notifications
         if (ws.isGuest && ws.guestEmail) {
           guestConnections.set(ws.guestEmail, ws);
         }
-        
+
         // Send ready message
         safeSend(ws, JSON.stringify({
           type: 'ready',
@@ -180,21 +231,21 @@ function createWebSocketApp() {
             timestamp: new Date().toISOString()
           }
         }));
-        
+
         // Send chat history
         sendMeetingChatHistory(ws);
       }
     },
-    
+
     message: (ws, message, isBinary) => {
       if (isBinary) {
         logger.warn('Received binary message, ignoring');
         return;
       }
-      
+
       try {
         const data = JSON.parse(Buffer.from(message).toString());
-        
+
         // Handle different message types
         if (data.type === 'chat_message') {
           handleMeetingChatMessage(ws, data);
@@ -207,31 +258,31 @@ function createWebSocketApp() {
         logger.error('Error processing message', { error: error.message });
       }
     },
-    
+
     close: (ws, code, message) => {
       const meetingCode = ws.meetingCode;
       logger.info(`Client disconnected from meeting room: ${meetingCode}`, { code });
-      
+
       // Unsubscribe from the meeting topic
       ws.unsubscribe(`meeting:${meetingCode}`);
-      
+
       // Remove from meeting room connections
       if (meetingRooms.has(meetingCode)) {
         meetingRooms.get(meetingCode).delete(ws);
-        
+
         // Clean up empty meeting rooms
         if (meetingRooms.get(meetingCode).size === 0) {
           meetingRooms.delete(meetingCode);
         }
       }
-      
+
       // Remove guest connection tracking
       if (ws.isGuest && ws.guestEmail && guestConnections.has(ws.guestEmail)) {
         guestConnections.delete(ws.guestEmail);
       }
     }
   });
-  
+
   // Main WebSocket handler
   app.ws("/*", {
     idleTimeout: 30,
@@ -243,7 +294,7 @@ function createWebSocketApp() {
     // Keep the pong handler to track client responses to our pings
     pong: (ws) => {
       ws.isAlive = true;
-      logger.debug("Received pong from client", { 
+      logger.debug("Received pong from client", {
         userId: ws.userId || 'unknown',
         sheetId: ws.sheetId || 'unknown'
       });
@@ -252,7 +303,7 @@ function createWebSocketApp() {
     upgrade: (res, req, context) => {
       const abort = { done: false };
       const token = req.getQuery("token");
-      
+
       res.onAborted(() => {
         if (token) activeTokens.delete(token);
         abort.done = true;
@@ -281,7 +332,7 @@ function createWebSocketApp() {
     open: (ws) => {
       // Initialize connection as alive
       ws.isAlive = true;
-      
+
       if (ws.sheetId) {
         handleSheetOpen(ws);
       } else {
@@ -331,7 +382,7 @@ function createWebSocketApp() {
           ws.send('pong', false, true); // Send 'pong' response, not binary, compressed
           return; // Skip further processing for ping messages
         }
-        
+
         // Process normal messages
         if (ws.sheetId) {
           handleSheetMessage(ws, text);
@@ -396,7 +447,7 @@ function handleTokenUpgrade(res, req, context, token, abort) {
     } catch (e) {
       return res.cork(() => res.writeStatus("401 Unauthorized").end("Invalid token"));
     }
-    
+
     if (err || !tokenData || !tokenData.user_id || !tokenData.accounts || new Date() > new Date(tokenData.valid_until)) {
       return res.cork(() => res.writeStatus("401 Unauthorized").end("Invalid token data"));
     }
@@ -412,11 +463,19 @@ function handleTokenUpgrade(res, req, context, token, abort) {
         userId: tokenData.user_id,
         accounts: validAccounts,
         ws: null,
+        // Preserve org chat feature flag from token, defaulting to enabled when undefined
+        org_chat_enabled: tokenData.org_chat_enabled !== false
       });
 
       if (!abort.done) {
         res.upgrade(
-          { userId: tokenData.user_id, token, accounts: validAccounts },
+          {
+            userId: tokenData.user_id,
+            token,
+            accounts: validAccounts,
+            // Expose org chat flag on the ws instance for downstream handlers
+            orgChatEnabled: tokenData.org_chat_enabled !== false
+          },
           secWebSocketKey,
           secWebSocketProtocol,
           secWebSocketExtensions,
@@ -429,14 +488,14 @@ function handleTokenUpgrade(res, req, context, token, abort) {
 
 function validateAccounts(currentToken, accountIds, callback) {
   if (!accountIds) return callback([]);
-  
+
   const accountArray = Array.isArray(accountIds)
     ? accountIds
     : Object.values(accountIds).map(id => id.toString());
 
   // Use Promise.all directly
   Promise.all(accountArray.map(id =>
-    new Promise(resolve => 
+    new Promise(resolve =>
       cache.get(`active_token_${id}`, (err, storedToken) => {
         if (err) {
           console.error('Cache error:', err);
@@ -462,6 +521,8 @@ function handleTokenOpen(ws) {
   tokenData.ws = ws;
 
   // Manage token-user mapping
+  // Feature flags
+  ws.orgChatEnabled = tokenData.org_chat_enabled !== false;
   if (ws.userId && !userIdToTokens.has(ws.userId)) {
     // console.log('setting userIdToTokens', ws.userId);
     userIdToTokens.set(ws.userId, new Set());
@@ -486,21 +547,6 @@ function handleTokenOpen(ws) {
       accountConnections.set(accountId, new Set());
     }
     accountConnections.get(accountId).add(ws);
-    // ws.subscribe(`account:${accountId}`);
-    //subscriptions not working well for now
-
-    //check if there are queued undownloaded special request messages
-    cache.get(`special_request_${accountId}`, (err, data) => {
-      if (data) {
-        // console.log('special request found', data);
-        ws.send(JSON.stringify({
-          type: 'special_request',
-          data: data
-        }));
-        cache.del(`special_request_${accountId}`);
-      }
-    });
-
   });
 
   //log subscribed topics
@@ -516,7 +562,7 @@ function handleTokenOpen(ws) {
 
 function handleTokenClose(ws) {
   const tokenData = activeTokens.get(ws.token) || {};
-  
+
   // Cleanup account associations
   tokenData.accounts?.forEach(accountId => {
     accountConnections.get(accountId)?.delete(ws);
@@ -534,6 +580,19 @@ function handleTokenClose(ws) {
   activeTokens.delete(ws.token);
   cache.del(ws.token);
 
+  if (ws.orgId && orgRooms.has(ws.orgId)) {
+    orgRooms.get(ws.orgId).delete(ws);
+    if (orgRooms.get(ws.orgId).size === 0) {
+      orgRooms.delete(ws.orgId);
+    } else {
+      const peers = orgRooms.get(ws.orgId);
+      const presence = JSON.stringify({ type: 'org_chat_presence', orgId: ws.orgId, count: peers.size });
+      peers.forEach((client) => {
+        safeSend(client, presence);
+      });
+    }
+  }
+
   logger.info("Client disconnected", { userId: ws.userId });
 }
 
@@ -545,6 +604,101 @@ function handleTokenMessage(ws, rawMessage) {
       userId: ws.userId,
       msgId: message.msg_id
     });
+
+    if (message.type === 'org_chat_join') {
+      if (!ws.orgChatEnabled) {
+        logger.warn("Org chat not enabled for user", { userId: ws.userId });
+        return;
+      }
+
+      const { employee_id, organization_id } = message;
+      if (!employee_id || !organization_id) {
+        logger.warn("Missing employee_id or organization_id in join request");
+        return;
+      }
+
+      // Allow flexible employee_id formats and decouple from userId equality
+      ws.orgId = String(organization_id);
+      ws.employeeId = String(employee_id);
+
+      if (!orgRooms.has(ws.orgId)) orgRooms.set(ws.orgId, new Set());
+      orgRooms.get(ws.orgId).add(ws);
+
+      safeSend(ws, JSON.stringify({ type: 'org_chat_ready', orgId: ws.orgId }));
+
+      getOrgChatMessages(ws.orgId).then((messages) => {
+        safeSend(ws, JSON.stringify({ type: 'org_chat_history', messages: messages.slice(-50) }));
+        const peers = orgRooms.get(ws.orgId);
+        if (peers && peers.size > 0) {
+          const presence = JSON.stringify({ type: 'org_chat_presence', orgId: ws.orgId, count: peers.size });
+          peers.forEach((client) => {
+            safeSend(client, presence);
+          });
+        }
+      }).catch((e) => logger.error('Failed to fetch org chat history', { error: e.message }));
+      return;
+    }
+
+    if (message.type === 'org_chat_message') {
+      if (!ws.orgChatEnabled) return;
+      if (!ws.orgId || !ws.employeeId) {
+        logger.warn("Attempted to send org chat message without joining", { userId: ws.userId });
+        return;
+      }
+
+      const content = (message.content || '').toString();
+      if (!content) return;
+
+      const chat = {
+        id: `${ws.employeeId}-${Date.now()}`,
+        type: 'org_chat_message',
+        content: content.slice(0, 2000),
+        employeeId: ws.employeeId,
+        userId: ws.userId,
+        orgId: ws.orgId,
+        timestamp: Date.now(),
+      };
+
+      storeOrgChatMessage(ws.orgId, chat).catch(() => {});
+      const peers = orgRooms.get(ws.orgId);
+      if (peers && peers.size > 0) {
+        const payload = JSON.stringify(chat);
+        peers.forEach((client) => {
+          safeSend(client, payload);
+        });
+      }
+      return;
+    }
+
+    if (message.type === 'org_chat_leave') {
+      if (!ws.orgId) return;
+      const orgId = ws.orgId;
+      const room = orgRooms.get(orgId);
+      if (room) {
+        room.delete(ws);
+        if (room.size === 0) {
+          orgRooms.delete(orgId);
+        }
+        const peers = orgRooms.get(orgId);
+        const presence = JSON.stringify({ type: 'org_chat_presence', orgId, count: peers ? peers.size : 0 });
+        if (peers && peers.size > 0) {
+          peers.forEach((client) => {
+            safeSend(client, presence);
+          });
+        }
+      }
+      ws.orgId = undefined;
+      ws.employeeId = undefined;
+      return;
+    }
+
+    if (message.type === 'get_org_chat_history') {
+      if (!ws.orgId) return;
+      getOrgChatMessages(ws.orgId).then((messages) => {
+        safeSend(ws, JSON.stringify({ type: 'org_chat_history', messages: messages.slice(-50) }));
+      }).catch(() => {});
+      return;
+    }
 
     if (message.subject) {
       message.msg = {
@@ -573,7 +727,7 @@ function handleTokenMessage(ws, rawMessage) {
 function handleMeetingNotification(res, data) {
   try {
     logger.info('Received meeting notification', { type: data.type });
-    
+
     if (!data || !data.type) {
       res.cork(() => res.writeStatus('400 Bad Request').end(JSON.stringify({
         success: false,
@@ -581,11 +735,11 @@ function handleMeetingNotification(res, data) {
       })));
       return;
     }
-    
+
     // Handle meeting access approvals
     if (data.type === 'access_approved') {
       const { meetingCode, guestEmail, guest_token } = data;
-      
+
       // Broadcast to all connections in the meeting room
       if (meetingCode && meetingRooms.has(meetingCode)) {
         const connections = meetingRooms.get(meetingCode);
@@ -598,17 +752,17 @@ function handleMeetingNotification(res, data) {
             timestamp: new Date().toISOString()
           }
         });
-        
+
         logger.info(`Broadcasting meeting access approval to ${connections.size} connections`, {
           meetingCode,
           guestEmail
         });
-        
+
         connections.forEach(ws => {
           safeSend(ws, message);
         });
       }
-      
+
       // Direct notification to the specific guest if connected
       if (guestEmail && guestConnections.has(guestEmail)) {
         const ws = guestConnections.get(guestEmail);
@@ -621,17 +775,17 @@ function handleMeetingNotification(res, data) {
             timestamp: new Date().toISOString()
           }
         });
-        
+
         logger.info(`Sending direct meeting access approval to guest`, {
           guestEmail
         });
-        
+
         safeSend(ws, message);
       }
     }
-    
+
     // Handle other meeting notification types here
-    
+
     res.cork(() => res.writeStatus('200 OK').end(JSON.stringify({
       success: true,
       message: 'Notification processed'
@@ -641,7 +795,7 @@ function handleMeetingNotification(res, data) {
       error: error.message,
       stack: error.stack
     });
-    
+
     res.cork(() => res.writeStatus('500 Internal Server Error').end(JSON.stringify({
       success: false,
       message: 'Error processing notification'
@@ -649,76 +803,82 @@ function handleMeetingNotification(res, data) {
   }
 }
 
-function handleSpecialRequest(res, data) {
-  if (!data.msg_id || !data.target) {
-    logger.error("Invalid target", { target: data.target });
-    return res.cork(() => res.writeStatus("400 Bad Request").end());
-  }
-  //todo: validate security
-
-  const [type, accountId, token] = data.target.split(':');
-  if (!activeTokens.has(token)) {
-    //queue message in cache for up to 4 hours in case user comes back online
-    //first check if already set or array empty
-    cache.get(`special_request_${accountId}`, (err, arr) => {
-      if (err) {
-        logger.error("Failed to queue special request", { error: err.message });
-      } else if (arr) {
-        const arrData = JSON.parse(arr);
-        //add to array
-        arrData.push(data);
-        cache.set(`special_request_${accountId}`, JSON.stringify(arrData), 14400, (err) => {
-          if (err) {
-            logger.error("Failed to queue special request", { error: err.message });
-          }
-        });
-      } else {
-        //set array
-        const arrData = [data];
-        cache.set(`special_request_${accountId}`, JSON.stringify(arrData), 14400, (err) => {
-          if (err) {
-            logger.error("Failed to queue special request", { error: err.message });
-          }
-        });
+// Minimal JSON body reader for uWebSockets.js HTTP routes
+function readJson(res, onSuccess, onError) {
+  let buffer;
+  res.onData((ab, isLast) => {
+    const chunk = Buffer.from(ab);
+    buffer = buffer ? Buffer.concat([buffer, chunk]) : chunk;
+    if (isLast) {
+      try {
+        const data = JSON.parse(buffer.toString());
+        onSuccess(data);
+      } catch (e) {
+        onError();
       }
-    });
-    return res.cork(() => res.writeStatus("404 Not Found").end("Invalid target"));
-  }
-
-  publishMessages(data.msg, [accountId], data.user_id, data.msg_id);
-  res.cork(() => res.end("Message queued"));
+    }
+  });
+  res.onAborted(() => {
+    // Do not attempt to write any response after abort; just drop the request
+    buffer = undefined;
+  });
 }
 
-function publishMessages(msg, accountIds, userId, msgId) {
-  accountIds.forEach(accountId => {
-    cache.get(`active_token_${accountId}`, (_, token) => {
-      console.log('token', token);
-      if (token) {
-        //use original websocket to publish
-        const ws = activeTokens.get(token).ws;
-        if (ws) {
-          console.log('sending message to websocket via token socket');
-          ws.send(JSON.stringify({
-            from: userId,
-            msg: msg,
-            msg_id: msgId
-          }), false);
-          // //also publish to channel
-          // ws.publish(`account:${accountId}`, JSON.stringify({
-          //   from: userId,
-          //   msg: msg,
-          //   msg_id: msgId
-          // }), false);
-        } else {
-          console.log('publishing message to account', accountId);
-          app.publish(`account:${accountId}`, JSON.stringify({
-            from: userId,
-          msg: msg,
-            msg_id: msgId
-          }), false);
-        }
-      }
+function handleInvalidRequest(res) {
+  res.cork(() => res.writeStatus("400 Bad Request").end());
+}
+
+function handleSpecialRequest(res, data) {
+  if (!data || !data.msg_id || !data.target || !data.user_id) {
+    logger.error("Invalid special request payload", {
+      hasMsg: !!data?.msg,
+      hasTarget: !!data?.target,
+      hasUserId: !!data?.user_id,
     });
+    return res.cork(() => res.writeStatus("400 Bad Request").end());
+  }
+
+  logger.info("Processing special mail notification", {
+    userId: data.user_id,
+    msgId: data.msg_id,
+    hasMsg: !!data.msg,
+  });
+
+  // For mail notifications, we only care about the user and deliver
+  // directly to all of their active WebSocket connections.
+  publishMessages(data.msg, [data.user_id], data.user_id, data.msg_id);
+
+  return res.cork(() => res.writeStatus("200 OK").end("Message queued"));
+}
+
+// Create a compact representation of a special request suitable for caching
+function publishMessages(msg, accountIds, userId, msgId) {
+  const userKey = String(userId);
+  const tokens = userIdToTokens.get(userKey);
+
+  if (!tokens || tokens.size === 0) {
+    logger.debug("No active tokens for user, dropping message", { userId, msgId });
+    return;
+  }
+
+  logger.info("Publishing message to active tokens", {
+    userId,
+    msgId,
+    tokenCount: tokens.size,
+  });
+
+  const payload = JSON.stringify({
+    from: userId,
+    msg,
+    msg_id: msgId,
+  });
+
+  tokens.forEach((token) => {
+    const tokenData = activeTokens.get(token);
+    const ws = tokenData?.ws;
+    if (ws) {
+      safeSend(ws, payload);
+    }
   });
 }
 
@@ -831,7 +991,7 @@ function handleSheetClose(ws) {
   if (sheetSockets.has(ws.sheetId)) {
     const connections = sheetSockets.get(ws.sheetId);
     connections.delete(ws);
-    
+
     if (connections.size === 0) {
       sheetSockets.delete(ws.sheetId);
     }
@@ -859,7 +1019,7 @@ async function storeChatMessage(sheetId, message) {
   try {
     const messages = await getCachedMessages(sheetId);
     messages.push(message);
-    
+
     if (messages.length > config.messageLimit) {
       messages.splice(0, messages.length - config.messageLimit);
     }
@@ -908,10 +1068,10 @@ function broadcastToSheet(sheetId, message, excludeWs = null) {
 function broadcastToMeetingRoom(meetingCode, message, excludeWs = null) {
   // Use the WebSocket subscription model to broadcast messages
   logger.debug(`Broadcasting to meeting room: ${meetingCode}`, { meetingCode });
-  
+
   // Publish to the meeting topic
   app.publish(`meeting:${meetingCode}`, message, false);
-  
+
   // If we need to exclude a specific client, we can't do that with the subscription model
   // But this is rarely needed, and the client can filter out its own messages if needed
 }
@@ -926,14 +1086,14 @@ async function handleMeetingChatMessage(ws, data) {
     logger.error('Received chat message for unknown meeting', { data });
     return;
   }
-  
+
   try {
     // Validate message format
     if (!data.content || typeof data.content !== 'string') {
       logger.warn('Invalid chat message format', { data });
       return;
     }
-    
+
     // Create a standardized message object
     const chatMessage = {
       id: `${ws.guestEmail || ws.userId || 'anonymous'}-${Date.now()}`,
@@ -945,14 +1105,14 @@ async function handleMeetingChatMessage(ws, data) {
       timestamp: Date.now(),
       meetingCode: ws.meetingCode
     };
-    
+
     // Store the message
     await storeMeetingChatMessage(ws.meetingCode, chatMessage);
-    
+
     // Publish the message to the meeting topic
     // This will reach all subscribed clients, including the sender
     app.publish(`meeting:${ws.meetingCode}`, JSON.stringify(chatMessage), false);
-    
+
     logger.info('Chat message processed and published', {
       meetingCode: ws.meetingCode,
       messageId: chatMessage.id,
@@ -976,21 +1136,21 @@ async function sendMeetingChatHistory(ws) {
     logger.error('Cannot send chat history for unknown meeting', { ws });
     return;
   }
-  
+
   try {
     // Get the chat history
     const messages = await getMeetingChatMessages(ws.meetingCode);
-    
+
     // Only send the last 20 messages to avoid overwhelming the client
     const recentMessages = messages.slice(-20);
-    
+
     // Send the chat history directly to this client only
     safeSend(ws, JSON.stringify({
       type: 'chat_history',
       messages: recentMessages,
       timestamp: Date.now()
     }));
-    
+
     logger.debug('Sent chat history to client', {
       meetingCode: ws.meetingCode,
       messageCount: recentMessages.length
@@ -1016,10 +1176,10 @@ async function storeMeetingChatMessage(meetingCode, message) {
     if (!meetingChatMessages.has(meetingCode)) {
       meetingChatMessages.set(meetingCode, []);
     }
-    
+
     const messages = meetingChatMessages.get(meetingCode);
     messages.push(message);
-    
+
     // Limit the number of messages stored in memory
     if (messages.length > config.messageLimit) {
       messages.splice(0, messages.length - config.messageLimit);
@@ -1034,7 +1194,7 @@ async function storeMeetingChatMessage(meetingCode, message) {
         err => err ? reject(err) : resolve()
       );
     });
-    
+
     logger.debug('Stored meeting chat message', {
       meetingCode,
       messageId: message.id,
@@ -1060,7 +1220,7 @@ function getMeetingChatMessages(meetingCode) {
     if (meetingChatMessages.has(meetingCode)) {
       return resolve(meetingChatMessages.get(meetingCode));
     }
-    
+
     // Otherwise check memcached
     cache.get(`meeting_chat_${meetingCode}`, (err, data) => {
       if (err) {
@@ -1070,13 +1230,13 @@ function getMeetingChatMessages(meetingCode) {
         });
         return resolve([]);
       }
-      
+
       try {
         const messages = data ? JSON.parse(data) : [];
-        
+
         // Update in-memory cache
         meetingChatMessages.set(meetingCode, messages);
-        
+
         resolve(messages);
       } catch (e) {
         logger.error('Corrupted meeting chat cache data', { meetingCode, error: e.message });
@@ -1142,7 +1302,7 @@ function handleSheetOperation(ws, message) {
   const operation = {
     ...message,
     user: { id: ws.userId, name: ws.userName },
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 
   broadcastToSheet(ws.sheetId, JSON.stringify(operation), ws);
@@ -1163,9 +1323,9 @@ function handleSheetOperation(ws, message) {
       });
     });
 
-    const app = createWebSocketApp();
-    app.listen(config.host, config.port, (token) => {
-      logger.info("WebSocket server listening", { 
+    const wsApp = createWebSocketApp();
+    wsApp.listen(config.host, config.port, (token) => {
+      logger.info("WebSocket server listening", {
         host: config.host,
         port: config.port,
       });
@@ -1175,55 +1335,3 @@ function handleSheetOperation(ws, message) {
     process.exit(1);
   }
 })();
-
-// Error and request handlers
-function handleInvalidRequest(res) {
-  res.cork(() => {
-    res.writeStatus("400 Bad Request");
-    res.end("Invalid request data");
-  });
-  logger.warn("Invalid request received");
-}
-
-
-// Utility functions
-function readJson(res, cb, err) {
-  let buffer;
-  
-  res.onAborted(() => {
-    buffer = null;  // Clean up memory
-    if (typeof err === 'function') err();
-  });
-  
-  res.onData((ab, isLast) => {
-    let chunk = Buffer.from(ab);
-    if (isLast) {
-      let json;
-      if (buffer) {
-        try {
-          json = JSON.parse(Buffer.concat([buffer, chunk]));
-        } catch (e) {
-          /* res.close calls onAborted */
-          res.close();
-          return;
-        }
-        cb(json);
-      } else {
-        try {
-          json = JSON.parse(chunk);
-        } catch (e) {
-          /* res.close calls onAborted */
-          res.close();
-          return;
-        }
-        cb(json);
-      }
-    } else {
-      if (buffer) {
-        buffer = Buffer.concat([buffer, chunk]);
-      } else {
-        buffer = Buffer.concat([chunk]);
-      }
-    }
-  });
-}

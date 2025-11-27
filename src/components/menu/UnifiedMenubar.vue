@@ -132,6 +132,30 @@ function colorForUser(uid: string) {
   const idx = Math.abs(hash) % palette.length
   return palette[idx]
 }
+
+function toA1(rowIndex: number, colIndex: number) {
+  const row = rowIndex + 1
+  let col = ''
+  let n = colIndex
+  while (n >= 0) {
+    col = String.fromCharCode((n % 26) + 65) + col
+    n = Math.floor(n / 26) - 1
+  }
+  return `${col}${row}`
+}
+
+function formatSelectionLabel(selection: any): string {
+  try {
+    const range = (selection as any)?.range || (selection as any)?.primaryRange || selection
+    const data = (range as any)?.rangeData || range
+    const startRow = (data as any)?.startRow ?? (data as any)?.startRowIndex ?? (data as any)?.rowStart
+    const startCol = (data as any)?.startColumn ?? (data as any)?.startColumnIndex ?? (data as any)?.colStart
+    if (typeof startRow === 'number' && typeof startCol === 'number') {
+      return `Cell ${toA1(startRow, startCol)}`
+    }
+  } catch {}
+  return 'Active'
+}
 </script>
 
 <template>
@@ -303,12 +327,23 @@ function colorForUser(uid: string) {
     </MenubarMenu>
     <!-- Right aligned collaborator badges -->
     <div class="ml-auto flex items-center gap-2 pr-2" v-if="props.collaborators && Object.keys(props.collaborators).length">
-      <div v-for="(c, uid) in props.collaborators" :key="uid" class="flex items-center gap-1 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800 rounded-full px-2 py-1 shadow text-xs">
+      <button
+        v-for="(c, uid) in props.collaborators"
+        :key="uid"
+        type="button"
+        class="flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800 rounded-full px-2 py-1 shadow text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+        @click="toggleChat"
+      >
         <div class="w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center" :style="{ backgroundColor: colorForUser(uid) }">
           {{ (c.name || '?').charAt(0).toUpperCase() }}
         </div>
-        <span class="max-w-[120px] truncate" :title="c.name">{{ c.name }}</span>
-      </div>
+        <div class="flex flex-col items-start">
+          <span class="max-w-[120px] truncate" :title="c.name">{{ c.name }}</span>
+          <span v-if="c.selection" class="text-[10px] text-gray-500 dark:text-gray-400">
+            {{ formatSelectionLabel(c.selection) }}
+          </span>
+        </div>
+      </button>
     </div>
   </Menubar>
 </template>

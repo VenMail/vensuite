@@ -76,6 +76,23 @@
       @update-pagination="updatePaginationSettings"
       @print="handlePrint"
     />
+    <div v-if="collaboratorList.length" class="px-6 py-1 flex flex-wrap gap-2 items-center bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 text-xs">
+      <span class="text-gray-500 dark:text-gray-400">Also editing:</span>
+      <button
+        v-for="c in collaboratorList"
+        :key="c.id"
+        type="button"
+        class="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 px-2 py-0.5 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-default"
+      >
+        <span
+          class="w-4 h-4 rounded-full text-[10px] flex items-center justify-center text-white"
+          :style="{ backgroundColor: colorForUser(c.id) }"
+        >
+          {{ (c.name || '?').charAt(0).toUpperCase() }}
+        </span>
+        <span class="max-w-[120px] truncate text-gray-700 dark:text-gray-200" :title="c.name">{{ c.name }}</span>
+      </button>
+    </div>
 
     <!-- Table of Contents Toggle (Floating Left) -->
     <button
@@ -360,38 +377,60 @@ function setDocumentTitleFromName(name?: string | null) {
     <!-- Chat Panel -->
     <div
       v-if="isChatOpen"
-      class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white dark:bg-gray-900 border-l border-t border-gray-200 dark:border-gray-700 shadow-lg flex flex-col"
+      class="fixed right-4 bottom-4 w-80 h-96 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl flex flex-col"
     >
-      <div class="flex justify-between items-center p-3 border-b border-gray-200 dark:border-gray-700">
-        <h3 class="font-semibold text-gray-900 dark:text-gray-100">Comments & Chat</h3>
-        <button @click="isChatOpen = false" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800">
-          <svg class="h-4 w-4 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="font-semibold text-sm text-gray-900 dark:text-gray-100">Comments &amp; Chat</h3>
+        <button @click="isChatOpen = false" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+          <svg class="h-4 w-4 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
-      <div class="flex-grow overflow-y-auto p-3">
-        <div class="text-center text-gray-500 dark:text-gray-400 text-sm py-8">
-          <p>Chat feature coming soon!</p>
-          <p class="mt-2 text-xs">Collaborate with your team in real-time</p>
+      <div class="flex-grow overflow-y-auto p-3 space-y-2 bg-gray-50 dark:bg-gray-950" ref="chatMessagesContainer">
+        <template v-if="chatMessages.length">
+          <div v-for="message in chatMessages" :key="message.id" class="mb-3">
+            <div class="flex items-start">
+              <div class="w-8 h-8 rounded-full bg-primary-600 flex-shrink-0 flex items-center justify-center text-white font-semibold mr-2">
+                {{ message.user.name.charAt(0).toUpperCase() }}
+              </div>
+              <div>
+                <div class="flex items-baseline gap-2">
+                  <span class="font-semibold text-sm text-gray-900 dark:text-gray-100">{{ message.user.name }}</span>
+                  <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ formatChatTime(message.timestamp) }}</span>
+                </div>
+                <div class="mt-1 text-sm text-gray-800 whitespace-pre-line dark:text-gray-100">
+                  {{ message.content.message }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+        <div v-else class="text-center text-gray-500 dark:text-gray-400 text-sm py-8">
+          <p>No messages yet.</p>
+          <p class="mt-2 text-xs">Start a conversation with your collaborators.</p>
         </div>
       </div>
-      <div class="p-3 border-t border-gray-200 dark:border-gray-700">
-        <div class="flex gap-2">
-          <input
-            type="text"
-            placeholder="Type a message..."
-            class="flex-grow border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            disabled
-          />
-          <button
-            type="button"
-            class="px-4 py-2 bg-primary-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
-            disabled
-          >
-            Send
-          </button>
-        </div>
+      <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <form @submit.prevent="sendChatMessage" class="flex flex-col">
+          <div class="flex">
+            <textarea
+              v-model="newChatMessage"
+              placeholder="Type a message..."
+              class="flex-grow border border-gray-300 dark:border-gray-700 rounded-l-md px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none"
+              :style="{ height: textareaHeight }"
+              @input="adjustChatTextareaHeight"
+              @keydown.enter.exact.prevent="handleChatEnterKey"
+              ref="chatInput"
+            ></textarea>
+            <button
+              type="submit"
+              class="bg-primary-600 text-white px-4 py-2 rounded-r-md text-sm hover:bg-primary-700 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
+            >
+              Send
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -608,13 +647,29 @@ const isEditorEmpty = ref(true);
 const hasEnteredContent = ref(false);
 const showPlaceholderOverlay = computed(() => !isEditorFocused.value && isEditorEmpty.value && !hasEnteredContent.value);
 
+const collaborators = ref<Record<string, { name: string; ts: number }>>({});
+const collaboratorList = computed(() =>
+  Object.entries(collaborators.value)
+    .filter(([id]) => id !== userId.value)
+    .map(([id, info]) => ({ id, name: info.name, ts: info.ts })),
+);
+
 let detachEditorListeners: (() => void) | null = null;
 
 // WebSocket collaboration state
 const { initializeWebSocket } = useWebSocket();
 const wsService = ref<IWebsocketService | null>(null);
-const userId = ref(`user-${Math.random().toString(36).substr(2, 9)}`);
-const userName = ref(`User ${Math.floor(Math.random() * 1000)}`);
+const randomUserToken = Math.random().toString(36).substr(2, 9);
+const userId = ref(
+  authStore.isAuthenticated && authStore.userId
+    ? authStore.userId
+    : `guest-${randomUserToken}`,
+);
+const userName = ref(
+  authStore.isAuthenticated
+    ? ([authStore.firstName, authStore.lastName].filter(Boolean).join(' ') || authStore.email?.split('@')[0] || 'You')
+    : `Guest ${Math.floor(Math.random() * 1000)}`,
+);
 const changesPending = ref(false);
 const isJoined = ref(false);
 const SOCKET_URI = import.meta.env.VITE_SOCKET_BASE_URL || "wss://w.venmail.io:8443";
@@ -733,7 +788,7 @@ function initializeWebSocketAndJoinDoc() {
   if (!canJoinRealtime.value) return;
   const docId = route.params.appFileId as string;
   if (docId && docId !== 'new' && !wsService.value) {
-    wsService.value = initializeWebSocket(`${SOCKET_URI}?docId=${docId}&userName=${userName.value}&userId=${userId.value}`);
+    wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${docId}&userName=${userName.value}&userId=${userId.value}`);
     joinDoc();
   }
 }
@@ -753,19 +808,34 @@ function joinDoc() {
 
 function handleIncomingMessage(message: Message) {
   if (!message) return;
-  
+  const docId = route.params.appFileId as string;
+  if (message.sheetId && docId && message.sheetId !== docId) return;
+
+  if (message.messages) {
+    return message.messages.forEach(handleIncomingMessage);
+  }
+
   switch (message.type) {
+    case 'chat':
+      handleChatMessage(message);
+      break;
     case 'change':
       if (message.user?.id === userId.value) break;
       if (message.content?.delta) {
         applyRemoteChange(message.content.delta);
       }
       break;
-    case 'cursor':
-      if (message.user?.id !== userId.value) {
-        // Handle remote cursor updates (optional)
+    case 'cursor': {
+      const uid = message.user?.id;
+      const name = message.user?.name;
+      if (uid && name) {
+        collaborators.value[uid] = {
+          name,
+          ts: Date.now(),
+        };
       }
       break;
+    }
     case 'title':
       if (message.user?.id !== userId.value && message.content?.title) {
         documentTitle.value = message.content.title;
@@ -805,9 +875,107 @@ function broadcastChange() {
     console.error('Error broadcasting change:', error);
   }
 }
-
 // Chat state
 const isChatOpen = ref(false);
+const chatMessages = ref<Message[]>([]);
+const newChatMessage = ref('');
+const chatMessagesContainer = ref<HTMLElement | null>(null);
+const chatInput = ref<HTMLTextAreaElement | null>(null);
+const textareaHeight = ref('40px');
+
+function handleChatMessage(messageInfo: Message) {
+  chatMessages.value.push(messageInfo);
+  scrollChatToBottom();
+}
+
+function sendChatMessage() {
+  if (!wsService.value) return;
+  const docId = route.params.appFileId as string;
+  if (!docId || docId === 'new') return;
+  const message = newChatMessage.value;
+  if (!message.trim()) return;
+
+  try {
+    wsService.value.sendMessage(docId, 'chat', { message }, userId.value, userName.value);
+    newChatMessage.value = '';
+    adjustChatTextareaHeight();
+  } catch (error) {
+    console.error('Error sending chat message:', error);
+  }
+}
+
+function handleChatEnterKey(event: KeyboardEvent) {
+  event.preventDefault();
+  sendChatMessage();
+}
+
+function adjustChatTextareaHeight() {
+  if (chatInput.value) {
+    chatInput.value.style.height = '40px';
+    chatInput.value.style.height = `${Math.min(chatInput.value.scrollHeight, 150)}px`;
+    textareaHeight.value = chatInput.value.style.height;
+  }
+}
+
+function scrollChatToBottom() {
+  nextTick(() => {
+    if (chatMessagesContainer.value) {
+      chatMessagesContainer.value.scrollTop = chatMessagesContainer.value.scrollHeight;
+    }
+  });
+}
+
+function formatChatTime(timestamp: number) {
+  try {
+    return new Date(timestamp).toLocaleTimeString();
+  } catch {
+    return '';
+  }
+}
+
+watch(isChatOpen, open => {
+  if (open) {
+    nextTick(() => {
+      if (chatInput.value) {
+        chatInput.value.focus();
+      }
+      scrollChatToBottom();
+    });
+  }
+});
+
+watch(
+  collaborators,
+  () => {
+    const now = Date.now();
+    for (const [id, info] of Object.entries(collaborators.value)) {
+      if (now - info.ts > 8000) {
+        delete collaborators.value[id];
+      }
+    }
+  },
+  { deep: true },
+);
+
+function broadcastCursorPresence() {
+  if (!editor.value || !wsService.value) return;
+  const docId = route.params.appFileId as string;
+  if (!docId || docId === 'new') return;
+
+  try {
+    wsService.value.sendMessage(docId, 'cursor', {}, userId.value, userName.value);
+  } catch (error) {
+    console.error('Error broadcasting cursor presence:', error);
+  }
+}
+
+function colorForUser(uid: string) {
+  const palette = ['#2563EB', '#9333EA', '#16A34A', '#DC2626', '#F59E0B', '#0EA5E9', '#7C3AED', '#059669', '#D97706', '#DB2777'];
+  let hash = 0;
+  for (let i = 0; i < uid.length; i++) hash = ((hash << 5) - hash) + uid.charCodeAt(i);
+  const idx = Math.abs(hash) % palette.length;
+  return palette[idx];
+}
 
 // Table of Contents state
 const isTocOpen = ref(false);
@@ -2844,6 +3012,7 @@ onMounted(async () => {
     // If selection enters/leaves a table, reflect via class
     const active = !!editor.value?.isActive('table');
     setTableActiveUI(active || isTableActiveByClick.value);
+    broadcastCursorPresence();
   });
 
   // Attach click listener to detect table clicks (no selection change)

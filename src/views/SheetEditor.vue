@@ -42,8 +42,17 @@ const univerRef: Ref<InstanceType<typeof UniverSheet> | null> = ref(null)
 const univerCoreRef = ref<FUniver | null>(null)
 const title = ref('New Spreadsheet')
 const isTitleEdit = ref(false)
-const userId = ref(`user-${Math.random().toString(36).substr(2, 9)}`)
-const userName = ref(`User ${Math.floor(Math.random() * 1000)}`)
+const randomUserToken = Math.random().toString(36).substr(2, 9)
+const userId = ref(
+  authStore.isAuthenticated && authStore.userId
+    ? authStore.userId
+    : `guest-${randomUserToken}`,
+)
+const userName = ref(
+  authStore.isAuthenticated
+    ? ([authStore.firstName, authStore.lastName].filter(Boolean).join(' ') || authStore.email?.split('@')[0] || 'You')
+    : `Guest ${Math.floor(Math.random() * 1000)}`,
+)
 const editableTitle = ref(title.value)
 const isSettingCursor = ref(false)
 const isSaving = ref(false)
@@ -563,12 +572,24 @@ function sendChatMessage() {
   if (route.params.id) {
     const message = newChatMessage.value
     if (message.trim()) {
-      wsService.value?.sendMessage(route.params.id as string, 'chat', { message }, userId.value, userName.value)
+      wsService.value?.sendMessage(
+        route.params.id as string,
+        'chat',
+        { message },
+        userId.value,
+        userName.value,
+        replyingTo.value?.id,
+      )
       adjustTextareaHeight()
       replyingTo.value = null
       newChatMessage.value = ''
     }
   }
+}
+
+function handleChatEnterKey(event: KeyboardEvent) {
+  event.preventDefault()
+  sendChatMessage()
 }
 
 const debouncedHandleTitleChange = debounce(saveTitle, 300)
@@ -994,6 +1015,14 @@ function getReplyContent(replyId: string) {
 
 function toggleChat() {
   isChatOpen.value = !isChatOpen.value
+  if (isChatOpen.value) {
+    nextTick(() => {
+      if (chatInput.value) {
+        chatInput.value.focus()
+      }
+      scrollToBottom()
+    })
+  }
 }
 
 watch(
@@ -1227,45 +1256,45 @@ watch(
 
     <div
       v-if="!accessDenied && isChatOpen"
-      class="fixed right-0 bottom-0 w-80 h-96 z-50 bg-white border-l border-t border-gray-200 shadow-lg flex flex-col"
+      class="fixed right-4 bottom-4 w-80 h-96 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl flex flex-col"
     >
-      <div class="flex justify-between items-center p-3 border-b border-gray-200">
-        <h3 class="font-semibold">Chat</h3>
-        <button @click="toggleChat" class="p-1 rounded-full hover:bg-gray-200">
-          <XIcon class="h-4 w-4 text-gray-600" />
+      <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="font-semibold text-sm text-gray-900 dark:text-gray-100">Sheet Chat</h3>
+        <button @click="toggleChat" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+          <XIcon class="h-4 w-4 text-gray-600 dark:text-gray-300" />
         </button>
       </div>
-      <div class="flex-grow overflow-y-auto p-3" ref="chatMessagesContainer">
+      <div class="flex-grow overflow-y-auto p-3 space-y-2 bg-gray-50 dark:bg-gray-950" ref="chatMessagesContainer">
         <div v-for="message in chatMessages" :key="message.id" class="mb-4">
-          <div v-if="message.replyTo" class="ml-4 mb-1 p-2 bg-gray-100 rounded text-sm">
+          <div v-if="message.replyTo" class="ml-4 mb-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-700 dark:text-gray-300">
             <span class="font-semibold">{{ getReplyUserName(message.replyTo) }}:</span>
             {{ getReplyContent(message.replyTo) }}
           </div>
           <div class="flex items-start">
-            <div class="w-8 h-8 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center text-white font-semibold mr-2">
+            <div class="w-8 h-8 rounded-full bg-primary-600 flex-shrink-0 flex items-center justify-center text-white font-semibold mr-2">
               {{ message.user.name.charAt(0).toUpperCase() }}
             </div>
             <div>
-              <div class="flex items-baseline">
-                <span class="font-semibold mr-2">{{ message.user.name }}</span>
-                <span class="text-xs text-gray-500">{{ formatDate(message.timestamp) }}</span>
+              <div class="flex items-baseline gap-2">
+                <span class="font-semibold text-sm text-gray-900 dark:text-gray-100">{{ message.user.name }}</span>
+                <span class="text-[11px] text-gray-500 dark:text-gray-400">{{ formatDate(message.timestamp) }}</span>
               </div>
-              <div class="mt-1">{{ message.content.message }}</div>
-              <button @click="replyToMessage(message)" class="text-sm text-blue-500 mt-1">
+              <div class="mt-1 text-sm text-gray-800 whitespace-pre-line dark:text-gray-100">{{ message.content.message }}</div>
+              <button @click="replyToMessage(message)" class="text-xs text-primary-600 mt-1 hover:underline">
                 Reply
               </button>
             </div>
           </div>
         </div>
       </div>
-      <div class="p-3 border-t border-gray-200">
+      <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         <form @submit.prevent="sendChatMessage" class="flex flex-col">
-          <div v-if="replyingTo" class="mb-2 p-2 bg-gray-100 rounded flex justify-between items-start">
-            <div class="text-sm">
+          <div v-if="replyingTo" class="mb-2 p-2 bg-gray-100 dark:bg-gray-800 rounded flex justify-between items-start">
+            <div class="text-xs text-gray-800 dark:text-gray-100">
               <span class="font-semibold">Replying to {{ replyingTo.user.name }}:</span>
               {{ replyingTo.content.message }}
             </div>
-            <button @click="cancelReply" class="text-gray-500 hover:text-gray-700">
+            <button @click="cancelReply" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
               <XIcon class="h-4 w-4" />
             </button>
           </div>
@@ -1273,14 +1302,15 @@ watch(
             <textarea
               v-model="newChatMessage"
               placeholder="Type a message..."
-              class="flex-grow border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+              class="flex-grow border border-gray-300 dark:border-gray-700 rounded-l-md px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none"
               :style="{ height: textareaHeight }"
               @input="adjustTextareaHeight"
+              @keydown.enter.exact.prevent="handleChatEnterKey"
               ref="chatInput"
             ></textarea>
             <button
               type="submit"
-              class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-primary-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              class="bg-primary-600 text-white px-4 py-2 rounded-r-md text-sm hover:bg-primary-700 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
             >
               Send
             </button>
