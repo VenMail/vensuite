@@ -14,6 +14,11 @@ export const useAuthStore = defineStore('auth', {
     employeeId: localStorage.getItem('venEmployeeId') || "",
     isAuthenticated: !!localStorage.getItem('venAuthToken'),
     token: localStorage.getItem('venAuthToken') || null,
+    // Tracks whether the authenticated user has at least one valid linked account/workspace.
+    // When false, the user is logged in but cannot access resources requiring an account.
+    hasLinkedAccounts: true,
+    // Prevents multiple concurrent logout/redirect operations
+    _isLoggingOut: false,
     router: null as Router | any, // Add router to state
     // Track axios interceptors to avoid duplicates
     _axiosInterceptorIds: { req: null as number | null, res: null as number | null },
@@ -67,15 +72,31 @@ export const useAuthStore = defineStore('auth', {
       this.token = token;
       localStorage.setItem('venAuthToken', token);
       this.isAuthenticated = true;
+      this.hasLinkedAccounts = true; // Assume valid until proven otherwise
+      this._isLoggingOut = false; // Reset logout flag on new login
       // Set default Authorization header for axios
       try { (axios.defaults.headers as any).common = (axios.defaults.headers as any).common || {}; (axios.defaults.headers as any).common.Authorization = `Bearer ${token}`; } catch {}
       this.setupAxiosInterceptor();
     },
+    /**
+     * Mark the session as having no linked accounts.
+     * The user remains authenticated but cannot access account-specific resources.
+     */
+    setNoLinkedAccounts() {
+      this.hasLinkedAccounts = false;
+      console.warn('Auth: No linked accounts detected for this session.');
+    },
+
     async logout() {
+      // Prevent concurrent logout operations
+      if (this._isLoggingOut) return;
+      this._isLoggingOut = true;
+
       try {
         // Reset in-memory auth state
         this.token = null;
         this.isAuthenticated = false;
+        this.hasLinkedAccounts = true; // Reset for next login
         this.firstName = "";
         this.lastName = "";
         this.email = "";
@@ -118,6 +139,8 @@ export const useAuthStore = defineStore('auth', {
         if (this.router) {
           await this.router.push({ name: 'login' });
         }
+      } finally {
+        this._isLoggingOut = false;
       }
     },
     getAuthUrl(redirectUri: string) {
@@ -203,14 +226,36 @@ export const useAuthStore = defineStore('auth', {
         async (error) => {
           if (error.response) {
             const status = error.response.status
-            if (status === 401 || status === 403 || status === 419) {
-              // Only redirect to login if we actually had a token/session
-              // Guests viewing public/link resources should not be forced to login
-              const hadToken = !!this.getToken()
+            const hadToken = !!this.getToken()
+
+            // Check if this is a "no valid accounts" 403 (not a token issue)
+            const responseData = error.response.data
+            const isNoAccountsError = status === 403 && (
+              (typeof responseData === 'string' && responseData.toLowerCase().includes('no valid accounts')) ||
+              (responseData?.message && responseData.message.toLowerCase().includes('no valid accounts')) ||
+              (responseData?.error && responseData.error.toLowerCase().includes('no valid accounts'))
+            )
+
+            if (isNoAccountsError && hadToken && this.isAuthenticated) {
+              // User is authenticated but has no linked accounts.
+              // Do NOT logout or redirect - just mark the state.
+              this.setNoLinkedAccounts();
+              // Let the caller handle this specific error (e.g., show "no workspace" UI)
+            } else if (status === 401 || status === 419) {
+              // Token is invalid or expired - full logout
               if (hadToken && this.isAuthenticated) {
                 await this.handleTokenExpiration();
               }
-              // Otherwise, let the caller handle access-denied state
+            } else if (status === 403 && hadToken && this.isAuthenticated) {
+              // Generic 403 (permission denied) - could be resource-specific.
+              // Do NOT auto-logout; let the caller handle access-denied state.
+              // Only logout if it looks like a session/token issue.
+              const isTokenIssue = responseData?.message?.toLowerCase().includes('token') ||
+                                   responseData?.message?.toLowerCase().includes('unauthorized') ||
+                                   responseData?.message?.toLowerCase().includes('unauthenticated')
+              if (isTokenIssue) {
+                await this.handleTokenExpiration();
+              }
             }
           }
           return Promise.reject(error);

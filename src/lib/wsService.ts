@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
+import { useAuthStore } from '@/store/auth'
 
 export interface User {
   id: string
@@ -92,6 +93,37 @@ export class WebSocketService implements IWebsocketService {
     if (WebSocketService?.socket) {
       WebSocketService.socket = null
     }
+
+    // Check if the close is due to an auth issue (no valid accounts or token problem)
+    // Close code 1008 = Policy Violation (used by backend for auth failures)
+    // Close code 4001/4003 = Custom auth error codes if backend uses them
+    const isAuthError = event.code === 1008 || event.code === 4001 || event.code === 4003
+    const reason = (event.reason || '').toLowerCase()
+    const isNoAccountsError = reason.includes('no valid accounts') || reason.includes('forbidden')
+    const isTokenError = reason.includes('unauthorized') || reason.includes('invalid token') || reason.includes('token')
+
+    if (isAuthError || isNoAccountsError || isTokenError) {
+      console.warn('WebSocket closed due to auth issue:', event.code, event.reason)
+
+      // Notify auth store about the issue
+      try {
+        const authStore = useAuthStore()
+        if (isNoAccountsError) {
+          // User is authenticated but has no linked accounts - don't logout
+          authStore.setNoLinkedAccounts()
+        } else if (isTokenError && authStore.isAuthenticated) {
+          // Token is invalid - trigger logout
+          authStore.handleTokenExpiration()
+        }
+      } catch (e) {
+        console.warn('Failed to notify auth store of WebSocket auth error:', e)
+      }
+
+      // Do NOT reconnect for auth errors - it would just fail again
+      return
+    }
+
+    // For non-auth disconnections, attempt reconnection
     this.reconnect()
   }
 
