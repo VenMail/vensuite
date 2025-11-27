@@ -67,8 +67,7 @@
       :editor="editor" 
       :page-size="pageSize"
       :page-orientation="pageOrientation"
-      :pagination-manager="paginationManager"
-      @update:page-size="pageSize = $event"
+      @update:page-size="handlePageSizeChange"
       @update:page-orientation="pageOrientation = $event"
       @export="handleExport"
       @toggle-comments="isChatOpen = !isChatOpen"
@@ -577,17 +576,43 @@ import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
-// import { PaginationPlus } from 'tiptap-pagination-plus';
+import { PaginationPlus } from 'tiptap-pagination-plus';
+import { PaginationTable } from 'tiptap-table-plus';
 import { FontSize } from '@/extensions/font-size';
 import { LineHeight } from '@/extensions/line-height';
 import { ParagraphSpacing } from '@/extensions/paragraph-spacing';
 import { ChartExtension } from '@/extensions/chart';
 import type { ChartAttrs } from '@/extensions/chart';
-import { AdvancedTable, AdvancedTableRow, AdvancedTableCell, AdvancedTableHeader } from '@/extensions/advanced-table';
 
-// const {
-//   TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus
-// } = PaginationTable;
+// Predefined page sizes for PaginationPlus (in pixels at 96 DPI)
+const PAGE_SIZES = {
+  A4: { width: 794, height: 1123 },
+  A3: { width: 1123, height: 1591 },
+  A5: { width: 419, height: 794 },
+  LETTER: { width: 818, height: 1060 },
+  LEGAL: { width: 818, height: 1404 },
+  TABLOID: { width: 1060, height: 1635 },
+} as const;
+
+// Use PaginationTable extensions for table pagination support
+const { TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus } = PaginationTable;
+
+// Type augmentation for PaginationPlus commands (runtime commands exist but types may be missing)
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    paginationPlus: {
+      updatePageHeight: (height: number) => ReturnType;
+      updatePageWidth: (width: number) => ReturnType;
+      updatePageSize: (size: { width: number; height: number }) => ReturnType;
+      updateMargins: (margins: { top: number; bottom: number; left: number; right: number }) => ReturnType;
+      updateContentMargins: (margins: { top: number; bottom: number }) => ReturnType;
+      updateHeaderContent: (left: string, right: string) => ReturnType;
+      updateFooterContent: (left: string, right: string) => ReturnType;
+      updatePageBreakBackground: (color: string) => ReturnType;
+      updatePageGap: (gap: number) => ReturnType;
+    };
+  }
+}
 import { useFileStore } from '@/store/files';
 import { toast } from 'vue-sonner';
 import type { FileData } from '@/types';
@@ -603,10 +628,6 @@ import { applyContentToEditor, guardEditorBeforeSave } from '@/composables/useTi
 import { saveAs } from 'file-saver';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
-// Import the new pagination manager and styles
-import PaginationManagerInstance, { TiptapPaginationManager, PaginationConfig } from '@/lib/pagination/pagination-manager';
-import { paginationStyles } from '@/lib/pagination/pagination-styles';
-import { PaginationUI } from '@/lib/pagination/pagination-ui';
 import { NodeSelection } from '@tiptap/pm/state';
 import { IWebsocketService, Message, useWebSocket } from '@/lib/wsService';
 
@@ -617,10 +638,6 @@ const authStore = useAuthStore();
 
 const editor = ref<Editor>();
 const toolbarRef = ref<InstanceType<typeof DocsToolbar> | null>(null);
-
-// Pagination manager instances
-const paginationManager = ref<TiptapPaginationManager>();
-const paginationUI = ref<PaginationUI>();
 const currentDoc = ref<FileData | null>(null);
 const documentTitle = ref('Untitled Document');
 const isSaving = ref(false);
@@ -2074,8 +2091,17 @@ const pageDimensions = {
   card: { width: 88.9, height: 50.8 },
 } as const;
 
-const paginationConfig = reactive({
-  footerHeight: 30,
+// Pagination settings state (used by PaginationPlus extension)
+const paginationSettings = reactive({
+  marginTop: 50,
+  marginBottom: 50,
+  marginLeft: 50,
+  marginRight: 50,
+  showPageNumbers: true,
+  pageNumberPosition: 'bottom-right' as string,
+  printPageNumbers: false,
+  headerLeft: '',
+  headerRight: '',
   footerLeft: '',
   footerRight: '{page}',
 });
@@ -2130,15 +2156,14 @@ function ensurePrintStyleElement(): HTMLStyleElement {
 
 function updatePrintStyles() {
   const styleEl = ensurePrintStyleElement();
-  const config = paginationManager.value?.getConfig('main-editor');
   
   // Convert px to mm for print (96 DPI = 1 inch = 25.4mm)
   const pxToMm = (px: number) => (px * 25.4) / 96;
   
-  const marginTopMm = config ? pxToMm(config.marginTop) : 20;
-  const marginRightMm = config ? pxToMm(config.marginRight) : 15;
-  const marginBottomMm = config ? pxToMm(config.marginBottom) : 20;
-  const marginLeftMm = config ? pxToMm(config.marginLeft) : 15;
+  const marginTopMm = pxToMm(paginationSettings.marginTop);
+  const marginRightMm = pxToMm(paginationSettings.marginRight);
+  const marginBottomMm = pxToMm(paginationSettings.marginBottom);
+  const marginLeftMm = pxToMm(paginationSettings.marginLeft);
   
   const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
   const pageWidthMm = (metrics.widthPx * 25.4) / 96;
@@ -2739,45 +2764,86 @@ async function loadVersionContent(version: any) {
   }
 }
 
-// Pagination settings update
+// Pagination settings update - uses PaginationPlus commands
 function updatePaginationSettings(settings: any) {
-  if (paginationManager.value) {
-    // Update the pagination manager with the new settings
-    const config = getPaginationConfig();
-    // Override with settings from toolbar
-    if (settings.showPageNumbers !== undefined) config.showPageNumbers = settings.showPageNumbers;
-    if (settings.pageNumberPosition !== undefined) config.pageNumberPosition = settings.pageNumberPosition;
-    if (settings.printPageNumbers !== undefined) config.printPageNumbers = settings.printPageNumbers;
-    if (settings.footerHeight !== undefined) {
-      config.marginBottom = settings.footerHeight;
+  if (!editor.value) return;
+
+  // Update local pagination settings state
+  if (settings.marginTop !== undefined) paginationSettings.marginTop = settings.marginTop;
+  if (settings.marginBottom !== undefined) paginationSettings.marginBottom = settings.marginBottom;
+  if (settings.marginLeft !== undefined) paginationSettings.marginLeft = settings.marginLeft;
+  if (settings.marginRight !== undefined) paginationSettings.marginRight = settings.marginRight;
+  if (settings.showPageNumbers !== undefined) paginationSettings.showPageNumbers = settings.showPageNumbers;
+  if (settings.pageNumberPosition !== undefined) paginationSettings.pageNumberPosition = settings.pageNumberPosition;
+  if (settings.printPageNumbers !== undefined) paginationSettings.printPageNumbers = settings.printPageNumbers;
+
+  // Update footer content based on page number settings
+  const isShow = !!settings.showPageNumbers;
+  const pos = settings.pageNumberPosition || 'bottom-right';
+  
+  // Determine footer/header content based on position
+  let footerLeft = '';
+  let footerRight = '';
+  let headerLeft = '';
+  let headerRight = '';
+  
+  if (isShow) {
+    if (pos.includes('bottom')) {
+      if (pos.includes('left')) footerLeft = '{page}';
+      else if (pos.includes('center')) footerLeft = ''; // Center handled differently
+      else footerRight = '{page}';
+    } else if (pos.includes('top')) {
+      if (pos.includes('left')) headerLeft = 'Page {page}';
+      else if (pos.includes('center')) headerLeft = ''; // Center handled differently
+      else headerRight = 'Page {page}';
     }
-    if (settings.pageBorder !== undefined) config.pageBorder = settings.pageBorder;
-    if (settings.pageShadow !== undefined) config.pageShadow = settings.pageShadow;
-    if (settings.marginTop !== undefined) config.marginTop = settings.marginTop;
-    if (settings.marginBottom !== undefined) config.marginBottom = settings.marginBottom;
-    if (settings.marginLeft !== undefined) config.marginLeft = settings.marginLeft;
-    if (settings.marginRight !== undefined) config.marginRight = settings.marginRight;
-    if (settings.debounceDelay !== undefined) config.debounceDelay = settings.debounceDelay;
-    if (settings.autoRecalculate !== undefined) config.autoRecalculate = settings.autoRecalculate;
-
-    // Update the manager
-    paginationManager.value.updateConfig('main-editor', config);
-
-    // Also update the old paginationConfig for backward compatibility
-    paginationConfig.footerHeight = settings.footerHeight || 30;
-    const isShow = !!settings.showPageNumbers;
-    const pos = settings.pageNumberPosition || 'right';
-    paginationConfig.footerLeft = isShow && pos === 'left' ? '{page}' : '';
-    paginationConfig.footerRight = isShow && (pos === 'right' || pos === 'center') ? '{page}' : '';
-
-    // Ensure pagination is enabled and recalculate
-    paginationManager.value.enablePagination('main-editor');
-    // Force recalculation for orientation changes
-    paginationManager.value.updateConfig('main-editor', config);
   }
 
-  if (editor.value) {
-    initializeEditor();
+  paginationSettings.footerLeft = footerLeft;
+  paginationSettings.footerRight = footerRight;
+  paginationSettings.headerLeft = headerLeft;
+  paginationSettings.headerRight = headerRight;
+
+  // Apply settings via PaginationPlus commands
+  editor.value.chain().focus()
+    .updateMargins({
+      top: paginationSettings.marginTop,
+      bottom: paginationSettings.marginBottom,
+      left: paginationSettings.marginLeft,
+      right: paginationSettings.marginRight,
+    })
+    .updateHeaderContent(headerLeft, headerRight)
+    .updateFooterContent(footerLeft, footerRight)
+    .run();
+
+  updatePrintStyles();
+}
+
+// Handle page size change via PaginationPlus
+function handlePageSizeChange(size: string) {
+  pageSize.value = size;
+  
+  if (!editor.value) return;
+
+  // Map page size to PaginationPlus PAGE_SIZES
+  const pageSizeMap: Record<string, typeof PAGE_SIZES[keyof typeof PAGE_SIZES]> = {
+    'a4': PAGE_SIZES.A4,
+    'a3': PAGE_SIZES.A3,
+    'a5': PAGE_SIZES.A5,
+    'letter': PAGE_SIZES.LETTER,
+    'legal': PAGE_SIZES.LEGAL,
+  };
+
+  const selectedPageSize = pageSizeMap[size];
+  if (selectedPageSize) {
+    editor.value.chain().focus().updatePageSize(selectedPageSize).run();
+  } else {
+    // For custom sizes like 'card', use manual dimensions
+    const metrics = resolvePageMetrics(size as keyof typeof pageDimensions, pageOrientation.value);
+    editor.value.chain().focus()
+      .updatePageHeight(metrics.heightPx)
+      .updatePageWidth(metrics.widthPx)
+      .run();
   }
 
   updatePrintStyles();
@@ -2870,6 +2936,57 @@ async function updateVisibility(value: number) {
   } catch {}
 }
 
+// Helper to get PaginationPlus configuration based on current page settings
+function getPaginationPlusConfig() {
+  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
+  
+  // Determine footer content based on page number position
+  const pos = paginationSettings.pageNumberPosition;
+  let footerLeft = '';
+  let footerRight = '';
+  let headerLeft = '';
+  let headerRight = '';
+  
+  if (paginationSettings.showPageNumbers) {
+    if (pos.includes('bottom')) {
+      if (pos.includes('left')) footerLeft = '{page}';
+      else if (pos.includes('center')) {
+        footerLeft = '';
+        footerRight = '{page}'; // Center approximation
+      } else {
+        footerRight = '{page}';
+      }
+    } else if (pos.includes('top')) {
+      if (pos.includes('left')) headerLeft = 'Page {page}';
+      else if (pos.includes('center')) {
+        headerLeft = '';
+        headerRight = 'Page {page}'; // Center approximation
+      } else {
+        headerRight = 'Page {page}';
+      }
+    }
+  }
+
+  return {
+    pageHeight: metrics.heightPx,
+    pageWidth: metrics.widthPx,
+    pageGap: 50,
+    pageGapBorderSize: 1,
+    pageGapBorderColor: '#e5e5e5',
+    pageBreakBackground: '#ffffff',
+    marginTop: paginationSettings.marginTop,
+    marginBottom: paginationSettings.marginBottom,
+    marginLeft: paginationSettings.marginLeft,
+    marginRight: paginationSettings.marginRight,
+    contentMarginTop: 10,
+    contentMarginBottom: 10,
+    headerLeft,
+    headerRight,
+    footerLeft,
+    footerRight,
+  };
+}
+
 // Helper to (re)initialize the editor with pagination settings
 function initializeEditor() {
   const existingContent = editor.value ? editor.value.getJSON() : undefined;
@@ -2880,13 +2997,13 @@ function initializeEditor() {
     } catch {}
   }
 
-  // const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
+  const paginationConfig = getPaginationPlusConfig();
 
   editor.value = new Editor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3, 4] },
-        history: { depth: 100  },
+        history: { depth: 100 },
         bulletList: { keepMarks: true, keepAttributes: false },
         orderedList: { keepMarks: true, keepAttributes: false },
       }),
@@ -2904,16 +3021,15 @@ function initializeEditor() {
       Link.configure({ openOnClick: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
-      AdvancedTable.configure({
-        resizable: true,
-        minRowHeight: 28,
-      }),
-      AdvancedTableRow,
-      AdvancedTableCell,
-      AdvancedTableHeader,
+      // Use PaginationTable extensions for table pagination support
+      TablePlus,
+      TableRowPlus,
+      TableCellPlus,
+      TableHeaderPlus,
       ImagePlus.configure({ allowBase64: true }),
       ChartExtension,
-      // Remove PaginationPlus extension
+      // PaginationPlus extension for document pagination
+      PaginationPlus.configure(paginationConfig as any),
     ],
     content: existingContent || '',
     editorProps: {
@@ -2940,35 +3056,6 @@ function initializeEditor() {
       }
     }
   });
-
-  // Register editor with pagination manager
-  if (paginationManager.value) {
-    const config = getPaginationConfig();
-    paginationManager.value.registerEditor('main-editor', editor.value as any, config);
-    // Enable pagination immediately after registration
-    paginationManager.value.enablePagination('main-editor');
-  }
-}
-
-function getPaginationConfig(): PaginationConfig {
-  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
-  return {
-    pageHeight: metrics.heightPx,
-    pageWidth: metrics.widthPx,
-    marginTop: 50,
-    marginBottom: 50,
-    marginLeft: 50,
-    marginRight: 50,
-    pageNumberPosition: 'bottom-right',
-    showPageNumbers: true,
-    printPageNumbers: false,
-    pageBorder: true,
-    pageShadow: true,
-    enabled: true,
-    autoRecalculate: true,
-    debounceDelay: 100,
-    orientation: pageOrientation.value
-  };
 }
 
 function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -2982,30 +3069,12 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 }
 
 onMounted(async () => {
-  // Initialize pagination manager and UI
-  paginationManager.value = PaginationManagerInstance;
-  // Create optional UI helper instance (not required for core visuals)
-  paginationUI.value = new PaginationUI(paginationManager.value);
-  // Inject optional UI styles (controls)
-  paginationUI.value.injectStyles?.();
-  
-  // Inject core pagination styles (visuals for pages and numbers)
-  if (typeof document !== 'undefined' && !document.getElementById('tiptap-pagination-core-styles')) {
-    const styleEl = document.createElement('style');
-    styleEl.id = 'tiptap-pagination-core-styles';
-    styleEl.textContent = paginationStyles;
-    document.head.appendChild(styleEl);
-  }
-
-  // Initialize editor with default pagination matching current standard
+  // Initialize editor with PaginationPlus extension
   initializeEditor();
   updatePrintStyles();
 
-  // Enable pagination after editor is ready
+  // Wait for editor to be ready
   await nextTick();
-  if (paginationManager.value) {
-    paginationManager.value.enablePagination('main-editor');
-  }
 
   // Hook editor events for table-active visuals and bubble visibility
   editor.value?.on('selectionUpdate', () => {
@@ -3031,31 +3100,22 @@ onMounted(async () => {
   }
 
   // Debug: Log pagination status
-  console.log('Pagination manager status:', {
-    registered: paginationManager.value?.getRegisteredEditors(),
-    config: paginationManager.value?.getConfig('main-editor'),
-    enabled: paginationManager.value?.getConfig('main-editor')?.enabled
-  });
+  console.log('PaginationPlus initialized with page size:', pageSize.value, 'orientation:', pageOrientation.value);
 });
 
 watch([pageSize, pageOrientation], () => {
   if (!editor.value) return;
 
-  // Update pagination config with new orientation/page size
-  if (paginationManager.value) {
-    const config = getPaginationConfig();
-    paginationManager.value.updateConfig('main-editor', config);
-    // Force recalculation
-    paginationManager.value.enablePagination('main-editor');
-  }
+  // Get new page dimensions
+  const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
 
-  initializeEditor();
+  // Update pagination via PaginationPlus commands
+  editor.value.chain().focus()
+    .updatePageHeight(metrics.heightPx)
+    .updatePageWidth(metrics.widthPx)
+    .run();
+
   updatePrintStyles();
-
-  // Re-enable pagination after editor reinitialization
-  if (paginationManager.value) {
-    paginationManager.value.enablePagination('main-editor');
-  }
 });
 
 watch(canJoinRealtime, canJoin => {

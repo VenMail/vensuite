@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "set NODE_OPTIONS=--max_old_space_size=8192 && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "build-prod": "vue-tsc --noEmit && vite build --mode production"
+    "build-prod": "vue-tsc --noEmit && vite build --mode production",
+    "i18n:extract": "node ./scripts/extract-i18n.cjs",
+    "i18n:rewrite": "node ./scripts/replace-i18n.cjs",
+    "i18n:sync": "node ./scripts/sync-i18n.cjs",
+    "i18n:fix-untranslated": "node ./scripts/fix-untranslated.cjs",
+    "i18n:rewrite-blade": "node ./scripts/rewrite-i18n-blade.cjs",
+    "postbuild": "pnpm run i18n:extract && pnpm run i18n:rewrite && pnpm run i18n:sync"
   },
   "dependencies": {
     "@aarkue/tiptap-math-extension": "^1.3.6",
@@ -229,5 +235,12 @@
     "volar-service-prettyhtml": "^0.0.62",
     "vue-tsc": "^2.2.10"
   },
-  "packageManager": "pnpm@9.10.0+sha512.73a29afa36a0d092ece5271de5177ecbf8318d454ecd701343131b8ebc0c1a91c487da46ab77c8e596d6acf1461e3594ced4becedf8921b074fbd8653ed7051c"
+  "packageManager": "pnpm@9.10.0+sha512.73a29afa36a0d092ece5271de5177ecbf8318d454ecd701343131b8ebc0c1a91c487da46ab77c8e596d6acf1461e3594ced4becedf8921b074fbd8653ed7051c",
+  "aiI18n": {
+    "locales": [
+      "en",
+      "fr"
+    ],
+    "srcRoot": "src"
+  }
 }

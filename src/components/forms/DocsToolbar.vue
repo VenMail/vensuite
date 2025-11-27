@@ -495,7 +495,7 @@
       </div>
       <DialogFooter>
         <Button variant="outline" @click="showTableDialog = false">Cancel</Button>
-        <Button :title="tablePaginationTooltip" @click="insertTable">Insert</Button>
+        <Button @click="insertTable">Insert</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -818,15 +818,12 @@ import {
 import ChartConfigurator from '@/components/editor/ChartConfigurator.vue';
 import ImagePicker from '@/components/ImagePicker.vue';
 import type { ChartAttrs } from '@/extensions/chart';
-import { computeNextPageInsertionPosition, resolvePaginationOptions, INSERTION_PADDING_PX } from '@/extensions/pagination-utils';
 import { NodeSelection } from '@tiptap/pm/state';
-import { TiptapPaginationManager } from '@/lib/pagination/pagination-manager';
 
 const props = defineProps<{
   editor: Editor | null | undefined;
   pageSize?: string;
   pageOrientation?: 'portrait' | 'landscape';
-  paginationManager?: TiptapPaginationManager;
 }>();
 
 const emit = defineEmits<{
@@ -888,8 +885,6 @@ const tableRows = ref(3);
 const tableCols = ref(3);
 const tableStyle = ref('default');
 const tableWithHeader = ref(true);
-const tablePaginationTooltip = computed(() => 'Tables will move to the next page if there isn\'t space for at least two rows.');
-const TABLE_ROW_HEIGHT_ESTIMATE = 44; // px – heuristic for pagination checks
 
 // Link insert state
 const linkUrl = ref('');
@@ -1120,27 +1115,8 @@ function openLinkDialog() {
 function insertTable() {
   if (!props.editor) return;
 
-  const paginationOptions = resolvePaginationOptions(props.editor);
-  const totalRows = tableRows.value + (tableWithHeader.value ? 1 : 0);
-  const rowsToEnsure = Math.min(totalRows, 2);
-  const requiredHeight = rowsToEnsure * TABLE_ROW_HEIGHT_ESTIMATE;
-
-  const insertPosition = paginationOptions
-    ? computeNextPageInsertionPosition(
-        paginationOptions,
-        props.editor.view,
-        props.editor.state.selection,
-        requiredHeight,
-        INSERTION_PADDING_PX,
-      )
-    : null;
-
-  const chain = props.editor.chain().focus();
-  if (typeof insertPosition === 'number') {
-    chain.setTextSelection(insertPosition);
-  }
-
-  chain
+  // Insert table at current position - PaginationPlus handles page breaks automatically
+  props.editor.chain().focus()
     .insertTable({
       rows: tableRows.value,
       cols: tableCols.value,
