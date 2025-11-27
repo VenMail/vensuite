@@ -2206,8 +2206,9 @@ function updatePrintStyles() {
       padding: var(--print-padding, 0) !important;
     }
     .rm-page-break { break-after: page; }
-    /* Do not force a break before the very first page marker; prevents blank first page */
-    .rm-page-break:first-child { break-after: auto; }
+    /* Do not force a break before the very first or last page marker; prevents blank pages */
+    .rm-page-break:first-child,
+    .rm-page-break:last-child { break-after: auto; }
     .rm-page-break .page { break-after: avoid; break-inside: avoid; }
   }`;
 }
