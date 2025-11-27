@@ -1121,6 +1121,19 @@ function setTableActiveUI(active: boolean) {
 
 function handleEditorClick(e: MouseEvent) {
   const target = e.target as HTMLElement | null;
+  const gapEl = target?.closest('.rm-pagination-gap') as HTMLElement | null;
+
+  if (gapEl) {
+    const breakerEl = gapEl.closest('.breaker') as HTMLElement | null;
+    if (breakerEl) {
+      const isCollapsed = breakerEl.dataset.collapsed === 'true';
+      breakerEl.dataset.collapsed = isCollapsed ? 'false' : 'true';
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+  }
+
   const isOnTable = !!target?.closest('table');
   setTableActiveUI(isOnTable);
 }
@@ -3206,6 +3219,67 @@ onUnmounted(() => {
   margin-top: 4rem;
   margin-left: 2rem;
   opacity: 0.8;
+}
+
+@media print {
+  .editor-placeholder-overlay {
+    display: none !important;
+  }
+}
+
+/* PaginationPlus breaker & page gap styling */
+:deep(.breaker) {
+  /* Ensure the gap wrapper blends with the editor background */
+  background-color: transparent;
+}
+
+:deep(.rm-pagination-gap) {
+  /* Visible but subtle separation between pages */
+  background-color: #f3f4f6 !important; /* tailwind gray-100 */
+  border-left-color: #e5e7eb !important;  /* gray-200 */
+  border-right-color: #e5e7eb !important;
+  cursor: ns-resize;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, height 0.15s ease;
+}
+
+:deep(.rm-pagination-gap:hover) {
+  background-color: #e5e7eb !important; /* gray-200 */
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.4); /* slate-300 */
+}
+
+:deep(.rm-page-footer),
+:deep(.rm-page-header) {
+  background-color: transparent;
+}
+
+:deep(.rm-page-number) {
+  color: #6b7280; /* gray-600 for page numbers */
+}
+
+/* Collapsed page break state (toggled via breaker[data-collapsed]) */
+:deep(.breaker[data-collapsed='true'] .rm-page-footer),
+:deep(.breaker[data-collapsed='true'] .rm-page-header) {
+  display: none !important;
+}
+
+:deep(.breaker[data-collapsed='true'] .rm-pagination-gap) {
+  height: 8px !important;
+  background-color: #e5e7eb !important; /* gray-200 */
+  border-left-style: dashed;
+  border-right-style: dashed;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+:deep(.breaker[data-collapsed='true'] .rm-pagination-gap::before) {
+  content: 'Page break - click to expand';
+  font-size: 11px;
+  line-height: 1;
+  color: #6b7280; /* gray-600 */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* Editor Styles */
