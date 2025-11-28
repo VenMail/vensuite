@@ -75,13 +75,15 @@
       @update-pagination="updatePaginationSettings"
       @print="handlePrint"
     />
-    <div v-if="collaboratorList.length" class="px-6 py-1 flex flex-wrap gap-2 items-center bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 text-xs">
+    <div v-if="collaboratorList.length" class="px-6 py-1 flex flex-wrap gap-2 items-center justify-end bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 text-xs">
       <span class="text-gray-500 dark:text-gray-400">Also editing:</span>
       <button
         v-for="c in collaboratorList"
         :key="c.id"
         type="button"
-        class="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 px-2 py-0.5 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-default"
+        class="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 px-2 py-0.5 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+        @click="isChatOpen = true"
+        :title="`${c.name} is editing`"
       >
         <span
           class="w-4 h-4 rounded-full text-[10px] flex items-center justify-center text-white"
@@ -651,6 +653,8 @@ const privacyType = ref<number>(7);
 const shareMembers = ref<ShareMember[]>([]);
 
 const guestAccessiblePrivacyTypes = new Set<number>([1, 2, 3, 4]);
+// Privacy types that allow editing: 2=everyone_edit, 4=link_edit
+const editablePrivacyTypes = new Set<number>([2, 4]);
 
 const canJoinRealtime = computed(() => {
   const docId = route.params.appFileId as string;
@@ -658,6 +662,9 @@ const canJoinRealtime = computed(() => {
   if (authStore.isAuthenticated) return true;
   return guestAccessiblePrivacyTypes.has(privacyType.value);
 });
+
+// Determines if the current user can edit the document
+const canEditDoc = computed(() => authStore.isAuthenticated || editablePrivacyTypes.has(privacyType.value));
 
 const isEditorFocused = ref(false);
 const isEditorEmpty = ref(true);
@@ -993,6 +1000,13 @@ function colorForUser(uid: string) {
   const idx = Math.abs(hash) % palette.length;
   return palette[idx];
 }
+
+// Update editor editable state when canEditDoc changes (e.g., after privacyType is loaded)
+watch(canEditDoc, (canEdit) => {
+  if (editor.value) {
+    editor.value.setEditable(canEdit);
+  }
+});
 
 // Table of Contents state
 const isTocOpen = ref(false);
@@ -3046,6 +3060,7 @@ function initializeEditor() {
       PaginationPlus.configure(paginationConfig as any),
     ],
     content: existingContent || '',
+    editable: canEditDoc.value,
     editorProps: {
       attributes: {
         class: 'focus:outline-none min-h-[500px] print:min-h-0 print:overflow-visible'

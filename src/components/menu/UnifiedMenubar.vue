@@ -66,6 +66,7 @@ const emit = defineEmits([
   'data-filter',
   'data-group',
   'print',
+  'navigate-to-collaborator',
 ])
 
 const router = useRouter()
@@ -122,6 +123,10 @@ function handleRedo() {
 
 function toggleChat() {
   emit('toggleChat')
+}
+
+function handleCollaboratorClick(uid: string) {
+  emit('navigate-to-collaborator', uid)
 }
 
 // Deterministic color picker for user IDs
@@ -332,9 +337,10 @@ function formatSelectionLabel(selection: any): string {
         :key="uid"
         type="button"
         class="flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800 rounded-full px-2 py-1 shadow text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
-        @click="toggleChat"
+        @click="handleCollaboratorClick(uid as string)"
+        :title="`Click to go to ${c.name}'s position`"
       >
-        <div class="w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center" :style="{ backgroundColor: colorForUser(uid) }">
+        <div class="w-5 h-5 rounded-full text-white text-[10px] flex items-center justify-center" :style="{ backgroundColor: colorForUser(uid as string) }">
           {{ (c.name || '?').charAt(0).toUpperCase() }}
         </div>
         <div class="flex flex-col items-start">

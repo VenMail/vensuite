@@ -368,6 +368,8 @@ function joinSheet() {
     try {
       isJoined.value = wsService.value.joinSheet(route.params.id as string, handleIncomingMessage)
       console.log('Joined sheet:', route.params.id)
+      // Start presence heartbeat after joining
+      startPresenceHeartbeat()
     } catch (error) {
       console.error('Error joining sheet:', error)
     }
@@ -490,6 +492,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  stopPresenceHeartbeat()
   if (wsService.value && route.params.id) {
     wsService.value.leaveSheet(route.params.id as string)
   }
@@ -1025,6 +1028,65 @@ function toggleChat() {
   }
 }
 
+function navigateToCollaborator(uid: string) {
+  const collab = collaborators.value[uid]
+  if (!collab?.selection || !univerCoreRef.value) return
+  try {
+    const sel = collab.selection
+    const range = sel?.range || sel?.primaryRange || sel
+    const data = range?.rangeData || range
+    const startRow = data?.startRow ?? data?.startRowIndex ?? data?.rowStart
+    const startCol = data?.startColumn ?? data?.startColumnIndex ?? data?.colStart
+    if (typeof startRow === 'number' && typeof startCol === 'number') {
+      const workbook = univerCoreRef.value.getActiveWorkbook()
+      const sheet = workbook?.getActiveSheet()
+      if (sheet) {
+        // Navigate to the cell by setting selection
+        const targetRange = sheet.getRange(startRow, startCol, 1, 1)
+        targetRange?.activate()
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to navigate to collaborator cell:', error)
+  }
+}
+
+function broadcastPresence() {
+  if (!univerCoreRef.value || !wsService.value || !route.params.id) return
+  try {
+    const workbook = univerCoreRef.value.getActiveWorkbook()
+    const sheet = workbook?.getActiveSheet()
+    const selection = sheet?.getSelection()?.getActiveRange()
+    if (selection) {
+      const range = (selection as any).getRange?.() || selection
+      wsService.value.sendMessage(
+        route.params.id as string,
+        'cursor',
+        { selection: range },
+        userId.value,
+        userName.value,
+      )
+    }
+  } catch {}
+}
+
+// Periodic presence heartbeat (every 5 seconds)
+let presenceInterval: ReturnType<typeof setInterval> | null = null
+
+function startPresenceHeartbeat() {
+  stopPresenceHeartbeat()
+  presenceInterval = setInterval(broadcastPresence, 5000)
+  // Send initial presence
+  broadcastPresence()
+}
+
+function stopPresenceHeartbeat() {
+  if (presenceInterval) {
+    clearInterval(presenceInterval)
+    presenceInterval = null
+  }
+}
+
 watch(
   () => route.params.id,
   async (newId, oldId) => {
@@ -1178,6 +1240,7 @@ watch(
       @data-filter="handleDataFilter"
       @data-group="handleDataGroup"
       @print="handlePrint"
+      @navigate-to-collaborator="navigateToCollaborator"
     />
 
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">

@@ -144,22 +144,9 @@ function scheduleCollaboration() {
 
   addCollaborationDisposer(commandDisposer)
 
-  const workbook = fUniver.value.getActiveWorkbook()
-  const selectionDisposer = workbook?.onSelectionChange(selection => {
-    props.ws?.sendMessage(
-      props.sheetId,
-      'cursor',
-      {
-        userId: props.userId,
-        userName: props.userName,
-        selection,
-      },
-      props.userId,
-      props.userName,
-    )
-  }) as any
-
-  addCollaborationDisposer(selectionDisposer)
+  // Note: We no longer broadcast cursor selection on every change to avoid
+  // disrupting other users' editing experience. Presence is tracked via
+  // periodic heartbeats or explicit actions instead.
 }
 
 function addCollaborationDisposer(disposer: any) {
