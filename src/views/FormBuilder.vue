@@ -2124,6 +2124,13 @@ const handlePublish = async () => {
           ? `Form published. Share link: /f/${shareSlug}`
           : "Form published but share slug is unavailable"
       );
+
+      const isPublic = definition.sharing?.is_public === true;
+      if (!isPublic) {
+        toast.info(
+          "This form is not set to public yet. Right now it's only available to you or your organization. Update its visibility to Public in the form's sharing settings if you want anyone with the link to respond.",
+        );
+      }
     }
   } catch (error) {
     console.error("Failed to publish form:", error);
