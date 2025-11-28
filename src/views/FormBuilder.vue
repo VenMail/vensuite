@@ -1048,6 +1048,49 @@
             </p>
           </div>
 
+          <div class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div class="space-y-1">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Visibility
+                </p>
+                <p class="text-xs text-slate-500">
+                  {{ shareVisibilityDescription }}
+                </p>
+              </div>
+              <div class="inline-flex rounded-md border border-slate-200 bg-white overflow-hidden mt-2 sm:mt-0">
+                <Button
+                  type="button"
+                  size="sm"
+                  :variant="isSharePublic ? 'secondary' : 'ghost'"
+                  class="px-3 py-1 text-xs rounded-none"
+                  :disabled="isUpdatingShareVisibility"
+                  @click="setShareVisibility(true)"
+                >
+                  Public
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  :variant="!isSharePublic ? 'secondary' : 'ghost'"
+                  class="px-3 py-1 text-xs rounded-none border-l border-slate-200"
+                  :disabled="isUpdatingShareVisibility"
+                  @click="setShareVisibility(false)"
+                >
+                  Org only
+                </Button>
+              </div>
+            </div>
+
+            <p
+              v-if="shareAutoPublic"
+              class="mt-2 text-xs text-slate-500"
+            >
+              We've set this form to Public so anyone with the link can respond. You can
+              switch it back to organization-only access here.
+            </p>
+          </div>
+
           <div v-if="shareHelperItems.length" class="grid gap-2 sm:grid-cols-2">
             <Button
               v-for="item in shareHelperItems"
@@ -1165,6 +1208,8 @@ const acceptingResponses = ref(true);
 const showShareModal = ref(false);
 const isPublishingShare = ref(false);
 const shareTarget = ref<any>(null);
+const shareAutoPublic = ref(false);
+const isUpdatingShareVisibility = ref(false);
 
 // Dropdown state management
 const openDropdown = ref<string | null>(null);
@@ -1188,6 +1233,19 @@ const computedShareLink = computed(() => {
   if (target?.id) return `${window.location.origin}/f/by-id/${target.id}`;
   return "";
 });
+
+const isSharePublic = computed(() => {
+  const target: any = shareTarget.value;
+  return Boolean(target?.sharing?.is_public);
+});
+
+const shareVisibilityDescription = computed(() => {
+  if (!shareTarget.value) return "";
+  return isSharePublic.value
+    ? "Anyone with the link can respond."
+    : "Only people in your organization (and invited collaborators) can access this form.";
+});
+
 const shareHelperItems = computed(() => {
   const link = computedShareLink.value;
   if (!link) return [] as any[];
@@ -1219,8 +1277,10 @@ const closeShareModal = () => {
   if (isPublishingShare.value) return;
   showShareModal.value = false;
   shareTarget.value = null;
+  shareAutoPublic.value = false;
 };
 const openShareModal = async () => {
+  shareAutoPublic.value = false;
   const target = formStore.allForms.find((f) => f.id === formId.value) ?? {
     id: formId.value,
   };
@@ -1276,6 +1336,35 @@ const logoAlignmentClass = computed(() => {
       return "justify-center";
   }
 });
+
+const setShareVisibility = async (makePublic: boolean) => {
+  if (!formId.value || isUpdatingShareVisibility.value) return;
+
+  // No-op if already in requested state
+  if (isSharePublic.value === makePublic) return;
+
+  isUpdatingShareVisibility.value = true;
+  try {
+    const updated = await formStore.updateFormSharing(formId.value, {
+      is_public: makePublic,
+    });
+
+    if (updated) {
+      const current: any = shareTarget.value ?? { id: formId.value };
+      shareTarget.value = {
+        ...current,
+        sharing: {
+          ...(current.sharing ?? {}),
+          ...updated,
+        },
+      };
+    }
+  } catch (error) {
+    console.error("Failed to update form visibility:", error);
+  } finally {
+    isUpdatingShareVisibility.value = false;
+  }
+};
 
 const resetLogoSize = () => {
   logoWidth.value = DEFAULT_LOGO_WIDTH;
@@ -2118,19 +2207,41 @@ const handlePublish = async () => {
     const definition = await ensurePublishedShareSlug();
     console.log("Published form:", definition);
     if (definition) {
-      const shareSlug = definition.sharing?.share_slug;
+      let effectiveDefinition: any = definition;
+      let autoMadePublic = false;
+
+      // Ensure the form is public on publish so anyone with the link can respond
+      if (!definition.sharing?.is_public) {
+        try {
+          const updatedSharing = await formStore.updateFormSharing(formId.value, {
+            is_public: true,
+          });
+          if (updatedSharing) {
+            effectiveDefinition = {
+              ...definition,
+              sharing: {
+                ...(definition.sharing ?? {}),
+                ...updatedSharing,
+              },
+            };
+            autoMadePublic = Boolean(updatedSharing.is_public);
+          }
+        } catch (error) {
+          console.error("Failed to auto-set form visibility to public on publish:", error);
+        }
+      }
+
+      const shareSlug = effectiveDefinition.sharing?.share_slug;
       toast.success(
         shareSlug
-          ? `Form published. Share link: /f/${shareSlug}`
+          ? `Form published${autoMadePublic ? " and set to public" : ""}. Share link ready.`
           : "Form published but share slug is unavailable"
       );
 
-      const isPublic = definition.sharing?.is_public === true;
-      if (!isPublic) {
-        toast.info(
-          "This form is not set to public yet. Right now it's only available to you or your organization. Update its visibility to Public in the form's sharing settings if you want anyone with the link to respond.",
-        );
-      }
+      // Show Share dialog so user can immediately see and, if desired, change visibility back
+      shareTarget.value = effectiveDefinition;
+      shareAutoPublic.value = autoMadePublic;
+      showShareModal.value = true;
     }
   } catch (error) {
     console.error("Failed to publish form:", error);

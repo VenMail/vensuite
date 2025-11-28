@@ -7,9 +7,15 @@ import {
   createForm as createFormApi,
   updateForm as updateFormApi,
   publishForm as publishFormApi,
+  updateSharingSettings as updateSharingSettingsApi,
   type FetchResponsesParams,
 } from "@/services/forms";
-import type { AppForm, FormDefinition, FormResponsesPage } from "@/types";
+import type {
+  AppForm,
+  FormDefinition,
+  FormResponsesPage,
+  FormSharingSettings,
+} from "@/types";
 import { useAuthStore } from "./auth";
 
 interface PaginationState {
@@ -263,6 +269,57 @@ export const useFormStore = defineStore("forms", {
         "VENX_RECENT_FORMS",
         JSON.stringify(this.recentForms.map((f) => f.id)),
       );
+    },
+
+    async updateFormSharing(id: string, sharing: Partial<FormSharingSettings>): Promise<FormSharingSettings | null> {
+      const authStore = useAuthStore();
+      const token = authStore.getToken();
+
+      try {
+        const updated = await updateSharingSettingsApi(id, sharing, {
+          auth: token ? { token } : undefined,
+        });
+
+        this.allForms = this.allForms.map((existing) =>
+          existing.id === id
+            ? {
+                ...existing,
+                sharing: {
+                  ...(existing.sharing ?? {}),
+                  ...updated,
+                },
+              }
+            : existing,
+        );
+
+        this.recentForms = this.recentForms.map((existing) =>
+          existing.id === id
+            ? {
+                ...existing,
+                sharing: {
+                  ...(existing.sharing ?? {}),
+                  ...updated,
+                },
+              }
+            : existing,
+        );
+
+        const cached = this.formDetailsCache[id];
+        if (cached) {
+          this.formDetailsCache[id] = {
+            ...cached,
+            sharing: {
+              ...(cached.sharing ?? {}),
+              ...updated,
+            },
+          };
+        }
+
+        return updated;
+      } catch (error: any) {
+        this.error = error?.data?.message ?? "Failed to update sharing settings.";
+        return null;
+      }
     },
   },
 });
