@@ -1930,11 +1930,12 @@ onUnmounted(() => clearOverflowTimer());
 
 // Share dialog state
 const shareOpen = ref(false);
+const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin;
 const shareLinkDoc = computed(() => {
   const idParam = route.params.appFileId;
   if (!idParam) return '';
   const id = String(idParam);
-  return `${window.location.origin}/docs/${id}`;
+  return `${SHARE_BASE_URL}/share/doc/${id}`;
 });
 
 const {

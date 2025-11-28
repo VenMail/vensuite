@@ -39,6 +39,8 @@ import { router } from "@/main";
 const searchValue = ref("");
 const debouncedSearch = ref("");
 const viewMode = ref<"grid" | "list">("grid");
+const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin;
+
 const selectedForm = ref<string | null>(null);
 const shareTarget = ref<AppForm | null>(null);
 const showShareModal = ref(false);
@@ -95,7 +97,7 @@ const computedShareLink = computed(() => {
   if (!shareTarget.value) return "";
   const shareSlug = shareTarget.value.sharing?.share_slug ?? shareTarget.value.slug;
   if (shareSlug) {
-    return `${window.location.origin}/f/${shareSlug}`;
+    return `${SHARE_BASE_URL}/share/form/${shareSlug}`;
   }
   if (shareTarget.value.id) {
     return `${window.location.origin}/f/by-id/${shareTarget.value.id}`;
@@ -192,7 +194,7 @@ const openShareModal = async (form: AppForm) => {
     const updated = await ensurePublishedShareSlug(form);
     if (updated?.sharing?.share_slug) {
       shareTarget.value = updated;
-      await navigator.clipboard.writeText(`${window.location.origin}/f/${updated.sharing.share_slug}`);
+      await navigator.clipboard.writeText(`${SHARE_BASE_URL}/share/form/${updated.sharing.share_slug}`);
       toast({ title: "Form published", description: "Share link copied to clipboard." });
     } else {
       toast({ title: "Publish incomplete", description: "Unable to generate share slug. Please publish manually.", variant: "destructive" });

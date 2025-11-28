@@ -129,10 +129,12 @@ const lastSavedText = computed(() => {
   return `Last saved at ${hh}:${mm}`
 })
 
+const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin
+
 const shareLinkSheet = computed(() => {
   const id = route.params.id as string
   if (!id) return ''
-  return `${window.location.origin}/sheets/${id}`
+  return `${SHARE_BASE_URL}/share/sheet/${id}`
 })
 
 const guestAccessiblePrivacyTypes = new Set<number>([1, 2, 3, 4])
@@ -882,7 +884,7 @@ async function saveData() {
 function copyShareLink() {
   const id = route.params.id as string
   if (!id) return
-  const url = `${window.location.origin}/sheets/${id}`
+  const url = `${SHARE_BASE_URL}/share/sheet/${id}`
   navigator.clipboard.writeText(url).then(() => toast.success('Link copied'))
 }
 

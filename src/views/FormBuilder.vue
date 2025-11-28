@@ -1178,11 +1178,13 @@ const isFormPublished = computed(() => {
   return form?.status === "published";
 });
 
+const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin;
+
 const computedShareLink = computed(() => {
   const target: any = shareTarget.value;
   if (!target) return "";
   const shareSlug = target?.sharing?.share_slug ?? target?.slug;
-  if (shareSlug) return `${window.location.origin}/f/${shareSlug}`;
+  if (shareSlug) return `${SHARE_BASE_URL}/share/form/${shareSlug}`;
   if (target?.id) return `${window.location.origin}/f/by-id/${target.id}`;
   return "";
 });
@@ -1232,7 +1234,7 @@ const openShareModal = async () => {
     if (updated?.sharing?.share_slug) {
       shareTarget.value = updated;
       await navigator.clipboard.writeText(
-        `${window.location.origin}/f/${updated.sharing.share_slug}`
+        `${SHARE_BASE_URL}/share/form/${updated.sharing.share_slug}`
       );
       toast.success("Form published. Share link copied to clipboard.");
     } else {
