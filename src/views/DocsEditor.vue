@@ -67,6 +67,7 @@
       :editor="editor" 
       :page-size="pageSize"
       :page-orientation="pageOrientation"
+      :unread-count="unreadCount"
       @update:page-size="handlePageSizeChange"
       @update:page-orientation="pageOrientation = $event"
       @export="handleExport"
@@ -906,10 +907,22 @@ const newChatMessage = ref('');
 const chatMessagesContainer = ref<HTMLElement | null>(null);
 const chatInput = ref<HTMLTextAreaElement | null>(null);
 const textareaHeight = ref('40px');
+const unreadCount = ref(0);
+
+// Notification sound
+const notificationSound = new Audio(new URL('@/assets/bubble.mp3', import.meta.url).href);
 
 function handleChatMessage(messageInfo: Message) {
   chatMessages.value.push(messageInfo);
   scrollChatToBottom();
+  // Play notification sound and increment unread count if chat is closed and message is from another user
+  if (!isChatOpen.value && messageInfo.user?.id !== userId.value) {
+    unreadCount.value++;
+    try {
+      notificationSound.currentTime = 0;
+      notificationSound.play().catch(() => {});
+    } catch {}
+  }
 }
 
 function sendChatMessage() {
@@ -959,6 +972,7 @@ function formatChatTime(timestamp: number) {
 
 watch(isChatOpen, open => {
   if (open) {
+    unreadCount.value = 0;
     nextTick(() => {
       if (chatInput.value) {
         chatInput.value.focus();

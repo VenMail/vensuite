@@ -79,6 +79,10 @@ const isJoined = ref(false)
 
 const chatMessages = ref<Message[]>([])
 const isChatOpen = ref(false)
+const unreadCount = ref(0)
+
+// Notification sound
+const notificationSound = new Audio(new URL('@/assets/bubble.mp3', import.meta.url).href)
 const changesPending = ref(false)
 const newChatMessage = ref('')
 const textareaHeight = ref('40px')
@@ -568,6 +572,14 @@ function handleIncomingMessage(message: Message) {
 function handleChatMessage(messageInfo: Message) {
   chatMessages.value.push(messageInfo)
   scrollToBottom()
+  // Play notification sound and increment unread count if chat is closed and message is from another user
+  if (!isChatOpen.value && messageInfo.user?.id !== userId.value) {
+    unreadCount.value++
+    try {
+      notificationSound.currentTime = 0
+      notificationSound.play().catch(() => {})
+    } catch {}
+  }
 }
 
 function sendChatMessage() {
@@ -1019,6 +1031,7 @@ function getReplyContent(replyId: string) {
 function toggleChat() {
   isChatOpen.value = !isChatOpen.value
   if (isChatOpen.value) {
+    unreadCount.value = 0
     nextTick(() => {
       if (chatInput.value) {
         chatInput.value.focus()
@@ -1213,8 +1226,14 @@ watch(
           </DialogContent>
         </Dialog>
 
-        <button @click="toggleChat" class="p-2 rounded-full hover:bg-gray-200">
+        <button @click="toggleChat" class="p-2 rounded-full hover:bg-gray-200 relative">
           <MessageSquareIcon class="h-6 w-6 text-gray-600" />
+          <span
+            v-if="unreadCount > 0"
+            class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
+          >
+            {{ unreadCount > 99 ? '99+' : unreadCount }}
+          </span>
         </button>
         <UserProfile :isMobile="false" />
       </div>
