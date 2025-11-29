@@ -1017,18 +1017,31 @@
     >
       <DialogContent class="sm:max-w-lg sm:max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{{ showShareAccessView ? "Manage access" : "Share form" }}</DialogTitle>
-          <DialogDescription v-if="!showShareAccessView">
-            Share this form with participants using the public form link and basic visibility controls.
+          <DialogTitle class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <span v-if="!showShareAccessView">
+              Share "{{ formTitle || 'Untitled form' }}"
+            </span>
+            <span v-else>
+              Manage access
+            </span>
+          </DialogTitle>
+          <DialogDescription
+            v-if="!showShareAccessView"
+            class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400"
+          >
+            Send the live form link and control who can respond.
           </DialogDescription>
-          <DialogDescription v-else>
-            Control who in your organization can open and collaborate on this form.
+          <DialogDescription
+            v-else
+            class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400"
+          >
+            Choose who in your workspace can open or edit this form.
           </DialogDescription>
         </DialogHeader>
 
         <div v-if="!showShareAccessView" class="space-y-4 py-2">
           <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Share link
             </label>
             <div class="flex flex-col gap-2 sm:flex-row">
@@ -1046,8 +1059,8 @@
                 >Copy link</Button
               >
             </div>
-            <div class="flex items-center justify-between text-xs text-slate-500 gap-3">
-              <span>
+            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 gap-3">
+              <span class="truncate">
                 Anyone with this link can access the form based on its publish settings.
               </span>
               <Button
@@ -1064,18 +1077,18 @@
           </div>
 
           <div
-            class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
+            class="space-y-2 rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/40 p-3"
           >
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div class="space-y-1">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   Visibility
                 </p>
-                <p class="text-xs text-slate-500">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
                   {{ shareVisibilityDescription }}
                 </p>
               </div>
-              <div class="inline-flex rounded-md border border-slate-200 bg-white overflow-hidden mt-2 sm:mt-0">
+              <div class="inline-flex rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden mt-2 sm:mt-0">
                 <Button
                   type="button"
                   size="sm"
@@ -1101,7 +1114,7 @@
 
             <p
               v-if="shareAutoPublic"
-              class="mt-2 text-xs text-slate-500"
+              class="mt-2 text-xs text-gray-500 dark:text-gray-400"
             >
               We've set this form to Public so anyone with the link can respond. You can
               switch it back to organization-only access here.
@@ -1110,13 +1123,13 @@
 
           <div
             v-if="isPublishingShare"
-            class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500"
+            class="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3 text-xs text-gray-500 dark:text-gray-400"
           >
             Publishing form to generate share link…
           </div>
 
-          <div class="pt-4 mt-2 border-t border-slate-200 flex items-center justify-between gap-3">
-            <div class="space-y-0.5 text-xs text-slate-500">
+          <div class="pt-4 mt-2 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">
+            <div class="space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
               <p class="font-semibold">Collaborators & workspace access</p>
               <p>Manage who in your workspace can open and edit this form.</p>
             </div>
