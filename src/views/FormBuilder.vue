@@ -1038,9 +1038,9 @@
               <Button
                 type="button"
                 variant="default"
-                :disabled="!computedShareLink || isUpdatingShareVisibility"
-                @click="handlePrimaryShareClick"
-                >Share publicly</Button
+                :disabled="!computedShareLink"
+                @click="copyShareLink"
+                >Copy link</Button
               >
             </div>
             <p class="text-xs text-slate-500">
@@ -1053,19 +1053,9 @@
               Sharing:
               <strong>{{ isSharePublic ? "Public" : "Organization only" }}</strong>
             </span>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              class="px-0 text-xs"
-              @click="showAdvancedSharing = !showAdvancedSharing"
-            >
-              {{ showAdvancedSharing ? "Hide advanced sharing" : "Advanced sharing" }}
-            </Button>
           </div>
 
           <div
-            v-if="showAdvancedSharing"
             class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
           >
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1129,6 +1119,23 @@
           >
             Publishing form to generate share link…
           </div>
+
+          <div class="pt-4 mt-4 border-t border-slate-200">
+            <ShareCard
+              mode="doc"
+              :share-link="internalShareLink"
+              :privacy-type="privacyType"
+              :members="shareMembersForCard"
+              :can-edit-privacy="true"
+              :document-title="formTitle"
+              @copy-link="handleInternalCopyLink"
+              @change-privacy="handleChangeFormPrivacy"
+              @invite="handleInviteCollaborator"
+              @update-member="handleUpdateCollaborator"
+              @remove-member="handleRemoveCollaborator"
+              @close="showShareModal = false"
+            />
+          </div>
         </div>
 
         <DialogFooter>
@@ -1169,11 +1176,22 @@ import SlashMenu from "@/components/forms/blocks/SlashMenu.vue";
 import FormConfigWizard from "@/components/forms/FormConfigWizardSimple.vue";
 import WebhooksPanel from "@/components/forms/WebhooksPanel.vue";
 import ImagePicker from "@/components/ImagePicker.vue";
+import ShareCard from "@/components/ShareCard.vue";
+import axios from "axios";
 import type { FormBlock } from "@/components/forms/blocks/types";
 import type { FormConfig } from "@/components/forms/FormConfigWizardSimple.vue";
 import type { FormDefinition, FormPage, FormQuestion, Option } from "@/types";
 import { useFormStore } from "@/store/forms";
 import { useFormSettingsStore } from "@/store/formSettings";
+import { useAuthStore } from "@/store/auth";
+import {
+  parseSharingInfoString,
+  serializeSharingInfoString,
+  labelToShareLevel,
+  type ShareMember,
+  type ShareLevel,
+  type ShareLevelLabel,
+} from "@/utils/sharing";
 import { generateCompleteForm } from "../services/ai";
 import Input from "@/components/ui/input/Input.vue";
 import Button from "@/components/ui/button/Button.vue";
@@ -1191,6 +1209,7 @@ const route = useRoute();
 const router = useRouter();
 const formStore = useFormStore();
 const settingsStore = useFormSettingsStore();
+const authStore = useAuthStore();
 
 const formId = computed(() => route.params.id as string);
 const TEMPLATE_STORAGE_PREFIX = "VENX_FORM_TEMPLATE_";
@@ -1229,7 +1248,24 @@ const isPublishingShare = ref(false);
 const shareTarget = ref<any>(null);
 const shareAutoPublic = ref(false);
 const isUpdatingShareVisibility = ref(false);
-const showAdvancedSharing = ref(false);
+const privacyType = ref<number>(7);
+const shareMembers = ref<ShareMember[]>([]);
+const shareMembersForCard = computed(() => shareMembers.value);
+
+const formOwnerId = ref<string | null>(null);
+const currentUserId = computed(() => authStore.employeeId || authStore.userId || "");
+const isFormOwner = computed(() => {
+  if (!formOwnerId.value || !currentUserId.value) return false;
+  return String(formOwnerId.value) === String(currentUserId.value);
+});
+
+const canEditPayments = computed(() => {
+  const mode = settingsStore.state.payment.mode || "platform";
+  if (mode === "platform" && !isFormOwner.value) {
+    return false;
+  }
+  return true;
+});
 
 // Dropdown state management
 const openDropdown = ref<string | null>(null);
@@ -1243,6 +1279,9 @@ const isFormPublished = computed(() => {
   return form?.status === "published";
 });
 
+const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+const FORMS_ENDPOINT = `${API_BASE_URI}/app-forms`;
+
 const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin;
 
 const computedShareLink = computed(() => {
@@ -1252,6 +1291,10 @@ const computedShareLink = computed(() => {
   if (shareSlug) return `${SHARE_BASE_URL}/share/form/${shareSlug}`;
   if (target?.id) return `${window.location.origin}/f/by-id/${target.id}`;
   return "";
+});
+
+const internalShareLink = computed(() => {
+  return window.location.href;
 });
 
 const isSharePublic = computed(() => {
@@ -1289,6 +1332,15 @@ const copyShareLink = async () => {
     toast.error("Unable to copy link. Try copying manually.");
   }
 };
+const handleInternalCopyLink = async () => {
+  const link = internalShareLink.value;
+  try {
+    await navigator.clipboard.writeText(link);
+    toast.success("Editor link copied to clipboard");
+  } catch {
+    toast.error("Unable to copy link. Try copying manually.");
+  }
+};
 const handleShareLinkFocus = (event: FocusEvent) => {
   const target = event.target as HTMLInputElement | null;
   target?.select();
@@ -1298,11 +1350,9 @@ const closeShareModal = () => {
   showShareModal.value = false;
   shareTarget.value = null;
   shareAutoPublic.value = false;
-  showAdvancedSharing.value = false;
 };
 const openShareModal = async () => {
   shareAutoPublic.value = false;
-  showAdvancedSharing.value = false;
   const target = formStore.allForms.find((f) => f.id === formId.value) ?? {
     id: formId.value,
   };
@@ -1324,6 +1374,92 @@ const openShareModal = async () => {
     }
   } finally {
     isPublishingShare.value = false;
+  }
+};
+
+const hydrateFormSharing = async () => {
+  if (!formId.value) return;
+  try {
+    const response = await axios.get(`${FORMS_ENDPOINT}/${formId.value}`);
+    const payload = response.data?.data || response.data?.form || response.data || {};
+    if (typeof payload.privacy_type === "number") {
+      privacyType.value = Number(payload.privacy_type);
+    }
+    shareMembers.value = parseSharingInfoString(payload.sharing_info);
+  } catch (error) {
+    console.warn("Failed to hydrate form sharing details", error);
+  }
+};
+
+const handleChangeFormPrivacy = async (next: number) => {
+  if (!formId.value) return;
+  try {
+    const response = await axios.patch(`${FORMS_ENDPOINT}/${formId.value}`, {
+      privacy_type: next,
+    });
+    const payload = response.data?.data || response.data?.form || response.data || {};
+    privacyType.value = Number(payload.privacy_type ?? next);
+    toast.success("Visibility updated");
+  } catch (error) {
+    console.error("Failed to update form privacy_type", error);
+    toast.error("Unable to update access level");
+  }
+};
+
+type ShareCardPayload = {
+  email: string;
+  shareLevel?: ShareLevel;
+  label?: ShareLevelLabel;
+  note?: string;
+  permission?: "view" | "comment" | "edit" | "owner";
+};
+
+const handleInviteCollaborator = async (payload: ShareCardPayload) => {
+  if (!formId.value) return;
+  const resolvedLevel: ShareLevel = (() => {
+    if (payload.shareLevel) return payload.shareLevel;
+    if (payload.permission) {
+      const mapped = payload.permission === "owner" ? "edit" : payload.permission;
+      return labelToShareLevel(mapped as ShareLevelLabel);
+    }
+    if (payload.label) return labelToShareLevel(payload.label);
+    return "v";
+  })();
+
+  const newMembers: ShareMember[] = [
+    ...shareMembers.value.filter((member) => member.email !== payload.email),
+    { email: payload.email, shareLevel: resolvedLevel },
+  ];
+
+  const sharingInfo = serializeSharingInfoString(newMembers);
+
+  try {
+    await axios.patch(`${FORMS_ENDPOINT}/${formId.value}`, { sharing_info: sharingInfo });
+    shareMembers.value = newMembers;
+    toast.success("Collaborator updated");
+  } catch (error) {
+    console.error("Failed to update collaborators", error);
+    toast.error("Unable to update collaborators");
+  }
+};
+
+const handleUpdateCollaborator = (payload: ShareCardPayload) => {
+  return handleInviteCollaborator(payload);
+};
+
+const handleRemoveCollaborator = async (payload: { email: string }) => {
+  if (!formId.value) return;
+  const newMembers: ShareMember[] = shareMembers.value.filter(
+    (member) => member.email !== payload.email,
+  );
+  const sharingInfo = serializeSharingInfoString(newMembers);
+  try {
+    await axios.patch(`${FORMS_ENDPOINT}/${formId.value}`, { sharing_info: sharingInfo });
+    shareMembers.value = newMembers;
+    toast.success("Access removed");
+  } catch (error) {
+    console.error("Failed to remove collaborator", error);
+    toast.error("Unable to remove collaborator");
   }
 };
 
@@ -1399,21 +1535,6 @@ const setShareVisibility = async (makePublic: boolean): Promise<boolean> => {
   } finally {
     isUpdatingShareVisibility.value = false;
   }
-};
-
-const handlePrimaryShareClick = async () => {
-  // Primary path: ensure the form is public, then copy the link
-  if (!isSharePublic.value) {
-    const ok = await setShareVisibility(true);
-    if (!ok) {
-      toast.error(
-        "Could not enable public sharing. Try again or use Advanced sharing options.",
-      );
-      return;
-    }
-  }
-
-  await copyShareLink();
 };
 
 const resetLogoSize = () => {
@@ -1687,6 +1808,12 @@ watch(logoWidth, (value) => {
 });
 
 const openPaymentDialog = () => {
+  if (!canEditPayments.value) {
+    toast.error(
+      "Only the form owner can update payment settings when using platform payments.",
+    );
+    return;
+  }
   if (!settingsStore.state.payment.enabled) {
     settingsStore.setPaymentEnabled(true);
     if (!settingsStore.state.payment.amount_cents) {
@@ -1710,6 +1837,12 @@ const closePaymentDialog = () => {
 };
 
 const disablePayments = () => {
+  if (!canEditPayments.value) {
+    toast.error(
+      "Only the form owner can update payment settings when using platform payments.",
+    );
+    return;
+  }
   settingsStore.setPaymentEnabled(false);
   settingsStore.updatePayment({ amount_cents: 0 });
   showPaymentDialog.value = false;
@@ -2151,6 +2284,12 @@ const handleSettings = () => {
 };
 
 const updatePaymentAmount = () => {
+  if (!canEditPayments.value) {
+    toast.error(
+      "Only the form owner can update payment settings when using platform payments.",
+    );
+    return;
+  }
   const amount = parseFloat(paymentAmount.value) || 5;
   const clamped = Math.max(1, Math.min(100, amount));
   paymentAmount.value = clamped.toFixed(2);
@@ -2291,7 +2430,6 @@ const handlePublish = async () => {
       // Show Share dialog so user can immediately see and, if desired, change visibility back
       shareTarget.value = effectiveDefinition;
       shareAutoPublic.value = autoMadePublic;
-      showAdvancedSharing.value = autoMadePublic;
       showShareModal.value = true;
     }
   } catch (error) {
@@ -2391,6 +2529,8 @@ onMounted(async () => {
       formConfig.value = buildConfigFromSettings();
       syncPaymentAmountFromStore();
 
+      formOwnerId.value = (form as any).owner_id ?? null;
+
       // Check if this is a new form (no questions yet)
       isNewForm.value = !form.questions || form.questions.length === 0;
 
@@ -2489,6 +2629,7 @@ onMounted(async () => {
       }
     }
   }
+  await hydrateFormSharing();
   isLoading.value = false;
 
   // Close dropdowns on outside click and Escape

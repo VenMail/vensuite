@@ -57,6 +57,11 @@ export interface AppForm {
   organization_id?: string;
   owner_id?: string;
   slug?: string;
+  // Internal sharing metadata (aligned with FileData)
+  // privacy_type: 1=everyone_view,2=everyone_edit,3=link_view,4=link_edit,5=org_view,6=org_edit,7=explicit
+  privacy_type?: number;
+  // sharing_info: 'email1:v,email2:e' where v=view, e=edit, c=comment
+  sharing_info?: string | null;
   sharing?: FormSharingSettings;
   title: string;
   status?: FormStatus;

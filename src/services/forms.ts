@@ -276,12 +276,17 @@ export const updateSharingSettings = async (
   sharing: Partial<FormSharingSettings>,
   options?: RequestOptions,
 ): Promise<FormSharingSettings> => {
-  const response = await apiClient.patch(
-    `${BASE_PATH}/${id}/sharing`,
-    sharing,
-    withRequestOptions(options),
+  const form = await updateForm(
+    id,
+    {
+      settings: {
+        sharing,
+      } as any,
+    },
+    options,
   );
-  return response.data?.data as FormSharingSettings;
+
+  return (form.sharing ?? {}) as FormSharingSettings;
 };
 
 export interface FetchResponsesParams {
