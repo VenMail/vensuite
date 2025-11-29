@@ -1,36 +1,26 @@
 <template>
   <div v-if="questionSections.length" class="mx-auto my-4 w-full max-w-4xl px-3 sm:px-5 lg:px-6">
-    <header class="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
+    <header class="flex flex-col gap-4 border-b border-gray-200 pb-5 dark:border-gray-700">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div class="flex flex-col gap-2.5">
-          <span class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400">
+          <span class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-gray-500 dark:text-gray-400">
             {{ definition?.organization_id ? 'Form Preview' : 'Form Response' }}
           </span>
-          <h1 class="font-serif text-[2.25rem] font-semibold leading-tight text-slate-900 sm:text-[2.6rem] dark:text-white">
+          <h1 class="font-serif text-[2.25rem] font-semibold leading-tight text-gray-900 sm:text-[2.6rem] dark:text-gray-100">
             {{ definition?.title || 'Untitled Form' }}
           </h1>
-          <p v-if="definition?.description" class="max-w-3xl text-sm text-slate-600 dark:text-slate-400">
+          <p v-if="definition?.description" class="max-w-3xl text-sm text-gray-600 dark:text-gray-400">
             {{ definition?.description }}
           </p>
         </div>
-
-        <button
-          type="button"
-          class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 transition hover:-translate-y-0.5 hover:bg-slate-100 dark:border-slate-600/70 dark:bg-slate-800/70 dark:hover:bg-slate-700"
-          :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-          @click="toggleTheme"
-        >
-          <Sun v-if="isDarkMode" class="h-5 w-5 text-amber-400" />
-          <Moon v-else class="h-5 w-5 text-slate-700 dark:text-slate-200" />
-        </button>
       </div>
 
       <div v-if="showProgress && totalQuestions" class="mt-1 flex flex-col gap-1">
-        <div class="flex items-center justify-between text-[0.6rem] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        <div class="flex items-center justify-between text-[0.6rem] font-medium uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
           <span>{{ answeredCount }} of {{ totalQuestions }} answered</span>
           <span>{{ progressPercent }}%</span>
         </div>
-        <div class="h-1.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-slate-200 via-slate-200 to-slate-300 dark:from-slate-700 dark:via-slate-700 dark:to-slate-600">
+        <div class="h-1.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-gray-200 via-gray-200 to-gray-300 dark:from-gray-700 dark:via-gray-700 dark:to-gray-600">
           <div
             class="h-full bg-gradient-to-r from-[var(--player-accent)] to-[var(--player-accent-strong)] transition-all duration-500 ease-out"
             :style="{ width: `${progressPercent}%` }"
@@ -45,16 +35,16 @@
           v-for="(section, idx) in sectionSummaries"
           :key="section.id"
           :class="[
-            'flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm text-slate-600 transition hover:border-primary-200 hover:bg-primary-50/80 hover:text-primary-700 dark:text-slate-300 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-300',
+            'flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm text-gray-600 transition hover:border-primary-200 hover:bg-primary-50/80 hover:text-primary-700 dark:text-gray-300 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-300',
             section.hasErrors ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500 dark:bg-rose-900/30 dark:text-rose-300' : ''
           ]"
         >
-          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-500 dark:border-slate-600 dark:text-slate-300">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-xs font-semibold text-gray-500 dark:border-gray-600 dark:text-gray-300">
             {{ idx + 1 }}
           </span>
           <div class="flex flex-col gap-0.5">
-            <p class="font-semibold text-slate-800 dark:text-slate-100">{{ section.title || `Section ${idx + 1}` }}</p>
-            <p class="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+            <p class="font-semibold text-gray-800 dark:text-gray-100">{{ section.title || `Section ${idx + 1}` }}</p>
+            <p class="text-[0.65rem] uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">
               {{ section.answered }} of {{ section.total }} answered
             </p>
           </div>
@@ -68,7 +58,7 @@
         :id="`section-${section.id}`"
         :key="section.id"
         :class="[
-          'flex flex-col gap-6 border-b border-slate-200 pb-8 last:border-none last:pb-0 dark:border-slate-800',
+          'flex flex-col gap-6 border-b border-gray-200 pb-8 last:border-none last:pb-0 dark:border-gray-700',
           sectionStateMap.get(section.id)?.hasErrors ? 'border-b-2 border-rose-400/70 dark:border-rose-500/70' : ''
         ]"
       >
@@ -76,27 +66,27 @@
           <div class="flex max-w-3xl flex-col gap-1.5">
             <span
               v-if="sectionCount > 1"
-              class="text-[0.55rem] font-semibold uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500"
+              class="text-[0.55rem] font-semibold uppercase tracking-[0.35em] text-gray-400 dark:text-gray-500"
             >
               Section {{ index + 1 }}
             </span>
             <h2
               v-if="getSectionTitle(section, index)"
-              class="text-xl font-semibold text-slate-900 sm:text-[1.9rem] dark:text-white"
+              class="text-xl font-semibold text-gray-900 sm:text-[1.9rem] dark:text-gray-100"
             >
               {{ getSectionTitle(section, index) }}
             </h2>
           </div>
           <span
             v-if="sectionCount > 1"
-            class="inline-flex h-8 items-center rounded-full border border-slate-200 px-3 text-[0.65rem] font-semibold text-slate-500 dark:border-slate-700 dark:text-slate-300"
+            class="inline-flex h-8 items-center rounded-full border border-gray-200 px-3 text-[0.65rem] font-semibold text-gray-500 dark:border-gray-700 dark:text-gray-300"
           >
             {{ section.questions.length }}
             {{ section.questions.length === 1 ? 'question' : 'questions' }}
           </span>
         </header>
 
-        <p v-if="section.description" class="text-[0.95rem] text-slate-600 dark:text-slate-400">
+        <p v-if="section.description" class="text-[0.95rem] text-gray-600 dark:text-gray-400">
           {{ section.description }}
         </p>
 
@@ -120,13 +110,13 @@
     </main>
 
     <footer
-      class="flex flex-col gap-3 border-t border-slate-200 pt-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between"
+      class="flex flex-col gap-3 border-t border-gray-200 pt-5 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between"
     >
       <div class="flex flex-col gap-1">
-        <p class="text-sm font-semibold text-slate-800 dark:text-white">
+        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
           {{ canSubmit ? 'Ready to submit' : 'Please complete required fields' }}
         </p>
-        <p class="text-xs text-slate-500 dark:text-slate-400">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
           {{ canSubmit ? 'Review your responses before submitting.' : 'Required fields are marked with *' }}
         </p>
       </div>
@@ -148,19 +138,18 @@
 
   <div
     v-else
-    class="mx-auto my-20 max-w-xl rounded-2xl border-2 border-dashed border-slate-300 bg-white px-10 py-12 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+    class="mx-auto my-20 max-w-xl rounded-2xl border-2 border-dashed border-gray-300 bg-white px-10 py-12 text-center text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
   >
     <p>No questions available in this form.</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue';
+import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import QuestionRenderer from '@/components/forms/player/QuestionRenderer.vue';
 import { useFormPlayerStore } from '@/store/formPlayer';
 import type { FormDensity, FormLabelPlacement, FormPage, FormQuestion } from '@/types';
-import { Moon, Sun } from 'lucide-vue-next';
 
 const props = defineProps<{
   isSubmitting?: boolean;
@@ -193,7 +182,7 @@ const questionGridClass = computed(() => {
 });
 
 const questionCardClass = computed(() => {
-  const base = ['rounded-2xl border border-slate-200/80 bg-white/95 shadow-sm transition hover:-translate-y-0.5 dark:border-slate-700/70 dark:bg-slate-900/60'];
+  const base = ['rounded-2xl border border-gray-200/80 bg-white/95 shadow-sm transition hover:-translate-y-0.5 dark:border-gray-700/70 dark:bg-gray-900/60'];
   if (resolvedDensity.value === 'compact') {
     base.push('px-4 py-3 hover:border-primary-200/60 dark:hover:border-primary-500/30');
   } else {
@@ -201,43 +190,6 @@ const questionCardClass = computed(() => {
   }
   return base.join(' ');
 });
-
-const THEME_EVENT = 'theme-change';
-const THEME_STORAGE_KEY = 'theme';
-const isDarkMode = ref(false);
-
-const applyTheme = (mode: 'light' | 'dark', emitEvent = false, persist = true) => {
-  const isDark = mode === 'dark';
-  isDarkMode.value = isDark;
-  document.documentElement.classList.toggle('dark', isDark);
-  if (persist) {
-    localStorage.setItem(THEME_STORAGE_KEY, mode);
-  }
-  if (emitEvent) {
-    window.dispatchEvent(new CustomEvent<'light' | 'dark'>(THEME_EVENT, { detail: mode }));
-  }
-};
-
-const syncThemeFromStorage = () => {
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
-  if (stored === 'dark' || stored === 'light') {
-    applyTheme(stored as 'light' | 'dark', false);
-  } else {
-    applyTheme('light', false, false);
-  }
-};
-
-const handleExternalTheme = (event: Event) => {
-  const detail = (event as CustomEvent<'light' | 'dark'>).detail;
-  if (detail === 'light' || detail === 'dark') {
-    applyTheme(detail, false);
-  }
-};
-
-const toggleTheme = () => {
-  const mode: 'light' | 'dark' = isDarkMode.value ? 'light' : 'dark';
-  applyTheme(mode, true);
-};
 
 type AnswerValue = Parameters<typeof playerStore.answerQuestion>[1];
 
@@ -396,15 +348,6 @@ const emitSubmit = () => {
   commitAllAnswers();
   emit('submit');
 };
-
-onMounted(() => {
-  syncThemeFromStorage();
-  window.addEventListener(THEME_EVENT, handleExternalTheme as EventListener);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener(THEME_EVENT, handleExternalTheme as EventListener);
-});
 </script>
 
 <style scoped>

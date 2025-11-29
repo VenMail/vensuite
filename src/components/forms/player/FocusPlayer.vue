@@ -1,23 +1,23 @@
 <template>
   <div
     v-if="currentQuestion"
-    class="relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 rounded-3xl border px-6 py-8 transition bg-white/95 dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-700/70 shadow-xl"
+    class="relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 rounded-3xl border px-6 py-8 transition bg-white/95 dark:bg-gray-900/60 border-gray-200/80 dark:border-gray-700/70 shadow-xl"
   >
     <div class="space-y-6">
       <div v-if="showProgress" class="space-y-4">
         <div class="flex flex-col items-center gap-2 text-center">
-          <span class="text-sm font-semibold uppercase tracking-[0.32em] text-slate-400 dark:text-slate-500">
+          <span class="text-sm font-semibold uppercase tracking-[0.32em] text-gray-400 dark:text-gray-500">
             Step {{ currentStep }} of {{ totalSteps }}
           </span>
-          <h2 class="text-2xl font-semibold text-slate-900 dark:text-white">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
             {{ encouragementMessage }}
           </h2>
-          <p class="text-sm text-slate-500 dark:text-slate-400">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
             {{ Math.round(progressPercent) }}% complete
           </p>
         </div>
 
-        <div class="relative h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+        <div class="relative h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
           <div
             class="h-full bg-gradient-to-r from-[var(--player-accent)] to-[var(--player-accent-strong)] transition-all duration-500 ease-out"
             :style="{ width: `${progressPercent}%` }"
@@ -40,16 +40,16 @@
       </Transition>
     </div>
 
-    <div class="mt-auto flex flex-col gap-4 rounded-2xl border px-6 py-5 transition bg-slate-50/80 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 shadow">
+    <div class="mt-auto flex flex-col gap-4 rounded-2xl border px-6 py-5 transition bg-gray-50/80 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 shadow">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p class="text-sm text-slate-500 dark:text-slate-400">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
           {{ footerMessage }}
         </p>
         <div class="flex items-center gap-3">
           <button
             v-if="allowBack"
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/40 hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/40 hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="isSubmitting || !canGoBack"
             @click="handleBack"
           >
@@ -59,7 +59,7 @@
           <button
             v-if="showSkip"
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/40 hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/40 hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="isSubmitting"
             @click="handleSkip"
           >
@@ -69,7 +69,7 @@
           <button
             v-if="hasNextQuestion"
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-900"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-gray-900"
             :disabled="isSubmitting || !canProceed"
             @click="handleNext"
           >
@@ -79,7 +79,7 @@
           <button
             v-else
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-900"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-gray-900"
             :disabled="isSubmitting || !canProceed"
             @click="emitComplete"
           >
@@ -92,7 +92,7 @@
 
   <div
     v-else
-    class="rounded-3xl border border-dashed border-slate-200 p-12 text-center text-slate-500 dark:border-slate-800 dark:text-slate-400"
+    class="rounded-3xl border border-dashed border-gray-200 p-12 text-center text-gray-500 dark:border-gray-800 dark:text-gray-400"
   >
     <p>No questions available.</p>
   </div>

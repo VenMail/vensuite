@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import FocusPlayer from '@/components/forms/player/FocusPlayer.vue';
@@ -126,29 +126,6 @@ const formDefinition = ref<FormDefinition | null>(null);
 const isSubmitting = ref(false);
 const loadError = ref<string | null>(null);
 const stage = ref<'loading' | 'welcome' | 'playing' | 'payment' | 'completed' | 'error'>('loading');
-const isDarkMode = ref(false);
-
-const THEME_EVENT = 'theme-change';
-
-const applyDocumentTheme = (mode: 'light' | 'dark') => {
-  if (mode === 'dark') {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-  isDarkMode.value = mode === 'dark';
-};
-
-const syncThemeFromDocument = () => {
-  isDarkMode.value = document.documentElement.classList.contains('dark');
-};
-
-const handleThemeEvent = (event: Event) => {
-  const detail = (event as CustomEvent<'light' | 'dark'>).detail;
-  if (detail === 'light' || detail === 'dark') {
-    applyDocumentTheme(detail);
-  }
-};
 
 const welcomeScreen = computed<FormWelcomeScreen | null>(() => {
   const screen = formDefinition.value?.welcome_screen;
@@ -205,16 +182,15 @@ const accentColorStrong = computed(() => {
 });
 
 const rootStyle = computed(() => {
-  const dark = isDarkMode.value;
-  const backgroundColor = theme.value?.background_color ?? (dark ? '#0f172a' : '#f4f5f9');
-  const textColor = theme.value?.text_color ?? (dark ? '#e2e8f0' : '#0f172a');
-  const surfaceColor = theme.value?.surface_color ?? (dark ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.95)');
-  const surfaceBorder = (theme.value as any)?.surface_border_color ?? (dark ? 'rgba(51, 65, 85, 0.6)' : 'rgba(148, 163, 184, 0.35)');
-  const mutedSurface = (theme.value as any)?.muted_surface_color ?? (dark ? 'rgba(17, 24, 39, 0.78)' : 'rgba(248, 250, 252, 0.85)');
-  const mutedBorder = (theme.value as any)?.muted_border_color ?? (dark ? 'rgba(71, 85, 105, 0.55)' : 'rgba(203, 213, 225, 0.6)');
-  const progressTrack = (theme.value as any)?.progress_track_color ?? (dark ? 'rgba(71, 85, 105, 0.65)' : 'rgba(226, 232, 240, 0.95)');
-  const elevation = (theme.value as any)?.elevation ?? (dark ? '0 20px 45px rgba(0, 0, 0, 0.5)' : '0 25px 60px rgba(15, 23, 42, 0.12)');
-  const mutedElevation = (theme.value as any)?.muted_elevation ?? (dark ? '0 12px 30px rgba(0, 0, 0, 0.4)' : '0 12px 32px rgba(15, 23, 42, 0.08)');
+  const backgroundColor = theme.value?.background_color ?? '#f4f5f9';
+  const textColor = theme.value?.text_color ?? '#0f172a';
+  const surfaceColor = theme.value?.surface_color ?? 'rgba(255, 255, 255, 0.95)';
+  const surfaceBorder = (theme.value as any)?.surface_border_color ?? 'rgba(148, 163, 184, 0.35)';
+  const mutedSurface = (theme.value as any)?.muted_surface_color ?? 'rgba(248, 250, 252, 0.85)';
+  const mutedBorder = (theme.value as any)?.muted_border_color ?? 'rgba(203, 213, 225, 0.6)';
+  const progressTrack = (theme.value as any)?.progress_track_color ?? 'rgba(226, 232, 240, 0.95)';
+  const elevation = (theme.value as any)?.elevation ?? '0 25px 60px rgba(15, 23, 42, 0.12)';
+  const mutedElevation = (theme.value as any)?.muted_elevation ?? '0 12px 32px rgba(15, 23, 42, 0.08)';
 
   const styles: Record<string, string> = {
     background: backgroundColor,
@@ -600,23 +576,8 @@ watch(formDefinition, (newDefinition) => {
   }
 });
 
-onMounted(async () => {
-  try {
-    const stored = localStorage.getItem('theme');
-    if (stored === 'dark') document.documentElement.classList.add('dark');
-    else if (stored === 'light') document.documentElement.classList.remove('dark');
-    if (stored === 'dark' || stored === 'light') {
-      applyDocumentTheme(stored);
-    } else {
-      syncThemeFromDocument();
-    }
-  } catch {}
-  window.addEventListener(THEME_EVENT, handleThemeEvent as EventListener);
+onMounted(() => {
   loadForm();
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener(THEME_EVENT, handleThemeEvent as EventListener);
 });
 
 watch(
@@ -895,40 +856,5 @@ watch(
 .completion-card--focus {
   background: white;
   border: 1px solid rgba(148, 163, 184, 0.25);
-}
-
-/* Dark mode alignment with Classic */
-:global(.dark) .player-host {
-  color: #e2e8f0;
-}
-
-:global(.dark) .player-host__body--classic {
-  background: rgba(15, 23, 42, 0.92);
-  border-color: rgba(51, 65, 85, 0.6);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
-}
-
-:global(.dark) .player-host__state {
-  background: rgba(30, 41, 59, 0.5);
-  border-color: rgba(71, 85, 105, 0.55);
-  color: #cbd5e1;
-}
-
-:global(.dark) .welcome-card,
-:global(.dark) .completion-card {
-  background: rgba(15, 23, 42, 0.92);
-  border-color: rgba(51, 65, 85, 0.6);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
-  color: #e2e8f0;
-}
-
-:global(.dark) .player-host__button {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(71, 85, 105, 0.6);
-  color: #e2e8f0;
-}
-
-:global(.dark) .player-host__button:hover {
-  background: rgba(51, 65, 85, 0.9);
 }
 </style>

@@ -1037,10 +1037,10 @@
               />
               <Button
                 type="button"
-                variant="outline"
-                :disabled="!computedShareLink"
-                @click="copyShareLink"
-                >Copy</Button
+                variant="default"
+                :disabled="!computedShareLink || isUpdatingShareVisibility"
+                @click="handlePrimaryShareClick"
+                >Share publicly</Button
               >
             </div>
             <p class="text-xs text-slate-500">
@@ -1048,7 +1048,26 @@
             </p>
           </div>
 
-          <div class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>
+              Sharing:
+              <strong>{{ isSharePublic ? "Public" : "Organization only" }}</strong>
+            </span>
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              class="px-0 text-xs"
+              @click="showAdvancedSharing = !showAdvancedSharing"
+            >
+              {{ showAdvancedSharing ? "Hide advanced sharing" : "Advanced sharing" }}
+            </Button>
+          </div>
+
+          <div
+            v-if="showAdvancedSharing"
+            class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
+          >
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div class="space-y-1">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -1210,6 +1229,7 @@ const isPublishingShare = ref(false);
 const shareTarget = ref<any>(null);
 const shareAutoPublic = ref(false);
 const isUpdatingShareVisibility = ref(false);
+const showAdvancedSharing = ref(false);
 
 // Dropdown state management
 const openDropdown = ref<string | null>(null);
@@ -1278,9 +1298,11 @@ const closeShareModal = () => {
   showShareModal.value = false;
   shareTarget.value = null;
   shareAutoPublic.value = false;
+  showAdvancedSharing.value = false;
 };
 const openShareModal = async () => {
   shareAutoPublic.value = false;
+  showAdvancedSharing.value = false;
   const target = formStore.allForms.find((f) => f.id === formId.value) ?? {
     id: formId.value,
   };
@@ -1337,11 +1359,20 @@ const logoAlignmentClass = computed(() => {
   }
 });
 
-const setShareVisibility = async (makePublic: boolean) => {
-  if (!formId.value || isUpdatingShareVisibility.value) return;
+const setShareVisibility = async (makePublic: boolean): Promise<boolean> => {
+  if (!formId.value) {
+    return false;
+  }
+
+  if (isUpdatingShareVisibility.value) {
+    // Another visibility update is in progress; treat as no-op.
+    return isSharePublic.value === makePublic;
+  }
 
   // No-op if already in requested state
-  if (isSharePublic.value === makePublic) return;
+  if (isSharePublic.value === makePublic) {
+    return true;
+  }
 
   isUpdatingShareVisibility.value = true;
   try {
@@ -1358,12 +1389,31 @@ const setShareVisibility = async (makePublic: boolean) => {
           ...updated,
         },
       };
+      return true;
     }
+
+    return false;
   } catch (error) {
     console.error("Failed to update form visibility:", error);
+    return false;
   } finally {
     isUpdatingShareVisibility.value = false;
   }
+};
+
+const handlePrimaryShareClick = async () => {
+  // Primary path: ensure the form is public, then copy the link
+  if (!isSharePublic.value) {
+    const ok = await setShareVisibility(true);
+    if (!ok) {
+      toast.error(
+        "Could not enable public sharing. Try again or use Advanced sharing options.",
+      );
+      return;
+    }
+  }
+
+  await copyShareLink();
 };
 
 const resetLogoSize = () => {
@@ -2241,6 +2291,7 @@ const handlePublish = async () => {
       // Show Share dialog so user can immediately see and, if desired, change visibility back
       shareTarget.value = effectiveDefinition;
       shareAutoPublic.value = autoMadePublic;
+      showAdvancedSharing.value = autoMadePublic;
       showShareModal.value = true;
     }
   } catch (error) {
