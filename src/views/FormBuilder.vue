@@ -1015,7 +1015,7 @@
       :open="showShareModal"
       @update:open="(value) => (value ? null : closeShareModal())"
     >
-      <DialogContent class="sm:max-w-lg sm:max-h-[80vh] overflow-y-auto">
+      <DialogContent class="w-full max-w-md sm:max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
             <span v-if="!showShareAccessView">
@@ -1044,7 +1044,7 @@
             <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Share link
             </label>
-            <div class="flex flex-col gap-2 sm:flex-row">
+            <div class="flex flex-col gap-2 md:flex-row">
               <Input
                 :model-value="computedShareLink"
                 readonly
@@ -1059,7 +1059,7 @@
                 >Copy link</Button
               >
             </div>
-            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 gap-3">
+            <div class="flex items-center justify-between text-xs sm:text-sm text-gray-500 dark:text-gray-400 gap-3">
               <span class="truncate">
                 Anyone with this link can access the form based on its publish settings.
               </span>
@@ -1079,12 +1079,12 @@
           <div
             class="space-y-2 rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/40 p-3"
           >
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div class="space-y-1">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   Visibility
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {{ shareVisibilityDescription }}
                 </p>
               </div>
@@ -1103,7 +1103,7 @@
                   type="button"
                   size="sm"
                   :variant="!isSharePublic ? 'secondary' : 'ghost'"
-                  class="px-3 py-1 text-xs rounded-none border-l border-slate-200"
+                  class="px-3 py-1 text-xs rounded-none border-l border-gray-200 dark:border-gray-700"
                   :disabled="isUpdatingShareVisibility"
                   @click="setShareVisibility(false)"
                 >
@@ -1114,7 +1114,7 @@
 
             <p
               v-if="shareAutoPublic"
-              class="mt-2 text-xs text-gray-500 dark:text-gray-400"
+              class="mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400"
             >
               We've set this form to Public so anyone with the link can respond. You can
               switch it back to organization-only access here.
@@ -1123,13 +1123,13 @@
 
           <div
             v-if="isPublishingShare"
-            class="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3 text-xs text-gray-500 dark:text-gray-400"
+            class="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400"
           >
             Publishing form to generate share link…
           </div>
 
           <div class="pt-4 mt-2 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">
-            <div class="space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+            <div class="space-y-0.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               <p class="font-semibold">Collaborators & workspace access</p>
               <p>Manage who in your workspace can open and edit this form.</p>
             </div>
