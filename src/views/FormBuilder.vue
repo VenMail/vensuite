@@ -1015,15 +1015,18 @@
       :open="showShareModal"
       @update:open="(value) => (value ? null : closeShareModal())"
     >
-      <DialogContent class="sm:max-w-lg">
+      <DialogContent class="sm:max-w-lg sm:max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Share form</DialogTitle>
-          <DialogDescription>
-            Share this form with participants or collaborators using the link below.
+          <DialogTitle>{{ showShareAccessView ? "Manage access" : "Share form" }}</DialogTitle>
+          <DialogDescription v-if="!showShareAccessView">
+            Share this form with participants using the public form link and basic visibility controls.
+          </DialogDescription>
+          <DialogDescription v-else>
+            Control who in your organization can open and collaborate on this form.
           </DialogDescription>
         </DialogHeader>
 
-        <div class="space-y-4 py-2">
+        <div v-if="!showShareAccessView" class="space-y-4 py-2">
           <div class="space-y-2">
             <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Share link
@@ -1043,16 +1046,21 @@
                 >Copy link</Button
               >
             </div>
-            <p class="text-xs text-slate-500">
-              Anyone with this link can access the form based on its publish settings.
-            </p>
-          </div>
-
-          <div class="flex items-center justify-between text-xs text-slate-500">
-            <span>
-              Sharing:
-              <strong>{{ isSharePublic ? "Public" : "Organization only" }}</strong>
-            </span>
+            <div class="flex items-center justify-between text-xs text-slate-500 gap-3">
+              <span>
+                Anyone with this link can access the form based on its publish settings.
+              </span>
+              <Button
+                v-if="shareHelperItems.length"
+                type="button"
+                variant="link"
+                size="sm"
+                class="px-0 text-xs"
+                @click="shareHelperItems[0].action"
+              >
+                Open form
+              </Button>
+            </div>
           </div>
 
           <div
@@ -1100,19 +1108,6 @@
             </p>
           </div>
 
-          <div v-if="shareHelperItems.length" class="grid gap-2 sm:grid-cols-2">
-            <Button
-              v-for="item in shareHelperItems"
-              :key="item.label"
-              type="button"
-              variant="outline"
-              class="justify-start"
-              @click="item.action"
-            >
-              {{ item.label }}
-            </Button>
-          </div>
-
           <div
             v-if="isPublishingShare"
             class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500"
@@ -1120,21 +1115,55 @@
             Publishing form to generate share link…
           </div>
 
-          <div class="pt-4 mt-4 border-t border-slate-200">
-            <ShareCard
-              mode="doc"
-              :share-link="internalShareLink"
-              :privacy-type="privacyType"
-              :members="shareMembersForCard"
-              :can-edit-privacy="true"
-              :document-title="formTitle"
-              @copy-link="handleInternalCopyLink"
-              @change-privacy="handleChangeFormPrivacy"
-              @invite="handleInviteCollaborator"
-              @update-member="handleUpdateCollaborator"
-              @remove-member="handleRemoveCollaborator"
-              @close="showShareModal = false"
-            />
+          <div class="pt-4 mt-2 border-t border-slate-200 flex items-center justify-between gap-3">
+            <div class="space-y-0.5 text-xs text-slate-500">
+              <p class="font-semibold">Collaborators & workspace access</p>
+              <p>Manage who in your workspace can open and edit this form.</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              @click="showShareAccessView = true"
+            >
+              Manage access
+            </Button>
+          </div>
+        </div>
+
+        <div v-else class="space-y-4 py-2">
+          <ShareCard
+            mode="doc"
+            :share-link="internalShareLink"
+            :privacy-type="privacyType"
+            :members="shareMembersForCard"
+            :can-edit-privacy="true"
+            :document-title="formTitle"
+            @copy-link="handleInternalCopyLink"
+            @change-privacy="handleChangeFormPrivacy"
+            @invite="handleInviteCollaborator"
+            @update-member="handleUpdateCollaborator"
+            @remove-member="handleRemoveCollaborator"
+            @close="showShareModal = false"
+          />
+
+          <div class="flex items-center justify-between pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              @click="showShareAccessView = false"
+            >
+              Back to share link
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              @click="handleInternalCopyLink"
+            >
+              Copy editor link
+            </Button>
           </div>
         </div>
 
@@ -1247,6 +1276,7 @@ const showShareModal = ref(false);
 const isPublishingShare = ref(false);
 const shareTarget = ref<any>(null);
 const shareAutoPublic = ref(false);
+const showShareAccessView = ref(false);
 const isUpdatingShareVisibility = ref(false);
 const privacyType = ref<number>(7);
 const shareMembers = ref<ShareMember[]>([]);
@@ -1353,6 +1383,7 @@ const closeShareModal = () => {
 };
 const openShareModal = async () => {
   shareAutoPublic.value = false;
+  showShareAccessView.value = false;
   const target = formStore.allForms.find((f) => f.id === formId.value) ?? {
     id: formId.value,
   };
