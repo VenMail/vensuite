@@ -1,0 +1,16 @@
+{
+  "exact": [
+    "AI",
+    "S3",
+    "Venmail",
+    "Cloudflare R2",
+    "123 Main Street, City, State 12345",
+    "John Doe",
+    "Acme Inc",
+    "john.doe@example.com",
+    "example.com",
+    "Lorem ipsum dolor sit amet"
+  ],
+  "exactInsensitive": [],
+  "contains": []
+}

@@ -1,0 +1,489 @@
+/**
+ * JSX/TSX Parser
+ * 
+ * Handles React, Next.js, and other JSX-based frameworks.
+ * Supports: .js, .jsx, .ts, .tsx files with JSX syntax
+ * 
+ * Frameworks: React, Next.js, Gatsby, Remix, React Native
+ */
+
+const { BaseParser } = require('./baseParser');
+
+// Try to load parsers
+let parseSync; // oxc-parser
+let babelParse; // @babel/parser
+
+try {
+  parseSync = require('oxc-parser').parseSync;
+} catch (e) {}
+
+try {
+  babelParse = require('@babel/parser').parse;
+} catch (e) {}
+
+class JsxParser extends BaseParser {
+  static getExtensions() {
+    return ['js', 'jsx', 'ts', 'tsx', 'mjs', 'mts'];
+  }
+
+  static getName() {
+    return 'JSX/TSX (React, Next.js, Gatsby, Remix)';
+  }
+
+  static canHandle(filePath) {
+    const ext = filePath.toLowerCase().split('.').pop();
+    // Skip declaration files
+    if (filePath.endsWith('.d.ts')) return false;
+    return this.getExtensions().includes(ext);
+  }
+
+  /**
+   * Parse JSX/TSX content
+   * @param {string} content
+   * @param {Object} options
+   * @returns {Object}
+   */
+  parse(content, options = {}) {
+    const results = {
+      items: [],
+      stats: { processed: 0, extracted: 0, errors: 0 },
+      errors: [],
+    };
+
+    if (!content || typeof content !== 'string') {
+      return results;
+    }
+
+    const { shouldTranslate } = require('../validators');
+    const filePath = options.filePath || 'unknown.jsx';
+    const ext = filePath.split('.').pop().toLowerCase();
+
+    let ast;
+
+    // Try oxc-parser first (faster)
+    if (parseSync) {
+      try {
+        const result = parseSync(filePath, content, {
+          sourceType: 'module',
+          lang: ext === 'tsx' ? 'tsx' : ext === 'ts' ? 'ts' : ext === 'jsx' ? 'jsx' : 'js',
+        });
+        if (result && result.program) {
+          ast = result.program;
+        }
+      } catch (err) {
+        results.errors.push(`oxc-parser error: ${err.message}`);
+      }
+    }
+
+    // Fall back to babel
+    if (!ast && babelParse) {
+      try {
+        const result = babelParse(content, {
+          sourceType: 'module',
+          plugins: ['typescript', 'jsx', 'decorators-legacy'],
+        });
+        if (result) {
+          ast = result;
+        }
+      } catch (err) {
+        results.errors.push(`babel error: ${err.message}`);
+      }
+    }
+
+    if (!ast) {
+      // Fallback to regex extraction
+      return this.parseWithRegex(content, options);
+    }
+
+    results.stats.processed = 1;
+
+    // Walk the AST
+    const self = this;
+    let currentJsxElement = null;
+
+    const visitors = {
+      JSXElement(node) {
+        currentJsxElement = node;
+      },
+
+      JSXText(node, parent) {
+        const raw = node.value || '';
+        const text = raw.replace(/\s+/g, ' ').trim();
+        if (!text) return;
+
+        const jsxParent = parent?.type === 'JSXElement' ? parent : currentJsxElement;
+        if (!jsxParent?.openingElement) return;
+
+        const elementName = self.getJsxElementName(jsxParent.openingElement.name);
+        const kind = self.inferKindFromTag(elementName);
+
+        if (shouldTranslate(text, { ignorePatterns: self.ignorePatterns })) {
+          results.items.push({ type: 'text', text, kind, parentTag: elementName });
+          results.stats.extracted++;
+        }
+      },
+
+      JSXExpressionContainer(node, parent) {
+        const expr = node.expression;
+        if (!expr || expr.type === 'JSXEmptyExpression') return;
+
+        const jsxParent = parent?.type === 'JSXElement' ? parent : currentJsxElement;
+        if (!jsxParent?.openingElement) return;
+
+        const elementName = self.getJsxElementName(jsxParent.openingElement.name);
+        const kind = self.inferKindFromTag(elementName);
+
+        self.processExpression(expr, kind, elementName, results, shouldTranslate);
+      },
+
+      JSXAttribute(node) {
+        const nameNode = node.name;
+        if (!nameNode || nameNode.type !== 'JSXIdentifier') return;
+
+        const attrName = nameNode.name;
+        const valueNode = node.value;
+        if (!valueNode) return;
+
+        const { isNonTranslatableAttribute, isTranslatableAttribute } = require('../validators/htmlValidator');
+        if (isNonTranslatableAttribute(attrName)) return;
+        if (!isTranslatableAttribute(attrName)) return;
+
+        const kind = self.inferKindFromAttr(attrName);
+        self.processAttributeValue(valueNode, attrName, kind, results, shouldTranslate);
+      },
+
+      // Object properties (for config objects, labels, etc.)
+      Property(node, parent) {
+        self.processObjectProperty(node, parent, results, shouldTranslate);
+      },
+      ObjectProperty(node, parent) {
+        self.processObjectProperty(node, parent, results, shouldTranslate);
+      },
+
+      // Variable declarations with string values
+      VariableDeclarator(node) {
+        self.processVariableDeclarator(node, results, shouldTranslate);
+      },
+
+      // Return statements that directly return string/templated text
+      ReturnStatement(node, parent) {
+        self.processReturnStatement(node, parent, results, shouldTranslate);
+      },
+
+      // Toast/notification calls
+      CallExpression(node) {
+        self.processCallExpression(node, results, shouldTranslate);
+      },
+    };
+
+    this.walk(ast, visitors);
+    return results;
+  }
+
+  /**
+   * Walk AST recursively
+   */
+  walk(node, visitors, parent = null) {
+    if (!node || typeof node !== 'object') return;
+
+    const visitor = visitors[node.type];
+    if (visitor) {
+      visitor(node, parent);
+    }
+
+    for (const key of Object.keys(node)) {
+      if (['type', 'loc', 'range', 'start', 'end'].includes(key)) continue;
+      const child = node[key];
+      if (Array.isArray(child)) {
+        for (const item of child) {
+          this.walk(item, visitors, node);
+        }
+      } else if (child && typeof child === 'object' && child.type) {
+        this.walk(child, visitors, node);
+      }
+    }
+  }
+
+  /**
+   * Get JSX element name from AST node
+   */
+  getJsxElementName(node) {
+    if (!node) return null;
+    if (node.type === 'JSXIdentifier') return node.name;
+    if (node.type === 'JSXMemberExpression') {
+      const objectName = this.getJsxElementName(node.object);
+      const propName = this.getJsxElementName(node.property);
+      if (objectName && propName) return `${objectName}.${propName}`;
+      return propName || objectName;
+    }
+    return null;
+  }
+
+  /**
+   * Check if node is a string literal
+   */
+  isStringLiteral(node) {
+    if (!node) return false;
+    if (node.type === 'StringLiteral') return true;
+    if (node.type === 'Literal' && typeof node.value === 'string') return true;
+    return false;
+  }
+
+  /**
+   * Get string value from literal node
+   */
+  getStringValue(node) {
+    if (!node) return null;
+    if (node.type === 'StringLiteral') return node.value;
+    if (node.type === 'Literal' && typeof node.value === 'string') return node.value;
+    return null;
+  }
+
+  /**
+   * Build pattern from template literal
+   */
+  buildPatternFromTemplateLiteral(tpl) {
+    if (!tpl || !tpl.quasis) return '';
+    const parts = [];
+    for (let i = 0; i < tpl.quasis.length; i++) {
+      const quasi = tpl.quasis[i];
+      const cooked = quasi.value?.cooked ?? quasi.cooked ?? '';
+      parts.push(cooked);
+      if (tpl.expressions && i < tpl.expressions.length) {
+        const expr = tpl.expressions[i];
+        const name = this.inferPlaceholderName(expr, i);
+        parts.push(`{${name}}`);
+      }
+    }
+    return parts.join('');
+  }
+
+  /**
+   * Infer placeholder name from expression
+   */
+  inferPlaceholderName(expr, index) {
+    if (!expr) return `value${index + 1}`;
+    if (expr.type === 'Identifier') return expr.name;
+    if (expr.type === 'MemberExpression' && !expr.computed) {
+      const prop = expr.property;
+      if (prop?.type === 'Identifier') return prop.name;
+    }
+    return `value${index + 1}`;
+  }
+
+  /**
+   * Get text pattern from node
+   */
+  getTextPattern(node) {
+    if (!node) return null;
+    if (this.isStringLiteral(node)) return this.getStringValue(node);
+    if (node.type === 'TemplateLiteral') {
+      if (!node.expressions || node.expressions.length === 0) {
+        return node.quasis.map(q => q.value?.cooked ?? q.cooked ?? '').join('');
+      }
+      return this.buildPatternFromTemplateLiteral(node);
+    }
+    return null;
+  }
+
+  /**
+   * Process JSX expression
+   */
+  processExpression(expr, kind, parentTag, results, shouldTranslate) {
+    if (!expr) return;
+
+    const pattern = this.getTextPattern(expr);
+    if (pattern) {
+      const text = pattern.replace(/\s+/g, ' ').trim();
+      if (text && shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+        results.items.push({ type: 'text', text, kind, parentTag });
+        results.stats.extracted++;
+      }
+    } else if (expr.type === 'ConditionalExpression') {
+      this.processExpression(expr.consequent, kind, parentTag, results, shouldTranslate);
+      this.processExpression(expr.alternate, kind, parentTag, results, shouldTranslate);
+    }
+  }
+
+  /**
+   * Process attribute value
+   */
+  processAttributeValue(valueNode, attrName, kind, results, shouldTranslate) {
+    if (!valueNode) return;
+
+    const pattern = this.getTextPattern(valueNode);
+    if (pattern) {
+      const text = pattern.replace(/\s+/g, ' ').trim();
+      if (text && shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+        results.items.push({ type: 'attribute', text, kind, attributeName: attrName });
+        results.stats.extracted++;
+      }
+    } else if (valueNode.type === 'JSXExpressionContainer') {
+      this.processAttributeValue(valueNode.expression, attrName, kind, results, shouldTranslate);
+    } else if (valueNode.type === 'ConditionalExpression') {
+      this.processAttributeValue(valueNode.consequent, attrName, kind, results, shouldTranslate);
+      this.processAttributeValue(valueNode.alternate, attrName, kind, results, shouldTranslate);
+    }
+  }
+
+  /**
+   * Process object property
+   */
+  processObjectProperty(node, parent, results, shouldTranslate) {
+    const keyNode = node.key;
+    const valueNode = node.value;
+    if (!valueNode) return;
+
+    let propName = null;
+    if (keyNode.type === 'Identifier') {
+      propName = keyNode.name;
+    } else if (this.isStringLiteral(keyNode)) {
+      propName = this.getStringValue(keyNode);
+    }
+    if (!propName) return;
+
+    let kind = null;
+    if (propName === 'title') kind = 'heading';
+    else if (propName === 'description') kind = 'text';
+    else if (propName === 'cta') kind = 'button';
+    else if (propName === 'message') kind = 'text';
+    else if (propName === 'label' && this.isStringLiteral(valueNode)) {
+      const valueText = this.getStringValue(valueNode) || '';
+      if (/\s/.test(valueText.trim()) && parent?.type === 'ArrayExpression') {
+        kind = 'label';
+      }
+    }
+
+    if (!kind) return;
+
+    const pattern = this.getTextPattern(valueNode);
+    if (!pattern) return;
+
+    const text = pattern.replace(/\s+/g, ' ').trim();
+    if (text && shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+      results.items.push({ type: 'string', text, kind });
+      results.stats.extracted++;
+    }
+  }
+
+  /**
+   * Process variable declarator
+   */
+  processVariableDeclarator(node, results, shouldTranslate) {
+    const id = node.id;
+    const init = node.init;
+    if (!id || id.type !== 'Identifier' || !init) return;
+
+    const pattern = this.getTextPattern(init);
+    if (!pattern) return;
+
+    const text = pattern.replace(/\s+/g, ' ').trim();
+    if (!text) return;
+
+    const varName = id.name || '';
+    let kind = 'text';
+    if (/title/i.test(varName)) kind = 'heading';
+    else if (/label/i.test(varName)) kind = 'label';
+    else if (/placeholder/i.test(varName)) kind = 'placeholder';
+    else if (/message/i.test(varName)) kind = 'text';
+
+    if (shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+      results.items.push({ type: 'string', text, kind });
+      results.stats.extracted++;
+    }
+  }
+
+  /**
+   * Process return statement that yields a string/templated value
+   * This is useful for patterns like:
+   *   const subtitle = computed(() => { return "Financial spreadsheets"; })
+   */
+  processReturnStatement(node, parent, results, shouldTranslate) {
+    if (!node || !node.argument) return;
+
+    const pattern = this.getTextPattern(node.argument);
+    if (!pattern) return;
+
+    const text = pattern.replace(/\s+/g, ' ').trim();
+    if (!text) return;
+
+    if (!shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+      return;
+    }
+
+    // For now, treat these as generic text. If needed, we can refine kind
+    // based on surrounding variable/function names.
+    const kind = 'text';
+    results.items.push({ type: 'string', text, kind });
+    results.stats.extracted++;
+  }
+
+  /**
+   * Process call expression (toast, notifications, etc.)
+   */
+  processCallExpression(node, results, shouldTranslate) {
+    const callee = node.callee;
+    const args = node.arguments || [];
+
+    // Toast calls: toast.success(), toast.error(), etc.
+    if (callee?.type === 'MemberExpression' &&
+        callee.object?.type === 'Identifier' && 
+        callee.object.name === 'toast') {
+      if (args.length > 0) {
+        this.collectPatternsFromArg(args[0], 'toast', results, shouldTranslate);
+      }
+    }
+
+    // Notification calls
+    if (callee?.type === 'Identifier' && 
+        ['notify', 'notification', 'alert', 'showMessage'].includes(callee.name)) {
+      if (args.length > 0) {
+        this.collectPatternsFromArg(args[0], 'toast', results, shouldTranslate);
+      }
+    }
+  }
+
+  /**
+   * Collect patterns from call argument
+   */
+  collectPatternsFromArg(arg, kind, results, shouldTranslate) {
+    const pattern = this.getTextPattern(arg);
+    if (pattern) {
+      const text = pattern.replace(/\s+/g, ' ').trim();
+      if (text && shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+        results.items.push({ type: 'string', text, kind });
+        results.stats.extracted++;
+      }
+    } else if (arg.type === 'ConditionalExpression') {
+      this.collectPatternsFromArg(arg.consequent, kind, results, shouldTranslate);
+      this.collectPatternsFromArg(arg.alternate, kind, results, shouldTranslate);
+    }
+  }
+
+  /**
+   * Fallback regex-based extraction
+   */
+  parseWithRegex(content, options = {}) {
+    const results = {
+      items: [],
+      stats: { processed: 1, extracted: 0, errors: 0 },
+      errors: ['Using regex fallback - AST parsers not available'],
+    };
+
+    const { shouldTranslate } = require('../validators');
+    const stringPattern = /(['"`])([^'"`\n]{3,100})\1/g;
+    let match;
+
+    while ((match = stringPattern.exec(content)) !== null) {
+      const text = match[2].trim();
+      if (shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+        results.items.push({ type: 'string', text, kind: 'text' });
+        results.stats.extracted++;
+      }
+    }
+
+    return results;
+  }
+}
+
+module.exports = { JsxParser };

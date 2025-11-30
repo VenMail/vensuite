@@ -1,0 +1,6 @@
+{
+  "name": "ai-localizer-scripts",
+  "private": true,
+  "type": "commonjs",
+  "description": "AI Localizer i18n scripts - this file ensures scripts run as CommonJS"
+}
