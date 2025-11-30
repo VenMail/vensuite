@@ -8,6 +8,7 @@ import { createPinia } from 'pinia'
 // @ts-ignore - vite url import
 import mammothUrl from 'mammoth/mammoth.browser.min.js?url'
 import { createI18n } from 'vue-i18n'
+import { t } from '@/i18n'
 import App from './App.vue'
 import { useAuthStore } from './store/auth'
 
@@ -112,6 +113,9 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(i18n)
+
+// Bridge vue templates' $t helper to the custom i18n implementation
+;(app.config.globalProperties as any).$t = t
 
 const authStore = useAuthStore(pinia)
 authStore.setRouter(router)
