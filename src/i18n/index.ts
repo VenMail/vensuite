@@ -44,7 +44,8 @@ function flattenMessages(input: unknown, prefix = ''): Messages {
   return result;
 }
 
-const messageModules = import.meta.glob('@i18n-auto/**/*.json', { eager: true });
+// Auto-load i18n JSON files from src/i18n/locales if they exist
+const messageModules = import.meta.glob('./locales/**/*.json', { eager: true });
 
 const autoMessagesByLocale: MessagesByLocale = {};
 
