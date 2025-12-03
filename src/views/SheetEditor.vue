@@ -186,15 +186,11 @@ async function loadData(id: string) {
       if (ts) lastSavedAt.value = new Date(ts)
     } catch {}
 
-    if (loadedData.content) {
+    if (loadedData.content !== undefined && loadedData.content !== null && loadedData.content !== '') {
       try {
-        const contentString = loadedData.content
-        if (!contentString) {
-          console.log('Content string is empty, will use default structure')
-          return null
-        }
-
-        const parsedData = JSON.parse(contentString)
+        const parsedData = typeof loadedData.content === 'string'
+          ? JSON.parse(loadedData.content)
+          : loadedData.content
 
         if (parsedData && typeof parsedData === 'object') {
           if (!parsedData.id) {
@@ -208,7 +204,7 @@ async function loadData(id: string) {
             hasId: !!parsedData.id,
             hasSheets: !!parsedData.sheets,
             hasName: !!parsedData.name,
-            dataSize: contentString.length,
+            dataSize: typeof loadedData.content === 'string' ? loadedData.content.length : JSON.stringify(parsedData).length,
             title: loadedData.title,
           })
 

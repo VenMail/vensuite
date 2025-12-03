@@ -130,12 +130,29 @@ export const useFileStore = defineStore("files", {
     normalizeDocumentShape(doc: any): FileData {
       const normalizedType = this.normalizeFileType(doc?.file_type, doc?.file_name)
       const isFolder = !!doc?.is_folder
+      const normalizedContent = this.normalizeContentPayload(doc?.content ?? doc?.contents, normalizedType)
       return {
         ...doc,
         id: doc.id,
         file_type: normalizedType,
         is_folder: isFolder,
+        content: normalizedContent,
+        title: this.computeTitle(doc),
       } as FileData
+    },
+
+    normalizeContentPayload(raw: unknown, fileType?: string | null): string {
+      if (raw === undefined || raw === null || raw === '') {
+        return this.getDefaultContent(fileType);
+      }
+      if (typeof raw === 'string') {
+        return raw;
+      }
+      try {
+        return JSON.stringify(raw);
+      } catch {
+        return this.getDefaultContent(fileType);
+      }
     },
     inferDocumentFormat(fileType?: string | null): DocumentFormat {
       const normalized = (fileType || "").toString().trim().toLowerCase();
@@ -925,16 +942,13 @@ export const useFileStore = defineStore("files", {
 
         if (response.status === 200 || response.status === 201) {
           const serverData = response.data.data;
-
-          const savedDoc: FileData = {
+          const savedDoc: FileData = this.normalizeDocumentShape({
             ...serverData,
-            id: serverData.id, // Always use server ID
-            file_type: document.file_type || serverData.file_type, // Preserve file_type
-            is_folder: document.is_folder ?? serverData.is_folder ?? false, // Preserve is_folder
-            content: serverData.content || serverData.contents || this.getDefaultContent(serverData.file_type),
-            isNew: false,
-            isDirty: false,
-          };
+            file_type: document.file_type || serverData.file_type,
+            is_folder: document.is_folder ?? serverData.is_folder ?? false,
+          });
+          savedDoc.isNew = false;
+          savedDoc.isDirty = false;
 
           // Persist refreshed version locally so offline cache always has latest server ID
           this.saveToLocalCache(savedDoc);
@@ -999,17 +1013,10 @@ export const useFileStore = defineStore("files", {
           headers,
         });
         const data = response.data.data;
-        const normalizedType = this.normalizeFileType(data.file_type, data.file_name)
-        const doc: FileData = {
-          ...data,
-          id: data.id, // Use server ID directly
-          file_type: normalizedType,
-          is_folder: !!data.is_folder,
-          content: data.content || data.contents || this.getDefaultContent(normalizedType),
-          title: this.computeTitle(data),
-          isNew: false,
-          isDirty: false
-        };
+        const doc = this.normalizeDocumentShape(data);
+        doc.file_url = data.file_url ? this.constructFullUrl(data.file_url) : doc.file_url;
+        doc.isNew = false;
+        doc.isDirty = false;
         // Attach large-file hints for front-end handling without breaking types
         (doc as any).is_large = !!data.is_large;
         if ((data as any).file_url) {
@@ -1196,18 +1203,11 @@ export const useFileStore = defineStore("files", {
         });
         const docs = response.data.data as FileData[];
         const processedDocs = docs.map((doc) => {
-          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name)
-          return {
-            ...doc,
-            id: doc.id, // Use server ID directly
-            file_type: normalizedType,
-            is_folder: !!doc.is_folder,
-            content: doc.content || this.getDefaultContent(normalizedType),
-            title: this.computeTitle(doc),
-            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
-            isNew: false,
-            isDirty: false
-          }
+          const normalized = this.normalizeDocumentShape(doc)
+          normalized.file_url = doc.file_url ? this.constructFullUrl(doc.file_url) : undefined
+          normalized.isNew = false
+          normalized.isDirty = false
+          return normalized
         });
 
         // Optionally update store with processed documents
@@ -1289,18 +1289,11 @@ export const useFileStore = defineStore("files", {
 
         const docs = response.data.data as FileData[];
         const processedDocs = docs.map((doc) => {
-          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name);
-          return {
-            ...doc,
-            id: doc.id,
-            file_type: normalizedType,
-            is_folder: !!doc.is_folder,
-            content: doc.content || this.getDefaultContent(normalizedType),
-            title: this.computeTitle(doc),
-            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
-            isNew: false,
-            isDirty: false,
-          };
+          const normalized = this.normalizeDocumentShape(doc);
+          normalized.file_url = doc.file_url ? this.constructFullUrl(doc.file_url) : undefined;
+          normalized.isNew = false;
+          normalized.isDirty = false;
+          return normalized;
         });
 
         return processedDocs;
@@ -1382,18 +1375,11 @@ export const useFileStore = defineStore("files", {
         });
         const docs = response.data.data as FileData[];
         const processedDocs = docs.map((doc) => {
-          const normalizedType = this.normalizeFileType(doc.file_type, doc.file_name)
-          return {
-            ...doc,
-            id: doc.id, // Use server ID directly
-            file_type: normalizedType,
-            is_folder: !!doc.is_folder,
-            content: doc.content || this.getDefaultContent(normalizedType),
-            title: this.computeTitle(doc),
-            file_url: doc.file_url ? this.constructFullUrl(doc.file_url) : undefined,
-            isNew: false,
-            isDirty: false
-          }
+          const normalized = this.normalizeDocumentShape(doc)
+          normalized.file_url = doc.file_url ? this.constructFullUrl(doc.file_url) : undefined
+          normalized.isNew = false
+          normalized.isDirty = false
+          return normalized
         });
 
         return processedDocs;
@@ -1502,12 +1488,11 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         console.log("Imported attachment:", response.data.data);
-        const doc = response.data.data as FileData;
-        doc.id = uuidv4();
-        doc.last_viewed = new Date();
-        this.saveToLocalCache(doc);
-        this.updateFiles(doc);
-        return doc;
+        const normalized = this.normalizeDocumentShape(response.data.data);
+        normalized.last_viewed = new Date();
+        this.saveToLocalCache(normalized);
+        this.updateFiles(normalized);
+        return normalized;
       } catch (error) {
         console.error("Error importing attachment:", error);
         this.lastError = "Failed to import attachment";
