@@ -1,7 +1,7 @@
 <template>
   <Dialog :open="isOpen" @update:open="handleClose">
     <DialogContent class="max-w-6xl w-full h-[90vh] p-0 bg-black/95 overflow-hidden">
-      <!-- Header -->
+       
       <div class="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-4">
         <div class="flex items-center justify-between text-white">
           <div class="flex items-center gap-3">
@@ -21,9 +21,9 @@
         </div>
       </div>
 
-      <!-- Media Content Container -->
+       
       <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
-        <!-- Main Media Content -->
+         
         <div 
           :class="[
             'relative transition-all duration-500 ease-out overflow-hidden',
@@ -31,7 +31,7 @@
           ]"
           :style="mediaContainerStyle"
         >
-          <!-- Image Preview -->
+           
           <div v-if="currentIsImage" class="relative w-full h-full flex items-center justify-center">
             <img
               :key="currentFile?.id"
@@ -48,7 +48,7 @@
             />
           </div>
 
-          <!-- Video Preview -->
+           
           <div v-else-if="currentIsVideo" class="relative w-full h-full flex items-center justify-center">
             <video
               :key="currentFile?.id"
@@ -68,7 +68,7 @@
             </video>
           </div>
 
-          <!-- Audio Preview -->
+           
           <div v-else-if="currentIsAudio" class="flex flex-col items-center gap-6 max-w-md w-full">
             <div 
               :class="[
@@ -94,14 +94,14 @@
             </audio>
           </div>
 
-          <!-- Unsupported File Type -->
+           
           <div v-else class="flex flex-col items-center gap-6 text-white text-center">
             <div class="w-24 h-24 bg-gray-600 rounded-full flex items-center justify-center">
               <FileIcon class="w-12 h-12" />
             </div>
             <div>
               <h3 class="text-xl font-semibold mb-2">{{ currentFile?.title }}</h3>
-              <p class="text-gray-300 mb-4">Preview not available for this file type</p>
+              <p class="text-gray-300 mb-4">{{$t('Media.MediaViewer.text.preview_not_available_for')}}</p>
               <Button variant="outline" @click="handleDownload">
                 <Download class="h-4 w-4 mr-2" />
                 Download File
@@ -110,7 +110,7 @@
           </div>
         </div>
 
-        <!-- Thumbnail Slider -->
+         
         <Transition
           enter-active-class="transition-all duration-300 ease-out"
           enter-from-class="transform translate-x-full opacity-0"
@@ -135,7 +135,7 @@
                     : 'border-white/20 hover:border-white/40 hover:scale-102'
                 ]"
               >
-                <!-- Image Thumbnail -->
+                 
                 <img
                   v-if="isImageFile(file)"
                   :src="file.file_url"
@@ -143,21 +143,21 @@
                   class="w-full h-full object-cover"
                   loading="lazy"
                 />
-                <!-- Video Thumbnail -->
+                 
                 <div 
                   v-else-if="isVideoFile(file)" 
                   class="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center"
                 >
                   <Play class="w-4 h-4 text-white" />
                 </div>
-                <!-- Audio Thumbnail -->
+                 
                 <div 
                   v-else-if="isAudioFile(file)" 
                   class="w-full h-full bg-gradient-to-br from-green-600 to-blue-600 flex items-center justify-center"
                 >
                   <Volume2 class="w-4 h-4 text-white" />
                 </div>
-                <!-- Other Files -->
+                 
                 <div 
                   v-else 
                   class="w-full h-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center"
@@ -165,7 +165,7 @@
                   <FileIcon class="w-4 h-4 text-white" />
                 </div>
 
-                <!-- Index Indicator -->
+                 
                 <div class="absolute top-1 left-1 bg-black/60 text-white text-xs px-1 rounded">
                   {{ index + 1 }}
                 </div>
@@ -174,7 +174,7 @@
           </div>
         </Transition>
 
-        <!-- Loading State -->
+         
         <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-black/50 z-30">
           <div class="flex flex-col items-center gap-4 text-white">
             <Loader class="w-8 h-8 animate-spin" />
@@ -182,13 +182,13 @@
           </div>
         </div>
 
-        <!-- Error State -->
+         
         <div v-if="hasError" class="absolute inset-0 flex items-center justify-center z-30">
           <div class="flex flex-col items-center gap-4 text-white text-center">
             <AlertCircle class="w-12 h-12 text-red-400" />
             <div>
-              <h3 class="text-lg font-semibold mb-2">Failed to load media</h3>
-              <p class="text-gray-300 mb-4">There was an error loading this file</p>
+              <h3 class="text-lg font-semibold mb-2">{{$t('Media.MediaViewer.heading.failed_to_load_media')}}</h3>
+              <p class="text-gray-300 mb-4">{{$t('Media.MediaViewer.text.there_was_an_error')}}</p>
               <Button variant="outline" @click="handleDownload">
                 <Download class="h-4 w-4 mr-2" />
                 Download Instead
@@ -198,7 +198,7 @@
         </div>
       </div>
 
-      <!-- Navigation Controls -->
+       
       <div v-if="hasMultipleFiles" class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
         <Button
           variant="ghost"
@@ -224,7 +224,7 @@
         </Button>
       </div>
 
-      <!-- Footer Info -->
+       
       <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20">
         <div class="flex items-center justify-between text-white text-sm">
           <div class="flex items-center gap-4">

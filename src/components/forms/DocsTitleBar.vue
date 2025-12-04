@@ -32,7 +32,7 @@
           class="h-3 w-3 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
         />
 
-        <!-- Last Saved Status / Version History -->
+         
         <div class="flex items-center gap-3 text-sm">
           <span
             v-if="lastSavedAt"
@@ -47,7 +47,7 @@
             {{ lastSavedText }}
           </span>
 
-          <!-- Version History -->
+           
           <div class="relative inline-block" ref="versionAreaRef">
             <button
               v-if="showVersionHistory"
@@ -59,7 +59,7 @@
               <span v-if="versionCount && versionCount > 0" class="text-xs">{{ versionCount }}</span>
             </button>
 
-            <!-- Version History Dropdown -->
+             
             <transition name="fade">
               <div
                 v-if="isVersionDropdownOpen"
@@ -82,7 +82,7 @@
                   </div>
                   <template v-else>
                     <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                      <!-- Current Version -->
+                       
                       <div class="p-3 bg-blue-50 dark:bg-blue-900/20">
                         <div class="flex items-center justify-between">
                           <div class="flex items-center gap-2">
@@ -96,9 +96,9 @@
                         </div>
                       </div>
 
-                      <!-- Previous Versions -->
+                       
                       <div v-if="versionHistory.length === 0" class="p-3 text-center text-gray-500 dark:text-gray-400">
-                        No previous versions
+                        {{$t('Forms.DocsTitleBar.text.no_previous_versions')}}
                       </div>
                       <template v-else>
                         <div

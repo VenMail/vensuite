@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { readdir, readFile, writeFile, mkdir } = require('node:fs/promises');
+const { readdir, readFile, writeFile, mkdir, rm } = require('node:fs/promises');
 const { existsSync } = require('node:fs');
 const path = require('node:path');
 const process = require('node:process');
@@ -125,6 +125,15 @@ async function writeJson(filePath, data) {
 
       for (const locale of locales) {
         const localeDir = path.resolve(autoDir, locale);
+
+        try {
+          const localeEntries = await readdir(localeDir, { withFileTypes: true });
+          for (const entry of localeEntries) {
+            const full = path.join(localeDir, entry.name);
+            await rm(full, { recursive: true, force: true });
+          }
+        } catch {}
+
         const singleLocalePath = path.resolve(autoDir, `${locale}.json`);
         const singleLocaleData = (await readJson(singleLocalePath)) || {};
         for (const baseFile of baseFiles) {

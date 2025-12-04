@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    <!-- Tabs -->
+     
     <div class="flex gap-2 border-b border-gray-200 dark:border-gray-700">
       <button
         v-for="tab in tabs"
@@ -18,7 +18,7 @@
       </button>
     </div>
 
-    <!-- URL Tab -->
+     
     <div v-if="activeTab === 'url'" class="space-y-2">
       <label class="text-sm font-medium text-gray-900 dark:text-gray-100">Image URL</label>
       <input
@@ -30,7 +30,7 @@
       />
     </div>
 
-    <!-- Upload Tab -->
+     
     <div v-if="activeTab === 'upload'" class="space-y-2">
       <label class="text-sm font-medium text-gray-900 dark:text-gray-100">Upload Image</label>
       <div
@@ -47,7 +47,7 @@
       >
         <Upload class="h-12 w-12 mx-auto mb-4 text-gray-400" />
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          Click to upload or drag and drop
+          {{$t('ImagePicker.text.click_to_upload_or')}}
         </p>
         <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
           PNG, JPG, GIF up to 10MB
@@ -65,10 +65,10 @@
       </div>
     </div>
 
-    <!-- Library Tab -->
+     
     <div v-if="activeTab === 'library'" class="space-y-2">
       <div class="flex items-center justify-between">
-        <label class="text-sm font-medium text-gray-900 dark:text-gray-100">Select from Library</label>
+        <label class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('ImagePicker.label.select_from_library')}}</label>
         <button
           v-if="selectedLibraryImage"
           @click="selectedLibraryImage = null"
@@ -78,7 +78,7 @@
         </button>
       </div>
       
-      <!-- Search -->
+       
       <input
         v-model="searchQuery"
         type="text"
@@ -86,13 +86,13 @@
         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
       />
 
-      <!-- Image Grid -->
+       
       <div class="max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
         <div v-if="isLoading" class="text-center py-8 text-gray-500">
           Loading images...
         </div>
         <div v-else-if="filteredImages.length === 0" class="text-center py-8 text-gray-500">
-          No images found
+          {{$t('ImagePicker.text.no_images_found')}}
         </div>
         <div v-else class="grid grid-cols-3 gap-2">
           <button
@@ -122,7 +122,7 @@
       </div>
     </div>
 
-    <!-- Actions -->
+     
     <div class="flex justify-end gap-2 pt-2">
       <button
         @click="$emit('cancel')"

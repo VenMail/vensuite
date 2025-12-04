@@ -1,0 +1,17 @@
+{
+  "Services": {
+    "Ai": {
+      "text": {
+        "ai_generation_failed": "AI generation failed:",
+        "failed_to_generate_form": "Failed to generate form blocks",
+        "failed_to_generate_form_2": "Failed to generate form",
+        "failed_to_resolve_auth": "Failed to resolve auth token for AI request:"
+      }
+    },
+    "Forms": {
+      "text": {
+        "invalid_form_payload_received": "Invalid form payload received"
+      }
+    }
+  }
+}

@@ -11,7 +11,7 @@
 
       <div v-if="emailRequired" class="player-host__callout">
         <h3>Email required</h3>
-        <p>We will ask for your email address so we can send confirmations and receipts.</p>
+        <p>{{$t('Views.FormPlayerHost.text.we_will_ask_for')}}</p>
       </div>
 
       <div v-if="showPaymentReminder" class="player-host__callout player-host__callout--payment">

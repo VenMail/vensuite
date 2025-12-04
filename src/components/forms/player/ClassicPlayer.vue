@@ -140,7 +140,7 @@
     v-else
     class="mx-auto my-20 max-w-xl rounded-2xl border-2 border-dashed border-gray-300 bg-white px-10 py-12 text-center text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
   >
-    <p>No questions available in this form.</p>
+    <p>{{$t('Forms.Player.ClassicPlayer.text.no_questions_available_in')}}</p>
   </div>
 </template>
 

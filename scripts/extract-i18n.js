@@ -18,7 +18,7 @@
  * - CSS, code expression, and technical content detection
  */
 
-const { readdir, readFile, writeFile, mkdir, stat } = require('node:fs/promises');
+const { readdir, readFile, writeFile, mkdir, stat, rm } = require('node:fs/promises');
 const { existsSync, readdirSync } = require('node:fs');
 const path = require('node:path');
 const process = require('node:process');
@@ -48,6 +48,7 @@ const ignorePatterns = loadIgnorePatterns(projectRoot);
 // Translation store
 const translations = Object.create(null);
 const textKeyMap = new Map();
+const namespaceRoots = new Map();
 
 // Statistics
 const stats = {
@@ -58,6 +59,70 @@ const stats = {
   rejectionReasons: {},
   byFramework: {},
 };
+
+function isCommonShortText(text) {
+  const trimmed = String(text || '').trim();
+  if (!trimmed) return false;
+  const cleaned = trimmed.replace(/\s+/g, ' ').trim();
+
+  if (/[.!?]/.test(cleaned)) return false;
+
+  const words = cleaned.split(' ').filter(Boolean);
+  if (words.length === 0 || words.length > 2) return false;
+
+  if (cleaned.length > 24) return false;
+
+  if (/[\/_]/.test(cleaned)) return false;
+
+  return true;
+}
+
+function cleanupExistingTranslations(existing) {
+  let removed = 0;
+  const root = existing && typeof existing === 'object' ? existing : {};
+  for (const [namespace, kinds] of Object.entries(root)) {
+    if (!kinds || typeof kinds !== 'object') continue;
+    for (const [kind, entries] of Object.entries(kinds)) {
+      if (!entries || typeof entries !== 'object') continue;
+      for (const [slug, value] of Object.entries(entries)) {
+        const text = typeof value === 'string' ? value : null;
+        if (!text) continue;
+        const validation = validateText(String(text).trim(), { ignorePatterns });
+        if (!validation.valid) {
+          delete entries[slug];
+          removed += 1;
+        }
+      }
+      if (Object.keys(entries).length === 0) {
+        delete kinds[kind];
+      }
+    }
+    if (Object.keys(kinds).length === 0) {
+      delete root[namespace];
+    }
+  }
+  if (removed > 0) {
+    console.log(`[i18n-extract] Cleaned ${removed} invalid existing translations with updated validators.`);
+  }
+}
+
+function getRootFromFilePath(filePath) {
+  const normalized = filePath.replace(/\\/g, '/');
+  if (normalized.includes('/resources/views/')) {
+    return 'views';
+  }
+  const relFromSrc = path.relative(srcRoot, filePath).replace(/\\/g, '/');
+  const parts = relFromSrc.split('/').filter(Boolean);
+  if (parts.length && parts[0] !== '..') {
+    return parts[0].toLowerCase();
+  }
+  const relFromProject = path.relative(projectRoot, filePath).replace(/\\/g, '/');
+  const projectParts = relFromProject.split('/').filter(Boolean);
+  if (projectParts.length) {
+    return projectParts[0].toLowerCase();
+  }
+  return 'common';
+}
 
 // ============================================================================
 // Translation Registration
@@ -74,7 +139,12 @@ function registerTranslation(namespace, kind, text) {
     return null;
   }
 
-  const keyId = `${namespace}|${kind}|${trimmed}`;
+  let effectiveNamespace = namespace;
+  if (isCommonShortText(trimmed)) {
+    effectiveNamespace = 'Commons';
+  }
+
+  const keyId = `${effectiveNamespace}|${kind}|${trimmed}`;
   const existingKey = textKeyMap.get(keyId);
   if (existingKey) {
     return existingKey;
@@ -90,14 +160,14 @@ function registerTranslation(namespace, kind, text) {
     return Object.prototype.hasOwnProperty.call(nsNode[k], s);
   };
 
-  while (hasTranslation(translations, namespace, kind, slug) && 
-         getTranslation(translations, namespace, kind, slug) !== trimmed) {
+  while (hasTranslation(translations, effectiveNamespace, kind, slug) && 
+         getTranslation(translations, effectiveNamespace, kind, slug) !== trimmed) {
     slug = `${baseSlug}_${index}`;
     index += 1;
   }
 
-  setTranslation(translations, namespace, kind, slug, trimmed);
-  const fullKey = `${namespace}.${kind}.${slug}`;
+  setTranslation(translations, effectiveNamespace, kind, slug, trimmed);
+  const fullKey = `${effectiveNamespace}.${kind}.${slug}`;
   textKeyMap.set(keyId, fullKey);
   stats.textsExtracted++;
   return fullKey;
@@ -159,6 +229,15 @@ async function processFile(filePath) {
     namespace = getNamespaceFromBladeFile(filePath, projectRoot);
   } else {
     namespace = getNamespaceFromFile(filePath, srcRoot);
+  }
+
+  const rootSegment = getRootFromFilePath(filePath);
+  const topNamespace = String(namespace || '').split('.')[0] || 'Common';
+  if (topNamespace !== 'Commons') {
+    const existingRoot = namespaceRoots.get(topNamespace);
+    if (!existingRoot) {
+      namespaceRoots.set(topNamespace, rootSegment);
+    }
   }
 
   // Parse the file
@@ -281,14 +360,27 @@ async function runConcurrent(items, worker, limit = CONCURRENCY) {
         }
       }
     } else {
-      const outputFile = path.resolve(outputDir, 'en.json');
-      if (existsSync(outputFile)) {
-        const parsed = await readJsonSafe(outputFile);
-        if (parsed && typeof parsed === 'object') existingTranslations = parsed;
+      // Legacy auto single-file layout: resources/js/i18n/auto/en.json
+      const autoSingleFile = path.resolve(outputDir, 'en.json');
+      if (existsSync(autoSingleFile)) {
+        const parsed = await readJsonSafe(autoSingleFile);
+        if (parsed && typeof parsed === 'object') {
+          existingTranslations = parsed;
+        }
+      } else {
+        // Older projects may only have a runtime base file at resources/js/i18n/en.json
+        const legacyRuntimeFile = path.resolve(projectRoot, 'resources', 'js', 'i18n', 'en.json');
+        if (existsSync(legacyRuntimeFile)) {
+          const parsed = await readJsonSafe(legacyRuntimeFile);
+          if (parsed && typeof parsed === 'object') {
+            existingTranslations = parsed;
+          }
+        }
       }
     }
 
     if (existingTranslations) {
+      cleanupExistingTranslations(existingTranslations);
       Object.assign(translations, existingTranslations);
       primeTextKeyMap(existingTranslations, textKeyMap);
     }
@@ -313,43 +405,34 @@ async function runConcurrent(items, worker, limit = CONCURRENCY) {
     const localeDir = path.resolve(outputDir, 'en');
     await mkdir(localeDir, { recursive: true });
 
-    function countLeafStrings(node) {
-      let count = 0;
-      function walkCount(n) {
-        if (!n || typeof n !== 'object') return;
-        for (const [, v] of Object.entries(n)) {
-          if (typeof v === 'string') count += 1;
-          else if (v && typeof v === 'object') walkCount(v);
-        }
+    try {
+      const existingEntries = await readdir(localeDir, { withFileTypes: true });
+      for (const entry of existingEntries) {
+        const full = path.join(localeDir, entry.name);
+        await rm(full, { recursive: true, force: true });
       }
-      walkCount(node);
-      return count;
-    }
+    } catch {}
 
     const groups = Object.keys(sorted).sort();
-    let fileCount = 0;
+    const perRoot = {};
     for (const group of groups) {
       const subtree = sorted[group];
       if (!subtree || typeof subtree !== 'object') continue;
-      const leafCount = countLeafStrings(subtree);
-      if (leafCount <= 400) {
-        const outPath = path.resolve(localeDir, `${group.toLowerCase()}.json`);
-        const content = { [group]: subtree };
-        await writeFile(outPath, JSON.stringify(content, null, 2) + '\n', 'utf8');
-        fileCount += 1;
+      let rootName;
+      if (group === 'Commons') {
+        rootName = 'commons';
       } else {
-        const groupDir = path.resolve(localeDir, group.toLowerCase());
-        await mkdir(groupDir, { recursive: true });
-        const secondKeys = Object.keys(subtree).sort();
-        for (const second of secondKeys) {
-          const secondSub = subtree[second];
-          if (!secondSub || typeof secondSub !== 'object') continue;
-          const outPath = path.resolve(groupDir, `${String(second).toLowerCase()}.json`);
-          const content = { [group]: { [second]: secondSub } };
-          await writeFile(outPath, JSON.stringify(content, null, 2) + '\n', 'utf8');
-          fileCount += 1;
-        }
+        rootName = namespaceRoots.get(group) || 'common';
       }
+      const rootTree = perRoot[rootName] || (perRoot[rootName] = {});
+      rootTree[group] = subtree;
+    }
+
+    let fileCount = 0;
+    for (const [rootName, tree] of Object.entries(perRoot)) {
+      const outPath = path.resolve(localeDir, `${String(rootName).toLowerCase()}.json`);
+      await writeFile(outPath, JSON.stringify(tree, null, 2) + '\n', 'utf8');
+      fileCount += 1;
     }
 
     // Print statistics

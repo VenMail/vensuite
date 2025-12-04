@@ -15,6 +15,7 @@ import type {
 import { useFileStore } from './files';
 import { useAuthStore } from './auth';
 import { PAGE_WIDTH, PAGE_HEIGHT, DEFAULT_LINE_HEIGHT, DEFAULT_TITLE_FONT_FAMILY, DEFAULT_BODY_FONT_FAMILY } from '@/constants/slides';
+import { t } from '@/i18n';
 
 const DEFAULT_SNAP_SETTINGS: SnapSettings = {
   showGrid: true,
@@ -266,7 +267,7 @@ const loadedTemplates: ResolvedTemplate[] = Object.entries(templateModules).map(
 const FALLBACK_TEMPLATE: ResolvedTemplate = {
   slug: 'title-slide',
   title: 'Title Slide',
-  description: 'Centered title with subtitle',
+  description: t('Store.Slides.text.centered_title_with_subtitle'),
   isDefault: true,
   pages: [
     {

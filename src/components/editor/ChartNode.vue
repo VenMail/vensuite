@@ -17,7 +17,7 @@
         <span v-if="isSelected" class="chart-node__handle chart-node__handle--s" data-direction="s" />
       </div>
       <div v-if="!hasData" class="chart-node__placeholder">
-        No data to display
+        {{$t('Editor.ChartNode.text.no_data_to_display')}}
       </div>
     </div>
   </NodeViewWrapper>

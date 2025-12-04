@@ -78,10 +78,47 @@ class VueParser extends BaseParser {
 
   /**
    * Extract template section from Vue SFC
+   * Handles nested <template> tags (Vue slots) by finding the matching closing tag
    */
   extractTemplate(content) {
-    const match = content.match(/<template[^>]*>([\s\S]*?)<\/template>/i);
-    return match ? match[1] : null;
+    // Find the opening <template> tag at the root level
+    const openMatch = content.match(/^[\s\S]*?<template(\s[^>]*)?>|<template(\s[^>]*)?>/i);
+    if (!openMatch) return null;
+
+    const startIndex = openMatch.index + openMatch[0].length;
+    let depth = 1;
+    let pos = startIndex;
+    const len = content.length;
+
+    while (pos < len && depth > 0) {
+      // Look for <template or </template
+      const nextOpen = content.indexOf('<template', pos);
+      const nextClose = content.indexOf('</template>', pos);
+
+      if (nextClose === -1) {
+        // No closing tag found
+        break;
+      }
+
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        // Check if it's actually a template tag (not something like <templateFoo>)
+        const afterOpen = content[nextOpen + 9]; // character after '<template'
+        if (!afterOpen || /[\s>\/]/.test(afterOpen)) {
+          depth++;
+        }
+        pos = nextOpen + 9;
+      } else {
+        depth--;
+        if (depth === 0) {
+          return content.slice(startIndex, nextClose);
+        }
+        pos = nextClose + 11; // length of '</template>'
+      }
+    }
+
+    // Fallback: try greedy match for the last </template>
+    const greedyMatch = content.match(/<template[^>]*>([\s\S]*)<\/template>/i);
+    return greedyMatch ? greedyMatch[1] : null;
   }
 
   /**

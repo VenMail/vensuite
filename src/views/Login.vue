@@ -51,24 +51,24 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen flex flex-col justify-between items-center bg-white text-black">
-    <!-- Logo header -->
+     
     <div class="flex items-center justify-between w-full border-b border-[#A9C9D64D] p-6">
       <div class="w-[150px]">
         <img src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full" />
       </div>
       <div class="w-[150px] flex justify-end">
-        <!-- Globe icon could go here if needed -->
+         
       </div>
     </div>
     
-    <!-- Main content -->
+     
     <div class="relative w-full max-w-lg overflow-hidden p-8">
       <div class="mb-8 text-center">
         <h2 class="mb-4 text-4xl text-black font-semibold leading-normal">
-          Welcome to Venmail Files
+          {{$t('Views.Login.heading.welcome_to_venmail_files')}}
         </h2>
         <p class="text-black mb-6">
-          Login to manage your files and folders on Venmail
+          {{$t('Views.Login.text.login_to_manage_your')}}
         </p>
       </div>
 
@@ -87,13 +87,13 @@ onMounted(async () => {
       </Button>
     </div>
 
-    <!-- Footer -->
+     
     <div class="text-base text-center text-black my-6 space-x-2">
-      <a href="https://venmail.io/resources/privacy-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Privacy & terms</a>
+      <a href="https://venmail.io/resources/privacy-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">{{$t('Views.Login.link.privacy_terms')}}</a>
       <span>•</span>
       <a href="https://venmail.io/resources/cookie-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Cookie policy</a>
       <span>•</span>
-      <a href="https://venmail.io/resources/cookie_ccpa-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Cookie & CCPA preferences</a>
+      <a href="https://venmail.io/resources/cookie_ccpa-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">{{$t('Views.Login.link.cookie_ccpa_preferences')}}</a>
       <span>•</span>
       <a href="https://venmail.io/resources/ai-principles" target="_blank" rel="noopener noreferrer" class="hover:underline">AI Principles</a>
     </div>

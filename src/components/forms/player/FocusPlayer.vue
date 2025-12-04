@@ -94,7 +94,7 @@
     v-else
     class="rounded-3xl border border-dashed border-gray-200 p-12 text-center text-gray-500 dark:border-gray-800 dark:text-gray-400"
   >
-    <p>No questions available.</p>
+    <p>{{$t('Forms.Player.FocusPlayer.text.no_questions_available')}}</p>
   </div>
 </template>
 

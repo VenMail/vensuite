@@ -6,7 +6,7 @@
     isSelected ? 'ring-2 ring-primary-500 bg-primary-50 dark:bg-primary-950/20' : 'hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md',
     size === 'small' ? 'aspect-square w-16 h-16' : size === 'medium' ? 'aspect-square w-full' : 'aspect-square w-full'
   )">
-    <!-- Selection Checkbox -->
+     
     <Transition
       enter-active-class="transition-all duration-200"
       enter-from-class="opacity-0 scale-75"
@@ -22,12 +22,12 @@
       </div>
     </Transition>
 
-    <!-- File Type Badge -->
+     
     <div class="absolute top-2 right-2 z-10 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
       {{ file.file_type?.toUpperCase() }}
     </div>
 
-    <!-- Loading State -->
+     
     <Transition
       enter-active-class="transition-all duration-300"
       enter-from-class="opacity-0"
@@ -41,7 +41,7 @@
       </div>
     </Transition>
 
-    <!-- Image Preview -->
+     
     <div v-if="mediaCategory === 'image'" class="relative w-full h-full">
       <img 
         :src="file.file_url" 
@@ -57,7 +57,7 @@
       </div>
     </div>
 
-    <!-- Video Preview -->
+     
     <div v-else-if="mediaCategory === 'video'" class="relative w-full h-full bg-black group">
       <video 
         :src="file.file_url"
@@ -78,7 +78,7 @@
       </div>
     </div>
 
-    <!-- Audio Preview -->
+     
     <div v-else-if="mediaCategory === 'audio'" class="w-full h-full flex flex-col items-center justify-center p-4 cursor-pointer group-hover:bg-gray-100 dark:group-hover:bg-gray-700 transition-colors duration-200" @click="emit('preview', file)">
       <Volume2 class="w-8 h-8 text-primary-600 mb-2 group-hover:text-primary-500 transition-colors duration-200" />
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center truncate w-full">
@@ -89,7 +89,7 @@
       </span>
     </div>
 
-    <!-- Unsupported/Other Files -->
+     
     <div v-else class="w-full h-full flex flex-col items-center justify-center p-4 cursor-pointer group-hover:bg-gray-100 dark:group-hover:bg-gray-700 transition-colors duration-200" @click="emit('preview', file)">
       <FileIcon class="w-8 h-8 text-gray-400 mb-2" />
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center truncate w-full">
@@ -100,21 +100,21 @@
       </span>
     </div>
 
-    <!-- Error State -->
+     
     <div v-if="hasMediaError" class="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 z-10">
       <div class="flex flex-col items-center text-center">
         <AlertCircle class="w-6 h-6 text-red-400 mb-1" />
-        <span class="text-xs text-red-500">Failed to load</span>
+        <span class="text-xs text-red-500">{{$t('Media.MediaPreview.text.failed_to_load')}}</span>
       </div>
     </div>
 
-    <!-- File Info Overlay (for larger sizes) -->
+     
     <div v-if="size === 'large'" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
       <h3 class="text-white font-medium text-sm truncate">{{ file.title }}</h3>
       <p class="text-white/80 text-xs">{{ formatFileSize(file.file_size) }} • {{ formatDate(file.created_at) }}</p>
     </div>
 
-    <!-- Hover Actions for medium/large sizes -->
+     
     <div v-if="size !== 'small'" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
       <Button 
         size="sm" 

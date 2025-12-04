@@ -78,7 +78,7 @@
                 @available-fonts="handleAvailableFonts"
               />
               <div v-else class="flex h-[720px] items-center justify-center text-gray-500 dark:text-gray-400">
-                Select or add a slide to begin.
+                {{$t('Views.SlidesEditor.text.select_or_add_a')}}
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import type { LogicCondition, LogicRule, Option } from "@/types";
+import { t } from '@/i18n';
 
 export type BlockType =
   | "short"
@@ -65,7 +66,7 @@ export const slashMenuItems: SlashMenuItem[] = [
   {
     id: "short",
     label: "Short Text",
-    description: "Single line text input",
+    description: t('Forms.Blocks.Types.text.single_line_text_input'),
     icon: "Type",
     type: "short",
     category: "text",
@@ -74,7 +75,7 @@ export const slashMenuItems: SlashMenuItem[] = [
   {
     id: "long",
     label: "Long Text",
-    description: "Multi-line text area",
+    description: t('Forms.Blocks.Types.text.multi_line_text_area'),
     icon: "AlignLeft",
     type: "long",
     category: "text",
@@ -83,7 +84,7 @@ export const slashMenuItems: SlashMenuItem[] = [
   {
     id: "email",
     label: "Email",
-    description: "Email address input",
+    description: t('Forms.Blocks.Types.text.email_address_input'),
     icon: "Mail",
     type: "email",
     category: "text",
@@ -92,7 +93,7 @@ export const slashMenuItems: SlashMenuItem[] = [
   {
     id: "phone",
     label: "Phone",
-    description: "Phone number input",
+    description: t('Forms.Blocks.Types.text.phone_number_input'),
     icon: "Phone",
     type: "phone",
     category: "text",
@@ -119,7 +120,7 @@ export const slashMenuItems: SlashMenuItem[] = [
   {
     id: "radio",
     label: "Multiple Choice",
-    description: "Single selection from options",
+    description: t('Forms.Blocks.Types.text.single_selection_from_options'),
     icon: "CircleDot",
     type: "radio",
     category: "choice",
@@ -128,7 +129,7 @@ export const slashMenuItems: SlashMenuItem[] = [
   {
     id: "checkbox",
     label: "Checkboxes",
-    description: "Multiple selections allowed",
+    description: t('Forms.Blocks.Types.text.multiple_selections_allowed'),
     icon: "CheckSquare",
     type: "checkbox",
     category: "choices",
@@ -146,7 +147,7 @@ export const slashMenuItems: SlashMenuItem[] = [
   {
     id: "rating",
     label: "Rating",
-    description: "Star or number rating",
+    description: t('Forms.Blocks.Types.text.star_or_number_rating'),
     icon: "Star",
     type: "rating",
     category: "rating",
@@ -155,7 +156,7 @@ export const slashMenuItems: SlashMenuItem[] = [
   {
     id: "slider",
     label: "Slider",
-    description: "Numeric slider input",
+    description: t('Forms.Blocks.Types.text.numeric_slider_input'),
     icon: "SlidersHorizontal",
     type: "slider",
     category: "rating",

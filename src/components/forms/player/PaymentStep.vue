@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-6 text-slate-900 dark:text-slate-100">
     <header class="space-y-1">
       <h2 class="text-2xl font-semibold">Secure Payment</h2>
-      <p class="text-sm text-slate-600 dark:text-slate-400">Please complete the payment to submit your response.</p>
+      <p class="text-sm text-slate-600 dark:text-slate-400">{{$t('Forms.Player.PaymentStep.text.please_complete_the_payment')}}</p>
     </header>
 
     <section

@@ -61,7 +61,7 @@
 
       <div v-if="fileTypeFilter !== 'all'" class="mb-4 p-3 bg-muted/50 rounded-lg">
         <p class="text-sm text-muted-foreground">
-          <strong>Allowed file types:</strong> {{ getAllowedExtensions() }}
+          <strong>{{$t('FileUploader.text.allowed_file_types')}}</strong> {{ getAllowedExtensions() }}
         </p>
       </div>
 

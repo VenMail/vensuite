@@ -3,7 +3,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Raleway:wght@400;600;700&family=Nunito:wght@400;600;700&family=Poppins:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
   
   <div class="flex flex-col h-screen bg-gray-50">
-    <!-- Docs Title Bar -->
+     
     <DocsTitleBar
       :title="documentTitle"
       :isSaving="isSaving"
@@ -26,7 +26,7 @@
       @select-version="handleVersionSelect"
     />
 
-    <!-- Show Access Request Panel for guests without access -->
+     
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-8">
       <div class="w-full max-w-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Request access</h2>
@@ -54,14 +54,14 @@
             <button @click="submitAccessRequestDoc" :disabled="requestSubmitting || !requestEmail" class="px-4 py-2 bg-primary-600 text-white rounded-md disabled:opacity-50">
               {{ requestSubmitting ? 'Sending…' : 'Request access' }}
             </button>
-            <a :href="shareLinkDoc" class="text-sm text-blue-600 dark:text-blue-400 underline" target="_blank" rel="noopener">Open direct link</a>
+            <a :href="shareLinkDoc" class="text-sm text-blue-600 dark:text-blue-400 underline" target="_blank" rel="noopener">{{$t('Views.DocsEditor.link.open_direct_link')}}</a>
           </div>
           <p v-if="requestSuccess" class="text-sm text-green-600 dark:text-green-400">{{ requestSuccess }}</p>
         </div>
       </div>
     </div>
 
-    <!-- Docs Menu Bar -->
+     
     <DocsToolbar 
       ref="toolbarRef"
       :editor="editor" 
@@ -96,7 +96,7 @@
       </button>
     </div>
 
-    <!-- Table of Contents Toggle (Floating Left) -->
+     
     <button
       @click="isTocOpen = !isTocOpen"
       :class=" [
@@ -110,7 +110,7 @@
       </svg>
     </button>
 
-    <!-- Floating Table of Contents Panel -->
+     
     <div
       v-if="isTocOpen"
       :class="[
@@ -128,8 +128,8 @@
       </div>
       <div class="flex-grow overflow-y-auto p-2 custom-scrollbar">
         <div v-if="tocItems.length === 0" class="text-center text-gray-500 dark:text-gray-400 text-sm py-8">
-          <p>No headings found</p>
-          <p class="mt-1 text-xs">Add headings to see outline</p>
+          <p>{{$t('Views.DocsEditor.text.no_headings_found')}}</p>
+          <p class="mt-1 text-xs">{{$t('Views.DocsEditor.text.add_headings_to_see')}}</p>
         </div>
         <div v-else class="space-y-1">
           <button
@@ -156,7 +156,7 @@ function setDocumentTitleFromName(name?: string | null) {
       </div>
     </div>
 
-    <!-- Editor Content -->
+     
     <div v-if="!accessDenied" class="flex-1 overflow-auto bg-gray-50 p-6 transition-colors custom-scrollbar print:p-0 print:bg-white">
       <div 
         class="mx-auto bg-white shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
@@ -171,10 +171,10 @@ function setDocumentTitleFromName(name?: string | null) {
           >
             <div class="editor-placeholder-content">
               <p class="text-lg text-gray-700">Click to start typing...</p>
-              <!-- <p class="text-sm text-gray-500 mt-2">Click on text to apply formatting.</p> -->
+               
             </div>
           </div>
-          <!-- Contextual Bubble Menu -->
+           
           <BubbleMenu
             v-if="editor"
             ref="bubbleMenuRef"
@@ -237,7 +237,7 @@ function setDocumentTitleFromName(name?: string | null) {
                 </span>
               </div>
               
-              <!-- Color Pickers -->
+               
               <template v-if="showTextColorPicker">
                 <div :class="bubbleInlineFormClass">
                   <label class="flex items-center gap-2">

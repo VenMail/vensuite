@@ -1,12 +1,12 @@
 <template>
   <div class="add-field-section w-full">
     <div class="relative">
-      <!-- Main Button Group Container -->
+       
       <div class="bg-white shadow-lg overflow-hidden flex items-center space-x-2 rounded-full" :style="{
         width: isDropdown ? (isExpanded ? 'auto' : '3rem') : 'auto',
         height: isDropdown ? (isExpanded ? 'auto' : '3rem') : 'auto',
       }">
-        <!-- PlusIcon as part of button group -->
+         
         <button
           class="flex items-center justify-center w-14 h-14 text-white bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           @click="toggleExpand" :aria-label="isExpanded ? 'Collapse category menu' : 'Expand category menu'
@@ -17,7 +17,7 @@
           <PlusIcon class="w-6 h-6" />
         </button>
 
-        <!-- Dropdown Menu (for smaller screens) -->
+         
         <Transition enter-active-class="transition duration-200 ease-out"
           enter-from-class="transform scale-95 opacity-0" enter-to-class="transform scale-100 opacity-100"
           leave-active-class="transition duration-200 ease-in" leave-from-class="transform scale-100 opacity-100"
@@ -41,7 +41,7 @@
           </div>
         </Transition> 
 
-        <!-- Button Group for Larger Screens (Horizontal layout) -->
+         
         <div v-if="!isDropdown" class="flex items-center space-x-0">
                 <button v-for="(category, index) in fieldCategories" :key="category.name"
                   class="flex items-center justify-center px-4 py-3 text-sm font-medium text-gray-700 bg-white rounded-none hover:bg-gray-100 bg-opacity-15"
@@ -63,7 +63,7 @@
                 <Command>
                   <CommandInput placeholder="Search field types..." />
                   <CommandList>
-                    <CommandEmpty>No field types found.</CommandEmpty>
+                    <CommandEmpty>{{$t('Buttons.AddFieldButton.text.no_field_types_found')}}</CommandEmpty>
                     <CommandGroup>
                       <CommandItem v-for="type in selectedFieldTypes" :key="type" :value="type"
                         @click="addNewField(type)">

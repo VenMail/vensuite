@@ -3,7 +3,7 @@
     <Card class="form-preview">
       <CardHeader>
         <CardTitle>{{ form?.title || "New Form" }}</CardTitle>
-        <CardDescription>Edit your form fields below</CardDescription>
+        <CardDescription>{{$t('Forms.Editor.text.edit_your_form_fields')}}</CardDescription>
       </CardHeader>
       <CardContent>
         <ScrollArea :class="formData?.fields.length ? 'h-[300px]' : ''">
@@ -18,7 +18,7 @@
               <CardContent>
                 <component :is="getPropertyEditor(field.type)" v-if="getPropertyEditor(field.type)" :modelValue="field"
                   @update:modelValue="handleFieldModelUpdate(index, $event)" />
-                <!-- Logic Editor -->
+                 
                 <div class="logic-editor mt-4">
                   <h4 class="text-sm font-medium mb-2">Logic Rule</h4>
                   <div class="flex items-center space-x-2">

@@ -1,6 +1,6 @@
 <template>
   <div class="flex-1 overflow-hidden">
-    <!-- Thumbnail View -->
+     
     <div
       v-if="viewMode === 'thumbnail'"
       :class="cn(
@@ -31,9 +31,9 @@
       </div>
     </div>
 
-    <!-- List View -->
+     
     <div v-else-if="viewMode === 'list'" class="overflow-y-auto">
-      <!-- List Header -->
+       
       <div class="grid grid-cols-12 gap-4 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400">
         <div class="col-span-1 flex items-center justify-center">
           <input
@@ -50,7 +50,7 @@
         <div class="col-span-1 text-center">Actions</div>
       </div>
 
-      <!-- List Items -->
+       
       <div class="divide-y divide-gray-200 dark:divide-gray-700">
         <div
           v-for="file in mediaFiles"
@@ -62,7 +62,7 @@
           @click="handleSelect(file.id, $event)"
           @contextmenu.prevent.stop="handleContextMenu($event, file)"
         >
-          <!-- Checkbox -->
+           
           <div class="col-span-1 flex items-center justify-center">
             <input
               type="checkbox"
@@ -72,7 +72,7 @@
             />
           </div>
 
-          <!-- File Info with MediaPreview -->
+           
           <div class="col-span-6 flex items-center gap-3 min-w-0">
             <div class="flex-shrink-0 w-10 h-10 overflow-hidden">
               <MediaPreview
@@ -93,21 +93,21 @@
             </div>
           </div>
 
-          <!-- Size -->
+           
           <div class="col-span-2 flex items-center justify-center min-w-0">
             <span class="text-sm text-gray-600 dark:text-gray-400 truncate">
               {{ formatFileSize(file.file_size) }}
             </span>
           </div>
 
-          <!-- Modified Date -->
+           
           <div class="col-span-2 flex items-center justify-center min-w-0">
             <span class="text-sm text-gray-600 dark:text-gray-400 truncate">
               {{ formatDate(file.updated_at || file.created_at) }}
             </span>
           </div>
 
-          <!-- Actions -->
+           
           <div class="col-span-1 flex items-center justify-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -140,13 +140,13 @@
       </div>
     </div>
 
-    <!-- Empty State -->
+     
     <div v-if="mediaFiles.length === 0 && !isLoading" class="flex flex-col items-center justify-center h-96 text-center">
       <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
         <Image class="w-12 h-12 text-gray-400" />
       </div>
       <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-        No media files
+        {{$t('Media.MediaGrid.heading.no_media_files')}}
       </h3>
       <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
         Upload your first media files to get started. Supported formats include images, videos, and audio files.
@@ -157,7 +157,7 @@
       </Button>
     </div>
 
-    <!-- Loading State -->
+     
     <div v-if="isLoading" class="flex items-center justify-center h-96">
       <div class="flex flex-col items-center">
         <Loader class="w-8 h-8 animate-spin text-primary-600 mb-4" />

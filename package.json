@@ -247,7 +247,8 @@
   "aiI18n": {
     "locales": [
       "en",
-      "fr"
+      "fr",
+      "zh"
     ],
     "srcRoot": "src"
   }

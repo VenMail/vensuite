@@ -1,7 +1,7 @@
 <template>
   <div class="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-      <!-- Header -->
+       
       <div class="px-8 py-6 border-b border-gray-200 dark:border-gray-800">
         <div class="flex items-center justify-between">
           <div>
@@ -20,7 +20,7 @@
           </button>
         </div>
         
-        <!-- Progress Bar -->
+         
         <div class="mt-4 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
             class="h-full bg-primary-600 dark:bg-blue-500 transition-all duration-300"
@@ -29,20 +29,20 @@
         </div>
       </div>
 
-      <!-- Content -->
+       
       <div class="flex-1 overflow-y-auto px-8 py-6">
-        <!-- Step 1: Appearance -->
+         
         <div v-if="currentStep === 1" class="space-y-6">
           <div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Form Appearance
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Customize how your form looks to respondents
+              {{$t('Forms.FormConfigWizard.text.customize_how_your_form')}}
             </p>
           </div>
 
-          <!-- Theme -->
+           
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Theme
@@ -65,7 +65,7 @@
             </div>
           </div>
 
-          <!-- Header Style -->
+           
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Header Style
@@ -88,14 +88,14 @@
             </div>
           </div>
 
-          <!-- Show Progress Bar -->
+           
           <div class="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
             <div>
               <label class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                Show Progress Bar
+                {{$t('Forms.FormConfigWizard.label.show_progress_bar')}}
               </label>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Display completion progress to respondents
+                {{$t('Forms.FormConfigWizard.text.display_completion_progress_to')}}
               </p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
@@ -109,18 +109,18 @@
           </div>
         </div>
 
-        <!-- Step 2: Response Logic -->
+         
         <div v-if="currentStep === 2" class="space-y-6">
           <div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Response Logic
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Control how responses are collected and processed
+              {{$t('Forms.FormConfigWizard.text.control_how_responses_are')}}
             </p>
           </div>
 
-          <!-- Navigation Type -->
+           
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Navigation Type
@@ -148,15 +148,15 @@
             </div>
           </div>
 
-          <!-- Response Options -->
+           
           <div class="space-y-3">
             <div class="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
               <div>
                 <label class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  Allow Multiple Submissions
+                  {{$t('Forms.FormConfigWizard.label.allow_multiple_submissions')}}
                 </label>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Users can submit the form multiple times
+                  {{$t('Forms.FormConfigWizard.text.users_can_submit_the')}}
                 </p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
@@ -175,7 +175,7 @@
                   Show Confirmation Page
                 </label>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Display a thank you message after submission
+                  {{$t('Forms.FormConfigWizard.text.display_a_thank_you')}}
                 </p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
@@ -191,10 +191,10 @@
             <div class="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
               <div>
                 <label class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  Collect Email Addresses
+                  {{$t('Forms.FormConfigWizard.label.collect_email_addresses')}}
                 </label>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Require respondents to provide their email
+                  {{$t('Forms.FormConfigWizard.text.require_respondents_to_provide')}}
                 </p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
@@ -209,21 +209,21 @@
           </div>
         </div>
 
-        <!-- Step 3: Response Format -->
+         
         <div v-if="currentStep === 3" class="space-y-6">
           <div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Response Format
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Choose how you want to receive and view responses
+              {{$t('Forms.FormConfigWizard.text.choose_how_you_want')}}
             </p>
           </div>
 
-          <!-- Response View -->
+           
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Default Response View
+              {{$t('Forms.FormConfigWizard.label.default_response_view')}}
             </label>
             <div class="space-y-3">
               <button
@@ -248,7 +248,7 @@
             </div>
           </div>
 
-          <!-- Notifications -->
+           
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Email Notifications
@@ -257,10 +257,10 @@
               <div class="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
                 <div>
                   <label class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    Notify on New Response
+                    {{$t('Forms.FormConfigWizard.label.notify_on_new_response')}}
                   </label>
                   <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Get an email for each new submission
+                    {{$t('Forms.FormConfigWizard.text.get_an_email_for')}}
                   </p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
@@ -286,7 +286,7 @@
         </div>
       </div>
 
-      <!-- Footer -->
+       
       <div class="px-8 py-6 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
         <button
           v-if="currentStep > 1"

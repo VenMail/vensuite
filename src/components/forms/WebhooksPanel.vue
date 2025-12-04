@@ -3,7 +3,7 @@
     <header class="flex items-start justify-between gap-3">
       <div>
         <h3 class="text-lg font-semibold">Webhooks</h3>
-        <p class="text-sm text-gray-600 dark:text-gray-400">Connect form events to external services with quick validation.</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">{{$t('Forms.WebhooksPanel.text.connect_form_events_to')}}</p>
       </div>
       <button
         type="button"
@@ -76,7 +76,7 @@
           </tr>
           <tr v-if="!items.length && !isLoading" class="border-t border-gray-200 dark:border-gray-800 text-center text-gray-500 dark:text-gray-400">
             <td colspan="4" class="px-4 py-8">
-              No webhooks configured yet.
+              {{$t('Forms.WebhooksPanel.text.no_webhooks_configured_yet')}}
             </td>
           </tr>
           <tr v-if="isLoading" class="border-t border-gray-200 dark:border-gray-800 text-center text-gray-500 dark:text-gray-400">
@@ -101,7 +101,7 @@
           >
             <Plus class="w-4 h-4" />
           </button>
-          <span class="text-sm text-gray-600 dark:text-gray-400">Add new webhook</span>
+          <span class="text-sm text-gray-600 dark:text-gray-400">{{$t('Forms.WebhooksPanel.text.add_new_webhook')}}</span>
         </div>
         <Transition name="fade">
           <div v-if="composer.open" class="flex flex-1 flex-col gap-3 md:flex-row md:items-center">

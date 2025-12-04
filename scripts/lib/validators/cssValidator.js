@@ -121,6 +121,154 @@ function isCssPropertyDeclaration(text) {
 }
 
 /**
+ * Check if a single token looks like a CSS utility class
+ * Detects CSS patterns from any framework
+ */
+function isSingleCssClass(part) {
+  // Empty strings are not classes
+  if (!part) return false;
+  
+  const lower = part.toLowerCase();
+  
+  // Common CSS framework prefixes/patterns
+  const cssFrameworkPrefixes = [
+    // Tailwind
+    'p-', 'm-', 'px-', 'py-', 'pt-', 'pb-', 'pl-', 'pr-', 'mx-', 'my-', 'mt-', 'mb-', 'ml-', 'mr-',
+    'w-', 'h-', 'min-w-', 'max-w-', 'min-h-', 'max-h-',
+    'text-', 'font-', 'leading-', 'tracking-', 'space-',
+    'bg-', 'border-', 'rounded-', 'shadow-',
+    'flex-', 'grid-', 'gap-', 'items-', 'justify-', 'self-', 'place-',
+    'absolute', 'relative', 'fixed', 'sticky', 'static',
+    'top-', 'right-', 'bottom-', 'left-', 'inset-',
+    'z-', 'opacity-', 'cursor-', 'pointer-events-',
+    'overflow-', 'hidden', 'visible', 'scroll',
+    'hover:', 'focus:', 'active:', 'dark:', 'sm:', 'md:', 'lg:', 'xl:', '2xl:',
+    'prose', 'container', 'divide-', 'ring-',
+    // Bootstrap
+    'btn-', 'alert-', 'badge-', 'card-', 'nav-', 'navbar-', 'form-', 'input-',
+    'col-', 'row-', 'offset-', 'order-', 'd-', 'flex-', 'justify-', 'align-',
+    'ms-', 'me-', 'mb-', 'mt-', 'mx-', 'my-',
+    'bg-', 'text-', 'border-', 'rounded-', 'shadow-',
+    // Material UI / MUI
+    'mui', 'makeStyles', 'withStyles',
+    // Bulma
+    'is-', 'has-',
+    // Foundation
+    'small-', 'medium-', 'large-',
+    // Semantic UI
+    'ui ', 'labeled', 'disabled',
+    // Tachyons
+    'pa', 'ma', 'ba', 'br', 'dib', 'dn', 'db', 'flex', 'items-', 'justify-',
+    // CSS Modules patterns
+    'styles.', 'css.',
+  ];
+  
+  // Check for known framework prefixes
+  for (const prefix of cssFrameworkPrefixes) {
+    if (lower.startsWith(prefix) || lower.includes(prefix)) {
+      return true;
+    }
+  }
+  
+  // 1. ANY hyphenated pattern with numbers, colors, or size indicators
+  //    e.g., p-4, mt-2, text-gray-500, p-1.5, bg-blue-600, w-full
+  //    Allow decimal and fractional numeric segments (1.5, 50/90, etc.).
+  if (/^-?[a-z]+(?:-[a-z0-9.\/:%]+)+$/i.test(part)) {
+    // Contains common CSS value indicators
+    if (/\d+|full|auto|none|start|end|center|stretch|between|around|evenly|primary|secondary|success|danger|warning|info|light|dark|white|black|gray|grey|red|blue|green|yellow|purple|pink|indigo|teal|orange|cyan|amber|lime|emerald|sky|violet|fuchsia|rose/i.test(part)) {
+      return true;
+    }
+    // Has typical CSS property prefixes
+    if (/^(p|m|w|h|min|max|text|font|bg|border|flex|grid|gap|space|divide|ring|shadow|opacity|z|top|left|right|bottom|inset|rounded|cursor|overflow|display|position|items|justify|align|self|place|content|order|grow|shrink|basis|col|row|aspect|object|decoration|transform|transition|duration|delay|ease|animate|scale|rotate|translate|skew|origin|filter|backdrop|brightness|contrast|blur|saturate|hue)-/i.test(part)) {
+      return true;
+    }
+  }
+  
+  // 2. Arbitrary value classes with brackets (any framework)
+  //    e.g., w-[100px], text-[#333], p-[1.5rem], [&>*]:
+  if (/[\[\]]/.test(part)) {
+    return true;
+  }
+  
+  // 3. Variant/modifier prefixes with colons (Tailwind, custom frameworks)
+  //    e.g., dark:text-white, sm:flex, hover:bg-blue-500, prose-a:text-primary-600
+  if (/:/.test(part)) {
+    const segments = part.split(':');
+    // If any segment looks like a CSS pattern, it's likely a class
+    if (segments.some(seg => /^[a-z]+(?:-[a-z0-9]+)*$/i.test(seg))) {
+      return true;
+    }
+  }
+  
+  // 4. Important modifier (any framework)
+  //    e.g., !text-white, !important, !m-0
+  if (/^!/.test(part)) {
+    return true;
+  }
+  
+  // 5. Fractional values (Tailwind, custom)
+  //    e.g., w-1/2, w-1/3, w-2/3, grid-cols-1/3
+  if (/\/\d+/.test(part)) {
+    return true;
+  }
+  
+  // 6. Underscore-based naming (BEM, CSS Modules)
+  //    e.g., button_primary, card__header, nav__item--active
+  if (/__/.test(part) || /--/.test(part)) {
+    return true;
+  }
+  
+  // 7. camelCase or PascalCase with CSS-related words
+  //    e.g., flexContainer, gridItem, textPrimary, buttonLarge
+  if (/^[a-z]+[A-Z]/.test(part)) {
+    if (/flex|grid|text|font|color|background|border|margin|padding|width|height|display|position|container|wrapper|button|card|nav|header|footer|sidebar|main|content|item|element|component/i.test(part)) {
+      return true;
+    }
+  }
+  
+  // 8. Single CSS-related keywords
+  const cssKeywords = [
+    'flex', 'grid', 'block', 'inline', 'hidden', 'visible', 'absolute', 'relative', 'fixed', 'sticky', 'static',
+    'container', 'wrapper', 'row', 'col', 'column', 'centered', 'center',
+    'prose', 'truncate', 'ellipsis', 'break', 'wrap', 'nowrap',
+    'bold', 'italic', 'underline', 'uppercase', 'lowercase', 'capitalize',
+    'rounded', 'circle', 'square', 'full', 'none', 'auto',
+    'primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark',
+    'small', 'medium', 'large', 'xlarge', 'xs', 'sm', 'md', 'lg', 'xl',
+    'disabled', 'active', 'inactive', 'selected', 'hovered', 'focused',
+    'group', 'peer', 'isolate', 'inset', 'outline', 'ring', 'sr-only', 'not-sr-only',
+  ];
+  
+  if (cssKeywords.includes(lower)) {
+    return true;
+  }
+  
+  // 9. Numeric suffixes with common patterns
+  //    e.g., mb3, p2, w100, h50, text16
+  if (/^[a-z]{1,4}\d+$/i.test(part) && part.length <= 8) {
+    return true;
+  }
+  
+  // 10. Starts with common CSS abbreviations followed by number or hyphen
+  //    e.g., p4, m2, w50, h100
+  if (/^(p|m|w|h|t|r|b|l|x|y|z|fs|fw|lh|ta|td|tt|va|ws|wb|ww|op|cur|pos|dis|flo|clr|vis|ovf|zi)\d+/i.test(part)) {
+    return true;
+  }
+  
+  // 11. Contains common color names as suffix or segment
+  if (/(red|blue|green|yellow|purple|pink|orange|gray|grey|black|white|indigo|teal|cyan|amber|lime|emerald|sky|violet|fuchsia|rose|primary|secondary|success|danger|warning|info|light|dark)(-\d+)?$/i.test(part)) {
+    return true;
+  }
+  
+  // 12. Percentage-based or viewport-based naming
+  //    e.g., w-100p, h-50vh, max-w-screen
+  if (/(vh|vw|vmin|vmax|screen|full|fit|min|max)(?:-|$)/i.test(part)) {
+    return true;
+  }
+  
+  return false;
+}
+/**
  * Check if text is a CSS class list (Tailwind, utility classes, etc.)
  * e.g., "flex items-center justify-between", "mt-4 px-2 text-gray-500"
  */
@@ -128,24 +276,60 @@ function isCssClassList(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return false;
   
+  // Quick pattern checks before splitting (performance optimization)
+  const quickPatterns = [
+    /^[a-z0-9-_:.!\[\]\/\s]+$/i,  // Only contains CSS-like characters
+    /-\d+/,                        // Contains hyphen-number pattern (very common in CSS)
+    /:/,                           // Contains colons (variants/pseudo-classes)
+    /\[.*\]/,                      // Contains brackets (arbitrary values)
+    /^!/,                          // Starts with ! (important)
+  ];
+  
+  const hasQuickPattern = quickPatterns.some(pattern => pattern.test(trimmed));
+  
   // Split by whitespace
   const parts = trimmed.split(/\s+/);
   if (parts.length === 0) return false;
+
+  // Ignore placeholder-like tokens such as {classX}, {{value}}, ${expr}
+  const placeholderPattern = /^\{\{?[^}]+\}?\}$|^\$\{[^}]+\}$/;
+  const cssParts = parts.filter(p => !placeholderPattern.test(p));
+  if (cssParts.length === 0) return false;
   
-  // Count how many look like CSS classes
+  // For a single non-placeholder token, be strict
+  if (cssParts.length === 1) {
+    return isSingleCssClass(cssParts[0]);
+  }
+  
+  // Count how many non-placeholder tokens look like CSS classes
   let classLikeCount = 0;
-  for (const part of parts) {
-    // Tailwind/utility class patterns
-    if (/^[a-z]+-[a-z0-9-]+$/i.test(part) ||  // e.g., text-gray-500, mt-4
-        /^[a-z]+:[a-z0-9-]+$/i.test(part) ||   // e.g., dark:text-white, sm:flex
-        /^-?[a-z]+-\[.+\]$/i.test(part) ||     // e.g., w-[100px], text-[#333]
-        /^!?[a-z]+-[a-z0-9-]+$/i.test(part)) { // e.g., !important classes
+  for (const part of cssParts) {
+    if (isSingleCssClass(part)) {
       classLikeCount++;
     }
   }
   
-  // If more than 50% look like CSS classes, it's probably a class list
-  return classLikeCount >= parts.length * 0.5 && classLikeCount >= 2;
+  // If all non-placeholder tokens look like CSS classes, it's definitely a class list
+  if (classLikeCount === cssParts.length && cssParts.length > 0) {
+    return true;
+  }
+  
+  // If we have a quick pattern match and majority of non-placeholder tokens are CSS-like, accept it
+  if (hasQuickPattern && classLikeCount >= cssParts.length * 0.6) {
+    return true;
+  }
+  
+  // If more than 70% of non-placeholder tokens look like CSS classes and we have at least 2, it's probably a class list
+  if (classLikeCount >= cssParts.length * 0.7 && classLikeCount >= 2) {
+    return true;
+  }
+  
+  // Edge case: If we have 2+ non-placeholder tokens and they ALL match hyphen-number pattern
+  if (cssParts.length >= 2 && cssParts.every(p => /-\d/.test(p))) {
+    return true;
+  }
+  
+  return false;
 }
 
 /**
@@ -170,6 +354,12 @@ function isCssContent(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return false;
   
+  // Quick reject: if it contains typical sentence markers, it's probably not CSS
+  // BUT be lenient - only reject obvious prose
+  if (/^[A-Z][a-z]+\s+[a-z]+.*[.!?]$/.test(trimmed) && !/[:{\[\-]/.test(trimmed)) {
+    return false;
+  }
+  
   // Check for CSS property declaration
   if (isCssPropertyDeclaration(trimmed)) {
     return true;
@@ -185,6 +375,7 @@ function isCssContent(text) {
     return true;
   }
   
+  // Check for CSS rule blocks
   if (/\{[^}]*:[^;]+;[^}]*\}/.test(trimmed)) {
     return true;
   }
@@ -197,6 +388,77 @@ function isCssContent(text) {
   // Check for CSS value with placeholders like "height: {rowHeight}px;"
   if (/^[a-z-]+\s*:\s*\{[a-zA-Z_][a-zA-Z0-9_]*\}[a-z%]*;?$/i.test(trimmed)) {
     return true;
+  }
+  
+  // Check for CSS custom properties / CSS variables
+  if (/--[a-z-]+/.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for @-rules (media queries, keyframes, etc.)
+  if (/^@(media|keyframes|supports|import|font-face|page|charset|namespace)/i.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for pseudo-classes and pseudo-elements
+  if (/:(?:hover|focus|active|visited|link|before|after|first-child|last-child|nth-child|not|has|where|is)\b/.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for attribute selectors
+  if (/\[[a-z-]+(?:[~|^$*]?=)?[^\]]*\]/i.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for combinator patterns (>, +, ~)
+  if (/[a-z0-9_-]+\s*[>+~]\s*[a-z0-9_-]+/i.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for calc(), var(), rgb(), etc. functions
+  if (CSS_FUNCTION_PATTERN.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for color codes
+  if (CSS_COLOR_PATTERN.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for CSS units
+  if (CSS_UNIT_PATTERN.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for viewport units or percentage-only values
+  if (/^\d+(?:\.\d+)?(?:vh|vw|vmin|vmax|%)$/.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for CSS Grid template syntax
+  if (/repeat\s*\(\s*\d+\s*,/.test(trimmed) || /minmax\s*\(/.test(trimmed)) {
+    return true;
+  }
+  
+  // Check for multiple values separated by commas (font families, shadows, etc.)
+  if (/^[a-z0-9-]+(?:\s+[a-z0-9-]+)*(?:,\s*[a-z0-9-]+(?:\s+[a-z0-9-]+)*)+$/i.test(trimmed)) {
+    return true;
+  }
+  
+  // Check if it looks like a CSS value list (space or comma separated)
+  const tokens = trimmed.split(/[\s,]+/);
+  if (tokens.length >= 2) {
+    const cssValueTokens = tokens.filter(token => 
+      CSS_UNIT_PATTERN.test(token) || 
+      CSS_VALUE_KEYWORDS.has(token.toLowerCase()) ||
+      CSS_COLOR_PATTERN.test(token) ||
+      /^\d+$/.test(token) ||
+      token === 'auto' || token === 'inherit' || token === 'initial'
+    );
+    // If most tokens look like CSS values, it's probably CSS
+    if (cssValueTokens.length >= tokens.length * 0.6) {
+      return true;
+    }
   }
   
   return false;
@@ -231,4 +493,5 @@ module.exports = {
   isCssSelector,
   isCssContent,
   isSpreadsheetReference,
+  isSingleCssClass,
 };

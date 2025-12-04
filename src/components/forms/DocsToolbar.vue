@@ -1,7 +1,7 @@
 <template>
   <div class="tiptap-toolbar bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700" :class="{ 'is-expanded': isExpanded }">
     <div class="tiptap-toolbar__main overflow-x-auto whitespace-nowrap flex-nowrap">
-      <!-- Toggle Expand/Collapse -->
+       
       <button
         class="tiptap-toolbar__crystal-toggle border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
         :class="{ 'is-expanded': isExpanded }"
@@ -13,9 +13,9 @@
 
       <span class="tiptap-toolbar__divider" />
 
-      <!-- File Section (Expanded only) -->
+       
       <div v-if="isExpanded" class="tiptap-toolbar__section-label text-gray-500 dark:text-gray-400">New</div>
-      <!-- New File Menu -->
+       
       <button
         class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
         title="New Document"
@@ -41,7 +41,7 @@
       </div>
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
-      <!-- Undo/Redo -->
+       
       <div class="tiptap-toolbar__group">
         <button
           class="tiptap-toolbar__btn"
@@ -60,7 +60,7 @@
           <Redo2 class="h-4 w-4" />
         </button>
         <span class="tiptap-toolbar__divider" />
-        <!-- Save Action -->
+         
         <button
           class="tiptap-toolbar__btn"
           title="Save (Ctrl+S)"
@@ -72,7 +72,7 @@
 
       <span class="tiptap-toolbar__divider" />
 
-      <!-- Font -->
+       
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">Font</div>
       <div class="tiptap-toolbar__group">
         <select
@@ -101,10 +101,10 @@
 
       <span class="tiptap-toolbar__divider" />
 
-      <!-- Text Formatting (label only in expanded) -->
+       
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">Text</div>
       <div class="tiptap-toolbar__group">
-        <!-- Basic Formatting (Always visible) -->
+         
         <button
           :class="['tiptap-toolbar__btn', btnClasses, editor?.isActive('bold') && btnActiveClasses]"
           title="Bold (Ctrl+B)"
@@ -144,7 +144,7 @@
         </button>
         <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
-        <!-- Text & Background Colors (Expanded) -->
+         
         <div v-if="isExpanded" class="tiptap-toolbar__section-label">Colors</div>
 
         <div v-if="isExpanded" class="tiptap-toolbar__color-picker">
@@ -173,10 +173,10 @@
 
       <span class="tiptap-toolbar__divider" />
 
-      <!-- Paragraph (label only in expanded) -->
+       
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">Paragraph</div>
       <div class="tiptap-toolbar__group">
-        <!-- Text Align (Always visible) -->
+         
         <button
           class="tiptap-toolbar__btn"
           :class="{ 'is-active': editor?.isActive({ textAlign: 'left' }) }"
@@ -271,7 +271,7 @@
 
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
-      <!-- Page Layout (Expanded only) -->
+       
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">Page</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
         <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" @click="showPaginationDialog = true" title="Page Settings">
@@ -293,7 +293,7 @@
 
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
-      <!-- Headings (expanded only) -->
+       
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">Headings</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
         <button
@@ -348,7 +348,7 @@
 
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
-      <!-- Advanced (expanded only) -->
+       
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">Advanced</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
         <button
@@ -371,7 +371,7 @@
 
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
-      <!-- Blocks (expanded only) -->
+       
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">Blocks</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
         <button
@@ -401,7 +401,7 @@
 
       <span class="tiptap-toolbar__divider" />
 
-      <!-- More -->
+       
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">More</div>
       <div class="tiptap-toolbar__group">
         <button
@@ -420,7 +420,7 @@
           <BarChart3 class="h-4 w-4" />
         </button>
         
-        <!-- Table Insert with Dialog -->
+         
         <button
           class="tiptap-toolbar__btn"
           title="Insert Table"
@@ -429,7 +429,7 @@
           <Table class="h-4 w-4" />
         </button>
         
-        <!-- Link Insert with Dialog -->
+         
         <button
           class="tiptap-toolbar__btn"
           :class="{ 'is-active': editor?.isActive('link') }"
@@ -439,7 +439,7 @@
           <Link2 class="h-4 w-4" />
         </button>
         
-        <!-- Image Insert with Dialog -->
+         
         <button
           v-if="isExpanded"
           class="tiptap-toolbar__btn"
@@ -450,7 +450,7 @@
         </button>
       </div>
       
-      <!-- Comment/Chat Icon (Always visible at end) -->
+       
       <div class="tiptap-toolbar__group" style="margin-left: auto;">
         <button
           class="tiptap-toolbar__btn relative"
@@ -469,8 +469,8 @@
     </div>
   </div>
 
-  <!-- Dialogs -->
-  <!-- Table Insert Dialog -->
+   
+   
   <Dialog v-model:open="showTableDialog">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
@@ -496,7 +496,7 @@
         </div>
         <div class="flex items-center gap-2">
           <input type="checkbox" v-model="tableWithHeader" id="header-check" class="h-4 w-4" />
-          <label for="header-check" class="text-sm font-medium">Include header row</label>
+          <label for="header-check" class="text-sm font-medium">{{$t('Forms.DocsToolbar.label.include_header_row')}}</label>
         </div>
       </div>
       <DialogFooter>
@@ -506,7 +506,7 @@
     </DialogContent>
   </Dialog>
 
-  <!-- Link Insert Dialog -->
+   
   <Dialog v-model:open="showLinkDialog">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
@@ -519,7 +519,7 @@
         </div>
         <div class="flex items-center gap-2">
           <input type="checkbox" v-model="linkOpenInNewTab" id="new-tab-check" class="h-4 w-4" />
-          <label for="new-tab-check" class="text-sm font-medium">Open in new tab</label>
+          <label for="new-tab-check" class="text-sm font-medium">{{$t('Forms.DocsToolbar.label.open_in_new_tab')}}</label>
         </div>
       </div>
       <DialogFooter>
@@ -530,7 +530,7 @@
     </DialogContent>
   </Dialog>
 
-  <!-- Image Insert Dialog -->
+   
   <Dialog v-model:open="showImageDialog">
     <DialogContent class="sm:max-w-2xl">
       <DialogHeader>
@@ -544,7 +544,7 @@
     </DialogContent>
   </Dialog>
 
-  <!-- Pagination Settings Dialog -->
+   
   <Dialog v-model:open="showPaginationDialog">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
@@ -567,7 +567,7 @@
         </label>
 
         <div v-if="paginationSettings.showPageNumbers" class="space-y-3 pl-6">
-          <label class="text-sm font-medium">Page Number Position</label>
+          <label class="text-sm font-medium">{{$t('Forms.DocsToolbar.label.page_number_position')}}</label>
           <select
             v-model="paginationSettings.pageNumberPosition"
             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -584,7 +584,7 @@
             <input type="checkbox" v-model="paginationSettings.printPageNumbers" class="rounded" />
             Show page numbers when printing
           </label>
-          <!-- <p class="text-xs text-gray-500">Printed numbers remain hidden by default to avoid browser headers.</p> -->
+           
         </div>
       </div>
 
@@ -627,16 +627,16 @@
     </DialogContent>
   </Dialog>
 
-  <!-- New File Dialog with Templates -->
+   
   <Dialog v-model:open="showNewFileDialog">
     <DialogContent class="sm:max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
       <DialogHeader>
         <DialogTitle class="text-xl">Create New Document</DialogTitle>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Choose a template to get started quickly</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{$t('Forms.DocsToolbar.text.choose_a_template_to')}}</p>
       </DialogHeader>
       <div class="overflow-y-auto flex-1 py-6 px-1 custom-scrollbar">
         <div class="grid grid-cols-2 md:grid-cols-3 gap-5">
-          <!-- Blank Document -->
+           
           <button @click="createFromTemplate('blank')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent dark:from-gray-800/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 flex items-center justify-center shadow-sm">
@@ -646,11 +646,11 @@
             </div>
             <div class="relative text-center">
               <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Blank Document</span>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Start from scratch</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Forms.DocsToolbar.text.start_from_scratch')}}</p>
             </div>
           </button>
 
-          <!-- Business Letter -->
+           
           <button @click="createFromTemplate('letter')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent dark:from-blue-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-blue-50 via-white to-white dark:from-blue-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">
@@ -663,11 +663,11 @@
             </div>
             <div class="relative text-center">
               <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Business Letter</span>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Professional correspondence</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Forms.DocsToolbar.text.professional_correspondence')}}</p>
             </div>
           </button>
 
-          <!-- Report -->
+           
           <button @click="createFromTemplate('report')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent dark:from-purple-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-purple-50 via-white to-white dark:from-purple-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">
@@ -687,7 +687,7 @@
             </div>
           </button>
 
-          <!-- Resume -->
+           
           <button @click="createFromTemplate('resume')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent dark:from-green-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-green-50 via-white to-white dark:from-green-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">
@@ -707,7 +707,7 @@
             </div>
           </button>
 
-          <!-- Meeting Notes -->
+           
           <button @click="createFromTemplate('notes')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-br from-yellow-50 to-transparent dark:from-yellow-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-yellow-50 via-white to-white dark:from-yellow-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">
@@ -733,7 +733,7 @@
             </div>
           </button>
 
-          <!-- Article -->
+           
           <button @click="createFromTemplate('article')" class="group relative flex flex-col p-5 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-lg transition-all overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-br from-red-50 to-transparent dark:from-red-900/30 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="relative w-full aspect-[4/5] max-h-[180px]  bg-gradient-to-b from-red-50 via-white to-white dark:from-red-950/40 dark:via-gray-800 dark:to-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-lg mb-4 p-4 shadow-sm">

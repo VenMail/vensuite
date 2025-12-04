@@ -13,7 +13,7 @@
         <header class="flex items-center justify-between">
           <div>
             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Snapping</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Control alignment helpers for precise layouts.</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{$t('Slides.SlidesInspector.text.control_alignment_helpers_for')}}</p>
           </div>
           <Switch
             :checked="localSettings.smartSnapping"
@@ -65,7 +65,7 @@
               </div>
             </label>
             <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">
-              Use a smaller grid for dense layouts or increase spacing for broader guides.
+              {{$t('Slides.SlidesInspector.text.use_a_smaller_grid')}}
             </p>
           </div>
         </div>
@@ -75,7 +75,7 @@
         <header class="flex items-center justify-between">
           <div>
             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Imports</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Bring existing content into your slide deck.</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{$t('Slides.SlidesInspector.text.bring_existing_content_into')}}</p>
           </div>
         </header>
 
@@ -92,9 +92,9 @@
 
         <div v-if="importStatus" class="rounded-md bg-purple-50 p-3 text-xs text-purple-700 dark:bg-purple-900/20 dark:text-purple-200">
           <p class="font-medium">Status:</p>
-          <p v-if="importStatus.isImporting">Processing your file…</p>
+          <p v-if="importStatus.isImporting">{{$t('Slides.SlidesInspector.text.processing_your_file')}}</p>
           <p v-else-if="importStatus.lastError">{{ importStatus.lastError }}</p>
-          <p v-else>Ready for new imports.</p>
+          <p v-else>{{$t('Slides.SlidesInspector.text.ready_for_new_imports')}}</p>
         </div>
       </section>
 

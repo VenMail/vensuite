@@ -1,7 +1,7 @@
 <template>
   <div class="block-editor w-full h-full">
     <div class="block-editor__container max-w-3xl mx-auto px-6 py-8">
-      <!-- Form Title -->
+       
       <div class="block-editor__title-section mb-8">
         <input
           v-model="formTitle"
@@ -19,7 +19,7 @@
         />
       </div>
 
-      <!-- Blocks Container -->
+       
       <div class="block-editor__blocks space-y-2">
         <TransitionGroup name="block-list">
           <BlockItem
@@ -43,17 +43,17 @@
         </TransitionGroup>
       </div>
 
-      <!-- Add Block Button -->
+       
       <button
         v-if="blocks.length === 0 || !showSlashMenu"
         class="block-editor__add-button mt-4 flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors w-full"
         @click="handleAddBlock"
       >
         <Plus class="w-5 h-5" />
-        <span>Add a question</span>
+        <span>{{$t('Forms.Blocks.BlockEditor.text.add_a_question')}}</span>
       </button>
 
-      <!-- Empty State -->
+       
       <div
         v-if="blocks.length === 0"
         class="block-editor__empty-state mt-12 text-center"
@@ -62,7 +62,7 @@
           <FileQuestion class="w-8 h-8 text-gray-400 dark:text-gray-500" />
         </div>
         <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Start building your form
+          {{$t('Forms.Blocks.BlockEditor.heading.start_building_your_form')}}
         </h3>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
           Type <kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-sm font-mono">/</kbd> for commands or click the button above

@@ -44,7 +44,7 @@
         v-if="filteredItems.length === 0"
         class="px-3 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
       >
-        No blocks found
+        {{$t('Forms.Blocks.SlashMenu.text.no_blocks_found')}}
       </div>
     </div>
   </div>

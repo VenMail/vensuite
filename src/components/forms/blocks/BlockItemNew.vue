@@ -5,7 +5,7 @@
       'ring-2 ring-blue-500 dark:ring-blue-400': isFocused,
     }"
   >
-    <!-- Hover Actions -->
+     
     <div class="absolute -left-12 top-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       <button
         class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
@@ -22,7 +22,7 @@
       </button>
     </div>
 
-    <!-- Block Content -->
+     
     <div
       class="block-item-new__content bg-white dark:bg-gray-800 rounded-xl border-2 transition-all p-6"
       :class="[
@@ -31,7 +31,7 @@
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
       ]"
     >
-      <!-- Question Input -->
+       
       <div class="mb-4">
         <input
           ref="questionInput"
@@ -46,7 +46,7 @@
         />
       </div>
 
-      <!-- Type and Required -->
+       
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
           <button
@@ -58,7 +58,7 @@
             <ChevronDown class="w-3 h-3" />
           </button>
           
-          <!-- Type Change Menu -->
+           
           <div
             v-if="showTypeMenu"
             class="absolute z-10 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2"
@@ -87,9 +87,9 @@
         </label>
       </div>
 
-      <!-- Type-Specific Content -->
+       
       <div class="block-item-new__preview">
-        <!-- Text Inputs -->
+         
         <div v-if="localBlock.category === 'text'" class="space-y-2">
           <input
             v-if="localBlock.type === 'short' || localBlock.type === 'email' || localBlock.type === 'phone'"
@@ -119,7 +119,7 @@
           />
         </div>
 
-        <!-- Choice Inputs -->
+         
         <div v-else-if="localBlock.category === 'choice' || localBlock.category === 'choices'" class="space-y-2">
           <div
             v-for="(_, index) in localBlock.options"
@@ -154,7 +154,7 @@
           </button>
         </div>
 
-        <!-- Rating -->
+         
         <div v-else-if="localBlock.category === 'rating'" class="flex items-center gap-2">
           <Star
             v-for="n in (localBlock.max || 5)"
@@ -163,17 +163,17 @@
           />
         </div>
 
-        <!-- File Upload -->
+         
         <div v-else-if="localBlock.category === 'file'">
           <div class="flex items-center justify-center px-6 py-10 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900">
             <div class="text-center">
               <Upload class="w-10 h-10 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
-              <p class="text-sm text-gray-500 dark:text-gray-400">Click or drag files here</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">{{$t('Forms.Blocks.BlockItemNew.text.click_or_drag_files')}}</p>
             </div>
           </div>
         </div>
 
-        <!-- Yes/No -->
+         
         <div v-else-if="localBlock.category === 'switch'" class="flex gap-3">
           <button class="flex-1 px-6 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium">
             Yes
@@ -184,7 +184,7 @@
         </div>
       </div>
 
-      <!-- Action Buttons (visible on focus) -->
+       
       <div
         v-if="isFocused"
         class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"

@@ -1,0 +1,10 @@
+{
+  "Utils": {
+    "Node": {
+      "text": {
+        "invalid_node_parameter": "Invalid \"node\" parameter",
+        "invalid_predicate_parameter": "Invalid \"predicate\" parameter"
+      }
+    }
+  }
+}

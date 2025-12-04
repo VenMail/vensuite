@@ -106,12 +106,12 @@ onMounted(() => {
 
 <template>
   <div id="app" class="h-screen flex flex-col">
-    <!-- Loading bar -->
+     
     <div v-if="isLoading" class="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50 overflow-hidden">
       <div class="h-full bg-primary-600 w-1/3 animate-pulse"></div>
     </div>
 
-    <!-- Header -->
+     
     <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
       <div class="flex items-center gap-4">
         <Button variant="ghost" size="icon" @click="goBack">
@@ -125,11 +125,11 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Access request interstitial -->
+     
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">
       <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
         <div class="mb-4">
-          <h2 class="text-lg font-semibold">Request access to this file</h2>
+          <h2 class="text-lg font-semibold">{{$t('Views.MediaViewer.heading.request_access_to_this')}}</h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">This file is private. Enter your email to request access from the owner.</p>
         </div>
         <form @submit.prevent="submitAccessRequest" class="space-y-3">
@@ -163,15 +163,15 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Viewer -->
+     
     <div v-else class="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-950">
       <div class="max-w-6xl w-full p-4 flex items-center justify-center">
         <img v-if="isImage() && fileUrl" :src="fileUrl" :alt="title" class="max-h-[80vh] max-w-full object-contain rounded shadow" />
         <video v-else-if="isVideo() && fileUrl" :src="fileUrl" controls class="max-h-[80vh] max-w-full rounded shadow"></video>
         <audio v-else-if="isAudio() && fileUrl" :src="fileUrl" controls class="w-full"></audio>
         <div v-else class="text-center">
-          <p class="mb-3">Cannot preview this file type.</p>
-          <a v-if="fileUrl" :href="fileUrl" target="_blank" rel="noopener" class="text-blue-600">Download / Open original</a>
+          <p class="mb-3">{{$t('Views.MediaViewer.text.cannot_preview_this_file')}}</p>
+          <a v-if="fileUrl" :href="fileUrl" target="_blank" rel="noopener" class="text-blue-600">{{$t('Views.MediaViewer.link.download_open_original')}}</a>
         </div>
       </div>
     </div>

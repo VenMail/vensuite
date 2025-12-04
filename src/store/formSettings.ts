@@ -15,6 +15,7 @@ import type {
   FormPaymentMode,
   FormLayoutMode,
 } from "@/types";
+import { t } from '@/i18n';
 
 interface FormSettingsState {
   layoutMode: FormLayoutMode;
@@ -84,7 +85,7 @@ const createDefaultWelcomeScreen = (): FormWelcomeScreen => ({
 
 const createDefaultCompletionScreen = (): FormCompletionScreen => ({
   enabled: true,
-  title: "Thank you!",
+  title: t('Store.FormSettings.heading.thank_you'),
   message: "We’ve received your response.",
   button_text: "Continue",
   show_summary: false,

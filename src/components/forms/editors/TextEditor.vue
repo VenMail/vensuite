@@ -1,8 +1,8 @@
 <template>
   <div class="text-editor">
-    <h3>Text Field Properties</h3>
+    <h3>{{$t('Forms.Editors.TextEditor.heading.text_field_properties')}}</h3>
 
-    <!-- Field Type -->
+     
     <label>
       Field Type:
       <select v-model="localModelValue.type">
@@ -12,7 +12,7 @@
       </select>
     </label>
 
-    <!-- Validation Type -->
+     
     <label>
       Validation Type:
       <select v-model="validation.inputType" @change="applyDefaultValidation">
@@ -22,27 +22,27 @@
       </select>
     </label>
 
-    <!-- Regex for custom text validation -->
+     
     <label v-if="validation.inputType === 'text'">
       Regex:
       <input v-model="validation.regex" type="text" placeholder="Enter custom regex (optional)" />
     </label>
 
-    <!-- Min Length -->
+     
     <label>
       Min Length:
       <input v-model.number="validation.minLength" type="number" placeholder="Minimum length (optional)" />
     </label>
 
-    <!-- Max Length -->
+     
     <label>
       Max Length:
       <input v-model.number="validation.maxLength" type="number" placeholder="Maximum length (optional)" />
     </label>
 
-    <!-- Optional Preview of Current Validation -->
+     
     <div v-if="validation">
-      <h4>Current Validation Rules:</h4>
+      <h4>{{$t('Forms.Editors.TextEditor.heading.current_validation_rules')}}</h4>
       <pre>{{ validation }}</pre>
     </div>
   </div>

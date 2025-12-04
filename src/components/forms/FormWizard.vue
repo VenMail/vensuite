@@ -2,7 +2,7 @@
   <div class="form-wizard-overlay fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
     <div
       class="form-wizard flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-      <!-- Header -->
+       
       <div class="form-wizard__header px-6 py-5 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div>
@@ -23,13 +23,13 @@
         </div>
       </div>
 
-      <!-- Content -->
+       
       <div class="form-wizard__content p-6 flex-1 overflow-y-auto">
-        <!-- Step 1: Describe Form -->
+         
         <div v-if="currentStep === 'describe'" class="space-y-6">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              What kind of form do you want to create?
+              {{$t('Forms.FormWizard.label.what_kind_of_form')}}
             </label>
             <textarea ref="descriptionInput" v-model="description" rows="3"
               placeholder="Example: A customer feedback form with name, email, rating, and comments..."
@@ -42,10 +42,10 @@
             </p>
           </div>
 
-          <!-- Quick Templates -->
+           
           <div>
             <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Or choose a template:
+              {{$t('Forms.FormWizard.text.or_choose_a_template')}}
             </p>
             <div class="grid grid-cols-2 gap-3">
               <button v-for="template in quickTemplates" :key="template.name"
@@ -59,7 +59,7 @@
           </div>
         </div>
 
-        <!-- Step 2: Generating -->
+         
         <div v-else-if="currentStep === 'generating'" class="py-12 text-center">
           <div
             class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4 animate-pulse">
@@ -69,7 +69,7 @@
             Creating your form...
           </h3>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            AI is analyzing your description and building the perfect form structure
+            {{$t('Forms.FormWizard.text.ai_is_analyzing_your')}}
           </p>
           <div class="mt-6 flex justify-center">
             <div class="flex gap-1">
@@ -83,7 +83,7 @@
           </div>
         </div>
 
-        <!-- Step 3: Preview -->
+         
         <div v-else-if="currentStep === 'preview'" class="space-y-6">
           <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
             <div class="flex items-start justify-between gap-3 border-b border-gray-200 dark:border-gray-700 px-5 py-4">
@@ -151,7 +151,7 @@
               <Lightbulb class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  AI-generated form ready!
+                  {{$t('Forms.FormWizard.text.ai_generated_form_ready')}}
                 </p>
                 <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
                   You can edit any field in the form builder after creation. Click "Create Form" to continue.
@@ -162,7 +162,7 @@
         </div>
       </div>
 
-      <!-- Footer -->
+       
       <div
         class="form-wizard__footer px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
         <div class="flex items-center justify-between">
@@ -181,7 +181,7 @@
               class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               @click="createBlankForm"
             >
-              Skip & Create Blank
+              {{$t('Forms.FormWizard.button.skip_create_blank')}}
             </button>
             <button
               v-if="currentStep === 'describe'"
@@ -189,7 +189,7 @@
               :disabled="!description.trim()"
               @click="handleGenerate"
             >
-              Generate Form →
+              {{$t('Forms.FormWizard.button.generate_form')}}
             </button>
             <button
               v-if="currentStep === 'preview'"

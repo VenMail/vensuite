@@ -513,11 +513,11 @@ const contextMenuActions = computed(() => {
       'dark:bg-gradient-to-br dark:from-gray-900 to-gray-800'
     ]"
   >
-    <!-- Top Menubar - Mobile First -->
+     
     <div
       class="bg-white/60 dark:bg-gray-900/60 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800 p-3 sm:p-4 text-gray-800 dark:text-gray-100 shrink-0"
     >
-      <!-- Mobile Layout -->
+       
       <div class="flex flex-col gap-3 sm:hidden">
         <div class="flex items-center justify-between gap-2">
           <div class="relative flex-1">
@@ -551,7 +551,7 @@ const contextMenuActions = computed(() => {
         </Button>
       </div>
 
-      <!-- Tablet and Desktop Layout -->
+       
       <div class="hidden sm:flex items-center justify-between">
         <div class="flex items-center gap-4 flex-1">
           <div class="relative max-w-xs lg:max-w-sm">
@@ -560,7 +560,7 @@ const contextMenuActions = computed(() => {
           </div>
         </div>
 
-        <!-- Context Menu -->
+         
         <div v-if="showContextMenu" class="flex items-center gap-2 ml-auto">
           <Button v-for="action in contextMenuActions" :key="action.label" variant="ghost" size="sm"
             @click="action.action" class="flex items-center text-xs lg:text-sm">
@@ -569,7 +569,7 @@ const contextMenuActions = computed(() => {
           </Button>
         </div>
 
-        <!-- Default Actions -->
+         
         <div v-else class="flex items-center gap-2 ml-auto">
           <Button variant="outline" @click="createNewForm" class="hidden lg:flex">
             <FilePlus2 class="mr-2 h-4 w-4" />
@@ -602,19 +602,19 @@ const contextMenuActions = computed(() => {
       </div>
     </div>
 
-    <!-- Main Content Area -->
+     
     <div class="flex-1 overflow-auto p-3 sm:p-6">
-      <!-- Empty State Title -->
+       
       <h1 v-if="forms.length < 1" class="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-6 sm:mb-8 dark:text-white">
-        Create and Manage Forms
+        {{$t('Views.Forms.heading.create_and_manage_forms')}}
       </h1>
 
-      <!-- Error Message -->
+       
       <div v-if="errorMessage" class="text-red-500 text-center text-sm sm:text-base mb-4">
         {{ errorMessage }}
       </div>
 
-      <!-- Forms Grid/List -->
+       
       <div :class="cardsContainerClass">
         <QuickViewCard
           v-for="form in filteredForms"
@@ -628,20 +628,20 @@ const contextMenuActions = computed(() => {
         />
       </div>
 
-      <!-- Loading Spinner -->
+       
       <div v-if="loading && hasMore" class="text-center mt-6 sm:mt-8">
         <div class="inline-block w-8 h-8 rounded-full border-4 border-gray-300 dark:border-gray-600 border-r-transparent animate-spin" role="status"></div>
         <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-if="forms.length > 0">Loading more forms...</span>
         <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-else>Loading...</span>
       </div>
 
-      <!-- No More Forms -->
+       
       <div v-if="!hasMore && !loading && forms.length > 0" class="text-center mt-6 sm:mt-8 text-gray-500 dark:text-gray-400 text-sm sm:text-base">
         No more forms to load.
       </div>
     </div>
 
-    <!-- Share Modal -->
+     
     <Dialog :open="showShareModal" @update:open="value => value ? null : closeShareModal()">
       <DialogContent class="w-full max-w-sm sm:max-w-lg mx-auto">
         <DialogHeader>
@@ -674,7 +674,7 @@ const contextMenuActions = computed(() => {
               </Button>
             </div>
             <p class="text-xs text-slate-500">
-              Anyone with this link can access the form based on its publish settings.
+              {{$t('Views.Forms.text.anyone_with_this_link')}}
             </p>
           </div>
 
@@ -692,7 +692,7 @@ const contextMenuActions = computed(() => {
           </div>
 
           <div v-if="isPublishingShare" class="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-            Publishing form to generate share link…
+            {{$t('Views.Forms.text.publishing_form_to_generate')}}
           </div>
         </div>
 
@@ -706,7 +706,7 @@ const contextMenuActions = computed(() => {
       </DialogContent>
     </Dialog>
 
-    <!-- Form Wizard -->
+     
     <FormWizard
       v-if="showWizard"
       @create="handleWizardCreate"

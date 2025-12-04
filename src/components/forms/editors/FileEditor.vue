@@ -1,6 +1,6 @@
 <template>
   <div class="file-editor">
-    <h3>File Upload Properties</h3>
+    <h3>{{$t('Forms.Editors.FileEditor.heading.file_upload_properties')}}</h3>
     <label>
       Allow Multiple Files:
       <input type="checkbox" :checked="multiple" @change="onToggleMultiple" />

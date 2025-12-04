@@ -1,0 +1,112 @@
+{
+  "Store": {
+    "Auth": {
+      "text": {
+        "failed_to_clear_files": "Failed to clear files store on logout:",
+        "logout_encountered_an_issue": "Logout encountered an issue:",
+        "no_valid_accounts": "no valid accounts",
+        "token_expiration_cleanup_encountered": "Token expiration cleanup encountered an issue:"
+      }
+    },
+    "Files": {
+      "text": {
+        "bulk_restore_failed": "Bulk restore failed",
+        "chunked_upload_failed": "Chunked upload failed",
+        "client_side_conversion_failed": "Client-side conversion failed:",
+        "created_new_document_locally": "Created new document locally:",
+        "created_new_document_online": "Created new document online:",
+        "error_creating_folder_on": "Error creating folder on API:",
+        "error_deleting_from_api": "Error deleting from API:",
+        "error_fetching_files": "Error fetching files:",
+        "error_fetching_version": "Error fetching version:",
+        "error_fetching_version_history": "Error fetching version history:",
+        "error_importing_attachment": "Error importing attachment:",
+        "error_loading_documents": "Error loading documents:",
+        "error_loading_from_api": "Error loading from API:",
+        "error_loading_media_files": "Error loading media files:",
+        "error_loading_trashed_documents": "Error loading trashed documents:",
+        "error_moving_file": "Error moving file:",
+        "error_moving_to_trash": "Error moving to trash:",
+        "error_permanently_deleting_file": "Error permanently deleting file:",
+        "error_renaming_item": "Error renaming item:",
+        "error_restoring_file": "Error restoring file:",
+        "error_saving_to_api": "Error saving to API:",
+        "error_uploading_file": "Error uploading file:",
+        "failed_to_create_document": "Failed to create document online:",
+        "failed_to_fetch_files": "Failed to fetch files",
+        "failed_to_import_attachment": "Failed to import attachment",
+        "failed_to_initiate_upload": "Failed to initiate upload",
+        "failed_to_load_documents": "Failed to load documents",
+        "failed_to_load_media": "Failed to load media files",
+        "failed_to_load_source": "Failed to load source binary for conversion",
+        "failed_to_load_trash": "Failed to load trash items",
+        "failed_to_load_trashed": "Failed to load trashed documents",
+        "failed_to_move_item": "Failed to move item",
+        "failed_to_move_to": "Failed to move to trash",
+        "failed_to_permanently_delete": "Failed to permanently delete file",
+        "failed_to_rename_item": "Failed to rename item",
+        "failed_to_restore_file": "Failed to restore file",
+        "failed_to_save_to": "Failed to save to API",
+        "failed_to_upload_file": "Failed to upload file",
+        "file_uploaded_successfully": "File uploaded successfully:",
+        "files_clearall_failed": "files.clearAll failed:",
+        "invalid_file_id": "Invalid file id",
+        "reconcile_offline_documents_failed": "Reconcile offline documents failed:",
+        "server_conversion_failed_or": "Server conversion failed or not available:"
+      }
+    },
+    "FormEditor": {
+      "text": {
+        "missing_rule_owner": "Missing rule owner",
+        "rule_must_contain_at": "Rule must contain at least one condition",
+        "rule_must_contain_at_2": "Rule must contain at least one action",
+        "untitled_page_copy": "Untitled page copy",
+        "untitled_question_copy": "Untitled question copy"
+      }
+    },
+    "FormPlayer": {
+      "text": {
+        "applied_logic_rule": "Applied logic rule"
+      }
+    },
+    "FormSettings": {
+      "heading": {
+        "thank_you": "Thank you!"
+      },
+      "text": {
+        "let_s_get_to": "Let’s get to know you better",
+        "thank_you": "Thank you!",
+        "we_ve_received_your": "We’ve received your response."
+      }
+    },
+    "Forms": {
+      "text": {
+        "failed_to_create_form": "Failed to create form.",
+        "failed_to_delete_form": "Failed to delete form.",
+        "failed_to_hydrate_form": "Failed to hydrate form definition",
+        "failed_to_load_forms": "Failed to load forms",
+        "failed_to_load_responses": "Failed to load responses.",
+        "failed_to_publish_form": "Failed to publish form.",
+        "failed_to_update_form": "Failed to update form.",
+        "failed_to_update_sharing": "Failed to update sharing settings.",
+        "unable_to_fetch_form": "Unable to fetch form."
+      }
+    },
+    "Slides": {
+      "text": {
+        "authentication_required_to_export": "Authentication required to export slides",
+        "authentication_required_to_import": "Authentication required to import PowerPoint files",
+        "centered_title_with_subtitle": "Centered title with subtitle",
+        "click_to_add_subtitle": "Click to add subtitle",
+        "click_to_add_title": "Click to add title",
+        "converted_slide_deck_data": "Converted slide deck data not found in response",
+        "failed_to_parse_slide": "Failed to parse slide deck content",
+        "failed_to_persist_deck": "Failed to persist deck",
+        "html_import_failed": "HTML import failed",
+        "powerpoint_import_failed": "PowerPoint import failed",
+        "slide_deck_not_found": "Slide deck not found",
+        "slides_import_endpoint_is": "Slides import endpoint is not configured"
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 <template>
   <div class="form-builder-new min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Top Bar -->
+     
     <div
       class="form-builder-new__topbar sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800"
     >
@@ -30,9 +30,9 @@
           </div>
         </div>
 
-        <!-- Desktop Actions (hidden on mobile) -->
+         
         <div class="hidden lg:flex items-center gap-3">
-          <!-- Logo Toggle -->
+           
           <button
             class="p-2 rounded-lg transition-colors"
             :class="
@@ -46,7 +46,7 @@
             <ImageIcon class="w-5 h-5" />
           </button>
 
-          <!-- Preview Button -->
+           
           <button
             class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             @click="handlePreview"
@@ -55,7 +55,7 @@
             Preview
           </button>
 
-          <!-- Share Button -->
+           
           <button
             class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             @click="openShareModal"
@@ -64,7 +64,7 @@
             Share
           </button>
 
-          <!-- Stop/Resume (conditional) -->
+           
           <button
             v-if="isFormPublished && acceptingResponses"
             class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -74,7 +74,7 @@
             Stop responses
           </button>
 
-          <!-- Publish Button -->
+           
           <button
             class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="isPublishing || blocks.length === 0"
@@ -84,7 +84,7 @@
             {{ isPublishing ? "Publishing..." : "Publish" }}
           </button>
 
-          <!-- More Menu Dropdown -->
+           
           <div class="relative">
             <button
               class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
@@ -122,7 +122,7 @@
                 <DollarSign class="w-4 h-4" />
                 <span>Payment</span>
                 <span class="ml-auto text-xs text-gray-500 dark:text-gray-400">{{
-                  settingsStore.state.payment.enabled ? `$${paymentAmount}` : "Off"
+                  settingsStore.state.payment.enabled ? `${paymentAmount}` : "Off"
                 }}</span>
               </button>
               <button
@@ -162,9 +162,9 @@
           </div>
         </div>
 
-        <!-- Mobile Actions (hamburger + more menu side by side) -->
+         
         <div class="flex lg:hidden items-center gap-2 shrink-0">
-          <!-- Hamburger Menu -->
+           
           <div class="relative">
             <button
               class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
@@ -185,7 +185,7 @@
               class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
               @click.stop
             >
-              <!-- Logo Toggle -->
+               
               <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left"
                 :class="
@@ -202,7 +202,7 @@
                 Logo
               </button>
 
-              <!-- Preview -->
+               
               <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
                 @click="
@@ -214,7 +214,7 @@
                 Preview
               </button>
 
-              <!-- Share -->
+               
               <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
                 @click="
@@ -226,7 +226,7 @@
                 Share
               </button>
 
-              <!-- Stop/Resume responses -->
+               
               <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
                 @click="
@@ -263,7 +263,7 @@
 
               <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
 
-              <!-- Publish -->
+               
               <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="isPublishing || blocks.length === 0"
@@ -278,7 +278,7 @@
             </div>
           </div>
 
-          <!-- More Menu (vertical dots) -->
+           
           <div class="relative">
             <button
               class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
@@ -316,7 +316,7 @@
                 <DollarSign class="w-4 h-4" />
                 <span>Payment</span>
                 <span class="ml-auto text-xs text-gray-500 dark:text-gray-400">{{
-                  settingsStore.state.payment.enabled ? `$${paymentAmount}` : "Off"
+                  settingsStore.state.payment.enabled ? `${paymentAmount}` : "Off"
                 }}</span>
               </button>
               <button
@@ -357,7 +357,7 @@
         </div>
       </div>
     </div>
-    <!-- Main Content -->
+     
     <div v-if="isLoading" class="max-w-3xl mx-auto px-6 py-24 animate-pulse">
       <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
       <div class="h-4 w-96 bg-gray-200 dark:bg-gray-700 rounded mb-8"></div>
@@ -375,9 +375,9 @@
     </div>
 
     <div v-else class="form-builder-new__content max-w-3xl mx-auto px-6 py-12">
-      <!-- Form Header -->
+       
       <div class="form-builder-new__header mb-12">
-        <!-- Logo block inside document -->
+         
         <div v-if="formConfig?.showLogo !== false" class="mb-6">
           <Transition name="fade" mode="out-in">
             <div
@@ -531,7 +531,7 @@
         />
       </div>
 
-      <!-- Blocks -->
+       
       <div class="form-builder-new__blocks space-y-3">
         <TransitionGroup name="block-list">
           <div
@@ -583,14 +583,14 @@
         ></div>
       </div>
 
-      <!-- Add Block Button -->
+       
       <div class="mt-6">
         <button
           class="add-block-button group w-full flex items-center gap-3 px-4 py-4 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
           @click="handleAddBlock"
         >
           <Plus class="w-5 h-5" />
-          <span class="text-sm font-medium">Add a question</span>
+          <span class="text-sm font-medium">{{$t('Views.FormBuilder.text.add_a_question')}}</span>
           <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto"
             >or press
             <kbd
@@ -601,7 +601,7 @@
         </button>
       </div>
 
-      <!-- Empty State -->
+       
       <div v-if="blocks.length === 0" class="empty-state mt-20 text-center">
         <div
           class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 mb-6"
@@ -609,10 +609,10 @@
           <Sparkles class="w-10 h-10 text-blue-600 dark:text-blue-400" />
         </div>
         <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-          Start building your form
+          {{$t('Views.FormBuilder.heading.start_building_your_form')}}
         </h3>
         <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-          Add questions, customize fields, and create the perfect form for your needs.
+          {{$t('Views.FormBuilder.text.add_questions_customize_fields')}}
         </p>
         <div class="flex items-center justify-center gap-3">
           <button
@@ -633,7 +633,7 @@
       </div>
     </div>
 
-    <!-- Slash Command Menu -->
+     
     <SlashMenu
       v-if="showSlashMenu"
       :filter="slashMenuFilter"
@@ -642,7 +642,7 @@
       @close="closeSlashMenu"
     />
 
-    <!-- Configuration Wizard -->
+     
     <FormConfigWizard
       v-if="showConfigWizard"
       :initial-config="formConfig ?? undefined"
@@ -650,7 +650,7 @@
       @skip="handleConfigSkip"
     />
 
-    <!-- Payment Modal -->
+     
     <Teleport to="body">
       <div
         v-if="showPaymentDialog"
@@ -703,8 +703,8 @@
                 v-model="paymentMode"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="platform">Use platform account</option>
-                <option value="custom">Use my own Stripe account</option>
+                <option value="platform">{{$t('Views.FormBuilder.text.use_platform_account')}}</option>
+                <option value="custom">{{$t('Views.FormBuilder.text.use_my_own_stripe')}}</option>
               </select>
             </div>
 
@@ -762,7 +762,7 @@
       </div>
     </Teleport>
 
-    <!-- Webhooks Modal -->
+     
     <Teleport to="body">
       <div
         v-if="showWebhooksPanel"
@@ -841,8 +841,7 @@
                     class="text-sm text-gray-600 dark:text-gray-400"
                     v-if="webhookStep === 'intro'"
                   >
-                    Send form responses and payment events to your downstream systems in
-                    real time.
+                    {{$t('Views.FormBuilder.text.send_form_responses_and')}}
                   </p>
                 </div>
                 <button
@@ -860,22 +859,22 @@
                       class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50"
                     >
                       <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                        When do webhooks fire?
+                        {{$t('Views.FormBuilder.heading.when_do_webhooks_fire')}}
                       </h4>
                       <ul
                         class="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 space-y-1"
                       >
                         <li>Form completed</li>
-                        <li>Payment succeeded or failed</li>
+                        <li>{{$t('Views.FormBuilder.text.payment_succeeded_or_failed')}}</li>
                         <li>Charges refunded</li>
-                        <li>Any custom events you define</li>
+                        <li>{{$t('Views.FormBuilder.text.any_custom_events_you')}}</li>
                       </ul>
                     </div>
                     <div
                       class="p-4 rounded-xl border border-gray-200 dark:border-gray-800"
                     >
                       <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                        How it works
+                        {{$t('Views.FormBuilder.heading.how_it_works')}}
                       </h4>
                       <p class="text-sm text-gray-600 dark:text-gray-400">
                         Provide a secure HTTPS endpoint and we will POST a signed payload
@@ -891,14 +890,14 @@
                       class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                       @click="closeWebhooksModal"
                     >
-                      Skip for now
+                      {{$t('Views.FormBuilder.button.skip_for_now')}}
                     </button>
                     <div class="flex items-center gap-3">
                       <button
                         class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
                         @click="webhookStep = 'configure'"
                       >
-                        Set up webhooks
+                        {{$t('Views.FormBuilder.button.set_up_webhooks')}}
                       </button>
                     </div>
                   </div>
@@ -931,7 +930,7 @@
       </div>
     </Teleport>
 
-    <!-- Image Picker Modal -->
+     
     <Teleport to="body">
       <div
         v-if="showImagePicker"
@@ -966,7 +965,7 @@
       </div>
     </Teleport>
 
-    <!-- AI Generation Dialog -->
+     
     <Teleport to="body">
       <div
         v-if="showAIDialog"
@@ -976,7 +975,7 @@
         <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-              Generate with AI
+              {{$t('Views.FormBuilder.heading.generate_with_ai')}}
             </h3>
             <button
               class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
@@ -1010,7 +1009,7 @@
       </div>
     </Teleport>
 
-    <!-- Share Dialog -->
+     
     <Dialog
       :open="showShareModal"
       @update:open="(value) => (value ? null : closeShareModal())"
@@ -1061,7 +1060,7 @@
             </div>
             <div class="flex items-center justify-between text-xs sm:text-sm text-gray-500 dark:text-gray-400 gap-3">
               <span class="truncate">
-                Anyone with this link can access the form based on its publish settings.
+                {{$t('Views.FormBuilder.text.anyone_with_this_link')}}
               </span>
               <Button
                 v-if="shareHelperItems.length"
@@ -1125,13 +1124,13 @@
             v-if="isPublishingShare"
             class="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400"
           >
-            Publishing form to generate share link…
+            {{$t('Views.FormBuilder.text.publishing_form_to_generate')}}
           </div>
 
           <div class="pt-4 mt-2 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">
             <div class="space-y-0.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              <p class="font-semibold">Collaborators & workspace access</p>
-              <p>Manage who in your workspace can open and edit this form.</p>
+              <p class="font-semibold">{{$t('Views.FormBuilder.text.collaborators_workspace_access')}}</p>
+              <p>{{$t('Views.FormBuilder.text.manage_who_in_your')}}</p>
             </div>
             <Button
               type="button"
@@ -1167,7 +1166,7 @@
               size="sm"
               @click="showShareAccessView = false"
             >
-              Back to share link
+              {{$t('Views.FormBuilder.button.back_to_share_link')}}
             </Button>
             <Button
               type="button"
@@ -1175,7 +1174,7 @@
               size="sm"
               @click="handleInternalCopyLink"
             >
-              Copy editor link
+              {{$t('Views.FormBuilder.button.copy_editor_link')}}
             </Button>
           </div>
         </div>

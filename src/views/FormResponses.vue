@@ -5,10 +5,7 @@
       <div class="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
         <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div class="space-y-5">
-            <!-- <div class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary dark:border-primary/40 dark:bg-primary/15 dark:text-primary-foreground">
-              <span class="inline-flex h-2 w-2 rounded-full bg-primary"></span>
-              Response Analytics
-            </div> -->
+             
             <div class="space-y-2">
               <div class="flex flex-wrap items-center gap-3">
                 <Button variant="ghost" size="sm" class="gap-2 text-muted-foreground" @click="goBack">
@@ -124,7 +121,7 @@
           <Card class="flex flex-col border-none bg-card/90 shadow-sm ring-1 ring-border/60">
             <CardHeader class="pb-2">
               <CardTitle class="text-base font-semibold">Response breakdown</CardTitle>
-              <CardDescription>Visualize completion ratio at a glance</CardDescription>
+              <CardDescription>{{$t('Views.FormResponses.text.visualize_completion_ratio_at')}}</CardDescription>
             </CardHeader>
             <CardContent class="flex flex-1 items-center justify-center">
               <div class="relative h-48 w-48">
@@ -142,7 +139,7 @@
           <div class="space-y-1.5">
             <CardTitle class="text-xl font-semibold">Responses</CardTitle>
             <CardDescription class="text-sm text-muted-foreground">
-              Manage submissions, monitor payment status, and drill into individual answers.
+              {{$t('Views.FormResponses.text.manage_submissions_monitor_payment')}}
             </CardDescription>
           </div>
           <div class="flex flex-wrap items-center gap-4">
@@ -316,7 +313,7 @@
                 </article>
               </div>
               <p v-else class="rounded-xl border border-dashed border-muted-foreground/40 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                No answers captured for this response.
+                {{$t('Views.FormResponses.text.no_answers_captured_for')}}
               </p>
             </div>
           </div>

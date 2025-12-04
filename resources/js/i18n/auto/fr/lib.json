@@ -1,0 +1,37 @@
+{
+  "Lib": {
+    "Pagination": {
+      "PaginationManager": {
+        "toast": {
+          "please_allow_popups_for": "Please allow popups for PDF export"
+        }
+      },
+      "PaginationUi": {
+        "text": {
+          "control_group_custom_size": "control-group custom-size"
+        }
+      }
+    },
+    "WsService": {
+      "text": {
+        "cannot_send_message_websocket": "Cannot send message: WebSocket is not connected",
+        "error_parsing_websocket_message": "Error parsing WebSocket message:",
+        "failed_to_notify_auth": "Failed to notify auth store of WebSocket auth error:",
+        "max_reconnection_attempts_reached": "Max reconnection attempts reached",
+        "no_valid_accounts": "no valid accounts",
+        "websocket_closed_due_to": "WebSocket closed due to auth issue:"
+      }
+    },
+    "XLSXporter": {
+      "text": {
+        "workbook_protection_is_not": "Workbook protection is not supported in this implementation"
+      }
+    },
+    "YProviderCustom": {
+      "text": {
+        "ysocketprovider_message_error": "YSocketProvider message error",
+        "ysocketprovider_ws_error": "YSocketProvider ws error"
+      }
+    }
+  }
+}

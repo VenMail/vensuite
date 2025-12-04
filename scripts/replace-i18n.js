@@ -45,6 +45,19 @@ const projectRoot = path.resolve(__dirname, '..');
 const srcRoot = detectSrcRoot(projectRoot);
 const outputDir = path.resolve(projectRoot, 'resources', 'js', 'i18n', 'auto');
 
+let hasVueI18n = false;
+try {
+  const pkgPath = path.resolve(projectRoot, 'package.json');
+  if (existsSync(pkgPath)) {
+    const pkg = require(pkgPath);
+    const deps = Object.assign({}, pkg.dependencies || {}, pkg.devDependencies || {});
+    if (deps['vue-i18n'] || deps['@intlify/vue-i18n']) {
+      hasVueI18n = true;
+    }
+  }
+} catch {
+}
+
 // Load ignore patterns
 const ignorePatterns = loadIgnorePatterns(projectRoot);
 
@@ -95,6 +108,23 @@ function inferKindFromJsxElementName(name) {
 
 function normalizeText(text) {
   return String(text || '').replace(/\s+/g, ' ').trim();
+}
+
+function isCommonShortText(text) {
+  const trimmed = String(text || '').trim();
+  if (!trimmed) return false;
+  const cleaned = trimmed.replace(/\s+/g, ' ').trim();
+
+  if (/[.!?]/.test(cleaned)) return false;
+
+  const words = cleaned.split(' ').filter(Boolean);
+  if (words.length === 0 || words.length > 2) return false;
+
+  if (cleaned.length > 24) return false;
+
+  if (/[\/_]/.test(cleaned)) return false;
+
+  return true;
 }
 
 function inferPlaceholderNameFromExpression(expr, index) {
@@ -434,7 +464,8 @@ async function processFile(filePath, keyMap) {
       const elementName = getJsxElementName(jsxParent.openingElement.name);
       const kind = inferKindFromJsxElementName(elementName);
       
-      const keyId = `${namespace}|${kind}|${text}`;
+      const nsForKey = isCommonShortText(text) ? 'Commons' : namespace;
+      const keyId = `${nsForKey}|${kind}|${text}`;
       const fullKey = keyMap.get(keyId);
       if (!fullKey) return;
       
@@ -486,7 +517,8 @@ async function processFile(filePath, keyMap) {
         const text = normalizeText(getStringValue(valueNode));
         if (!shouldTranslateText(text, ignorePatterns)) return;
         
-        const keyId = `${namespace}|${kind}|${text}`;
+        const nsForKey = isCommonShortText(text) ? 'Commons' : namespace;
+        const keyId = `${nsForKey}|${kind}|${text}`;
         const fullKey = keyMap.get(keyId);
         if (!fullKey) return;
         
@@ -772,14 +804,18 @@ async function processVueFile(filePath, keyMap) {
       }
     }
 
-    // Process Vue files
-    for (const file of vueFiles) {
-      const rel = path.relative(projectRoot, file);
-      const { changed } = await processVueFile(file, keyMap);
-      if (changed) {
-        changedCount += 1;
-        console.log(`[i18n-replace] Updated Vue template ${rel}`);
+    // Process Vue files only when vue-i18n is present, since the rewrite uses $t(...) in templates.
+    if (hasVueI18n) {
+      for (const file of vueFiles) {
+        const rel = path.relative(projectRoot, file);
+        const { changed } = await processVueFile(file, keyMap);
+        if (changed) {
+          changedCount += 1;
+          console.log(`[i18n-replace] Updated Vue template ${rel}`);
+        }
       }
+    } else if (vueFiles.length > 0) {
+      console.log('[i18n-replace] vue-i18n not detected; skipping Vue template rewrite to avoid inserting $t(...) without a global helper.');
     }
 
     console.log(`[i18n-replace] Completed. Updated ${changedCount} files. Skipped ${conflictCount} files due to conflicts.`);

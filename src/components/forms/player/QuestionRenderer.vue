@@ -12,7 +12,7 @@
     </div>
 
     <div :class="fieldWrapperClass">
-      <!-- Short Text Inputs -->
+       
       <input
       v-if="isShortInput"
       :id="inputId"
@@ -27,7 +27,7 @@
       @input="updateValue(($event.target as HTMLInputElement).value)"
     />
 
-    <!-- Long Text Input -->
+     
       <textarea
       v-else-if="isLongInput"
       :id="inputId"
@@ -41,7 +41,7 @@
       @input="updateValue(($event.target as HTMLTextAreaElement).value)"
     />
 
-    <!-- Radio Buttons -->
+     
       <fieldset v-else-if="type === 'radio'" class="space-y-2.5">
         <label
         v-for="(option, idx) in options"
@@ -64,7 +64,7 @@
       </label>
       </fieldset>
 
-      <!-- Select Dropdown -->
+       
       <select
       v-else-if="type === 'select'"
       :id="inputId"
@@ -74,13 +74,13 @@
       :required="required"
       @change="updateValue(($event.target as HTMLSelectElement).value)"
     >
-      <option value="" disabled>Select an option</option>
+      <option value="" disabled>{{$t('Forms.Player.QuestionRenderer.text.select_an_option')}}</option>
       <option v-for="option in options" :key="option.value" :value="option.value">
         {{ option.label }}
       </option>
     </select>
 
-      <!-- Checkboxes -->
+       
       <fieldset v-else-if="isMultiChoice" class="space-y-2.5">
         <label
         v-for="(option, idx) in options"
@@ -102,7 +102,7 @@
       </label>
       </fieldset>
 
-      <!-- Yes/No Toggle -->
+       
       <label v-else-if="type === 'yesno'" class="flex items-center gap-3 cursor-pointer group">
       <input
         :id="inputId"
@@ -117,7 +117,7 @@
       </span>
     </label>
 
-      <!-- Slider -->
+       
       <div v-else-if="isSlider" class="space-y-2">
       <input
         :id="inputId"
@@ -137,7 +137,7 @@
       </div>
       </div>
 
-      <!-- Rating -->
+       
       <div v-else-if="type === 'rating'" class="flex flex-wrap gap-2">
       <button
         v-for="ratingValue in ratingScale"
@@ -156,14 +156,14 @@
       </button>
       </div>
 
-      <!-- Statement -->
+       
       <div 
       v-else-if="type === 'statement'"
       class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300" 
       v-html="statementHtml"
     />
 
-      <!-- File Upload -->
+       
       <div v-else-if="type === 'file'" class="space-y-3">
       <input
         :id="inputId"
@@ -184,7 +184,7 @@
       </ul>
       </div>
 
-      <!-- Fallback Input -->
+       
       <input
       v-else
       :id="inputId"
@@ -199,7 +199,7 @@
       @input="updateValue(($event.target as HTMLInputElement).value)"
     />
 
-      <!-- Help Text -->
+       
       <p v-if="question.help_text" class="text-xs text-slate-500 dark:text-slate-400">
         {{ question.help_text }}
       </p>

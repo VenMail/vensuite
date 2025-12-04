@@ -1263,7 +1263,7 @@ watch(
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">
       <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
         <div class="mb-4">
-          <h2 class="text-lg font-semibold">Request access to this sheet</h2>
+          <h2 class="text-lg font-semibold">{{$t('Views.SheetEditor.heading.request_access_to_this')}}</h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
             This sheet is private. Enter your email to request access from the owner.
           </p>
@@ -1312,7 +1312,7 @@ watch(
 
     <div v-else-if="isLarge" class="flex-1 flex items-center justify-center p-6">
       <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 text-center">
-        <h2 class="text-lg font-semibold mb-2">This spreadsheet is large</h2>
+        <h2 class="text-lg font-semibold mb-2">{{$t('Views.SheetEditor.heading.this_spreadsheet_is_large')}}</h2>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
           The file is too large to preview online. You can download it to view locally.
         </p>

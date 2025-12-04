@@ -1,6 +1,6 @@
 <template>
   <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-950">
-    <!-- Header -->
+     
     <div class="flex items-center justify-between p-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
       <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
         Select File
@@ -10,7 +10,7 @@
       </Button>
     </div>
 
-    <!-- Toolbar -->
+     
     <div class="px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
       <div class="flex flex-col lg:flex-row lg:items-center gap-3">
         <div class="relative flex-1 min-w-0 max-w-md">
@@ -95,7 +95,7 @@
       </div>
     </div>
 
-    <!-- Selection Banner -->
+     
     <div
       v-if="selectedIds.length > 0"
       class="flex items-center justify-between px-6 py-3 bg-primary-50 dark:bg-primary-950/30 border-b border-primary-200 dark:border-primary-900"
@@ -112,11 +112,11 @@
       </div>
     </div>
 
-    <!-- Content -->
+     
     <div class="flex-1 overflow-hidden">
       <ScrollArea class="h-full">
         <div v-if="visibleFiles.length > 0" class="p-4 space-y-4">
-          <!-- Grid View -->
+           
           <div
             v-if="viewMode === 'grid'"
             class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
@@ -149,7 +149,7 @@
             </div>
           </div>
 
-          <!-- List View -->
+           
           <div v-else class="space-y-1">
             <div class="grid grid-cols-[auto,1fr,160px,120px] items-center px-4 py-2 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <div>
@@ -197,20 +197,20 @@
           </div>
         </div>
 
-        <!-- Empty state -->
+         
         <div v-else class="flex flex-col items-center justify-center py-16 px-6">
           <FileIcon class="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
           <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-            No files found
+            {{$t('Views.FilePicker.heading.no_files_found')}}
           </h3>
           <p class="text-center text-gray-500 dark:text-gray-400">
-            Try adjusting your search or filter criteria.
+            {{$t('Views.FilePicker.text.try_adjusting_your_search')}}
           </p>
         </div>
       </ScrollArea>
     </div>
 
-    <!-- Footer -->
+     
     <div class="flex items-center justify-between p-6 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
       <span class="text-sm text-gray-500 dark:text-gray-400">
         {{ visibleFiles.length }} file{{ visibleFiles.length !== 1 ? 's' : '' }}

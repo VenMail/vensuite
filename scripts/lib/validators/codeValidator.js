@@ -1,106 +1,300 @@
 /**
- * Code/Expression Validator
- * Detects JavaScript/TypeScript code expressions, function calls,
- * and programming constructs that should NOT be translated.
+ * Enhanced Code/Expression Validator
+ * More robust detection of programming constructs while avoiding false positives for English text
  */
 
-// JavaScript keywords
+// JavaScript keywords (expanded)
 const JS_KEYWORDS = new Set([
+  // Control flow
   'async', 'await', 'break', 'case', 'catch', 'class', 'const', 'continue',
   'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export', 'extends',
-  'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof',
-  'let', 'new', 'null', 'return', 'static', 'super', 'switch', 'this',
-  'throw', 'true', 'try', 'typeof', 'undefined', 'var', 'void', 'while',
-  'with', 'yield', 'implements', 'interface', 'package', 'private',
-  'protected', 'public', 'abstract', 'as', 'from', 'get', 'set', 'of',
+  'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'let',
+  'new', 'return', 'static', 'super', 'switch', 'throw', 'try', 'typeof',
+  'var', 'void', 'while', 'with', 'yield',
+  
+  // Values
+  'false', 'null', 'true', 'undefined',
+  
+  // TypeScript/ESNext
+  'implements', 'interface', 'package', 'private', 'protected', 'public',
+  'abstract', 'as', 'asserts', 'any', 'unknown', 'never', 'keyof', 'readonly',
+  'type', 'namespace', 'module', 'declare', 'global', 'from', 'get', 'set',
+  'of', 'satisfies',
+  
+  // Contextual
+  'arguments', 'eval', 'this',
 ]);
 
 // Common programming identifiers that shouldn't be translated
 const PROGRAMMING_IDENTIFIERS = new Set([
+  // Global objects
   'console', 'window', 'document', 'navigator', 'location', 'history',
-  'localStorage', 'sessionStorage', 'fetch', 'Promise', 'Array', 'Object',
-  'String', 'Number', 'Boolean', 'Date', 'Math', 'JSON', 'RegExp', 'Error',
+  'localStorage', 'sessionStorage', 'indexedDB', 'crypto', 'performance',
+  
+  // Built-ins
+  'Array', 'Object', 'String', 'Number', 'Boolean', 'Date', 'Math', 'JSON',
+  'RegExp', 'Error', 'TypeError', 'RangeError', 'SyntaxError', 'Promise',
   'Map', 'Set', 'WeakMap', 'WeakSet', 'Symbol', 'Proxy', 'Reflect',
-  'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'encodeURI', 'decodeURI',
-  'encodeURIComponent', 'decodeURIComponent', 'setTimeout', 'setInterval',
-  'clearTimeout', 'clearInterval', 'requestAnimationFrame',
-  'addEventListener', 'removeEventListener', 'querySelector', 'querySelectorAll',
-  'getElementById', 'getElementsByClassName', 'getElementsByTagName',
-  'createElement', 'createTextNode', 'appendChild', 'removeChild',
-  'insertBefore', 'replaceChild', 'cloneNode', 'getAttribute', 'setAttribute',
-  'removeAttribute', 'classList', 'style', 'innerHTML', 'textContent',
+  'Intl', 'ArrayBuffer', 'DataView', 'TypedArray',
+  
+  // Common functions
+  'fetch', 'alert', 'confirm', 'prompt', 'setTimeout', 'setInterval',
+  'clearTimeout', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame',
+  'addEventListener', 'removeEventListener', 'dispatchEvent',
+  
+  // DOM methods
+  'querySelector', 'querySelectorAll', 'getElementById', 'getElementsByClassName',
+  'getElementsByTagName', 'createElement', 'createTextNode', 'appendChild',
+  'removeChild', 'insertBefore', 'replaceChild', 'cloneNode',
+  'getAttribute', 'setAttribute', 'removeAttribute', 'hasAttribute',
+  
+  // Common properties/methods
+  'classList', 'style', 'innerHTML', 'innerText', 'textContent',
   'value', 'checked', 'selected', 'disabled', 'readonly', 'required',
-  'length', 'push', 'pop', 'shift', 'unshift', 'splice', 'slice', 'concat',
-  'join', 'reverse', 'sort', 'filter', 'map', 'reduce', 'forEach', 'find',
-  'findIndex', 'includes', 'indexOf', 'lastIndexOf', 'every', 'some',
-  'keys', 'values', 'entries', 'hasOwnProperty', 'toString', 'valueOf',
-  'toUpperCase', 'toLowerCase', 'trim', 'split', 'replace', 'match', 'search',
-  'substring', 'substr', 'charAt', 'charCodeAt', 'startsWith', 'endsWith',
-  'padStart', 'padEnd', 'repeat', 'localeCompare',
+  'length', 'size', 'name', 'id', 'className', 'tagName', 'nodeType',
+  
+  // Array methods
+  'push', 'pop', 'shift', 'unshift', 'splice', 'slice', 'concat', 'join',
+  'reverse', 'sort', 'filter', 'map', 'reduce', 'reduceRight', 'forEach',
+  'find', 'findIndex', 'findLast', 'findLastIndex', 'includes', 'indexOf',
+  'lastIndexOf', 'every', 'some', 'keys', 'values', 'entries', 'from',
+  'isArray', 'at', 'flat', 'flatMap',
+  
+  // String methods
+  'toString', 'valueOf', 'toUpperCase', 'toLowerCase', 'trim', 'trimStart',
+  'trimEnd', 'split', 'replace', 'replaceAll', 'match', 'matchAll', 'search',
+  'substring', 'substr', 'slice', 'charAt', 'charCodeAt', 'codePointAt',
+  'startsWith', 'endsWith', 'padStart', 'padEnd', 'repeat', 'localeCompare',
+  'normalize',
+  
+  // Number methods
+  'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'isInteger', 'toFixed',
+  'toExponential', 'toPrecision',
+  
+  // Utility functions
+  'encodeURI', 'decodeURI', 'encodeURIComponent', 'decodeURIComponent',
+  'escape', 'unescape', 'btoa', 'atob',
+]);
+
+// Common English words/phrases that might look like code but aren't
+const COMMON_ENGLISH_PATTERNS = new Set([
+  'ok', 'okay', 'yes', 'no', 'true', 'false', // (handled separately)
+  'null', 'undefined', // (handled separately)
+  'click', 'open', 'close', 'save', 'load', 'back', 'next', 'previous',
+  'first', 'last', 'home', 'end', 'stop', 'start', 'pause', 'play',
+  'add', 'remove', 'delete', 'edit', 'view', 'show', 'hide', 'toggle',
+  'search', 'find', 'filter', 'sort', 'group', 'merge', 'split', 'join',
+  'copy', 'paste', 'cut', 'undo', 'redo', 'refresh', 'update', 'create',
+  'select', 'deselect', 'enable', 'disable', 'expand', 'collapse',
+  'success', 'error', 'warning', 'info', 'help', 'about', 'contact',
+  'required', 'optional', 'recommended', 'suggested', 'default', 'custom',
+  'basic', 'advanced', 'simple', 'complex', 'easy', 'hard', 'fast', 'slow',
+  'new', 'old', 'young', 'big', 'small', 'large', 'tiny', 'short', 'long',
+  'high', 'low', 'hot', 'cold', 'light', 'dark', 'bright', 'dim',
+]);
+
+// Known library/framework identifiers
+const LIBRARY_IDENTIFIERS = new Set([
+  // React/Vue/Angular patterns
+  'props', 'state', 'ref', 'emit', 'slot', 'component', 'directive',
+  'mixin', 'plugin', 'store', 'action', 'mutation', 'getter', 'setter',
+  'context', 'provider', 'consumer', 'hook', 'effect', 'reducer',
+  'dispatch', 'commit', 'selector',
+  
+  // Common variable names
+  'data', 'item', 'items', 'list', 'array', 'obj', 'object', 'func',
+  'function', 'fn', 'callback', 'cb', 'err', 'error', 'res', 'response',
+  'req', 'request', 'val', 'value', 'idx', 'index', 'key', 'id',
+  'result', 'results', 'output', 'input', 'param', 'params', 'args',
+  'arguments', 'options', 'config', 'settings', 'init', 'initialize',
+]);
+
+const JS_DIRECTIVE_LITERALS = new Set([
+  'use strict',
+  'use client',
+  'use server',
 ]);
 
 /**
- * Check if text is a JavaScript expression
- * e.g., "value ? null : closeShareModal()", "items.length > 0"
+ * Check if text looks like English text with parentheses (e.g., "Click (here)")
+ */
+function isEnglishWithParens(text) {
+  const trimmed = String(text || '').trim();
+  
+  // Simple English word followed by text in parentheses
+  if (/^[A-Z][a-z]*\s+\([^)]+\)$/.test(trimmed)) {
+    return true;
+  }
+  
+  // Multiple English words with parentheses
+  if (/^[A-Z][a-z]+(?:\s+[A-Za-z][a-z]*)*\s+\([^)]+\)$/.test(trimmed)) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Check if text is a simple English word that happens to be camelCase
+ */
+function isLikelyEnglishWord(text) {
+  const trimmed = String(text || '').trim().toLowerCase();
+  
+  // Single words that are common English
+  if (COMMON_ENGLISH_PATTERNS.has(trimmed)) {
+    return true;
+  }
+  
+  // Words that are camelCase but could be English compounds
+  if (/^[a-z]+[A-Z][a-z]+$/.test(text)) {
+    const parts = text.split(/(?=[A-Z])/).map(p => p.toLowerCase());
+    const firstPart = parts[0];
+    
+    // Check if first part is a common English verb/word
+    const commonFirstParts = new Set([
+      'click', 'open', 'close', 'save', 'load', 'back', 'next', 'previous',
+      'add', 'remove', 'delete', 'edit', 'view', 'show', 'hide', 'toggle',
+      'search', 'find', 'filter', 'sort', 'copy', 'paste', 'cut', 'undo',
+      'refresh', 'update', 'create', 'select', 'enable', 'disable',
+    ]);
+    
+    if (commonFirstParts.has(firstPart) && parts.length === 2) {
+      // Could be a UI label like "clickHere" or "saveButton"
+      const secondPart = parts[1].toLowerCase();
+      const commonSecondParts = new Set([
+        'button', 'link', 'menu', 'item', 'list', 'form', 'field', 'text',
+        'icon', 'image', 'panel', 'window', 'dialog', 'modal', 'tab',
+        'page', 'section', 'area', 'box', 'container', 'wrapper',
+        'here', 'now', 'again', 'more', 'less',
+      ]);
+      
+      if (commonSecondParts.has(secondPart)) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * Improved check for JavaScript expressions
  */
 function isJsExpression(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return false;
   
-  // Ternary expressions
-  if (/\?\s*[^:]+\s*:/.test(trimmed)) {
-    return true;
+  // Avoid simple English phrases
+  if (isEnglishWithParens(trimmed)) {
+    return false;
   }
   
-  // Function calls with parentheses
-  // Must be anchored to start/end to avoid matching text like "Contact us (required)"
-  // Allows optional prefixes: !, await, new, void
-  if (/^(!|await\s+|new\s+|void\s+)?[a-zA-Z_$][a-zA-Z0-9_$.]*\s*\([^)]*\)$/.test(trimmed)) {
-    // But not if it's just a simple word followed by parentheses with text
-    // e.g., "Click (here)" should not match
-    if (/^[A-Z][a-z]+\s+\([^)]+\)$/.test(trimmed)) {
-      return false;
+  if (isLikelyEnglishWord(trimmed)) {
+    return false;
+  }
+  
+  // Ternary expressions - must have ? and : operators
+  if (trimmed.includes('?') && trimmed.includes(':')) {
+    const parts = trimmed.split('?');
+    if (parts.length >= 2) {
+      const condition = parts[0].trim();
+      // Condition should look like a JS expression
+      if (condition && !/^[A-Z]/.test(condition)) {
+        return true;
+      }
+    }
+  }
+  
+  // Function calls with parentheses - more strict matching
+  // Match: func(), obj.method(), Module.function(), but not "Click (here)"
+  const funcCallRegex = /^(?:await\s+|new\s+|yield\s+|void\s+|typeof\s+|delete\s+)?(?:[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*|\([^)]+\))\s*\([^)]*\)(?:\s*\.\s*[a-zA-Z_$][\w$]*\s*\([^)]*\))*$/;
+  
+  if (funcCallRegex.test(trimmed)) {
+    // Additional check: if it looks like "word(word)" where first word is capitalized
+    const simpleCallMatch = trimmed.match(/^([A-Z][a-z]+)\s*\(([^)]+)\)$/);
+    if (simpleCallMatch) {
+      const arg = simpleCallMatch[2].trim();
+      // If argument is a single capitalized word or quoted string, might be English
+      if (/^[A-Z][a-z]+$/.test(arg) || /^["'][^"']+["']$/.test(arg)) {
+        return false;
+      }
     }
     return true;
   }
   
-  // Arrow functions
-  if (/=>\s*/.test(trimmed)) {
+  // Arrow functions - must have => and function body
+  if (trimmed.includes('=>')) {
+    const arrowParts = trimmed.split('=>');
+    if (arrowParts.length === 2) {
+      const params = arrowParts[0].trim();
+      const body = arrowParts[1].trim();
+      
+      // Check if params look like function parameters
+      const validParamPattern = /^(?:[a-zA-Z_$][\w$]*(?:\s*,\s*[a-zA-Z_$][\w$]*)*|\{[^}]*\}|\([^)]*\))$/;
+      if (validParamPattern.test(params) && body) {
+        return true;
+      }
+    }
+  }
+  
+  // Comparison operators with expressions on both sides
+  const comparisonRegex = /^(?:[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*|\([^)]+\)|[0-9]+(?:\.[0-9]+)?)\s*(?:[<>]=?|===?|!==?)\s*(?:[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*|\([^)]+\)|[0-9]+(?:\.[0-9]+)?|["'][^"']*["'])$/;
+  if (comparisonRegex.test(trimmed)) {
     return true;
   }
   
-  // Comparison operators
-  if (/[<>=!]=?=?/.test(trimmed) && !/^[^<>=!]+$/.test(trimmed)) {
-    // Make sure it's not just text with punctuation
-    if (/\b(if|else|while|for|return|const|let|var|function)\b/.test(trimmed) ||
-        /[a-zA-Z_$][a-zA-Z0-9_$]*\s*[<>=!]=/.test(trimmed)) {
+  // Logical operators with expressions
+  if ((trimmed.includes('&&') || trimmed.includes('||')) && !/^[A-Z]/.test(trimmed)) {
+    const parts = trimmed.split(/(&&|\|\|)/);
+    // At least one part should look like a JS expression
+    const hasExpression = parts.some(part => 
+      part.trim() && 
+      /^[a-z_$][\w$]*(?:\.[a-z_$][\w$]*)*$/.test(part.trim()) &&
+      !isLikelyEnglishWord(part.trim())
+    );
+    if (hasExpression) {
       return true;
     }
   }
   
-  // Logical operators
-  if (/\s(&&|\|\|)\s/.test(trimmed)) {
-    return true;
-  }
-  
-  // Property access chains
-  if (/[a-zA-Z_$][a-zA-Z0-9_$]*(?:\.[a-zA-Z_$][a-zA-Z0-9_$]*){2,}/.test(trimmed)) {
-    return true;
-  }
-  
-  // Array/object access
-  if (/\[[^\]]+\]/.test(trimmed) && /[a-zA-Z_$]/.test(trimmed)) {
-    // But not if it's a simple bracketed word like "[Optional]"
-    if (/^\[[A-Z][a-z]+\]$/.test(trimmed)) {
-      return false;
+  // Property access chains (min 2 dots)
+  if (/[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*){2,}/.test(trimmed)) {
+    // Check it's not something like "a.b.c" where all are single letters (could be abbreviations)
+    const match = trimmed.match(/[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*){2,}/);
+    if (match) {
+      const parts = match[0].split('.');
+      // If all parts are single letters or very short, might be abbreviation
+      if (parts.every(p => p.length > 1 || /[0-9]/.test(p))) {
+        return true;
+      }
     }
+  }
+  
+  // Array/object access with brackets
+  const bracketAccessRegex = /[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*\[(?:[^\[\]]+|"[^"]*"|'[^']*')\]/;
+  if (bracketAccessRegex.test(trimmed)) {
+    // But not simple bracketed text like "[Required]"
+    if (!/^\[[A-Z][a-z]+\]$/.test(trimmed)) {
+      return true;
+    }
+  }
+  
+  // Assignment expressions (including destructuring)
+  if (/^(?:const|let|var)\s+[a-zA-Z_$][\w$]/.test(trimmed)) {
     return true;
   }
   
-  // Assignment expressions
-  if (/[a-zA-Z_$][a-zA-Z0-9_$]*\s*=\s*[^=]/.test(trimmed) && 
-      !/^[A-Z][a-z]+\s*=\s*[A-Z][a-z]+$/.test(trimmed)) {
-    return true;
+  if (/[a-zA-Z_$][\w$]*\s*=\s*(?![=>])/.test(trimmed)) {
+    // Check it's not something like "Name = John" (English)
+    const match = trimmed.match(/^([a-zA-Z_$][\w$]*)\s*=\s*(.+)$/);
+    if (match) {
+      const [, lhs, rhs] = match;
+      // If LHS is single capitalized word and RHS is text, might be English
+      if (/^[A-Z][a-z]+$/.test(lhs) && /^[A-Z][a-z]/.test(rhs.trim())) {
+        return false;
+      }
+      return true;
+    }
   }
   
   // Template literals with expressions
@@ -108,13 +302,25 @@ function isJsExpression(text) {
     return true;
   }
   
-  // Spread operator
-  if (/\.{3}[a-zA-Z_$]/.test(trimmed)) {
+  // Spread/Rest operator
+  if (/\.{3}[a-zA-Z_$][\w$]*/.test(trimmed)) {
     return true;
   }
   
-  // Destructuring patterns
-  if (/^\s*\{[^}]+\}\s*$/.test(trimmed) && /[a-zA-Z_$]:\s*[a-zA-Z_$]/.test(trimmed)) {
+  // Object/Array destructuring
+  const destructuringPatterns = [
+    /^\s*\{[^}]+\}\s*(?:=|\s+as\s+)/,
+    /^\s*\[[^\]]+\]\s*(?:=|\s+as\s+)/,
+    /^(?:const|let|var)\s+\{[^}]+\}/,
+    /^(?:const|let|var)\s+\[[^\]]+\]/,
+  ];
+  
+  if (destructuringPatterns.some(pattern => pattern.test(trimmed))) {
+    return true;
+  }
+  
+  // Method chaining
+  if (/\.(then|catch|finally|map|filter|reduce|forEach)\s*\(/.test(trimmed)) {
     return true;
   }
   
@@ -122,42 +328,62 @@ function isJsExpression(text) {
 }
 
 /**
- * Check if text is a Vue directive expression
- * e.g., "showModal", "items.length > 0", "handleClick($event)"
+ * Improved Vue directive expression detection
  */
 function isVueDirectiveExpression(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return false;
   
-  // Check for common Vue patterns
+  // Skip English text
+  if (isEnglishWithParens(trimmed) || isLikelyEnglishWord(trimmed)) {
+    return false;
+  }
   
-  // Event handlers: handleClick, onClick, onSubmit, etc.
-  if (/^(handle|on)[A-Z][a-zA-Z0-9]*(\([^)]*\))?$/.test(trimmed)) {
+  // Vue event handlers with common prefixes
+  const vueEventRegex = /^(?:@|v-on:)?(?:click|input|submit|change|key(?:down|up|press)|mouse(?:down|up|move|enter|leave)|focus|blur|scroll)/;
+  if (vueEventRegex.test(trimmed.toLowerCase())) {
     return true;
   }
   
-  // Boolean expressions for v-if/v-show
-  if (/^!?[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(trimmed)) {
-    // Simple property access like "isVisible", "user.isAdmin"
-    // But not single capitalized words that might be labels
-    if (/^[A-Z][a-z]+$/.test(trimmed)) {
-      return false;
+  // Vue bindings
+  if (/^(?::|v-bind:)[a-zA-Z_$][\w$]*/.test(trimmed)) {
+    return true;
+  }
+  
+  // Vue directives
+  if (/^v-(if|show|for|model|text|html|pre|cloak|once|ref)/.test(trimmed)) {
+    return true;
+  }
+  
+  // Boolean expressions for v-if/v-show (must have operators or be complex)
+  if (/^!?[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)+$/.test(trimmed)) {
+    return true;
+  }
+  
+  if (/^[a-zA-Z_$][\w$]*\s*(?:[<>]=?|===?|!==?)\s*/.test(trimmed)) {
+    return true;
+  }
+  
+  // Method calls in templates (often used in Vue)
+  if (/^[a-zA-Z_$][\w$]*\s*\([^)]*\)$/.test(trimmed)) {
+    // Check it's not a simple English call
+    const match = trimmed.match(/^([a-zA-Z_$][\w$]*)\s*\(([^)]*)\)$/);
+    if (match) {
+      const [, funcName, args] = match;
+      if (/^[A-Z][a-z]+$/.test(funcName) && !args.trim()) {
+        return false; // Could be "Save()" etc.
+      }
+      return true;
     }
+  }
+  
+  // Vue slot names
+  if (/^#[a-zA-Z_$][\w$]*/.test(trimmed)) {
     return true;
   }
   
-  // Computed expressions
-  if (/^[a-zA-Z_$][a-zA-Z0-9_$]*\s*[<>=!&|]+/.test(trimmed)) {
-    return true;
-  }
-  
-  // Method calls
-  if (/^[a-zA-Z_$][a-zA-Z0-9_$]*\s*\(/.test(trimmed)) {
-    return true;
-  }
-  
-  // Object/array literals
-  if (/^\s*[\[{]/.test(trimmed) && /[\]}]\s*$/.test(trimmed)) {
+  // Vue template references
+  if (/^ref="[^"]+"$/.test(trimmed) || /^\$refs\./.test(trimmed)) {
     return true;
   }
   
@@ -165,22 +391,49 @@ function isVueDirectiveExpression(text) {
 }
 
 /**
- * Check if text is a programming identifier (variable/function name)
- * e.g., "closeShareModal", "handleSubmit", "isLoading"
+ * Improved programming identifier detection
  */
 function isProgrammingIdentifier(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return false;
   
-  // Check for camelCase or PascalCase identifiers
-  // But exclude simple capitalized words that might be labels
+  // Skip common English words
+  if (isLikelyEnglishWord(trimmed)) {
+    return false;
+  }
   
-  // camelCase: starts with lowercase, has uppercase letters
-  if (/^[a-z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*$/.test(trimmed)) {
+  // Check against known sets first
+  if (JS_KEYWORDS.has(trimmed)) {
     return true;
   }
   
-  // snake_case with multiple parts
+  if (PROGRAMMING_IDENTIFIERS.has(trimmed)) {
+    return true;
+  }
+  
+  if (LIBRARY_IDENTIFIERS.has(trimmed)) {
+    return true;
+  }
+  
+  // camelCase with at least two parts and not starting with capital
+  if (/^[a-z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*$/.test(trimmed)) {
+    // Additional check: if it looks like "iPhone" or similar
+    if (/^i[A-Z][a-z]+/.test(trimmed) || /^e[A-Z][a-z]+/.test(trimmed)) {
+      // Could be product names like "iPhone", "eBay"
+      const commonProductNames = new Set(['iPhone', 'iPad', 'iPod', 'iMac', 'eBay', 'eCommerce']);
+      if (commonProductNames.has(trimmed)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  // PascalCase (for classes, components) - must have at least two capitals
+  if (/^[A-Z][a-z]+[A-Z][a-zA-Z0-9]*$/.test(trimmed)) {
+    return true;
+  }
+  
+  // snake_case with multiple underscores
   if (/^[a-z][a-z0-9]*(_[a-z][a-z0-9]*)+$/.test(trimmed)) {
     return true;
   }
@@ -190,13 +443,18 @@ function isProgrammingIdentifier(text) {
     return true;
   }
   
-  // Check against known programming identifiers
-  if (PROGRAMMING_IDENTIFIERS.has(trimmed)) {
+  // Hungarian notation or type prefixes
+  if (/^(?:is|has|can|should|will|did)[A-Z][a-zA-Z0-9]+$/.test(trimmed)) {
     return true;
   }
   
-  // Check against JS keywords
-  if (JS_KEYWORDS.has(trimmed)) {
+  // Common suffix patterns
+  if (/[A-Z][a-z]+(?:Util|Helper|Service|Factory|Provider|Controller|Component|Directive|Module)$/.test(trimmed)) {
+    return true;
+  }
+  
+  // React/Vue component patterns
+  if (/^[A-Z][a-zA-Z0-9]*(?:Button|Modal|Dialog|Form|Input|Select|Table|List|Item|Card|Panel|View|Page)$/.test(trimmed)) {
     return true;
   }
   
@@ -204,52 +462,99 @@ function isProgrammingIdentifier(text) {
 }
 
 /**
- * Check if text contains code-like patterns
- * This is the main entry point for code validation
+ * Main entry point - improved code detection with better English filtering
  */
 function isCodeContent(text) {
   const trimmed = String(text || '').trim();
-  if (!trimmed) return false;
+  if (!trimmed || trimmed.length < 2) return false;
   
-  // Check for JS expression
+  const lower = trimmed.toLowerCase();
+  
+  // Quick heuristics to identify English text
+  if (isEnglishWithParens(trimmed)) {
+    return false;
+  }
+  
+  // If it starts with a capital letter and looks like a sentence
+  if (/^[A-Z][a-z]+(?:\s+[a-z][a-z]*)*[.!?]?$/.test(trimmed) && !trimmed.includes('(')) {
+    // But check for common false negatives
+    const codeIndicators = ['=>', '()', '{}', '[]', '=', '==', '===', '!=', '!==', '<', '>', '<=', '>='];
+    if (!codeIndicators.some(indicator => trimmed.includes(indicator))) {
+      return false;
+    }
+  }
+  
+  if (JS_DIRECTIVE_LITERALS.has(lower) && trimmed === lower) {
+    return true;
+  }
+  
+  // Check for explicit code patterns
   if (isJsExpression(trimmed)) {
     return true;
   }
   
-  // Check for Vue directive expression
   if (isVueDirectiveExpression(trimmed)) {
     return true;
   }
   
-  // Check for programming identifier
   if (isProgrammingIdentifier(trimmed)) {
     return true;
   }
   
-  // Check for code blocks
-  // Control flow with parentheses
-  if (/^(if|for|while|switch|catch)\s*\(/.test(trimmed)) {
-    return true;
+  // Additional code patterns
+  
+  // Control flow with parentheses (must have code inside)
+  const controlFlowMatch = trimmed.match(/^(if|for|while|switch|catch)\s*\(([^)]+)\)/);
+  if (controlFlowMatch) {
+    const [, keyword, condition] = controlFlowMatch;
+    // Condition should look like code, not English
+    if (condition.trim() && !/^[A-Z]/.test(condition.trim())) {
+      return true;
+    }
   }
   
   // Declarations
-  if (/^(const|let|var|function|class|import|export)\s+[a-zA-Z_$]/.test(trimmed)) {
-    return true;
-  }
-
-  // Other keywords
-  if (/^(try|else|do)\s*\{/.test(trimmed)) {
+  if (/^(const|let|var|function|class|import|export|type|interface)\s+[a-zA-Z_$]/.test(trimmed)) {
     return true;
   }
   
-  // Return/throw statements - careful not to match "return to home" (imperative usually capitalized, but maybe not)
-  // We assume code returns are usually lower case 'return' followed by expression
-  if (/^(return|throw)\s+[^A-Z]/.test(trimmed)) {
+  // Try/catch/finally blocks
+  if (/^(try|catch|finally)\s*\{/.test(trimmed)) {
     return true;
   }
   
-  // Check for semicolon-terminated statements
-  if (/;\s*$/.test(trimmed) && /[a-zA-Z_$][a-zA-Z0-9_$]*\s*[=(]/.test(trimmed)) {
+  // Return/throw statements (must have expression after)
+  const returnMatch = trimmed.match(/^(return|throw)\s+(.+)/);
+  if (returnMatch) {
+    const [, keyword, expression] = returnMatch;
+    if (expression.trim() && !/^[A-Z]/.test(expression.trim())) {
+      return true;
+    }
+  }
+  
+  // Semicolon-terminated statements with code-like content
+  if (/;\s*$/.test(trimmed)) {
+    const beforeSemicolon = trimmed.slice(0, -1).trim();
+    if (beforeSemicolon && /[a-zA-Z_$][\w$]*\s*[=(]/.test(beforeSemicolon)) {
+      return true;
+    }
+  }
+  
+  // JSON-like patterns
+  if (/^\s*[\{\[]/.test(trimmed) && /[\}\]]\s*$/.test(trimmed)) {
+    // Check if it has key-value pairs or array elements
+    if (trimmed.includes(':') || trimmed.includes(',')) {
+      return true;
+    }
+  }
+  
+  // Regex literal
+  if (/^\/.+\/[gimsuyd]*$/.test(trimmed)) {
+    return true;
+  }
+  
+  // Number literals with operators
+  if (/^[0-9]+\s*[\+\-\*/%]\s*[0-9]+/.test(trimmed)) {
     return true;
   }
   
@@ -257,27 +562,56 @@ function isCodeContent(text) {
 }
 
 /**
- * Check if text is an event handler attribute value
- * e.g., "value => value ? null : closeShareModal()"
+ * Event handler detection with better filtering
  */
 function isEventHandlerValue(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return false;
   
-  // Arrow function patterns
-  if (/^[a-zA-Z_$][a-zA-Z0-9_$,\s]*\s*=>\s*.+$/.test(trimmed)) {
+  // Skip English
+  if (isEnglishWithParens(trimmed) || isLikelyEnglishWord(trimmed)) {
+    return false;
+  }
+  
+  // Arrow functions (explicit)
+  if (/^[a-zA-Z_$][\w$]*(?:\s*,\s*[a-zA-Z_$][\w$]*)*\s*=>\s*(?:[^=]|=>).+$/.test(trimmed)) {
     return true;
   }
   
-  // Function reference patterns
-  if (/^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(trimmed) &&
-      /^(handle|on|do|emit|dispatch|trigger|fire|call|invoke|execute|run|process)/i.test(trimmed)) {
-    return true;
+  // Event handler naming patterns
+  const handlerPrefixes = ['handle', 'on', 'do', 'emit', 'dispatch', 'trigger', 'fire', 'call'];
+  const hasHandlerPrefix = handlerPrefixes.some(prefix => 
+    trimmed.toLowerCase().startsWith(prefix.toLowerCase())
+  );
+  
+  if (hasHandlerPrefix) {
+    // Check if it follows naming conventions
+    if (/^[a-z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*$/.test(trimmed) || 
+        /^[a-z][a-z0-9]*(_[a-z][a-z0-9]*)+$/.test(trimmed)) {
+      return true;
+    }
   }
   
-  // Inline function call
-  if (/^[a-zA-Z_$][a-zA-Z0-9_$]*\s*\([^)]*\)$/.test(trimmed)) {
-    return true;
+  // Inline function call with event parameter
+  if (/^[a-zA-Z_$][\w$]*\s*\([^)]*\)$/.test(trimmed)) {
+    const argsMatch = trimmed.match(/\(([^)]*)\)/);
+    if (argsMatch) {
+      const args = argsMatch[1].trim();
+      // Common event parameter names
+      const eventParams = ['e', 'event', 'evt', '$event', 'ev', 'arg', 'args'];
+      if (!args || eventParams.some(param => args.includes(param))) {
+        return true;
+      }
+    }
+  }
+  
+  // Object method reference
+  if (/^[a-zA-Z_$][\w$]*\.[a-zA-Z_$][\w$]*$/.test(trimmed)) {
+    const parts = trimmed.split('.');
+    const methodName = parts[1];
+    if (/^[a-z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*$/.test(methodName)) {
+      return true;
+    }
   }
   
   return false;
@@ -286,9 +620,14 @@ function isEventHandlerValue(text) {
 module.exports = {
   JS_KEYWORDS,
   PROGRAMMING_IDENTIFIERS,
+  LIBRARY_IDENTIFIERS,
+  JS_DIRECTIVE_LITERALS,
+  COMMON_ENGLISH_PATTERNS,
   isJsExpression,
   isVueDirectiveExpression,
   isProgrammingIdentifier,
   isCodeContent,
   isEventHandlerValue,
+  isEnglishWithParens,
+  isLikelyEnglishWord,
 };

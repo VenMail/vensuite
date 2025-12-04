@@ -2,7 +2,7 @@
     <div class="logic-editor">
       <h3>Logic</h3>
       <div>
-        <label for="if">If Question ID:</label>
+        <label for="if">{{$t('Forms.Editors.LogicEditor.label.if_question_id')}}</label>
         <input v-model="logic.if" id="if" placeholder="Question ID" />
       </div>
       <div>
@@ -20,7 +20,7 @@
         </select>
       </div>
       <div>
-        <label for="jump">Jump to Question ID:</label>
+        <label for="jump">{{$t('Forms.Editors.LogicEditor.label.jump_to_question_id')}}</label>
         <input v-model="logic.jump" id="jump" placeholder="Question ID to jump to" />
       </div>
     </div>

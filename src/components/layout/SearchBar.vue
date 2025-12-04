@@ -176,7 +176,7 @@ watch(() => route.path, () => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-56">
           <div class="px-2 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Filter by Type
+            {{$t('Layout.SearchBar.text.filter_by_type')}}
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem

@@ -101,9 +101,7 @@ function parseVueTemplate(template, options = {}) {
     if (!text) return;
     
     // First, look inside Vue mustache expressions for string literals that
-    // should be translated. This covers patterns like:
-    //   {{ isPublishing ? "Publishing..." : "Publish" }}
-    //   {{ acceptingResponses ? 'Stop responses' : 'Resume responses' }}
+    // should be translated.
     try {
       const mustacheRegex = /\{\{([^}]+)\}\}/g;
       let mustacheMatch;
@@ -487,18 +485,51 @@ function parseVueTemplate(template, options = {}) {
 
 /**
  * Extract template section from Vue SFC
+ * Handles nested <template> tags (Vue slots) by finding the matching closing tag
  */
 function extractTemplateFromVue(vueContent) {
   if (!vueContent || typeof vueContent !== 'string') {
     return null;
   }
   
-  const match = vueContent.match(/<template[^>]*>([\s\S]*?)<\/template>/i);
-  if (!match) {
-    return null;
+  // Find the opening <template> tag at the root level
+  const openMatch = vueContent.match(/^[\s\S]*?<template(\s[^>]*)?>|<template(\s[^>]*)?>/i);
+  if (!openMatch) return null;
+
+  const startIndex = openMatch.index + openMatch[0].length;
+  let depth = 1;
+  let pos = startIndex;
+  const len = vueContent.length;
+
+  while (pos < len && depth > 0) {
+    // Look for <template or </template
+    const nextOpen = vueContent.indexOf('<template', pos);
+    const nextClose = vueContent.indexOf('</template>', pos);
+
+    if (nextClose === -1) {
+      // No closing tag found
+      break;
+    }
+
+    if (nextOpen !== -1 && nextOpen < nextClose) {
+      // Check if it's actually a template tag (not something like <templateFoo>)
+      const afterOpen = vueContent[nextOpen + 9]; // character after '<template'
+      if (!afterOpen || /[\s>\/]/.test(afterOpen)) {
+        depth++;
+      }
+      pos = nextOpen + 9;
+    } else {
+      depth--;
+      if (depth === 0) {
+        return vueContent.slice(startIndex, nextClose);
+      }
+      pos = nextClose + 11; // length of '</template>'
+    }
   }
-  
-  return match[1];
+
+  // Fallback: try greedy match for the last </template>
+  const greedyMatch = vueContent.match(/<template[^>]*>([\s\S]*)<\/template>/i);
+  return greedyMatch ? greedyMatch[1] : null;
 }
 
 /**

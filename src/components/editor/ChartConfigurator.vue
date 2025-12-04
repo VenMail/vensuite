@@ -6,7 +6,7 @@
       </DialogHeader>
 
       <div class="space-y-4 py-2">
-        <!-- Chart Type -->
+         
         <div>
           <label class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5 block">Chart Type</label>
           <select
@@ -18,11 +18,11 @@
             <option value="pie">Pie Chart</option>
             <option value="doughnut">Doughnut Chart</option>
             <option value="radar">Radar Chart</option>
-            <option value="polarArea">Polar Area Chart</option>
+            <option value="polarArea">{{$t('Editor.ChartConfigurator.text.polar_area_chart')}}</option>
           </select>
         </div>
 
-        <!-- X-Axis Labels -->
+         
         <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-blue-50/50 to-transparent dark:from-blue-950/20 p-3">
           <div class="flex items-center justify-between mb-3">
             <div>
@@ -72,7 +72,7 @@
           </div>
         </div>
 
-        <!-- Datasets -->
+         
         <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-purple-50/50 to-transparent dark:from-purple-950/20 p-3">
           <div class="flex items-center justify-between mb-2">
             <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Datasets</label>
@@ -87,7 +87,7 @@
               :key="i"
               class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 p-2.5"
             >
-              <!-- Header Row -->
+               
               <div class="flex items-center gap-2 mb-2">
                 <input
                   v-model="dataset.backgroundColor"
@@ -110,7 +110,7 @@
                 </button>
               </div>
 
-              <!-- Values -->
+               
               <input
                 :value="dataset.data?.join(', ') || ''"
                 @input="updateDatasetValues(i, ($event.target as HTMLInputElement).value)"
@@ -119,7 +119,7 @@
                 class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 px-2.5 py-1.5 text-sm mb-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
 
-              <!-- Advanced Options Toggle -->
+               
               <button
                 type="button"
                 @click="toggleAdvanced(i)"
@@ -132,7 +132,7 @@
                 Advanced
               </button>
 
-              <!-- Advanced Options -->
+               
               <transition name="slide">
                 <div v-if="expandedDatasets.has(i)" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
                   <div class="grid grid-cols-2 gap-2">
@@ -178,8 +178,8 @@
               v-if="!form.datasets.length"
               class="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 p-6 text-center"
             >
-              <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">No datasets yet</p>
-              <Button type="button" size="sm" @click="addDataset">Add First Dataset</Button>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">{{$t('Editor.ChartConfigurator.text.no_datasets_yet')}}</p>
+              <Button type="button" size="sm" @click="addDataset">{{$t('Editor.ChartConfigurator.button.add_first_dataset')}}</Button>
             </div>
           </div>
         </div>

@@ -362,9 +362,9 @@ function getStatusColor(status?: string) {
 
 <template>
   <div class="w-full max-w-2xl">
-    <!-- Main Page -->
+     
     <div v-if="currentPage === 'main'" class="space-y-6">
-      <!-- Header with Title and Icons -->
+       
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Share "{{ documentDisplayTitle }}"</h3>
         <div class="flex items-center gap-2">
@@ -390,17 +390,17 @@ function getStatusColor(status?: string) {
         </div>
       </div>
 
-      <!-- Owner and People with Access Section -->
+       
       <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
-        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">People with access</h4>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">{{$t('ShareCard.heading.people_with_access')}}</h4>
         
-        <!-- Current Access Summary -->
+         
         <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p class="text-sm text-blue-900 dark:text-blue-100 font-medium mb-1">{{ accessSummaryTitle }}</p>
           <p class="text-xs text-blue-700 dark:text-blue-300">{{ privacySummary }}</p>
         </div>
         
-        <!-- Owner -->
+         
         <div v-if="ownerMember" class="mb-3">
           <div class="flex items-center gap-3 py-2">
             <div class="w-10 h-10 rounded-full bg-primary-600/10 text-primary-700 dark:text-primary-300 flex items-center justify-center overflow-hidden">
@@ -415,7 +415,7 @@ function getStatusColor(status?: string) {
           </div>
         </div>
 
-        <!-- Other Members -->
+         
         <div v-if="otherMembers.length > 0" class="space-y-2">
           <div v-for="member in otherMembers" :key="member.email" class="flex items-center justify-between py-2">
             <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -454,7 +454,7 @@ function getStatusColor(status?: string) {
         </div>
       </div>
 
-      <!-- General Permissions -->
+       
       <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
         <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">General permissions</h4>
         
@@ -472,7 +472,7 @@ function getStatusColor(status?: string) {
               </svg>
             </button>
 
-            <!-- Dropdown Menu -->
+             
             <div v-if="showGeneralPermissionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto">
               <div class="p-1">
                 <button
@@ -481,7 +481,7 @@ function getStatusColor(status?: string) {
                   :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 7 }"
                 >
                   <div class="font-medium">Restricted</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Only people with access</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{$t('ShareCard.text.only_people_with_access')}}</div>
                 </button>
 
                 <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
@@ -492,7 +492,7 @@ function getStatusColor(status?: string) {
                   :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 5 }"
                 >
                   <div class="font-medium">{{ props.organizationDomain || 'Your organization' }} can view</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Anyone in your org can view</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{$t('ShareCard.text.anyone_in_your_org')}}</div>
                 </button>
 
                 <button
@@ -501,7 +501,7 @@ function getStatusColor(status?: string) {
                   :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 6 }"
                 >
                   <div class="font-medium">{{ props.organizationDomain || 'Your organization' }} can edit</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Anyone in your org can edit</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{$t('ShareCard.text.anyone_in_your_org_2')}}</div>
                 </button>
 
                 <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
@@ -511,8 +511,8 @@ function getStatusColor(status?: string) {
                   class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
                   :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 3 }"
                 >
-                  <div class="font-medium">Anyone with the link can view</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Anyone with link can view</div>
+                  <div class="font-medium">{{$t('ShareCard.text.anyone_with_the_link')}}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{$t('ShareCard.text.anyone_with_link_can')}}</div>
                 </button>
 
                 <button
@@ -520,8 +520,8 @@ function getStatusColor(status?: string) {
                   class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
                   :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 4 }"
                 >
-                  <div class="font-medium">Anyone with the link can edit</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Anyone with link can edit</div>
+                  <div class="font-medium">{{$t('ShareCard.text.anyone_with_the_link_2')}}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{$t('ShareCard.text.anyone_with_link_can_2')}}</div>
                 </button>
 
                 <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
@@ -531,8 +531,8 @@ function getStatusColor(status?: string) {
                   class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
                   :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 1 }"
                 >
-                  <div class="font-medium">Anyone on the internet can view</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Public on the web</div>
+                  <div class="font-medium">{{$t('ShareCard.text.anyone_on_the_internet')}}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{$t('ShareCard.text.public_on_the_web')}}</div>
                 </button>
 
                 <button
@@ -540,8 +540,8 @@ function getStatusColor(status?: string) {
                   class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
                   :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 2 }"
                 >
-                  <div class="font-medium">Anyone on the internet can edit</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Public and editable</div>
+                  <div class="font-medium">{{$t('ShareCard.text.anyone_on_the_internet_2')}}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{$t('ShareCard.text.public_and_editable')}}</div>
                 </button>
               </div>
             </div>
@@ -549,13 +549,13 @@ function getStatusColor(status?: string) {
           
         </div>
 
-        <!-- Description shows below after selection -->
+         
         <div class="ml-3 text-xs text-gray-600 dark:text-gray-400 mt-2">
           {{ generalPermissionDescription }}
         </div>
       </div>
 
-      <!-- Add People Button -->
+       
       <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
         <Button variant="outline" @click="openInvitePage" class="w-full justify-center">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -565,7 +565,7 @@ function getStatusColor(status?: string) {
         </Button>
       </div>
 
-      <!-- Copy Link and Done Button Row -->
+       
       <div class="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700 gap-4">
         <Button variant="outline" @click="copyLink" class="flex items-center">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -577,9 +577,9 @@ function getStatusColor(status?: string) {
       </div>
     </div>
 
-    <!-- Settings Page -->
+     
     <div v-else-if="currentPage === 'settings'" class="space-y-6">
-      <!-- Header with Back Button -->
+       
       <div class="flex items-center gap-3">
         <button
           @click="goBackToMain"
@@ -592,9 +592,9 @@ function getStatusColor(status?: string) {
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Settings</h3>
       </div>
 
-      <!-- Permissions Section -->
+       
       <div class="space-y-6">
-        <!-- Allow Editors to Change Permissions -->
+         
         <div class="space-y-4">
           <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Permissions</h4>
           <label class="flex items-start gap-3 cursor-pointer">
@@ -604,18 +604,18 @@ function getStatusColor(status?: string) {
               class="mt-1 h-4 w-4 text-primary-600 border-gray-300 dark:border-gray-700 rounded focus:ring-primary-500 dark:focus:ring-primary-400 dark:bg-gray-950"
             />
             <div>
-              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Allow editors to change permissions and share</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('ShareCard.text.allow_editors_to_change')}}</span>
               <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Editors will be able to change permissions and share this {{ mode === 'sheet' ? 'sheet' : 'document' }} with others</p>
             </div>
           </label>
         </div>
 
-        <!-- Download, Copy, and Print Permissions -->
+         
         <div class="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">People who can download, copy and print</h4>
           
           <div class="space-y-3">
-            <!-- Editors -->
+             
             <label class="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -628,7 +628,7 @@ function getStatusColor(status?: string) {
               </div>
             </label>
 
-            <!-- Commenters and Viewers -->
+             
             <label class="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -636,7 +636,7 @@ function getStatusColor(status?: string) {
                 class="mt-1 h-4 w-4 text-primary-600 border-gray-300 dark:border-gray-700 rounded focus:ring-primary-500 dark:focus:ring-primary-400 dark:bg-gray-950"
               />
               <div>
-                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Commenters and viewers</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('ShareCard.text.commenters_and_viewers')}}</span>
                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">People with comment or view access can download, copy, and print</p>
               </div>
             </label>
@@ -644,16 +644,16 @@ function getStatusColor(status?: string) {
         </div>
       </div>
 
-      <!-- Actions -->
+       
       <div class="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button variant="outline" @click="goBackToMain">Cancel</Button>
         <Button variant="default" @click="saveSettings">Save settings</Button>
       </div>
     </div>
 
-    <!-- Invite Page -->
+     
     <div v-else-if="currentPage === 'invite'" class="space-y-6">
-      <!-- Header with Back Button -->
+       
       <div class="flex items-center gap-3">
         <button
           @click="goBackToMain"
@@ -663,14 +663,14 @@ function getStatusColor(status?: string) {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Share with others</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{$t('ShareCard.heading.share_with_others')}}</h3>
       </div>
 
-      <!-- Email Fields with Individual Permissions -->
+       
       <div>
         <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Add people</h4>
         
-        <!-- Current invitees - each with their own permission dropdown -->
+         
         <div v-if="inviteEmails.length > 0" class="space-y-3 mb-4">
           <div v-for="(invitee, index) in inviteEmails" :key="index" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div class="w-8 h-8 rounded-full bg-primary-600/10 text-primary-700 dark:text-primary-300 flex items-center justify-center">
@@ -679,7 +679,7 @@ function getStatusColor(status?: string) {
             <div class="flex-1 min-w-0">
               <span class="text-sm text-gray-900 dark:text-gray-100 truncate">{{ invitee.email }}</span>
             </div>
-            <!-- Individual permission dropdown for each email -->
+             
             <select
               :value="invitee.label"
               @change="updateInviteePermission(index, ($event.target as HTMLSelectElement).value as SharePermissionLabel)"
@@ -697,7 +697,7 @@ function getStatusColor(status?: string) {
           </div>
         </div>
 
-        <!-- Add new invitee -->
+         
         <div class="flex gap-2">
           <input
             v-model="newInviteEmail"
@@ -710,7 +710,7 @@ function getStatusColor(status?: string) {
         </div>
       </div>
 
-      <!-- Message -->
+       
       <div>
         <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Add a note (optional)</h4>
         <textarea
@@ -721,7 +721,7 @@ function getStatusColor(status?: string) {
         />
       </div>
 
-      <!-- Actions -->
+       
       <div class="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button variant="outline" @click="goBackToMain">Cancel</Button>
         <Button variant="default" @click="sendInvites" :disabled="inviteEmails.length === 0">

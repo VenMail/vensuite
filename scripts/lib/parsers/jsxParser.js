@@ -58,6 +58,9 @@ class JsxParser extends BaseParser {
     const filePath = options.filePath || 'unknown.jsx';
     const ext = filePath.split('.').pop().toLowerCase();
 
+    // Ensure ignore patterns from options are available to helpers
+    this.ignorePatterns = options.ignorePatterns || this.ignorePatterns || {};
+
     let ast;
 
     // Try oxc-parser first (faster)
@@ -177,6 +180,11 @@ class JsxParser extends BaseParser {
     };
 
     this.walk(ast, visitors);
+
+    // As a safety net, also perform a lightweight line-based scan for
+    // human-facing string literals (e.g. in computed() blocks) even when
+    // AST parsing succeeds.
+    this.scanForPlainStrings(content, results, shouldTranslate);
     return results;
   }
 
@@ -471,18 +479,78 @@ class JsxParser extends BaseParser {
     };
 
     const { shouldTranslate } = require('../validators');
-    const stringPattern = /(['"`])([^'"`\n]{3,100})\1/g;
-    let match;
 
-    while ((match = stringPattern.exec(content)) !== null) {
-      const text = match[2].trim();
-      if (shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
-        results.items.push({ type: 'string', text, kind: 'text' });
-        results.stats.extracted++;
+    // Make sure ignore patterns from options are respected here as well
+    this.ignorePatterns = options.ignorePatterns || this.ignorePatterns || {};
+
+    this.scanForPlainStrings(content, results, shouldTranslate);
+    return results;
+  }
+
+  /**
+   * Generic line-based string scan as a safety net.
+   * This helps catch human-facing literals in plain TS/JS files
+   * (e.g. computed() return strings) even when they are not reached
+   * via JSX/AST visitors.
+   */
+  scanForPlainStrings(content, results, shouldTranslate) {
+    if (!content || typeof content !== 'string') return;
+
+    const lines = content.split('\n');
+
+    // Mark lines that contain explicit i18n lookups so their literals are
+    // not treated as user-facing text.
+    const i18nLineIndexes = new Set();
+    const i18nLinePatterns = [
+      /\$?t\s*\(\s*['"][^'"]+['"]\s*\)/,
+      /i18n\.t\s*\(\s*['"][^'"]+['"]\s*\)/,
+      /useI18n\(\)\.t\s*\(\s*['"][^'"]+['"]\s*\)/,
+    ];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      for (const pattern of i18nLinePatterns) {
+        if (pattern.test(line)) {
+          i18nLineIndexes.add(i);
+          break;
+        }
       }
     }
 
-    return results;
+    const stringPatterns = [
+      /'([^'\\\n]{3,200})'/g,
+      /"([^"\\\n]{3,200})"/g,
+    ];
+
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+      const line = lines[lineIndex];
+      if (!line || !line.trim()) continue;
+
+      for (const pattern of stringPatterns) {
+        pattern.lastIndex = 0;
+        let match;
+        while ((match = pattern.exec(line)) !== null) {
+          const candidate = (match[1] || '').trim();
+          if (!candidate) continue;
+
+          // Skip obvious i18n key lookups on the same line
+          if (i18nLineIndexes.has(lineIndex)) {
+            continue;
+          }
+
+          if (!shouldTranslate(candidate, { ignorePatterns: this.ignorePatterns })) {
+            continue;
+          }
+
+          results.items.push({
+            type: 'string',
+            text: candidate,
+            kind: 'text',
+          });
+          results.stats.extracted++;
+        }
+      }
+    }
   }
 }
 
