@@ -32,6 +32,57 @@
  * @property {string[]} errors - Any errors encountered during parsing
  */
 
+// Common HTML entities map
+const HTML_ENTITIES = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&apos;': "'",
+  '&nbsp;': ' ',
+  '&ndash;': '–',
+  '&mdash;': '—',
+  '&lsquo;': ''',
+  '&rsquo;': ''',
+  '&ldquo;': '"',
+  '&rdquo;': '"',
+  '&hellip;': '…',
+  '&copy;': '©',
+  '&reg;': '®',
+  '&trade;': '™',
+  '&euro;': '€',
+  '&pound;': '£',
+  '&yen;': '¥',
+  '&cent;': '¢',
+};
+
+/**
+ * Decode HTML entities in text
+ */
+function decodeHtmlEntities(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  let decoded = text;
+  
+  // Replace named entities
+  for (const [entity, char] of Object.entries(HTML_ENTITIES)) {
+    decoded = decoded.split(entity).join(char);
+  }
+  
+  // Replace numeric entities (decimal)
+  decoded = decoded.replace(/&#(\d+);/g, (match, dec) => {
+    return String.fromCharCode(parseInt(dec, 10));
+  });
+  
+  // Replace numeric entities (hex)
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+  
+  return decoded;
+}
+
 /**
  * Base parser class that all framework parsers should extend
  */
@@ -42,6 +93,15 @@ class BaseParser {
   constructor(options = {}) {
     this.options = options;
     this.ignorePatterns = options.ignorePatterns || {};
+  }
+  
+  /**
+   * Decode HTML entities in extracted text
+   * @param {string} text
+   * @returns {string}
+   */
+  decodeEntities(text) {
+    return decodeHtmlEntities(text);
   }
 
   /**
@@ -154,4 +214,6 @@ class BaseParser {
 
 module.exports = {
   BaseParser,
+  decodeHtmlEntities,
+  HTML_ENTITIES,
 };

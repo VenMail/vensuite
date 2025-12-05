@@ -186,6 +186,25 @@ function looksLikeHumanText(text) {
 }
 
 /**
+ * Normalize special characters in text before validation
+ * Converts curly quotes to straight quotes, special whitespace to regular space, etc.
+ */
+function normalizeSpecialChars(text) {
+  return String(text || '')
+    // Curly quotes to straight quotes
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    // Special dashes to regular hyphen
+    .replace(/[\u2013\u2014\u2015]/g, '-')
+    // Special whitespace to regular space
+    .replace(/[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
+    // Remove zero-width characters
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    // Ellipsis to three dots
+    .replace(/\u2026/g, '...');
+}
+
+/**
  * Main validation function: Check if text should be translated
  * 
  * @param {string} text - The text to validate
@@ -196,7 +215,9 @@ function looksLikeHumanText(text) {
  * @returns {boolean} - True if text should be translated
  */
 function shouldTranslate(text, options = {}) {
-  const trimmed = String(text || '').trim();
+  // Normalize special characters first
+  const normalized = normalizeSpecialChars(text);
+  const trimmed = normalized.trim();
   const { ignorePatterns, context, attributeName } = options;
   
   // Basic requirements check
@@ -308,7 +329,8 @@ function shouldIgnore(text, options = {}) {
  * @returns {Object} - Validation result with reason
  */
 function validateText(text, options = {}) {
-  const trimmed = String(text || '').trim();
+  const normalized = normalizeSpecialChars(text);
+  const trimmed = normalized.trim();
   
   if (!hasBasicRequirements(trimmed)) {
     return { valid: false, reason: 'basic_requirements' };
@@ -362,6 +384,7 @@ module.exports = {
   shouldTranslate,
   shouldIgnore,
   validateText,
+  normalizeSpecialChars,
   
   // Helper functions
   hasBasicRequirements,

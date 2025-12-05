@@ -68,8 +68,8 @@ class BladeParser extends BaseParser {
    * Parse HTML content from Blade template
    */
   parseHtmlContent(template, results) {
-    // Match text content between tags
-    const tagRegex = /<([A-Za-z][A-Za-z0-9-_]*)\b([^>]*)>([^<]*)<\/\1>/g;
+    // Match text content between tags (including multi-line)
+    const tagRegex = /<([A-Za-z][A-Za-z0-9-_]*)\b([^>]*)>([\s\S]*?)<\/\1>/g;
     let match;
 
     while ((match = tagRegex.exec(template)) !== null) {
@@ -80,8 +80,12 @@ class BladeParser extends BaseParser {
       // Skip if already translated
       if (this.isAlreadyTranslated(rawText)) continue;
 
-      // Skip Blade expressions
-      if (rawText.includes('{{') || rawText.includes('{!!') || rawText.includes('@')) continue;
+      // Skip Blade expressions - but only if they're the primary content
+      // Allow @ in context like "Contact us @ support@example.com"
+      if (rawText.includes('{{') || rawText.includes('{!!')) continue;
+      
+      // Check for Blade directives (start with @ followed by a letter)
+      if (/@[a-z]/i.test(rawText)) continue;
 
       const text = rawText.replace(/\s+/g, ' ').trim();
       if (!text) continue;
@@ -124,6 +128,12 @@ class BladeParser extends BaseParser {
       const attrName = match[1];
       const attrValue = match[2];
 
+      // Handle Alpine.js x-text directive with string literals
+      if (attrName === 'x-text') {
+        this.parseAlpineXText(attrValue, tagName, results);
+        continue;
+      }
+
       // Skip non-translatable attributes
       if (isNonTranslatableAttribute(attrName)) continue;
       if (!isTranslatableAttribute(attrName)) continue;
@@ -148,6 +158,38 @@ class BladeParser extends BaseParser {
         });
         results.stats.extracted++;
       }
+    }
+  }
+
+  /**
+   * Parse Alpine.js x-text directive for string literals
+   * e.g., x-text="'Hello World'" or x-text="condition ? 'Yes' : 'No'"
+   */
+  parseAlpineXText(value, tagName, results) {
+    if (!value) return;
+
+    // Extract string literals from the Alpine.js expression
+    const stringRegex = /(['"])([^'"\\]*(?:\\.[^'"\\]*)*)\1/g;
+    let match;
+
+    while ((match = stringRegex.exec(value)) !== null) {
+      const candidate = (match[2] || '').trim();
+      if (!candidate) continue;
+
+      // Skip if it looks like a variable or identifier
+      if (/^[a-z_$][a-zA-Z0-9_$]*$/.test(candidate)) continue;
+
+      if (!shouldTranslate(candidate, { ignorePatterns: this.ignorePatterns })) {
+        continue;
+      }
+
+      results.items.push({
+        type: 'text',
+        text: candidate,
+        kind: 'text',
+        parentTag: tagName,
+      });
+      results.stats.extracted++;
     }
   }
 

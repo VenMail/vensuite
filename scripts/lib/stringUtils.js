@@ -19,21 +19,59 @@ function toPascalCase(input) {
 
 /**
  * Slugify text for use as translation key
+ * Handles Unicode characters, emojis, and various scripts
  */
 function slugifyForKey(text, maxWords = 4, maxLength = 48) {
-  const normalized = String(text || '')
+  let normalized = String(text || '')
+    // Normalize Unicode to decomposed form
     .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '');
+    // Remove combining diacritical marks
+    .replace(/[\u0300-\u036f]/g, '')
+    // Remove emojis and other symbols (Unicode blocks)
+    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Emoticons
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Misc Symbols and Pictographs
+    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Transport and Map
+    .replace(/[\u{1F700}-\u{1F77F}]/gu, '') // Alchemical Symbols
+    .replace(/[\u{1F780}-\u{1F7FF}]/gu, '') // Geometric Shapes Extended
+    .replace(/[\u{1F800}-\u{1F8FF}]/gu, '') // Supplemental Arrows-C
+    .replace(/[\u{1F900}-\u{1F9FF}]/gu, '') // Supplemental Symbols and Pictographs
+    .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '') // Chess Symbols
+    .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '') // Symbols and Pictographs Extended-A
+    .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Misc symbols
+    .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+    // Remove other non-ASCII characters that aren't letters
+    .replace(/[^\x00-\x7F]/g, '');
+  
   const words = normalized.toLowerCase().match(/[a-z0-9]+/g) || [];
   const sliced = words.slice(0, maxWords);
   let slug = sliced.join('_');
+  
   if (!slug) {
-    slug = 'text';
+    // Fallback: generate a hash-based slug for pure emoji/unicode strings
+    const hash = simpleHash(text);
+    slug = `text_${hash}`;
   }
+  
   if (slug.length > maxLength) {
     slug = slug.slice(0, maxLength);
+    // Ensure we don't cut in the middle of an underscore sequence
+    slug = slug.replace(/_+$/, '');
   }
+  
   return slug;
+}
+
+/**
+ * Simple hash function for generating unique slugs
+ */
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36).slice(0, 8);
 }
 
 /**

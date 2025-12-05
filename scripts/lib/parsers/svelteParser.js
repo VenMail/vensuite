@@ -59,7 +59,91 @@ class SvelteParser extends BaseParser {
     // Parse the template using state machine
     this.parseTemplate(content, results);
 
+    // Also extract from script section for string literals
+    const script = this.extractScript(content);
+    if (script) {
+      this.parseScript(script, results);
+    }
+
     return results;
+  }
+
+  /**
+   * Extract script section from Svelte file
+   */
+  extractScript(content) {
+    // Match both <script> and <script context="module"> or <script lang="ts">
+    const match = content.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+    return match ? match[1] : null;
+  }
+
+  /**
+   * Parse script section for string literals
+   */
+  parseScript(script, results) {
+    if (!script || typeof script !== 'string') {
+      return;
+    }
+
+    const lines = script.split('\n');
+
+    // First, identify lines that contain explicit i18n key lookups
+    const i18nLineIndexes = new Set();
+    const i18nLinePatterns = [
+      /\$?t\s*\(\s*['"][^'"]+['"]\s*\)/,
+      /i18n\.t\s*\(\s*['"][^'"]+['"]\s*\)/,
+      /\$t\s*\(\s*['"][^'"]+['"]\s*\)/,
+      /\$_\s*\(\s*['"][^'"]+['"]\s*\)/,  // svelte-i18n pattern
+    ];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      for (const pattern of i18nLinePatterns) {
+        if (pattern.test(line)) {
+          i18nLineIndexes.add(i);
+          break;
+        }
+      }
+    }
+
+    // Scan for string literals in reactive declarations, refs, etc.
+    const stringPatterns = [
+      /'([^'\\\n]{3,200})'/g,
+      /"([^"\\\n]{3,200})"/g,
+    ];
+
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+      const line = lines[lineIndex];
+      if (!line || !line.trim()) continue;
+
+      // Skip import/export lines
+      if (/^\s*(import|export)\s/.test(line)) continue;
+
+      for (const pattern of stringPatterns) {
+        pattern.lastIndex = 0;
+        let match;
+        while ((match = pattern.exec(line)) !== null) {
+          const candidate = (match[1] || '').trim();
+          if (!candidate) continue;
+
+          // Skip i18n key lookups
+          if (i18nLineIndexes.has(lineIndex)) {
+            continue;
+          }
+
+          if (!shouldTranslate(candidate, { ignorePatterns: this.ignorePatterns })) {
+            continue;
+          }
+
+          results.items.push({
+            type: 'string',
+            text: candidate,
+            kind: 'text',
+          });
+          results.stats.extracted++;
+        }
+      }
+    }
   }
 
   /**

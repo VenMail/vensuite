@@ -14,6 +14,15 @@
         "privacy_terms": "Privacy & terms",
         "cookie_ccpa_preferences": "Cookie & CCPA preferences"
       }
+    },
+    "Sheets": {
+      "heading": {
+        "create_new_spreadsheet": "Create new spreadsheet",
+        "no_spreadsheets_found": "No spreadsheets found"
+      },
+      "text": {
+        "get_started_by_creating": "Get started by creating"
+      }
     }
   }
 }

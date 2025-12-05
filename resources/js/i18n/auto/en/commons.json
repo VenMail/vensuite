@@ -17,7 +17,9 @@
     },
     "button": {
       "download": "Download",
-      "share_with": "Share with"
+      "share_with": "Share with",
+      "new_spreadsheet": "New Spreadsheet",
+      "upload_spreadsheet": "Upload Spreadsheet"
     },
     "heading": {
       "document": "Document",
@@ -493,6 +495,9 @@
     },
     "toast": {
       "changes_saved": "Changes saved"
+    },
+    "label": {
+      "select_all": "Select All"
     }
   }
 }

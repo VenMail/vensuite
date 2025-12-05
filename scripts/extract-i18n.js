@@ -50,6 +50,10 @@ const translations = Object.create(null);
 const textKeyMap = new Map();
 const namespaceRoots = new Map();
 
+// Simple mutex for thread-safe registration
+// JavaScript is single-threaded but async operations can interleave
+let registrationLock = Promise.resolve();
+
 // Statistics
 const stats = {
   filesProcessed: 0,

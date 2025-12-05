@@ -424,7 +424,19 @@ function isDateTimeFormat(text) {
   if (!trimmed) return false;
   
   // Common date/time format patterns (YYYY-MM-DD, HH:mm:ss, etc.)
-  if (/^[YMDHhmsaAzZ\-/:.\s]+$/.test(trimmed) && /[YMDHhms]/.test(trimmed) && trimmed.length >= 4) {
+  // Be more strict: must have multiple format tokens and look like a format string
+  // Require at least 2 different format tokens and no regular words
+  const formatTokens = ['YYYY', 'YY', 'MM', 'DD', 'HH', 'hh', 'mm', 'ss', 'SSS', 'A', 'a', 'Z', 'ZZ'];
+  let tokenCount = 0;
+  let testStr = trimmed;
+  for (const token of formatTokens) {
+    if (testStr.includes(token)) {
+      tokenCount++;
+      testStr = testStr.replace(new RegExp(token, 'g'), '');
+    }
+  }
+  // If we found 2+ format tokens and what's left is just separators, it's a format
+  if (tokenCount >= 2 && /^[\s\-/:.,TW]*$/.test(testStr)) {
     return true;
   }
   
@@ -433,8 +445,8 @@ function isDateTimeFormat(text) {
     return true;
   }
   
-  // Unix timestamp (10 or 13 digits)
-  if (/^\d{10,13}$/.test(trimmed)) {
+  // Unix timestamp (10 or 13 digits) - only if it's JUST the number
+  if (/^\d{10}$/.test(trimmed) || /^\d{13}$/.test(trimmed)) {
     return true;
   }
   
@@ -478,10 +490,15 @@ function isNumericPattern(text) {
 
 /**
  * Check if text is a technical abbreviation
+ * Only applies to single words - multi-word text with technical terms is often translatable
  */
 function isTechnicalAbbreviation(text) {
-  const trimmed = String(text || '').trim().toLowerCase();
-  return TECHNICAL_ABBREVIATIONS.has(trimmed);
+  const trimmed = String(text || '').trim();
+  // Only check single words
+  if (/\s/.test(trimmed)) {
+    return false;
+  }
+  return TECHNICAL_ABBREVIATIONS.has(trimmed.toLowerCase());
 }
 
 /**

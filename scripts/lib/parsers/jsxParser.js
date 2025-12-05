@@ -111,8 +111,16 @@ class JsxParser extends BaseParser {
 
       JSXText(node, parent) {
         const raw = node.value || '';
+        
+        // Skip whitespace-only nodes (common in JSX formatting)
+        if (/^\s*$/.test(raw)) return;
+        
+        // Normalize whitespace but preserve meaning
         const text = raw.replace(/\s+/g, ' ').trim();
         if (!text) return;
+        
+        // Skip if it's just punctuation or single characters
+        if (/^[.,;:!?'"()[\]{}<>\/\\|@#$%^&*+=~`-]+$/.test(text)) return;
 
         const jsxParent = parent?.type === 'JSXElement' ? parent : currentJsxElement;
         if (!jsxParent?.openingElement) return;
@@ -295,10 +303,10 @@ class JsxParser extends BaseParser {
   }
 
   /**
-   * Process JSX expression
+   * Process JSX expression - handles nested ternaries and logical expressions
    */
-  processExpression(expr, kind, parentTag, results, shouldTranslate) {
-    if (!expr) return;
+  processExpression(expr, kind, parentTag, results, shouldTranslate, depth = 0) {
+    if (!expr || depth > 10) return; // Prevent infinite recursion
 
     const pattern = this.getTextPattern(expr);
     if (pattern) {
@@ -308,8 +316,21 @@ class JsxParser extends BaseParser {
         results.stats.extracted++;
       }
     } else if (expr.type === 'ConditionalExpression') {
-      this.processExpression(expr.consequent, kind, parentTag, results, shouldTranslate);
-      this.processExpression(expr.alternate, kind, parentTag, results, shouldTranslate);
+      // Handle nested ternaries: condition ? a : b ? c : d
+      this.processExpression(expr.consequent, kind, parentTag, results, shouldTranslate, depth + 1);
+      this.processExpression(expr.alternate, kind, parentTag, results, shouldTranslate, depth + 1);
+    } else if (expr.type === 'LogicalExpression') {
+      // Handle logical expressions: condition && "text" || "fallback"
+      this.processExpression(expr.left, kind, parentTag, results, shouldTranslate, depth + 1);
+      this.processExpression(expr.right, kind, parentTag, results, shouldTranslate, depth + 1);
+    } else if (expr.type === 'ParenthesizedExpression' || expr.type === 'TSAsExpression') {
+      // Handle parenthesized or TypeScript casted expressions
+      this.processExpression(expr.expression, kind, parentTag, results, shouldTranslate, depth + 1);
+    } else if (expr.type === 'SequenceExpression' && expr.expressions) {
+      // Handle comma expressions: (a, b, "text")
+      for (const subExpr of expr.expressions) {
+        this.processExpression(subExpr, kind, parentTag, results, shouldTranslate, depth + 1);
+      }
     }
   }
 
@@ -318,6 +339,24 @@ class JsxParser extends BaseParser {
    */
   processAttributeValue(valueNode, attrName, kind, results, shouldTranslate) {
     if (!valueNode) return;
+    
+    // Skip numeric literals
+    if (valueNode.type === 'NumericLiteral' || 
+        (valueNode.type === 'Literal' && typeof valueNode.value === 'number')) {
+      return;
+    }
+    
+    // Skip boolean literals
+    if (valueNode.type === 'BooleanLiteral' || 
+        (valueNode.type === 'Literal' && typeof valueNode.value === 'boolean')) {
+      return;
+    }
+    
+    // Skip null/undefined
+    if (valueNode.type === 'NullLiteral' || 
+        (valueNode.type === 'Identifier' && valueNode.name === 'undefined')) {
+      return;
+    }
 
     const pattern = this.getTextPattern(valueNode);
     if (pattern) {

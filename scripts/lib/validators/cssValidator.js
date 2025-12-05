@@ -91,12 +91,24 @@ const CSS_FUNCTION_PATTERN = /^(url|linear-gradient|radial-gradient|conic-gradie
 function isCssPropertyDeclaration(text) {
   const trimmed = String(text || '').trim();
   
+  // Quick reject: if it looks like a sentence with spaces and no CSS indicators
+  if (/\s+[a-z]+\s+/i.test(trimmed) && !/;$/.test(trimmed) && !/^[a-z-]+\s*:\s*[a-z0-9#(]/i.test(trimmed)) {
+    return false;
+  }
+  
   // Pattern: property: value; or property: value
+  // Must be the ENTIRE string, not just contain a colon
   const match = trimmed.match(/^([a-z-]+)\s*:\s*(.+?);?$/i);
   if (!match) return false;
   
   const property = match[1].toLowerCase();
   const value = match[2].trim();
+  
+  // If the value contains multiple words without CSS indicators, it's probably not CSS
+  const words = value.split(/\s+/);
+  if (words.length > 3 && !CSS_UNIT_PATTERN.test(value) && !CSS_COLOR_PATTERN.test(value)) {
+    return false;
+  }
   
   // Check if it's a known CSS property
   if (CSS_PROPERTIES.has(property)) {
@@ -121,6 +133,54 @@ function isCssPropertyDeclaration(text) {
 }
 
 /**
+ * Common English words/phrases that should NOT be treated as CSS classes
+ * even if they partially match CSS patterns
+ */
+const ENGLISH_NOT_CSS = new Set([
+  // Common words that might look like Tailwind but are English
+  'text', 'hidden', 'visible', 'block', 'inline', 'flex', 'grid', 'relative', 'absolute', 'fixed', 'sticky', 'static',
+  'left', 'right', 'top', 'bottom', 'center', 'start', 'end',
+  'small', 'medium', 'large', 'primary', 'secondary', 'success', 'warning', 'danger', 'error', 'info',
+  'bold', 'italic', 'underline', 'uppercase', 'lowercase', 'capitalize',
+  'disabled', 'active', 'inactive', 'selected', 'focused', 'hover',
+  'container', 'wrapper', 'content', 'header', 'footer', 'sidebar', 'main',
+  'row', 'column', 'item', 'items', 'list', 'table', 'form', 'input', 'button',
+  'none', 'auto', 'full', 'empty', 'loading', 'error', 'pending',
+  // Multi-word phrases that might look CSS-ish
+  'no items', 'no results', 'not found', 'loading items', 'error loading',
+]);
+
+/**
+ * Check if text looks like English phrase that might be confused with CSS
+ */
+function isEnglishNotCss(text) {
+  const lower = String(text || '').toLowerCase().trim();
+  
+  // Direct match
+  if (ENGLISH_NOT_CSS.has(lower)) {
+    return true;
+  }
+  
+  // Check for sentence-like patterns (multiple words with articles, prepositions, etc.)
+  const sentenceIndicators = /\b(the|a|an|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|must|shall|can|to|for|of|in|on|at|by|with|from|into|through|during|before|after|above|below|between|under|over|out|up|down|off|about|against|along|among|around|as|behind|beside|besides|beyond|but|despite|except|inside|near|outside|since|than|toward|towards|until|upon|within|without|and|or|not|no|yes|all|any|both|each|every|few|many|more|most|much|other|some|such|these|those|this|that|what|which|who|whom|whose|how|when|where|why|if|then|else|because|although|though|unless|while|so|yet|now|just|only|also|even|still|already|always|never|often|sometimes|usually|very|too|quite|rather|really|almost|nearly|perhaps|maybe|probably|certainly|definitely|obviously|clearly|simply|actually|basically|essentially|generally|specifically|particularly|especially|mainly|mostly|largely|entirely|completely|totally|fully|partly|partially|slightly|somewhat|highly|extremely|incredibly|absolutely)\b/i;
+  
+  if (sentenceIndicators.test(lower)) {
+    return true;
+  }
+  
+  // If it has 3+ words and no CSS-specific patterns, likely English
+  const words = lower.split(/\s+/).filter(w => w.length > 0);
+  if (words.length >= 3) {
+    const hasCssIndicators = /-\d|hover:|focus:|sm:|md:|lg:|xl:|dark:|\/\d|^\[|^\!|^@|^\./.test(text);
+    if (!hasCssIndicators) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
  * Check if a single token looks like a CSS utility class
  * Detects CSS patterns from any framework
  */
@@ -130,6 +190,11 @@ function isSingleCssClass(part) {
   
   const lower = part.toLowerCase();
   
+  // First, check if this looks like English that shouldn't be treated as CSS
+  if (isEnglishNotCss(part)) {
+    return false;
+  }
+  
   // Common CSS framework prefixes/patterns
   const cssFrameworkPrefixes = [
     // Tailwind
@@ -138,17 +203,15 @@ function isSingleCssClass(part) {
     'text-', 'font-', 'leading-', 'tracking-', 'space-',
     'bg-', 'border-', 'rounded-', 'shadow-',
     'flex-', 'grid-', 'gap-', 'items-', 'justify-', 'self-', 'place-',
-    'absolute', 'relative', 'fixed', 'sticky', 'static',
     'top-', 'right-', 'bottom-', 'left-', 'inset-',
     'z-', 'opacity-', 'cursor-', 'pointer-events-',
-    'overflow-', 'hidden', 'visible', 'scroll',
+    'overflow-', 
     'hover:', 'focus:', 'active:', 'dark:', 'sm:', 'md:', 'lg:', 'xl:', '2xl:',
-    'prose', 'container', 'divide-', 'ring-',
+    'prose', 'divide-', 'ring-',
     // Bootstrap
     'btn-', 'alert-', 'badge-', 'card-', 'nav-', 'navbar-', 'form-', 'input-',
-    'col-', 'row-', 'offset-', 'order-', 'd-', 'flex-', 'justify-', 'align-',
-    'ms-', 'me-', 'mb-', 'mt-', 'mx-', 'my-',
-    'bg-', 'text-', 'border-', 'rounded-', 'shadow-',
+    'col-', 'row-', 'offset-', 'order-', 'd-',
+    'ms-', 'me-',
     // Material UI / MUI
     'mui', 'makeStyles', 'withStyles',
     // Bulma
@@ -156,9 +219,9 @@ function isSingleCssClass(part) {
     // Foundation
     'small-', 'medium-', 'large-',
     // Semantic UI
-    'ui ', 'labeled', 'disabled',
+    'ui ', 'labeled',
     // Tachyons
-    'pa', 'ma', 'ba', 'br', 'dib', 'dn', 'db', 'flex', 'items-', 'justify-',
+    'pa', 'ma', 'ba', 'br', 'dib', 'dn', 'db',
     // CSS Modules patterns
     'styles.', 'css.',
   ];
@@ -276,9 +339,19 @@ function isCssClassList(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return false;
   
+  // FIRST: Check if this looks like English that shouldn't be treated as CSS
+  if (isEnglishNotCss(trimmed)) {
+    return false;
+  }
+  
+  // Quick reject for obvious English sentences
+  // Sentences typically have: capital start, multiple words, end punctuation
+  if (/^[A-Z][a-z]+(\s+[a-z]+)+[.!?]?$/.test(trimmed)) {
+    return false;
+  }
+  
   // Quick pattern checks before splitting (performance optimization)
   const quickPatterns = [
-    /^[a-z0-9-_:.!\[\]\/\s]+$/i,  // Only contains CSS-like characters
     /-\d+/,                        // Contains hyphen-number pattern (very common in CSS)
     /:/,                           // Contains colons (variants/pseudo-classes)
     /\[.*\]/,                      // Contains brackets (arbitrary values)
@@ -301,6 +374,19 @@ function isCssClassList(text) {
     return isSingleCssClass(cssParts[0]);
   }
   
+  // Multi-word: if it looks like a natural sentence, reject it
+  // Check for common English word patterns
+  const englishWordCount = cssParts.filter(p => {
+    const lower = p.toLowerCase();
+    // Common English words that aren't CSS
+    return /^(the|a|an|is|are|was|were|be|have|has|had|do|does|did|will|would|could|should|may|might|to|for|of|in|on|at|by|with|from|and|or|not|no|yes|all|any|if|then|else|so|but|this|that|these|those|it|its|your|my|our|their|his|her|we|you|they|i|me|him|them|us|what|which|who|how|when|where|why|please|thank|sorry|help|click|submit|save|cancel|delete|edit|view|add|remove|update|create|new|old|first|last|next|back|more|less|show|hide|open|close)$/.test(lower);
+  }).length;
+  
+  // If more than 30% of words are common English words, it's probably not CSS
+  if (englishWordCount >= cssParts.length * 0.3 && cssParts.length >= 3) {
+    return false;
+  }
+  
   // Count how many non-placeholder tokens look like CSS classes
   let classLikeCount = 0;
   for (const part of cssParts) {
@@ -315,12 +401,12 @@ function isCssClassList(text) {
   }
   
   // If we have a quick pattern match and majority of non-placeholder tokens are CSS-like, accept it
-  if (hasQuickPattern && classLikeCount >= cssParts.length * 0.6) {
+  if (hasQuickPattern && classLikeCount >= cssParts.length * 0.7) {
     return true;
   }
   
-  // If more than 70% of non-placeholder tokens look like CSS classes and we have at least 2, it's probably a class list
-  if (classLikeCount >= cssParts.length * 0.7 && classLikeCount >= 2) {
+  // If more than 80% of non-placeholder tokens look like CSS classes and we have at least 2, it's probably a class list
+  if (classLikeCount >= cssParts.length * 0.8 && classLikeCount >= 2) {
     return true;
   }
   
@@ -488,10 +574,12 @@ function isSpreadsheetReference(text) {
 module.exports = {
   CSS_PROPERTIES,
   CSS_VALUE_KEYWORDS,
+  ENGLISH_NOT_CSS,
   isCssPropertyDeclaration,
   isCssClassList,
   isCssSelector,
   isCssContent,
   isSpreadsheetReference,
   isSingleCssClass,
+  isEnglishNotCss,
 };

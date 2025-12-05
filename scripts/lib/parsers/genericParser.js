@@ -80,10 +80,10 @@ class GenericParser extends BaseParser {
    * Parse Python source
    */
   parsePython(content, results) {
-    // Python string patterns
+    // Python string patterns (non-f-strings)
     const patterns = [
-      // f-strings and regular strings
-      /(?:f)?["']([^"'\n]{3,100})["']/g,
+      // Regular strings (exclude f-strings)
+      /(?<!f)["']([^"'\n]{3,100})["']/g,
       // Triple-quoted strings (docstrings often, but can be UI text)
       /"""([^"]{3,200})"""/g,
       /'''([^']{3,200})'''/g,
@@ -97,6 +97,65 @@ class GenericParser extends BaseParser {
     ];
 
     this.extractStrings(content, patterns, i18nPatterns, results);
+    
+    // Handle f-strings separately to extract the text pattern
+    this.extractPythonFStrings(content, results, i18nPatterns);
+  }
+
+  /**
+   * Extract text from Python f-strings, converting {expr} to placeholders
+   * e.g., f"Hello, {name}!" -> "Hello, {name}!"
+   */
+  extractPythonFStrings(content, results, i18nPatterns) {
+    // Match f-strings
+    const fstringPattern = /f["']([^"'\n]{3,200})["']/g;
+    let match;
+
+    // Build set of i18n lines
+    const lines = content.split('\n');
+    const i18nLines = new Set();
+    for (let i = 0; i < lines.length; i++) {
+      for (const pattern of i18nPatterns) {
+        if (pattern.test(lines[i])) {
+          i18nLines.add(i);
+          break;
+        }
+      }
+    }
+
+    while ((match = fstringPattern.exec(content)) !== null) {
+      const lineNum = content.substring(0, match.index).split('\n').length - 1;
+      if (i18nLines.has(lineNum)) continue;
+
+      let text = match[1].trim();
+      if (!text) continue;
+
+      // Replace Python f-string expressions with placeholder syntax
+      // {name} stays as {name}, {user.name} -> {userName}, {func()} -> {value}
+      text = text.replace(/\{([^}]+)\}/g, (m, expr) => {
+        expr = expr.trim();
+        // Simple identifier
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(expr)) {
+          return `{${expr}}`;
+        }
+        // Attribute access: obj.attr -> objAttr
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*$/.test(expr)) {
+          const parts = expr.split('.');
+          return `{${parts[0]}${parts[1].charAt(0).toUpperCase()}${parts[1].slice(1)}}`;
+        }
+        // Complex expression - use generic placeholder
+        return '{value}';
+      });
+
+      if (shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+        results.items.push({
+          type: 'string',
+          text,
+          kind: 'text',
+        });
+        results.stats.extracted++;
+      }
+    }
   }
 
   /**
@@ -117,6 +176,42 @@ class GenericParser extends BaseParser {
     ];
 
     this.extractStrings(content, patterns, i18nPatterns, results);
+    
+    // Also extract from struct tags (label, error, description tags)
+    this.extractGoStructTags(content, results);
+  }
+
+  /**
+   * Extract user-facing strings from Go struct tags
+   * e.g., `label:"User Name"` or `error:"Invalid email"`
+   */
+  extractGoStructTags(content, results) {
+    // Match struct tags with user-facing content
+    const tagPatterns = [
+      /\blabel:"([^"]{3,100})"/g,
+      /\berror:"([^"]{3,100})"/g,
+      /\bdescription:"([^"]{3,100})"/g,
+      /\bmessage:"([^"]{3,100})"/g,
+      /\bplaceholder:"([^"]{3,100})"/g,
+      /\btitle:"([^"]{3,100})"/g,
+    ];
+
+    for (const pattern of tagPatterns) {
+      let match;
+      while ((match = pattern.exec(content)) !== null) {
+        const text = match[1].trim();
+        if (!text) continue;
+
+        if (shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+          results.items.push({
+            type: 'string',
+            text,
+            kind: 'text',
+          });
+          results.stats.extracted++;
+        }
+      }
+    }
   }
 
   /**

@@ -127,14 +127,56 @@ function isCommonShortText(text) {
   return true;
 }
 
-function inferPlaceholderNameFromExpression(expr, index) {
-  if (!expr) return `value${index + 1}`;
-  if (expr.type === 'Identifier') return expr.name;
-  if (expr.type === 'MemberExpression' && !expr.computed) {
+function inferPlaceholderNameFromExpression(expr, index, usedNames = new Set()) {
+  if (!expr) return getUniqueName(`value${index + 1}`, usedNames);
+  
+  let baseName;
+  if (expr.type === 'Identifier') {
+    baseName = expr.name;
+  } else if (expr.type === 'MemberExpression' && !expr.computed) {
     const prop = expr.property;
-    if (prop && prop.type === 'Identifier') return prop.name;
+    if (prop && prop.type === 'Identifier') {
+      // For member expressions, include object name to avoid collisions
+      // e.g., user.firstName and profile.firstName -> userFirstName, profileFirstName
+      const objName = expr.object?.type === 'Identifier' ? expr.object.name : '';
+      baseName = objName ? `${objName}${prop.name.charAt(0).toUpperCase()}${prop.name.slice(1)}` : prop.name;
+    } else {
+      baseName = `value${index + 1}`;
+    }
+  } else if (expr.type === 'CallExpression') {
+    // For function calls like formatDate(date), use the function name
+    const callee = expr.callee;
+    if (callee?.type === 'Identifier') {
+      baseName = callee.name;
+    } else if (callee?.type === 'MemberExpression' && callee.property?.type === 'Identifier') {
+      baseName = callee.property.name;
+    } else {
+      baseName = `value${index + 1}`;
+    }
+  } else {
+    baseName = `value${index + 1}`;
   }
-  return `value${index + 1}`;
+  
+  return getUniqueName(baseName, usedNames);
+}
+
+/**
+ * Get a unique name by appending a number if the name is already used
+ */
+function getUniqueName(baseName, usedNames) {
+  if (!usedNames.has(baseName)) {
+    usedNames.add(baseName);
+    return baseName;
+  }
+  
+  let counter = 2;
+  let uniqueName = `${baseName}${counter}`;
+  while (usedNames.has(uniqueName)) {
+    counter++;
+    uniqueName = `${baseName}${counter}`;
+  }
+  usedNames.add(uniqueName);
+  return uniqueName;
 }
 
 /**
@@ -144,6 +186,7 @@ function buildPatternAndPlaceholders(tpl, code) {
   if (!tpl || !tpl.quasis) return { pattern: '', placeholders: [] };
   const parts = [];
   const placeholders = [];
+  const usedNames = new Set();
   
   for (let i = 0; i < tpl.quasis.length; i++) {
     const quasi = tpl.quasis[i];
@@ -152,7 +195,7 @@ function buildPatternAndPlaceholders(tpl, code) {
     
     if (tpl.expressions && i < tpl.expressions.length) {
       const expr = tpl.expressions[i];
-      const name = inferPlaceholderNameFromExpression(expr, i);
+      const name = inferPlaceholderNameFromExpression(expr, i, usedNames);
       // Get the original expression code
       const exprCode = code.slice(expr.start, expr.end);
       placeholders.push({ name, code: exprCode });
@@ -297,12 +340,34 @@ async function collectVueFiles(dir, out) {
 
 /**
  * Check if file has i18n import and find position to insert if needed
+ * Also detects directive strings like "use client", "use strict", "use server"
  */
 function analyzeImports(ast, code) {
   let hasI18nImport = false;
   let hasTConflict = false;
   let lastImportEnd = 0;
   let firstImportStart = -1;
+  let directiveEnd = 0;
+
+  // Check for directive prologue (must be at the very start of the file)
+  const body = ast.body || [];
+  for (const node of body) {
+    // Directive strings are ExpressionStatements with string literals
+    if (node.type === 'ExpressionStatement') {
+      const expr = node.expression;
+      if (expr && (expr.type === 'StringLiteral' || 
+          (expr.type === 'Literal' && typeof expr.value === 'string'))) {
+        const value = expr.value || '';
+        // Common directive strings
+        if (['use strict', 'use client', 'use server'].includes(value)) {
+          directiveEnd = Math.max(directiveEnd, node.end);
+          continue;
+        }
+      }
+    }
+    // Once we hit a non-directive statement, stop checking
+    break;
+  }
 
   walk(ast, {
     ImportDeclaration(node) {
@@ -324,14 +389,44 @@ function analyzeImports(ast, code) {
     }
   });
 
-  return { hasI18nImport, hasTConflict, lastImportEnd, firstImportStart };
+  return { hasI18nImport, hasTConflict, lastImportEnd, firstImportStart, directiveEnd };
 }
 
 /**
- * Generate import statement string
+ * Generate import statement string for regular JS/TS files
  */
 function generateImportStatement() {
   return "import { t } from '@/i18n';\n";
+}
+
+/**
+ * Generate import statement for Vue script sections
+ * Uses useI18n if vue-i18n is detected, otherwise falls back to @/i18n
+ */
+function generateVueImportStatement() {
+  if (hasVueI18n) {
+    return "import { useI18n } from 'vue-i18n';\n";
+  }
+  return "import { t } from '@/i18n';\n";
+}
+
+/**
+ * Check if script section already has useI18n import or t function setup
+ */
+function hasVueI18nSetup(scriptContent) {
+  // Check for useI18n import
+  if (/import\s*\{[^}]*useI18n[^}]*\}\s*from\s*['"]vue-i18n['"]/.test(scriptContent)) {
+    return true;
+  }
+  // Check for const { t } = useI18n() pattern
+  if (/const\s*\{[^}]*\bt\b[^}]*\}\s*=\s*useI18n\s*\(\s*\)/.test(scriptContent)) {
+    return true;
+  }
+  // Check for existing t import from @/i18n
+  if (/import\s*\{[^}]*\bt\b[^}]*\}\s*from\s*['"]@\/i18n['"]/.test(scriptContent)) {
+    return true;
+  }
+  return false;
 }
 
 // ============================================================================
@@ -823,7 +918,7 @@ async function processFile(filePath, keyMap) {
   const s = new MagicString(code);
   
   // Analyze imports
-  const { hasI18nImport, hasTConflict, lastImportEnd, firstImportStart } = analyzeImports(ast, code);
+  const { hasI18nImport, hasTConflict, lastImportEnd, firstImportStart, directiveEnd } = analyzeImports(ast, code);
   
   if (hasTConflict) {
     return { changed: false, skippedDueToConflict: true };
@@ -834,16 +929,54 @@ async function processFile(filePath, keyMap) {
   let needsImport = false;
 
   // Helper to add a replacement
+  // Strategy: Allow nested replacements where one is fully contained in another
+  // When applying, only apply the innermost (smallest) replacements
   const addReplacement = (start, end, newCode) => {
-    // Check for overlaps
+    // Check for partial overlaps (but allow full containment)
     for (const r of replacements) {
-      if ((start >= r.start && start < r.end) || (end > r.start && end <= r.end)) {
-        return false; // Overlapping, skip
+      const isFullyContained = (start >= r.start && end <= r.end) || (r.start >= start && r.end <= end);
+      const hasOverlap = (start >= r.start && start < r.end) || (end > r.start && end <= r.end) ||
+                         (r.start >= start && r.start < end) || (r.end > start && r.end <= end);
+      
+      if (hasOverlap && !isFullyContained) {
+        return false; // Partial overlap, skip
       }
+      
+      // If the new range fully contains an existing one, keep the smaller one
+      if (r.start >= start && r.end <= end) {
+        // Existing range is inside new range - skip the new (larger) one
+        return false;
+      }
+      
+      // If existing range fully contains the new one, we'll add it and filter later
     }
     replacements.push({ start, end, newCode });
     needsImport = true;
     return true;
+  };
+  
+  // Helper to filter replacements to only keep innermost (smallest) ones
+  const filterToInnermostReplacements = () => {
+    // Sort by start position, then by size (smallest first)
+    replacements.sort((a, b) => {
+      if (a.start !== b.start) return a.start - b.start;
+      return (a.end - a.start) - (b.end - b.start);
+    });
+    
+    // Remove any replacement that fully contains another
+    const filtered = [];
+    for (const r of replacements) {
+      const isContainer = replacements.some(other => 
+        other !== r && other.start >= r.start && other.end <= r.end
+      );
+      if (!isContainer) {
+        filtered.push(r);
+      }
+    }
+    
+    // Replace the array contents
+    replacements.length = 0;
+    replacements.push(...filtered);
   };
 
   // Helper to build replacement for string/template
@@ -1054,6 +1187,9 @@ async function processFile(filePath, keyMap) {
 
   walk(ast, visitors);
 
+  // Filter to only innermost replacements (for nested structures)
+  filterToInnermostReplacements();
+  
   // Apply replacements (sort by position descending to avoid offset issues)
   replacements.sort((a, b) => b.start - a.start);
   for (const r of replacements) {
@@ -1069,6 +1205,9 @@ async function processFile(filePath, keyMap) {
     } else if (firstImportStart >= 0) {
       // Insert before first import
       s.prependLeft(firstImportStart, importStmt);
+    } else if (directiveEnd > 0) {
+      // Insert after directive string ("use client", "use strict", etc.)
+      s.appendRight(directiveEnd, '\n' + importStmt.trim());
     } else {
       // No imports, add at beginning
       s.prepend(importStmt);
@@ -1150,7 +1289,7 @@ function rewriteVueScriptSections(code, namespace, keyMap) {
     const ast = result.program;
     const s = new MagicString(scriptContent);
 
-    const { hasI18nImport, hasTConflict, lastImportEnd, firstImportStart } = analyzeImports(ast, scriptContent);
+    const { hasI18nImport, hasTConflict, lastImportEnd, firstImportStart, directiveEnd } = analyzeImports(ast, scriptContent);
     if (hasTConflict) {
       continue;
     }
@@ -1287,6 +1426,8 @@ function rewriteVueScriptSections(code, namespace, keyMap) {
         s.appendRight(lastImportEnd, '\n' + importStmt.trim());
       } else if (firstImportStart >= 0) {
         s.prependLeft(firstImportStart, importStmt);
+      } else if (directiveEnd > 0) {
+        s.appendRight(directiveEnd, '\n' + importStmt.trim());
       } else {
         s.prepend(importStmt);
       }
