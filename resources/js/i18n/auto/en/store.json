@@ -1,10 +1,5 @@
 {
   "Store": {
-    "Auth": {
-      "text": {
-        "token_expiration_cleanup_encountered": "Token expiration cleanup encountered an issue:"
-      }
-    },
     "FormSettings": {
       "heading": {
         "thank_you": "Thank you!"
