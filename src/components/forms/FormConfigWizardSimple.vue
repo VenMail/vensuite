@@ -131,6 +131,7 @@ import {
   Webhook,
   Image,
 } from "lucide-vue-next";
+import { t } from '@/i18n';
 
 const emit = defineEmits<{
   (e: "complete", config: FormConfig): void;
@@ -210,24 +211,24 @@ const questions: Question[] = [
   {
     key: "theme",
     title: "Choose Your Theme",
-    description: "How should your form look to respondents?",
+    description: t('Forms.FormConfigWizardSimple.text.how_should_your_form'),
     options: [
       {
         value: "light",
         label: "Light Mode",
-        description: "Clean and bright interface",
+        description: t('Forms.FormConfigWizardSimple.text.clean_and_bright_interface'),
         icon: Sun,
       },
       {
         value: "dark",
         label: "Dark Mode",
-        description: "Easy on the eyes",
+        description: t('Forms.FormConfigWizardSimple.text.easy_on_the_eyes'),
         icon: Moon,
       },
       {
         value: "auto",
         label: "Auto",
-        description: "Match system preference",
+        description: t('Forms.FormConfigWizardSimple.text.match_system_preference'),
         icon: Palette,
       },
     ],
@@ -235,7 +236,7 @@ const questions: Question[] = [
   {
     key: "fontFamily",
     title: "Choose Your Font",
-    description: "Select the typography for your form",
+    description: t('Forms.FormConfigWizardSimple.text.select_the_typography_for'),
     options: [
       {
         value: "system",
@@ -246,19 +247,19 @@ const questions: Question[] = [
       {
         value: "inter",
         label: "Inter",
-        description: "Modern and clean",
+        description: t('Forms.FormConfigWizardSimple.text.modern_and_clean'),
         icon: Type,
       },
       {
         value: "roboto",
         label: "Roboto",
-        description: "Professional and readable",
+        description: t('Forms.FormConfigWizardSimple.text.professional_and_readable'),
         icon: Type,
       },
       {
         value: "poppins",
         label: "Poppins",
-        description: "Friendly and approachable",
+        description: t('Forms.FormConfigWizardSimple.text.friendly_and_approachable'),
         icon: Type,
       },
     ],
@@ -266,18 +267,18 @@ const questions: Question[] = [
   {
     key: "labelPlacement",
     title: "Label Placement",
-    description: "Choose how labels should align with inputs.",
+    description: t('Forms.FormConfigWizardSimple.text.choose_how_labels_should'),
     options: [
       {
         value: "stacked",
         label: "Stacked Labels",
-        description: "Labels sit above each field for maximum clarity.",
+        description: t('Forms.FormConfigWizardSimple.text.labels_sit_above_each'),
         icon: List,
       },
       {
         value: "inline",
         label: "Inline Labels",
-        description: "Place labels beside inputs for a tighter layout.",
+        description: t('Forms.FormConfigWizardSimple.text.place_labels_beside_inputs'),
         icon: ArrowRight,
       },
     ],
@@ -285,18 +286,18 @@ const questions: Question[] = [
   {
     key: "formDensity",
     title: "Form Spacing",
-    description: "Control how much breathing room each field uses.",
+    description: t('Forms.FormConfigWizardSimple.text.control_how_much_breathing'),
     options: [
       {
         value: "comfortable",
         label: "Comfortable",
-        description: "Standard spacing that balances readability and space.",
+        description: t('Forms.FormConfigWizardSimple.text.standard_spacing_that_balances'),
         icon: Palette,
       },
       {
         value: "compact",
         label: "Compact",
-        description: "Reduce spacing to fit more fields on screen.",
+        description: t('Forms.FormConfigWizardSimple.text.reduce_spacing_to_fit'),
         icon: Check,
       },
     ],
@@ -304,18 +305,18 @@ const questions: Question[] = [
   {
     key: "navigationType",
     title: "How Should Users Navigate?",
-    description: "Choose the best experience for your respondents",
+    description: t('Forms.FormConfigWizardSimple.text.choose_the_best_experience'),
     options: [
       {
         value: "scroll",
         label: "Scroll",
-        description: "All questions on one scrollable page",
+        description: t('Forms.FormConfigWizardSimple.text.all_questions_on_one'),
         icon: List,
       },
       {
         value: "paginated",
         label: "Paginated",
-        description: "One question at a time with next/previous",
+        description: t('Forms.FormConfigWizardSimple.text.one_question_at_a'),
         icon: ArrowRight,
       },
     ],
@@ -323,18 +324,18 @@ const questions: Question[] = [
   {
     key: "enablePayments",
     title: "Do You Need to Collect Payments?",
-    description: "Enable payment processing for your form",
+    description: t('Forms.FormConfigWizardSimple.text.enable_payment_processing_for'),
     options: [
       {
         value: true,
         label: "Yes, Enable Payments",
-        description: "Accept payments via Stripe",
+        description: t('Forms.FormConfigWizardSimple.text.accept_payments_via_stripe'),
         icon: CreditCard,
       },
       {
         value: false,
         label: "No, Skip Payments",
-        description: "This is a free form",
+        description: t('Forms.FormConfigWizardSimple.text.this_is_a_free'),
         icon: X,
       },
     ],
@@ -342,18 +343,18 @@ const questions: Question[] = [
   {
     key: "showLogo",
     title: "Add Your Logo?",
-    description: "Display your brand logo at the top of the form",
+    description: t('Forms.FormConfigWizardSimple.text.display_your_brand_logo'),
     options: [
       {
         value: true,
         label: "Yes, Add Logo",
-        description: "Show logo in form header",
+        description: t('Forms.FormConfigWizardSimple.text.show_logo_in_form'),
         icon: Image,
       },
       {
         value: false,
         label: "No Logo",
-        description: "Keep it simple",
+        description: t('Forms.FormConfigWizardSimple.text.keep_it_simple'),
         icon: X,
       },
     ],
@@ -361,18 +362,18 @@ const questions: Question[] = [
   {
     key: "enableWebhooks",
     title: "Connect to External Services?",
-    description: "Send form submissions to your webhook endpoint",
+    description: t('Forms.FormConfigWizardSimple.text.send_form_submissions_to'),
     options: [
       {
         value: true,
         label: "Yes, Enable Webhooks",
-        description: "Integrate with other tools",
+        description: t('Forms.FormConfigWizardSimple.text.integrate_with_other_tools'),
         icon: Webhook,
       },
       {
         value: false,
         label: "No, Skip Webhooks",
-        description: "Just store responses",
+        description: t('Forms.FormConfigWizardSimple.text.just_store_responses'),
         icon: X,
       },
     ],
@@ -380,24 +381,24 @@ const questions: Question[] = [
   {
     key: "responseView",
     title: "How Do You Want to View Responses?",
-    description: "Choose your preferred response viewing format",
+    description: t('Forms.FormConfigWizardSimple.text.choose_your_preferred_response'),
     options: [
       {
         value: "table",
         label: "Table View",
-        description: "Spreadsheet-like view of all responses",
+        description: t('Forms.FormConfigWizardSimple.text.spreadsheet_like_view_of'),
         icon: Table,
       },
       {
         value: "individual",
         label: "Individual View",
-        description: "Review responses one at a time",
+        description: t('Forms.FormConfigWizardSimple.text.review_responses_one_at'),
         icon: List,
       },
       {
         value: "summary",
         label: "Summary View",
-        description: "Aggregated statistics and charts",
+        description: t('Forms.FormConfigWizardSimple.text.aggregated_statistics_and_charts'),
         icon: BarChart3,
       },
     ],

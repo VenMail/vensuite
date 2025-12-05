@@ -341,6 +341,7 @@ import {
   Table,
   BarChart3,
 } from "lucide-vue-next";
+import { t } from '@/i18n';
 
 const emit = defineEmits<{
   (e: "complete", config: FormConfig): void;
@@ -385,7 +386,7 @@ const headerStyles = [
   {
     value: "minimal",
     label: "Minimal",
-    description: "Clean header with just the title",
+    description: t('Forms.FormConfigWizard.text.clean_header_with_just'),
   },
   {
     value: "full",
@@ -399,13 +400,13 @@ const navigationTypes = [
     value: "scroll",
     label: "Scroll",
     icon: List,
-    description: "All questions on one scrollable page",
+    description: t('Forms.FormConfigWizard.text.all_questions_on_one'),
   },
   {
     value: "paginated",
     label: "Paginated",
     icon: ArrowRight,
-    description: "One question at a time with next/previous buttons",
+    description: t('Forms.FormConfigWizard.text.one_question_at_a'),
   },
 ];
 
@@ -414,19 +415,19 @@ const responseViews = [
     value: "table",
     label: "Table View",
     icon: Table,
-    description: "View all responses in a spreadsheet-like table",
+    description: t('Forms.FormConfigWizard.text.view_all_responses_in'),
   },
   {
     value: "individual",
     label: "Individual View",
     icon: Layout,
-    description: "Review responses one at a time",
+    description: t('Forms.FormConfigWizard.text.review_responses_one_at'),
   },
   {
     value: "summary",
     label: "Summary View",
     icon: BarChart3,
-    description: "See aggregated statistics and charts",
+    description: t('Forms.FormConfigWizard.text.see_aggregated_statistics_and'),
   },
 ];
 

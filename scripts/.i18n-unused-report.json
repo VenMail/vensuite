@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-05T06:52:09.429Z",
+  "generatedAt": "2025-12-05T07:30:34.430Z",
   "baseLocale": "en",
   "autoDir": "resources/js/i18n/auto",
   "unused": [
@@ -1681,6 +1681,10 @@
     },
     {
       "keyPath": "Commons.text.individual_view",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.text.initi18n_with",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -5124,15 +5128,15 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.Login.button.login_with_venmail",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.Login.heading.welcome_to_venmail_files",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Login.text.login_to_manage_your",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.Login.button.login_with_venmail",
+      "keyPath": "Views.Login.link.cookie_ccpa_preferences",
       "baseFileRel": "en/views.json"
     },
     {
@@ -5140,7 +5144,7 @@
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Login.link.cookie_ccpa_preferences",
+      "keyPath": "Views.Login.text.login_to_manage_your",
       "baseFileRel": "en/views.json"
     },
     {

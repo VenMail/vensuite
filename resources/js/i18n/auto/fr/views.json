@@ -1,21 +1,8 @@
 {
   "Views": {
     "Bin": {
-      "button": {
-        "login_with_venmail": "Login with Venmail"
-      },
-      "heading": {
-        "delete_selected_items_permanently": "Delete Selected Items Permanently?",
-        "empty_bin": "Empty Bin?",
-        "no_items_found": "No items found",
-        "no_matching_items_found": "No matching items found",
-        "restore_selected_items": "Restore Selected Items?",
-        "trash_is_empty": "Trash is empty",
-        "welcome_to_venmail_file": "Welcome to Venmail File Manager"
-      },
       "text": {
         "cannot_download_this_item": "Cannot download this item",
-        "deleted_files_will_appear": "Deleted files will appear here and can be restored or permanently deleted.",
         "error_loading_trash_items": "Error loading trash items:",
         "error_permanently_deleting_file": "Error permanently deleting file:",
         "error_restoring_file": "Error restoring file:",
@@ -26,26 +13,13 @@
         "failed_to_preview_file": "Failed to preview file",
         "failed_to_restore_item": "Failed to restore item",
         "items_in_trash": "items in trash",
-        "login_to_access_your": "Login to access your trash and manage deleted files.",
         "no_items_selected": "No items selected",
-        "preparing_your_deleted_items": "Preparing your deleted items…",
         "preview_not_available_for": "Preview not available for this item",
-        "sort_by_name": "Sort by Name",
-        "sort_by_size": "Sort by Size",
-        "sort_by_type": "Sort by Type",
         "trash_file_manager": "Trash - File Manager",
-        "trash_is_already_empty": "Trash is already empty",
-        "try_adjusting_your_search": "Try adjusting your search or filters to find specific items."
+        "trash_is_already_empty": "Trash is already empty"
       }
     },
     "DocsEditor": {
-      "button": {
-        "keep_local_version": "Keep local version",
-        "keep_online_version": "Keep online version"
-      },
-      "heading": {
-        "content_versions_differ": "Content versions differ"
-      },
       "placeholder": {
         "i_d_like_to": "I’d like to view this document."
       },
@@ -81,15 +55,9 @@
         "loaded_as_plain_text": "✓ Loaded as plain text",
         "loaded_html_content": "✓ Loaded HTML content",
         "loaded_tiptap_json_content": "✓ Loaded Tiptap JSON content",
-        "no_headings_found": "No headings found",
-        "no_messages_yet": "No messages yet.",
         "pdf_export_error": "PDF export error:",
         "pdf_export_started": "PDF export started",
-        "preview_local_version": "Preview local version",
-        "preview_online_version": "Preview online version",
-        "preview_unavailable": "Preview unavailable.",
         "reset_row_height": "Reset row height",
-        "start_a_conversation_with": "Start a conversation with your collaborators.",
         "upload_new_image": "Upload new image"
       },
       "title": {
@@ -97,35 +65,14 @@
       }
     },
     "Documents": {
-      "heading": {
-        "create_new_document": "Create New Document",
-        "no_documents_found": "No documents found"
-      },
       "text": {
         "error_creating_document_folder": "Error creating document folder:",
         "error_deleting_documents": "Error deleting documents:",
         "failed_to_create_folder": "Failed to create folder",
-        "failed_to_delete_some": "Failed to delete some documents",
-        "get_started_by_creating": "Get started by creating a new document or uploading an existing one."
+        "failed_to_delete_some": "Failed to delete some documents"
       }
     },
     "FormBuilder": {
-      "button": {
-        "add_first_question": "Add First Question",
-        "generate_with_ai": "Generate with AI"
-      },
-      "heading": {
-        "choose_a_footer_image": "Choose a footer image",
-        "choose_a_logo": "Choose a logo",
-        "choose_who_in_your": "Choose who in your workspace can open or edit this form.",
-        "configure_webhook_endpoints": "Configure webhook endpoints",
-        "send_the_live_form": "Send the live form link and control who can respond."
-      },
-      "label": {
-        "amount_to_charge": "Amount to charge",
-        "stripe_account_id": "Stripe account ID",
-        "stripe_publishable_key": "Stripe publishable key"
-      },
       "text": {
         "and_set_to_public": "and set to public",
         "anyone_with_the_link": "Anyone with the link can respond.",
@@ -154,17 +101,13 @@
         "unable_to_remove_collaborator": "Unable to remove collaborator",
         "unable_to_update_access": "Unable to update access level",
         "unable_to_update_collaborators": "Unable to update collaborators",
-        "unable_to_update_response": "Unable to update response settings.",
-        "why_webhooks": "Why webhooks?"
+        "unable_to_update_response": "Unable to update response settings."
       },
       "title": {
         "stop_accepting_responses": "Stop accepting responses"
       }
     },
     "FormPaymentSuccess": {
-      "button": {
-        "view_form_again": "View form again"
-      },
       "text": {
         "thank_you_for_your": "Thank you for your payment",
         "your_response_has_been": "Your response has been submitted and the payment is confirmed.",
@@ -187,20 +130,12 @@
       }
     },
     "FormResponses": {
-      "button": {
-        "back_to_forms": "Back to Forms",
-        "export_to_sheet": "Export to Sheet"
-      },
-      "heading": {
-        "review_submission_metadata_and": "Review submission metadata and answers."
-      },
       "text": {
         "csv_exported_successfully": "CSV exported successfully",
         "failed_to_export_csv": "Failed to export CSV",
         "failed_to_export_to": "Failed to export to sheet",
         "failed_to_load_response": "Failed to load response detail.",
         "failed_to_load_responses": "Failed to load responses.",
-        "monitor_how_respondents_engage": "Monitor how respondents engage with your form and spot trends across completion states.",
         "sheet_updated_successfully": "Sheet updated successfully"
       }
     },
@@ -211,13 +146,9 @@
       }
     },
     "Forms": {
-      "heading": {
-        "share_this_form_with": "Share this form with participants or collaborators using the link below."
-      },
       "text": {
         "failed_to_publish_form": "Failed to publish form for sharing",
         "form_is_missing_an": "Form is missing an identifier.",
-        "no_more_forms_to": "No more forms to load.",
         "publish_the_form_to": "Publish the form to get a shareable link.",
         "share_link_copied": "Share link copied",
         "share_link_copied_to": "Share link copied to clipboard.",
@@ -229,47 +160,14 @@
       "aria_label": {
         "up_one_level": "Up one level"
       },
-      "button": {
-        "login_with_venmail": "Login with Venmail"
-      },
-      "heading": {
-        "choose_a_template": "Choose a Template",
-        "no_files_found": "No files found",
-        "no_matching_files_found": "No matching files found",
-        "welcome_to_venmail_file": "Welcome to Venmail File Manager"
-      },
       "text": {
         "error_creating_folder": "Error creating folder:",
         "error_deleting_files": "Error deleting files:",
         "failed_to_delete_some": "Failed to delete some items",
-        "file_not_found_in": "File not found in viewable files:",
-        "get_started_by_creating": "Get started by creating a new file or uploading an existing one.",
-        "group_by_type": "Group by Type",
-        "login_to_manage_your": "Login to manage your files and folders on Venmail.",
-        "no_items_available_in": "No items available in this category.",
-        "sort_by_date": "Sort by Date",
-        "sort_by_name": "Sort by Name",
-        "sort_by_size": "Sort by Size",
-        "sort_by_type": "Sort by Type",
-        "try_adjusting_your_search": "Try adjusting your search or filters."
+        "file_not_found_in": "File not found in viewable files:"
       },
       "title": {
         "up_one_level": "Up one level"
-      }
-    },
-    "Login": {
-      "button": {
-        "login_with_venmail": "Login with Venmail"
-      },
-      "heading": {
-        "welcome_to_venmail_files": "Welcome to Venmail Drive"
-      },
-      "link": {
-        "cookie_ccpa_preferences": "Cookie & CCPA preferences",
-        "privacy_terms": "Privacy & terms"
-      },
-      "text": {
-        "login_to_manage_your": "Login to manage your files and folders on Venmail."
       }
     },
     "Media": {
@@ -300,17 +198,6 @@
       }
     },
     "OauthCallback": {
-      "button": {
-        "return_to_login": "Return to Login"
-      },
-      "heading": {
-        "completing_authentication": "Completing Authentication",
-        "oops_login_failed": "Oops! Login Failed"
-      },
-      "link": {
-        "cookie_ccpa_preferences": "Cookie & CCPA preferences",
-        "privacy_terms": "Privacy & terms"
-      },
       "text": {
         "auth_failed_with_code": "Auth failed with code:",
         "auth_failed_with_cookie": "Auth failed with cookie:",
@@ -364,22 +251,14 @@
       }
     },
     "Sheets": {
-      "heading": {
-        "create_new_spreadsheet": "Create New Spreadsheet",
-        "no_spreadsheets_found": "No spreadsheets found"
-      },
       "text": {
         "error_creating_spreadsheet_folder": "Error creating spreadsheet folder:",
         "error_deleting_spreadsheets": "Error deleting spreadsheets:",
         "failed_to_create_folder": "Failed to create folder",
-        "failed_to_delete_some": "Failed to delete some spreadsheets",
-        "get_started_by_creating": "Get started by creating a new spreadsheet or uploading an existing one."
+        "failed_to_delete_some": "Failed to delete some spreadsheets"
       }
     },
     "Sidebar": {
-      "heading": {
-        "choose_a_template": "Choose a Template"
-      },
       "text": {
         "creating_new_file": "Creating new file:",
         "navigating_directly_to_sheets": "Navigating directly to /sheets/new",

@@ -226,6 +226,7 @@ import {
   Upload,
 } from "lucide-vue-next";
 import type { FormBlock } from "./blocks/types";
+import { t } from '@/i18n';
 
 const emit = defineEmits<{
   (e: "create", data: { title: string; description: string; blocks: FormBlock[] }): void;
@@ -256,19 +257,19 @@ const quickTemplates = [
   },
   {
     name: "Feedback Survey",
-    description: "Rating and comments",
+    description: t('Forms.FormWizard.text.rating_and_comments'),
     icon: MessageSquare,
     prompt: "A customer feedback survey with overall rating (1-5 stars), what did you like, what could be improved, and would you recommend us (yes/no)",
   },
   {
     name: "Registration",
-    description: "User signup details",
+    description: t('Forms.FormWizard.text.user_signup_details'),
     icon: UserCheck,
     prompt: "A registration form with first name, last name, email, phone number, company name, and job title",
   },
   {
     name: "Order Form",
-    description: "Product and shipping info",
+    description: t('Forms.FormWizard.text.product_and_shipping_info'),
     icon: ShoppingCart,
     prompt: "An order form with customer name, email, shipping address, product selection dropdown, quantity, and special instructions",
   },
@@ -397,7 +398,7 @@ function mockGenerateForm(description: string): {
   if (lowerDesc.includes("contact") || lowerDesc.includes("get in touch")) {
     return {
       title: "Contact Form",
-      description: "Get in touch with us",
+      description: t('Forms.FormWizard.text.get_in_touch_with'),
       blocks: [
         {
           id: crypto.randomUUID(),
@@ -436,7 +437,7 @@ function mockGenerateForm(description: string): {
   } else if (lowerDesc.includes("feedback") || lowerDesc.includes("survey")) {
     return {
       title: "Feedback Survey",
-      description: "Help us improve by sharing your feedback",
+      description: t('Forms.FormWizard.text.help_us_improve_by'),
       blocks: [
         {
           id: crypto.randomUUID(),
@@ -472,7 +473,7 @@ function mockGenerateForm(description: string): {
   } else if (lowerDesc.includes("registration") || lowerDesc.includes("signup") || lowerDesc.includes("sign up")) {
     return {
       title: "Registration Form",
-      description: "Create your account",
+      description: t('Forms.FormWizard.text.create_your_account'),
       blocks: [
         {
           id: crypto.randomUUID(),

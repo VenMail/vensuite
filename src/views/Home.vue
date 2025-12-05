@@ -57,6 +57,7 @@ import {
   type ContextMenuAction,
   type ContextMenuBuilderContext,
 } from "@/composables/useFileExplorer";
+import { t } from '@/i18n';
 
 const router = useRouter();
 const route = useRoute();
@@ -384,7 +385,7 @@ const groupedItems = computed(() => {
     let groupName: string;
 
     if (item.is_folder) {
-      groupName = "Folders";
+      groupName = t('Commons.text.folders');
     } else {
       const fileType = item.file_type?.toLowerCase();
       switch (fileType) {
@@ -393,13 +394,13 @@ const groupedItems = computed(() => {
         case "pdf":
         case "txt":
         case "rtf":
-          groupName = "Documents";
+          groupName = t('Commons.text.documents');
           break;
         case "xlsx":
         case "xls":
         case "csv":
         case "ods":
-          groupName = "Spreadsheets";
+          groupName = t('Commons.text.spreadsheets');
           break;
         case "jpg":
         case "jpeg":
@@ -416,7 +417,7 @@ const groupedItems = computed(() => {
         case "mov":
         case "wmv":
         case "flv":
-          groupName = "Videos";
+          groupName = t('Commons.text.videos');
           break;
         case "mp3":
         case "wav":
@@ -426,7 +427,7 @@ const groupedItems = computed(() => {
           groupName = "Audio";
           break;
         default:
-          groupName = "Other";
+          groupName = t('Commons.text.other');
           break;
       }
     }
@@ -528,7 +529,7 @@ function handleViewerDownload(file: FileData) {
 }
 
 async function createNewFolder() {
-  const newFolderName = "New Folder";
+  const newFolderName = t('Commons.text.new_folder');
   try {
     const folder: FileData = {
       file_name: sluggify(newFolderName),

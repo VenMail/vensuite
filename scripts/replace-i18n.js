@@ -1114,24 +1114,229 @@ function processObjectProperty(node, namespace, keyMap, code, tryReplace) {
   tryReplace(valueNode, kind);
 }
 
+function rewriteVueScriptSections(code, namespace, keyMap) {
+  const scriptRegex = /<script(\s[^>]*)?>([\s\S]*?)<\/script>/gi;
+  const blocks = [];
+  let match;
+
+  while ((match = scriptRegex.exec(code)) !== null) {
+    const fullMatch = match[0];
+    const openTagEnd = fullMatch.indexOf('>');
+    if (openTagEnd === -1) {
+      continue;
+    }
+
+    const contentStart = match.index + openTagEnd + 1;
+    const contentEnd = match.index + fullMatch.length - '</script>'.length;
+    const scriptContent = code.slice(contentStart, contentEnd);
+    if (!scriptContent.trim()) {
+      continue;
+    }
+
+    let result;
+    try {
+      result = parseSync('vue-script.ts', scriptContent, {
+        sourceType: 'module',
+        lang: 'ts',
+      });
+    } catch {
+      continue;
+    }
+
+    if (!result || !result.program) {
+      continue;
+    }
+
+    const ast = result.program;
+    const s = new MagicString(scriptContent);
+
+    const { hasI18nImport, hasTConflict, lastImportEnd, firstImportStart } = analyzeImports(ast, scriptContent);
+    if (hasTConflict) {
+      continue;
+    }
+
+    const replacements = [];
+    let needsImport = false;
+
+    const addReplacement = (start, end, newCode) => {
+      for (const r of replacements) {
+        if ((start >= r.start && start < r.end) || (end > r.start && end <= r.end)) {
+          return false;
+        }
+      }
+      replacements.push({ start, end, newCode });
+      needsImport = true;
+      return true;
+    };
+
+    const tryReplace = (node, kind) => {
+      if (isStringLiteral(node)) {
+        const text = normalizeText(getStringValue(node));
+        if (!shouldTranslateText(text, ignorePatterns)) return false;
+
+        const nsForKey = isCommonShortText(text) ? 'Commons' : namespace;
+        const keyId = `${nsForKey}|${kind}|${text}`;
+        const fullKey = keyMap.get(keyId);
+        if (!fullKey) return false;
+
+        return addReplacement(node.start, node.end, generateTCall(fullKey));
+      }
+
+      if (isTemplateLiteral(node)) {
+        const { pattern, placeholders } = buildPatternAndPlaceholders(node, scriptContent);
+        const text = normalizeText(pattern);
+        if (!shouldTranslateText(text, ignorePatterns)) return false;
+
+        const nsForKey = isCommonShortText(text) ? 'Commons' : namespace;
+        const keyId = `${nsForKey}|${kind}|${text}`;
+        const fullKey = keyMap.get(keyId);
+        if (!fullKey) return false;
+
+        return addReplacement(node.start, node.end, generateTCallWithPlaceholders(fullKey, placeholders));
+      }
+
+      return false;
+    };
+
+    const processConditional = (node, kind) => {
+      if (!node) return false;
+
+      if (isStringLiteral(node) || isTemplateLiteral(node)) {
+        return tryReplace(node, kind);
+      }
+
+      if (node.type === 'ConditionalExpression') {
+        const a = processConditional(node.consequent, kind);
+        const b = processConditional(node.alternate, kind);
+        return a || b;
+      }
+
+      return false;
+    };
+
+    const visitors = {
+      Property(node) {
+        processObjectProperty(node, namespace, keyMap, scriptContent, tryReplace);
+      },
+      ObjectProperty(node) {
+        processObjectProperty(node, namespace, keyMap, scriptContent, tryReplace);
+      },
+      VariableDeclarator(node) {
+        const id = node.id;
+        const init = node.init;
+        if (!id || id.type !== 'Identifier' || !init) return;
+
+        const varName = id.name || '';
+        let kind = 'text';
+        if (/title/i.test(varName)) kind = 'heading';
+        else if (/label/i.test(varName)) kind = 'label';
+        else if (/placeholder/i.test(varName)) kind = 'placeholder';
+
+        tryReplace(init, kind);
+      },
+      AssignmentExpression(node) {
+        const left = node.left;
+        const right = node.right;
+
+        if (left?.type === 'MemberExpression' && !left.computed) {
+          if (left.object?.type === 'Identifier' && left.object.name === 'document' &&
+              left.property?.type === 'Identifier' && left.property.name === 'title') {
+            tryReplace(right, 'title');
+            return;
+          }
+        }
+
+        if (left?.type === 'Identifier') {
+          const varName = left.name || '';
+          let kind = 'text';
+          if (/title/i.test(varName)) kind = 'heading';
+          else if (/label/i.test(varName)) kind = 'label';
+          else if (/placeholder/i.test(varName)) kind = 'placeholder';
+
+          tryReplace(right, kind);
+        }
+      },
+      CallExpression(node) {
+        const callee = node.callee;
+        const args = node.arguments || [];
+
+        if (callee?.type === 'MemberExpression' &&
+            callee.object?.type === 'Identifier' && callee.object.name === 'toast') {
+          if (args.length > 0) {
+            const first = args[0];
+            if (isStringLiteral(first) || isTemplateLiteral(first)) {
+              tryReplace(first, 'toast');
+            } else if (first?.type === 'ConditionalExpression') {
+              processConditional(first, 'toast');
+            }
+          }
+        }
+      },
+    };
+
+    walk(ast, visitors);
+
+    replacements.sort((a, b) => b.start - a.start);
+    for (const r of replacements) {
+      s.overwrite(r.start, r.end, r.newCode);
+    }
+
+    if (needsImport && !hasI18nImport) {
+      const importStmt = generateImportStatement();
+      if (lastImportEnd > 0) {
+        s.appendRight(lastImportEnd, '\n' + importStmt.trim());
+      } else if (firstImportStart >= 0) {
+        s.prependLeft(firstImportStart, importStmt);
+      } else {
+        s.prepend(importStmt);
+      }
+    }
+
+    if (replacements.length > 0) {
+      blocks.push({ start: contentStart, end: contentEnd, newCode: s.toString() });
+    }
+  }
+
+  if (blocks.length === 0) {
+    return { code, changed: false };
+  }
+
+  blocks.sort((a, b) => b.start - a.start);
+  let out = code;
+  for (const b of blocks) {
+    out = out.slice(0, b.start) + b.newCode + out.slice(b.end);
+  }
+
+  return { code: out, changed: true };
+}
+
 async function processVueFile(filePath, keyMap) {
   let code = await readFile(filePath, 'utf8');
   const namespace = getNamespaceFromFile(filePath, srcRoot);
-  
+  let changed = false;
+
+  const scriptResult = rewriteVueScriptSections(code, namespace, keyMap);
+  code = scriptResult.code;
+  if (scriptResult.changed) {
+    changed = true;
+  }
+
   const range = extractVueTemplateRange(code);
-  if (!range) {
+  if (range) {
+    const { innerStart, innerEnd } = range;
+    const inner = code.slice(innerStart, innerEnd);
+    const rewritten = rewriteVueTemplate(inner, namespace, keyMap);
+
+    if (rewritten !== inner) {
+      code = code.slice(0, innerStart) + rewritten + code.slice(innerEnd);
+      changed = true;
+    }
+  }
+
+  if (!changed) {
     return { changed: false };
   }
-  
-  const { innerStart, innerEnd } = range;
-  const inner = code.slice(innerStart, innerEnd);
-  const rewritten = rewriteVueTemplate(inner, namespace, keyMap);
-  
-  if (rewritten === inner) {
-    return { changed: false };
-  }
-  
-  code = code.slice(0, innerStart) + rewritten + code.slice(innerEnd);
+
   await writeFile(filePath, code, 'utf8');
   return { changed: true };
 }

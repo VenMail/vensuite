@@ -71,7 +71,7 @@
     },
     "FormSettings": {
       "heading": {
-        "thank_you": "Thank you!"
+        "thank_you": "Merci !"
       },
       "text": {
         "let_s_get_to": "Let’s get to know you better",
@@ -95,7 +95,7 @@
       "text": {
         "authentication_required_to_export": "Authentication required to export slides",
         "authentication_required_to_import": "Authentication required to import PowerPoint files",
-        "centered_title_with_subtitle": "Centered title with subtitle",
+        "centered_title_with_subtitle": "Titre centré avec sous-titre",
         "click_to_add_subtitle": "Click to add subtitle",
         "click_to_add_title": "Click to add title",
         "converted_slide_deck_data": "Converted slide deck data not found in response",

@@ -1,358 +1,358 @@
 {
   "FileItem": {
     "text": {
-      "error_deleting_file": "Error deleting file:",
-      "error_moving_file": "Error moving file:",
-      "error_renaming_file": "Error renaming file:"
+      "error_deleting_file": "删除文件时出错：",
+      "error_moving_file": "移动文件时出错：",
+      "error_renaming_file": "重命名文件时出错："
     }
   },
   "FileUploader": {
     "text": {
-      "all_file_types": "all file types",
-      "failed_to_create_root": "Failed to create root folder",
-      "file_already_selected": "File already selected",
-      "file_type_not_allowed": "File type not allowed"
+      "all_file_types": "所有文件类型",
+      "failed_to_create_root": "创建根文件夹失败",
+      "file_already_selected": "文件已被选择",
+      "file_type_not_allowed": "不允许的文件类型"
     }
   },
   "Forms": {
     "Blocks": {
       "BlockEditor": {
         "text": {
-          "for_commands_or_click": "for commands or click the button above"
+          "for_commands_or_click": "用于命令或点击上面的按钮"
         }
       },
       "BlockItem": {
         "text": {
-          "choose_one_option": "Choose one option",
-          "rate_from_1_to": "Rate from 1 to 5",
-          "select_a_date": "Select a date",
-          "select_a_time": "Select a time",
-          "select_all_that_apply": "Select all that apply",
-          "select_from_dropdown": "Select from dropdown",
-          "short_answer_text": "Short answer text",
-          "slide_to_select": "Slide to select",
-          "upload_a_file": "Upload a file",
-          "yes_or_no": "Yes or No?"
+          "choose_one_option": "选择一个选项",
+          "rate_from_1_to": "评分从1到5",
+          "select_a_date": "选择一个日期",
+          "select_a_time": "选择一个时间",
+          "select_all_that_apply": "选择所有适用项",
+          "select_from_dropdown": "从下拉菜单中选择",
+          "short_answer_text": "简短回答文本",
+          "slide_to_select": "滑动以选择",
+          "upload_a_file": "上传文件",
+          "yes_or_no": "是或否？"
         },
         "title": {
-          "add_block_below": "Add block below",
-          "drag_to_reorder": "Drag to reorder"
+          "add_block_below": "在下方添加区块",
+          "drag_to_reorder": "拖动以重新排序"
         }
       },
       "BlockItemNew": {
         "text": {
-          "short_answer_text": "Short answer text"
+          "short_answer_text": "简短回答文本"
         },
         "title": {
-          "drag_to_reorder": "Drag to reorder"
+          "drag_to_reorder": "拖动以重新排序"
         }
       },
       "Types": {
         "text": {
-          "email_address_input": "Email address input",
-          "multi_line_text_area": "Multi-line text area",
-          "multiple_selections_allowed": "Multiple selections allowed",
-          "numeric_slider_input": "Numeric slider input",
-          "phone_number_input": "Phone number input",
-          "single_line_text_input": "Single line text input",
-          "single_selection_from_options": "Single selection from options",
-          "star_or_number_rating": "Star or number rating"
+          "email_address_input": "电子邮件地址输入",
+          "multi_line_text_area": "多行文本区域",
+          "multiple_selections_allowed": "允许多项选择",
+          "numeric_slider_input": "数字滑块输入",
+          "phone_number_input": "电话号码输入",
+          "single_line_text_input": "单行文本输入",
+          "single_selection_from_options": "从选项中单项选择",
+          "star_or_number_rating": "星级或数字评分"
         }
       }
     },
     "DocsTitleBar": {
       "text": {
-        "click_to_save_now": "Click to save now",
-        "could_not_restore_cursor": "Could not restore cursor position:",
-        "failed_to_load_version": "Failed to load version history:",
-        "last_saved_time": "Last saved time",
-        "loading_version_for": "loading version for",
-        "saved_just_now": "Saved just now"
+        "click_to_save_now": "点击立即保存",
+        "could_not_restore_cursor": "无法恢复光标位置：",
+        "failed_to_load_version": "加载版本历史失败：",
+        "last_saved_time": "最后保存时间",
+        "loading_version_for": "正在加载版本",
+        "saved_just_now": "刚刚保存"
       }
     },
     "DocsToolbar": {
       "heading": {
-        "create_new_document": "Create New Document"
+        "create_new_document": "创建新文档"
       },
       "label": {
-        "show_page_border": "Show Page Border",
-        "show_page_numbers": "Show Page Numbers",
-        "show_page_numbers_when": "Show page numbers when printing",
-        "show_page_shadow": "Show Page Shadow"
+        "show_page_border": "显示页面边框",
+        "show_page_numbers": "显示页码",
+        "show_page_numbers_when": "打印时显示页码",
+        "show_page_shadow": "显示页面阴影"
       },
       "text": {
         "source_sans_3": "Source Sans 3",
-        "times_new_roman": "Times New Roman"
+        "times_new_roman": "新罗马字体"
       },
       "title": {
-        "comments_chat": "Comments & Chat",
-        "insert_edit_link": "Insert/Edit Link",
-        "line_paragraph_spacing": "Line & paragraph spacing"
+        "comments_chat": "评论与聊天",
+        "insert_edit_link": "插入/编辑链接",
+        "line_paragraph_spacing": "行间距和段落间距"
       }
     },
     "Editor": {
       "placeholder": {
-        "select_jump_to_field": "Select jump to field"
+        "select_jump_to_field": "选择跳转到字段"
       },
       "text": {
-        "error_fetching_form": "Error fetching form:"
+        "error_fetching_form": "获取表单时出错："
       }
     },
     "Editors": {
       "FileEditor": {
         "label": {
-          "allow_multiple_files": "Allow Multiple Files:",
-          "allowed_file_types": "Allowed File Types:"
+          "allow_multiple_files": "允许多个文件：",
+          "allowed_file_types": "允许的文件类型："
         }
       },
       "LogicEditor": {
         "placeholder": {
-          "question_id_to_jump": "Question ID to jump to"
+          "question_id_to_jump": "跳转到的问题 ID"
         }
       },
       "RatingEditor": {
         "label": {
-          "allow_half_ratings": "Allow Half Ratings:"
+          "allow_half_ratings": "允许半评分："
         }
       }
     },
     "Fields": {
       "TextQuestion": {
         "text": {
-          "invalid_url_format": "Invalid URL format"
+          "invalid_url_format": "无效的 URL 格式"
         }
       }
     },
     "FormConfigWizard": {
       "text": {
-        "all_questions_on_one": "All questions on one scrollable page",
-        "clean_header_with_just": "Clean header with just the title",
-        "one_question_at_a": "One question at a time with next/previous buttons",
-        "review_responses_one_at": "Review responses one at a time",
-        "see_aggregated_statistics_and": "See aggregated statistics and charts",
-        "step_of_3": "Step of 3",
-        "view_all_responses_in": "View all responses in a spreadsheet-like table"
+        "all_questions_on_one": "所有问题在一个可滚动的页面上",
+        "clean_header_with_just": "干净的标题，仅包含标题",
+        "one_question_at_a": "一次一个问题，带有下一步/上一步按钮",
+        "review_responses_one_at": "逐个查看响应",
+        "see_aggregated_statistics_and": "查看汇总统计和图表",
+        "step_of_3": "步骤 3",
+        "view_all_responses_in": "在类似电子表格的表格中查看所有响应"
       }
     },
     "FormConfigWizardSimple": {
       "text": {
-        "accept_payments_via_stripe": "Accept payments via Stripe",
-        "add_your_logo": "Add Your Logo?",
-        "aggregated_statistics_and_charts": "Aggregated statistics and charts",
-        "all_questions_on_one": "All questions on one scrollable page",
-        "choose_how_labels_should": "Choose how labels should align with inputs.",
-        "choose_the_best_experience": "Choose the best experience for your respondents",
-        "choose_your_font": "Choose Your Font",
-        "choose_your_preferred_response": "Choose your preferred response viewing format",
-        "choose_your_theme": "Choose Your Theme",
-        "clean_and_bright_interface": "Clean and bright interface",
-        "connect_to_external_services": "Connect to External Services?",
-        "control_how_much_breathing": "Control how much breathing room each field uses.",
-        "display_your_brand_logo": "Display your brand logo at the top of the form",
-        "do_you_need_to": "Do You Need to Collect Payments?",
-        "easy_on_the_eyes": "Easy on the eyes",
-        "enable_payment_processing_for": "Enable payment processing for your form",
-        "friendly_and_approachable": "Friendly and approachable",
-        "how_do_you_want": "How Do You Want to View Responses?",
-        "how_should_users_navigate": "How Should Users Navigate?",
-        "how_should_your_form": "How should your form look to respondents?",
-        "integrate_with_other_tools": "Integrate with other tools",
-        "just_store_responses": "Just store responses",
-        "keep_it_simple": "Keep it simple",
-        "labels_sit_above_each": "Labels sit above each field for maximum clarity.",
-        "match_system_preference": "Match system preference",
-        "modern_and_clean": "Modern and clean",
-        "one_question_at_a": "One question at a time with next/previous",
-        "place_labels_beside_inputs": "Place labels beside inputs for a tighter layout.",
-        "professional_and_readable": "Professional and readable",
-        "reduce_spacing_to_fit": "Reduce spacing to fit more fields on screen.",
-        "review_responses_one_at": "Review responses one at a time",
-        "select_the_typography_for": "Select the typography for your form",
-        "send_form_submissions_to": "Send form submissions to your webhook endpoint",
-        "show_logo_in_form": "Show logo in form header",
-        "spreadsheet_like_view_of": "Spreadsheet-like view of all responses",
-        "standard_spacing_that_balances": "Standard spacing that balances readability and space.",
-        "this_is_a_free": "This is a free form"
+        "accept_payments_via_stripe": "通过 Stripe 接受付款",
+        "add_your_logo": "添加您的徽标？",
+        "aggregated_statistics_and_charts": "汇总统计和图表",
+        "all_questions_on_one": "所有问题在一个可滚动的页面上",
+        "choose_how_labels_should": "选择标签与输入对齐的方式。",
+        "choose_the_best_experience": "为您的受访者选择最佳体验",
+        "choose_your_font": "选择您的字体",
+        "choose_your_preferred_response": "选择您首选的响应查看格式",
+        "choose_your_theme": "选择您的主题",
+        "clean_and_bright_interface": "干净明亮的界面",
+        "connect_to_external_services": "连接到外部服务？",
+        "control_how_much_breathing": "控制每个字段使用的空白空间。",
+        "display_your_brand_logo": "在表单顶部显示您的品牌徽标",
+        "do_you_need_to": "您需要收集付款吗？",
+        "easy_on_the_eyes": "眼睛舒适",
+        "enable_payment_processing_for": "为您的表单启用付款处理",
+        "friendly_and_approachable": "友好且易于接近",
+        "how_do_you_want": "您希望如何查看响应？",
+        "how_should_users_navigate": "用户应该如何导航？",
+        "how_should_your_form": "您的表单应该如何呈现给受访者？",
+        "integrate_with_other_tools": "与其他工具集成",
+        "just_store_responses": "仅存储响应",
+        "keep_it_simple": "保持简单",
+        "labels_sit_above_each": "标签位于每个字段上方，以最大限度地提高清晰度。",
+        "match_system_preference": "匹配系统偏好",
+        "modern_and_clean": "现代且干净",
+        "one_question_at_a": "一次一个问题，带有下一步/上一步",
+        "place_labels_beside_inputs": "将标签放置在输入旁边，以实现更紧凑的布局。",
+        "professional_and_readable": "专业且易读",
+        "reduce_spacing_to_fit": "减少间距以适应更多字段在屏幕上。",
+        "review_responses_one_at": "逐个查看响应",
+        "select_the_typography_for": "选择您的表单的排版",
+        "send_form_submissions_to": "将表单提交发送到您的 webhook 端点",
+        "show_logo_in_form": "在表单头部显示徽标",
+        "spreadsheet_like_view_of": "类似电子表格的所有响应视图",
+        "standard_spacing_that_balances": "标准间距，平衡可读性和空间。",
+        "this_is_a_free": "这是一个免费表单"
       }
     },
     "FormWizard": {
       "heading": {
-        "create_your_form": "Create Your Form",
-        "review_your_form": "Review Your Form"
+        "create_your_form": "创建您的表单",
+        "review_your_form": "审核您的表单"
       },
       "text": {
-        "ai_generation_failed_using": "AI generation failed, using fallback:",
-        "ai_is_building_your": "AI is building your form structure",
-        "create_your_account": "Create your account",
-        "describe_what_you_want": "Describe what you want to create in plain English",
-        "failed_to_generate_form": "Failed to generate form:",
-        "get_in_touch": "get in touch",
-        "get_in_touch_with": "Get in touch with us",
-        "help_us_improve_by": "Help us improve by sharing your feedback",
-        "how_can_we_help": "How can we help you?",
-        "how_would_you_rate": "How would you rate your overall experience?",
-        "product_and_shipping_info": "Product and shipping info",
-        "rating_and_comments": "Rating and comments",
-        "review_and_customize_your": "Review and customize your form",
-        "user_signup_details": "User signup details",
-        "what_could_we_improve": "What could we improve?",
-        "what_did_you_like": "What did you like most?",
-        "would_you_recommend_us": "Would you recommend us to others?"
+        "ai_generation_failed_using": "AI 生成失败，使用后备：",
+        "ai_is_building_your": "AI 正在构建您的表单结构",
+        "create_your_account": "创建您的帐户",
+        "describe_what_you_want": "用简单的英语描述您想要创建的内容",
+        "failed_to_generate_form": "生成表单失败：",
+        "get_in_touch": "联系",
+        "get_in_touch_with": "与我们联系",
+        "help_us_improve_by": "通过分享您的反馈帮助我们改进",
+        "how_can_we_help": "我们能如何帮助您？",
+        "how_would_you_rate": "您如何评价您的整体体验？",
+        "product_and_shipping_info": "产品和运输信息",
+        "rating_and_comments": "评分和评论",
+        "review_and_customize_your": "审查并自定义您的表单",
+        "user_signup_details": "用户注册详情",
+        "what_could_we_improve": "我们可以改进什么？",
+        "what_did_you_like": "您最喜欢什么？",
+        "would_you_recommend_us": "您会向其他人推荐我们吗？"
       }
     },
     "Player": {
       "ClassicPlayer": {
         "text": {
-          "complete_required_fields": "Complete required fields",
-          "please_complete_required_fields": "Please complete required fields",
-          "ready_to_submit": "Ready to submit",
-          "required_fields_are_marked": "Required fields are marked with *",
-          "review_your_responses_before": "Review your responses before submitting."
+          "complete_required_fields": "填写必填字段",
+          "please_complete_required_fields": "请填写必填字段",
+          "ready_to_submit": "准备提交",
+          "required_fields_are_marked": "必填字段用 * 标记",
+          "review_your_responses_before": "在提交之前审查您的回答。"
         }
       },
       "FocusPlayer": {
         "text": {
-          "almost_there": "Almost there!",
-          "great_progress": "Great progress!",
-          "let_s_get_started": "Let’s get started",
-          "provide_your_answer_and": "Provide your answer and use Next when you are ready.",
-          "you_can_skip_this": "You can skip this question or come back later.",
-          "you_re_doing_well": "You’re doing well"
+          "almost_there": "快到了！",
+          "great_progress": "进展很好！",
+          "let_s_get_started": "让我们开始吧",
+          "provide_your_answer_and": "提供您的答案，准备好后使用“下一步”。",
+          "you_can_skip_this": "您可以跳过这个问题或稍后再回来。",
+          "you_re_doing_well": "您做得很好"
         }
       },
       "PaymentStep": {
         "button": {
-          "pay_submit": "Pay & Submit"
+          "pay_submit": "支付并提交"
         },
         "text": {
-          "creating_payment_intent": "Creating payment intent…",
-          "failed_to_mount_stripe": "Failed to mount Stripe payment element",
-          "payment_confirmation_failed": "Payment confirmation failed.",
-          "payment_successful": "Payment successful.",
-          "preparing_payment_form": "Preparing payment form…",
-          "unable_to_initialize_stripe": "Unable to initialize Stripe."
+          "creating_payment_intent": "正在创建支付意图…",
+          "failed_to_mount_stripe": "无法挂载 Stripe 支付元素",
+          "payment_confirmation_failed": "支付确认失败。",
+          "payment_successful": "支付成功。",
+          "preparing_payment_form": "正在准备支付表单…",
+          "unable_to_initialize_stripe": "无法初始化 Stripe。"
         }
       },
       "QuestionRenderer": {
         "text": {
-          "enter_a_valid_email": "Enter a valid email address",
-          "enter_a_valid_phone": "Enter a valid phone number",
-          "enter_a_valid_url": "Enter a valid URL",
-          "this_field_is_required": "This field is required",
-          "yes_no": "Yes / No"
+          "enter_a_valid_email": "输入有效的电子邮件地址",
+          "enter_a_valid_phone": "输入有效的电话号码",
+          "enter_a_valid_url": "输入有效的 URL",
+          "this_field_is_required": "此字段为必填项",
+          "yes_no": "是 / 否"
         }
       }
     },
     "QuickView": {
       "aria_label": {
-        "delete_draft_form": "Delete draft form"
+        "delete_draft_form": "删除草稿表单"
       }
     },
     "WebhooksPanel": {
       "text": {
-        "failed_to_load_webhooks": "Failed to load webhooks",
-        "failed_to_send_sample": "Failed to send sample.",
-        "sample_event_sent_successfully": "Sample event sent successfully."
+        "failed_to_load_webhooks": "加载 Webhook 失败",
+        "failed_to_send_sample": "发送示例失败。",
+        "sample_event_sent_successfully": "示例事件发送成功。"
       }
     }
   },
   "ImagePicker": {
     "text": {
-      "failed_to_load_media": "Failed to load media files:"
+      "failed_to_load_media": "加载媒体文件失败："
     }
   },
   "Layout": {
     "WorkspaceTopBar": {
       "aria_label": {
-        "up_one_level": "Up one level"
+        "up_one_level": "上一级"
       },
       "title": {
-        "up_one_level": "Up one level"
+        "up_one_level": "上一级"
       }
     }
   },
   "Media": {
     "MediaViewer": {
       "text": {
-        "your_browser_does_not": "Your browser does not support the video tag.",
-        "your_browser_does_not_2": "Your browser does not support the audio tag."
+        "your_browser_does_not": "您的浏览器不支持视频标签。",
+        "your_browser_does_not_2": "您的浏览器不支持音频标签。"
       }
     }
   },
   "Menu": {
     "SheetMenu": {
       "text": {
-        "funiver_facade_api_not": "FUniver facade API not available",
-        "no_active_range_selected": "No active range selected",
-        "no_misspelled_words_found": "No misspelled words found."
+        "funiver_facade_api_not": "FUniver facade API 不可用",
+        "no_active_range_selected": "未选择活动范围",
+        "no_misspelled_words_found": "未找到拼写错误的单词。"
       }
     },
     "UnifiedMenubar": {
       "text": {
-        "failed_to_create_new": "Failed to create new file from menubar:"
+        "failed_to_create_new": "从菜单栏创建新文件失败："
       }
     }
   },
   "ShareCard": {
     "button": {
-      "add_people_by_email": "Add people by email"
+      "add_people_by_email": "通过电子邮件添加人员"
     },
     "placeholder": {
-      "enter_email_address": "Enter email address"
+      "enter_email_address": "请输入电子邮件地址"
     },
     "text": {
-      "done_button_clicked_emitting": "Done button clicked - emitting close event",
-      "editors_will_be_able": "Editors will be able to change permissions and share this with others",
-      "people_in_your_organization": "People in your organization",
-      "share_the_link_with": "Share the link with anyone to give them access.",
-      "this_may_appear_in": "This may appear in search results and be visible to anyone."
+      "done_button_clicked_emitting": "完成按钮已点击 - 发出关闭事件",
+      "editors_will_be_able": "编辑者将能够更改权限并与他人分享",
+      "people_in_your_organization": "您组织中的人员",
+      "share_the_link_with": "与任何人分享链接以给予他们访问权限。",
+      "this_may_appear_in": "这可能会出现在搜索结果中，并对任何人可见。"
     }
   },
   "Slides": {
     "SlideCanvas": {
       "text": {
         "dm_serif_display": "DM Serif Display",
-        "failed_to_generate_slide": "Failed to generate slide thumbnail",
+        "failed_to_generate_slide": "生成幻灯片缩略图失败",
         "source_sans_3": "Source Sans 3"
       }
     },
     "SlidesInspector": {
       "text": {
-        "combine_smart_snapping_with": "Combine smart snapping with grid overlays for pixel-perfect layouts.",
-        "use_alignment_guides_to": "Use alignment guides to evenly distribute shapes.",
-        "while_dragging_to_constrain": "while dragging to constrain axis."
+        "combine_smart_snapping_with": "将智能对齐与网格叠加结合以实现像素完美的布局。",
+        "use_alignment_guides_to": "使用对齐指南均匀分配形状。",
+        "while_dragging_to_constrain": "在拖动时约束轴。"
       }
     },
     "SlidesTitleBar": {
       "text": {
-        "all_changes_saved": "All changes saved",
-        "click_to_save_now": "Click to save now",
-        "last_saved_time": "Last saved time",
-        "saved_just_now": "Saved just now"
+        "all_changes_saved": "所有更改已保存",
+        "click_to_save_now": "点击立即保存",
+        "last_saved_time": "最后保存时间",
+        "saved_just_now": "刚刚保存"
       }
     },
     "SlidesToolbar": {
       "text": {
-        "use_smart_snapping_to": "Use smart snapping to align shapes to center and equal spacing."
+        "use_smart_snapping_to": "使用智能对齐将形状对齐到中心并保持间距相等。"
       },
       "title": {
-        "export_as_pdf": "Export as PDF",
-        "export_as_pptx": "Export as PPTX"
+        "export_as_pdf": "导出为 PDF",
+        "export_as_pptx": "导出为 PPTX"
       }
     }
   },
   "UniverSheet": {
     "text": {
-      "container_element_is_missing": "Container element is missing",
-      "error_cleaning_collaboration_handler": "Error cleaning collaboration handler:",
-      "error_destroying_univer": "Error destroying Univer:",
-      "error_getting_data": "Error getting data:",
-      "error_initializing_univer": "Error initializing Univer:",
-      "error_setting_data": "Error setting data:",
-      "error_setting_name": "Error setting name:",
-      "error_setting_up_univer": "Error setting up Univer:",
-      "unable_to_serialize_command": "Unable to serialize command params for broadcast, skipping command.",
-      "workbook_is_not_initialized": "Workbook is not initialized"
+      "container_element_is_missing": "缺少容器元素",
+      "error_cleaning_collaboration_handler": "清理协作处理程序时出错：",
+      "error_destroying_univer": "销毁 Univer 时出错：",
+      "error_getting_data": "获取数据时出错：",
+      "error_initializing_univer": "初始化 Univer 时出错：",
+      "error_setting_data": "设置数据时出错：",
+      "error_setting_name": "设置名称时出错：",
+      "error_setting_up_univer": "设置 Univer 时出错：",
+      "unable_to_serialize_command": "无法序列化命令参数以进行广播，跳过命令。",
+      "workbook_is_not_initialized": "工作簿尚未初始化"
     }
   }
 }

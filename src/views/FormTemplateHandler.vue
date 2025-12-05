@@ -8,6 +8,7 @@
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFormStore } from '@/store/forms'
+import { t } from '@/i18n';
 
 const route = useRoute()
 const router = useRouter()
@@ -28,7 +29,7 @@ async function createFromTemplate() {
   } else if (key.includes('signup')) {
     payload = {
       title: 'Signup Form',
-      description: 'Collect user signups',
+      description: t('Views.FormTemplateHandler.text.collect_user_signups'),
       definition: {
         questions: [
           { id: 'q1', type: 'short_text', label: 'Full name', required: true },
@@ -40,7 +41,7 @@ async function createFromTemplate() {
   } else if (key.includes('survey')) {
     payload = {
       title: 'Survey Form',
-      description: 'Quick feedback survey',
+      description: t('Views.FormTemplateHandler.text.quick_feedback_survey'),
       definition: {
         questions: [
           { id: 'q1', type: 'rating', label: 'How satisfied are you?', required: true, scale: 5 },

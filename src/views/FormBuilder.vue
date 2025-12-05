@@ -1245,6 +1245,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { t } from '@/i18n';
 
 const route = useRoute();
 const router = useRouter();
@@ -2477,7 +2478,7 @@ const handlePublish = async () => {
     }
   } catch (error) {
     console.error("Failed to publish form:", error);
-    const fallbackMessage = "Failed to publish form";
+    const fallbackMessage = t('Views.FormBuilder.text.failed_to_publish_form_2');
     if (
       error &&
       typeof error === "object" &&

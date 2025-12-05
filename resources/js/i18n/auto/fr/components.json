@@ -1,16 +1,16 @@
 {
   "FileItem": {
     "text": {
-      "error_deleting_file": "Error deleting file:",
-      "error_moving_file": "Error moving file:",
-      "error_renaming_file": "Error renaming file:"
+      "error_deleting_file": "Erreur lors de la suppression du fichier :",
+      "error_moving_file": "Erreur lors du déplacement du fichier :",
+      "error_renaming_file": "Erreur lors du renommage du fichier :"
     }
   },
   "FileUploader": {
     "text": {
-      "all_file_types": "all file types",
+      "all_file_types": "tous les types de fichiers",
       "failed_to_create_root": "Échec de la création du dossier racine",
-      "file_already_selected": "File already selected",
+      "file_already_selected": "Fichier déjà sélectionné",
       "file_type_not_allowed": "Type de fichier non autorisé"
     }
   },
@@ -18,341 +18,341 @@
     "Blocks": {
       "BlockEditor": {
         "text": {
-          "for_commands_or_click": "for commands or click the button above"
+          "for_commands_or_click": "pour les commandes ou cliquez sur le bouton ci-dessus"
         }
       },
       "BlockItem": {
         "text": {
-          "choose_one_option": "Choose one option",
-          "rate_from_1_to": "Rate from 1 to 5",
-          "select_a_date": "Select a date",
-          "select_a_time": "Select a time",
-          "select_all_that_apply": "Select all that apply",
-          "select_from_dropdown": "Select from dropdown",
-          "short_answer_text": "Short answer text",
-          "slide_to_select": "Slide to select",
-          "upload_a_file": "Upload a file",
-          "yes_or_no": "Yes or No?"
+          "choose_one_option": "Choisissez une option",
+          "rate_from_1_to": "Évaluez de 1 à 5",
+          "select_a_date": "Sélectionnez une date",
+          "select_a_time": "Sélectionnez une heure",
+          "select_all_that_apply": "Sélectionnez tout ce qui s'applique",
+          "select_from_dropdown": "Sélectionnez dans le menu déroulant",
+          "short_answer_text": "Texte de réponse courte",
+          "slide_to_select": "Faites glisser pour sélectionner",
+          "upload_a_file": "Téléchargez un fichier",
+          "yes_or_no": "Oui ou Non ?"
         },
         "title": {
-          "add_block_below": "Add block below",
-          "drag_to_reorder": "Drag to reorder"
+          "add_block_below": "Ajouter un bloc en dessous",
+          "drag_to_reorder": "Faites glisser pour réorganiser"
         }
       },
       "BlockItemNew": {
         "text": {
-          "short_answer_text": "Short answer text"
+          "short_answer_text": "Texte de réponse courte"
         },
         "title": {
-          "drag_to_reorder": "Drag to reorder"
+          "drag_to_reorder": "Faites glisser pour réorganiser"
         }
       },
       "Types": {
         "text": {
-          "email_address_input": "Email address input",
-          "multi_line_text_area": "Multi-line text area",
-          "multiple_selections_allowed": "Multiple selections allowed",
-          "numeric_slider_input": "Numeric slider input",
-          "phone_number_input": "Phone number input",
-          "single_line_text_input": "Single line text input",
-          "single_selection_from_options": "Single selection from options",
-          "star_or_number_rating": "Star or number rating"
+          "email_address_input": "Champ d'adresse e-mail",
+          "multi_line_text_area": "Zone de texte multi-lignes",
+          "multiple_selections_allowed": "Plusieurs sélections autorisées",
+          "numeric_slider_input": "Champ de curseur numérique",
+          "phone_number_input": "Champ de numéro de téléphone",
+          "single_line_text_input": "Champ de texte sur une seule ligne",
+          "single_selection_from_options": "Sélection unique parmi les options",
+          "star_or_number_rating": "Avis par étoiles ou par nombre"
         }
       }
     },
     "DocsTitleBar": {
       "text": {
-        "click_to_save_now": "Click to save now",
-        "could_not_restore_cursor": "Could not restore cursor position:",
-        "failed_to_load_version": "Failed to load version history:",
-        "last_saved_time": "Last saved time",
-        "loading_version_for": "loading version for",
-        "saved_just_now": "Saved just now"
+        "click_to_save_now": "Cliquez pour enregistrer maintenant",
+        "could_not_restore_cursor": "N'a pas pu restaurer la position du curseur :",
+        "failed_to_load_version": "Échec du chargement de l'historique des versions :",
+        "last_saved_time": "Dernière heure d'enregistrement",
+        "loading_version_for": "chargement de la version pour",
+        "saved_just_now": "Enregistré à l'instant"
       }
     },
     "DocsToolbar": {
       "heading": {
-        "create_new_document": "Create New Document"
+        "create_new_document": "Créer un nouveau document"
       },
       "label": {
-        "show_page_border": "Show Page Border",
-        "show_page_numbers": "Show Page Numbers",
-        "show_page_numbers_when": "Show page numbers when printing",
-        "show_page_shadow": "Show Page Shadow"
+        "show_page_border": "Afficher la bordure de la page",
+        "show_page_numbers": "Afficher les numéros de page",
+        "show_page_numbers_when": "Afficher les numéros de page lors de l'impression",
+        "show_page_shadow": "Afficher l'ombre de la page"
       },
       "text": {
         "source_sans_3": "Source Sans 3",
         "times_new_roman": "Times New Roman"
       },
       "title": {
-        "comments_chat": "Comments & Chat",
-        "insert_edit_link": "Insert/Edit Link",
-        "line_paragraph_spacing": "Line & paragraph spacing"
+        "comments_chat": "Commentaires & Chat",
+        "insert_edit_link": "Insérer/Modifier le lien",
+        "line_paragraph_spacing": "Interligne et espacement des paragraphes"
       }
     },
     "Editor": {
       "placeholder": {
-        "select_jump_to_field": "Select jump to field"
+        "select_jump_to_field": "Sélectionnez le champ de saut"
       },
       "text": {
-        "error_fetching_form": "Error fetching form:"
+        "error_fetching_form": "Erreur lors de la récupération du formulaire :"
       }
     },
     "Editors": {
       "FileEditor": {
         "label": {
-          "allow_multiple_files": "Allow Multiple Files:",
-          "allowed_file_types": "Allowed File Types:"
+          "allow_multiple_files": "Autoriser plusieurs fichiers :",
+          "allowed_file_types": "Tyypes de fichiers autorisés :"
         }
       },
       "LogicEditor": {
         "placeholder": {
-          "question_id_to_jump": "Question ID to jump to"
+          "question_id_to_jump": "Identifiant de la question à sauter"
         }
       },
       "RatingEditor": {
         "label": {
-          "allow_half_ratings": "Allow Half Ratings:"
+          "allow_half_ratings": "Autoriser les évaluations à moitié :"
         }
       }
     },
     "Fields": {
       "TextQuestion": {
         "text": {
-          "invalid_url_format": "Invalid URL format"
+          "invalid_url_format": "Format d'URL invalide"
         }
       }
     },
     "FormConfigWizard": {
       "text": {
-        "all_questions_on_one": "All questions on one scrollable page",
-        "clean_header_with_just": "Clean header with just the title",
-        "one_question_at_a": "One question at a time with next/previous buttons",
-        "review_responses_one_at": "Review responses one at a time",
-        "see_aggregated_statistics_and": "See aggregated statistics and charts",
-        "step_of_3": "Step of 3",
-        "view_all_responses_in": "View all responses in a spreadsheet-like table"
+        "all_questions_on_one": "Toutes les questions sur une page défilable",
+        "clean_header_with_just": "En-tête épuré avec juste le titre",
+        "one_question_at_a": "Une question à la fois avec des boutons suivant/précédent",
+        "review_responses_one_at": "Examiner les réponses une à la fois",
+        "see_aggregated_statistics_and": "Voir les statistiques et graphiques agrégés",
+        "step_of_3": "Étape de 3",
+        "view_all_responses_in": "Voir toutes les réponses dans un tableau semblable à une feuille de calcul"
       }
     },
     "FormConfigWizardSimple": {
       "text": {
-        "accept_payments_via_stripe": "Accept payments via Stripe",
-        "add_your_logo": "Add Your Logo?",
-        "aggregated_statistics_and_charts": "Aggregated statistics and charts",
-        "all_questions_on_one": "All questions on one scrollable page",
-        "choose_how_labels_should": "Choose how labels should align with inputs.",
-        "choose_the_best_experience": "Choose the best experience for your respondents",
-        "choose_your_font": "Choose Your Font",
-        "choose_your_preferred_response": "Choose your preferred response viewing format",
-        "choose_your_theme": "Choose Your Theme",
-        "clean_and_bright_interface": "Clean and bright interface",
-        "connect_to_external_services": "Connect to External Services?",
-        "control_how_much_breathing": "Control how much breathing room each field uses.",
-        "display_your_brand_logo": "Display your brand logo at the top of the form",
-        "do_you_need_to": "Do You Need to Collect Payments?",
-        "easy_on_the_eyes": "Easy on the eyes",
-        "enable_payment_processing_for": "Enable payment processing for your form",
-        "friendly_and_approachable": "Friendly and approachable",
-        "how_do_you_want": "How Do You Want to View Responses?",
-        "how_should_users_navigate": "How Should Users Navigate?",
-        "how_should_your_form": "How should your form look to respondents?",
-        "integrate_with_other_tools": "Integrate with other tools",
-        "just_store_responses": "Just store responses",
-        "keep_it_simple": "Keep it simple",
-        "labels_sit_above_each": "Labels sit above each field for maximum clarity.",
-        "match_system_preference": "Match system preference",
-        "modern_and_clean": "Modern and clean",
-        "one_question_at_a": "One question at a time with next/previous",
-        "place_labels_beside_inputs": "Place labels beside inputs for a tighter layout.",
-        "professional_and_readable": "Professional and readable",
-        "reduce_spacing_to_fit": "Reduce spacing to fit more fields on screen.",
-        "review_responses_one_at": "Review responses one at a time",
-        "select_the_typography_for": "Select the typography for your form",
-        "send_form_submissions_to": "Send form submissions to your webhook endpoint",
-        "show_logo_in_form": "Show logo in form header",
-        "spreadsheet_like_view_of": "Spreadsheet-like view of all responses",
-        "standard_spacing_that_balances": "Standard spacing that balances readability and space.",
-        "this_is_a_free": "This is a free form"
+        "accept_payments_via_stripe": "Accepter les paiements via Stripe",
+        "add_your_logo": "Ajouter votre logo ?",
+        "aggregated_statistics_and_charts": "Statistiques et graphiques agrégés",
+        "all_questions_on_one": "Toutes les questions sur une page défilable",
+        "choose_how_labels_should": "Choisissez comment les étiquettes doivent s'aligner avec les entrées.",
+        "choose_the_best_experience": "Choisissez la meilleure expérience pour vos répondants",
+        "choose_your_font": "Choisissez votre police",
+        "choose_your_preferred_response": "Choisissez votre format de visualisation des réponses préféré",
+        "choose_your_theme": "Choisissez votre thème",
+        "clean_and_bright_interface": "Interface propre et lumineuse",
+        "connect_to_external_services": "Se connecter à des services externes ?",
+        "control_how_much_breathing": "Contrôlez combien d'espace chaque champ utilise.",
+        "display_your_brand_logo": "Affichez votre logo de marque en haut du formulaire",
+        "do_you_need_to": "Avez-vous besoin de collecter des paiements ?",
+        "easy_on_the_eyes": "Agréable pour les yeux",
+        "enable_payment_processing_for": "Activer le traitement des paiements pour votre formulaire",
+        "friendly_and_approachable": "Amiable et accessible",
+        "how_do_you_want": "Comment souhaitez-vous visualiser les réponses ?",
+        "how_should_users_navigate": "Comment les utilisateurs devraient-ils naviguer ?",
+        "how_should_your_form": "Comment votre formulaire devrait-il apparaître aux répondants ?",
+        "integrate_with_other_tools": "Intégrer avec d'autres outils",
+        "just_store_responses": "Juste stocker les réponses",
+        "keep_it_simple": "Gardez-le simple",
+        "labels_sit_above_each": "Les étiquettes se trouvent au-dessus de chaque champ pour une clarté maximale.",
+        "match_system_preference": "Correspondre à la préférence système",
+        "modern_and_clean": "Moderne et propre",
+        "one_question_at_a": "Une question à la fois avec suivant/précédent",
+        "place_labels_beside_inputs": "Placer les étiquettes à côté des entrées pour un agencement plus compact.",
+        "professional_and_readable": "Professionnel et lisible",
+        "reduce_spacing_to_fit": "Réduire l'espacement pour faire tenir plus de champs à l'écran.",
+        "review_responses_one_at": "Examiner les réponses une à la fois",
+        "select_the_typography_for": "Sélectionnez la typographie pour votre formulaire",
+        "send_form_submissions_to": "Envoyer les soumissions de formulaire à votre point de terminaison webhook",
+        "show_logo_in_form": "Afficher le logo dans l'en-tête du formulaire",
+        "spreadsheet_like_view_of": "Vue semblable à une feuille de calcul de toutes les réponses",
+        "standard_spacing_that_balances": "Spacing standard qui équilibre lisibilité et espace.",
+        "this_is_a_free": "Ceci est un formulaire gratuit"
       }
     },
     "FormWizard": {
       "heading": {
-        "create_your_form": "Create Your Form",
-        "review_your_form": "Review Your Form"
+        "create_your_form": "Créez votre formulaire",
+        "review_your_form": "Examinez votre formulaire"
       },
       "text": {
-        "ai_generation_failed_using": "AI generation failed, using fallback:",
-        "ai_is_building_your": "AI is building your form structure",
-        "create_your_account": "Create your account",
-        "describe_what_you_want": "Describe what you want to create in plain English",
-        "failed_to_generate_form": "Failed to generate form:",
-        "get_in_touch": "get in touch",
-        "get_in_touch_with": "Get in touch with us",
-        "help_us_improve_by": "Help us improve by sharing your feedback",
-        "how_can_we_help": "How can we help you?",
-        "how_would_you_rate": "How would you rate your overall experience?",
-        "product_and_shipping_info": "Product and shipping info",
-        "rating_and_comments": "Rating and comments",
-        "review_and_customize_your": "Review and customize your form",
-        "user_signup_details": "User signup details",
-        "what_could_we_improve": "What could we improve?",
-        "what_did_you_like": "What did you like most?",
-        "would_you_recommend_us": "Would you recommend us to others?"
+        "ai_generation_failed_using": "Génération AI échouée, utilisation de la solution de repli :",
+        "ai_is_building_your": "L'IA construit la structure de votre formulaire",
+        "create_your_account": "Créez votre compte",
+        "describe_what_you_want": "Décrivez ce que vous souhaitez créer en anglais simple",
+        "failed_to_generate_form": "Échec de la génération du formulaire :",
+        "get_in_touch": "contactez-nous",
+        "get_in_touch_with": "Contactez-nous",
+        "help_us_improve_by": "Aidez-nous à nous améliorer en partageant vos commentaires",
+        "how_can_we_help": "Comment pouvons-nous vous aider ?",
+        "how_would_you_rate": "Comment évalueriez-vous votre expérience globale ?",
+        "product_and_shipping_info": "Informations sur le produit et l'expédition",
+        "rating_and_comments": "Évaluation et commentaires",
+        "review_and_customize_your": "Examinez et personnalisez votre formulaire",
+        "user_signup_details": "Détails d'inscription de l'utilisateur",
+        "what_could_we_improve": "Que pourrions-nous améliorer ?",
+        "what_did_you_like": "Qu'avez-vous le plus aimé ?",
+        "would_you_recommend_us": "Nous recommanderiez-vous à d'autres ?"
       }
     },
     "Player": {
       "ClassicPlayer": {
         "text": {
-          "complete_required_fields": "Complete required fields",
-          "please_complete_required_fields": "Please complete required fields",
-          "ready_to_submit": "Ready to submit",
-          "required_fields_are_marked": "Required fields are marked with *",
-          "review_your_responses_before": "Review your responses before submitting."
+          "complete_required_fields": "Complétez les champs obligatoires",
+          "please_complete_required_fields": "Veuillez compléter les champs obligatoires",
+          "ready_to_submit": "Prêt à soumettre",
+          "required_fields_are_marked": "Les champs obligatoires sont marqués d'un *",
+          "review_your_responses_before": "Examinez vos réponses avant de soumettre."
         }
       },
       "FocusPlayer": {
         "text": {
-          "almost_there": "Almost there!",
-          "great_progress": "Great progress!",
-          "let_s_get_started": "Let’s get started",
-          "provide_your_answer_and": "Provide your answer and use Next when you are ready.",
-          "you_can_skip_this": "You can skip this question or come back later.",
-          "you_re_doing_well": "You’re doing well"
+          "almost_there": "Vous y êtes presque !",
+          "great_progress": "Très bon progrès !",
+          "let_s_get_started": "Commençons",
+          "provide_your_answer_and": "Fournissez votre réponse et utilisez Suivant lorsque vous êtes prêt.",
+          "you_can_skip_this": "Vous pouvez ignorer cette question ou revenir plus tard.",
+          "you_re_doing_well": "Vous faites du bon travail"
         }
       },
       "PaymentStep": {
         "button": {
-          "pay_submit": "Pay & Submit"
+          "pay_submit": "Payer et soumettre"
         },
         "text": {
-          "creating_payment_intent": "Creating payment intent…",
-          "failed_to_mount_stripe": "Failed to mount Stripe payment element",
-          "payment_confirmation_failed": "Payment confirmation failed.",
-          "payment_successful": "Payment successful.",
-          "preparing_payment_form": "Preparing payment form…",
-          "unable_to_initialize_stripe": "Unable to initialize Stripe."
+          "creating_payment_intent": "Création de l'intention de paiement…",
+          "failed_to_mount_stripe": "Échec du montage de l'élément de paiement Stripe",
+          "payment_confirmation_failed": "Échec de la confirmation du paiement.",
+          "payment_successful": "Paiement réussi.",
+          "preparing_payment_form": "Préparation du formulaire de paiement…",
+          "unable_to_initialize_stripe": "Impossible d'initialiser Stripe."
         }
       },
       "QuestionRenderer": {
         "text": {
-          "enter_a_valid_email": "Enter a valid email address",
-          "enter_a_valid_phone": "Enter a valid phone number",
-          "enter_a_valid_url": "Enter a valid URL",
-          "this_field_is_required": "This field is required",
-          "yes_no": "Yes / No"
+          "enter_a_valid_email": "Entrez une adresse e-mail valide",
+          "enter_a_valid_phone": "Entrez un numéro de téléphone valide",
+          "enter_a_valid_url": "Entrez une URL valide",
+          "this_field_is_required": "Ce champ est requis",
+          "yes_no": "Oui / Non"
         }
       }
     },
     "QuickView": {
       "aria_label": {
-        "delete_draft_form": "Delete draft form"
+        "delete_draft_form": "Supprimer le formulaire brouillon"
       }
     },
     "WebhooksPanel": {
       "text": {
-        "failed_to_load_webhooks": "Failed to load webhooks",
-        "failed_to_send_sample": "Failed to send sample.",
-        "sample_event_sent_successfully": "Sample event sent successfully."
+        "failed_to_load_webhooks": "Échec du chargement des webhooks",
+        "failed_to_send_sample": "Échec de l'envoi de l'échantillon.",
+        "sample_event_sent_successfully": "Événement d'échantillon envoyé avec succès."
       }
     }
   },
   "ImagePicker": {
     "text": {
-      "failed_to_load_media": "Failed to load media files:"
+      "failed_to_load_media": "Échec du chargement des fichiers multimédias :"
     }
   },
   "Layout": {
     "WorkspaceTopBar": {
       "aria_label": {
-        "up_one_level": "Up one level"
+        "up_one_level": "Monter d'un niveau"
       },
       "title": {
-        "up_one_level": "Up one level"
+        "up_one_level": "Monter d'un niveau"
       }
     }
   },
   "Media": {
     "MediaViewer": {
       "text": {
-        "your_browser_does_not": "Your browser does not support the video tag.",
-        "your_browser_does_not_2": "Your browser does not support the audio tag."
+        "your_browser_does_not": "Votre navigateur ne prend pas en charge la balise vidéo.",
+        "your_browser_does_not_2": "Votre navigateur ne prend pas en charge la balise audio."
       }
     }
   },
   "Menu": {
     "SheetMenu": {
       "text": {
-        "funiver_facade_api_not": "FUniver facade API not available",
-        "no_active_range_selected": "No active range selected",
-        "no_misspelled_words_found": "No misspelled words found."
+        "funiver_facade_api_not": "API de façade FUniver non disponible",
+        "no_active_range_selected": "Aucune plage active sélectionnée",
+        "no_misspelled_words_found": "Aucun mot mal orthographié trouvé."
       }
     },
     "UnifiedMenubar": {
       "text": {
-        "failed_to_create_new": "Failed to create new file from menubar:"
+        "failed_to_create_new": "Échec de la création d'un nouveau fichier à partir de la barre de menu :"
       }
     }
   },
   "ShareCard": {
     "button": {
-      "add_people_by_email": "Add people by email"
+      "add_people_by_email": "Ajouter des personnes par e-mail"
     },
     "placeholder": {
-      "enter_email_address": "Enter email address"
+      "enter_email_address": "Saisissez l'adresse e-mail"
     },
     "text": {
-      "done_button_clicked_emitting": "Done button clicked - emitting close event",
-      "editors_will_be_able": "Editors will be able to change permissions and share this with others",
-      "people_in_your_organization": "People in your organization",
-      "share_the_link_with": "Share the link with anyone to give them access.",
-      "this_may_appear_in": "This may appear in search results and be visible to anyone."
+      "done_button_clicked_emitting": "Bouton terminé cliqué - émission de l'événement de fermeture",
+      "editors_will_be_able": "Les éditeurs pourront changer les autorisations et partager cela avec d'autres",
+      "people_in_your_organization": "Personnes dans votre organisation",
+      "share_the_link_with": "Partagez le lien avec quiconque pour leur donner accès.",
+      "this_may_appear_in": "Cela peut apparaître dans les résultats de recherche et être visible par tous."
     }
   },
   "Slides": {
     "SlideCanvas": {
       "text": {
         "dm_serif_display": "DM Serif Display",
-        "failed_to_generate_slide": "Failed to generate slide thumbnail",
+        "failed_to_generate_slide": "Échec de la génération de la miniature de la diapositive",
         "source_sans_3": "Source Sans 3"
       }
     },
     "SlidesInspector": {
       "text": {
-        "combine_smart_snapping_with": "Combine smart snapping with grid overlays for pixel-perfect layouts.",
-        "use_alignment_guides_to": "Use alignment guides to evenly distribute shapes.",
-        "while_dragging_to_constrain": "while dragging to constrain axis."
+        "combine_smart_snapping_with": "Combinez l'accrochage intelligent avec des superpositions de grille pour des mises en page parfaites.",
+        "use_alignment_guides_to": "Utilisez des guides d'alignement pour répartir uniformément les formes.",
+        "while_dragging_to_constrain": "pendant le glissement pour contraindre l'axe."
       }
     },
     "SlidesTitleBar": {
       "text": {
-        "all_changes_saved": "All changes saved",
-        "click_to_save_now": "Click to save now",
-        "last_saved_time": "Last saved time",
-        "saved_just_now": "Saved just now"
+        "all_changes_saved": "Toutes les modifications enregistrées",
+        "click_to_save_now": "Cliquez pour enregistrer maintenant",
+        "last_saved_time": "Dernière heure d'enregistrement",
+        "saved_just_now": "Enregistré à l'instant"
       }
     },
     "SlidesToolbar": {
       "text": {
-        "use_smart_snapping_to": "Use smart snapping to align shapes to center and equal spacing."
+        "use_smart_snapping_to": "Utilisez l'accrochage intelligent pour aligner les formes au centre et espacer également."
       },
       "title": {
-        "export_as_pdf": "Export as PDF",
-        "export_as_pptx": "Export as PPTX"
+        "export_as_pdf": "Exporter en PDF",
+        "export_as_pptx": "Exporter en PPTX"
       }
     }
   },
   "UniverSheet": {
     "text": {
-      "container_element_is_missing": "Container element is missing",
-      "error_cleaning_collaboration_handler": "Error cleaning collaboration handler:",
-      "error_destroying_univer": "Error destroying Univer:",
-      "error_getting_data": "Error getting data:",
-      "error_initializing_univer": "Error initializing Univer:",
-      "error_setting_data": "Error setting data:",
-      "error_setting_name": "Error setting name:",
-      "error_setting_up_univer": "Error setting up Univer:",
-      "unable_to_serialize_command": "Unable to serialize command params for broadcast, skipping command.",
-      "workbook_is_not_initialized": "Workbook is not initialized"
+      "container_element_is_missing": "L'élément conteneur est manquant",
+      "error_cleaning_collaboration_handler": "Erreur lors du nettoyage du gestionnaire de collaboration :",
+      "error_destroying_univer": "Erreur lors de la destruction de Univer :",
+      "error_getting_data": "Erreur lors de la récupération des données :",
+      "error_initializing_univer": "Erreur lors de l'initialisation de Univer :",
+      "error_setting_data": "Erreur lors de la définition des données :",
+      "error_setting_name": "Erreur lors de la définition du nom :",
+      "error_setting_up_univer": "Erreur lors de la configuration de Univer :",
+      "unable_to_serialize_command": "Impossible de sérialiser les paramètres de commande pour la diffusion, commande ignorée.",
+      "workbook_is_not_initialized": "Le classeur n'est pas initialisé"
     }
   }
 }

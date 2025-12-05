@@ -169,6 +169,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { UploadCloud, File, X, CheckCircle2, RefreshCw } from "lucide-vue-next";
 import { useFileStore } from "@/store/files";
 import { formatBytes } from "@/utils/lib";
+import { t } from '@/i18n';
 
 interface FileData {
   id: string;
@@ -211,7 +212,7 @@ const FILE_TYPE_CONFIG: Record<
   all: {
     extensions: [],
     mimeTypes: [],
-    description: "all file types",
+    description: t('FileUploader.text.all_file_types'),
     instructions: "Drag and drop files or folders here, or click to browse",
   },
   documents: {

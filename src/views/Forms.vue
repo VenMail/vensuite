@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/toast";
 import { router } from "@/main";
+import { t } from '@/i18n';
 
 const searchValue = ref("");
 const debouncedSearch = ref("");
@@ -121,12 +122,12 @@ const shareHelperItems = computed(() => {
 const copyShareLink = async () => {
   const link = computedShareLink.value;
   if (!link) {
-    toast({ title: "Share link unavailable", description: "Publish the form to get a shareable link.", variant: "destructive" });
+    toast({ title: "Share link unavailable", description: t('Views.Forms.text.publish_the_form_to'), variant: "destructive" });
     return;
   }
   try {
     await navigator.clipboard.writeText(link);
-    toast({ title: "Share link copied", description: "The form link was copied to your clipboard." });
+    toast({ title: "Share link copied", description: t('Views.Forms.text.the_form_link_was') });
   } catch {
     toast({ title: "Copy failed", description: "Unable to copy link. Try copying manually.", variant: "destructive" });
   }
@@ -177,7 +178,7 @@ const ensurePublishedShareSlug = async (form: AppForm) => {
 
 const openShareModal = async (form: AppForm) => {
   if (!form.id) {
-    toast({ title: "Share unavailable", description: "Form is missing an identifier.", variant: "destructive" });
+    toast({ title: "Share unavailable", description: t('Views.Forms.text.form_is_missing_an'), variant: "destructive" });
     return;
   }
 
@@ -195,7 +196,7 @@ const openShareModal = async (form: AppForm) => {
     if (updated?.sharing?.share_slug) {
       shareTarget.value = updated;
       await navigator.clipboard.writeText(`${SHARE_BASE_URL}/share/form/${updated.sharing.share_slug}`);
-      toast({ title: "Form published", description: "Share link copied to clipboard." });
+      toast({ title: "Form published", description: t('Views.Forms.text.share_link_copied_to') });
     } else {
       toast({ title: "Publish incomplete", description: "Unable to generate share slug. Please publish manually.", variant: "destructive" });
     }
