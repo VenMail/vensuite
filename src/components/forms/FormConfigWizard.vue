@@ -172,7 +172,7 @@
             <div class="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
               <div>
                 <label class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  Show Confirmation Page
+                  {{$t('Forms.FormConfigWizard.label.show_confirmation_page')}}
                 </label>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {{$t('Forms.FormConfigWizard.text.display_a_thank_you')}}

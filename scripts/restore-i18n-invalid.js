@@ -139,6 +139,9 @@ async function indexKeyUsage(fullKey) {
   return cachedUsageIndex[fullKey] || [];
 }
 
+// Expose buildUsageIndex for use in collectInvalidBaseKeys
+// (keeping the cached version for backward compatibility)
+
 function isInvalidBaseValue(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return false;
@@ -150,15 +153,36 @@ async function collectInvalidBaseKeys() {
   const baseKeys = await loadBaseLocaleKeys();
   const invalid = [];
 
+  // Build usage index once for all keys (more efficient)
+  const usageIndex = await buildUsageIndex();
+
   for (const [keyPath, info] of baseKeys.entries()) {
     if (!isInvalidBaseValue(info.value)) continue;
-    const usages = await indexKeyUsage(keyPath);
-    invalid.push({
-      keyPath,
-      baseValue: info.value,
-      baseFileRel: info.localeFileRel,
-      usages,
-    });
+    
+    // Check if key is actually used in code
+    const usages = usageIndex[keyPath] || [];
+    
+    // Only mark as invalid if:
+    // 1. The base value is non-translatable AND
+    // 2. The key is NOT used in code (unused keys can be safely removed)
+    // OR the key has very few usages that can be safely restored
+    // 
+    // CRITICAL: If a key is actively being used in code, we should NOT remove it
+    // even if the base value looks non-translatable, because:
+    // - The value might be valid in other locales
+    // - The key might be used correctly in code
+    // - Removing it would break the application
+    if (usages.length === 0) {
+      // Unused key with invalid base value - safe to remove
+      invalid.push({
+        keyPath,
+        baseValue: info.value,
+        baseFileRel: info.localeFileRel,
+        usages: [],
+      });
+    }
+    // Note: We intentionally skip keys that are used in code, even if the base value
+    // looks non-translatable. The user can manually review these cases if needed.
   }
 
   return invalid;

@@ -92,7 +92,7 @@
           title="Font Size"
           @change="onFontSizeChange"
         >
-          <option value="">Auto</option>
+          <option value="">{{$t('Commons.text.auto')}}</option>
           <option v-for="size in fontSizes" :key="size" :value="size">
             {{ size }}
           </option>
@@ -236,7 +236,7 @@
             </DropdownMenuRadioGroup>
             <DropdownMenuSeparator />
             <div class="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              Paragraph spacing
+              {{$t('Commons.text.paragraph_spacing')}}
             </div>
             <DropdownMenuRadioGroup :model-value="selectedParagraphSpacing" @update:model-value="applyParagraphSpacing">
               <DropdownMenuRadioItem

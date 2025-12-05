@@ -333,6 +333,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useFileStore } from "@/store/files";
 import { FileData } from "@/types";
+import { t } from '@/i18n';
 
 const props = defineProps({
   file: {
@@ -421,7 +422,7 @@ const getMediaUrl = computed(() => {
 });
 
 const fileItemClass = computed(() => {
-  const baseClass = "transition-all duration-200 cursor-pointer";
+  const baseClass = t('FileItem.text.transition_all_duration_200');
   const selectedClass = props.isSelected
     ? "ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/20"
     : "hover:bg-gray-50 dark:hover:bg-gray-700";

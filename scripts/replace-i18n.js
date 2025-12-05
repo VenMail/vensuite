@@ -556,8 +556,14 @@ function rewriteVueTemplate(template, namespace, keyMap) {
     function rewritePlainTextFragment(fragment) {
       if (!fragment || !fragment.trim()) return fragment;
 
+      // Idempotency guard: skip if already contains $t() or t() calls
+      if (/\{\{\s*\$?t\s*\(/.test(fragment)) return fragment;
+      
       const cleaned = normalizeText(fragment);
       if (!cleaned) return fragment;
+      
+      // Skip if text looks like a translation key (dot-separated path starting with capital)
+      if (/^[A-Z][a-zA-Z0-9]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(cleaned)) return fragment;
 
       const nsForKey = isCommonShortText(cleaned) ? 'Commons' : namespace;
       let keyId = `${nsForKey}|${kind}|${cleaned}`;
@@ -599,9 +605,17 @@ function rewriteVueTemplate(template, namespace, keyMap) {
         let exprChanged = false;
         const stringRegex = /(['"])([^'"\\]*(?:\\.[^'"\\]*)*)\1/g;
 
-        const rewrittenExpr = expr.replace(stringRegex, (m, quote, body) => {
+        const rewrittenExpr = expr.replace(stringRegex, (m, quote, body, offset) => {
           const candidate = (body || '').trim();
           if (!candidate) return m;
+
+          // Idempotency guard: skip if this string is the argument of an existing $t() or t() call
+          // Check if there's a $t( or t( immediately before this match position
+          const beforeMatch = expr.slice(0, offset);
+          if (/\$?t\(\s*$/.test(beforeMatch)) return m;
+          
+          // Skip if text looks like a translation key (dot-separated path starting with capital)
+          if (/^[A-Z][a-zA-Z0-9]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(candidate)) return m;
 
           const cleaned = normalizeText(candidate);
           if (!cleaned) return m;
@@ -985,6 +999,9 @@ async function processFile(filePath, keyMap) {
       const text = normalizeText(getStringValue(node));
       if (!shouldTranslateText(text, ignorePatterns)) return false;
       
+      // Idempotency guard: skip if text looks like a translation key
+      if (/^[A-Z][a-zA-Z0-9]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(text)) return false;
+      
       const keyId = `${namespace}|${kind}|${text}`;
       const fullKey = keyMap.get(keyId);
       if (!fullKey) return false;
@@ -996,6 +1013,9 @@ async function processFile(filePath, keyMap) {
       const { pattern, placeholders } = buildPatternAndPlaceholders(node, code);
       const text = normalizeText(pattern);
       if (!shouldTranslateText(text, ignorePatterns)) return false;
+      
+      // Idempotency guard: skip if text looks like a translation key
+      if (/^[A-Z][a-zA-Z0-9]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(text)) return false;
       
       const keyId = `${namespace}|${kind}|${text}`;
       const fullKey = keyMap.get(keyId);
@@ -1312,6 +1332,9 @@ function rewriteVueScriptSections(code, namespace, keyMap) {
       if (isStringLiteral(node)) {
         const text = normalizeText(getStringValue(node));
         if (!shouldTranslateText(text, ignorePatterns)) return false;
+        
+        // Idempotency guard: skip if text looks like a translation key
+        if (/^[A-Z][a-zA-Z0-9]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(text)) return false;
 
         const nsForKey = isCommonShortText(text) ? 'Commons' : namespace;
         const keyId = `${nsForKey}|${kind}|${text}`;
@@ -1325,6 +1348,9 @@ function rewriteVueScriptSections(code, namespace, keyMap) {
         const { pattern, placeholders } = buildPatternAndPlaceholders(node, scriptContent);
         const text = normalizeText(pattern);
         if (!shouldTranslateText(text, ignorePatterns)) return false;
+        
+        // Idempotency guard: skip if text looks like a translation key
+        if (/^[A-Z][a-zA-Z0-9]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(text)) return false;
 
         const nsForKey = isCommonShortText(text) ? 'Commons' : namespace;
         const keyId = `${nsForKey}|${kind}|${text}`;

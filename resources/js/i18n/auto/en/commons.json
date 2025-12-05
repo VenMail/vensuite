@@ -16,20 +16,41 @@
       "view_responses": "View responses"
     },
     "button": {
+      "date": "Date",
+      "delete": "Delete",
       "download": "Download",
-      "share_with": "Share with",
+      "file": "File",
+      "name": "Name",
+      "new_document": "New Document",
       "new_spreadsheet": "New Spreadsheet",
+      "open": "Open",
+      "rename": "Rename",
+      "share": "Share",
+      "share_with": "Share with",
+      "size": "Size",
+      "type": "Type",
+      "upload_file": "Upload File",
       "upload_spreadsheet": "Upload Spreadsheet"
     },
     "heading": {
       "document": "Document",
+      "email_required": "Email required",
       "import_csv": "Import CSV",
       "new_document": "New Document",
+      "payment_summary": "Payment summary",
+      "recent_files": "Recent Files",
       "response": "Response #",
       "share": "Share \"\"",
       "title_slide": "Title Slide",
       "untitled_deck": "Untitled Deck",
       "welcome": "Welcome"
+    },
+    "label": {
+      "select_all": "Select All"
+    },
+    "link": {
+      "ai_principles": "AI principles",
+      "cookie_policy": "Cookie policy"
     },
     "placeholder": {
       "all_responses": "All responses",
@@ -52,6 +73,7 @@
       "1_element": "1 element",
       "access_removed": "Access removed",
       "access_settings": "Access settings",
+      "active": "Active",
       "additional_information": "Additional Information",
       "address": "Address",
       "align_center": "Align center",
@@ -73,6 +95,7 @@
       "auth_suc": "Auth suc",
       "authentication_required": "Authentication required",
       "authorization": "Authorization",
+      "auto": "Auto",
       "autosave_failed": "Autosave failed",
       "background_color": "Background color",
       "bill_to": "Bill To:",
@@ -81,6 +104,7 @@
       "blank_document": "Blank Document",
       "blank_form": "Blank Form",
       "blank_spreadsheet": "Blank Spreadsheet",
+      "bold": "Bold",
       "bottom": "Bottom",
       "budget": "Budget",
       "budget_template": "Budget Template",
@@ -90,6 +114,7 @@
       "can_edit": "can edit",
       "can_view": "can view",
       "cancelled": "Cancelled",
+      "center_image": "Center image",
       "changes_saved": "Changes saved",
       "charge_refunded": "Charge refunded",
       "checkbox": "Checkbox",
@@ -154,7 +179,6 @@
       "export": "Export",
       "export_failed": "Export failed:",
       "export_failed_2": "Export failed",
-      "exporting_responses": "Exporting responses…",
       "eye": "Eye",
       "feedback_survey": "Feedback Survey",
       "file": "File",
@@ -178,8 +202,10 @@
       "form_spacing": "Form Spacing",
       "forms": "Forms",
       "freelance": "Freelance",
+      "full": "Full",
       "full_name": "Full Name",
       "georgia": "Georgia",
+      "grid": "Grid",
       "heading_2": "Heading 2",
       "heading_3": "Heading 3",
       "height": "Height",
@@ -200,6 +226,7 @@
       "invalid_token": "invalid token",
       "invoice": "Invoice",
       "invoice_template": "Invoice Template",
+      "italic": "Italic",
       "jetbrains_mono": "JetBrains Mono",
       "joined_document": "Joined document:",
       "joined_sheet": "Joined sheet:",
@@ -217,7 +244,6 @@
       "lilita_one_2": "Lilita One",
       "link_copied": "Link copied",
       "list": "List",
-      "loading_stripe": "Loading Stripe…",
       "login_error": "Login error:",
       "long_answer": "Long Answer",
       "long_text": "Long Text",
@@ -250,6 +276,7 @@
       "numbered_list": "Numbered list",
       "nunito": "Nunito",
       "of_answered": "of answered",
+      "off": "Off",
       "offline": "Offline",
       "one_choice": "one choice",
       "open": "Open",
@@ -268,6 +295,7 @@
       "other_spreadsheets": "Other spreadsheets",
       "page_1": "Page 1",
       "page_of": "Page of",
+      "paragraph_spacing": "Paragraph spacing",
       "payment_confirmed": "Payment confirmed",
       "payment_failed": "Payment failed",
       "payment_status": "Payment Status",
@@ -281,7 +309,6 @@
       "phone_number": "Phone Number",
       "playfair_display": "Playfair Display",
       "poppins": "Poppins",
-      "preparing_spreadsheet": "Preparing spreadsheet…",
       "preview": "Preview",
       "private_access": "Private access",
       "professional_experience": "Professional Experience",
@@ -316,6 +343,7 @@
       "salary": "Salary",
       "saved": "Saved",
       "savings": "Savings",
+      "scroll": "Scroll",
       "search": "Search",
       "segoe_ui": "Segoe UI",
       "select_file": "Select File",
@@ -380,6 +408,7 @@
       "transportation": "Transportation",
       "type": "Type",
       "type_2": ", type:",
+      "underline": "Underline",
       "unknown": "Unknown",
       "unknown_date": "Unknown date",
       "unknown_size": "Unknown size",
@@ -416,10 +445,6 @@
       "your_organization": "your organization",
       "your_organization_2": "Your organization"
     },
-    "link": {
-      "cookie_policy": "Cookie policy",
-      "ai_principles": "AI principles"
-    },
     "title": {
       "add_below": "Add below",
       "add_slide": "Add slide",
@@ -436,6 +461,7 @@
       "blockquote": "Blockquote",
       "bullet_list": "Bullet List",
       "cancel": "Cancel",
+      "center": "Center",
       "choose_template": "Choose template",
       "code_block": "Code Block",
       "create_webhook": "Create webhook",
@@ -495,9 +521,6 @@
     },
     "toast": {
       "changes_saved": "Changes saved"
-    },
-    "label": {
-      "select_all": "Select All"
     }
   }
 }

@@ -116,6 +116,102 @@ const JS_DIRECTIVE_LITERALS = new Set([
 ]);
 
 /**
+ * Debug/logging function names that should be ignored during extraction
+ * Strings passed to these functions are typically debug messages, not user-facing text
+ */
+const LOGGING_FUNCTIONS = new Set([
+  // JavaScript console methods
+  'log', 'error', 'warn', 'info', 'debug', 'trace', 'dir', 'table', 'assert',
+  'count', 'countReset', 'group', 'groupCollapsed', 'groupEnd', 'time', 'timeEnd',
+  'timeLog', 'profile', 'profileEnd',
+]);
+
+const LOGGING_OBJECTS = new Set([
+  // JavaScript
+  'console',
+  // Node.js / Winston / Pino / Bunyan / Log4js
+  'logger', 'log', 'logging', 'winston', 'pino', 'bunyan', 'log4js',
+  // Laravel / PHP
+  'Log', 'Logger',
+  // Python-style
+  'logging',
+  // Misc frameworks
+  'debug', 'debugger', 'tracer', 'reporter',
+]);
+
+/**
+ * Check if a call expression is a logging/debug call
+ * @param {string} calleeName - The full callee name (e.g., "console.log", "Log::error")
+ * @returns {boolean}
+ */
+function isLoggingCall(calleeName) {
+  if (!calleeName || typeof calleeName !== 'string') return false;
+  
+  const normalized = calleeName.trim();
+  
+  // Check for object.method pattern (console.log, logger.info, etc.)
+  const dotMatch = normalized.match(/^([a-zA-Z_$][\w$]*)\s*\.\s*([a-zA-Z_$][\w$]*)$/);
+  if (dotMatch) {
+    const [, obj, method] = dotMatch;
+    if (LOGGING_OBJECTS.has(obj) && LOGGING_FUNCTIONS.has(method)) {
+      return true;
+    }
+    // Also check if object alone is a logger
+    if (LOGGING_OBJECTS.has(obj)) {
+      return true;
+    }
+  }
+  
+  // Check for PHP/Laravel static method pattern (Log::error, Logger::info)
+  const colonMatch = normalized.match(/^([a-zA-Z_][\w]*)::([a-zA-Z_][\w]*)$/);
+  if (colonMatch) {
+    const [, cls, method] = colonMatch;
+    if (LOGGING_OBJECTS.has(cls) && LOGGING_FUNCTIONS.has(method)) {
+      return true;
+    }
+    if (LOGGING_OBJECTS.has(cls)) {
+      return true;
+    }
+  }
+  
+  // Check for standalone logging functions
+  if (LOGGING_FUNCTIONS.has(normalized)) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Regex patterns to detect logging statements in source code lines
+ */
+const LOGGING_LINE_PATTERNS = [
+  // JavaScript console
+  /\bconsole\s*\.\s*(?:log|error|warn|info|debug|trace|dir|table|assert)\s*\(/,
+  // Generic logger object
+  /\blogger\s*\.\s*(?:log|error|warn|info|debug|trace|fatal|verbose|silly)\s*\(/i,
+  /\blogging\s*\.\s*(?:log|error|warn|warning|info|debug|critical|exception)\s*\(/i,
+  // Winston
+  /\bwinston\s*\.\s*(?:log|error|warn|info|debug|verbose|silly)\s*\(/,
+  // Pino
+  /\bpino\s*\.\s*(?:fatal|error|warn|info|debug|trace)\s*\(/,
+  // Log4js
+  /\blog4js\s*\.\s*(?:fatal|error|warn|info|debug|trace|mark)\s*\(/,
+  // Laravel/PHP Log facade
+  /\bLog\s*::\s*(?:emergency|alert|critical|error|warning|notice|info|debug)\s*\(/,
+  /\bLogger\s*::\s*(?:log|error|warning|info|debug)\s*\(/,
+  // Python logging
+  /\blogging\s*\.\s*(?:critical|error|warning|info|debug|exception|log)\s*\(/,
+  // Debug module
+  /\bdebug\s*\(\s*['"][^'"]*['"]\s*\)/,
+  // Print/echo statements (debugging)
+  /\bprint_r\s*\(/,
+  /\bvar_dump\s*\(/,
+  /\bdd\s*\(/,
+  /\bdump\s*\(/,
+];
+
+/**
  * Check if text looks like English text with parentheses (e.g., "Click (here)")
  */
 function isEnglishWithParens(text) {
@@ -623,6 +719,9 @@ module.exports = {
   LIBRARY_IDENTIFIERS,
   JS_DIRECTIVE_LITERALS,
   COMMON_ENGLISH_PATTERNS,
+  LOGGING_FUNCTIONS,
+  LOGGING_OBJECTS,
+  LOGGING_LINE_PATTERNS,
   isJsExpression,
   isVueDirectiveExpression,
   isProgrammingIdentifier,
@@ -630,4 +729,5 @@ module.exports = {
   isEventHandlerValue,
   isEnglishWithParens,
   isLikelyEnglishWord,
+  isLoggingCall,
 };

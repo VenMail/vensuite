@@ -21,7 +21,7 @@
 
       <section class="success-host__details">
         <div class="success-host__card">
-          <h2>Payment summary</h2>
+          <h2>{{$t('Commons.heading.payment_summary')}}</h2>
           <dl>
             <div v-if="paymentStatus">
               <dt>{{$t('Commons.text.status')}}</dt>

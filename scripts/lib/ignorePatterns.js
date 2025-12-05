@@ -115,7 +115,19 @@ function isCssUtilityString(text) {
     .replace(/\{[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*\}/g, ' ');
 
   const tokens = withoutPlaceholders.split(/\s+/).filter(Boolean);
-  if (tokens.length < 3) {
+  
+  // Handle edge case: single token that looks like CSS
+  if (tokens.length === 1) {
+    const token = tokens[0];
+    // Check for Tailwind-style classes: text-gray-200, stroke-current, etc.
+    if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(token) && 
+        (/\d+/.test(token) || /^(text|bg|border|p|m|w|h|flex|grid|items|justify|self|place|gap|space|divide|ring|shadow|opacity|z|top|left|right|bottom|inset|rounded|cursor|overflow|display|position|stroke|fill|animate|transition|transform|scale|rotate|translate|skew|origin|filter|backdrop|brightness|contrast|blur|saturate|hue|current|auto|full|none|start|end|center|stretch|between|around|evenly|primary|secondary|success|danger|warning|info|light|dark|white|black|gray|grey|red|blue|green|yellow|purple|pink|indigo|teal|orange|cyan|amber|lime|emerald|sky|violet|fuchsia|rose)-/i.test(token) || 
+         /^(current|auto|full|none|start|end|center|stretch|between|around|evenly)$/i.test(token))) {
+      return true;
+    }
+  }
+  
+  if (tokens.length < 2) {
     return false;
   }
 
@@ -143,6 +155,9 @@ function isCssUtilityString(text) {
     'overflow',
     'cursor',
     'pointer',
+    'stroke',
+    'current',
+    'currentColor',
   ]);
 
   let cssLikeCount = 0;
@@ -152,20 +167,39 @@ function isCssUtilityString(text) {
       cssLikeCount += 1;
       continue;
     }
+    // Tailwind-style classes: text-gray-200, stroke-current, bg-blue-500, etc.
     if (/^-?[a-z][a-z0-9]*(?:-[a-z0-9/:%]+)+$/.test(lower)) {
       cssLikeCount += 1;
       continue;
     }
+    // Numeric suffixes: mb3, p2, w100, etc.
     if (/^[a-z]+[0-9]+$/.test(lower)) {
+      cssLikeCount += 1;
+      continue;
+    }
+    // CSS color/value keywords: current, auto, full, none, etc.
+    // Use exact word boundaries to prevent substring matching
+    if (/^(current|auto|full|none|start|end|center|stretch|between|around|evenly|primary|secondary|success|danger|warning|info|light|dark|white|black|gray|grey|red|blue|green|yellow|purple|pink|indigo|teal|orange|cyan|amber|lime|emerald|sky|violet|fuchsia|rose)$/i.test(lower)) {
       cssLikeCount += 1;
     }
   }
 
-  // For short strings, be stricter. For longer strings (common in Tailwind), be more lenient.
+  // For 2 tokens, both must look like CSS
+  if (tokens.length === 2) {
+    return cssLikeCount === 2;
+  }
+
+  // For short strings (3-4 tokens), be stricter
+  if (tokens.length >= 3 && tokens.length <= 4) {
+    return cssLikeCount >= 2 && cssLikeCount / tokens.length >= 0.6;
+  }
+
+  // For longer strings (common in Tailwind), be more lenient
   if (tokens.length >= 5) {
     return cssLikeCount / tokens.length >= 0.5;
   }
-  return cssLikeCount >= 3 && cssLikeCount / tokens.length >= 0.6;
+  
+  return false;
 }
 
 /**

@@ -10,7 +10,7 @@
       </header>
 
       <div v-if="emailRequired" class="player-host__callout">
-        <h3>Email required</h3>
+        <h3>{{$t('Commons.heading.email_required')}}</h3>
         <p>{{$t('Views.FormPlayerHost.text.we_will_ask_for')}}</p>
       </div>
 

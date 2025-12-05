@@ -1,4 +1,9 @@
 {
+  "FileItem": {
+    "text": {
+      "transition_all_duration_200": "transition-all duration-200 cursor-pointer"
+    }
+  },
   "Forms": {
     "Blocks": {
       "Types": {
@@ -11,6 +16,47 @@
           "single_line_text_input": "Single line text input",
           "single_selection_from_options": "Single selection from options",
           "star_or_number_rating": "Star or number rating"
+        }
+      }
+    },
+    "Fields": {
+      "TextQuestion": {
+        "text": {
+          "invalid_email_format": "Invalid email format"
+        }
+      }
+    },
+    "FormConfigWizard": {
+      "label": {
+        "show_confirmation_page": "Show Confirmation Page"
+      }
+    },
+    "QuickView": {
+      "text": {
+        "group_relative_flex_flex": "group relative flex flex-col rounded-xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden",
+        "text_slate_400_dark": "text-slate-400 dark:text-slate-500 cursor-not-allowed",
+        "text_sm_font_medium": "text-sm font-medium tabular-nums transition-colors text-left"
+      }
+    }
+  },
+  "Layout": {
+    "WorkspaceTopBar": {
+      "text": {
+        "opacity_50_cursor_not": "opacity-50 cursor-not-allowed"
+      }
+    }
+  },
+  "Ui": {
+    "CustomToast": {
+      "text": {
+        "border_border_gray_200": "border border-gray-200 dark:border-gray-700"
+      }
+    },
+    "Toast": {
+      "Index": {
+        "text": {
+          "border_bg_background_text": "border bg-background text-foreground",
+          "destructive_group_border_destructive": "destructive group border-destructive bg-destructive text-destructive-foreground"
         }
       }
     }

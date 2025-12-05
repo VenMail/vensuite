@@ -32,7 +32,7 @@
  * @property {string[]} errors - Any errors encountered during parsing
  */
 
-// Common HTML entities map
+// Common HTML entities map - use Unicode escapes for special quote chars to avoid syntax issues
 const HTML_ENTITIES = {
   '&amp;': '&',
   '&lt;': '<',
@@ -41,20 +41,20 @@ const HTML_ENTITIES = {
   '&#39;': "'",
   '&apos;': "'",
   '&nbsp;': ' ',
-  '&ndash;': '–',
-  '&mdash;': '—',
-  '&lsquo;': ''',
-  '&rsquo;': ''',
-  '&ldquo;': '"',
-  '&rdquo;': '"',
-  '&hellip;': '…',
-  '&copy;': '©',
-  '&reg;': '®',
-  '&trade;': '™',
-  '&euro;': '€',
-  '&pound;': '£',
-  '&yen;': '¥',
-  '&cent;': '¢',
+  '&ndash;': '\u2013', // en-dash
+  '&mdash;': '\u2014', // em-dash
+  '&lsquo;': '\u2018', // left single quote
+  '&rsquo;': '\u2019', // right single quote
+  '&ldquo;': '\u201C', // left double quote
+  '&rdquo;': '\u201D', // right double quote
+  '&hellip;': '\u2026', // ellipsis
+  '&copy;': '\u00A9',  // copyright
+  '&reg;': '\u00AE',   // registered
+  '&trade;': '\u2122', // trademark
+  '&euro;': '\u20AC',  // euro
+  '&pound;': '\u00A3', // pound
+  '&yen;': '\u00A5',   // yen
+  '&cent;': '\u00A2',  // cent
 };
 
 /**

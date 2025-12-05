@@ -551,15 +551,15 @@ function about() {
       <MenubarContent>
         <MenubarItem @click="formatBold">
           <BoldIcon class="h-4 w-4 mr-2" />
-          Bold
+          {{$t('Commons.text.bold')}}
         </MenubarItem>
         <MenubarItem @click="formatItalic">
           <ItalicIcon class="h-4 w-4 mr-2" />
-          Italic
+          {{$t('Commons.text.italic')}}
         </MenubarItem>
         <MenubarItem @click="formatUnderline">
           <UnderlineIcon class="h-4 w-4 mr-2" />
-          Underline
+          {{$t('Commons.text.underline')}}
         </MenubarItem>
         <MenubarItem @click="formatStrikethrough">
           <StrikethroughIcon class="h-4 w-4 mr-2" />

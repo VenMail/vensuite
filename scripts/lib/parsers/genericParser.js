@@ -107,9 +107,16 @@ class GenericParser extends BaseParser {
    * e.g., f"Hello, {name}!" -> "Hello, {name}!"
    */
   extractPythonFStrings(content, results, i18nPatterns) {
-    // Match f-strings
-    const fstringPattern = /f["']([^"'\n]{3,200})["']/g;
-    let match;
+    // Match f-strings - handle both single and double quotes, with proper escaping
+    // Use two patterns to handle each quote type separately
+    // Pattern explanation:
+    // f"([^"\\]*(?:\\.[^"\\]*)*)" - double-quoted: matches content that can include single quotes
+    // f'([^'\\]*(?:\\.[^'\\]*)*)' - single-quoted: matches content that can include double quotes
+    // Both handle escaped quotes properly: f"Hello \"world\"" or f'Hello \'world\''
+    const fstringPatterns = [
+      /f"([^"\\]*(?:\\.[^"\\]*)*)"/g,  // Double-quoted f-strings
+      /f'([^'\\]*(?:\\.[^'\\]*)*)'/g,  // Single-quoted f-strings
+    ];
 
     // Build set of i18n lines
     const lines = content.split('\n');
@@ -123,37 +130,50 @@ class GenericParser extends BaseParser {
       }
     }
 
-    while ((match = fstringPattern.exec(content)) !== null) {
-      const lineNum = content.substring(0, match.index).split('\n').length - 1;
-      if (i18nLines.has(lineNum)) continue;
+    // Process each pattern type
+    for (const fstringPattern of fstringPatterns) {
+      fstringPattern.lastIndex = 0; // Reset regex state
+      let match;
+      while ((match = fstringPattern.exec(content)) !== null) {
+        const lineNum = content.substring(0, match.index).split('\n').length - 1;
+        if (i18nLines.has(lineNum)) continue;
 
-      let text = match[1].trim();
-      if (!text) continue;
+        let text = match[1].trim();
+        if (!text) continue;
 
-      // Replace Python f-string expressions with placeholder syntax
-      // {name} stays as {name}, {user.name} -> {userName}, {func()} -> {value}
-      text = text.replace(/\{([^}]+)\}/g, (m, expr) => {
-        expr = expr.trim();
-        // Simple identifier
-        if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(expr)) {
-          return `{${expr}}`;
-        }
-        // Attribute access: obj.attr -> objAttr
-        if (/^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*$/.test(expr)) {
-          const parts = expr.split('.');
-          return `{${parts[0]}${parts[1].charAt(0).toUpperCase()}${parts[1].slice(1)}}`;
-        }
-        // Complex expression - use generic placeholder
-        return '{value}';
-      });
-
-      if (shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
-        results.items.push({
-          type: 'string',
-          text,
-          kind: 'text',
+        // Unescape escaped characters (e.g., \" -> ", \' -> ', \\ -> \)
+        text = text.replace(/\\(.)/g, (match, char) => {
+          if (char === 'n') return '\n';
+          if (char === 't') return '\t';
+          if (char === 'r') return '\r';
+          return char; // \" -> ", \' -> ', \\ -> \
         });
-        results.stats.extracted++;
+
+        // Replace Python f-string expressions with placeholder syntax
+        // {name} stays as {name}, {user.name} -> {userName}, {func()} -> {value}
+        text = text.replace(/\{([^}]+)\}/g, (m, expr) => {
+          expr = expr.trim();
+          // Simple identifier
+          if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(expr)) {
+            return `{${expr}}`;
+          }
+          // Attribute access: obj.attr -> objAttr
+          if (/^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*$/.test(expr)) {
+            const parts = expr.split('.');
+            return `{${parts[0]}${parts[1].charAt(0).toUpperCase()}${parts[1].slice(1)}}`;
+          }
+          // Complex expression - use generic placeholder
+          return '{value}';
+        });
+
+        if (shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+          results.items.push({
+            type: 'string',
+            text,
+            kind: 'text',
+          });
+          results.stats.extracted++;
+        }
       }
     }
   }

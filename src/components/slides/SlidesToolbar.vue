@@ -101,7 +101,7 @@
 
       <div class="flex items-center gap-2" v-if="isExpanded">
         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-          <span>Grid</span>
+          <span>{{$t('Commons.text.grid')}}</span>
           <input
             :class="numberInputClass"
             type="number"

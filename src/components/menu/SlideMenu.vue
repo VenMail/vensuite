@@ -122,15 +122,15 @@ import {
       <MenubarContent>
         <MenubarItem>
           <BoldIcon class="h-4 w-4 mr-2" />
-          Bold
+          {{$t('Commons.text.bold')}}
         </MenubarItem>
         <MenubarItem>
           <ItalicIcon class="h-4 w-4 mr-2" />
-          Italic
+          {{$t('Commons.text.italic')}}
         </MenubarItem>
         <MenubarItem>
           <UnderlineIcon class="h-4 w-4 mr-2" />
-          Underline
+          {{$t('Commons.text.underline')}}
         </MenubarItem>
         <MenubarItem>
           <StrikethroughIcon class="h-4 w-4 mr-2" />

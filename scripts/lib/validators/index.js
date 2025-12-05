@@ -6,7 +6,7 @@
  */
 
 const { isCssContent, isSpreadsheetReference } = require('./cssValidator');
-const { isCodeContent, isEventHandlerValue, isJsExpression } = require('./codeValidator');
+const { isCodeContent, isEventHandlerValue, isJsExpression, isLoggingCall, LOGGING_LINE_PATTERNS } = require('./codeValidator');
 const { isHtmlContent, isNonTranslatableAttribute, isTranslatableAttribute, containsVueBindingSyntax } = require('./htmlValidator');
 const { isTechnicalContent, isUrl, isFilePath, isUuid, isHexColor } = require('./technicalValidator');
 
@@ -398,6 +398,8 @@ module.exports = {
   isCodeContent,
   isEventHandlerValue,
   isJsExpression,
+  isLoggingCall,
+  LOGGING_LINE_PATTERNS,
   isHtmlContent,
   isNonTranslatableAttribute,
   isTranslatableAttribute,

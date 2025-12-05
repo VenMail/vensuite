@@ -252,15 +252,15 @@ function formatSelectionLabel(selection: any): string {
         <MenubarContent>
           <MenubarItem @click="emit('format-bold')">
             <BoldIcon class="h-4 w-4 mr-2" />
-            Bold
+            {{$t('Commons.text.bold')}}
           </MenubarItem>
           <MenubarItem @click="emit('format-italic')">
             <ItalicIcon class="h-4 w-4 mr-2" />
-            Italic
+            {{$t('Commons.text.italic')}}
           </MenubarItem>
           <MenubarItem @click="emit('format-underline')">
             <UnderlineIcon class="h-4 w-4 mr-2" />
-            Underline
+            {{$t('Commons.text.underline')}}
           </MenubarItem>
           <MenubarItem @click="emit('format-strike')">
             <StrikethroughIcon class="h-4 w-4 mr-2" />

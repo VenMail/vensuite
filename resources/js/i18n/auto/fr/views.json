@@ -1,26 +1,19 @@
 {
   "Views": {
-    "Login": {
-      "button": {
-        "login_with_venmail": "Se connecter avec Venmail"
-      },
+    "DocsEditor": {
       "heading": {
-        "welcome_to_venmail_files": "Venmail Drive"
-      },
-      "link": {
-        "cookie_ccpa_preferences": "Préférences relatives aux cookies et au CCPA",
-        "privacy_terms": "Confidentialité et conditions"
+        "comments_chat": "Comments & Chat"
       },
       "text": {
-        "login_to_manage_your": "Connectez-vous pour gérer vos fichiers et dossiers sur Venmail."
+        "error_broadcasting_change": "Error broadcasting change:",
+        "paginationplus_initialized_with_page": "PaginationPlus initialized with page size:"
       }
     },
-    "Sheets": {
-      "heading": {
-        "create_new_spreadsheet": "Create new spreadsheet"
-      },
+    "Sidebar": {
       "text": {
-        "get_started_by_creating": "Get started by creating"
+        "found_matching_item": "Found matching item:",
+        "h_full_border_r": "h-full border-r transition-all duration-200",
+        "route_path_changed": "Route path changed:"
       }
     }
   }

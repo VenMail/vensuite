@@ -467,10 +467,18 @@ class JsxParser extends BaseParser {
 
   /**
    * Process call expression (toast, notifications, etc.)
+   * Skips logging/debug calls to avoid extracting debug messages
    */
   processCallExpression(node, results, shouldTranslate) {
     const callee = node.callee;
     const args = node.arguments || [];
+
+    // Skip logging/debug calls - these are not user-facing
+    const { isLoggingCall } = require('../validators');
+    const calleeName = this.getCalleeName(callee);
+    if (calleeName && isLoggingCall(calleeName)) {
+      return; // Skip all logging calls
+    }
 
     // Toast calls: toast.success(), toast.error(), etc.
     if (callee?.type === 'MemberExpression' &&
@@ -488,6 +496,24 @@ class JsxParser extends BaseParser {
         this.collectPatternsFromArg(args[0], 'toast', results, shouldTranslate);
       }
     }
+  }
+
+  /**
+   * Get callee name from AST node (handles object.method and simple calls)
+   */
+  getCalleeName(callee) {
+    if (!callee) return null;
+    if (callee.type === 'Identifier') return callee.name;
+    if (callee.type === 'MemberExpression') {
+      const obj = callee.object;
+      const prop = callee.property;
+      let objName = null;
+      let propName = null;
+      if (obj?.type === 'Identifier') objName = obj.name;
+      if (prop?.type === 'Identifier') propName = prop.name;
+      if (objName && propName) return `${objName}.${propName}`;
+    }
+    return null;
   }
 
   /**
@@ -535,11 +561,12 @@ class JsxParser extends BaseParser {
   scanForPlainStrings(content, results, shouldTranslate) {
     if (!content || typeof content !== 'string') return;
 
+    const { LOGGING_LINE_PATTERNS } = require('../validators');
     const lines = content.split('\n');
 
     // Mark lines that contain explicit i18n lookups so their literals are
     // not treated as user-facing text.
-    const i18nLineIndexes = new Set();
+    const skipLineIndexes = new Set();
     const i18nLinePatterns = [
       /\$?t\s*\(\s*['"][^'"]+['"]\s*\)/,
       /i18n\.t\s*\(\s*['"][^'"]+['"]\s*\)/,
@@ -548,10 +575,22 @@ class JsxParser extends BaseParser {
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      
+      // Check for i18n patterns
       for (const pattern of i18nLinePatterns) {
         if (pattern.test(line)) {
-          i18nLineIndexes.add(i);
+          skipLineIndexes.add(i);
           break;
+        }
+      }
+      
+      // Check for logging/debug patterns - skip these lines entirely
+      if (!skipLineIndexes.has(i)) {
+        for (const pattern of LOGGING_LINE_PATTERNS) {
+          if (pattern.test(line)) {
+            skipLineIndexes.add(i);
+            break;
+          }
         }
       }
     }
@@ -565,17 +604,17 @@ class JsxParser extends BaseParser {
       const line = lines[lineIndex];
       if (!line || !line.trim()) continue;
 
+      // Skip lines with i18n lookups or logging calls
+      if (skipLineIndexes.has(lineIndex)) {
+        continue;
+      }
+
       for (const pattern of stringPatterns) {
         pattern.lastIndex = 0;
         let match;
         while ((match = pattern.exec(line)) !== null) {
           const candidate = (match[1] || '').trim();
           if (!candidate) continue;
-
-          // Skip obvious i18n key lookups on the same line
-          if (i18nLineIndexes.has(lineIndex)) {
-            continue;
-          }
 
           if (!shouldTranslate(candidate, { ignorePatterns: this.ignorePatterns })) {
             continue;
