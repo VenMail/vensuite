@@ -414,6 +414,10 @@
       "your_organization": "your organization",
       "your_organization_2": "Your organization"
     },
+    "link": {
+      "cookie_policy": "Cookie 政策",
+      "ai_principles": "AI 原则"
+    },
     "title": {
       "add_below": "Add below",
       "add_slide": "Add slide",

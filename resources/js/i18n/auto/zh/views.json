@@ -1,1 +1,19 @@
-{}
+{
+  "Views": {
+    "Login": {
+      "heading": {
+        "welcome_to_venmail_files": "欢迎使用 Venmail 文件"
+      },
+      "text": {
+        "login_to_manage_your": "登录以在 Venmail 上管理您的文件和文件夹。"
+      },
+      "button": {
+        "login_with_venmail": "Login with Venmail"
+      },
+      "link": {
+        "privacy_terms": "隐私与条款",
+        "cookie_ccpa_preferences": "Cookie 与 CCPA 偏好设置"
+      }
+    }
+  }
+}

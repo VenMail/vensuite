@@ -414,6 +414,10 @@
       "your_organization": "your organization",
       "your_organization_2": "Your organization"
     },
+    "link": {
+      "cookie_policy": "Politique relative aux cookies",
+      "ai_principles": "Principes en matière d'IA"
+    },
     "title": {
       "add_below": "Add below",
       "add_slide": "Add slide",

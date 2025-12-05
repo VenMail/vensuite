@@ -1,1 +1,19 @@
-{}
+{
+  "Views": {
+    "Login": {
+      "heading": {
+        "welcome_to_venmail_files": "Venmail Drive"
+      },
+      "text": {
+        "login_to_manage_your": "Login to manage your files and folders on Venmail."
+      },
+      "button": {
+        "login_with_venmail": "Login with Venmail"
+      },
+      "link": {
+        "privacy_terms": "Privacy & terms",
+        "cookie_ccpa_preferences": "Cookie & CCPA preferences"
+      }
+    }
+  }
+}
