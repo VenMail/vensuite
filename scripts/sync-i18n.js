@@ -102,7 +102,8 @@ async function writeJson(filePath, data) {
     let updatedCount = 0;
 
     if (existsSync(baseGroupedDir)) {
-      // Grouped base: mirror file structure into each locale
+      // Grouped base: mirror file structure into each locale without
+      // overwriting existing translations.
       const baseFiles = await listJsonFiles(baseGroupedDir);
 
       // Determine locales primarily from configured project locales; fall back
@@ -126,23 +127,19 @@ async function writeJson(filePath, data) {
       for (const locale of locales) {
         const localeDir = path.resolve(autoDir, locale);
 
-        try {
-          const localeEntries = await readdir(localeDir, { withFileTypes: true });
-          for (const entry of localeEntries) {
-            const full = path.join(localeDir, entry.name);
-            await rm(full, { recursive: true, force: true });
-          }
-        } catch {}
-
         const singleLocalePath = path.resolve(autoDir, `${locale}.json`);
         const singleLocaleData = (await readJson(singleLocalePath)) || {};
+
         for (const baseFile of baseFiles) {
           const rel = path.relative(baseGroupedDir, baseFile);
           const targetPath = path.resolve(localeDir, rel);
           const baseObj = await readJson(baseFile);
           if (!baseObj || typeof baseObj !== 'object') continue;
-          const targetExisting = (existsSync(targetPath) ? await readJson(targetPath) : null) || maskPick(singleLocaleData, baseObj) || {};
-          const merged = deepFillFromBase(baseObj, targetExisting);
+
+          const existingFileData = (existsSync(targetPath) ? await readJson(targetPath) : null) || {};
+          const fromSingle = maskPick(singleLocaleData, baseObj) || {};
+          const seededExisting = deepFillFromBase(fromSingle, existingFileData);
+          const merged = deepFillFromBase(baseObj, seededExisting);
           const sorted = sortObjectDeep(merged);
           await mkdir(path.dirname(targetPath), { recursive: true });
           await writeJson(targetPath, sorted);

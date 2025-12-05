@@ -411,7 +411,7 @@ function getStatusColor(status?: string) {
               <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ ownerMember.name || ownerMember.email }} (you)</p>
               <p class="text-xs text-gray-600 dark:text-gray-400" v-if="ownerMember.name">{{ ownerMember.email }}</p>
             </div>
-            <span class="text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">Owner</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">{{$t('Commons.text.owner')}}</span>
           </div>
         </div>
 
@@ -439,15 +439,15 @@ function getStatusColor(status?: string) {
                 @change="updateMemberAccess(member.email, ($event.target as HTMLSelectElement).value as SharePermissionLabel)"
                 class="text-sm border rounded px-2 py-1 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
               >
-                <option value="view">Viewer</option>
-                <option value="comment">Commenter</option>
-                <option value="edit">Editor</option>
+                <option value="view">{{$t('Commons.text.viewer')}}</option>
+                <option value="comment">{{$t('Commons.text.commenter')}}</option>
+                <option value="edit">{{$t('Commons.text.editor')}}</option>
               </select>
               <button
                 class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 px-2 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                 @click="removeMember(member.email)"
               >
-                Remove
+                {{$t('Commons.button.remove')}}
               </button>
             </div>
           </div>
@@ -456,7 +456,7 @@ function getStatusColor(status?: string) {
 
        
       <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">General permissions</h4>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">{{$t('Commons.heading.general_permissions')}}</h4>
         
         <div class="flex items-center gap-3">
           <div class="relative flex-1" ref="dropdownRef">
@@ -491,7 +491,7 @@ function getStatusColor(status?: string) {
                   class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
                   :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 5 }"
                 >
-                  <div class="font-medium">{{ props.organizationDomain || 'Your organization' }} can view</div>
+                  <div class="font-medium">{{ props.organizationDomain || $t('Commons.text.your_organization') }} {{$t('Commons.text.can_view')}}</div>
                   <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{$t('ShareCard.text.anyone_in_your_org')}}</div>
                 </button>
 
@@ -500,7 +500,7 @@ function getStatusColor(status?: string) {
                   class="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-900 dark:text-gray-100"
                   :class="{ 'bg-gray-100 dark:bg-gray-800 font-semibold': props.privacyType === 6 }"
                 >
-                  <div class="font-medium">{{ props.organizationDomain || 'Your organization' }} can edit</div>
+                  <div class="font-medium">{{ props.organizationDomain || $t('Commons.text.your_organization') }} {{$t('Commons.text.can_edit')}}</div>
                   <div class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{{$t('ShareCard.text.anyone_in_your_org_2')}}</div>
                 </button>
 
@@ -561,7 +561,7 @@ function getStatusColor(status?: string) {
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
-          Add people by email
+          {{$t('ShareCard.button.add_people_by_email')}}
         </Button>
       </div>
 
@@ -571,9 +571,9 @@ function getStatusColor(status?: string) {
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
-          Copy link
+          {{$t('Commons.button.copy_link')}}
         </Button>
-        <Button variant="default" @click="handleDone">Done</Button>
+        <Button variant="default" @click="handleDone">{{$t('Commons.button.done')}}</Button>
       </div>
     </div>
 
@@ -589,14 +589,14 @@ function getStatusColor(status?: string) {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Settings</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{$t('Commons.heading.settings')}}</h3>
       </div>
 
        
       <div class="space-y-6">
          
         <div class="space-y-4">
-          <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Permissions</h4>
+          <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.permissions')}}</h4>
           <label class="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -623,7 +623,7 @@ function getStatusColor(status?: string) {
                 class="mt-1 h-4 w-4 text-primary-600 border-gray-300 dark:border-gray-700 rounded focus:ring-primary-500 dark:focus:ring-primary-400 dark:bg-gray-950"
               />
               <div>
-                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Editors</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.text.editors')}}</span>
                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">People with edit access can download, copy, and print</p>
               </div>
             </label>
@@ -646,8 +646,8 @@ function getStatusColor(status?: string) {
 
        
       <div class="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-        <Button variant="outline" @click="goBackToMain">Cancel</Button>
-        <Button variant="default" @click="saveSettings">Save settings</Button>
+        <Button variant="outline" @click="goBackToMain">{{$t('Commons.button.cancel')}}</Button>
+        <Button variant="default" @click="saveSettings">{{$t('Commons.button.save_settings')}}</Button>
       </div>
     </div>
 
@@ -668,7 +668,7 @@ function getStatusColor(status?: string) {
 
        
       <div>
-        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Add people</h4>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">{{$t('Commons.heading.add_people')}}</h4>
         
          
         <div v-if="inviteEmails.length > 0" class="space-y-3 mb-4">
@@ -685,9 +685,9 @@ function getStatusColor(status?: string) {
               @change="updateInviteePermission(index, ($event.target as HTMLSelectElement).value as SharePermissionLabel)"
               class="text-sm border rounded px-2 py-1 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
             >
-              <option value="view">Viewer</option>
-              <option value="comment">Commenter</option>
-              <option value="edit">Editor</option>
+              <option value="view">{{$t('Commons.text.viewer')}}</option>
+              <option value="comment">{{$t('Commons.text.commenter')}}</option>
+              <option value="edit">{{$t('Commons.text.editor')}}</option>
             </select>
             <button @click="removeInvitee(index)" class="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded ml-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -706,7 +706,7 @@ function getStatusColor(status?: string) {
             class="flex-1 border rounded-lg px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
             @keyup.enter="addInvitee"
           />
-          <Button variant="outline" @click="addInvitee" :disabled="!newInviteEmail.trim()">Add</Button>
+          <Button variant="outline" @click="addInvitee" :disabled="!newInviteEmail.trim()">{{$t('Commons.button.add_2')}}</Button>
         </div>
       </div>
 
@@ -723,7 +723,7 @@ function getStatusColor(status?: string) {
 
        
       <div class="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-        <Button variant="outline" @click="goBackToMain">Cancel</Button>
+        <Button variant="outline" @click="goBackToMain">{{$t('Commons.button.cancel')}}</Button>
         <Button variant="default" @click="sendInvites" :disabled="inviteEmails.length === 0">
           Share with {{ inviteEmails.length }} {{ inviteEmails.length !== 1 ? 'people' : 'person' }}
         </Button>

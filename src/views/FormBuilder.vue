@@ -25,7 +25,7 @@
             >
               <span v-if="isSaving">Saving...</span>
               <span v-else-if="lastSaved">Saved {{ lastSaved }}</span>
-              <span v-else>Unsaved changes</span>
+              <span v-else>{{$t('Commons.text.unsaved_changes')}}</span>
             </div>
           </div>
         </div>
@@ -52,7 +52,7 @@
             @click="handlePreview"
           >
             <Eye class="w-4 h-4" />
-            Preview
+            {{$t('Commons.button.preview')}}
           </button>
 
            
@@ -61,7 +61,7 @@
             @click="openShareModal"
           >
             <Share2 class="w-4 h-4" />
-            Share
+            {{$t('Commons.button.share')}}
           </button>
 
            
@@ -71,7 +71,7 @@
             @click="handleToggleAccepting"
             title="Stop accepting responses"
           >
-            Stop responses
+            {{$t('Commons.button.stop_responses')}}
           </button>
 
            
@@ -81,7 +81,7 @@
             @click="handlePublish"
           >
             <Send class="w-4 h-4" />
-            {{ isPublishing ? "Publishing..." : "Publish" }}
+            {{ isPublishing ? "Publishing..." : $t('Commons.button.publish') }}
           </button>
 
            
@@ -110,7 +110,7 @@
                 "
               >
                 <Settings class="w-4 h-4" />
-                Form Settings
+                {{$t('Commons.button.form_settings')}}
               </button>
               <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
@@ -133,7 +133,7 @@
                 "
               >
                 <Webhook class="w-4 h-4" />
-                Webhooks
+                {{$t('Commons.button.webhooks')}}
               </button>
               <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
               <button
@@ -156,7 +156,7 @@
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   ></path>
                 </svg>
-                Delete
+                {{$t('Commons.button.delete')}}
               </button>
             </div>
           </div>
@@ -199,7 +199,7 @@
                 "
               >
                 <ImageIcon class="w-4 h-4" />
-                Logo
+                {{$t('Commons.button.logo')}}
               </button>
 
                
@@ -211,7 +211,7 @@
                 "
               >
                 <Eye class="w-4 h-4" />
-                Preview
+                {{$t('Commons.button.preview')}}
               </button>
 
                
@@ -223,7 +223,7 @@
                 "
               >
                 <Share2 class="w-4 h-4" />
-                Share
+                {{$t('Commons.button.share')}}
               </button>
 
                
@@ -258,7 +258,7 @@
                     d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
                   ></path>
                 </svg>
-                {{ acceptingResponses ? "Stop responses" : "Resume responses" }}
+                {{ acceptingResponses ? $t('Commons.button.stop_responses') : $t('Commons.button.resume_responses') }}
               </button>
 
               <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
@@ -273,7 +273,7 @@
                 "
               >
                 <Send class="w-4 h-4" />
-                {{ isPublishing ? "Publishing..." : "Publish" }}
+                {{ isPublishing ? "Publishing..." : $t('Commons.button.publish') }}
               </button>
             </div>
           </div>
@@ -304,7 +304,7 @@
                 "
               >
                 <Settings class="w-4 h-4" />
-                Form Settings
+                {{$t('Commons.button.form_settings')}}
               </button>
               <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
@@ -327,7 +327,7 @@
                 "
               >
                 <Webhook class="w-4 h-4" />
-                Webhooks
+                {{$t('Commons.button.webhooks')}}
               </button>
               <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
               <button
@@ -350,7 +350,7 @@
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   ></path>
                 </svg>
-                Delete
+                {{$t('Commons.button.delete')}}
               </button>
             </div>
           </div>
@@ -407,13 +407,13 @@
                       class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
                       @click="handleLogoClick"
                     >
-                      Change
+                      {{$t('Commons.button.change')}}
                     </button>
                     <button
                       class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
                       @click="removeLogo"
                     >
-                      Remove
+                      {{$t('Commons.button.remove')}}
                     </button>
                   </div>
                 </div>
@@ -421,7 +421,7 @@
                 <div class="flex flex-wrap items-center gap-3">
                   <span
                     class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400"
-                    >Align</span
+                    >{{$t('Commons.text.align')}}</span
                   >
                   <button
                     class="p-2 rounded-lg border text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -464,10 +464,10 @@
                 <div class="flex flex-wrap items-center gap-3">
                   <span
                     class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400"
-                    >Size</span
+                    >{{$t('Commons.button.size')}}</span
                   >
                   <div class="flex items-center gap-2">
-                    <label class="sr-only" for="logo-size">Logo width</label>
+                    <label class="sr-only" for="logo-size">{{$t('Commons.label.logo_width')}}</label>
                     <input
                       id="logo-size"
                       type="range"
@@ -485,7 +485,7 @@
                     class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
                     @click="resetLogoSize"
                   >
-                    Reset
+                    {{$t('Commons.button.reset')}}
                   </button>
                 </div>
               </div>
@@ -510,7 +510,7 @@
               @click="ensureLogoVisible"
             >
               <ImageIcon class="w-4 h-4" />
-              <span class="text-sm">Add logo</span>
+              <span class="text-sm">{{$t('Commons.text.add_logo')}}</span>
             </button>
           </Transition>
         </div>
@@ -592,7 +592,7 @@
           <Plus class="w-5 h-5" />
           <span class="text-sm font-medium">{{$t('Views.FormBuilder.text.add_a_question')}}</span>
           <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto"
-            >or press
+            >{{$t('Commons.text.or_press')}}
             <kbd
               class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono"
               >/</kbd
@@ -620,14 +620,14 @@
             @click="handleAddBlock"
           >
             <Plus class="w-4 h-4 inline mr-2" />
-            Add First Question
+            {{$t('Views.FormBuilder.button.add_first_question')}}
           </button>
           <button
             class="px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             @click="handleUseAI"
           >
             <Wand2 class="w-4 h-4 inline mr-2" />
-            Generate with AI
+            {{$t('Views.FormBuilder.button.generate_with_ai')}}
           </button>
         </div>
       </div>
@@ -662,7 +662,7 @@
         >
           <div class="flex items-center justify-between">
             <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-              Payment settings
+              {{$t('Commons.heading.payment_settings')}}
             </h3>
             <button
               class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -676,7 +676,7 @@
             <div>
               <label
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >Amount to charge</label
+                >{{$t('Views.FormBuilder.label.amount_to_charge')}}</label
               >
               <div class="flex items-center gap-2">
                 <span class="text-gray-600 dark:text-gray-400">$</span>
@@ -697,7 +697,7 @@
             <div>
               <label
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >Payment mode</label
+                >{{$t('Commons.label.payment_mode')}}</label
               >
               <select
                 v-model="paymentMode"
@@ -712,7 +712,7 @@
               <div>
                 <label
                   class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >Stripe publishable key</label
+                  >{{$t('Views.FormBuilder.label.stripe_publishable_key')}}</label
                 >
                 <input
                   v-model="publishableKey"
@@ -724,7 +724,7 @@
               <div>
                 <label
                   class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >Stripe account ID</label
+                  >{{$t('Views.FormBuilder.label.stripe_account_id')}}</label
                 >
                 <input
                   v-model="stripeAccountId"
@@ -740,20 +740,20 @@
                 class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                 @click="disablePayments"
               >
-                Disable payments
+                {{$t('Commons.button.disable_payments')}}
               </button>
               <div class="flex items-center gap-3">
                 <button
                   class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
                   @click="closePaymentDialog"
                 >
-                  Cancel
+                  {{$t('Commons.button.cancel')}}
                 </button>
                 <button
                   class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
                   @click="updatePaymentAmount"
                 >
-                  Save
+                  {{$t('Commons.button.save')}}
                 </button>
               </div>
             </div>
@@ -795,9 +795,9 @@
                     >1</span
                   >
                   <div>
-                    <p class="text-sm leading-none">Overview</p>
+                    <p class="text-sm leading-none">{{$t('Commons.text.overview')}}</p>
                     <span class="text-xs text-gray-400 dark:text-gray-500"
-                      >Why webhooks?</span
+                      >{{$t('Views.FormBuilder.text.why_webhooks')}}</span
                     >
                   </div>
                 </div>
@@ -819,9 +819,9 @@
                     >2</span
                   >
                   <div>
-                    <p class="text-sm leading-none">Configure</p>
+                    <p class="text-sm leading-none">{{$t('Commons.text.configure')}}</p>
                     <span class="text-xs text-gray-400 dark:text-gray-500"
-                      >Add endpoints</span
+                      >{{$t('Commons.text.add_endpoints')}}</span
                     >
                   </div>
                 </div>
@@ -833,8 +833,8 @@
                   <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
                     {{
                       webhookStep === "intro"
-                        ? "Connect webhooks"
-                        : "Configure webhook endpoints"
+                        ? $t('Commons.heading.connect_webhooks')
+                        : $t('Views.FormBuilder.heading.configure_webhook_endpoints')
                     }}
                   </h3>
                   <p
@@ -864,9 +864,9 @@
                       <ul
                         class="text-sm text-gray-600 dark:text-gray-400 list-disc pl-5 space-y-1"
                       >
-                        <li>Form completed</li>
+                        <li>{{$t('Commons.text.form_completed')}}</li>
                         <li>{{$t('Views.FormBuilder.text.payment_succeeded_or_failed')}}</li>
-                        <li>Charges refunded</li>
+                        <li>{{$t('Commons.text.charges_refunded')}}</li>
                         <li>{{$t('Views.FormBuilder.text.any_custom_events_you')}}</li>
                       </ul>
                     </div>
@@ -918,7 +918,7 @@
                         class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
                         @click="closeWebhooksModal"
                       >
-                        Done
+                        {{$t('Commons.button.done')}}
                       </button>
                     </div>
                   </div>
@@ -942,7 +942,7 @@
         >
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {{ imagePickerMode === "logo" ? "Choose a logo" : "Choose a footer image" }}
+              {{ imagePickerMode === "logo" ? $t('Views.FormBuilder.heading.choose_a_logo') : $t('Views.FormBuilder.heading.choose_a_footer_image') }}
             </h3>
             <button
               class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -995,14 +995,14 @@
               class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
               @click="showAIDialog = false"
             >
-              Cancel
+              {{$t('Commons.button.cancel')}}
             </button>
             <button
               class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg disabled:opacity-50"
               :disabled="!aiPrompt.trim() || isGenerating"
               @click="handleGenerateAI"
             >
-              {{ isGenerating ? "Generating..." : "Generate" }}
+              {{ isGenerating ? "Generating..." : $t('Commons.button.generate') }}
             </button>
           </div>
         </div>
@@ -1018,30 +1018,30 @@
         <DialogHeader>
           <DialogTitle class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
             <span v-if="!showShareAccessView">
-              Share "{{ formTitle || 'Untitled form' }}"
+              Share "{{ formTitle || $t('Commons.text.untitled_form_2') }}"
             </span>
             <span v-else>
-              Manage access
+              {{$t('Commons.button.manage_access')}}
             </span>
           </DialogTitle>
           <DialogDescription
             v-if="!showShareAccessView"
             class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400"
           >
-            Send the live form link and control who can respond.
+            {{$t('Views.FormBuilder.heading.send_the_live_form')}}
           </DialogDescription>
           <DialogDescription
             v-else
             class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400"
           >
-            Choose who in your workspace can open or edit this form.
+            {{$t('Views.FormBuilder.heading.choose_who_in_your')}}
           </DialogDescription>
         </DialogHeader>
 
         <div v-if="!showShareAccessView" class="space-y-4 py-2">
           <div class="space-y-2">
             <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Share link
+              {{$t('Commons.label.share_link')}}
             </label>
             <div class="flex flex-col gap-2 md:flex-row">
               <Input
@@ -1055,7 +1055,7 @@
                 variant="default"
                 :disabled="!computedShareLink"
                 @click="copyShareLink"
-                >Copy link</Button
+                >{{$t('Commons.button.copy_link')}}</Button
               >
             </div>
             <div class="flex items-center justify-between text-xs sm:text-sm text-gray-500 dark:text-gray-400 gap-3">
@@ -1070,7 +1070,7 @@
                 class="px-0 text-xs"
                 @click="shareHelperItems[0].action"
               >
-                Open form
+                {{$t('Commons.button.open_form')}}
               </Button>
             </div>
           </div>
@@ -1081,7 +1081,7 @@
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div class="space-y-1">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  Visibility
+                  {{$t('Commons.text.visibility')}}
                 </p>
                 <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {{ shareVisibilityDescription }}
@@ -1096,7 +1096,7 @@
                   :disabled="isUpdatingShareVisibility"
                   @click="setShareVisibility(true)"
                 >
-                  Public
+                  {{$t('Commons.button.public')}}
                 </Button>
                 <Button
                   type="button"
@@ -1106,7 +1106,7 @@
                   :disabled="isUpdatingShareVisibility"
                   @click="setShareVisibility(false)"
                 >
-                  Org only
+                  {{$t('Commons.button.org_only')}}
                 </Button>
               </div>
             </div>
@@ -1138,7 +1138,7 @@
               size="sm"
               @click="showShareAccessView = true"
             >
-              Manage access
+              {{$t('Commons.button.manage_access')}}
             </Button>
           </div>
         </div>
@@ -1182,7 +1182,7 @@
         <DialogFooter>
           <DialogClose as-child>
             <Button type="button" variant="secondary" :disabled="isPublishingShare"
-              >Close</Button
+              >{{$t('Commons.button.close')}}</Button
             >
           </DialogClose>
         </DialogFooter>

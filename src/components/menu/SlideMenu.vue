@@ -38,19 +38,19 @@ import {
   <Menubar>
     <!-- File Menu -->
     <MenubarMenu>
-      <MenubarTrigger>File</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.file')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem>
           <FileIcon class="h-4 w-4 mr-2" />
-          New
+          {{$t('Commons.text.new')}}
         </MenubarItem>
         <MenubarItem>
           <FolderIcon class="h-4 w-4 mr-2" />
-          Open
+          {{$t('Commons.button.open')}}
         </MenubarItem>
         <MenubarItem>
           <SaveIcon class="h-4 w-4 mr-2" />
-          Save
+          {{$t('Commons.button.save')}}
         </MenubarItem>
         <MenubarItem>
           <DownloadIcon class="h-4 w-4 mr-2" />
@@ -59,31 +59,31 @@ import {
         <MenubarSeparator />
         <MenubarItem>
           <PrinterIcon class="h-4 w-4 mr-2" />
-          Print
+          {{$t('Commons.text.print')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
 
     <!-- Edit Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Edit</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.heading.edit')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem>
           <UndoIcon class="h-4 w-4 mr-2" />
-          Undo
+          {{$t('Commons.text.undo')}}
         </MenubarItem>
         <MenubarItem>
           <RedoIcon class="h-4 w-4 mr-2" />
-          Redo
+          {{$t('Commons.text.redo')}}
         </MenubarItem>
         <MenubarSeparator />
         <MenubarItem>
           <ScissorsIcon class="h-4 w-4 mr-2" />
-          Cut
+          {{$t('Commons.text.cut')}}
         </MenubarItem>
         <MenubarItem>
           <CopyIcon class="h-4 w-4 mr-2" />
-          Copy
+          {{$t('Commons.button.copy')}}
         </MenubarItem>
         <MenubarItem>
           <ClipboardPasteIcon class="h-4 w-4 mr-2" />
@@ -92,26 +92,26 @@ import {
         <MenubarSeparator />
         <MenubarItem>
           <TrashIcon class="h-4 w-4 mr-2" />
-          Delete
+          {{$t('Commons.button.delete')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
 
     <!-- View Menu -->
     <MenubarMenu>
-      <MenubarTrigger>View</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.view')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem>
           <ZoomInIcon class="h-4 w-4 mr-2" />
-          Zoom In
+          {{$t('Commons.text.zoom_in')}}
         </MenubarItem>
         <MenubarItem>
           <ZoomOutIcon class="h-4 w-4 mr-2" />
-          Zoom Out
+          {{$t('Commons.text.zoom_out')}}
         </MenubarItem>
         <MenubarItem>
           <RefreshCcwIcon class="h-4 w-4 mr-2" />
-          Reset Zoom
+          {{$t('Commons.text.reset_zoom')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
@@ -134,7 +134,7 @@ import {
         </MenubarItem>
         <MenubarItem>
           <StrikethroughIcon class="h-4 w-4 mr-2" />
-          Strikethrough
+          {{$t('Commons.text.strikethrough')}}
         </MenubarItem>
         <!-- Add more formatting options here -->
       </MenubarContent>
@@ -142,26 +142,26 @@ import {
 
     <!-- Tools Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Tools</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.tools')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem>
           <SpellCheckIcon class="h-4 w-4 mr-2" />
-          Spell Check
+          {{$t('Commons.text.spell_check')}}
         </MenubarItem>
         <MenubarItem>
           <EllipsisIcon class="h-4 w-4 mr-2" />
-          Word Count
+          {{$t('Commons.text.word_count')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
 
     <!-- Help Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Help</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.help')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem>
           <HelpCircleIcon class="h-4 w-4 mr-2" />
-          Help Center
+          {{$t('Commons.text.help_center')}}
         </MenubarItem>
         <MenubarItem>
           <MessageCircleIcon class="h-4 w-4 mr-2" />
@@ -170,7 +170,7 @@ import {
         <MenubarSeparator />
         <MenubarItem>
           <InfoIcon class="h-4 w-4 mr-2" />
-          About
+          {{$t('Commons.text.about')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>

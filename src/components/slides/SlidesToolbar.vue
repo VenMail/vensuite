@@ -89,7 +89,7 @@
 
       <!-- Fonts: only when text is selected (appears before grid) -->
       <div class="flex items-center gap-2" v-if="isExpanded && selection?.hasText">
-        <label class="text-xs text-gray-600 dark:text-gray-300">Font</label>
+        <label class="text-xs text-gray-600 dark:text-gray-300">{{$t('Commons.label.font')}}</label>
         <select :class="numberInputClass" :disabled="disabled" :value="`id:${selection?.fontFamily ?? 2}`" @change="onFontChange">
           <option value="id:1">Hand (Virgil)</option>
           <option value="id:2">Sans (Inter)</option>
@@ -114,15 +114,15 @@
         </label>
         <label :class="switchLabelClass">
           <input class="h-4 w-4 accent-purple-600" type="checkbox" :checked="snapSettings.showGrid" @change="toggleSnap('showGrid', $event)" />
-          <span>Show grid</span>
+          <span>{{$t('Commons.text.show_grid')}}</span>
         </label>
         <label :class="switchLabelClass">
           <input class="h-4 w-4 accent-purple-600" type="checkbox" :checked="snapSettings.showGuides" @change="toggleSnap('showGuides', $event)" />
-          <span>Guides</span>
+          <span>{{$t('Commons.text.guides')}}</span>
         </label>
         <label :class="switchLabelClass">
           <input class="h-4 w-4 accent-purple-600" type="checkbox" :checked="snapSettings.smartSnapping" @change="toggleSnap('smartSnapping', $event)" />
-          <span>Smart snap</span>
+          <span>{{$t('Commons.text.smart_snap')}}</span>
         </label>
       </div>
 
@@ -154,9 +154,9 @@
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" class="min-w-[200px]">
-            <DropdownMenuItem @click="emitInsertChart('bar')">Bar chart</DropdownMenuItem>
-            <DropdownMenuItem @click="emitInsertChart('line')">Line chart</DropdownMenuItem>
-            <DropdownMenuItem @click="emitInsertChart('pie')">Pie chart</DropdownMenuItem>
+            <DropdownMenuItem @click="emitInsertChart('bar')">{{$t('Commons.text.bar_chart_2')}}</DropdownMenuItem>
+            <DropdownMenuItem @click="emitInsertChart('line')">{{$t('Commons.text.line_chart_2')}}</DropdownMenuItem>
+            <DropdownMenuItem @click="emitInsertChart('pie')">{{$t('Commons.text.pie_chart_2')}}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -166,11 +166,11 @@
       <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
         <span v-if="isSaving" class="flex items-center gap-1 text-blue-600 dark:text-blue-400">
           <Loader2 class="h-3 w-3 animate-spin" />
-          Saving deck…
+          {{$t('Commons.text.saving_deck')}}
         </span>
         <span v-else class="flex items-center gap-1">
           <Sparkles class="h-3 w-3 text-purple-500" />
-          Use smart snapping to align shapes to center and equal spacing.
+          {{$t('Slides.SlidesToolbar.text.use_smart_snapping_to')}}
         </span>
       </div>
     </div>

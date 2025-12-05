@@ -7,7 +7,6 @@ import { createPinia } from 'pinia'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - vite url import
 import mammothUrl from 'mammoth/mammoth.browser.min.js?url'
-import { createI18n } from 'vue-i18n'
 import { t } from '@/i18n'
 import App from './App.vue'
 import { useAuthStore } from './store/auth'
@@ -103,16 +102,12 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
-const i18n = createI18n({
-  // something vue-i18n options here ...
-})
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
-app.use(i18n)
 
 // Bridge vue templates' $t helper to the custom i18n implementation
 ;(app.config.globalProperties as any).$t = t

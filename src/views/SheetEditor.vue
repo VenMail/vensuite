@@ -1201,12 +1201,12 @@ watch(
           <DialogTrigger asChild>
             <Button variant="outline" @click="openShareDialog">
               <Share2 class="h-4 w-4 mr-2" />
-              Share
+              {{$t('Commons.button.share')}}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Share</DialogTitle>
+              <DialogTitle>{{$t('Commons.button.share')}}</DialogTitle>
             </DialogHeader>
             <ShareCard
               @close="shareOpen = false"
@@ -1280,14 +1280,14 @@ watch(
             />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Requested access</label>
+            <label class="block text-sm font-medium mb-1">{{$t('Commons.label.requested_access')}}</label>
             <select
               v-model="accessLevel"
               class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
             >
-              <option value="v">View</option>
-              <option value="c">Comment</option>
-              <option value="e">Edit</option>
+              <option value="v">{{$t('Commons.text.view')}}</option>
+              <option value="c">{{$t('Commons.text.comment')}}</option>
+              <option value="e">{{$t('Commons.heading.edit')}}</option>
             </select>
           </div>
           <div>
@@ -1301,7 +1301,7 @@ watch(
           </div>
           <div class="flex items-center justify-between pt-2">
             <Button type="submit" :disabled="requestSubmitting || !requestEmail" variant="default">
-              <span v-if="!requestSubmitting">Request access</span>
+              <span v-if="!requestSubmitting">{{$t('Commons.button.request_access')}}</span>
               <span v-else>Sending...</span>
             </Button>
             <span v-if="requestSuccess" class="text-sm text-green-600">{{ requestSuccess }}</span>
@@ -1316,7 +1316,7 @@ watch(
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
           The file is too large to preview online. You can download it to view locally.
         </p>
-        <Button variant="default" @click="downloadFile" :disabled="!downloadUrl">Download file</Button>
+        <Button variant="default" @click="downloadFile" :disabled="!downloadUrl">{{$t('Commons.button.download_file_2')}}</Button>
       </div>
     </div>
     <div v-else class="relative w-full flex-1 min-h-0">
@@ -1339,7 +1339,7 @@ watch(
       class="fixed right-4 bottom-4 w-80 h-96 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl flex flex-col"
     >
       <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700">
-        <h3 class="font-semibold text-sm text-gray-900 dark:text-gray-100">Sheet Chat</h3>
+        <h3 class="font-semibold text-sm text-gray-900 dark:text-gray-100">{{$t('Commons.heading.sheet_chat')}}</h3>
         <button @click="toggleChat" class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
           <XIcon class="h-4 w-4 text-gray-600 dark:text-gray-300" />
         </button>
@@ -1361,7 +1361,7 @@ watch(
               </div>
               <div class="mt-1 text-sm text-gray-800 whitespace-pre-line dark:text-gray-100">{{ message.content.message }}</div>
               <button @click="replyToMessage(message)" class="text-xs text-primary-600 mt-1 hover:underline">
-                Reply
+                {{$t('Commons.button.reply')}}
               </button>
             </div>
           </div>
@@ -1392,7 +1392,7 @@ watch(
               type="submit"
               class="bg-primary-600 text-white px-4 py-2 rounded-r-md text-sm hover:bg-primary-700 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
             >
-              Send
+              {{$t('Commons.button.send')}}
             </button>
           </div>
         </form>

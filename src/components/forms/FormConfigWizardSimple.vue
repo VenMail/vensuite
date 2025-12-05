@@ -87,7 +87,7 @@
           class="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
           @click="handleSkip"
         >
-          Skip Setup
+          {{$t('Commons.button.skip_setup')}}
         </button>
 
         <button
@@ -95,7 +95,7 @@
           class="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors"
           @click="goNext"
         >
-          Next
+          {{$t('Commons.button.next')}}
           <ChevronRight class="w-4 h-4 inline ml-1" />
         </button>
         <button
@@ -104,7 +104,7 @@
           @click="handleComplete"
         >
           <Check class="w-4 h-4 inline mr-1" />
-          Complete
+          {{$t('Commons.button.complete')}}
         </button>
       </div>
     </div>

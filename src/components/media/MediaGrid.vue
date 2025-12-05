@@ -44,10 +44,10 @@
             class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
           />
         </div>
-        <div class="col-span-6">Name</div>
-        <div class="col-span-2 text-center">Size</div>
-        <div class="col-span-2 text-center">Modified</div>
-        <div class="col-span-1 text-center">Actions</div>
+        <div class="col-span-6">{{$t('Commons.button.name')}}</div>
+        <div class="col-span-2 text-center">{{$t('Commons.button.size')}}</div>
+        <div class="col-span-2 text-center">{{$t('Commons.text.modified')}}</div>
+        <div class="col-span-1 text-center">{{$t('Commons.text.actions')}}</div>
       </div>
 
        
@@ -118,20 +118,20 @@
               <DropdownMenuContent align="end">
                 <DropdownMenuItem @click="handlePreview(file)">
                   <Eye class="h-4 w-4 mr-2" />
-                  Preview
+                  {{$t('Commons.alt.preview')}}
                 </DropdownMenuItem>
                 <DropdownMenuItem @click="handleDownload(file)">
                   <Download class="h-4 w-4 mr-2" />
-                  Download
+                  {{$t('Commons.button.download')}}
                 </DropdownMenuItem>
                 <DropdownMenuItem @click="handleRename(file)">
                   <Edit class="h-4 w-4 mr-2" />
-                  Rename
+                  {{$t('Commons.button.rename')}}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem @click="handleDelete(file)" class="text-red-600 dark:text-red-400">
                   <Trash2 class="h-4 w-4 mr-2" />
-                  Delete
+                  {{$t('Commons.button.delete')}}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -153,7 +153,7 @@
       </p>
       <Button @click="$emit('upload')">
         <Upload class="h-4 w-4 mr-2" />
-        Upload Media
+        {{$t('Commons.button.upload_media')}}
       </Button>
     </div>
 

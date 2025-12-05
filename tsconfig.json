@@ -28,6 +28,6 @@
     "skipLibCheck": true,
     "isolatedModules": false,
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "vue.shim.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.d.ts", "vue.shim.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

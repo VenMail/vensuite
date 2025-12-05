@@ -1,27 +1,4 @@
 {
-  "Buttons": {
-    "AddFieldButton": {
-      "text": {
-        "no_field_types_found": "No field types found."
-      }
-    }
-  },
-  "Editor": {
-    "ChartConfigurator": {
-      "button": {
-        "add_first_dataset": "Add First Dataset"
-      },
-      "text": {
-        "no_datasets_yet": "No datasets yet",
-        "polar_area_chart": "Polar Area Chart"
-      }
-    },
-    "ChartNode": {
-      "text": {
-        "no_data_to_display": "No data to display"
-      }
-    }
-  },
   "FileItem": {
     "text": {
       "error_deleting_file": "Error deleting file:",
@@ -32,27 +9,21 @@
   "FileUploader": {
     "text": {
       "all_file_types": "all file types",
-      "allowed_file_types": "Allowed file types:",
-      "failed_to_create_root": "Failed to create root folder",
+      "failed_to_create_root": "Échec de la création du dossier racine",
       "file_already_selected": "File already selected",
-      "file_type_not_allowed": "File type not allowed"
+      "file_type_not_allowed": "Type de fichier non autorisé"
     }
   },
   "Forms": {
     "Blocks": {
       "BlockEditor": {
-        "heading": {
-          "start_building_your_form": "Start building your form"
-        },
         "text": {
-          "add_a_question": "Add a question",
           "for_commands_or_click": "for commands or click the button above"
         }
       },
       "BlockItem": {
         "text": {
           "choose_one_option": "Choose one option",
-          "click_or_drag_files": "Click or drag files here",
           "rate_from_1_to": "Rate from 1 to 5",
           "select_a_date": "Select a date",
           "select_a_time": "Select a time",
@@ -70,16 +41,10 @@
       },
       "BlockItemNew": {
         "text": {
-          "click_or_drag_files": "Click or drag files here",
           "short_answer_text": "Short answer text"
         },
         "title": {
           "drag_to_reorder": "Drag to reorder"
-        }
-      },
-      "SlashMenu": {
-        "text": {
-          "no_blocks_found": "No blocks found"
         }
       },
       "Types": {
@@ -102,7 +67,6 @@
         "failed_to_load_version": "Failed to load version history:",
         "last_saved_time": "Last saved time",
         "loading_version_for": "loading version for",
-        "no_previous_versions": "No previous versions",
         "saved_just_now": "Saved just now"
       }
     },
@@ -111,19 +75,13 @@
         "create_new_document": "Create New Document"
       },
       "label": {
-        "include_header_row": "Include header row",
-        "open_in_new_tab": "Open in new tab",
-        "page_number_position": "Page Number Position",
         "show_page_border": "Show Page Border",
         "show_page_numbers": "Show Page Numbers",
         "show_page_numbers_when": "Show page numbers when printing",
         "show_page_shadow": "Show Page Shadow"
       },
       "text": {
-        "choose_a_template_to": "Choose a template to get started quickly",
-        "professional_correspondence": "Professional correspondence",
         "source_sans_3": "Source Sans 3",
-        "start_from_scratch": "Start from scratch",
         "times_new_roman": "Times New Roman"
       },
       "title": {
@@ -137,25 +95,17 @@
         "select_jump_to_field": "Select jump to field"
       },
       "text": {
-        "edit_your_form_fields": "Edit your form fields below",
         "error_fetching_form": "Error fetching form:"
       }
     },
     "Editors": {
       "FileEditor": {
-        "heading": {
-          "file_upload_properties": "File Upload Properties"
-        },
         "label": {
           "allow_multiple_files": "Allow Multiple Files:",
           "allowed_file_types": "Allowed File Types:"
         }
       },
       "LogicEditor": {
-        "label": {
-          "if_question_id": "If Question ID:",
-          "jump_to_question_id": "Jump to Question ID:"
-        },
         "placeholder": {
           "question_id_to_jump": "Question ID to jump to"
         }
@@ -163,12 +113,6 @@
       "RatingEditor": {
         "label": {
           "allow_half_ratings": "Allow Half Ratings:"
-        }
-      },
-      "TextEditor": {
-        "heading": {
-          "current_validation_rules": "Current Validation Rules:",
-          "text_field_properties": "Text Field Properties"
         }
       }
     },
@@ -180,28 +124,13 @@
       }
     },
     "FormConfigWizard": {
-      "label": {
-        "allow_multiple_submissions": "Allow Multiple Submissions",
-        "collect_email_addresses": "Collect Email Addresses",
-        "default_response_view": "Default Response View",
-        "notify_on_new_response": "Notify on New Response",
-        "show_progress_bar": "Show Progress Bar"
-      },
       "text": {
         "all_questions_on_one": "All questions on one scrollable page",
-        "choose_how_you_want": "Choose how you want to receive and view responses",
         "clean_header_with_just": "Clean header with just the title",
-        "control_how_responses_are": "Control how responses are collected and processed",
-        "customize_how_your_form": "Customize how your form looks to respondents",
-        "display_a_thank_you": "Display a thank you message after submission",
-        "display_completion_progress_to": "Display completion progress to respondents",
-        "get_an_email_for": "Get an email for each new submission",
         "one_question_at_a": "One question at a time with next/previous buttons",
-        "require_respondents_to_provide": "Require respondents to provide their email",
         "review_responses_one_at": "Review responses one at a time",
         "see_aggregated_statistics_and": "See aggregated statistics and charts",
         "step_of_3": "Step of 3",
-        "users_can_submit_the": "Users can submit the form multiple times",
         "view_all_responses_in": "View all responses in a spreadsheet-like table"
       }
     },
@@ -247,21 +176,12 @@
       }
     },
     "FormWizard": {
-      "button": {
-        "generate_form": "Generate Form →",
-        "skip_create_blank": "Skip & Create Blank"
-      },
       "heading": {
         "create_your_form": "Create Your Form",
         "review_your_form": "Review Your Form"
       },
-      "label": {
-        "what_kind_of_form": "What kind of form do you want to create?"
-      },
       "text": {
-        "ai_generated_form_ready": "AI-generated form ready!",
         "ai_generation_failed_using": "AI generation failed, using fallback:",
-        "ai_is_analyzing_your": "AI is analyzing your description and building the perfect form structure",
         "ai_is_building_your": "AI is building your form structure",
         "create_your_account": "Create your account",
         "describe_what_you_want": "Describe what you want to create in plain English",
@@ -271,7 +191,6 @@
         "help_us_improve_by": "Help us improve by sharing your feedback",
         "how_can_we_help": "How can we help you?",
         "how_would_you_rate": "How would you rate your overall experience?",
-        "or_choose_a_template": "Or choose a template:",
         "product_and_shipping_info": "Product and shipping info",
         "rating_and_comments": "Rating and comments",
         "review_and_customize_your": "Review and customize your form",
@@ -285,7 +204,6 @@
       "ClassicPlayer": {
         "text": {
           "complete_required_fields": "Complete required fields",
-          "no_questions_available_in": "No questions available in this form.",
           "please_complete_required_fields": "Please complete required fields",
           "ready_to_submit": "Ready to submit",
           "required_fields_are_marked": "Required fields are marked with *",
@@ -297,7 +215,6 @@
           "almost_there": "Almost there!",
           "great_progress": "Great progress!",
           "let_s_get_started": "Let’s get started",
-          "no_questions_available": "No questions available.",
           "provide_your_answer_and": "Provide your answer and use Next when you are ready.",
           "you_can_skip_this": "You can skip this question or come back later.",
           "you_re_doing_well": "You’re doing well"
@@ -312,7 +229,6 @@
           "failed_to_mount_stripe": "Failed to mount Stripe payment element",
           "payment_confirmation_failed": "Payment confirmation failed.",
           "payment_successful": "Payment successful.",
-          "please_complete_the_payment": "Please complete the payment to submit your response.",
           "preparing_payment_form": "Preparing payment form…",
           "unable_to_initialize_stripe": "Unable to initialize Stripe."
         }
@@ -322,7 +238,6 @@
           "enter_a_valid_email": "Enter a valid email address",
           "enter_a_valid_phone": "Enter a valid phone number",
           "enter_a_valid_url": "Enter a valid URL",
-          "select_an_option": "Select an option",
           "this_field_is_required": "This field is required",
           "yes_no": "Yes / No"
         }
@@ -335,31 +250,18 @@
     },
     "WebhooksPanel": {
       "text": {
-        "add_new_webhook": "Add new webhook",
-        "connect_form_events_to": "Connect form events to external services with quick validation.",
         "failed_to_load_webhooks": "Failed to load webhooks",
         "failed_to_send_sample": "Failed to send sample.",
-        "no_webhooks_configured_yet": "No webhooks configured yet.",
         "sample_event_sent_successfully": "Sample event sent successfully."
       }
     }
   },
   "ImagePicker": {
-    "label": {
-      "select_from_library": "Select from Library"
-    },
     "text": {
-      "click_to_upload_or": "Click to upload or drag and drop",
-      "failed_to_load_media": "Failed to load media files:",
-      "no_images_found": "No images found"
+      "failed_to_load_media": "Failed to load media files:"
     }
   },
   "Layout": {
-    "SearchBar": {
-      "text": {
-        "filter_by_type": "Filter by Type"
-      }
-    },
     "WorkspaceTopBar": {
       "aria_label": {
         "up_one_level": "Up one level"
@@ -370,23 +272,8 @@
     }
   },
   "Media": {
-    "MediaGrid": {
-      "heading": {
-        "no_media_files": "No media files"
-      }
-    },
-    "MediaPreview": {
-      "text": {
-        "failed_to_load": "Failed to load"
-      }
-    },
     "MediaViewer": {
-      "heading": {
-        "failed_to_load_media": "Failed to load media"
-      },
       "text": {
-        "preview_not_available_for": "Preview not available for this file type",
-        "there_was_an_error": "There was an error loading this file",
         "your_browser_does_not": "Your browser does not support the video tag.",
         "your_browser_does_not_2": "Your browser does not support the audio tag."
       }
@@ -410,30 +297,13 @@
     "button": {
       "add_people_by_email": "Add people by email"
     },
-    "heading": {
-      "people_with_access": "People with access",
-      "share_with_others": "Share with others"
-    },
     "placeholder": {
       "enter_email_address": "Enter email address"
     },
     "text": {
-      "allow_editors_to_change": "Allow editors to change permissions and share",
-      "anyone_in_your_org": "Anyone in your org can view",
-      "anyone_in_your_org_2": "Anyone in your org can edit",
-      "anyone_on_the_internet": "Anyone on the internet can view",
-      "anyone_on_the_internet_2": "Anyone on the internet can edit",
-      "anyone_with_link_can": "Anyone with link can view",
-      "anyone_with_link_can_2": "Anyone with link can edit",
-      "anyone_with_the_link": "Anyone with the link can view",
-      "anyone_with_the_link_2": "Anyone with the link can edit",
-      "commenters_and_viewers": "Commenters and viewers",
       "done_button_clicked_emitting": "Done button clicked - emitting close event",
       "editors_will_be_able": "Editors will be able to change permissions and share this with others",
-      "only_people_with_access": "Only people with access",
       "people_in_your_organization": "People in your organization",
-      "public_and_editable": "Public and editable",
-      "public_on_the_web": "Public on the web",
       "share_the_link_with": "Share the link with anyone to give them access.",
       "this_may_appear_in": "This may appear in search results and be visible to anyone."
     }
@@ -448,12 +318,7 @@
     },
     "SlidesInspector": {
       "text": {
-        "bring_existing_content_into": "Bring existing content into your slide deck.",
         "combine_smart_snapping_with": "Combine smart snapping with grid overlays for pixel-perfect layouts.",
-        "control_alignment_helpers_for": "Control alignment helpers for precise layouts.",
-        "processing_your_file": "Processing your file…",
-        "ready_for_new_imports": "Ready for new imports.",
-        "use_a_smaller_grid": "Use a smaller grid for dense layouts or increase spacing for broader guides.",
         "use_alignment_guides_to": "Use alignment guides to evenly distribute shapes.",
         "while_dragging_to_constrain": "while dragging to constrain axis."
       }

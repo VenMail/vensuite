@@ -4,7 +4,7 @@
       class="sm:max-w-[700px] bg-white dark:bg-gray-900 border border-border/50"
     >
       <DialogHeader>
-        <DialogTitle class="text-2xl">Upload Files</DialogTitle>
+        <DialogTitle class="text-2xl">{{$t('Commons.button.upload_files')}}</DialogTitle>
         <DialogDescription>
           {{ getUploadDescription() }}
         </DialogDescription>
@@ -27,7 +27,7 @@
             class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
             @click.stop="selectFiles"
           >
-            Select Files
+            {{$t('Commons.button.select_files')}}
           </button>
           <span class="text-muted-foreground">or</span>
           <button
@@ -35,7 +35,7 @@
             class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
             @click.stop="selectFolder"
           >
-            Select Folder
+            {{$t('Commons.button.select_folder')}}
           </button>
         </div>
 
@@ -145,9 +145,9 @@
       </div>
 
       <DialogFooter>
-        <Button variant="outline" @click="$emit('close')">Cancel</Button>
+        <Button variant="outline" @click="$emit('close')">{{$t('Commons.button.cancel')}}</Button>
         <Button @click="uploadFiles" :disabled="files.length === 0 || isUploading">
-          {{ isUploading ? "Uploading..." : "Upload Files" }}
+          {{ isUploading ? "Uploading..." : $t('Commons.button.upload_files') }}
         </Button>
       </DialogFooter>
     </DialogContent>

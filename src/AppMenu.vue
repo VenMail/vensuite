@@ -21,42 +21,42 @@ import {
   <Menubar>
     <!-- File Management Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Files</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.files')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem>
           <FilePlusIcon class="h-4 w-4 mr-2" />
-          Create Spreadsheet
+          {{$t('Commons.text.create_spreadsheet')}}
         </MenubarItem>
         <MenubarItem>
           <FilePlus2Icon class="h-4 w-4 mr-2" />
-          Create Document
+          {{$t('Commons.text.create_document')}}
         </MenubarItem>
         <MenubarItem>
           <FolderPlusIcon class="h-4 w-4 mr-2" />
-          New Folder
+          {{$t('Commons.text.new_folder')}}
         </MenubarItem>
         <MenubarItem>
           <UploadIcon class="h-4 w-4 mr-2" />
-          Upload Files
+          {{$t('Commons.button.upload_files')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
 
     <!-- Actions Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Actions</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.actions')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem>
           <EyeIcon class="h-4 w-4 mr-2" />
-          View
+          {{$t('Commons.text.view')}}
         </MenubarItem>
         <MenubarItem>
           <ShareIcon class="h-4 w-4 mr-2" />
-          Share
+          {{$t('Commons.button.share')}}
         </MenubarItem>
         <MenubarItem>
           <Trash2Icon class="h-4 w-4 mr-2" />
-          Delete
+          {{$t('Commons.button.delete')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>

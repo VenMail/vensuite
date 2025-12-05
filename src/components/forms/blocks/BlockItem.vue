@@ -68,7 +68,7 @@
               class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline"
               @click="showTypeMenu = !showTypeMenu"
             >
-              Change type
+              {{$t('Commons.button.change_type')}}
             </button>
           </div>
           <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -147,7 +147,7 @@
               @click="addOption()"
             >
               <Plus class="w-3.5 h-3.5" />
-              Add option
+              {{$t('Commons.button.add_option')}}
             </button>
           </div>
 
@@ -173,10 +173,10 @@
            
           <div v-else-if="localBlock.category === 'switch'" class="flex gap-3">
             <button class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm">
-              Yes
+              {{$t('Commons.button.yes')}}
             </button>
             <button class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm">
-              No
+              {{$t('Commons.button.no')}}
             </button>
           </div>
         </div>

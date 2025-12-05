@@ -7,12 +7,12 @@
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {{ currentStep === 'describe' ? 'Create Your Form' : currentStep === 'generating' ? 'Generating Form...' :
-              'Review Your Form' }}
+              {{ currentStep === 'describe' ? $t('Forms.FormWizard.heading.create_your_form') : currentStep === 'generating' ? 'Generating Form...' :
+              $t('Forms.FormWizard.heading.review_your_form') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {{ currentStep === 'describe' ? 'Describe what you want to create in plain English' : currentStep ===
-                'generating' ? 'AI is building your form structure' : 'Review and customize your form' }}
+              {{ currentStep === 'describe' ? $t('Forms.FormWizard.text.describe_what_you_want') : currentStep ===
+                'generating' ? $t('Forms.FormWizard.text.ai_is_building_your') : $t('Forms.FormWizard.text.review_and_customize_your') }}
             </p>
           </div>
           <button v-if="currentStep !== 'generating'"
@@ -36,9 +36,9 @@
               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-none"
               @keydown.meta.enter="handleGenerate" @keydown.ctrl.enter="handleGenerate" />
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Press <kbd
+              {{$t('Commons.text.press')}} <kbd
                 class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs">Ctrl+Enter</kbd>
-              to generate
+              {{$t('Commons.text.to_generate')}}
             </p>
           </div>
 
@@ -171,7 +171,7 @@
             class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
             @click="currentStep = 'describe'"
           >
-            ← Back
+            {{$t('Commons.button.back')}}
           </button>
           <div v-else></div>
 
@@ -196,7 +196,7 @@
               class="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg"
               @click="handleCreateForm"
             >
-              Create Form
+              {{$t('Commons.button.create_form')}}
             </button>
           </div>
         </div>

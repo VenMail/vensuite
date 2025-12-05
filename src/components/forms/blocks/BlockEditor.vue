@@ -65,7 +65,7 @@
           {{$t('Forms.Blocks.BlockEditor.heading.start_building_your_form')}}
         </h3>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
-          Type <kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-sm font-mono">/</kbd> for commands or click the button above
+          {{$t('Commons.button.type')}} <kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-sm font-mono">/</kbd> {{$t('Forms.Blocks.BlockEditor.text.for_commands_or_click')}}
         </p>
       </div>
     </div>

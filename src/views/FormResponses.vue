@@ -10,17 +10,17 @@
               <div class="flex flex-wrap items-center gap-3">
                 <Button variant="ghost" size="sm" class="gap-2 text-muted-foreground" @click="goBack">
                   <ArrowLeft class="h-4 w-4" />
-                  Back to Forms
+                  {{$t('Views.FormResponses.button.back_to_forms')}}
                 </Button>
                 <Badge variant="outline" class="rounded-full border-muted-foreground/40 bg-muted/50 px-3 py-1 text-xs font-medium uppercase tracking-wide">
-                  Responses dashboard
+                  {{$t('Commons.text.responses_dashboard')}}
                 </Badge>
               </div>
               <h1 class="text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
                 {{ formTitle }}
               </h1>
               <p class="max-w-2xl text-sm text-muted-foreground">
-                {{ formDescription || 'Monitor how respondents engage with your form and spot trends across completion states.' }}
+                {{ formDescription || $t('Views.FormResponses.text.monitor_how_respondents_engage') }}
               </p>
             </div>
             <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
@@ -34,33 +34,33 @@
               </div>
               <Separator orientation="vertical" class="hidden h-5 lg:block" />
               <div class="flex items-center gap-2">
-                <span class="text-xs uppercase tracking-wide text-muted-foreground">Last refreshed</span>
-                <span class="rounded-full bg-muted px-2 py-1 text-xs font-medium text-foreground">Just now</span>
+                <span class="text-xs uppercase tracking-wide text-muted-foreground">{{$t('Commons.text.last_refreshed')}}</span>
+                <span class="rounded-full bg-muted px-2 py-1 text-xs font-medium text-foreground">{{$t('Commons.text.just_now')}}</span>
               </div>
             </div>
           </div>
 
           <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
             <Button variant="outline" size="sm" class="min-w-[110px]" :disabled="isLoading" @click="refresh">
-              Refresh
+              {{$t('Commons.button.refresh')}}
             </Button>
             <Button size="sm" class="min-w-[140px]" :disabled="isExporting || !responseRows.length" @click="exportCsv">
               <Download class="mr-2 h-4 w-4" />
-              {{ isExporting ? 'Exporting…' : 'Export CSV' }}
+              {{ isExporting ? 'Exporting…' : $t('Commons.button.export_csv') }}
             </Button>
             <Button size="sm" class="min-w-[160px]" :disabled="isExporting || !responseRows.length" @click="exportToSheet">
               <FileSpreadsheet class="mr-2 h-4 w-4" />
-              Export to Sheet
+              {{$t('Views.FormResponses.button.export_to_sheet')}}
             </Button>
             <div class="flex items-center gap-3 rounded-full border border-border/60 bg-muted/40 px-3 py-2">
               <Label for="auto-sync-switch" class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Auto-sync</Label>
               <Switch id="auto-sync-switch" :checked="sheetSettings.autoSync" @update:checked="toggleAutoSync" />
               <div class="hidden h-4 w-px bg-border/60 sm:block" />
               <Button size="sm" variant="ghost" class="px-2 text-sm" :disabled="!sheetSettings.sheetId" @click="openSheet">
-                Open
+                {{$t('Commons.button.open')}}
               </Button>
               <Button size="sm" variant="ghost" class="px-2 text-sm" @click="clearSheetMapping">
-                Change
+                {{$t('Commons.button.change')}}
               </Button>
             </div>
             <Button
@@ -80,7 +80,7 @@
             <Card class="border-none bg-gradient-to-br from-primary/10 via-primary/5 to-background shadow-sm ring-1 ring-primary/20 dark:via-primary/10 dark:to-background">
               <CardContent class="flex items-center justify-between gap-4 p-5">
                 <div>
-                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total responses</span>
+                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{$t('Commons.text.total_responses')}}</span>
                   <p class="mt-2 text-3xl font-semibold text-foreground">
                     {{ responseMeta.total_responses.toLocaleString() }}
                   </p>
@@ -93,7 +93,7 @@
             <Card class="border-none bg-gradient-to-br from-emerald-500/15 via-emerald-500/10 to-background shadow-sm ring-1 ring-emerald-500/20 dark:to-muted/20">
               <CardContent class="flex items-center justify-between gap-4 p-5">
                 <div>
-                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Completed</span>
+                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{$t('Commons.text.completed')}}</span>
                   <p class="mt-2 text-3xl font-semibold text-emerald-600 dark:text-emerald-400">
                     {{ responseMeta.completed_responses.toLocaleString() }}
                   </p>
@@ -106,7 +106,7 @@
             <Card class="border-none bg-gradient-to-br from-amber-500/15 via-amber-500/10 to-background shadow-sm ring-1 ring-amber-500/20 dark:to-muted/20">
               <CardContent class="flex items-center justify-between gap-4 p-5">
                 <div>
-                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Incomplete</span>
+                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{$t('Commons.text.incomplete')}}</span>
                   <p class="mt-2 text-3xl font-semibold text-amber-600 dark:text-amber-400">
                     {{ responseMeta.incomplete_responses.toLocaleString() }}
                   </p>
@@ -120,7 +120,7 @@
 
           <Card class="flex flex-col border-none bg-card/90 shadow-sm ring-1 ring-border/60">
             <CardHeader class="pb-2">
-              <CardTitle class="text-base font-semibold">Response breakdown</CardTitle>
+              <CardTitle class="text-base font-semibold">{{$t('Commons.text.response_breakdown')}}</CardTitle>
               <CardDescription>{{$t('Views.FormResponses.text.visualize_completion_ratio_at')}}</CardDescription>
             </CardHeader>
             <CardContent class="flex flex-1 items-center justify-center">
@@ -137,7 +137,7 @@
       <Card class="flex-1 overflow-hidden border-none bg-card/95 shadow-lg shadow-primary/5 ring-1 ring-border/60">
         <CardHeader class="flex flex-col gap-6 border-b border-border/60 pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div class="space-y-1.5">
-            <CardTitle class="text-xl font-semibold">Responses</CardTitle>
+            <CardTitle class="text-xl font-semibold">{{$t('Commons.text.responses')}}</CardTitle>
             <CardDescription class="text-sm text-muted-foreground">
               {{$t('Views.FormResponses.text.manage_submissions_monitor_payment')}}
             </CardDescription>
@@ -145,23 +145,23 @@
           <div class="flex flex-wrap items-center gap-4">
             <div class="flex items-center gap-3 rounded-full border border-muted-foreground/30 bg-muted/40 px-3 py-2">
               <Label class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground" for="status-filter">
-                Status Filter
+                {{$t('Commons.label.status_filter')}}
               </Label>
               <Select :model-value="filters.status || 'all'" @update:model-value="handleStatusChange">
                 <SelectTrigger id="status-filter" class="w-44 border-none bg-background/60 text-sm shadow-none">
                   <SelectValue placeholder="All responses" />
                 </SelectTrigger>
                 <SelectContent class="rounded-lg border border-border bg-card shadow-md">
-                  <SelectItem value="all">All responses</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="pending_payment">Pending payment</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="all">{{$t('Commons.placeholder.all_responses')}}</SelectItem>
+                  <SelectItem value="submitted">{{$t('Commons.text.submitted')}}</SelectItem>
+                  <SelectItem value="pending_payment">{{$t('Commons.text.pending_payment')}}</SelectItem>
+                  <SelectItem value="draft">{{$t('Commons.text.draft')}}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div class="hidden h-10 w-px bg-border/70 sm:block" />
             <div class="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Showing</span>
+              <span>{{$t('Commons.text.showing')}}</span>
               <span class="rounded-full bg-muted px-2 py-1 font-medium text-foreground">{{ responseRows.length }}</span>
               <span>of</span>
               <span class="font-semibold text-foreground">{{ responseMeta.total_responses }}</span>
@@ -172,12 +172,12 @@
 
         <CardContent class="flex h-full flex-col gap-4 overflow-hidden p-0">
           <div v-if="isLoading" class="flex flex-1 items-center justify-center rounded-none border-none bg-muted/30 py-16 text-sm text-muted-foreground">
-            Loading responses…
+            {{$t('Commons.text.loading_responses')}}
           </div>
 
           <div v-else-if="loadError" class="flex flex-1 flex-col items-center justify-center gap-4 rounded-none border-none bg-destructive/5 py-20 text-center">
             <p class="max-w-sm text-sm font-medium text-destructive">{{ loadError }}</p>
-            <Button variant="outline" size="sm" @click="refresh">Retry</Button>
+            <Button variant="outline" size="sm" @click="refresh">{{$t('Commons.button.retry')}}</Button>
           </div>
 
           <div v-else class="flex flex-1 flex-col overflow-hidden">
@@ -191,8 +191,8 @@
                   <thead class="bg-muted/60 text-muted-foreground">
                     <tr>
                       <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">ID</th>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">Status</th>
-                      <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">Submitted</th>
+                      <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">{{$t('Commons.text.status')}}</th>
+                      <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">{{$t('Commons.text.submitted')}}</th>
                       <th scope="col" class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide">Payment</th>
                       <th scope="col" class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide"></th>
                     </tr>
@@ -213,7 +213,7 @@
                       <td class="px-6 py-4 text-sm text-muted-foreground">{{ response.paymentStatusLabel }}</td>
                       <td class="px-6 py-4 text-right">
                         <Button variant="ghost" size="sm" class="gap-1 text-primary" @click="openDetail(response.id)">
-                          View details
+                          {{$t('Commons.button.view_details')}}
                         </Button>
                       </td>
                     </tr>
@@ -225,10 +225,10 @@
                 <span class="text-muted-foreground">Page {{ pagination.page }} of {{ totalPages }}</span>
                 <div class="flex items-center gap-3">
                   <Button variant="outline" size="sm" class="min-w-[90px]" :disabled="pagination.page === 1" @click="changePage(pagination.page - 1)">
-                    Previous
+                    {{$t('Commons.button.previous')}}
                   </Button>
                   <Button variant="outline" size="sm" class="min-w-[90px]" :disabled="pagination.page === totalPages" @click="changePage(pagination.page + 1)">
-                    Next
+                    {{$t('Commons.button.next')}}
                   </Button>
                 </div>
               </div>
@@ -245,22 +245,22 @@
             Response #{{ detailState.response?.id ?? activeResponseId ?? '' }}
           </DialogTitle>
           <DialogDescription class="text-sm text-muted-foreground">
-            Review submission metadata and answers.
+            {{$t('Views.FormResponses.heading.review_submission_metadata_and')}}
           </DialogDescription>
         </DialogHeader>
 
         <div class="px-6 py-5">
           <div v-if="detailState.isLoading" class="flex items-center justify-center rounded-lg bg-muted/30 py-12 text-sm text-muted-foreground">
-            Loading response…
+            {{$t('Commons.text.loading_response')}}
           </div>
           <div v-else-if="detailState.error" class="flex flex-col items-center justify-center gap-4 rounded-lg bg-destructive/5 py-12 text-center">
             <p class="max-w-sm text-sm font-medium text-destructive">{{ detailState.error }}</p>
-            <Button variant="outline" size="sm" @click="retryDetail">Retry</Button>
+            <Button variant="outline" size="sm" @click="retryDetail">{{$t('Commons.button.retry')}}</Button>
           </div>
           <div v-else-if="detailState.response" class="space-y-6">
             <div class="grid gap-4 rounded-xl border border-border/60 bg-muted/20 p-4 sm:grid-cols-3">
               <div class="space-y-1">
-                <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</span>
+                <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{$t('Commons.text.status')}}</span>
                 <Badge
                   variant="outline"
                   :class="statusBadgeClasses(detailState.response.status ?? 'draft')"
@@ -269,7 +269,7 @@
                 </Badge>
               </div>
               <div class="space-y-1">
-                <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Submitted</span>
+                <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{$t('Commons.text.submitted')}}</span>
                 <p class="text-sm text-foreground">
                   {{ detailState.response.submitted_at ? formatDate(detailState.response.submitted_at) : '—' }}
                 </p>
@@ -281,7 +281,7 @@
             </div>
 
             <div v-if="respondentDetails.length" class="space-y-3">
-              <h3 class="text-sm font-semibold text-foreground">Respondent</h3>
+              <h3 class="text-sm font-semibold text-foreground">{{$t('Commons.heading.respondent')}}</h3>
               <dl class="grid gap-2 rounded-xl border border-border/60 bg-muted/15 p-4 text-sm text-foreground">
                 <div v-for="detail in respondentDetails" :key="detail.key" class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <dt class="text-muted-foreground">{{ detail.key }}</dt>
@@ -291,7 +291,7 @@
             </div>
 
             <div class="space-y-4">
-              <h3 class="text-sm font-semibold text-foreground">Answers</h3>
+              <h3 class="text-sm font-semibold text-foreground">{{$t('Commons.heading.answers')}}</h3>
               <div v-if="detailAnswers.length" class="grid gap-3">
                 <article
                   v-for="answer in detailAnswers"
@@ -320,7 +320,7 @@
         </div>
 
         <DialogFooter class="flex items-center justify-end gap-2 border-t border-border/60 bg-muted/30 px-6 py-4">
-          <Button variant="ghost" @click="closeDetail">Close</Button>
+          <Button variant="ghost" @click="closeDetail">{{$t('Commons.button.close')}}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

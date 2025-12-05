@@ -672,7 +672,7 @@ onUnmounted(() => {
                   theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
                 ]"
               >
-                Trash
+                {{$t('Commons.heading.trash')}}
               </h2>
             </div>
 
@@ -685,7 +685,7 @@ onUnmounted(() => {
                 :disabled="isLoading"
               >
                 <RefreshCw :class="['h-4 w-4', isLoading ? 'animate-spin' : '']" />
-                <span class="ml-2 hidden sm:inline">Refresh</span>
+                <span class="ml-2 hidden sm:inline">{{$t('Commons.button.refresh')}}</span>
               </Button>
               <Button
                 v-if="trashItems.length > 0"
@@ -695,7 +695,7 @@ onUnmounted(() => {
                 :disabled="isLoading"
               >
                 <Trash2 class="h-4 w-4" />
-                <span class="ml-2 hidden sm:inline">Empty Bin</span>
+                <span class="ml-2 hidden sm:inline">{{$t('Commons.button.empty_bin')}}</span>
               </Button>
             </div>
           </div>
@@ -730,7 +730,7 @@ onUnmounted(() => {
                   @click.stop="handleBulkAction('restore')"
                 >
                   <RefreshCw class="h-4 w-4 mr-2" />
-                  <span class="hidden sm:inline">Restore</span>
+                  <span class="hidden sm:inline">{{$t('Commons.button.restore')}}</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -738,7 +738,7 @@ onUnmounted(() => {
                   @click.stop="handleBulkAction('delete')"
                 >
                   <AlertCircle class="h-4 w-4 mr-2" />
-                  <span class="hidden sm:inline">Delete</span>
+                  <span class="hidden sm:inline">{{$t('Commons.button.delete')}}</span>
                 </Button>
                 <Button variant="ghost" size="sm" @click.stop="clearSelection">
                   <svg
@@ -786,19 +786,19 @@ onUnmounted(() => {
                       <span class="hidden sm:inline">Sort: </span>
                       {{
                         sortBy === "title"
-                          ? "Name"
+                          ? $t('Commons.button.name')
                           : sortBy === "updated_at"
-                          ? "Date"
+                          ? $t('Commons.button.date')
                           : sortBy === "file_type"
-                          ? "Type"
-                          : "Size"
+                          ? $t('Commons.button.type')
+                          : $t('Commons.button.size')
                       }}
                       <ChevronDown class="ml-2 h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem @click="sortValue = 'title-asc'">
-                      Sort by Name
+                      {{$t('Views.Bin.text.sort_by_name')}}
                     </DropdownMenuItem>
                     <DropdownMenuItem @click="sortValue = 'updated_at-desc'">
                       Sort by Date (Newest)
@@ -807,10 +807,10 @@ onUnmounted(() => {
                       Sort by Date (Oldest)
                     </DropdownMenuItem>
                     <DropdownMenuItem @click="sortValue = 'file_type-asc'">
-                      Sort by Type
+                      {{$t('Views.Bin.text.sort_by_type')}}
                     </DropdownMenuItem>
                     <DropdownMenuItem @click="sortValue = 'size-desc'">
-                      Sort by Size
+                      {{$t('Views.Bin.text.sort_by_size')}}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -933,7 +933,7 @@ onUnmounted(() => {
               ]"
             >
               <Loader2 class="h-4 w-4 animate-spin" />
-              <span>Preparing your deleted items…</span>
+              <span>{{$t('Views.Bin.text.preparing_your_deleted_items')}}</span>
             </div>
           </div>
 
@@ -963,10 +963,10 @@ onUnmounted(() => {
             >
               {{
                 trashItems.length === 0
-                  ? "Trash is empty"
+                  ? $t('Views.Bin.heading.trash_is_empty')
                   : searchValue || filters.type !== "all" || filters.source !== "all"
-                  ? "No matching items found"
-                  : "No items found"
+                  ? $t('Views.Bin.heading.no_matching_items_found')
+                  : $t('Views.Bin.heading.no_items_found')
               }}
             </h3>
             <p
@@ -977,15 +977,15 @@ onUnmounted(() => {
             >
               {{
                 trashItems.length === 0
-                  ? "Deleted files will appear here and can be restored or permanently deleted."
-                  : "Try adjusting your search or filters to find specific items."
+                  ? $t('Views.Bin.text.deleted_files_will_appear')
+                  : $t('Views.Bin.text.try_adjusting_your_search')
               }}
             </p>
             <div v-if="trashItems.length > 0" class="flex gap-3 justify-center">
-              <Button variant="outline" @click="clearFilters"> Clear Filters </Button>
+              <Button variant="outline" @click="clearFilters"> {{$t('Commons.button.clear_filters')}} </Button>
               <Button variant="ghost" @click="fetchTrashedItems">
                 <RefreshCw class="mr-2 h-4 w-4" />
-                Refresh
+                {{$t('Commons.button.refresh')}}
               </Button>
             </div>
           </div>
@@ -1017,7 +1017,7 @@ onUnmounted(() => {
                   ]"
                   @click="toggleSelectAll"
                 >
-                  Select All
+                  {{$t('Commons.label.select_all')}}
                 </label>
               </div>
 
@@ -1072,21 +1072,21 @@ onUnmounted(() => {
                         :disabled="isLoading"
                       >
                         <RefreshCw class="h-4 w-4 mr-2" />
-                        Restore
+                        {{$t('Commons.button.restore')}}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         v-if="!item.is_folder && item.file_url"
                         @click.stop="previewItem(item)"
                       >
                         <Eye class="h-4 w-4 mr-2" />
-                        Preview
+                        {{$t('Commons.alt.preview')}}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         v-if="!item.is_folder && item.file_url"
                         @click.stop="downloadItem(item)"
                       >
                         <Download class="h-4 w-4 mr-2" />
-                        Download
+                        {{$t('Commons.button.download')}}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         @click.stop="deletePermanently(item.id || '')"
@@ -1094,7 +1094,7 @@ onUnmounted(() => {
                         :disabled="isLoading"
                       >
                         <AlertCircle class="h-4 w-4 mr-2" />
-                        Delete Permanently
+                        {{$t('Commons.text.delete_permanently')}}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1131,7 +1131,7 @@ onUnmounted(() => {
                   </div>
                   <div class="flex justify-center">
                     <Badge variant="outline" class="text-xs">
-                      {{ item.source || "Files" }}
+                      {{ item.source || $t('Commons.text.files') }}
                     </Badge>
                   </div>
                 </div>
@@ -1175,21 +1175,21 @@ onUnmounted(() => {
                         :disabled="isLoading"
                       >
                         <RefreshCw class="h-4 w-4 mr-2" />
-                        Restore
+                        {{$t('Commons.button.restore')}}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         v-if="!item.is_folder && item.file_url"
                         @click.stop="previewItem(item)"
                       >
                         <Eye class="h-4 w-4 mr-2" />
-                        Preview
+                        {{$t('Commons.alt.preview')}}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         v-if="!item.is_folder && item.file_url"
                         @click.stop="downloadItem(item)"
                       >
                         <Download class="h-4 w-4 mr-2" />
-                        Download
+                        {{$t('Commons.button.download')}}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         @click.stop="deletePermanently(item.id || '')"
@@ -1197,7 +1197,7 @@ onUnmounted(() => {
                         :disabled="isLoading"
                       >
                         <AlertCircle class="h-4 w-4 mr-2" />
-                        Delete Permanently
+                        {{$t('Commons.text.delete_permanently')}}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1222,7 +1222,7 @@ onUnmounted(() => {
                 <div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
                   <div class="flex justify-between">
                     <span>Source:</span>
-                    <span>{{ item.source || "Files" }}</span>
+                    <span>{{ item.source || $t('Commons.text.files') }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span>Size:</span>
@@ -1251,32 +1251,32 @@ onUnmounted(() => {
                     <th
                       class="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400"
                     >
-                      Name
+                      {{$t('Commons.button.name')}}
                     </th>
                     <th
                       class="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400"
                     >
-                      Type
+                      {{$t('Commons.button.type')}}
                     </th>
                     <th
                       class="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400"
                     >
-                      Source
+                      {{$t('Commons.heading.source')}}
                     </th>
                     <th
                       class="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400"
                     >
-                      Size
+                      {{$t('Commons.button.size')}}
                     </th>
                     <th
                       class="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400"
                     >
-                      Deleted
+                      {{$t('Commons.text.deleted')}}
                     </th>
                     <th
                       class="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400"
                     >
-                      Actions
+                      {{$t('Commons.text.actions')}}
                     </th>
                   </tr>
                 </thead>
@@ -1322,7 +1322,7 @@ onUnmounted(() => {
                           (item.source || 'Files') === 'Files' ? 'default' : 'outline'
                         "
                       >
-                        {{ item.source || "Files" }}
+                        {{ item.source || $t('Commons.text.files') }}
                       </Badge>
                     </td>
                     <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
@@ -1344,21 +1344,21 @@ onUnmounted(() => {
                             :disabled="isLoading"
                           >
                             <RefreshCw class="h-4 w-4 mr-2" />
-                            Restore
+                            {{$t('Commons.button.restore')}}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             v-if="!item.is_folder && item.file_url"
                             @click="previewItem(item)"
                           >
                             <Eye class="h-4 w-4 mr-2" />
-                            Preview
+                            {{$t('Commons.alt.preview')}}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             v-if="!item.is_folder && item.file_url"
                             @click="downloadItem(item)"
                           >
                             <Download class="h-4 w-4 mr-2" />
-                            Download
+                            {{$t('Commons.button.download')}}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             @click="deletePermanently(item.id || '')"
@@ -1366,7 +1366,7 @@ onUnmounted(() => {
                             :disabled="isLoading"
                           >
                             <AlertCircle class="h-4 w-4 mr-2" />
-                            Delete Permanently
+                            {{$t('Commons.text.delete_permanently')}}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -1410,13 +1410,13 @@ onUnmounted(() => {
           theme.isDark.value ? 'text-gray-100' : 'text-gray-800',
         ]"
       >
-        Welcome to Venmail File Manager
+        {{$t('Views.Bin.heading.welcome_to_venmail_file')}}
       </h2>
       <Button
         class="w-full bg-primary-600 hover:bg-primary-700"
         @click="loginWithVenmail"
       >
-        Login with Venmail
+        {{$t('Views.Bin.button.login_with_venmail')}}
       </Button>
       <p
         :class="[
@@ -1424,7 +1424,7 @@ onUnmounted(() => {
           theme.isDark.value ? 'text-gray-400' : 'text-gray-500',
         ]"
       >
-        Login to access your trash and manage deleted files.
+        {{$t('Views.Bin.text.login_to_access_your')}}
       </p>
     </div>
   </div>
@@ -1445,44 +1445,44 @@ onUnmounted(() => {
       </DialogHeader>
       <div v-if="selectedItemForDetails" class="space-y-4">
         <div>
-          <h4 class="font-medium text-gray-900 dark:text-gray-100">Type</h4>
+          <h4 class="font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.type')}}</h4>
           <p class="text-gray-600 dark:text-gray-400">
             {{ getFileType(selectedItemForDetails) }}
           </p>
         </div>
         <div>
-          <h4 class="font-medium text-gray-900 dark:text-gray-100">Source</h4>
+          <h4 class="font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.source')}}</h4>
           <p class="text-gray-600 dark:text-gray-400">
-            {{ selectedItemForDetails.source || "Files" }}
+            {{ selectedItemForDetails.source || $t('Commons.text.files') }}
           </p>
         </div>
         <div v-if="selectedItemForDetails.file_name">
-          <h4 class="font-medium text-gray-900 dark:text-gray-100">Original Filename</h4>
+          <h4 class="font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.original_filename')}}</h4>
           <p class="text-gray-600 dark:text-gray-400">
             {{ selectedItemForDetails.file_name }}
           </p>
         </div>
         <div>
-          <h4 class="font-medium text-gray-900 dark:text-gray-100">Size</h4>
+          <h4 class="font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.size')}}</h4>
           <p class="text-gray-600 dark:text-gray-400">
             {{ formatFileSize(selectedItemForDetails.file_size) }}
           </p>
         </div>
         <div>
-          <h4 class="font-medium text-gray-900 dark:text-gray-100">Deleted At</h4>
+          <h4 class="font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.deleted_at')}}</h4>
           <p class="text-gray-600 dark:text-gray-400">
             {{ formatDate(selectedItemForDetails.updated_at) }}
           </p>
         </div>
         <div v-if="selectedItemForDetails.mime_type">
-          <h4 class="font-medium text-gray-900 dark:text-gray-100">MIME Type</h4>
+          <h4 class="font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.mime_type')}}</h4>
           <p class="text-gray-600 dark:text-gray-400">
             {{ selectedItemForDetails.mime_type }}
           </p>
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" @click="showDetailsDialog = false">Close</Button>
+        <Button variant="outline" @click="showDetailsDialog = false">{{$t('Commons.button.close')}}</Button>
         <Button
           @click="
             restoreItem(selectedItemForDetails?.id || '');
@@ -1491,7 +1491,7 @@ onUnmounted(() => {
           :disabled="isLoading"
         >
           <RefreshCw class="h-4 w-4 mr-2" />
-          Restore
+          {{$t('Commons.button.restore')}}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -1501,7 +1501,7 @@ onUnmounted(() => {
   <Dialog v-model:open="showEmptyConfirm">
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Empty Bin?</DialogTitle>
+        <DialogTitle>{{$t('Views.Bin.heading.empty_bin')}}</DialogTitle>
       </DialogHeader>
       <p class="text-gray-600 dark:text-gray-400">
         This will permanently delete all {{ trashItems.length }} items in the trash. This
@@ -1509,11 +1509,11 @@ onUnmounted(() => {
       </p>
       <DialogFooter>
         <Button variant="outline" @click="showEmptyConfirm = false" :disabled="isLoading"
-          >Cancel</Button
+          >{{$t('Commons.button.cancel')}}</Button
         >
         <Button variant="destructive" @click="confirmEmptyBin" :disabled="isLoading">
           <Loader2 v-if="isLoading" class="h-4 w-4 mr-2 animate-spin" />
-          Empty Bin
+          {{$t('Commons.button.empty_bin')}}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -1525,8 +1525,8 @@ onUnmounted(() => {
       <DialogHeader>
         <DialogTitle>{{
           bulkAction === "restore"
-            ? "Restore Selected Items?"
-            : "Delete Selected Items Permanently?"
+            ? $t('Views.Bin.heading.restore_selected_items')
+            : $t('Views.Bin.heading.delete_selected_items_permanently')
         }}</DialogTitle>
       </DialogHeader>
       <p class="text-gray-600 dark:text-gray-400" v-if="bulkAction === 'restore'">
@@ -1538,7 +1538,7 @@ onUnmounted(() => {
       </p>
       <DialogFooter>
         <Button variant="outline" @click="showBulkConfirm = false" :disabled="isLoading"
-          >Cancel</Button
+          >{{$t('Commons.button.cancel')}}</Button
         >
         <Button
           :variant="bulkAction === 'restore' ? 'default' : 'destructive'"
@@ -1546,7 +1546,7 @@ onUnmounted(() => {
           :disabled="isLoading"
         >
           <Loader2 v-if="isLoading" class="h-4 w-4 mr-2 animate-spin" />
-          {{ bulkAction === "restore" ? "Restore" : "Delete" }}
+          {{ bulkAction === "restore" ? $t('Commons.button.restore') : $t('Commons.button.delete') }}
         </Button>
       </DialogFooter>
     </DialogContent>

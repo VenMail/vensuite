@@ -14,7 +14,7 @@
       <span class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label text-gray-500 dark:text-gray-400">New</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label text-gray-500 dark:text-gray-400">{{$t('Commons.text.new')}}</div>
        
       <button
         class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
@@ -24,7 +24,7 @@
         <Plus class="h-4 w-4" />
       </button>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">Export</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.export')}}</div>
       <span class="tiptap-toolbar__divider bg-gray-300 dark:bg-gray-600" />
         <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title="Export PDF" @click="handleExport('pdf')">
           <FileDown class="h-4 w-4" />
@@ -73,7 +73,7 @@
       <span class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">Font</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.label.font')}}</div>
       <div class="tiptap-toolbar__group">
         <select
           class="tiptap-toolbar__select bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 focus:border-blue-500 dark:focus:border-blue-400 shadow-sm"
@@ -102,7 +102,7 @@
       <span class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">Text</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.text')}}</div>
       <div class="tiptap-toolbar__group">
          
         <button
@@ -145,7 +145,7 @@
         <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
          
-        <div v-if="isExpanded" class="tiptap-toolbar__section-label">Colors</div>
+        <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.colors')}}</div>
 
         <div v-if="isExpanded" class="tiptap-toolbar__color-picker">
           <label title="Text Color" :style="{ borderBottomColor: currentTextColor, borderBottomWidth: '3px', borderBottomStyle: 'solid' }">
@@ -221,7 +221,7 @@
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" class="w-56 p-1">
             <div class="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              Line height
+              {{$t('Commons.text.line_height')}}
             </div>
             <DropdownMenuRadioGroup :model-value="selectedLineHeight" @update:model-value="applyLineHeight">
               <DropdownMenuRadioItem
@@ -294,7 +294,7 @@
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">Headings</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.headings')}}</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
         <button
           class="tiptap-toolbar__btn tiptap-toolbar__btn--heading"
@@ -349,7 +349,7 @@
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">Advanced</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.button.advanced')}}</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
         <button
           class="tiptap-toolbar__btn"
@@ -372,7 +372,7 @@
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">Blocks</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.blocks')}}</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
         <button
           class="tiptap-toolbar__btn"
@@ -402,7 +402,7 @@
       <span class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">More</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.more')}}</div>
       <div class="tiptap-toolbar__group">
         <button
           class="tiptap-toolbar__btn"
@@ -474,7 +474,7 @@
   <Dialog v-model:open="showTableDialog">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Insert Table</DialogTitle>
+        <DialogTitle>{{$t('Commons.heading.insert_table')}}</DialogTitle>
       </DialogHeader>
       <div class="grid gap-4 py-4">
         <div class="grid grid-cols-4 items-center gap-4">
@@ -489,7 +489,7 @@
           <label class="text-right text-sm font-medium">Style:</label>
           <select v-model="tableStyle" class="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
             <option value="default">Default</option>
-            <option value="striped">Striped Rows</option>
+            <option value="striped">{{$t('Commons.text.striped_rows')}}</option>
             <option value="bordered">Bordered</option>
             <option value="minimal">Minimal</option>
           </select>
@@ -500,8 +500,8 @@
         </div>
       </div>
       <DialogFooter>
-        <Button variant="outline" @click="showTableDialog = false">Cancel</Button>
-        <Button @click="insertTable">Insert</Button>
+        <Button variant="outline" @click="showTableDialog = false">{{$t('Commons.button.cancel')}}</Button>
+        <Button @click="insertTable">{{$t('Commons.button.insert')}}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -510,7 +510,7 @@
   <Dialog v-model:open="showLinkDialog">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>{{ linkUrl ? 'Edit' : 'Insert' }} Link</DialogTitle>
+        <DialogTitle>{{ linkUrl ? $t('Commons.heading.edit') : $t('Commons.button.insert') }} Link</DialogTitle>
       </DialogHeader>
       <div class="grid gap-4 py-4">
         <div class="grid gap-2">
@@ -523,9 +523,9 @@
         </div>
       </div>
       <DialogFooter>
-        <Button v-if="editor?.isActive('link')" variant="destructive" @click="removeLink">Remove</Button>
-        <Button variant="outline" @click="showLinkDialog = false">Cancel</Button>
-        <Button @click="applyLink">Apply</Button>
+        <Button v-if="editor?.isActive('link')" variant="destructive" @click="removeLink">{{$t('Commons.button.remove')}}</Button>
+        <Button variant="outline" @click="showLinkDialog = false">{{$t('Commons.button.cancel')}}</Button>
+        <Button @click="applyLink">{{$t('Commons.button.apply')}}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -534,7 +534,7 @@
   <Dialog v-model:open="showImageDialog">
     <DialogContent class="sm:max-w-2xl">
       <DialogHeader>
-        <DialogTitle>Insert Image</DialogTitle>
+        <DialogTitle>{{$t('Commons.heading.insert_image')}}</DialogTitle>
       </DialogHeader>
       <ImagePicker
         submit-label="Insert"
@@ -548,22 +548,22 @@
   <Dialog v-model:open="showPaginationDialog">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Page Settings</DialogTitle>
+        <DialogTitle>{{$t('Commons.heading.page_settings')}}</DialogTitle>
       </DialogHeader>
       <div class="space-y-4">
         <div class="space-y-3">
-          <label class="text-sm font-medium">Orientation</label>
+          <label class="text-sm font-medium">{{$t('Commons.label.orientation')}}</label>
           <select
             v-model="paginationSettings.orientation"
             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="portrait">Portrait</option>
-            <option value="landscape">Landscape</option>
+            <option value="portrait">{{$t('Commons.text.portrait')}}</option>
+            <option value="landscape">{{$t('Commons.text.landscape')}}</option>
           </select>
         </div>
         <label class="flex items-center gap-2 text-sm font-medium">
           <input type="checkbox" v-model="paginationSettings.showPageNumbers" class="rounded" />
-          Show Page Numbers
+          {{$t('Forms.DocsToolbar.label.show_page_numbers')}}
         </label>
 
         <div v-if="paginationSettings.showPageNumbers" class="space-y-3 pl-6">
@@ -572,17 +572,17 @@
             v-model="paginationSettings.pageNumberPosition"
             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="top-left">Top Left</option>
-            <option value="top-center">Top Center</option>
-            <option value="top-right">Top Right</option>
-            <option value="bottom-left">Bottom Left</option>
-            <option value="bottom-center">Bottom Center</option>
-            <option value="bottom-right">Bottom Right</option>
+            <option value="top-left">{{$t('Commons.text.top_left')}}</option>
+            <option value="top-center">{{$t('Commons.text.top_center')}}</option>
+            <option value="top-right">{{$t('Commons.text.top_right')}}</option>
+            <option value="bottom-left">{{$t('Commons.text.bottom_left')}}</option>
+            <option value="bottom-center">{{$t('Commons.text.bottom_center')}}</option>
+            <option value="bottom-right">{{$t('Commons.text.bottom_right')}}</option>
           </select>
 
           <label class="flex items-center gap-2 text-sm font-medium">
             <input type="checkbox" v-model="paginationSettings.printPageNumbers" class="rounded" />
-            Show page numbers when printing
+            {{$t('Forms.DocsToolbar.label.show_page_numbers_when')}}
           </label>
            
         </div>
@@ -592,19 +592,19 @@
        <h3 class="text-sm font-semibold">Page Margins (px)</h3>
        <div class="grid grid-cols-2 gap-4">
          <label class="grid gap-2 text-sm font-medium">
-           Top
+           {{$t('Commons.label.top')}}
            <input type="number" v-model.number="paginationSettings.marginTop" min="0" max="200" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
          </label>
          <label class="grid gap-2 text-sm font-medium">
-           Bottom
+           {{$t('Commons.label.bottom')}}
            <input type="number" v-model.number="paginationSettings.marginBottom" min="0" max="200" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
          </label>
          <label class="grid gap-2 text-sm font-medium">
-           Left
+           {{$t('Commons.label.left')}}
            <input type="number" v-model.number="paginationSettings.marginLeft" min="0" max="200" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
          </label>
          <label class="grid gap-2 text-sm font-medium">
-           Right
+           {{$t('Commons.label.right')}}
            <input type="number" v-model.number="paginationSettings.marginRight" min="0" max="200" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
          </label>
        </div>
@@ -613,16 +613,16 @@
      <div class="space-y-2">
        <label class="flex items-center gap-2 text-sm font-medium">
          <input type="checkbox" v-model="paginationSettings.pageBorder" class="rounded" />
-         Show Page Border
+         {{$t('Forms.DocsToolbar.label.show_page_border')}}
        </label>
        <label class="flex items-center gap-2 text-sm font-medium">
          <input type="checkbox" v-model="paginationSettings.pageShadow" class="rounded" />
-         Show Page Shadow
+         {{$t('Forms.DocsToolbar.label.show_page_shadow')}}
        </label>
      </div>
       <DialogFooter>
-        <Button variant="outline" @click="showPaginationDialog = false">Cancel</Button>
-        <Button @click="applyPaginationSettings">Apply</Button>
+        <Button variant="outline" @click="showPaginationDialog = false">{{$t('Commons.button.cancel')}}</Button>
+        <Button @click="applyPaginationSettings">{{$t('Commons.button.apply')}}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -631,7 +631,7 @@
   <Dialog v-model:open="showNewFileDialog">
     <DialogContent class="sm:max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
       <DialogHeader>
-        <DialogTitle class="text-xl">Create New Document</DialogTitle>
+        <DialogTitle class="text-xl">{{$t('Forms.DocsToolbar.heading.create_new_document')}}</DialogTitle>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{$t('Forms.DocsToolbar.text.choose_a_template_to')}}</p>
       </DialogHeader>
       <div class="overflow-y-auto flex-1 py-6 px-1 custom-scrollbar">
@@ -645,7 +645,7 @@
               </svg>
             </div>
             <div class="relative text-center">
-              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Blank Document</span>
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{$t('Commons.text.blank_document')}}</span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Forms.DocsToolbar.text.start_from_scratch')}}</p>
             </div>
           </button>
@@ -662,7 +662,7 @@
               </div>
             </div>
             <div class="relative text-center">
-              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Business Letter</span>
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{$t('Commons.text.business_letter')}}</span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Forms.DocsToolbar.text.professional_correspondence')}}</p>
             </div>
           </button>
@@ -682,8 +682,8 @@
               </div>
             </div>
             <div class="relative text-center">
-              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Report</span>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Structured analysis</p>
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{$t('Commons.text.report')}}</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Commons.text.structured_analysis')}}</p>
             </div>
           </button>
 
@@ -703,7 +703,7 @@
             </div>
             <div class="relative text-center">
               <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Resume/CV</span>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Professional profile</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Commons.text.professional_profile')}}</p>
             </div>
           </button>
 
@@ -728,8 +728,8 @@
               </div>
             </div>
             <div class="relative text-center">
-              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Meeting Notes</span>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Capture discussions</p>
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{$t('Commons.text.meeting_notes')}}</span>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Commons.text.capture_discussions')}}</p>
             </div>
           </button>
 
@@ -747,13 +747,13 @@
             </div>
             <div class="relative text-center">
               <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Article/Blog</span>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Long-form content</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Commons.text.long_form_content')}}</p>
             </div>
           </button>
         </div>
       </div>
       <DialogFooter class="flex-shrink-0">
-        <Button variant="outline" @click="showNewFileDialog = false">Cancel</Button>
+        <Button variant="outline" @click="showNewFileDialog = false">{{$t('Commons.button.cancel')}}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

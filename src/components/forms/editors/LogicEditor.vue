@@ -1,6 +1,6 @@
 <template>
     <div class="logic-editor">
-      <h3>Logic</h3>
+      <h3>{{$t('Commons.heading.logic')}}</h3>
       <div>
         <label for="if">{{$t('Forms.Editors.LogicEditor.label.if_question_id')}}</label>
         <input v-model="logic.if" id="if" placeholder="Question ID" />
@@ -12,11 +12,11 @@
       <div>
         <label for="matchType">Match Type:</label>
         <select v-model="logic.matchType">
-          <option value="equal">Equal</option>
-          <option value="greater">Greater</option>
-          <option value="less">Less</option>
-          <option value="contains">Contains</option>
-          <option value="regex">Regex</option>
+          <option value="equal">{{$t('Commons.text.equal')}}</option>
+          <option value="greater">{{$t('Commons.text.greater')}}</option>
+          <option value="less">{{$t('Commons.text.less')}}</option>
+          <option value="contains">{{$t('Commons.text.contains')}}</option>
+          <option value="regex">{{$t('Commons.text.regex')}}</option>
         </select>
       </div>
       <div>

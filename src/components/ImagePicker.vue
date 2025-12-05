@@ -20,7 +20,7 @@
 
      
     <div v-if="activeTab === 'url'" class="space-y-2">
-      <label class="text-sm font-medium text-gray-900 dark:text-gray-100">Image URL</label>
+      <label class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.label.image_url')}}</label>
       <input
         v-model="urlInput"
         type="url"
@@ -32,7 +32,7 @@
 
      
     <div v-if="activeTab === 'upload'" class="space-y-2">
-      <label class="text-sm font-medium text-gray-900 dark:text-gray-100">Upload Image</label>
+      <label class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.label.upload_image')}}</label>
       <div
         @click="triggerFileInput"
         @dragover.prevent="isDragging = true"
@@ -74,7 +74,7 @@
           @click="selectedLibraryImage = null"
           class="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
         >
-          Clear selection
+          {{$t('Commons.button.clear_selection')}}
         </button>
       </div>
       
@@ -128,7 +128,7 @@
         @click="$emit('cancel')"
         class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
       >
-        Cancel
+        {{$t('Commons.button.cancel')}}
       </button>
       <button
         @click="handleSubmit"

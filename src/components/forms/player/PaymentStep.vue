@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-6 text-slate-900 dark:text-slate-100">
     <header class="space-y-1">
-      <h2 class="text-2xl font-semibold">Secure Payment</h2>
+      <h2 class="text-2xl font-semibold">{{$t('Commons.heading.secure_payment')}}</h2>
       <p class="text-sm text-slate-600 dark:text-slate-400">{{$t('Forms.Player.PaymentStep.text.please_complete_the_payment')}}</p>
     </header>
 
@@ -10,11 +10,11 @@
       class="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]"
     >
       <div class="flex flex-col gap-1">
-        <span class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Amount</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{{$t('Commons.text.amount')}}</span>
         <span class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formattedAmount }}</span>
       </div>
       <div class="flex flex-col gap-1">
-        <span class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Mode</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{{$t('Commons.text.mode')}}</span>
         <span class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ paymentModeLabel }}</span>
       </div>
     </section>
@@ -43,7 +43,7 @@
         @click="emitCancel"
         :disabled="isSubmitting"
       >
-        Cancel
+        {{$t('Commons.button.cancel')}}
       </button>
       <button
         type="button"
@@ -51,7 +51,7 @@
         :disabled="isSubmitting || !isCardReady || isPreparing"
         @click="confirmPayment"
       >
-        {{ isSubmitting ? 'Processing…' : 'Pay & Submit' }}
+        {{ isSubmitting ? 'Processing…' : $t('Forms.Player.PaymentStep.button.pay_submit') }}
       </button>
     </footer>
   </div>

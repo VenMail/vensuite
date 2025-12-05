@@ -1,7 +1,7 @@
 <template>
   <aside class="flex h-full w-full flex-col bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800">
     <header class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-      <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Slides</h2>
+      <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{$t('Commons.heading.slides')}}</h2>
       <div class="flex items-center gap-1">
         <button
           class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 hover:text-purple-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-purple-400"

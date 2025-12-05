@@ -1,8 +1,8 @@
 <template>
   <div class="pagination">
-    <button :disabled="currentPage === 1" @click="changePage(currentPage - 1)">Previous</button>
+    <button :disabled="currentPage === 1" @click="changePage(currentPage - 1)">{{$t('Commons.button.previous')}}</button>
     <span>Page {{ currentPage }} of {{ totalPages }}</span>
-    <button :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">Next</button>
+    <button :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">{{$t('Commons.button.next')}}</button>
   </div>
 </template>
 

@@ -118,7 +118,7 @@
                     'text-xl font-semibold text-gray-800 dark:text-gray-100',
                   ]"
                 >
-                  Create New Document
+                  {{$t('Views.Documents.heading.create_new_document')}}
                 </DialogTitle>
               </DialogHeader>
               <div class="grid grid-cols-2 gap-4 p-2">
@@ -169,7 +169,7 @@
                 'text-sm font-medium text-gray-800 dark:text-gray-100',
               ]"
             >
-              {{ isAllSelected ? "Deselect All" : "Select All" }}
+              {{ isAllSelected ? $t('Commons.text.deselect_all') : $t('Commons.label.select_all') }}
             </span>
           </div>
 
@@ -202,7 +202,7 @@
                   'text-sm font-medium text-gray-800 dark:text-gray-100',
                 ]"
               >
-                {{ isAllSelected ? "Deselect All" : "Select All" }}
+                {{ isAllSelected ? $t('Commons.text.deselect_all') : $t('Commons.label.select_all') }}
               </span>
             </Button>
 
@@ -245,9 +245,9 @@
           <div class="empty-icon-wrapper">
             <FolderOpen class="empty-icon" />
           </div>
-          <h3 class="empty-title">No documents found</h3>
+          <h3 class="empty-title">{{$t('Views.Documents.heading.no_documents_found')}}</h3>
           <p class="empty-description">
-            Get started by creating a new document or uploading an existing one.
+            {{$t('Views.Documents.text.get_started_by_creating')}}
           </p>
           <div class="empty-actions">
             <Button
@@ -255,7 +255,7 @@
               class="bg-primary-600 hover:bg-primary-700"
             >
               <Plus class="mr-2 h-4 w-4" />
-              New Document
+              {{$t('Commons.button.new_document')}}
             </Button>
             <Button
               variant="outline"
@@ -263,7 +263,7 @@
               @click="openUploadDialog"
             >
               <Upload class="mr-2 h-4 w-4" />
-              Upload Document
+              {{$t('Commons.button.upload_document')}}
             </Button>
           </div>
         </div>

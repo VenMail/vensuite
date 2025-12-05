@@ -440,19 +440,19 @@ function about() {
   <Menubar class="border-none ml-0 pl-0">
     <!-- File Menu -->
     <MenubarMenu>
-      <MenubarTrigger>File</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.file')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="handleNew">
           <FileIcon class="h-4 w-4 mr-2" />
-          New
+          {{$t('Commons.text.new')}}
         </MenubarItem>
         <MenubarItem @click="handleLoadDialog">
           <FolderIcon class="h-4 w-4 mr-2" />
-          Open
+          {{$t('Commons.button.open')}}
         </MenubarItem>
         <MenubarItem @click="handleSave">
           <SaveIcon class="h-4 w-4 mr-2" />
-          Save
+          {{$t('Commons.button.save')}}
         </MenubarItem>
         <MenubarSub>
           <MenubarSubTrigger>
@@ -477,7 +477,7 @@ function about() {
         <MenubarSeparator />
         <MenubarItem>
           <PrinterIcon class="h-4 w-4 mr-2" />
-          Print
+          {{$t('Commons.text.print')}}
         </MenubarItem>
         <MenubarSub>
           <MenubarSubTrigger>
@@ -495,24 +495,24 @@ function about() {
 
     <!-- Edit Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Edit</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.heading.edit')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="undo">
           <UndoIcon class="h-4 w-4 mr-2" />
-          Undo
+          {{$t('Commons.text.undo')}}
         </MenubarItem>
         <MenubarItem @click="redo">
           <RedoIcon class="h-4 w-4 mr-2" />
-          Redo
+          {{$t('Commons.text.redo')}}
         </MenubarItem>
         <MenubarSeparator />
         <MenubarItem @click="cut">
           <ScissorsIcon class="h-4 w-4 mr-2" />
-          Cut
+          {{$t('Commons.text.cut')}}
         </MenubarItem>
         <MenubarItem @click="copy">
           <CopyIcon class="h-4 w-4 mr-2" />
-          Copy
+          {{$t('Commons.button.copy')}}
         </MenubarItem>
         <MenubarItem @click="paste">
           <ClipboardPasteIcon class="h-4 w-4 mr-2" />
@@ -521,26 +521,26 @@ function about() {
         <MenubarSeparator />
         <MenubarItem @click="deleteSelected">
           <TrashIcon class="h-4 w-4 mr-2" />
-          Delete
+          {{$t('Commons.button.delete')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
 
     <!-- View Menu -->
     <MenubarMenu>
-      <MenubarTrigger>View</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.view')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="zoomIn">
           <ZoomInIcon class="h-4 w-4 mr-2" />
-          Zoom In
+          {{$t('Commons.text.zoom_in')}}
         </MenubarItem>
         <MenubarItem @click="zoomOut">
           <ZoomOutIcon class="h-4 w-4 mr-2" />
-          Zoom Out
+          {{$t('Commons.text.zoom_out')}}
         </MenubarItem>
         <MenubarItem @click="resetZoom">
           <RefreshCcwIcon class="h-4 w-4 mr-2" />
-          Reset Zoom
+          {{$t('Commons.text.reset_zoom')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
@@ -563,7 +563,7 @@ function about() {
         </MenubarItem>
         <MenubarItem @click="formatStrikethrough">
           <StrikethroughIcon class="h-4 w-4 mr-2" />
-          Strikethrough
+          {{$t('Commons.text.strikethrough')}}
         </MenubarItem>
         <!-- Add more formatting options here -->
       </MenubarContent>
@@ -571,15 +571,15 @@ function about() {
 
     <!-- Data Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Data</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.data')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="sort">
           <SortAscIcon class="h-4 w-4 mr-2" />
-          Sort
+          {{$t('Commons.button.sort')}}
         </MenubarItem>
         <MenubarItem @click="filter">
           <FilterIcon class="h-4 w-4 mr-2" />
-          Filter
+          {{$t('Commons.text.filter')}}
         </MenubarItem>
         <MenubarItem @click="group">
           <GroupIcon class="h-4 w-4 mr-2" />
@@ -590,38 +590,38 @@ function about() {
 
     <!-- Tools Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Tools</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.tools')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="spellCheck">
           <SpellCheckIcon class="h-4 w-4 mr-2" />
-          Spell Check
+          {{$t('Commons.text.spell_check')}}
         </MenubarItem>
         <MenubarItem @click="wordCount">
           <EllipsisIcon class="h-4 w-4 mr-2" />
-          Word Count
+          {{$t('Commons.text.word_count')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
     <MenubarMenu>
-      <MenubarTrigger class="text-sm font-medium text-gray-700 hover:text-gray-900">Collaboration</MenubarTrigger>
+      <MenubarTrigger class="text-sm font-medium text-gray-700 hover:text-gray-900">{{$t('Commons.text.collaboration')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="toggleChat">
           <MessageCircleIcon class="h-4 w-4 mr-2" />
-          Toggle Chat
+          {{$t('Commons.text.toggle_chat')}}
         </MenubarItem>
         <MenubarItem>
           <UsersIcon class="h-4 w-4 mr-2" />
-          View Collaborators
+          {{$t('Commons.text.view_collaborators')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
     <!-- Help Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Help</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.help')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="openHelpCenter">
           <HelpCircleIcon class="h-4 w-4 mr-2" />
-          Help Center
+          {{$t('Commons.text.help_center')}}
         </MenubarItem>
         <MenubarItem @click="sendFeedback">
           <MessageCircleIcon class="h-4 w-4 mr-2" />
@@ -630,7 +630,7 @@ function about() {
         <MenubarSeparator />
         <MenubarItem @click="about">
           <InfoIcon class="h-4 w-4 mr-2" />
-          About
+          {{$t('Commons.text.about')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>

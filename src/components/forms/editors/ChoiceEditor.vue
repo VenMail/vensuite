@@ -1,14 +1,14 @@
 <template>
   <div class="choice-editor">
-    <h3>Options</h3>
+    <h3>{{$t('Commons.heading.options')}}</h3>
     <div v-if="isChoice">
       <div v-for="(option, index) in optionOptions" :key="index" class="option">
         <input v-model="option.label" type="text" placeholder="Label" />
         <input v-model="option.value" type="text" placeholder="Value" />
-        <button @click="removeOption(index)">Remove</button>
+        <button @click="removeOption(index)">{{$t('Commons.button.remove')}}</button>
       </div>
     </div>
-    <button @click="addOption">Add Option</button>
+    <button @click="addOption">{{$t('Commons.button.add_option_2')}}</button>
 
     <div v-if="isRangeLike" class="range-properties">
       <label>

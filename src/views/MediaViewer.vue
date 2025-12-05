@@ -120,7 +120,7 @@ onMounted(() => {
         <div class="font-bold px-2 py-1">{{ title }}</div>
       </div>
       <div class="flex items-center gap-3">
-        <a v-if="fileUrl" :href="fileUrl" target="_blank" rel="noopener" class="text-sm text-blue-600">Open original</a>
+        <a v-if="fileUrl" :href="fileUrl" target="_blank" rel="noopener" class="text-sm text-blue-600">{{$t('Commons.link.open_original')}}</a>
         <UserProfile :isMobile="false" />
       </div>
     </div>
@@ -138,11 +138,11 @@ onMounted(() => {
             <input v-model="requestEmail" type="email" required class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700" placeholder="you@example.com" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Requested access</label>
+            <label class="block text-sm font-medium mb-1">{{$t('Commons.label.requested_access')}}</label>
             <select v-model="accessLevel" class="w-full border rounded px-3 py-2 bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700">
-              <option value="v">View</option>
-              <option value="c">Comment</option>
-              <option value="e">Edit</option>
+              <option value="v">{{$t('Commons.text.view')}}</option>
+              <option value="c">{{$t('Commons.text.comment')}}</option>
+              <option value="e">{{$t('Commons.heading.edit')}}</option>
             </select>
           </div>
           <div>
@@ -151,12 +151,12 @@ onMounted(() => {
           </div>
           <div class="flex items-center justify-between pt-2">
             <Button type="submit" :disabled="requestSubmitting || !requestEmail" variant="default">
-              <span v-if="!requestSubmitting">Request access</span>
+              <span v-if="!requestSubmitting">{{$t('Commons.button.request_access')}}</span>
               <span v-else>Sending...</span>
             </Button>
             <div class="flex items-center gap-3">
               <span v-if="requestSuccess" class="text-sm text-green-600">{{ requestSuccess }}</span>
-              <Button type="button" variant="outline" @click="goToLogin">Sign in</Button>
+              <Button type="button" variant="outline" @click="goToLogin">{{$t('Commons.button.sign_in')}}</Button>
             </div>
           </div>
         </form>

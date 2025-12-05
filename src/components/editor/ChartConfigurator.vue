@@ -2,22 +2,22 @@
   <Dialog v-model:open="internalOpen">
     <DialogContent class="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>{{ isEditing ? 'Edit Chart' : 'Insert Chart' }}</DialogTitle>
+        <DialogTitle>{{ isEditing ? $t('Commons.heading.edit_chart') : $t('Commons.heading.insert_chart') }}</DialogTitle>
       </DialogHeader>
 
       <div class="space-y-4 py-2">
          
         <div>
-          <label class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5 block">Chart Type</label>
+          <label class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5 block">{{$t('Commons.label.chart_type')}}</label>
           <select
             v-model="form.chartType"
             class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="bar">Bar Chart</option>
-            <option value="line">Line Chart</option>
-            <option value="pie">Pie Chart</option>
-            <option value="doughnut">Doughnut Chart</option>
-            <option value="radar">Radar Chart</option>
+            <option value="bar">{{$t('Commons.text.bar_chart')}}</option>
+            <option value="line">{{$t('Commons.text.line_chart')}}</option>
+            <option value="pie">{{$t('Commons.text.pie_chart')}}</option>
+            <option value="doughnut">{{$t('Commons.text.doughnut_chart')}}</option>
+            <option value="radar">{{$t('Commons.text.radar_chart')}}</option>
             <option value="polarArea">{{$t('Editor.ChartConfigurator.text.polar_area_chart')}}</option>
           </select>
         </div>
@@ -26,11 +26,11 @@
         <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-blue-50/50 to-transparent dark:from-blue-950/20 p-3">
           <div class="flex items-center justify-between mb-3">
             <div>
-              <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">X-Axis Labels</label>
+              <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{$t('Commons.label.x_axis_labels')}}</label>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Categories or data points ({{ form.labels.length }})</p>
             </div>
             <Button type="button" size="sm" variant="ghost" @click="addLabel" class="h-7 text-xs">
-              + Add
+              {{$t('Commons.button.add')}}
             </Button>
           </div>
           
@@ -75,9 +75,9 @@
          
         <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gradient-to-br from-purple-50/50 to-transparent dark:from-purple-950/20 p-3">
           <div class="flex items-center justify-between mb-2">
-            <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">Datasets</label>
+            <label class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{$t('Commons.label.datasets')}}</label>
             <Button type="button" size="sm" variant="ghost" @click="addDataset" class="h-7 text-xs">
-              + Add
+              {{$t('Commons.button.add')}}
             </Button>
           </div>
 
@@ -129,7 +129,7 @@
                   class="w-3 h-3 transition-transform"
                   :class="{ 'rotate-180': expandedDatasets.has(i) }"
                 />
-                Advanced
+                {{$t('Commons.button.advanced')}}
               </button>
 
                
@@ -137,7 +137,7 @@
                 <div v-if="expandedDatasets.has(i)" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
                   <div class="grid grid-cols-2 gap-2">
                     <label class="block">
-                      <span class="text-xs text-gray-600 dark:text-gray-400">Border Color</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">{{$t('Commons.text.border_color')}}</span>
                       <input
                         v-model="dataset.borderColor"
                         type="color"
@@ -145,7 +145,7 @@
                       />
                     </label>
                     <label class="block">
-                      <span class="text-xs text-gray-600 dark:text-gray-400">Border Width</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">{{$t('Commons.text.border_width')}}</span>
                       <input
                         v-model.number="dataset.borderWidth"
                         type="number"
@@ -158,7 +158,7 @@
                   
                   <label v-if="form.chartType === 'line'" class="block">
                     <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      <span>Curve</span>
+                      <span>{{$t('Commons.text.curve')}}</span>
                       <span class="font-mono">{{ dataset.tension || 0 }}</span>
                     </div>
                     <input
@@ -186,9 +186,9 @@
       </div>
 
       <DialogFooter class="gap-2">
-        <Button variant="outline" @click="handleCancel">Cancel</Button>
+        <Button variant="outline" @click="handleCancel">{{$t('Commons.button.cancel')}}</Button>
         <Button @click="handleSubmit" :disabled="!isValid">
-          {{ isEditing ? 'Update' : 'Insert' }}
+          {{ isEditing ? $t('Commons.button.update') : $t('Commons.button.insert') }}
         </Button>
       </DialogFooter>
     </DialogContent>

@@ -1,6 +1,6 @@
 <template>
   <div class="slider-editor">
-    <h3>{{ modelValue.type === 'slider' ? 'Slider' : 'Range' }} Properties</h3>
+    <h3>{{ modelValue.type === 'slider' ? $t('Commons.heading.slider') : $t('Commons.heading.range') }} {{$t('Commons.heading.properties')}}</h3>
 
     <label>
       Min Value:
@@ -18,12 +18,12 @@
     </label>
 
     <label>
-      Show Labels:
+      {{$t('Commons.label.show_labels')}}
       <input :checked="modelValue.show_labels === true" type="checkbox" @change="onShowLabelsChange" />
     </label>
 
     <div v-if="modelValue.show_labels">
-      <h4>Customize Labels</h4>
+      <h4>{{$t('Commons.heading.customize_labels')}}</h4>
       <div class="label-option">
         <input :value="modelValue.left_label || ''" type="text" placeholder="Left label" @input="onLeftLabelInput" />
         <input :value="modelValue.right_label || ''" type="text" placeholder="Right label" @input="onRightLabelInput" />

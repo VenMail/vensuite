@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { useTranslation } from '@/composables/useTranslation'
 import { Button } from '@/components/ui/button'
 import { LoaderCircle } from 'lucide-vue-next'
 import { toast } from '@/composables/useToast'
@@ -11,6 +12,8 @@ const route = useRoute()
 const authStore = useAuthStore()
 const processing = ref(false)
 const error = ref<string | null>(null)
+
+const { locale, setLocale } = useTranslation()
 
 const redirectUri = `${window.location.origin}/oauth/callback`
 const authUrl = ref(authStore.getAuthUrl(redirectUri))
@@ -57,7 +60,35 @@ onMounted(async () => {
         <img src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full" />
       </div>
       <div class="w-[150px] flex justify-end">
-         
+        <div class="inline-flex items-center rounded-full border border-gray-200 text-xs overflow-hidden">
+          <button
+            class="px-2 py-1 transition-colors"
+            :class="locale === 'en'
+              ? 'bg-gray-900 text-white'
+              : 'bg-transparent text-gray-600'"
+            @click="setLocale('en')"
+          >
+            EN
+          </button>
+          <button
+            class="px-2 py-1 transition-colors"
+            :class="locale === 'fr'
+              ? 'bg-gray-900 text-white'
+              : 'bg-transparent text-gray-600'"
+            @click="setLocale('fr')"
+          >
+            FR
+          </button>
+          <button
+            class="px-2 py-1 transition-colors"
+            :class="locale === 'zh'
+              ? 'bg-gray-900 text-white'
+              : 'bg-transparent text-gray-600'"
+            @click="setLocale('zh')"
+          >
+            中
+          </button>
+        </div>
       </div>
     </div>
     
@@ -83,7 +114,7 @@ onMounted(async () => {
         size="lg"
       >
         <LoaderCircle v-if="processing" class="h-5 w-5 animate-spin mr-2" />
-        {{ processing ? 'Logging in...' : 'Login with Venmail' }}
+        {{ processing ? 'Logging in...' : $t('Views.Login.button.login_with_venmail') }}
       </Button>
     </div>
 
@@ -91,11 +122,11 @@ onMounted(async () => {
     <div class="text-base text-center text-black my-6 space-x-2">
       <a href="https://venmail.io/resources/privacy-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">{{$t('Views.Login.link.privacy_terms')}}</a>
       <span>•</span>
-      <a href="https://venmail.io/resources/cookie-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">Cookie policy</a>
+      <a href="https://venmail.io/resources/cookie-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">{{$t('Commons.link.cookie_policy')}}</a>
       <span>•</span>
       <a href="https://venmail.io/resources/cookie_ccpa-policy" target="_blank" rel="noopener noreferrer" class="hover:underline">{{$t('Views.Login.link.cookie_ccpa_preferences')}}</a>
       <span>•</span>
-      <a href="https://venmail.io/resources/ai-principles" target="_blank" rel="noopener noreferrer" class="hover:underline">AI Principles</a>
+      <a href="https://venmail.io/resources/ai-principles" target="_blank" rel="noopener noreferrer" class="hover:underline">{{$t('Commons.link.ai_principles')}}</a>
     </div>
   </div>
 </template>

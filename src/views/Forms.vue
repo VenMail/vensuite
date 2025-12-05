@@ -533,11 +533,11 @@ const contextMenuActions = computed(() => {
             <DropdownMenuContent>
               <DropdownMenuItem @click="viewMode = 'grid'">
                 <Grid class="mr-2 h-4 w-4" />
-                Grid View
+                {{$t('Commons.text.grid_view')}}
               </DropdownMenuItem>
               <DropdownMenuItem @click="viewMode = 'list'">
                 <List class="mr-2 h-4 w-4" />
-                List View
+                {{$t('Commons.text.list_view')}}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -547,7 +547,7 @@ const contextMenuActions = computed(() => {
         </div>
         <Button variant="outline" @click="createNewForm" class="w-full">
           <FilePlus2 class="h-4 w-4 mr-2" />
-          New Form
+          {{$t('Commons.button.new_form')}}
         </Button>
       </div>
 
@@ -573,7 +573,7 @@ const contextMenuActions = computed(() => {
         <div v-else class="flex items-center gap-2 ml-auto">
           <Button variant="outline" @click="createNewForm" class="hidden lg:flex">
             <FilePlus2 class="mr-2 h-4 w-4" />
-            New Form
+            {{$t('Commons.button.new_form')}}
           </Button>
           <Button variant="outline" @click="createNewForm" size="icon" class="lg:hidden">
             <FilePlus2 class="h-4 w-4" />
@@ -587,11 +587,11 @@ const contextMenuActions = computed(() => {
             <DropdownMenuContent>
               <DropdownMenuItem @click="viewMode = 'grid'">
                 <Grid class="mr-2 h-4 w-4" />
-                Grid View
+                {{$t('Commons.text.grid_view')}}
               </DropdownMenuItem>
               <DropdownMenuItem @click="viewMode = 'list'">
                 <List class="mr-2 h-4 w-4" />
-                List View
+                {{$t('Commons.text.list_view')}}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -637,7 +637,7 @@ const contextMenuActions = computed(() => {
 
        
       <div v-if="!hasMore && !loading && forms.length > 0" class="text-center mt-6 sm:mt-8 text-gray-500 dark:text-gray-400 text-sm sm:text-base">
-        No more forms to load.
+        {{$t('Views.Forms.text.no_more_forms_to')}}
       </div>
     </div>
 
@@ -645,16 +645,16 @@ const contextMenuActions = computed(() => {
     <Dialog :open="showShareModal" @update:open="value => value ? null : closeShareModal()">
       <DialogContent class="w-full max-w-sm sm:max-w-lg mx-auto">
         <DialogHeader>
-          <DialogTitle>Share form</DialogTitle>
+          <DialogTitle>{{$t('Commons.aria_label.share_form')}}</DialogTitle>
           <DialogDescription>
-            Share this form with participants or collaborators using the link below.
+            {{$t('Views.Forms.heading.share_this_form_with')}}
           </DialogDescription>
         </DialogHeader>
 
         <div class="space-y-4 py-2">
           <div class="space-y-2">
             <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Share link
+              {{$t('Commons.label.share_link')}}
             </label>
             <div class="flex flex-col gap-2 sm:flex-row">
               <Input
@@ -670,7 +670,7 @@ const contextMenuActions = computed(() => {
                 @click="copyShareLink"
                 class="text-xs sm:text-sm"
               >
-                Copy
+                {{$t('Commons.button.copy')}}
               </Button>
             </div>
             <p class="text-xs text-slate-500">
@@ -699,7 +699,7 @@ const contextMenuActions = computed(() => {
         <DialogFooter class="flex gap-2">
           <DialogClose as-child>
             <Button type="button" variant="secondary" :disabled="isPublishingShare" class="text-xs sm:text-sm">
-              Close
+              {{$t('Commons.button.close')}}
             </Button>
           </DialogClose>
         </DialogFooter>

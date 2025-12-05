@@ -13,7 +13,7 @@
           </svg>
         </div>
         <div class="success-host__title">
-          <p class="success-host__eyebrow">Form submission</p>
+          <p class="success-host__eyebrow">{{$t('Commons.text.form_submission')}}</p>
           <h1>{{ titleText }}</h1>
           <p class="success-host__subtitle">{{ subtitleText }}</p>
         </div>
@@ -24,19 +24,19 @@
           <h2>Payment summary</h2>
           <dl>
             <div v-if="paymentStatus">
-              <dt>Status</dt>
+              <dt>{{$t('Commons.text.status')}}</dt>
               <dd :class="statusClass">{{ statusLabel }}</dd>
             </div>
             <div v-if="responseId">
-              <dt>Response ID</dt>
+              <dt>{{$t('Commons.text.response_id')}}</dt>
               <dd>{{ responseId }}</dd>
             </div>
             <div v-if="amountLabel">
-              <dt>Amount paid</dt>
+              <dt>{{$t('Commons.text.amount_paid')}}</dt>
               <dd>{{ amountLabel }}</dd>
             </div>
             <div v-if="paymentIntentId">
-              <dt>Payment intent</dt>
+              <dt>{{$t('Commons.text.payment_intent')}}</dt>
               <dd>{{ paymentIntentId }}</dd>
             </div>
             <!-- <div v-if="normalizedSlug">
@@ -44,7 +44,7 @@
               <dd>{{ normalizedSlug }}</dd>
             </div> -->
             <div>
-              <dt>Completed</dt>
+              <dt>{{$t('Commons.text.completed')}}</dt>
               <dd>{{ completedAtLabel }}</dd>
             </div>
           </dl>
@@ -61,7 +61,7 @@
           class="success-host__button"
           @click="goToForm"
         >
-          View form again
+          {{$t('Views.FormPaymentSuccess.button.view_form_again')}}
         </button>
       </footer>
     </div>

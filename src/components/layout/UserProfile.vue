@@ -84,7 +84,7 @@ const menuItems = [
           class="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
         >
           <LogOut class="h-4 w-4 mr-2" />
-          <span>Logout</span>
+          <span>{{$t('Commons.text.logout')}}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

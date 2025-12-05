@@ -46,15 +46,11 @@
       "heading": {
         "content_versions_differ": "Content versions differ"
       },
-      "link": {
-        "open_direct_link": "Open direct link"
-      },
       "placeholder": {
         "i_d_like_to": "I’d like to view this document."
       },
       "text": {
         "add_column_after": "Add column after",
-        "add_headings_to_see": "Add headings to see outline",
         "add_row_below": "Add row below",
         "add_some_content_before": "Add some content before saving.",
         "adjust_font_size": "Adjust font size",
@@ -113,33 +109,17 @@
         "get_started_by_creating": "Get started by creating a new document or uploading an existing one."
       }
     },
-    "FilePicker": {
-      "heading": {
-        "no_files_found": "No files found"
-      },
-      "text": {
-        "try_adjusting_your_search": "Try adjusting your search or filter criteria."
-      }
-    },
     "FormBuilder": {
       "button": {
         "add_first_question": "Add First Question",
-        "back_to_share_link": "Back to share link",
-        "copy_editor_link": "Copy editor link",
-        "generate_with_ai": "Generate with AI",
-        "set_up_webhooks": "Set up webhooks",
-        "skip_for_now": "Skip for now"
+        "generate_with_ai": "Generate with AI"
       },
       "heading": {
         "choose_a_footer_image": "Choose a footer image",
         "choose_a_logo": "Choose a logo",
         "choose_who_in_your": "Choose who in your workspace can open or edit this form.",
         "configure_webhook_endpoints": "Configure webhook endpoints",
-        "generate_with_ai": "Generate with AI",
-        "how_it_works": "How it works",
-        "send_the_live_form": "Send the live form link and control who can respond.",
-        "start_building_your_form": "Start building your form",
-        "when_do_webhooks_fire": "When do webhooks fire?"
+        "send_the_live_form": "Send the live form link and control who can respond."
       },
       "label": {
         "amount_to_charge": "Amount to charge",
@@ -147,13 +127,8 @@
         "stripe_publishable_key": "Stripe publishable key"
       },
       "text": {
-        "add_a_question": "Add a question",
-        "add_questions_customize_fields": "Add questions, customize fields, and create the perfect form for your needs.",
         "and_set_to_public": "and set to public",
-        "any_custom_events_you": "Any custom events you define",
         "anyone_with_the_link": "Anyone with the link can respond.",
-        "anyone_with_this_link": "Anyone with this link can access the form based on its publish settings.",
-        "collaborators_workspace_access": "Collaborators & workspace access",
         "could_not_delete_form": "Could not delete form.",
         "editor_link_copied_to": "Editor link copied to clipboard",
         "ensure_published_share_slug": "Ensure published share slug for form:",
@@ -173,19 +148,13 @@
         "form_published_but_share": "Form published but share slug is unavailable",
         "form_will_accept_new": "Form will accept new submissions.",
         "form_will_not_accept": "Form will not accept new submissions.",
-        "manage_who_in_your": "Manage who in your workspace can open and edit this form.",
         "only_the_form_owner": "Only the form owner can update payment settings when using platform payments.",
-        "payment_succeeded_or_failed": "Payment succeeded or failed",
-        "publishing_form_to_generate": "Publishing form to generate share link…",
         "questions_generated_successfully": "Questions generated successfully!",
-        "send_form_responses_and": "Send form responses and payment events to your downstream systems in real time.",
         "share_link_copied_to": "Share link copied to clipboard",
         "unable_to_remove_collaborator": "Unable to remove collaborator",
         "unable_to_update_access": "Unable to update access level",
         "unable_to_update_collaborators": "Unable to update collaborators",
         "unable_to_update_response": "Unable to update response settings.",
-        "use_my_own_stripe": "Use my own Stripe account",
-        "use_platform_account": "Use platform account",
         "why_webhooks": "Why webhooks?"
       },
       "title": {
@@ -214,7 +183,6 @@
         "payment_confirmed_thank_you": "Payment confirmed. Thank you!",
         "response_submitted_successfully": "Response submitted successfully.",
         "thank_you": "Thank you!",
-        "we_will_ask_for": "We will ask for your email address so we can send confirmations and receipts.",
         "your_response_has_been": "Your response has been recorded."
       }
     },
@@ -232,11 +200,8 @@
         "failed_to_export_to": "Failed to export to sheet",
         "failed_to_load_response": "Failed to load response detail.",
         "failed_to_load_responses": "Failed to load responses.",
-        "manage_submissions_monitor_payment": "Manage submissions, monitor payment status, and drill into individual answers.",
         "monitor_how_respondents_engage": "Monitor how respondents engage with your form and spot trends across completion states.",
-        "no_answers_captured_for": "No answers captured for this response.",
-        "sheet_updated_successfully": "Sheet updated successfully",
-        "visualize_completion_ratio_at": "Visualize completion ratio at a glance"
+        "sheet_updated_successfully": "Sheet updated successfully"
       }
     },
     "FormTemplateHandler": {
@@ -247,16 +212,13 @@
     },
     "Forms": {
       "heading": {
-        "create_and_manage_forms": "Create and Manage Forms",
         "share_this_form_with": "Share this form with participants or collaborators using the link below."
       },
       "text": {
-        "anyone_with_this_link": "Anyone with this link can access the form based on its publish settings.",
         "failed_to_publish_form": "Failed to publish form for sharing",
         "form_is_missing_an": "Form is missing an identifier.",
         "no_more_forms_to": "No more forms to load.",
         "publish_the_form_to": "Publish the form to get a shareable link.",
-        "publishing_form_to_generate": "Publishing form to generate share link…",
         "share_link_copied": "Share link copied",
         "share_link_copied_to": "Share link copied to clipboard.",
         "share_link_unavailable": "Share link unavailable",
@@ -300,14 +262,14 @@
         "login_with_venmail": "Login with Venmail"
       },
       "heading": {
-        "welcome_to_venmail_files": "Welcome to Venmail Files"
+        "welcome_to_venmail_files": "Welcome to Venmail Drive"
       },
       "link": {
         "cookie_ccpa_preferences": "Cookie & CCPA preferences",
         "privacy_terms": "Privacy & terms"
       },
       "text": {
-        "login_to_manage_your": "Login to manage your files and folders on Venmail"
+        "login_to_manage_your": "Login to manage your files and folders on Venmail."
       }
     },
     "Media": {
@@ -328,18 +290,11 @@
       }
     },
     "MediaViewer": {
-      "heading": {
-        "request_access_to_this": "Request access to this file"
-      },
-      "link": {
-        "download_open_original": "Download / Open original"
-      },
       "placeholder": {
         "add_a_note_to": "Add a note to the owner"
       },
       "text": {
         "access_request_sent": "Access request sent",
-        "cannot_preview_this_file": "Cannot preview this file type.",
         "failed_to_load_file": "Failed to load file",
         "file_not_found": "File not found"
       }
@@ -365,10 +320,6 @@
       }
     },
     "SheetEditor": {
-      "heading": {
-        "request_access_to_this": "Request access to this sheet",
-        "this_spreadsheet_is_large": "This spreadsheet is large"
-      },
       "placeholder": {
         "add_a_note_to": "Add a note to the owner"
       },
@@ -448,7 +399,6 @@
         "save_the_deck_before": "Save the deck before adjusting visibility",
         "save_the_deck_before_2": "Save the deck before inviting collaborators",
         "save_the_deck_before_3": "Save the deck before removing collaborators",
-        "select_or_add_a": "Select or add a slide to begin.",
         "share_link_copied": "Share link copied",
         "share_link_not_available": "Share link not available yet",
         "slide_template_load_failed": "Slide template load failed",

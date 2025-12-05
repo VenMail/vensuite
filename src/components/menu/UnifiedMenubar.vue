@@ -167,19 +167,19 @@ function formatSelectionLabel(selection: any): string {
   <Menubar class="border-none ml-0 pl-0 flex items-center gap-2 w-full rounded-none">
     <!-- File Menu -->
     <MenubarMenu>
-      <MenubarTrigger>File</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.file')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="handleNew">
           <FileIcon class="h-4 w-4 mr-2" />
-          New
+          {{$t('Commons.text.new')}}
         </MenubarItem>
         <MenubarItem @click="handleOpenDialog">
           <FolderIcon class="h-4 w-4 mr-2" />
-          Open
+          {{$t('Commons.button.open')}}
         </MenubarItem>
         <MenubarItem @click="handleSave">
           <SaveIcon class="h-4 w-4 mr-2" />
-          Save
+          {{$t('Commons.button.save')}}
         </MenubarItem>
         <MenubarSub>
           <MenubarSubTrigger>
@@ -196,7 +196,7 @@ function formatSelectionLabel(selection: any): string {
         <MenubarSeparator />
         <MenubarItem @click="emit('print')">
           <PrinterIcon class="h-4 w-4 mr-2" />
-          Print
+          {{$t('Commons.text.print')}}
         </MenubarItem>
         <MenubarSub>
           <MenubarSubTrigger>
@@ -214,15 +214,15 @@ function formatSelectionLabel(selection: any): string {
 
     <!-- Edit Menu -->
     <MenubarMenu>
-      <MenubarTrigger>Edit</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.heading.edit')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="handleUndo">
           <UndoIcon class="h-4 w-4 mr-2" />
-          Undo
+          {{$t('Commons.text.undo')}}
         </MenubarItem>
         <MenubarItem @click="handleRedo">
           <RedoIcon class="h-4 w-4 mr-2" />
-          Redo
+          {{$t('Commons.text.redo')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
@@ -230,19 +230,19 @@ function formatSelectionLabel(selection: any): string {
     <!-- Sheet-only menus -->
     <template v-if="mode==='sheet'">
       <MenubarMenu>
-        <MenubarTrigger>View</MenubarTrigger>
+        <MenubarTrigger>{{$t('Commons.text.view')}}</MenubarTrigger>
         <MenubarContent>
           <MenubarItem @click="emit('view-zoom-in')">
             <ZoomInIcon class="h-4 w-4 mr-2" />
-            Zoom In
+            {{$t('Commons.text.zoom_in')}}
           </MenubarItem>
           <MenubarItem @click="emit('view-zoom-out')">
             <ZoomOutIcon class="h-4 w-4 mr-2" />
-            Zoom Out
+            {{$t('Commons.text.zoom_out')}}
           </MenubarItem>
           <MenubarItem @click="emit('view-zoom-reset')">
             <RefreshCcwIcon class="h-4 w-4 mr-2" />
-            Reset Zoom
+            {{$t('Commons.text.reset_zoom')}}
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
@@ -264,21 +264,21 @@ function formatSelectionLabel(selection: any): string {
           </MenubarItem>
           <MenubarItem @click="emit('format-strike')">
             <StrikethroughIcon class="h-4 w-4 mr-2" />
-            Strikethrough
+            {{$t('Commons.text.strikethrough')}}
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
       <MenubarMenu>
-        <MenubarTrigger>Data</MenubarTrigger>
+        <MenubarTrigger>{{$t('Commons.text.data')}}</MenubarTrigger>
         <MenubarContent>
           <MenubarItem @click="emit('data-sort')">
             <SortAscIcon class="h-4 w-4 mr-2" />
-            Sort
+            {{$t('Commons.button.sort')}}
           </MenubarItem>
           <MenubarItem @click="emit('data-filter')">
             <FilterIcon class="h-4 w-4 mr-2" />
-            Filter
+            {{$t('Commons.text.filter')}}
           </MenubarItem>
           <MenubarItem @click="emit('data-group')">
             <GroupIcon class="h-4 w-4 mr-2" />
@@ -294,10 +294,10 @@ function formatSelectionLabel(selection: any): string {
         <MenubarTrigger>Page</MenubarTrigger>
         <MenubarContent>
           <MenubarItem @click="emit('toggle-page-layout')">
-            Page Layout
+            {{$t('Commons.text.page_layout')}}
           </MenubarItem>
           <MenubarItem @click="emit('toggle-page-numbers')">
-            Page Numbers
+            {{$t('Commons.text.page_numbers')}}
           </MenubarItem>
           <MenubarItem @click="emit('toggle-formatting-marks')">
             Formatting Marks
@@ -308,25 +308,25 @@ function formatSelectionLabel(selection: any): string {
 
     <!-- Collaboration/Help -->
     <MenubarMenu>
-      <MenubarTrigger class="text-sm font-medium text-gray-700 hover:text-gray-900">Collaboration</MenubarTrigger>
+      <MenubarTrigger class="text-sm font-medium text-gray-700 hover:text-gray-900">{{$t('Commons.text.collaboration')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="toggleChat">
           <MessageCircleIcon class="h-4 w-4 mr-2" />
-          Toggle Chat
+          {{$t('Commons.text.toggle_chat')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
 
     <MenubarMenu>
-      <MenubarTrigger>Help</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.help')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem>
           <HelpCircleIcon class="h-4 w-4 mr-2" />
-          Help Center
+          {{$t('Commons.text.help_center')}}
         </MenubarItem>
         <MenubarItem>
           <InfoIcon class="h-4 w-4 mr-2" />
-          About
+          {{$t('Commons.text.about')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>

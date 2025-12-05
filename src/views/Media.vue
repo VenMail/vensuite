@@ -105,7 +105,7 @@
               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+              {{ isAllSelected ? $t('Commons.text.deselect_all') : $t('Commons.label.select_all') }}
             </span>
           </div>
 
@@ -128,7 +128,7 @@
                 class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
               />
               <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+                {{ isAllSelected ? $t('Commons.text.deselect_all') : $t('Commons.label.select_all') }}
               </span>
             </Button>
 
@@ -182,7 +182,7 @@
     <Dialog :open="isRenameDialogOpen" @update:open="setRenameDialogOpen">
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Rename File</DialogTitle>
+          <DialogTitle>{{$t('Commons.heading.rename_file')}}</DialogTitle>
           <DialogDescription>
             Enter a new name for "{{ fileToRename?.title }}"
           </DialogDescription>
@@ -197,10 +197,10 @@
         </div>
         <DialogFooter>
           <Button variant="outline" @click="setRenameDialogOpen(false)">
-            Cancel
+            {{$t('Commons.button.cancel')}}
           </Button>
           <Button @click="confirmRename" :disabled="!newFileName.trim()">
-            Rename
+            {{$t('Commons.button.rename')}}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -210,7 +210,7 @@
     <Dialog :open="isDeleteDialogOpen" @update:open="setDeleteDialogOpen">
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Files</DialogTitle>
+          <DialogTitle>{{$t('Commons.heading.delete_files')}}</DialogTitle>
           <DialogDescription>
             Are you sure you want to delete {{ filesToDelete.length === 1 ? '"' + filesToDelete[0]?.title + '"' : filesToDelete.length + ' files' }}?
             This action cannot be undone.
@@ -218,10 +218,10 @@
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" @click="setDeleteDialogOpen(false)">
-            Cancel
+            {{$t('Commons.button.cancel')}}
           </Button>
           <Button variant="destructive" @click="confirmDelete">
-            Delete
+            {{$t('Commons.button.delete')}}
           </Button>
         </DialogFooter>
       </DialogContent>

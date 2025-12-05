@@ -94,7 +94,7 @@
           class="rounded-lg border border-transparent bg-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
           @click="nextField"
         >
-          Skip
+          {{$t('Commons.button.skip')}}
         </button>
         <button
           v-else
@@ -102,7 +102,7 @@
           @click="nextField"
           :disabled="!canProceed"
         >
-          Next
+          {{$t('Commons.button.next')}}
         </button>
       </div>
     </div>

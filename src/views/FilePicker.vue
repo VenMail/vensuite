@@ -3,7 +3,7 @@
      
     <div class="flex items-center justify-between p-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
       <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-        Select File
+        {{$t('Commons.heading.select_file')}}
       </h1>
       <Button variant="ghost" size="sm" @click="cancel">
         <X class="h-4 w-4" />
@@ -35,19 +35,19 @@
             <DropdownMenuContent align="end">
               <DropdownMenuItem @click="handleFilterChange('all')">
                 <FileIcon class="h-4 w-4 mr-2" />
-                All Files
+                {{$t('Commons.text.all_files')}}
               </DropdownMenuItem>
               <DropdownMenuItem @click="handleFilterChange('documents')">
                 <FileText class="h-4 w-4 mr-2" />
-                Documents
+                {{$t('Commons.text.documents')}}
               </DropdownMenuItem>
               <DropdownMenuItem @click="handleFilterChange('media')">
                 <Image class="h-4 w-4 mr-2" />
-                Media
+                {{$t('Commons.text.media')}}
               </DropdownMenuItem>
               <DropdownMenuItem @click="handleFilterChange('sheets')">
                 <FileSpreadsheet class="h-4 w-4 mr-2" />
-                Sheets
+                {{$t('Commons.text.sheets')}}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -62,13 +62,13 @@
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem @click="handleSortChange('name')">
-                Name
+                {{$t('Commons.button.name')}}
               </DropdownMenuItem>
               <DropdownMenuItem @click="handleSortChange('date')">
-                Date
+                {{$t('Commons.button.date')}}
               </DropdownMenuItem>
               <DropdownMenuItem @click="handleSortChange('size')">
-                Size
+                {{$t('Commons.button.size')}}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -105,7 +105,7 @@
         <span>{{ selectedIds.length }} selected</span>
       </div>
       <div class="flex items-center gap-2">
-        <Button variant="ghost" size="sm" @click="clearSelection">Clear</Button>
+        <Button variant="ghost" size="sm" @click="clearSelection">{{$t('Commons.button.clear')}}</Button>
         <Button variant="ghost" size="sm" @click="handleConfirmSelection" :disabled="selectedIds.length === 0">
           Select
         </Button>
@@ -161,9 +161,9 @@
                   class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 />
               </div>
-              <div>Name</div>
-              <div>Type</div>
-              <div>Size</div>
+              <div>{{$t('Commons.button.name')}}</div>
+              <div>{{$t('Commons.button.type')}}</div>
+              <div>{{$t('Commons.button.size')}}</div>
             </div>
 
             <div
@@ -217,7 +217,7 @@
       </span>
       <div class="flex gap-3">
         <Button variant="outline" @click="cancel">
-          Cancel
+          {{$t('Commons.button.cancel')}}
         </Button>
         <Button :disabled="selectedIds.length === 0" @click="handleConfirmSelection">
           Select {{ selectedIds.length > 1 ? `${selectedIds.length} files` : 'File' }}

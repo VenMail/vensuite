@@ -2,7 +2,7 @@
   <div class="form-editor">
     <Card class="form-preview">
       <CardHeader>
-        <CardTitle>{{ form?.title || "New Form" }}</CardTitle>
+        <CardTitle>{{ form?.title || $t('Commons.button.new_form') }}</CardTitle>
         <CardDescription>{{$t('Forms.Editor.text.edit_your_form_fields')}}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -20,11 +20,11 @@
                   @update:modelValue="handleFieldModelUpdate(index, $event)" />
                  
                 <div class="logic-editor mt-4">
-                  <h4 class="text-sm font-medium mb-2">Logic Rule</h4>
+                  <h4 class="text-sm font-medium mb-2">{{$t('Commons.heading.logic_rule')}}</h4>
                   <div class="flex items-center space-x-2">
                     <Checkbox :id="'logic-' + field.id" :checked="!!field.logic" @update:checked="() => toggleLogic(field)" />
                     <Label :for="'logic-' + field.id">
-                      Enable Logic
+                      {{$t('Commons.label.enable_logic')}}
                     </Label>
                   </div>
                   <div v-if="field.logic" class="mt-2">
@@ -65,7 +65,7 @@
                     Required
                   </Label>
                 </div>
-                <Button variant="destructive" @click="deleteField(index)">Delete</Button>
+                <Button variant="destructive" @click="deleteField(index)">{{$t('Commons.button.delete')}}</Button>
               </CardFooter>
             </Card>
           </div>

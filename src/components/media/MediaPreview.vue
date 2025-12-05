@@ -123,7 +123,7 @@
         @click.stop="emit('preview', file)"
       >
         <Eye class="w-4 h-4 mr-1" />
-        Preview
+        {{$t('Commons.button.preview')}}
       </Button>
     </div>
   </div>

@@ -68,12 +68,12 @@
         <DialogTrigger asChild>
           <Button variant="outline" class="dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
             <Share2 class="h-4 w-4 mr-2" />
-            Share
+            {{$t('Commons.button.share')}}
           </Button>
         </DialogTrigger>
         <DialogContent class="dark:bg-gray-900 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle class="dark:text-gray-100">Share Slides</DialogTitle>
+            <DialogTitle class="dark:text-gray-100">{{$t('Commons.heading.share_slides')}}</DialogTitle>
           </DialogHeader>
           <ShareCard
             @close="shareDialogOpen = false"

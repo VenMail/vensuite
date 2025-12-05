@@ -1,6 +1,6 @@
 <template>
   <div class="rating-editor">
-    <h3>Rating Properties</h3>
+    <h3>{{$t('Commons.heading.rating_properties')}}</h3>
     <label>
       Min Rating:
       <input type="number" :value="min" min="0" @input="onMinInput" />
@@ -10,15 +10,15 @@
       <input type="number" :value="max" min="1" @input="onMaxInput" />
     </label>
     <label>
-      Icon Type:
+      {{$t('Commons.label.icon_type')}}
       <select :value="iconType" @change="onIconTypeChange">
-        <option value="star">Star</option>
-        <option value="heart">Heart</option>
-        <option value="thumb">Thumb</option>
+        <option value="star">{{$t('Commons.text.star')}}</option>
+        <option value="heart">{{$t('Commons.text.heart')}}</option>
+        <option value="thumb">{{$t('Commons.text.thumb')}}</option>
       </select>
     </label>
     <label>
-      Allow Half Ratings:
+      {{$t('Forms.Editors.RatingEditor.label.allow_half_ratings')}}
       <input type="checkbox" :checked="allowHalf" @change="onAllowHalfToggle" />
     </label>
   </div>

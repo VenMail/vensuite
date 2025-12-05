@@ -727,7 +727,7 @@ function handleEscapeKey(event: KeyboardEvent) {
               </div>
 
               <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100">
-                {{ showRecentFiles ? "Recent Files" : currentTitle }}
+                {{ showRecentFiles ? $t('Commons.heading.recent_files') : currentTitle }}
               </h2>
 
               <!-- Action buttons -->
@@ -758,7 +758,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                   <DialogContent class="rounded-lg shadow-2xl border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                     <DialogHeader>
                       <DialogTitle class="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                        Choose a Template
+                        {{$t('Views.Home.heading.choose_a_template')}}
                       </DialogTitle>
                     </DialogHeader>
                     <Tabs default-value="Documents">
@@ -811,7 +811,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                     class="hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
                     @click="openFile(Array.from(selectedFiles)[0])">
                     <FolderOpen class="h-4 w-4 mr-2" />
-                    <span class="hidden sm:inline">Open</span>
+                    <span class="hidden sm:inline">{{$t('Commons.button.open')}}</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -819,7 +819,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                     class="hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
                     @click="handleBulkDelete">
                     <Trash2 class="h-4 w-4 mr-2" />
-                    <span class="hidden sm:inline">Delete</span>
+                    <span class="hidden sm:inline">{{$t('Commons.button.delete')}}</span>
                   </Button>
                   <Button
                     v-if="selectedFiles.size === 1"
@@ -828,7 +828,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                     class="hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
                     @click="handleRename">
                     <Edit class="h-4 w-4 mr-2" />
-                    <span class="hidden sm:inline">Rename</span>
+                    <span class="hidden sm:inline">{{$t('Commons.button.rename')}}</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -836,7 +836,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                     class="hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
                     @click="handleBulkDownload">
                     <Download class="h-4 w-4 mr-2" />
-                    <span class="hidden sm:inline">Download</span>
+                    <span class="hidden sm:inline">{{$t('Commons.button.download')}}</span>
                   </Button>
                   <Button
                     v-if="selectedFiles.size === 1"
@@ -844,7 +844,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                     size="sm"
                     class="hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">
                     <Share2 class="h-4 w-4 mr-2" />
-                    <span class="hidden sm:inline">Share</span>
+                    <span class="hidden sm:inline">{{$t('Commons.button.share')}}</span>
                   </Button>
                   <Button
                     variant="ghost"
@@ -879,15 +879,15 @@ function handleEscapeKey(event: KeyboardEvent) {
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" class="flex-1 sm:flex-initial border-gray-300 dark:border-gray-600 dark:text-gray-100">
                         <span class="hidden sm:inline">Sort: </span>
-                        {{ sortBy === "name" ? "Name" : sortBy === "date" ? "Date" : sortBy === "type" ? "Type" : "Size" }}
+                        {{ sortBy === "name" ? $t('Commons.button.name') : sortBy === "date" ? $t('Commons.button.date') : sortBy === "type" ? $t('Commons.button.type') : $t('Commons.button.size') }}
                         <ChevronDown class="ml-2 h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuItem @click="sortBy = 'name'">Sort by Name</DropdownMenuItem>
-                      <DropdownMenuItem @click="sortBy = 'date'">Sort by Date</DropdownMenuItem>
-                      <DropdownMenuItem @click="sortBy = 'type'">Sort by Type</DropdownMenuItem>
-                      <DropdownMenuItem @click="sortBy = 'size'">Sort by Size</DropdownMenuItem>
+                      <DropdownMenuItem @click="sortBy = 'name'">{{$t('Views.Home.text.sort_by_name')}}</DropdownMenuItem>
+                      <DropdownMenuItem @click="sortBy = 'date'">{{$t('Views.Home.text.sort_by_date')}}</DropdownMenuItem>
+                      <DropdownMenuItem @click="sortBy = 'type'">{{$t('Views.Home.text.sort_by_type')}}</DropdownMenuItem>
+                      <DropdownMenuItem @click="sortBy = 'size'">{{$t('Views.Home.text.sort_by_size')}}</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
@@ -901,13 +901,13 @@ function handleEscapeKey(event: KeyboardEvent) {
                     <DropdownMenuContent>
                       <div class="px-2 py-1.5">
                         <div class="flex items-center justify-between space-x-2">
-                          <span class="text-sm text-gray-600 dark:text-gray-300">Group by Type</span>
+                          <span class="text-sm text-gray-600 dark:text-gray-300">{{$t('Views.Home.text.group_by_type')}}</span>
                           <Switch v-model="groupByFileType" />
                         </div>
                       </div>
                       <div class="px-2 py-1.5">
                         <div class="flex items-center justify-between space-x-2">
-                          <span class="text-sm text-gray-600 dark:text-gray-300">Recent Files</span>
+                          <span class="text-sm text-gray-600 dark:text-gray-300">{{$t('Commons.heading.recent_files')}}</span>
                           <Switch v-model="showRecentFiles" />
                         </div>
                       </div>
@@ -974,14 +974,14 @@ function handleEscapeKey(event: KeyboardEvent) {
                       <label
                         :for="`select-all-${groupName}`"
                         class="text-sm font-medium cursor-pointer select-none text-gray-700 dark:text-gray-300">
-                        Select All
+                        {{$t('Commons.label.select_all')}}
                       </label>
                     </div>
                   </div>
 
                   <!-- Items -->
                   <div v-if="items.length === 0" class="text-center text-sm py-4 text-gray-500 dark:text-gray-400">
-                    No items available in this category.
+                    {{$t('Views.Home.text.no_items_available_in')}}
                   </div>
                   <div
                     v-else
@@ -1020,23 +1020,23 @@ function handleEscapeKey(event: KeyboardEvent) {
                   <FolderOpen class="h-8 w-8 text-gray-500 dark:text-gray-400" />
                 </div>
                 <h3 class="text-xl font-semibold mb-2 text-center text-gray-800 dark:text-gray-100">
-                  {{ searchValue ? "No matching files found" : "No files found" }}
+                  {{ searchValue ? $t('Views.Home.heading.no_matching_files_found') : $t('Views.Home.heading.no_files_found') }}
                 </h3>
                 <p class="text-center mb-8 max-w-md text-gray-600 dark:text-gray-400">
-                  {{ searchValue ? "Try adjusting your search or filters." : "Get started by creating a new file or uploading an existing one." }}
+                  {{ searchValue ? $t('Views.Home.text.try_adjusting_your_search') : $t('Views.Home.text.get_started_by_creating') }}
                 </p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
                   <Button @click="createNewFile('documents')" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2">
                     <Plus class="mr-2 h-4 w-4" />
-                    New Document
+                    {{$t('Commons.button.new_document')}}
                   </Button>
                   <Button @click="createNewFile('spreadsheets')" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
                     <Plus class="mr-2 h-4 w-4" />
-                    New Spreadsheet
+                    {{$t('Commons.button.new_spreadsheet')}}
                   </Button>
                   <Button variant="outline" class="px-6 py-2 border-gray-300 dark:border-gray-600 dark:text-gray-100 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700" @click="openUploadDialog">
                     <Upload class="mr-2 h-4 w-4" />
-                    Upload File
+                    {{$t('Commons.button.upload_file')}}
                   </Button>
                 </div>
               </div>
@@ -1075,12 +1075,12 @@ function handleEscapeKey(event: KeyboardEvent) {
       <div class="backdrop-filter backdrop-blur-lg p-10 rounded-lg shadow-xl border max-w-md w-full mx-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <img src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full dark:hidden" />
         <img src="/logo-white.png" alt="VenMail Logo" class="h-6 w-full hidden dark:block" />
-        <h2 class="text-gray-800 dark:text-gray-100">Welcome to Venmail File Manager</h2>
+        <h2 class="text-gray-800 dark:text-gray-100">{{$t('Views.Home.heading.welcome_to_venmail_file')}}</h2>
         <Button class="w-full bg-primary-600 hover:bg-primary-700" @click="loginWithVenmail">
-          Login with Venmail
+          {{$t('Views.Home.button.login_with_venmail')}}
         </Button>
         <p class="text-sm mt-4 text-center text-gray-500 dark:text-gray-400">
-          Login to manage your files and folders on Venmail.
+          {{$t('Views.Home.text.login_to_manage_your')}}
         </p>
       </div>
     </div>

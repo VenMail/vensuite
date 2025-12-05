@@ -4,10 +4,10 @@
       <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div class="flex flex-col gap-2.5">
           <span class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-gray-500 dark:text-gray-400">
-            {{ definition?.organization_id ? 'Form Preview' : 'Form Response' }}
+            {{ definition?.organization_id ? $t('Commons.text.form_preview') : $t('Commons.text.form_response') }}
           </span>
           <h1 class="font-serif text-[2.25rem] font-semibold leading-tight text-gray-900 sm:text-[2.6rem] dark:text-gray-100">
-            {{ definition?.title || 'Untitled Form' }}
+            {{ definition?.title || $t('Commons.heading.untitled_form') }}
           </h1>
           <p v-if="definition?.description" class="max-w-3xl text-sm text-gray-600 dark:text-gray-400">
             {{ definition?.description }}
@@ -114,10 +114,10 @@
     >
       <div class="flex flex-col gap-1">
         <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-          {{ canSubmit ? 'Ready to submit' : 'Please complete required fields' }}
+          {{ canSubmit ? $t('Forms.Player.ClassicPlayer.text.ready_to_submit') : $t('Forms.Player.ClassicPlayer.text.please_complete_required_fields') }}
         </p>
         <p class="text-xs text-gray-500 dark:text-gray-400">
-          {{ canSubmit ? 'Review your responses before submitting.' : 'Required fields are marked with *' }}
+          {{ canSubmit ? $t('Forms.Player.ClassicPlayer.text.review_your_responses_before') : $t('Forms.Player.ClassicPlayer.text.required_fields_are_marked') }}
         </p>
       </div>
 
@@ -131,7 +131,7 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
-        <span>{{ isSubmitting ? 'Submitting…' : canSubmit ? 'Submit form' : 'Complete required fields' }}</span>
+        <span>{{ isSubmitting ? 'Submitting…' : canSubmit ? $t('Commons.button.submit_form') : $t('Forms.Player.ClassicPlayer.text.complete_required_fields') }}</span>
       </button>
     </footer>
   </div>

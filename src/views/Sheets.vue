@@ -120,7 +120,7 @@
                     'text-gray-800 dark:text-gray-100'
                   ]"
                 >
-                  Create New Spreadsheet
+                  {{$t('Views.Sheets.heading.create_new_spreadsheet')}}
                 </DialogTitle>
               </DialogHeader>
               <div class="grid grid-cols-2 gap-4 p-2">
@@ -170,7 +170,7 @@
             <span
               class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              {{ isAllSelected ? "Deselect All" : "Select All" }}
+              {{ isAllSelected ? $t('Commons.text.deselect_all') : $t('Commons.label.select_all') }}
             </span>
           </div>
 
@@ -200,7 +200,7 @@
                   'text-sm font-medium text-gray-700 dark:text-gray-300',
                 ]"
               >
-                {{ isAllSelected ? "Deselect All" : "Select All" }}
+                {{ isAllSelected ? $t('Commons.text.deselect_all') : $t('Commons.label.select_all') }}
               </span>
             </Button>
 
@@ -243,9 +243,9 @@
           <div class="empty-icon-wrapper">
             <FolderOpen class="empty-icon" />
           </div>
-          <h3 class="empty-title">No spreadsheets found</h3>
+          <h3 class="empty-title">{{$t('Views.Sheets.heading.no_spreadsheets_found')}}</h3>
           <p class="empty-description">
-            Get started by creating a new spreadsheet or uploading an existing one.
+            {{$t('Views.Sheets.text.get_started_by_creating')}}
           </p>
           <div class="empty-actions">
             <Button
@@ -253,7 +253,7 @@
               class="bg-primary-600 hover:bg-primary-700"
             >
               <Plus class="mr-2 h-4 w-4" />
-              New Spreadsheet
+              {{$t('Commons.button.new_spreadsheet')}}
             </Button>
             <Button
               variant="outline"
@@ -261,7 +261,7 @@
               @click="openUploadDialog"
             >
               <Upload class="mr-2 h-4 w-4" />
-              Upload Spreadsheet
+              {{$t('Commons.button.upload_spreadsheet')}}
             </Button>
           </div>
         </div>

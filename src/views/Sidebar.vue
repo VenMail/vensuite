@@ -146,12 +146,12 @@ function createNewFile(type: string, template?: string) {
                 :class="props.isCollapsed ? 'w-8' : 'flex-1'"
               >
                 <Plus class="h-5 w-5" :class="props.isCollapsed ? '' : 'mr-2'" />
-                <span v-if="!props.isCollapsed">New</span>
+                <span v-if="!props.isCollapsed">{{$t('Commons.text.new')}}</span>
               </button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Choose a Template</DialogTitle>
+                <DialogTitle>{{$t('Views.Sidebar.heading.choose_a_template')}}</DialogTitle>
               </DialogHeader>
               <Tabs default-value="Documents">
                 <TabsList>

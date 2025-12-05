@@ -199,7 +199,7 @@ watch(() => route.path, () => {
             class="cursor-pointer text-red-600 dark:text-red-400"
           >
             <X class="h-4 w-4 mr-2" />
-            Clear Filters
+            {{$t('Commons.button.clear_filters')}}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

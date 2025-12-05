@@ -2,7 +2,7 @@
   <section class="space-y-6 text-gray-900 dark:text-gray-100">
     <header class="flex items-start justify-between gap-3">
       <div>
-        <h3 class="text-lg font-semibold">Webhooks</h3>
+        <h3 class="text-lg font-semibold">{{$t('Commons.heading.webhooks')}}</h3>
         <p class="text-sm text-gray-600 dark:text-gray-400">{{$t('Forms.WebhooksPanel.text.connect_form_events_to')}}</p>
       </div>
       <button
@@ -12,7 +12,7 @@
         @click="load"
       >
         <RefreshCw class="w-4 h-4" />
-        Refresh
+        {{$t('Commons.button.refresh')}}
       </button>
     </header>
 
@@ -20,10 +20,10 @@
       <table class="w-full text-sm" aria-label="Configured webhooks">
         <thead class="text-left text-gray-500 dark:text-gray-400 uppercase text-xs">
           <tr>
-            <th class="px-4 py-3 w-36">Type</th>
-            <th class="px-4 py-3">Webhook URL</th>
-            <th class="px-4 py-3 w-24 text-center">Status</th>
-            <th class="px-4 py-3 w-40">Actions</th>
+            <th class="px-4 py-3 w-36">{{$t('Commons.button.type')}}</th>
+            <th class="px-4 py-3">{{$t('Commons.label.webhook_url')}}</th>
+            <th class="px-4 py-3 w-24 text-center">{{$t('Commons.text.status')}}</th>
+            <th class="px-4 py-3 w-40">{{$t('Commons.text.actions')}}</th>
           </tr>
         </thead>
         <tbody>
@@ -106,7 +106,7 @@
         <Transition name="fade">
           <div v-if="composer.open" class="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
             <div class="flex items-center gap-2">
-              <label class="sr-only" for="webhook-type">Event</label>
+              <label class="sr-only" for="webhook-type">{{$t('Commons.label.event')}}</label>
               <select
                 id="webhook-type"
                 v-model="composer.event"
@@ -118,7 +118,7 @@
               </select>
             </div>
             <div class="flex-1">
-              <label class="sr-only" for="webhook-url">Webhook URL</label>
+              <label class="sr-only" for="webhook-url">{{$t('Commons.label.webhook_url')}}</label>
               <input
                 id="webhook-url"
                 v-model.trim="composer.url"

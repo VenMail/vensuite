@@ -19,14 +19,14 @@
         <DropdownMenuTrigger asChild>
           <Button variant="outline" class="shrink-0">
             <Filter class="h-4 w-4 mr-2" />
-            {{ filters.type === 'all' || !filters.type ? 'All Types' : filters.type }}
+            {{ filters.type === 'all' || !filters.type ? $t('Commons.button.all_types') : filters.type }}
             <ChevronDown class="h-4 w-4 ml-2" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuItem @click="updateFilters({ ...filters, type: 'all' })">
             <FileIcon class="h-4 w-4 mr-2" />
-            All Types
+            {{$t('Commons.button.all_types')}}
           </DropdownMenuItem>
           <DropdownMenuItem v-for="type in allTypes" :key="type" @click="updateFilters({ ...filters, type })">
             <FileType class="h-4 w-4 mr-2" />
@@ -40,14 +40,14 @@
         <DropdownMenuTrigger asChild>
           <Button variant="outline" class="shrink-0">
             <Filter class="h-4 w-4 mr-2" />
-            {{ filters.source === 'all' || !filters.source ? 'All Sources' : filters.source }}
+            {{ filters.source === 'all' || !filters.source ? $t('Commons.button.all_sources') : filters.source }}
             <ChevronDown class="h-4 w-4 ml-2" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuItem @click="updateFilters({ ...filters, source: 'all' })">
             <FileIcon class="h-4 w-4 mr-2" />
-            All Sources
+            {{$t('Commons.button.all_sources')}}
           </DropdownMenuItem>
           <DropdownMenuItem v-for="source in allSources" :key="source" @click="updateFilters({ ...filters, source })">
             <FolderIcon class="h-4 w-4 mr-2" />
@@ -61,7 +61,7 @@
         <DropdownMenuTrigger asChild>
           <Button variant="outline" class="shrink-0">
             <ArrowUpDown class="h-4 w-4 mr-2" />
-            Sort
+            {{$t('Commons.button.sort')}}
             <ChevronDown class="h-4 w-4 ml-2" />
           </Button>
         </DropdownMenuTrigger>
@@ -84,7 +84,7 @@
           </DropdownMenuItem>
           <DropdownMenuItem @click="updateSortValue('file_type-asc')">
             <FileType class="h-4 w-4 mr-2" />
-            Type
+            {{$t('Commons.button.type')}}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -132,7 +132,7 @@
       <!-- Bulk Actions (shown when items are selected) -->
       <div v-if="hasSelection" class="flex items-center gap-2">
         <Button variant="outline" size="sm" @click="$emit('clearSelection')">
-          Clear
+          {{$t('Commons.button.clear')}}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -144,14 +144,14 @@
           <DropdownMenuContent>
             <DropdownMenuItem @click="$emit('bulkAction', 'restore')">
               <RefreshCw class="h-4 w-4 mr-2" />
-              Restore Selected
+              {{$t('Commons.text.restore_selected')}}
             </DropdownMenuItem>
             <DropdownMenuItem 
               @click="$emit('bulkAction', 'delete')"
               class="text-destructive focus:text-destructive"
             >
               <Trash2 class="h-4 w-4 mr-2" />
-              Delete Selected
+              {{$t('Commons.text.delete_selected')}}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -165,7 +165,7 @@
         :disabled="loading || deletedItemsLength === 0"
       >
         <Trash2 class="h-4 w-4 mr-2" />
-        Empty Bin
+        {{$t('Commons.button.empty_bin')}}
       </Button>
     </div>
   </div>

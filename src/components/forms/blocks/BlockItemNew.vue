@@ -150,7 +150,7 @@
             @click="addOption()"
           >
             <Plus class="w-4 h-4" />
-            Add option
+            {{$t('Commons.button.add_option')}}
           </button>
         </div>
 
@@ -176,10 +176,10 @@
          
         <div v-else-if="localBlock.category === 'switch'" class="flex gap-3">
           <button class="flex-1 px-6 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium">
-            Yes
+            {{$t('Commons.button.yes')}}
           </button>
           <button class="flex-1 px-6 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium">
-            No
+            {{$t('Commons.button.no')}}
           </button>
         </div>
       </div>

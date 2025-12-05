@@ -8,6 +8,7 @@
   import {
     cn
   } from '@/lib/utils'
+  import { useTranslation } from '@/composables/useTranslation'
   import SearchBar from './SearchBar.vue'
   import UserProfile from './UserProfile.vue'
 
@@ -24,6 +25,8 @@
       value: boolean
     }
   }
+
+  const { locale, setLocale } = useTranslation()
 </script>
 
 <template>
@@ -66,8 +69,40 @@
         <SearchBar :isMobile="props.isMobile" />
       </div>
 
-      <!-- Right section: User Profile -->
-      <UserProfile :isMobile="props.isMobile" />
+      <!-- Right section: Language switcher + User Profile -->
+      <div class="flex items-center space-x-3">
+        <div class="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 text-xs overflow-hidden">
+          <button
+            class="px-2 py-1 transition-colors"
+            :class="locale === 'en'
+              ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+              : 'bg-transparent text-gray-600 dark:text-gray-300'"
+            @click="setLocale('en')"
+          >
+            EN
+          </button>
+          <button
+            class="px-2 py-1 transition-colors"
+            :class="locale === 'fr'
+              ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+              : 'bg-transparent text-gray-600 dark:text-gray-300'"
+            @click="setLocale('fr')"
+          >
+            FR
+          </button>
+          <button
+            class="px-2 py-1 transition-colors"
+            :class="locale === 'zh'
+              ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+              : 'bg-transparent text-gray-600 dark:text-gray-300'"
+            @click="setLocale('zh')"
+          >
+            中
+          </button>
+        </div>
+
+        <UserProfile :isMobile="props.isMobile" />
+      </div>
     </div>
   </nav>
 </template>

@@ -63,7 +63,7 @@
             :disabled="isSubmitting"
             @click="handleSkip"
           >
-            Skip
+            {{$t('Commons.button.skip')}}
           </button>
 
           <button
@@ -73,7 +73,7 @@
             :disabled="isSubmitting || !canProceed"
             @click="handleNext"
           >
-            Next
+            {{$t('Commons.button.next')}}
           </button>
 
           <button
@@ -83,7 +83,7 @@
             :disabled="isSubmitting || !canProceed"
             @click="emitComplete"
           >
-            {{ isSubmitting ? 'Submitting…' : 'Submit form' }}
+            {{ isSubmitting ? 'Submitting…' : $t('Commons.button.submit_form') }}
           </button>
         </div>
       </div>

@@ -53,9 +53,9 @@
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem @click="openFile">Open</DropdownMenuItem>
-            <DropdownMenuItem @click="startRenaming">Rename</DropdownMenuItem>
-            <DropdownMenuItem @click="deleteFile">Delete</DropdownMenuItem>
+            <DropdownMenuItem @click="openFile">{{$t('Commons.button.open')}}</DropdownMenuItem>
+            <DropdownMenuItem @click="startRenaming">{{$t('Commons.button.rename')}}</DropdownMenuItem>
+            <DropdownMenuItem @click="deleteFile">{{$t('Commons.button.delete')}}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -147,7 +147,7 @@
             class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400"
           >
             <span v-if="formattedDate">{{ formattedDate }}</span>
-            <span v-if="file.is_folder" class="font-medium">Folder</span>
+            <span v-if="file.is_folder" class="font-medium">{{$t('Commons.text.folder')}}</span>
           </div>
         </div>
       </div>
@@ -307,9 +307,9 @@
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem @click="openFile">Open</DropdownMenuItem>
-                <DropdownMenuItem @click="startRenaming">Rename</DropdownMenuItem>
-                <DropdownMenuItem @click="deleteFile">Delete</DropdownMenuItem>
+                <DropdownMenuItem @click="openFile">{{$t('Commons.button.open')}}</DropdownMenuItem>
+                <DropdownMenuItem @click="startRenaming">{{$t('Commons.button.rename')}}</DropdownMenuItem>
+                <DropdownMenuItem @click="deleteFile">{{$t('Commons.button.delete')}}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

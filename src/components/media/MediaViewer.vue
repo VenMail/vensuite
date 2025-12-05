@@ -64,7 +64,7 @@
               ref="mediaElement"
             >
               <source :src="currentFile?.file_url" :type="`video/${currentFile?.file_type}`">
-              Your browser does not support the video tag.
+              {{$t('Media.MediaViewer.text.your_browser_does_not')}}
             </video>
           </div>
 
@@ -90,7 +90,7 @@
               @error="handleMediaError"
             >
               <source :src="currentFile?.file_url" :type="`audio/${currentFile?.file_type}`">
-              Your browser does not support the audio tag.
+              {{$t('Media.MediaViewer.text.your_browser_does_not_2')}}
             </audio>
           </div>
 
@@ -104,7 +104,7 @@
               <p class="text-gray-300 mb-4">{{$t('Media.MediaViewer.text.preview_not_available_for')}}</p>
               <Button variant="outline" @click="handleDownload">
                 <Download class="h-4 w-4 mr-2" />
-                Download File
+                {{$t('Commons.button.download_file')}}
               </Button>
             </div>
           </div>
@@ -191,7 +191,7 @@
               <p class="text-gray-300 mb-4">{{$t('Media.MediaViewer.text.there_was_an_error')}}</p>
               <Button variant="outline" @click="handleDownload">
                 <Download class="h-4 w-4 mr-2" />
-                Download Instead
+                {{$t('Commons.button.download_instead')}}
               </Button>
             </div>
           </div>

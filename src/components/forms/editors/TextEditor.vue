@@ -4,7 +4,7 @@
 
      
     <label>
-      Field Type:
+      {{$t('Commons.label.field_type')}}
       <select v-model="localModelValue.type">
         <option v-for="type in fieldTypes" :key="type" :value="type">
           {{ formatLabel(type) }}
@@ -14,7 +14,7 @@
 
      
     <label>
-      Validation Type:
+      {{$t('Commons.label.validation_type')}}
       <select v-model="validation.inputType" @change="applyDefaultValidation">
         <option v-for="type in validationTypes" :key="type" :value="type">
           {{ formatLabel(type) }}

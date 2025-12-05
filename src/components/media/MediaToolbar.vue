@@ -31,7 +31,7 @@
           <DropdownMenuContent align="end">
             <DropdownMenuItem @click="handleFilterChange('all')">
               <FileIcon class="h-4 w-4 mr-2" />
-              All Media
+              {{$t('Commons.text.all_media')}}
             </DropdownMenuItem>
             <DropdownMenuItem @click="handleFilterChange('images')">
               <Image class="h-4 w-4 mr-2" />
@@ -39,7 +39,7 @@
             </DropdownMenuItem>
             <DropdownMenuItem @click="handleFilterChange('videos')">
               <Video class="h-4 w-4 mr-2" />
-              Videos
+              {{$t('Commons.text.videos')}}
             </DropdownMenuItem>
             <DropdownMenuItem @click="handleFilterChange('audio')">
               <Volume2 class="h-4 w-4 mr-2" />
@@ -50,7 +50,7 @@
       </div>
 
       <div class="flex items-center gap-3 w-full xl:w-auto justify-between lg:justify-end">
-        <span class="hidden sm:inline text-sm text-gray-500 dark:text-gray-400">Sort by</span>
+        <span class="hidden sm:inline text-sm text-gray-500 dark:text-gray-400">{{$t('Commons.text.sort_by')}}</span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" class="shrink-0">
@@ -62,19 +62,19 @@
           <DropdownMenuContent align="end">
             <DropdownMenuItem @click="handleSortChange('name')">
               <AlphabeticalIcon class="h-4 w-4 mr-2" />
-              Name
+              {{$t('Commons.button.name')}}
             </DropdownMenuItem>
             <DropdownMenuItem @click="handleSortChange('date')">
               <Calendar class="h-4 w-4 mr-2" />
-              Date
+              {{$t('Commons.button.date')}}
             </DropdownMenuItem>
             <DropdownMenuItem @click="handleSortChange('size')">
               <HardDrive class="h-4 w-4 mr-2" />
-              Size
+              {{$t('Commons.button.size')}}
             </DropdownMenuItem>
             <DropdownMenuItem @click="handleSortChange('type')">
               <FileType class="h-4 w-4 mr-2" />
-              Type
+              {{$t('Commons.button.type')}}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -120,18 +120,18 @@
           <div class="flex items-center gap-2">
             <Button variant="outline" size="sm" @click="$emit('bulk-download')">
               <Download class="h-4 w-4 mr-2" />
-              Download
+              {{$t('Commons.button.download')}}
             </Button>
             <Button variant="outline" size="sm" @click="$emit('bulk-delete')">
               <Trash2 class="h-4 w-4 mr-2" />
-              Delete
+              {{$t('Commons.button.delete')}}
             </Button>
           </div>
         </template>
 
         <Button @click="$emit('upload')" class="shrink-0">
           <Upload class="h-4 w-4 mr-2" />
-          Upload Media
+          {{$t('Commons.button.upload_media')}}
         </Button>
       </div>
     </div>

@@ -15,26 +15,26 @@
       </div>
 
       <div v-if="showPaymentReminder" class="player-host__callout player-host__callout--payment">
-        <h3>Payment due</h3>
+        <h3>{{$t('Commons.heading.payment_due')}}</h3>
         <p>{{ paymentSummaryText }}</p>
       </div>
 
       <main :class="['player-host__body', isClassicMode ? 'player-host__body--classic' : 'player-host__body--focus']">
         <section v-if="stage === 'loading'" class="player-host__state">
-          <span>Loading form…</span>
+          <span>{{$t('Commons.text.loading_form')}}</span>
         </section>
 
         <section v-else-if="stage === 'error'" class="player-host__state player-host__state--error">
           <p>{{ loadError }}</p>
-          <button type="button" class="player-host__button" @click="reload">Retry</button>
+          <button type="button" class="player-host__button" @click="reload">{{$t('Commons.button.retry')}}</button>
         </section>
 
         <section v-else-if="stage === 'welcome'" class="player-host__welcome">
           <div class="welcome-card">
-            <h2>{{ welcomeScreen?.title ?? 'Welcome' }}</h2>
+            <h2>{{ welcomeScreen?.title ?? $t('Commons.heading.welcome') }}</h2>
             <p v-if="welcomeScreen?.subtitle">{{ welcomeScreen?.subtitle }}</p>
             <button type="button" class="player-host__button player-host__button--primary" @click="startForm">
-              {{ welcomeScreen?.button_text ?? 'Start' }}
+              {{ welcomeScreen?.button_text ?? $t('Commons.button.start') }}
             </button>
           </div>
         </section>

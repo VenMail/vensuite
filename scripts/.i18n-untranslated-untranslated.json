@@ -1,6 +1,6 @@
 {
   "issueType": "untranslated",
-  "generatedAt": "2025-12-04T20:48:01.964Z",
+  "generatedAt": "2025-12-05T00:12:19.693Z",
   "files": [
     {
       "locale": "fr",
@@ -173,6 +173,11 @@
           "current": "Clear"
         },
         {
+          "keyPath": "Commons.button.clear_filters",
+          "english": "Clear Filters",
+          "current": "Clear Filters"
+        },
+        {
           "keyPath": "Commons.button.clear_selection",
           "english": "Clear selection",
           "current": "Clear selection"
@@ -206,6 +211,11 @@
           "keyPath": "Commons.button.create_form",
           "english": "Create Form",
           "current": "Create Form"
+        },
+        {
+          "keyPath": "Commons.button.date",
+          "english": "Date",
+          "current": "Date"
         },
         {
           "keyPath": "Commons.button.delete",
@@ -288,9 +298,24 @@
           "current": "Manage access"
         },
         {
+          "keyPath": "Commons.button.name",
+          "english": "Name",
+          "current": "Name"
+        },
+        {
+          "keyPath": "Commons.button.new_document",
+          "english": "New Document",
+          "current": "New Document"
+        },
+        {
           "keyPath": "Commons.button.new_form",
           "english": "New Form",
           "current": "New Form"
+        },
+        {
+          "keyPath": "Commons.button.new_spreadsheet",
+          "english": "New Spreadsheet",
+          "current": "New Spreadsheet"
         },
         {
           "keyPath": "Commons.button.next",
@@ -348,6 +373,11 @@
           "current": "Remove"
         },
         {
+          "keyPath": "Commons.button.rename",
+          "english": "Rename",
+          "current": "Rename"
+        },
+        {
           "keyPath": "Commons.button.request_access",
           "english": "Request access",
           "current": "Request access"
@@ -356,6 +386,11 @@
           "keyPath": "Commons.button.reset",
           "english": "Reset",
           "current": "Reset"
+        },
+        {
+          "keyPath": "Commons.button.restore",
+          "english": "Restore",
+          "current": "Restore"
         },
         {
           "keyPath": "Commons.button.resume_responses",
@@ -403,6 +438,11 @@
           "current": "Sign in"
         },
         {
+          "keyPath": "Commons.button.size",
+          "english": "Size",
+          "current": "Size"
+        },
+        {
           "keyPath": "Commons.button.skip",
           "english": "Skip",
           "current": "Skip"
@@ -443,6 +483,16 @@
           "current": "Update"
         },
         {
+          "keyPath": "Commons.button.upload_document",
+          "english": "Upload Document",
+          "current": "Upload Document"
+        },
+        {
+          "keyPath": "Commons.button.upload_file",
+          "english": "Upload File",
+          "current": "Upload File"
+        },
+        {
           "keyPath": "Commons.button.upload_files",
           "english": "Upload Files",
           "current": "Upload Files"
@@ -451,6 +501,11 @@
           "keyPath": "Commons.button.upload_media",
           "english": "Upload Media",
           "current": "Upload Media"
+        },
+        {
+          "keyPath": "Commons.button.upload_spreadsheet",
+          "english": "Upload Spreadsheet",
+          "current": "Upload Spreadsheet"
         },
         {
           "keyPath": "Commons.button.view_details",
@@ -486,6 +541,16 @@
           "keyPath": "Commons.heading.customize_labels",
           "english": "Customize Labels",
           "current": "Customize Labels"
+        },
+        {
+          "keyPath": "Commons.heading.delete_files",
+          "english": "Delete Files",
+          "current": "Delete Files"
+        },
+        {
+          "keyPath": "Commons.heading.deleted_at",
+          "english": "Deleted At",
+          "current": "Deleted At"
         },
         {
           "keyPath": "Commons.heading.document",
@@ -563,6 +628,11 @@
           "current": "Logic Rule"
         },
         {
+          "keyPath": "Commons.heading.mime_type",
+          "english": "MIME Type",
+          "current": "MIME Type"
+        },
+        {
           "keyPath": "Commons.heading.new_document",
           "english": "New Document",
           "current": "New Document"
@@ -571,6 +641,11 @@
           "keyPath": "Commons.heading.options",
           "english": "Options",
           "current": "Options"
+        },
+        {
+          "keyPath": "Commons.heading.original_filename",
+          "english": "Original Filename",
+          "current": "Original Filename"
         },
         {
           "keyPath": "Commons.heading.page_settings",
@@ -606,6 +681,21 @@
           "keyPath": "Commons.heading.rating_properties",
           "english": "Rating Properties",
           "current": "Rating Properties"
+        },
+        {
+          "keyPath": "Commons.heading.recent_files",
+          "english": "Recent Files",
+          "current": "Recent Files"
+        },
+        {
+          "keyPath": "Commons.heading.rename_file",
+          "english": "Rename File",
+          "current": "Rename File"
+        },
+        {
+          "keyPath": "Commons.heading.replace_image",
+          "english": "Replace Image",
+          "current": "Replace Image"
         },
         {
           "keyPath": "Commons.heading.request_access",
@@ -658,6 +748,11 @@
           "current": "Share"
         },
         {
+          "keyPath": "Commons.heading.share_document",
+          "english": "Share Document",
+          "current": "Share Document"
+        },
+        {
           "keyPath": "Commons.heading.share_form",
           "english": "Share form",
           "current": "Share form"
@@ -673,6 +768,11 @@
           "current": "Sheet Chat"
         },
         {
+          "keyPath": "Commons.heading.size",
+          "english": "Size",
+          "current": "Size"
+        },
+        {
           "keyPath": "Commons.heading.slider",
           "english": "Slider",
           "current": "Slider"
@@ -686,6 +786,11 @@
           "keyPath": "Commons.heading.snapping",
           "english": "Snapping",
           "current": "Snapping"
+        },
+        {
+          "keyPath": "Commons.heading.source",
+          "english": "Source",
+          "current": "Source"
         },
         {
           "keyPath": "Commons.heading.title_slide",
@@ -811,6 +916,11 @@
           "keyPath": "Commons.label.requested_access",
           "english": "Requested access",
           "current": "Requested access"
+        },
+        {
+          "keyPath": "Commons.label.select_all",
+          "english": "Select All",
+          "current": "Select All"
         },
         {
           "keyPath": "Commons.label.share_link",
@@ -1086,6 +1196,11 @@
           "keyPath": "Commons.text.amount",
           "english": "Amount",
           "current": "Amount"
+        },
+        {
+          "keyPath": "Commons.text.amount_paid",
+          "english": "Amount paid",
+          "current": "Amount paid"
         },
         {
           "keyPath": "Commons.text.archived",
@@ -1483,6 +1598,11 @@
           "current": "Delete image"
         },
         {
+          "keyPath": "Commons.text.delete_permanently",
+          "english": "Delete Permanently",
+          "current": "Delete Permanently"
+        },
+        {
           "keyPath": "Commons.text.delete_row",
           "english": "Delete row",
           "current": "Delete row"
@@ -1493,6 +1613,11 @@
           "current": "Delete Selected"
         },
         {
+          "keyPath": "Commons.text.deleted",
+          "english": "Deleted",
+          "current": "Deleted"
+        },
+        {
           "keyPath": "Commons.text.description",
           "english": "Description",
           "current": "Description"
@@ -1501,6 +1626,11 @@
           "keyPath": "Commons.text.description_2",
           "english": ", description:",
           "current": ", description:"
+        },
+        {
+          "keyPath": "Commons.text.deselect_all",
+          "english": "Deselect All",
+          "current": "Deselect All"
         },
         {
           "keyPath": "Commons.text.design_consultation",
@@ -1798,6 +1928,11 @@
           "current": "Form Spacing"
         },
         {
+          "keyPath": "Commons.text.form_submission",
+          "english": "Form submission",
+          "current": "Form submission"
+        },
+        {
           "keyPath": "Commons.text.freelance",
           "english": "Freelance",
           "current": "Freelance"
@@ -2088,6 +2223,11 @@
           "current": "Loading Stripe…"
         },
         {
+          "keyPath": "Commons.text.local_copy",
+          "english": "Local copy:",
+          "current": "Local copy:"
+        },
+        {
           "keyPath": "Commons.text.login_error",
           "english": "Login error:",
           "current": "Login error:"
@@ -2126,6 +2266,11 @@
           "keyPath": "Commons.text.media",
           "english": "Media",
           "current": "Media"
+        },
+        {
+          "keyPath": "Commons.text.media_file",
+          "english": "media file",
+          "current": "media file"
         },
         {
           "keyPath": "Commons.text.meeting_notes",
@@ -2293,6 +2438,11 @@
           "current": "one choice"
         },
         {
+          "keyPath": "Commons.text.online_copy",
+          "english": "Online copy:",
+          "current": "Online copy:"
+        },
+        {
           "keyPath": "Commons.text.open",
           "english": "Open",
           "current": "Open"
@@ -2383,6 +2533,16 @@
           "current": "Page 1"
         },
         {
+          "keyPath": "Commons.text.page_layout",
+          "english": "Page Layout",
+          "current": "Page Layout"
+        },
+        {
+          "keyPath": "Commons.text.page_numbers",
+          "english": "Page Numbers",
+          "current": "Page Numbers"
+        },
+        {
           "keyPath": "Commons.text.page_of",
           "english": "Page of",
           "current": "Page of"
@@ -2396,6 +2556,11 @@
           "keyPath": "Commons.text.payment_failed",
           "english": "Payment failed",
           "current": "Payment failed"
+        },
+        {
+          "keyPath": "Commons.text.payment_intent",
+          "english": "Payment intent",
+          "current": "Payment intent"
         },
         {
           "keyPath": "Commons.text.payment_status",
@@ -2598,6 +2763,11 @@
           "current": "Rating"
         },
         {
+          "keyPath": "Commons.text.recent_files",
+          "english": "Recent Files",
+          "current": "Recent Files"
+        },
+        {
           "keyPath": "Commons.text.redo",
           "english": "Redo",
           "current": "Redo"
@@ -2663,6 +2833,11 @@
           "current": "Response breakdown"
         },
         {
+          "keyPath": "Commons.text.response_id",
+          "english": "Response ID",
+          "current": "Response ID"
+        },
+        {
           "keyPath": "Commons.text.responses",
           "english": "Responses",
           "current": "Responses"
@@ -2726,6 +2901,11 @@
           "keyPath": "Commons.text.segoe_ui",
           "english": "Segoe UI",
           "current": "Segoe UI"
+        },
+        {
+          "keyPath": "Commons.text.select_all",
+          "english": "Select All",
+          "current": "Select All"
         },
         {
           "keyPath": "Commons.text.select_file",
@@ -2876,6 +3056,11 @@
           "keyPath": "Commons.text.sort_by",
           "english": "Sort by",
           "current": "Sort by"
+        },
+        {
+          "keyPath": "Commons.text.source",
+          "english": "Source",
+          "current": "Source"
         },
         {
           "keyPath": "Commons.text.source_sans",
@@ -3398,6 +3583,16 @@
           "current": "Align right"
         },
         {
+          "keyPath": "Commons.title.apply_link",
+          "english": "Apply link",
+          "current": "Apply link"
+        },
+        {
+          "keyPath": "Commons.title.apply_title",
+          "english": "Apply title",
+          "current": "Apply title"
+        },
+        {
           "keyPath": "Commons.title.background_color",
           "english": "Background Color",
           "current": "Background Color"
@@ -3488,6 +3683,11 @@
           "current": "Font Size"
         },
         {
+          "keyPath": "Commons.title.grid_view",
+          "english": "Grid View",
+          "current": "Grid View"
+        },
+        {
           "keyPath": "Commons.title.heading_1",
           "english": "Heading 1",
           "current": "Heading 1"
@@ -3561,6 +3761,11 @@
           "keyPath": "Commons.title.insert_table",
           "english": "Insert Table",
           "current": "Insert Table"
+        },
+        {
+          "keyPath": "Commons.title.list_view",
+          "english": "List View",
+          "current": "List View"
         },
         {
           "keyPath": "Commons.title.logo",
@@ -3638,6 +3843,16 @@
           "current": "Remove color"
         },
         {
+          "keyPath": "Commons.title.remove_highlight",
+          "english": "Remove highlight",
+          "current": "Remove highlight"
+        },
+        {
+          "keyPath": "Commons.title.remove_link",
+          "english": "Remove link",
+          "current": "Remove link"
+        },
+        {
           "keyPath": "Commons.title.send_sample",
           "english": "Send sample",
           "current": "Send sample"
@@ -3673,6 +3888,11 @@
           "current": "Text Color"
         },
         {
+          "keyPath": "Commons.title.thumbnail_view",
+          "english": "Thumbnail View",
+          "current": "Thumbnail View"
+        },
+        {
           "keyPath": "Commons.toast.changes_saved",
           "english": "Changes saved",
           "current": "Changes saved"
@@ -3683,31 +3903,6 @@
       "locale": "fr",
       "localeFile": "fr\\components.json",
       "issues": [
-        {
-          "keyPath": "Buttons.AddFieldButton.text.no_field_types_found",
-          "english": "No field types found.",
-          "current": "No field types found."
-        },
-        {
-          "keyPath": "Editor.ChartConfigurator.button.add_first_dataset",
-          "english": "Add First Dataset",
-          "current": "Add First Dataset"
-        },
-        {
-          "keyPath": "Editor.ChartConfigurator.text.no_datasets_yet",
-          "english": "No datasets yet",
-          "current": "No datasets yet"
-        },
-        {
-          "keyPath": "Editor.ChartConfigurator.text.polar_area_chart",
-          "english": "Polar Area Chart",
-          "current": "Polar Area Chart"
-        },
-        {
-          "keyPath": "Editor.ChartNode.text.no_data_to_display",
-          "english": "No data to display",
-          "current": "No data to display"
-        },
         {
           "keyPath": "FileItem.text.error_deleting_file",
           "english": "Error deleting file:",
@@ -3729,11 +3924,6 @@
           "current": "all file types"
         },
         {
-          "keyPath": "FileUploader.text.allowed_file_types",
-          "english": "Allowed file types:",
-          "current": "Allowed file types:"
-        },
-        {
           "keyPath": "FileUploader.text.failed_to_create_root",
           "english": "Failed to create root folder",
           "current": "Failed to create root folder"
@@ -3749,16 +3939,6 @@
           "current": "File type not allowed"
         },
         {
-          "keyPath": "Forms.Blocks.BlockEditor.heading.start_building_your_form",
-          "english": "Start building your form",
-          "current": "Start building your form"
-        },
-        {
-          "keyPath": "Forms.Blocks.BlockEditor.text.add_a_question",
-          "english": "Add a question",
-          "current": "Add a question"
-        },
-        {
           "keyPath": "Forms.Blocks.BlockEditor.text.for_commands_or_click",
           "english": "for commands or click the button above",
           "current": "for commands or click the button above"
@@ -3767,11 +3947,6 @@
           "keyPath": "Forms.Blocks.BlockItem.text.choose_one_option",
           "english": "Choose one option",
           "current": "Choose one option"
-        },
-        {
-          "keyPath": "Forms.Blocks.BlockItem.text.click_or_drag_files",
-          "english": "Click or drag files here",
-          "current": "Click or drag files here"
         },
         {
           "keyPath": "Forms.Blocks.BlockItem.text.rate_from_1_to",
@@ -3829,11 +4004,6 @@
           "current": "Drag to reorder"
         },
         {
-          "keyPath": "Forms.Blocks.BlockItemNew.text.click_or_drag_files",
-          "english": "Click or drag files here",
-          "current": "Click or drag files here"
-        },
-        {
           "keyPath": "Forms.Blocks.BlockItemNew.text.short_answer_text",
           "english": "Short answer text",
           "current": "Short answer text"
@@ -3842,11 +4012,6 @@
           "keyPath": "Forms.Blocks.BlockItemNew.title.drag_to_reorder",
           "english": "Drag to reorder",
           "current": "Drag to reorder"
-        },
-        {
-          "keyPath": "Forms.Blocks.SlashMenu.text.no_blocks_found",
-          "english": "No blocks found",
-          "current": "No blocks found"
         },
         {
           "keyPath": "Forms.Blocks.Types.text.email_address_input",
@@ -3914,11 +4079,6 @@
           "current": "loading version for"
         },
         {
-          "keyPath": "Forms.DocsTitleBar.text.no_previous_versions",
-          "english": "No previous versions",
-          "current": "No previous versions"
-        },
-        {
           "keyPath": "Forms.DocsTitleBar.text.saved_just_now",
           "english": "Saved just now",
           "current": "Saved just now"
@@ -3927,21 +4087,6 @@
           "keyPath": "Forms.DocsToolbar.heading.create_new_document",
           "english": "Create New Document",
           "current": "Create New Document"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.label.include_header_row",
-          "english": "Include header row",
-          "current": "Include header row"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.label.open_in_new_tab",
-          "english": "Open in new tab",
-          "current": "Open in new tab"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.label.page_number_position",
-          "english": "Page Number Position",
-          "current": "Page Number Position"
         },
         {
           "keyPath": "Forms.DocsToolbar.label.show_page_border",
@@ -3964,24 +4109,9 @@
           "current": "Show Page Shadow"
         },
         {
-          "keyPath": "Forms.DocsToolbar.text.choose_a_template_to",
-          "english": "Choose a template to get started quickly",
-          "current": "Choose a template to get started quickly"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.text.professional_correspondence",
-          "english": "Professional correspondence",
-          "current": "Professional correspondence"
-        },
-        {
           "keyPath": "Forms.DocsToolbar.text.source_sans_3",
           "english": "Source Sans 3",
           "current": "Source Sans 3"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.text.start_from_scratch",
-          "english": "Start from scratch",
-          "current": "Start from scratch"
         },
         {
           "keyPath": "Forms.DocsToolbar.text.times_new_roman",
@@ -4009,19 +4139,9 @@
           "current": "Select jump to field"
         },
         {
-          "keyPath": "Forms.Editor.text.edit_your_form_fields",
-          "english": "Edit your form fields below",
-          "current": "Edit your form fields below"
-        },
-        {
           "keyPath": "Forms.Editor.text.error_fetching_form",
           "english": "Error fetching form:",
           "current": "Error fetching form:"
-        },
-        {
-          "keyPath": "Forms.Editors.FileEditor.heading.file_upload_properties",
-          "english": "File Upload Properties",
-          "current": "File Upload Properties"
         },
         {
           "keyPath": "Forms.Editors.FileEditor.label.allow_multiple_files",
@@ -4034,16 +4154,6 @@
           "current": "Allowed File Types:"
         },
         {
-          "keyPath": "Forms.Editors.LogicEditor.label.if_question_id",
-          "english": "If Question ID:",
-          "current": "If Question ID:"
-        },
-        {
-          "keyPath": "Forms.Editors.LogicEditor.label.jump_to_question_id",
-          "english": "Jump to Question ID:",
-          "current": "Jump to Question ID:"
-        },
-        {
           "keyPath": "Forms.Editors.LogicEditor.placeholder.question_id_to_jump",
           "english": "Question ID to jump to",
           "current": "Question ID to jump to"
@@ -4054,44 +4164,9 @@
           "current": "Allow Half Ratings:"
         },
         {
-          "keyPath": "Forms.Editors.TextEditor.heading.current_validation_rules",
-          "english": "Current Validation Rules:",
-          "current": "Current Validation Rules:"
-        },
-        {
-          "keyPath": "Forms.Editors.TextEditor.heading.text_field_properties",
-          "english": "Text Field Properties",
-          "current": "Text Field Properties"
-        },
-        {
           "keyPath": "Forms.Fields.TextQuestion.text.invalid_url_format",
           "english": "Invalid URL format",
           "current": "Invalid URL format"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.allow_multiple_submissions",
-          "english": "Allow Multiple Submissions",
-          "current": "Allow Multiple Submissions"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.collect_email_addresses",
-          "english": "Collect Email Addresses",
-          "current": "Collect Email Addresses"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.default_response_view",
-          "english": "Default Response View",
-          "current": "Default Response View"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.notify_on_new_response",
-          "english": "Notify on New Response",
-          "current": "Notify on New Response"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.show_progress_bar",
-          "english": "Show Progress Bar",
-          "current": "Show Progress Bar"
         },
         {
           "keyPath": "Forms.FormConfigWizard.text.all_questions_on_one",
@@ -4099,49 +4174,14 @@
           "current": "All questions on one scrollable page"
         },
         {
-          "keyPath": "Forms.FormConfigWizard.text.choose_how_you_want",
-          "english": "Choose how you want to receive and view responses",
-          "current": "Choose how you want to receive and view responses"
-        },
-        {
           "keyPath": "Forms.FormConfigWizard.text.clean_header_with_just",
           "english": "Clean header with just the title",
           "current": "Clean header with just the title"
         },
         {
-          "keyPath": "Forms.FormConfigWizard.text.control_how_responses_are",
-          "english": "Control how responses are collected and processed",
-          "current": "Control how responses are collected and processed"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.customize_how_your_form",
-          "english": "Customize how your form looks to respondents",
-          "current": "Customize how your form looks to respondents"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.display_a_thank_you",
-          "english": "Display a thank you message after submission",
-          "current": "Display a thank you message after submission"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.display_completion_progress_to",
-          "english": "Display completion progress to respondents",
-          "current": "Display completion progress to respondents"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.get_an_email_for",
-          "english": "Get an email for each new submission",
-          "current": "Get an email for each new submission"
-        },
-        {
           "keyPath": "Forms.FormConfigWizard.text.one_question_at_a",
           "english": "One question at a time with next/previous buttons",
           "current": "One question at a time with next/previous buttons"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.require_respondents_to_provide",
-          "english": "Require respondents to provide their email",
-          "current": "Require respondents to provide their email"
         },
         {
           "keyPath": "Forms.FormConfigWizard.text.review_responses_one_at",
@@ -4157,11 +4197,6 @@
           "keyPath": "Forms.FormConfigWizard.text.step_of_3",
           "english": "Step of 3",
           "current": "Step of 3"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.users_can_submit_the",
-          "english": "Users can submit the form multiple times",
-          "current": "Users can submit the form multiple times"
         },
         {
           "keyPath": "Forms.FormConfigWizard.text.view_all_responses_in",
@@ -4354,16 +4389,6 @@
           "current": "This is a free form"
         },
         {
-          "keyPath": "Forms.FormWizard.button.generate_form",
-          "english": "Generate Form →",
-          "current": "Generate Form →"
-        },
-        {
-          "keyPath": "Forms.FormWizard.button.skip_create_blank",
-          "english": "Skip & Create Blank",
-          "current": "Skip & Create Blank"
-        },
-        {
           "keyPath": "Forms.FormWizard.heading.create_your_form",
           "english": "Create Your Form",
           "current": "Create Your Form"
@@ -4374,24 +4399,9 @@
           "current": "Review Your Form"
         },
         {
-          "keyPath": "Forms.FormWizard.label.what_kind_of_form",
-          "english": "What kind of form do you want to create?",
-          "current": "What kind of form do you want to create?"
-        },
-        {
-          "keyPath": "Forms.FormWizard.text.ai_generated_form_ready",
-          "english": "AI-generated form ready!",
-          "current": "AI-generated form ready!"
-        },
-        {
           "keyPath": "Forms.FormWizard.text.ai_generation_failed_using",
           "english": "AI generation failed, using fallback:",
           "current": "AI generation failed, using fallback:"
-        },
-        {
-          "keyPath": "Forms.FormWizard.text.ai_is_analyzing_your",
-          "english": "AI is analyzing your description and building the perfect form structure",
-          "current": "AI is analyzing your description and building the perfect form structure"
         },
         {
           "keyPath": "Forms.FormWizard.text.ai_is_building_your",
@@ -4439,11 +4449,6 @@
           "current": "How would you rate your overall experience?"
         },
         {
-          "keyPath": "Forms.FormWizard.text.or_choose_a_template",
-          "english": "Or choose a template:",
-          "current": "Or choose a template:"
-        },
-        {
           "keyPath": "Forms.FormWizard.text.product_and_shipping_info",
           "english": "Product and shipping info",
           "current": "Product and shipping info"
@@ -4484,11 +4489,6 @@
           "current": "Complete required fields"
         },
         {
-          "keyPath": "Forms.Player.ClassicPlayer.text.no_questions_available_in",
-          "english": "No questions available in this form.",
-          "current": "No questions available in this form."
-        },
-        {
           "keyPath": "Forms.Player.ClassicPlayer.text.please_complete_required_fields",
           "english": "Please complete required fields",
           "current": "Please complete required fields"
@@ -4522,11 +4522,6 @@
           "keyPath": "Forms.Player.FocusPlayer.text.let_s_get_started",
           "english": "Let’s get started",
           "current": "Let’s get started"
-        },
-        {
-          "keyPath": "Forms.Player.FocusPlayer.text.no_questions_available",
-          "english": "No questions available.",
-          "current": "No questions available."
         },
         {
           "keyPath": "Forms.Player.FocusPlayer.text.provide_your_answer_and",
@@ -4569,11 +4564,6 @@
           "current": "Payment successful."
         },
         {
-          "keyPath": "Forms.Player.PaymentStep.text.please_complete_the_payment",
-          "english": "Please complete the payment to submit your response.",
-          "current": "Please complete the payment to submit your response."
-        },
-        {
           "keyPath": "Forms.Player.PaymentStep.text.preparing_payment_form",
           "english": "Preparing payment form…",
           "current": "Preparing payment form…"
@@ -4599,11 +4589,6 @@
           "current": "Enter a valid URL"
         },
         {
-          "keyPath": "Forms.Player.QuestionRenderer.text.select_an_option",
-          "english": "Select an option",
-          "current": "Select an option"
-        },
-        {
           "keyPath": "Forms.Player.QuestionRenderer.text.this_field_is_required",
           "english": "This field is required",
           "current": "This field is required"
@@ -4619,16 +4604,6 @@
           "current": "Delete draft form"
         },
         {
-          "keyPath": "Forms.WebhooksPanel.text.add_new_webhook",
-          "english": "Add new webhook",
-          "current": "Add new webhook"
-        },
-        {
-          "keyPath": "Forms.WebhooksPanel.text.connect_form_events_to",
-          "english": "Connect form events to external services with quick validation.",
-          "current": "Connect form events to external services with quick validation."
-        },
-        {
           "keyPath": "Forms.WebhooksPanel.text.failed_to_load_webhooks",
           "english": "Failed to load webhooks",
           "current": "Failed to load webhooks"
@@ -4639,39 +4614,14 @@
           "current": "Failed to send sample."
         },
         {
-          "keyPath": "Forms.WebhooksPanel.text.no_webhooks_configured_yet",
-          "english": "No webhooks configured yet.",
-          "current": "No webhooks configured yet."
-        },
-        {
           "keyPath": "Forms.WebhooksPanel.text.sample_event_sent_successfully",
           "english": "Sample event sent successfully.",
           "current": "Sample event sent successfully."
         },
         {
-          "keyPath": "ImagePicker.label.select_from_library",
-          "english": "Select from Library",
-          "current": "Select from Library"
-        },
-        {
-          "keyPath": "ImagePicker.text.click_to_upload_or",
-          "english": "Click to upload or drag and drop",
-          "current": "Click to upload or drag and drop"
-        },
-        {
           "keyPath": "ImagePicker.text.failed_to_load_media",
           "english": "Failed to load media files:",
           "current": "Failed to load media files:"
-        },
-        {
-          "keyPath": "ImagePicker.text.no_images_found",
-          "english": "No images found",
-          "current": "No images found"
-        },
-        {
-          "keyPath": "Layout.SearchBar.text.filter_by_type",
-          "english": "Filter by Type",
-          "current": "Filter by Type"
         },
         {
           "keyPath": "Layout.WorkspaceTopBar.aria_label.up_one_level",
@@ -4682,31 +4632,6 @@
           "keyPath": "Layout.WorkspaceTopBar.title.up_one_level",
           "english": "Up one level",
           "current": "Up one level"
-        },
-        {
-          "keyPath": "Media.MediaGrid.heading.no_media_files",
-          "english": "No media files",
-          "current": "No media files"
-        },
-        {
-          "keyPath": "Media.MediaPreview.text.failed_to_load",
-          "english": "Failed to load",
-          "current": "Failed to load"
-        },
-        {
-          "keyPath": "Media.MediaViewer.heading.failed_to_load_media",
-          "english": "Failed to load media",
-          "current": "Failed to load media"
-        },
-        {
-          "keyPath": "Media.MediaViewer.text.preview_not_available_for",
-          "english": "Preview not available for this file type",
-          "current": "Preview not available for this file type"
-        },
-        {
-          "keyPath": "Media.MediaViewer.text.there_was_an_error",
-          "english": "There was an error loading this file",
-          "current": "There was an error loading this file"
         },
         {
           "keyPath": "Media.MediaViewer.text.your_browser_does_not",
@@ -4744,69 +4669,9 @@
           "current": "Add people by email"
         },
         {
-          "keyPath": "ShareCard.heading.people_with_access",
-          "english": "People with access",
-          "current": "People with access"
-        },
-        {
-          "keyPath": "ShareCard.heading.share_with_others",
-          "english": "Share with others",
-          "current": "Share with others"
-        },
-        {
           "keyPath": "ShareCard.placeholder.enter_email_address",
           "english": "Enter email address",
           "current": "Enter email address"
-        },
-        {
-          "keyPath": "ShareCard.text.allow_editors_to_change",
-          "english": "Allow editors to change permissions and share",
-          "current": "Allow editors to change permissions and share"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_in_your_org",
-          "english": "Anyone in your org can view",
-          "current": "Anyone in your org can view"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_in_your_org_2",
-          "english": "Anyone in your org can edit",
-          "current": "Anyone in your org can edit"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_on_the_internet",
-          "english": "Anyone on the internet can view",
-          "current": "Anyone on the internet can view"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_on_the_internet_2",
-          "english": "Anyone on the internet can edit",
-          "current": "Anyone on the internet can edit"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_with_link_can",
-          "english": "Anyone with link can view",
-          "current": "Anyone with link can view"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_with_link_can_2",
-          "english": "Anyone with link can edit",
-          "current": "Anyone with link can edit"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_with_the_link",
-          "english": "Anyone with the link can view",
-          "current": "Anyone with the link can view"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_with_the_link_2",
-          "english": "Anyone with the link can edit",
-          "current": "Anyone with the link can edit"
-        },
-        {
-          "keyPath": "ShareCard.text.commenters_and_viewers",
-          "english": "Commenters and viewers",
-          "current": "Commenters and viewers"
         },
         {
           "keyPath": "ShareCard.text.done_button_clicked_emitting",
@@ -4819,24 +4684,9 @@
           "current": "Editors will be able to change permissions and share this with others"
         },
         {
-          "keyPath": "ShareCard.text.only_people_with_access",
-          "english": "Only people with access",
-          "current": "Only people with access"
-        },
-        {
           "keyPath": "ShareCard.text.people_in_your_organization",
           "english": "People in your organization",
           "current": "People in your organization"
-        },
-        {
-          "keyPath": "ShareCard.text.public_and_editable",
-          "english": "Public and editable",
-          "current": "Public and editable"
-        },
-        {
-          "keyPath": "ShareCard.text.public_on_the_web",
-          "english": "Public on the web",
-          "current": "Public on the web"
         },
         {
           "keyPath": "ShareCard.text.share_the_link_with",
@@ -4864,34 +4714,9 @@
           "current": "Source Sans 3"
         },
         {
-          "keyPath": "Slides.SlidesInspector.text.bring_existing_content_into",
-          "english": "Bring existing content into your slide deck.",
-          "current": "Bring existing content into your slide deck."
-        },
-        {
           "keyPath": "Slides.SlidesInspector.text.combine_smart_snapping_with",
           "english": "Combine smart snapping with grid overlays for pixel-perfect layouts.",
           "current": "Combine smart snapping with grid overlays for pixel-perfect layouts."
-        },
-        {
-          "keyPath": "Slides.SlidesInspector.text.control_alignment_helpers_for",
-          "english": "Control alignment helpers for precise layouts.",
-          "current": "Control alignment helpers for precise layouts."
-        },
-        {
-          "keyPath": "Slides.SlidesInspector.text.processing_your_file",
-          "english": "Processing your file…",
-          "current": "Processing your file…"
-        },
-        {
-          "keyPath": "Slides.SlidesInspector.text.ready_for_new_imports",
-          "english": "Ready for new imports.",
-          "current": "Ready for new imports."
-        },
-        {
-          "keyPath": "Slides.SlidesInspector.text.use_a_smaller_grid",
-          "english": "Use a smaller grid for dense layouts or increase spacing for broader guides.",
-          "current": "Use a smaller grid for dense layouts or increase spacing for broader guides."
         },
         {
           "keyPath": "Slides.SlidesInspector.text.use_alignment_guides_to",
@@ -5555,11 +5380,6 @@
           "current": "Let’s get to know you better"
         },
         {
-          "keyPath": "Store.FormSettings.text.thank_you",
-          "english": "Thank you!",
-          "current": "Thank you!"
-        },
-        {
           "keyPath": "Store.FormSettings.text.we_ve_received_your",
           "english": "We’ve received your response.",
           "current": "We’ve received your response."
@@ -5692,9 +5512,44 @@
       "localeFile": "fr\\views.json",
       "issues": [
         {
+          "keyPath": "Views.Bin.heading.delete_selected_items_permanently",
+          "english": "Delete Selected Items Permanently?",
+          "current": "Delete Selected Items Permanently?"
+        },
+        {
+          "keyPath": "Views.Bin.heading.empty_bin",
+          "english": "Empty Bin?",
+          "current": "Empty Bin?"
+        },
+        {
+          "keyPath": "Views.Bin.heading.no_items_found",
+          "english": "No items found",
+          "current": "No items found"
+        },
+        {
+          "keyPath": "Views.Bin.heading.no_matching_items_found",
+          "english": "No matching items found",
+          "current": "No matching items found"
+        },
+        {
+          "keyPath": "Views.Bin.heading.restore_selected_items",
+          "english": "Restore Selected Items?",
+          "current": "Restore Selected Items?"
+        },
+        {
+          "keyPath": "Views.Bin.heading.trash_is_empty",
+          "english": "Trash is empty",
+          "current": "Trash is empty"
+        },
+        {
           "keyPath": "Views.Bin.text.cannot_download_this_item",
           "english": "Cannot download this item",
           "current": "Cannot download this item"
+        },
+        {
+          "keyPath": "Views.Bin.text.deleted_files_will_appear",
+          "english": "Deleted files will appear here and can be restored or permanently deleted.",
+          "current": "Deleted files will appear here and can be restored or permanently deleted."
         },
         {
           "keyPath": "Views.Bin.text.error_loading_trash_items",
@@ -5742,14 +5597,44 @@
           "current": "Failed to restore item"
         },
         {
+          "keyPath": "Views.Bin.text.items_in_trash",
+          "english": "items in trash",
+          "current": "items in trash"
+        },
+        {
+          "keyPath": "Views.Bin.text.login_to_access_your",
+          "english": "Login to access your trash and manage deleted files.",
+          "current": "Login to access your trash and manage deleted files."
+        },
+        {
           "keyPath": "Views.Bin.text.no_items_selected",
           "english": "No items selected",
           "current": "No items selected"
         },
         {
+          "keyPath": "Views.Bin.text.preparing_your_deleted_items",
+          "english": "Preparing your deleted items…",
+          "current": "Preparing your deleted items…"
+        },
+        {
           "keyPath": "Views.Bin.text.preview_not_available_for",
           "english": "Preview not available for this item",
           "current": "Preview not available for this item"
+        },
+        {
+          "keyPath": "Views.Bin.text.sort_by_name",
+          "english": "Sort by Name",
+          "current": "Sort by Name"
+        },
+        {
+          "keyPath": "Views.Bin.text.sort_by_size",
+          "english": "Sort by Size",
+          "current": "Sort by Size"
+        },
+        {
+          "keyPath": "Views.Bin.text.sort_by_type",
+          "english": "Sort by Type",
+          "current": "Sort by Type"
         },
         {
           "keyPath": "Views.Bin.text.trash_file_manager",
@@ -5762,1209 +5647,9 @@
           "current": "Trash is already empty"
         },
         {
-          "keyPath": "Views.DocsEditor.link.open_direct_link",
-          "english": "Open direct link",
-          "current": "Open direct link"
-        },
-        {
-          "keyPath": "Views.DocsEditor.placeholder.i_d_like_to",
-          "english": "I’d like to view this document.",
-          "current": "I’d like to view this document."
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.add_column_after",
-          "english": "Add column after",
-          "current": "Add column after"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.add_headings_to_see",
-          "english": "Add headings to see outline",
-          "current": "Add headings to see outline"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.add_row_below",
-          "english": "Add row below",
-          "current": "Add row below"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.add_some_content_before",
-          "english": "Add some content before saving.",
-          "current": "Add some content before saving."
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.adjust_font_size",
-          "english": "Adjust font size",
-          "current": "Adjust font size"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.brand_foreground_color",
-          "english": "Brand foreground color",
-          "current": "Brand foreground color"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.configure_chart_data",
-          "english": "Configure chart data",
-          "current": "Configure chart data"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.document_created_from_template",
-          "english": "Document created from template",
-          "current": "Document created from template"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.docx_export_error",
-          "english": "DOCX export error:",
-          "current": "DOCX export error:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.docx_exported_successfully",
-          "english": "DOCX exported successfully",
-          "current": "DOCX exported successfully"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.edit_chart_title",
-          "english": "Edit chart title",
-          "current": "Edit chart title"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_applying_remote_change",
-          "english": "Error applying remote change:",
-          "current": "Error applying remote change:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_broadcasting_cursor_presence",
-          "english": "Error broadcasting cursor presence:",
-          "current": "Error broadcasting cursor presence:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_joining_document",
-          "english": "Error joining document:",
-          "current": "Error joining document:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_loading_content",
-          "english": "Error loading content:",
-          "current": "Error loading content:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_loading_version_content",
-          "english": "Error loading version content:",
-          "current": "Error loading version content:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_sending_chat_message",
-          "english": "Error sending chat message:",
-          "current": "Error sending chat message:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_create_document",
-          "english": "Failed to create document from template:",
-          "current": "Failed to create document from template:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_create_document_2",
-          "english": "Failed to create document",
-          "current": "Failed to create document"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_create_document_3",
-          "english": "Failed to create document:",
-          "current": "Failed to create document:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_export_docx",
-          "english": "Failed to export DOCX",
-          "current": "Failed to export DOCX"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_export_pdf",
-          "english": "Failed to export PDF",
-          "current": "Failed to export PDF"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_load_document",
-          "english": "Failed to load document:",
-          "current": "Failed to load document:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_load_document_2",
-          "english": "Failed to load document",
-          "current": "Failed to load document"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_load_version",
-          "english": "Failed to load version content",
-          "current": "Failed to load version content"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_save_document",
-          "english": "Failed to save document:",
-          "current": "Failed to save document:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_save_document_2",
-          "english": "Failed to save document",
-          "current": "Failed to save document"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.html_exported_successfully",
-          "english": "HTML exported successfully",
-          "current": "HTML exported successfully"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.link_copied_to_clipboard",
-          "english": "Link copied to clipboard",
-          "current": "Link copied to clipboard"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.loaded_as_plain_text",
-          "english": "✓ Loaded as plain text",
-          "current": "✓ Loaded as plain text"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.loaded_html_content",
-          "english": "✓ Loaded HTML content",
-          "current": "✓ Loaded HTML content"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.loaded_tiptap_json_content",
-          "english": "✓ Loaded Tiptap JSON content",
-          "current": "✓ Loaded Tiptap JSON content"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.no_headings_found",
-          "english": "No headings found",
-          "current": "No headings found"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.pdf_export_error",
-          "english": "PDF export error:",
-          "current": "PDF export error:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.pdf_export_started",
-          "english": "PDF export started",
-          "current": "PDF export started"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.reset_row_height",
-          "english": "Reset row height",
-          "current": "Reset row height"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.upload_new_image",
-          "english": "Upload new image",
-          "current": "Upload new image"
-        },
-        {
-          "keyPath": "Views.Documents.text.error_creating_document_folder",
-          "english": "Error creating document folder:",
-          "current": "Error creating document folder:"
-        },
-        {
-          "keyPath": "Views.Documents.text.error_deleting_documents",
-          "english": "Error deleting documents:",
-          "current": "Error deleting documents:"
-        },
-        {
-          "keyPath": "Views.Documents.text.failed_to_create_folder",
-          "english": "Failed to create folder",
-          "current": "Failed to create folder"
-        },
-        {
-          "keyPath": "Views.Documents.text.failed_to_delete_some",
-          "english": "Failed to delete some documents",
-          "current": "Failed to delete some documents"
-        },
-        {
-          "keyPath": "Views.FilePicker.heading.no_files_found",
-          "english": "No files found",
-          "current": "No files found"
-        },
-        {
-          "keyPath": "Views.FilePicker.text.try_adjusting_your_search",
-          "english": "Try adjusting your search or filter criteria.",
-          "current": "Try adjusting your search or filter criteria."
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.add_first_question",
-          "english": "Add First Question",
-          "current": "Add First Question"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.back_to_share_link",
-          "english": "Back to share link",
-          "current": "Back to share link"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.copy_editor_link",
-          "english": "Copy editor link",
-          "current": "Copy editor link"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.generate_with_ai",
-          "english": "Generate with AI",
-          "current": "Generate with AI"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.set_up_webhooks",
-          "english": "Set up webhooks",
-          "current": "Set up webhooks"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.skip_for_now",
-          "english": "Skip for now",
-          "current": "Skip for now"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.choose_a_footer_image",
-          "english": "Choose a footer image",
-          "current": "Choose a footer image"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.choose_a_logo",
-          "english": "Choose a logo",
-          "current": "Choose a logo"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.choose_who_in_your",
-          "english": "Choose who in your workspace can open or edit this form.",
-          "current": "Choose who in your workspace can open or edit this form."
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.configure_webhook_endpoints",
-          "english": "Configure webhook endpoints",
-          "current": "Configure webhook endpoints"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.generate_with_ai",
-          "english": "Generate with AI",
-          "current": "Generate with AI"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.how_it_works",
-          "english": "How it works",
-          "current": "How it works"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.send_the_live_form",
-          "english": "Send the live form link and control who can respond.",
-          "current": "Send the live form link and control who can respond."
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.start_building_your_form",
-          "english": "Start building your form",
-          "current": "Start building your form"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.when_do_webhooks_fire",
-          "english": "When do webhooks fire?",
-          "current": "When do webhooks fire?"
-        },
-        {
-          "keyPath": "Views.FormBuilder.label.amount_to_charge",
-          "english": "Amount to charge",
-          "current": "Amount to charge"
-        },
-        {
-          "keyPath": "Views.FormBuilder.label.stripe_account_id",
-          "english": "Stripe account ID",
-          "current": "Stripe account ID"
-        },
-        {
-          "keyPath": "Views.FormBuilder.label.stripe_publishable_key",
-          "english": "Stripe publishable key",
-          "current": "Stripe publishable key"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.add_a_question",
-          "english": "Add a question",
-          "current": "Add a question"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.add_questions_customize_fields",
-          "english": "Add questions, customize fields, and create the perfect form for your needs.",
-          "current": "Add questions, customize fields, and create the perfect form for your needs."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.and_set_to_public",
-          "english": "and set to public",
-          "current": "and set to public"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.any_custom_events_you",
-          "english": "Any custom events you define",
-          "current": "Any custom events you define"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.anyone_with_the_link",
-          "english": "Anyone with the link can respond.",
-          "current": "Anyone with the link can respond."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.anyone_with_this_link",
-          "english": "Anyone with this link can access the form based on its publish settings.",
-          "current": "Anyone with this link can access the form based on its publish settings."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.collaborators_workspace_access",
-          "english": "Collaborators & workspace access",
-          "current": "Collaborators & workspace access"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.could_not_delete_form",
-          "english": "Could not delete form.",
-          "current": "Could not delete form."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.editor_link_copied_to",
-          "english": "Editor link copied to clipboard",
-          "current": "Editor link copied to clipboard"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.ensure_published_share_slug",
-          "english": "Ensure published share slug for form:",
-          "current": "Ensure published share slug for form:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.existing_share_slug",
-          "english": "Existing share slug:",
-          "current": "Existing share slug:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_auto_set",
-          "english": "Failed to auto-set form visibility to public on publish:",
-          "current": "Failed to auto-set form visibility to public on publish:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_generate_blocks",
-          "english": "Failed to generate blocks:",
-          "current": "Failed to generate blocks:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_hydrate_form",
-          "english": "Failed to hydrate form sharing details",
-          "current": "Failed to hydrate form sharing details"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_hydrate_template",
-          "english": "Failed to hydrate template payload:",
-          "current": "Failed to hydrate template payload:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_publish_form",
-          "english": "Failed to publish form:",
-          "current": "Failed to publish form:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_publish_form_2",
-          "english": "Failed to publish form",
-          "current": "Failed to publish form"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_remove_collaborator",
-          "english": "Failed to remove collaborator",
-          "current": "Failed to remove collaborator"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_save_changes",
-          "english": "Failed to save changes",
-          "current": "Failed to save changes"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_save_form",
-          "english": "Failed to save form:",
-          "current": "Failed to save form:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_update_collaborators",
-          "english": "Failed to update collaborators",
-          "current": "Failed to update collaborators"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_update_form",
-          "english": "Failed to update form privacy_type",
-          "current": "Failed to update form privacy_type"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_update_form_2",
-          "english": "Failed to update form visibility:",
-          "current": "Failed to update form visibility:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.form_published_but_share",
-          "english": "Form published but share slug is unavailable",
-          "current": "Form published but share slug is unavailable"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.form_will_accept_new",
-          "english": "Form will accept new submissions.",
-          "current": "Form will accept new submissions."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.form_will_not_accept",
-          "english": "Form will not accept new submissions.",
-          "current": "Form will not accept new submissions."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.manage_who_in_your",
-          "english": "Manage who in your workspace can open and edit this form.",
-          "current": "Manage who in your workspace can open and edit this form."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.only_the_form_owner",
-          "english": "Only the form owner can update payment settings when using platform payments.",
-          "current": "Only the form owner can update payment settings when using platform payments."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.payment_succeeded_or_failed",
-          "english": "Payment succeeded or failed",
-          "current": "Payment succeeded or failed"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.publishing_form_to_generate",
-          "english": "Publishing form to generate share link…",
-          "current": "Publishing form to generate share link…"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.questions_generated_successfully",
-          "english": "Questions generated successfully!",
-          "current": "Questions generated successfully!"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.send_form_responses_and",
-          "english": "Send form responses and payment events to your downstream systems in real time.",
-          "current": "Send form responses and payment events to your downstream systems in real time."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.share_link_copied_to",
-          "english": "Share link copied to clipboard",
-          "current": "Share link copied to clipboard"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.unable_to_remove_collaborator",
-          "english": "Unable to remove collaborator",
-          "current": "Unable to remove collaborator"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.unable_to_update_access",
-          "english": "Unable to update access level",
-          "current": "Unable to update access level"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.unable_to_update_collaborators",
-          "english": "Unable to update collaborators",
-          "current": "Unable to update collaborators"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.unable_to_update_response",
-          "english": "Unable to update response settings.",
-          "current": "Unable to update response settings."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.use_my_own_stripe",
-          "english": "Use my own Stripe account",
-          "current": "Use my own Stripe account"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.use_platform_account",
-          "english": "Use platform account",
-          "current": "Use platform account"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.why_webhooks",
-          "english": "Why webhooks?",
-          "current": "Why webhooks?"
-        },
-        {
-          "keyPath": "Views.FormBuilder.title.stop_accepting_responses",
-          "english": "Stop accepting responses",
-          "current": "Stop accepting responses"
-        },
-        {
-          "keyPath": "Views.FormPaymentSuccess.text.thank_you_for_your",
-          "english": "Thank you for your payment",
-          "current": "Thank you for your payment"
-        },
-        {
-          "keyPath": "Views.FormPaymentSuccess.text.your_response_has_been",
-          "english": "Your response has been submitted and the payment is confirmed.",
-          "current": "Your response has been submitted and the payment is confirmed."
-        },
-        {
-          "keyPath": "Views.FormPaymentSuccess.text.your_response_was_submitted",
-          "english": "Your response was submitted successfully.",
-          "current": "Your response was submitted successfully."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.authentication_required_to_preview",
-          "english": "Authentication required to preview this form.",
-          "current": "Authentication required to preview this form."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.failed_to_finalize_response",
-          "english": "Failed to finalize response.",
-          "current": "Failed to finalize response."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.failed_to_load_form",
-          "english": "Failed to load form.",
-          "current": "Failed to load form."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.failed_to_resolve_payment",
-          "english": "Failed to resolve payment success URL",
-          "current": "Failed to resolve payment success URL"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.failed_to_submit_response",
-          "english": "Failed to submit response.",
-          "current": "Failed to submit response."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.missing_form_identifier",
-          "english": "Missing form identifier",
-          "current": "Missing form identifier"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.missing_response_id",
-          "english": "Missing response ID",
-          "current": "Missing response ID"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.payment_confirmed_thank_you",
-          "english": "Payment confirmed. Thank you!",
-          "current": "Payment confirmed. Thank you!"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.response_submitted_successfully",
-          "english": "Response submitted successfully.",
-          "current": "Response submitted successfully."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.thank_you",
-          "english": "Thank you!",
-          "current": "Thank you!"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.we_will_ask_for",
-          "english": "We will ask for your email address so we can send confirmations and receipts.",
-          "current": "We will ask for your email address so we can send confirmations and receipts."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.your_response_has_been",
-          "english": "Your response has been recorded.",
-          "current": "Your response has been recorded."
-        },
-        {
-          "keyPath": "Views.FormResponses.button.back_to_forms",
-          "english": "Back to Forms",
-          "current": "Back to Forms"
-        },
-        {
-          "keyPath": "Views.FormResponses.button.export_to_sheet",
-          "english": "Export to Sheet",
-          "current": "Export to Sheet"
-        },
-        {
-          "keyPath": "Views.FormResponses.heading.review_submission_metadata_and",
-          "english": "Review submission metadata and answers.",
-          "current": "Review submission metadata and answers."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.csv_exported_successfully",
-          "english": "CSV exported successfully",
-          "current": "CSV exported successfully"
-        },
-        {
-          "keyPath": "Views.FormResponses.text.failed_to_export_csv",
-          "english": "Failed to export CSV",
-          "current": "Failed to export CSV"
-        },
-        {
-          "keyPath": "Views.FormResponses.text.failed_to_export_to",
-          "english": "Failed to export to sheet",
-          "current": "Failed to export to sheet"
-        },
-        {
-          "keyPath": "Views.FormResponses.text.failed_to_load_response",
-          "english": "Failed to load response detail.",
-          "current": "Failed to load response detail."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.failed_to_load_responses",
-          "english": "Failed to load responses.",
-          "current": "Failed to load responses."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.manage_submissions_monitor_payment",
-          "english": "Manage submissions, monitor payment status, and drill into individual answers.",
-          "current": "Manage submissions, monitor payment status, and drill into individual answers."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.monitor_how_respondents_engage",
-          "english": "Monitor how respondents engage with your form and spot trends across completion states.",
-          "current": "Monitor how respondents engage with your form and spot trends across completion states."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.no_answers_captured_for",
-          "english": "No answers captured for this response.",
-          "current": "No answers captured for this response."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.sheet_updated_successfully",
-          "english": "Sheet updated successfully",
-          "current": "Sheet updated successfully"
-        },
-        {
-          "keyPath": "Views.FormResponses.text.visualize_completion_ratio_at",
-          "english": "Visualize completion ratio at a glance",
-          "current": "Visualize completion ratio at a glance"
-        },
-        {
-          "keyPath": "Views.FormTemplateHandler.text.collect_user_signups",
-          "english": "Collect user signups",
-          "current": "Collect user signups"
-        },
-        {
-          "keyPath": "Views.FormTemplateHandler.text.quick_feedback_survey",
-          "english": "Quick feedback survey",
-          "current": "Quick feedback survey"
-        },
-        {
-          "keyPath": "Views.Forms.heading.create_and_manage_forms",
-          "english": "Create and Manage Forms",
-          "current": "Create and Manage Forms"
-        },
-        {
-          "keyPath": "Views.Forms.heading.share_this_form_with",
-          "english": "Share this form with participants or collaborators using the link below.",
-          "current": "Share this form with participants or collaborators using the link below."
-        },
-        {
-          "keyPath": "Views.Forms.text.anyone_with_this_link",
-          "english": "Anyone with this link can access the form based on its publish settings.",
-          "current": "Anyone with this link can access the form based on its publish settings."
-        },
-        {
-          "keyPath": "Views.Forms.text.failed_to_publish_form",
-          "english": "Failed to publish form for sharing",
-          "current": "Failed to publish form for sharing"
-        },
-        {
-          "keyPath": "Views.Forms.text.form_is_missing_an",
-          "english": "Form is missing an identifier.",
-          "current": "Form is missing an identifier."
-        },
-        {
-          "keyPath": "Views.Forms.text.no_more_forms_to",
-          "english": "No more forms to load.",
-          "current": "No more forms to load."
-        },
-        {
-          "keyPath": "Views.Forms.text.publish_the_form_to",
-          "english": "Publish the form to get a shareable link.",
-          "current": "Publish the form to get a shareable link."
-        },
-        {
-          "keyPath": "Views.Forms.text.publishing_form_to_generate",
-          "english": "Publishing form to generate share link…",
-          "current": "Publishing form to generate share link…"
-        },
-        {
-          "keyPath": "Views.Forms.text.share_link_copied",
-          "english": "Share link copied",
-          "current": "Share link copied"
-        },
-        {
-          "keyPath": "Views.Forms.text.share_link_copied_to",
-          "english": "Share link copied to clipboard.",
-          "current": "Share link copied to clipboard."
-        },
-        {
-          "keyPath": "Views.Forms.text.share_link_unavailable",
-          "english": "Share link unavailable",
-          "current": "Share link unavailable"
-        },
-        {
-          "keyPath": "Views.Forms.text.the_form_link_was",
-          "english": "The form link was copied to your clipboard.",
-          "current": "The form link was copied to your clipboard."
-        },
-        {
-          "keyPath": "Views.Home.aria_label.up_one_level",
-          "english": "Up one level",
-          "current": "Up one level"
-        },
-        {
-          "keyPath": "Views.Home.text.error_creating_folder",
-          "english": "Error creating folder:",
-          "current": "Error creating folder:"
-        },
-        {
-          "keyPath": "Views.Home.text.error_deleting_files",
-          "english": "Error deleting files:",
-          "current": "Error deleting files:"
-        },
-        {
-          "keyPath": "Views.Home.text.failed_to_delete_some",
-          "english": "Failed to delete some items",
-          "current": "Failed to delete some items"
-        },
-        {
-          "keyPath": "Views.Home.text.file_not_found_in",
-          "english": "File not found in viewable files:",
-          "current": "File not found in viewable files:"
-        },
-        {
-          "keyPath": "Views.Home.title.up_one_level",
-          "english": "Up one level",
-          "current": "Up one level"
-        },
-        {
-          "keyPath": "Views.Login.link.cookie_ccpa_preferences",
-          "english": "Cookie & CCPA preferences",
-          "current": "Cookie & CCPA preferences"
-        },
-        {
-          "keyPath": "Views.Login.link.privacy_terms",
-          "english": "Privacy & terms",
-          "current": "Privacy & terms"
-        },
-        {
-          "keyPath": "Views.Media.text.browse_all_media_files",
-          "english": "Browse all media files",
-          "current": "Browse all media files"
-        },
-        {
-          "keyPath": "Views.Media.text.error_creating_media_folder",
-          "english": "Error creating media folder:",
-          "current": "Error creating media folder:"
-        },
-        {
-          "keyPath": "Views.Media.text.failed_to_create_folder",
-          "english": "Failed to create folder",
-          "current": "Failed to create folder"
-        },
-        {
-          "keyPath": "Views.Media.text.failed_to_delete_files",
-          "english": "Failed to delete files",
-          "current": "Failed to delete files"
-        },
-        {
-          "keyPath": "Views.Media.text.failed_to_load_media",
-          "english": "Failed to load media files",
-          "current": "Failed to load media files"
-        },
-        {
-          "keyPath": "Views.Media.text.failed_to_rename_file",
-          "english": "Failed to rename file",
-          "current": "Failed to rename file"
-        },
-        {
-          "keyPath": "Views.Media.text.file_renamed_successfully",
-          "english": "File renamed successfully",
-          "current": "File renamed successfully"
-        },
-        {
-          "keyPath": "Views.MediaViewer.heading.request_access_to_this",
-          "english": "Request access to this file",
-          "current": "Request access to this file"
-        },
-        {
-          "keyPath": "Views.MediaViewer.link.download_open_original",
-          "english": "Download / Open original",
-          "current": "Download / Open original"
-        },
-        {
-          "keyPath": "Views.MediaViewer.placeholder.add_a_note_to",
-          "english": "Add a note to the owner",
-          "current": "Add a note to the owner"
-        },
-        {
-          "keyPath": "Views.MediaViewer.text.access_request_sent",
-          "english": "Access request sent",
-          "current": "Access request sent"
-        },
-        {
-          "keyPath": "Views.MediaViewer.text.cannot_preview_this_file",
-          "english": "Cannot preview this file type.",
-          "current": "Cannot preview this file type."
-        },
-        {
-          "keyPath": "Views.MediaViewer.text.failed_to_load_file",
-          "english": "Failed to load file",
-          "current": "Failed to load file"
-        },
-        {
-          "keyPath": "Views.MediaViewer.text.file_not_found",
-          "english": "File not found",
-          "current": "File not found"
-        },
-        {
-          "keyPath": "Views.OauthCallback.heading.completing_authentication",
-          "english": "Completing Authentication",
-          "current": "Completing Authentication"
-        },
-        {
-          "keyPath": "Views.OauthCallback.heading.oops_login_failed",
-          "english": "Oops! Login Failed",
-          "current": "Oops! Login Failed"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.auth_failed_with_code",
-          "english": "Auth failed with code:",
-          "current": "Auth failed with code:"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.auth_failed_with_cookie",
-          "english": "Auth failed with cookie:",
-          "current": "Auth failed with cookie:"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.error_during_authentication_with",
-          "english": "Error during authentication with cookie:",
-          "current": "Error during authentication with cookie:"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.error_during_authentication_with_2",
-          "english": "Error during authentication with code:",
-          "current": "Error during authentication with code:"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.error_value_set_to",
-          "english": "Error value set to:",
-          "current": "Error value set to:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.heading.request_access_to_this",
-          "english": "Request access to this sheet",
-          "current": "Request access to this sheet"
-        },
-        {
-          "keyPath": "Views.SheetEditor.heading.this_spreadsheet_is_large",
-          "english": "This spreadsheet is large",
-          "current": "This spreadsheet is large"
-        },
-        {
-          "keyPath": "Views.SheetEditor.placeholder.add_a_note_to",
-          "english": "Add a note to the owner",
-          "current": "Add a note to the owner"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.all_changes_saved",
-          "english": "All changes saved",
-          "current": "All changes saved"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.cannot_join_realtime",
-          "english": "Cannot join realtime:",
-          "current": "Cannot join realtime:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.cannot_save_missing_document",
-          "english": "Cannot save: Missing document reference or ID",
-          "current": "Cannot save: Missing document reference or ID"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.creating_completely_new_document",
-          "english": "Creating completely new document",
-          "current": "Creating completely new document"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.creating_new_document_from",
-          "english": "Creating new document from template:",
-          "current": "Creating new document from template:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.creating_new_document_with",
-          "english": "Creating new document with ID:",
-          "current": "Creating new document with ID:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.document_got_new_server",
-          "english": "Document got new server ID after title change, redirecting to:",
-          "current": "Document got new server ID after title change, redirecting to:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.document_got_new_server_2",
-          "english": "Document got new server ID, redirecting to:",
-          "current": "Document got new server ID, redirecting to:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.document_saved_and_synced",
-          "english": "Document saved and synced successfully",
-          "current": "Document saved and synced successfully"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.document_saved_successfully",
-          "english": "Document saved successfully",
-          "current": "Document saved successfully"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_joining_sheet",
-          "english": "Error joining sheet:",
-          "current": "Error joining sheet:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_loading_spreadsheet_data",
-          "english": "Error loading spreadsheet data:",
-          "current": "Error loading spreadsheet data:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_parsing_spreadsheet_contents",
-          "english": "Error parsing spreadsheet contents:",
-          "current": "Error parsing spreadsheet contents:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_saving_document",
-          "english": "Error saving document:",
-          "current": "Error saving document:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_saving_title",
-          "english": "Error saving title:",
-          "current": "Error saving title:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.export_is_not_available",
-          "english": "Export is not available yet",
-          "current": "Export is not available yet"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_capture_spreadsheet",
-          "english": "Failed to capture spreadsheet data",
-          "current": "Failed to capture spreadsheet data"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_load_document",
-          "english": "Failed to load document:",
-          "current": "Failed to load document:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_load_spreadsheet",
-          "english": "Failed to load spreadsheet",
-          "current": "Failed to load spreadsheet"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_navigate_to",
-          "english": "Failed to navigate to collaborator cell:",
-          "current": "Failed to navigate to collaborator cell:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_push_latest",
-          "english": "Failed to push latest data into UniverSheet:",
-          "current": "Failed to push latest data into UniverSheet:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_remove_access",
-          "english": "Failed to remove access",
-          "current": "Failed to remove access"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_share",
-          "english": "Failed to share",
-          "current": "Failed to share"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.initializing_websocket_for_sheet",
-          "english": "Initializing WebSocket for sheet:",
-          "current": "Initializing WebSocket for sheet:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.loaded_existing_document",
-          "english": "Loaded existing document:",
-          "current": "Loaded existing document:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.loading_spreadsheet_data_for",
-          "english": "Loading spreadsheet data for ID:",
-          "current": "Loading spreadsheet data for ID:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.public_link_access_initializing",
-          "english": "Public link access: initializing viewer with default structure",
-          "current": "Public link access: initializing viewer with default structure"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.replying_to",
-          "english": "Replying to :",
-          "current": "Replying to :"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.saving_document_with_complete",
-          "english": "Saving document with complete data:",
-          "current": "Saving document with complete data:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.set_title_from_existing",
-          "english": "Set title from existing store data:",
-          "current": "Set title from existing store data:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.set_title_from_loaded",
-          "english": "Set title from loaded document:",
-          "current": "Set title from loaded document:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.successfully_parsed_spreadsheet_data",
-          "english": "Successfully parsed spreadsheet data:",
-          "current": "Successfully parsed spreadsheet data:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.websocket_connection_lost",
-          "english": "WebSocket connection lost.",
-          "current": "WebSocket connection lost."
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.websocket_connection_state_changed",
-          "english": "WebSocket connection state changed:",
-          "current": "WebSocket connection state changed:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.title.click_to_save_now",
-          "english": "Click to save now",
-          "current": "Click to save now"
-        },
-        {
-          "keyPath": "Views.Sheets.text.error_creating_spreadsheet_folder",
-          "english": "Error creating spreadsheet folder:",
-          "current": "Error creating spreadsheet folder:"
-        },
-        {
-          "keyPath": "Views.Sheets.text.error_deleting_spreadsheets",
-          "english": "Error deleting spreadsheets:",
-          "current": "Error deleting spreadsheets:"
-        },
-        {
-          "keyPath": "Views.Sheets.text.failed_to_create_folder",
-          "english": "Failed to create folder",
-          "current": "Failed to create folder"
-        },
-        {
-          "keyPath": "Views.Sheets.text.failed_to_delete_some",
-          "english": "Failed to delete some spreadsheets",
-          "current": "Failed to delete some spreadsheets"
-        },
-        {
-          "keyPath": "Views.Sidebar.heading.choose_a_template",
-          "english": "Choose a Template",
-          "current": "Choose a Template"
-        },
-        {
-          "keyPath": "Views.Sidebar.text.creating_new_file",
-          "english": "Creating new file:",
-          "current": "Creating new file:"
-        },
-        {
-          "keyPath": "Views.Sidebar.text.navigating_directly_to_sheets",
-          "english": "Navigating directly to /sheets/new",
-          "current": "Navigating directly to /sheets/new"
-        },
-        {
-          "keyPath": "Views.Sidebar.text.no_matching_item_found",
-          "english": "No matching item found for path:",
-          "current": "No matching item found for path:"
-        },
-        {
-          "keyPath": "Views.Sidebar.text.sidebar_mounted_initial_route",
-          "english": "Sidebar mounted, initial route path:",
-          "current": "Sidebar mounted, initial route path:"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_hydrate_sharing",
-          "english": "Failed to hydrate sharing details",
-          "current": "Failed to hydrate sharing details"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_invite_collaborator",
-          "english": "Failed to invite collaborator",
-          "current": "Failed to invite collaborator"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_remove_collaborator",
-          "english": "Failed to remove collaborator",
-          "current": "Failed to remove collaborator"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_save_deck",
-          "english": "Failed to save deck",
-          "current": "Failed to save deck"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_update_visibility",
-          "english": "Failed to update visibility",
-          "current": "Failed to update visibility"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.html_import_failed",
-          "english": "HTML import failed",
-          "current": "HTML import failed"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.powerpoint_import_failed",
-          "english": "PowerPoint import failed",
-          "current": "PowerPoint import failed"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.save_the_deck_before",
-          "english": "Save the deck before adjusting visibility",
-          "current": "Save the deck before adjusting visibility"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.save_the_deck_before_2",
-          "english": "Save the deck before inviting collaborators",
-          "current": "Save the deck before inviting collaborators"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.save_the_deck_before_3",
-          "english": "Save the deck before removing collaborators",
-          "current": "Save the deck before removing collaborators"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.select_or_add_a",
-          "english": "Select or add a slide to begin.",
-          "current": "Select or add a slide to begin."
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.share_link_copied",
-          "english": "Share link copied",
-          "current": "Share link copied"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.share_link_not_available",
-          "english": "Share link not available yet",
-          "current": "Share link not available yet"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.slide_template_load_failed",
-          "english": "Slide template load failed",
-          "current": "Slide template load failed"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.template_unavailable_starting_with",
-          "english": "Template unavailable, starting with blank deck.",
-          "current": "Template unavailable, starting with blank deck."
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.unable_to_invite_collaborator",
-          "english": "Unable to invite collaborator",
-          "current": "Unable to invite collaborator"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.unable_to_load_slide",
-          "english": "Unable to load slide deck",
-          "current": "Unable to load slide deck"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.unable_to_remove_collaborator",
-          "english": "Unable to remove collaborator",
-          "current": "Unable to remove collaborator"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.unable_to_update_visibility",
-          "english": "Unable to update visibility",
-          "current": "Unable to update visibility"
+          "keyPath": "Views.Bin.text.try_adjusting_your_search",
+          "english": "Try adjusting your search or filters to find specific items.",
+          "current": "Try adjusting your search or filters to find specific items."
         }
       ]
     },
@@ -7139,6 +5824,11 @@
           "current": "Clear"
         },
         {
+          "keyPath": "Commons.button.clear_filters",
+          "english": "Clear Filters",
+          "current": "Clear Filters"
+        },
+        {
           "keyPath": "Commons.button.clear_selection",
           "english": "Clear selection",
           "current": "Clear selection"
@@ -7172,6 +5862,11 @@
           "keyPath": "Commons.button.create_form",
           "english": "Create Form",
           "current": "Create Form"
+        },
+        {
+          "keyPath": "Commons.button.date",
+          "english": "Date",
+          "current": "Date"
         },
         {
           "keyPath": "Commons.button.delete",
@@ -7254,9 +5949,24 @@
           "current": "Manage access"
         },
         {
+          "keyPath": "Commons.button.name",
+          "english": "Name",
+          "current": "Name"
+        },
+        {
+          "keyPath": "Commons.button.new_document",
+          "english": "New Document",
+          "current": "New Document"
+        },
+        {
           "keyPath": "Commons.button.new_form",
           "english": "New Form",
           "current": "New Form"
+        },
+        {
+          "keyPath": "Commons.button.new_spreadsheet",
+          "english": "New Spreadsheet",
+          "current": "New Spreadsheet"
         },
         {
           "keyPath": "Commons.button.next",
@@ -7314,6 +6024,11 @@
           "current": "Remove"
         },
         {
+          "keyPath": "Commons.button.rename",
+          "english": "Rename",
+          "current": "Rename"
+        },
+        {
           "keyPath": "Commons.button.request_access",
           "english": "Request access",
           "current": "Request access"
@@ -7322,6 +6037,11 @@
           "keyPath": "Commons.button.reset",
           "english": "Reset",
           "current": "Reset"
+        },
+        {
+          "keyPath": "Commons.button.restore",
+          "english": "Restore",
+          "current": "Restore"
         },
         {
           "keyPath": "Commons.button.resume_responses",
@@ -7369,6 +6089,11 @@
           "current": "Sign in"
         },
         {
+          "keyPath": "Commons.button.size",
+          "english": "Size",
+          "current": "Size"
+        },
+        {
           "keyPath": "Commons.button.skip",
           "english": "Skip",
           "current": "Skip"
@@ -7409,6 +6134,16 @@
           "current": "Update"
         },
         {
+          "keyPath": "Commons.button.upload_document",
+          "english": "Upload Document",
+          "current": "Upload Document"
+        },
+        {
+          "keyPath": "Commons.button.upload_file",
+          "english": "Upload File",
+          "current": "Upload File"
+        },
+        {
           "keyPath": "Commons.button.upload_files",
           "english": "Upload Files",
           "current": "Upload Files"
@@ -7417,6 +6152,11 @@
           "keyPath": "Commons.button.upload_media",
           "english": "Upload Media",
           "current": "Upload Media"
+        },
+        {
+          "keyPath": "Commons.button.upload_spreadsheet",
+          "english": "Upload Spreadsheet",
+          "current": "Upload Spreadsheet"
         },
         {
           "keyPath": "Commons.button.view_details",
@@ -7452,6 +6192,16 @@
           "keyPath": "Commons.heading.customize_labels",
           "english": "Customize Labels",
           "current": "Customize Labels"
+        },
+        {
+          "keyPath": "Commons.heading.delete_files",
+          "english": "Delete Files",
+          "current": "Delete Files"
+        },
+        {
+          "keyPath": "Commons.heading.deleted_at",
+          "english": "Deleted At",
+          "current": "Deleted At"
         },
         {
           "keyPath": "Commons.heading.document",
@@ -7529,6 +6279,11 @@
           "current": "Logic Rule"
         },
         {
+          "keyPath": "Commons.heading.mime_type",
+          "english": "MIME Type",
+          "current": "MIME Type"
+        },
+        {
           "keyPath": "Commons.heading.new_document",
           "english": "New Document",
           "current": "New Document"
@@ -7537,6 +6292,11 @@
           "keyPath": "Commons.heading.options",
           "english": "Options",
           "current": "Options"
+        },
+        {
+          "keyPath": "Commons.heading.original_filename",
+          "english": "Original Filename",
+          "current": "Original Filename"
         },
         {
           "keyPath": "Commons.heading.page_settings",
@@ -7572,6 +6332,21 @@
           "keyPath": "Commons.heading.rating_properties",
           "english": "Rating Properties",
           "current": "Rating Properties"
+        },
+        {
+          "keyPath": "Commons.heading.recent_files",
+          "english": "Recent Files",
+          "current": "Recent Files"
+        },
+        {
+          "keyPath": "Commons.heading.rename_file",
+          "english": "Rename File",
+          "current": "Rename File"
+        },
+        {
+          "keyPath": "Commons.heading.replace_image",
+          "english": "Replace Image",
+          "current": "Replace Image"
         },
         {
           "keyPath": "Commons.heading.request_access",
@@ -7624,6 +6399,11 @@
           "current": "Share"
         },
         {
+          "keyPath": "Commons.heading.share_document",
+          "english": "Share Document",
+          "current": "Share Document"
+        },
+        {
           "keyPath": "Commons.heading.share_form",
           "english": "Share form",
           "current": "Share form"
@@ -7639,6 +6419,11 @@
           "current": "Sheet Chat"
         },
         {
+          "keyPath": "Commons.heading.size",
+          "english": "Size",
+          "current": "Size"
+        },
+        {
           "keyPath": "Commons.heading.slider",
           "english": "Slider",
           "current": "Slider"
@@ -7652,6 +6437,11 @@
           "keyPath": "Commons.heading.snapping",
           "english": "Snapping",
           "current": "Snapping"
+        },
+        {
+          "keyPath": "Commons.heading.source",
+          "english": "Source",
+          "current": "Source"
         },
         {
           "keyPath": "Commons.heading.title_slide",
@@ -7777,6 +6567,11 @@
           "keyPath": "Commons.label.requested_access",
           "english": "Requested access",
           "current": "Requested access"
+        },
+        {
+          "keyPath": "Commons.label.select_all",
+          "english": "Select All",
+          "current": "Select All"
         },
         {
           "keyPath": "Commons.label.share_link",
@@ -8052,6 +6847,11 @@
           "keyPath": "Commons.text.amount",
           "english": "Amount",
           "current": "Amount"
+        },
+        {
+          "keyPath": "Commons.text.amount_paid",
+          "english": "Amount paid",
+          "current": "Amount paid"
         },
         {
           "keyPath": "Commons.text.archived",
@@ -8449,6 +7249,11 @@
           "current": "Delete image"
         },
         {
+          "keyPath": "Commons.text.delete_permanently",
+          "english": "Delete Permanently",
+          "current": "Delete Permanently"
+        },
+        {
           "keyPath": "Commons.text.delete_row",
           "english": "Delete row",
           "current": "Delete row"
@@ -8459,6 +7264,11 @@
           "current": "Delete Selected"
         },
         {
+          "keyPath": "Commons.text.deleted",
+          "english": "Deleted",
+          "current": "Deleted"
+        },
+        {
           "keyPath": "Commons.text.description",
           "english": "Description",
           "current": "Description"
@@ -8467,6 +7277,11 @@
           "keyPath": "Commons.text.description_2",
           "english": ", description:",
           "current": ", description:"
+        },
+        {
+          "keyPath": "Commons.text.deselect_all",
+          "english": "Deselect All",
+          "current": "Deselect All"
         },
         {
           "keyPath": "Commons.text.design_consultation",
@@ -8764,6 +7579,11 @@
           "current": "Form Spacing"
         },
         {
+          "keyPath": "Commons.text.form_submission",
+          "english": "Form submission",
+          "current": "Form submission"
+        },
+        {
           "keyPath": "Commons.text.freelance",
           "english": "Freelance",
           "current": "Freelance"
@@ -9054,6 +7874,11 @@
           "current": "Loading Stripe…"
         },
         {
+          "keyPath": "Commons.text.local_copy",
+          "english": "Local copy:",
+          "current": "Local copy:"
+        },
+        {
           "keyPath": "Commons.text.login_error",
           "english": "Login error:",
           "current": "Login error:"
@@ -9092,6 +7917,11 @@
           "keyPath": "Commons.text.media",
           "english": "Media",
           "current": "Media"
+        },
+        {
+          "keyPath": "Commons.text.media_file",
+          "english": "media file",
+          "current": "media file"
         },
         {
           "keyPath": "Commons.text.meeting_notes",
@@ -9259,6 +8089,11 @@
           "current": "one choice"
         },
         {
+          "keyPath": "Commons.text.online_copy",
+          "english": "Online copy:",
+          "current": "Online copy:"
+        },
+        {
           "keyPath": "Commons.text.open",
           "english": "Open",
           "current": "Open"
@@ -9349,6 +8184,16 @@
           "current": "Page 1"
         },
         {
+          "keyPath": "Commons.text.page_layout",
+          "english": "Page Layout",
+          "current": "Page Layout"
+        },
+        {
+          "keyPath": "Commons.text.page_numbers",
+          "english": "Page Numbers",
+          "current": "Page Numbers"
+        },
+        {
           "keyPath": "Commons.text.page_of",
           "english": "Page of",
           "current": "Page of"
@@ -9362,6 +8207,11 @@
           "keyPath": "Commons.text.payment_failed",
           "english": "Payment failed",
           "current": "Payment failed"
+        },
+        {
+          "keyPath": "Commons.text.payment_intent",
+          "english": "Payment intent",
+          "current": "Payment intent"
         },
         {
           "keyPath": "Commons.text.payment_status",
@@ -9564,6 +8414,11 @@
           "current": "Rating"
         },
         {
+          "keyPath": "Commons.text.recent_files",
+          "english": "Recent Files",
+          "current": "Recent Files"
+        },
+        {
           "keyPath": "Commons.text.redo",
           "english": "Redo",
           "current": "Redo"
@@ -9629,6 +8484,11 @@
           "current": "Response breakdown"
         },
         {
+          "keyPath": "Commons.text.response_id",
+          "english": "Response ID",
+          "current": "Response ID"
+        },
+        {
           "keyPath": "Commons.text.responses",
           "english": "Responses",
           "current": "Responses"
@@ -9692,6 +8552,11 @@
           "keyPath": "Commons.text.segoe_ui",
           "english": "Segoe UI",
           "current": "Segoe UI"
+        },
+        {
+          "keyPath": "Commons.text.select_all",
+          "english": "Select All",
+          "current": "Select All"
         },
         {
           "keyPath": "Commons.text.select_file",
@@ -9842,6 +8707,11 @@
           "keyPath": "Commons.text.sort_by",
           "english": "Sort by",
           "current": "Sort by"
+        },
+        {
+          "keyPath": "Commons.text.source",
+          "english": "Source",
+          "current": "Source"
         },
         {
           "keyPath": "Commons.text.source_sans",
@@ -10364,6 +9234,16 @@
           "current": "Align right"
         },
         {
+          "keyPath": "Commons.title.apply_link",
+          "english": "Apply link",
+          "current": "Apply link"
+        },
+        {
+          "keyPath": "Commons.title.apply_title",
+          "english": "Apply title",
+          "current": "Apply title"
+        },
+        {
           "keyPath": "Commons.title.background_color",
           "english": "Background Color",
           "current": "Background Color"
@@ -10454,6 +9334,11 @@
           "current": "Font Size"
         },
         {
+          "keyPath": "Commons.title.grid_view",
+          "english": "Grid View",
+          "current": "Grid View"
+        },
+        {
           "keyPath": "Commons.title.heading_1",
           "english": "Heading 1",
           "current": "Heading 1"
@@ -10527,6 +9412,11 @@
           "keyPath": "Commons.title.insert_table",
           "english": "Insert Table",
           "current": "Insert Table"
+        },
+        {
+          "keyPath": "Commons.title.list_view",
+          "english": "List View",
+          "current": "List View"
         },
         {
           "keyPath": "Commons.title.logo",
@@ -10604,6 +9494,16 @@
           "current": "Remove color"
         },
         {
+          "keyPath": "Commons.title.remove_highlight",
+          "english": "Remove highlight",
+          "current": "Remove highlight"
+        },
+        {
+          "keyPath": "Commons.title.remove_link",
+          "english": "Remove link",
+          "current": "Remove link"
+        },
+        {
           "keyPath": "Commons.title.send_sample",
           "english": "Send sample",
           "current": "Send sample"
@@ -10639,6 +9539,11 @@
           "current": "Text Color"
         },
         {
+          "keyPath": "Commons.title.thumbnail_view",
+          "english": "Thumbnail View",
+          "current": "Thumbnail View"
+        },
+        {
           "keyPath": "Commons.toast.changes_saved",
           "english": "Changes saved",
           "current": "Changes saved"
@@ -10649,31 +9554,6 @@
       "locale": "zh",
       "localeFile": "zh\\components.json",
       "issues": [
-        {
-          "keyPath": "Buttons.AddFieldButton.text.no_field_types_found",
-          "english": "No field types found.",
-          "current": "No field types found."
-        },
-        {
-          "keyPath": "Editor.ChartConfigurator.button.add_first_dataset",
-          "english": "Add First Dataset",
-          "current": "Add First Dataset"
-        },
-        {
-          "keyPath": "Editor.ChartConfigurator.text.no_datasets_yet",
-          "english": "No datasets yet",
-          "current": "No datasets yet"
-        },
-        {
-          "keyPath": "Editor.ChartConfigurator.text.polar_area_chart",
-          "english": "Polar Area Chart",
-          "current": "Polar Area Chart"
-        },
-        {
-          "keyPath": "Editor.ChartNode.text.no_data_to_display",
-          "english": "No data to display",
-          "current": "No data to display"
-        },
         {
           "keyPath": "FileItem.text.error_deleting_file",
           "english": "Error deleting file:",
@@ -10695,11 +9575,6 @@
           "current": "all file types"
         },
         {
-          "keyPath": "FileUploader.text.allowed_file_types",
-          "english": "Allowed file types:",
-          "current": "Allowed file types:"
-        },
-        {
           "keyPath": "FileUploader.text.failed_to_create_root",
           "english": "Failed to create root folder",
           "current": "Failed to create root folder"
@@ -10715,16 +9590,6 @@
           "current": "File type not allowed"
         },
         {
-          "keyPath": "Forms.Blocks.BlockEditor.heading.start_building_your_form",
-          "english": "Start building your form",
-          "current": "Start building your form"
-        },
-        {
-          "keyPath": "Forms.Blocks.BlockEditor.text.add_a_question",
-          "english": "Add a question",
-          "current": "Add a question"
-        },
-        {
           "keyPath": "Forms.Blocks.BlockEditor.text.for_commands_or_click",
           "english": "for commands or click the button above",
           "current": "for commands or click the button above"
@@ -10733,11 +9598,6 @@
           "keyPath": "Forms.Blocks.BlockItem.text.choose_one_option",
           "english": "Choose one option",
           "current": "Choose one option"
-        },
-        {
-          "keyPath": "Forms.Blocks.BlockItem.text.click_or_drag_files",
-          "english": "Click or drag files here",
-          "current": "Click or drag files here"
         },
         {
           "keyPath": "Forms.Blocks.BlockItem.text.rate_from_1_to",
@@ -10795,11 +9655,6 @@
           "current": "Drag to reorder"
         },
         {
-          "keyPath": "Forms.Blocks.BlockItemNew.text.click_or_drag_files",
-          "english": "Click or drag files here",
-          "current": "Click or drag files here"
-        },
-        {
           "keyPath": "Forms.Blocks.BlockItemNew.text.short_answer_text",
           "english": "Short answer text",
           "current": "Short answer text"
@@ -10808,11 +9663,6 @@
           "keyPath": "Forms.Blocks.BlockItemNew.title.drag_to_reorder",
           "english": "Drag to reorder",
           "current": "Drag to reorder"
-        },
-        {
-          "keyPath": "Forms.Blocks.SlashMenu.text.no_blocks_found",
-          "english": "No blocks found",
-          "current": "No blocks found"
         },
         {
           "keyPath": "Forms.Blocks.Types.text.email_address_input",
@@ -10880,11 +9730,6 @@
           "current": "loading version for"
         },
         {
-          "keyPath": "Forms.DocsTitleBar.text.no_previous_versions",
-          "english": "No previous versions",
-          "current": "No previous versions"
-        },
-        {
           "keyPath": "Forms.DocsTitleBar.text.saved_just_now",
           "english": "Saved just now",
           "current": "Saved just now"
@@ -10893,21 +9738,6 @@
           "keyPath": "Forms.DocsToolbar.heading.create_new_document",
           "english": "Create New Document",
           "current": "Create New Document"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.label.include_header_row",
-          "english": "Include header row",
-          "current": "Include header row"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.label.open_in_new_tab",
-          "english": "Open in new tab",
-          "current": "Open in new tab"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.label.page_number_position",
-          "english": "Page Number Position",
-          "current": "Page Number Position"
         },
         {
           "keyPath": "Forms.DocsToolbar.label.show_page_border",
@@ -10930,24 +9760,9 @@
           "current": "Show Page Shadow"
         },
         {
-          "keyPath": "Forms.DocsToolbar.text.choose_a_template_to",
-          "english": "Choose a template to get started quickly",
-          "current": "Choose a template to get started quickly"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.text.professional_correspondence",
-          "english": "Professional correspondence",
-          "current": "Professional correspondence"
-        },
-        {
           "keyPath": "Forms.DocsToolbar.text.source_sans_3",
           "english": "Source Sans 3",
           "current": "Source Sans 3"
-        },
-        {
-          "keyPath": "Forms.DocsToolbar.text.start_from_scratch",
-          "english": "Start from scratch",
-          "current": "Start from scratch"
         },
         {
           "keyPath": "Forms.DocsToolbar.text.times_new_roman",
@@ -10975,19 +9790,9 @@
           "current": "Select jump to field"
         },
         {
-          "keyPath": "Forms.Editor.text.edit_your_form_fields",
-          "english": "Edit your form fields below",
-          "current": "Edit your form fields below"
-        },
-        {
           "keyPath": "Forms.Editor.text.error_fetching_form",
           "english": "Error fetching form:",
           "current": "Error fetching form:"
-        },
-        {
-          "keyPath": "Forms.Editors.FileEditor.heading.file_upload_properties",
-          "english": "File Upload Properties",
-          "current": "File Upload Properties"
         },
         {
           "keyPath": "Forms.Editors.FileEditor.label.allow_multiple_files",
@@ -11000,16 +9805,6 @@
           "current": "Allowed File Types:"
         },
         {
-          "keyPath": "Forms.Editors.LogicEditor.label.if_question_id",
-          "english": "If Question ID:",
-          "current": "If Question ID:"
-        },
-        {
-          "keyPath": "Forms.Editors.LogicEditor.label.jump_to_question_id",
-          "english": "Jump to Question ID:",
-          "current": "Jump to Question ID:"
-        },
-        {
           "keyPath": "Forms.Editors.LogicEditor.placeholder.question_id_to_jump",
           "english": "Question ID to jump to",
           "current": "Question ID to jump to"
@@ -11020,44 +9815,9 @@
           "current": "Allow Half Ratings:"
         },
         {
-          "keyPath": "Forms.Editors.TextEditor.heading.current_validation_rules",
-          "english": "Current Validation Rules:",
-          "current": "Current Validation Rules:"
-        },
-        {
-          "keyPath": "Forms.Editors.TextEditor.heading.text_field_properties",
-          "english": "Text Field Properties",
-          "current": "Text Field Properties"
-        },
-        {
           "keyPath": "Forms.Fields.TextQuestion.text.invalid_url_format",
           "english": "Invalid URL format",
           "current": "Invalid URL format"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.allow_multiple_submissions",
-          "english": "Allow Multiple Submissions",
-          "current": "Allow Multiple Submissions"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.collect_email_addresses",
-          "english": "Collect Email Addresses",
-          "current": "Collect Email Addresses"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.default_response_view",
-          "english": "Default Response View",
-          "current": "Default Response View"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.notify_on_new_response",
-          "english": "Notify on New Response",
-          "current": "Notify on New Response"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.label.show_progress_bar",
-          "english": "Show Progress Bar",
-          "current": "Show Progress Bar"
         },
         {
           "keyPath": "Forms.FormConfigWizard.text.all_questions_on_one",
@@ -11065,49 +9825,14 @@
           "current": "All questions on one scrollable page"
         },
         {
-          "keyPath": "Forms.FormConfigWizard.text.choose_how_you_want",
-          "english": "Choose how you want to receive and view responses",
-          "current": "Choose how you want to receive and view responses"
-        },
-        {
           "keyPath": "Forms.FormConfigWizard.text.clean_header_with_just",
           "english": "Clean header with just the title",
           "current": "Clean header with just the title"
         },
         {
-          "keyPath": "Forms.FormConfigWizard.text.control_how_responses_are",
-          "english": "Control how responses are collected and processed",
-          "current": "Control how responses are collected and processed"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.customize_how_your_form",
-          "english": "Customize how your form looks to respondents",
-          "current": "Customize how your form looks to respondents"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.display_a_thank_you",
-          "english": "Display a thank you message after submission",
-          "current": "Display a thank you message after submission"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.display_completion_progress_to",
-          "english": "Display completion progress to respondents",
-          "current": "Display completion progress to respondents"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.get_an_email_for",
-          "english": "Get an email for each new submission",
-          "current": "Get an email for each new submission"
-        },
-        {
           "keyPath": "Forms.FormConfigWizard.text.one_question_at_a",
           "english": "One question at a time with next/previous buttons",
           "current": "One question at a time with next/previous buttons"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.require_respondents_to_provide",
-          "english": "Require respondents to provide their email",
-          "current": "Require respondents to provide their email"
         },
         {
           "keyPath": "Forms.FormConfigWizard.text.review_responses_one_at",
@@ -11123,11 +9848,6 @@
           "keyPath": "Forms.FormConfigWizard.text.step_of_3",
           "english": "Step of 3",
           "current": "Step of 3"
-        },
-        {
-          "keyPath": "Forms.FormConfigWizard.text.users_can_submit_the",
-          "english": "Users can submit the form multiple times",
-          "current": "Users can submit the form multiple times"
         },
         {
           "keyPath": "Forms.FormConfigWizard.text.view_all_responses_in",
@@ -11320,16 +10040,6 @@
           "current": "This is a free form"
         },
         {
-          "keyPath": "Forms.FormWizard.button.generate_form",
-          "english": "Generate Form →",
-          "current": "Generate Form →"
-        },
-        {
-          "keyPath": "Forms.FormWizard.button.skip_create_blank",
-          "english": "Skip & Create Blank",
-          "current": "Skip & Create Blank"
-        },
-        {
           "keyPath": "Forms.FormWizard.heading.create_your_form",
           "english": "Create Your Form",
           "current": "Create Your Form"
@@ -11340,24 +10050,9 @@
           "current": "Review Your Form"
         },
         {
-          "keyPath": "Forms.FormWizard.label.what_kind_of_form",
-          "english": "What kind of form do you want to create?",
-          "current": "What kind of form do you want to create?"
-        },
-        {
-          "keyPath": "Forms.FormWizard.text.ai_generated_form_ready",
-          "english": "AI-generated form ready!",
-          "current": "AI-generated form ready!"
-        },
-        {
           "keyPath": "Forms.FormWizard.text.ai_generation_failed_using",
           "english": "AI generation failed, using fallback:",
           "current": "AI generation failed, using fallback:"
-        },
-        {
-          "keyPath": "Forms.FormWizard.text.ai_is_analyzing_your",
-          "english": "AI is analyzing your description and building the perfect form structure",
-          "current": "AI is analyzing your description and building the perfect form structure"
         },
         {
           "keyPath": "Forms.FormWizard.text.ai_is_building_your",
@@ -11405,11 +10100,6 @@
           "current": "How would you rate your overall experience?"
         },
         {
-          "keyPath": "Forms.FormWizard.text.or_choose_a_template",
-          "english": "Or choose a template:",
-          "current": "Or choose a template:"
-        },
-        {
           "keyPath": "Forms.FormWizard.text.product_and_shipping_info",
           "english": "Product and shipping info",
           "current": "Product and shipping info"
@@ -11450,11 +10140,6 @@
           "current": "Complete required fields"
         },
         {
-          "keyPath": "Forms.Player.ClassicPlayer.text.no_questions_available_in",
-          "english": "No questions available in this form.",
-          "current": "No questions available in this form."
-        },
-        {
           "keyPath": "Forms.Player.ClassicPlayer.text.please_complete_required_fields",
           "english": "Please complete required fields",
           "current": "Please complete required fields"
@@ -11488,11 +10173,6 @@
           "keyPath": "Forms.Player.FocusPlayer.text.let_s_get_started",
           "english": "Let’s get started",
           "current": "Let’s get started"
-        },
-        {
-          "keyPath": "Forms.Player.FocusPlayer.text.no_questions_available",
-          "english": "No questions available.",
-          "current": "No questions available."
         },
         {
           "keyPath": "Forms.Player.FocusPlayer.text.provide_your_answer_and",
@@ -11535,11 +10215,6 @@
           "current": "Payment successful."
         },
         {
-          "keyPath": "Forms.Player.PaymentStep.text.please_complete_the_payment",
-          "english": "Please complete the payment to submit your response.",
-          "current": "Please complete the payment to submit your response."
-        },
-        {
           "keyPath": "Forms.Player.PaymentStep.text.preparing_payment_form",
           "english": "Preparing payment form…",
           "current": "Preparing payment form…"
@@ -11565,11 +10240,6 @@
           "current": "Enter a valid URL"
         },
         {
-          "keyPath": "Forms.Player.QuestionRenderer.text.select_an_option",
-          "english": "Select an option",
-          "current": "Select an option"
-        },
-        {
           "keyPath": "Forms.Player.QuestionRenderer.text.this_field_is_required",
           "english": "This field is required",
           "current": "This field is required"
@@ -11585,16 +10255,6 @@
           "current": "Delete draft form"
         },
         {
-          "keyPath": "Forms.WebhooksPanel.text.add_new_webhook",
-          "english": "Add new webhook",
-          "current": "Add new webhook"
-        },
-        {
-          "keyPath": "Forms.WebhooksPanel.text.connect_form_events_to",
-          "english": "Connect form events to external services with quick validation.",
-          "current": "Connect form events to external services with quick validation."
-        },
-        {
           "keyPath": "Forms.WebhooksPanel.text.failed_to_load_webhooks",
           "english": "Failed to load webhooks",
           "current": "Failed to load webhooks"
@@ -11605,39 +10265,14 @@
           "current": "Failed to send sample."
         },
         {
-          "keyPath": "Forms.WebhooksPanel.text.no_webhooks_configured_yet",
-          "english": "No webhooks configured yet.",
-          "current": "No webhooks configured yet."
-        },
-        {
           "keyPath": "Forms.WebhooksPanel.text.sample_event_sent_successfully",
           "english": "Sample event sent successfully.",
           "current": "Sample event sent successfully."
         },
         {
-          "keyPath": "ImagePicker.label.select_from_library",
-          "english": "Select from Library",
-          "current": "Select from Library"
-        },
-        {
-          "keyPath": "ImagePicker.text.click_to_upload_or",
-          "english": "Click to upload or drag and drop",
-          "current": "Click to upload or drag and drop"
-        },
-        {
           "keyPath": "ImagePicker.text.failed_to_load_media",
           "english": "Failed to load media files:",
           "current": "Failed to load media files:"
-        },
-        {
-          "keyPath": "ImagePicker.text.no_images_found",
-          "english": "No images found",
-          "current": "No images found"
-        },
-        {
-          "keyPath": "Layout.SearchBar.text.filter_by_type",
-          "english": "Filter by Type",
-          "current": "Filter by Type"
         },
         {
           "keyPath": "Layout.WorkspaceTopBar.aria_label.up_one_level",
@@ -11648,31 +10283,6 @@
           "keyPath": "Layout.WorkspaceTopBar.title.up_one_level",
           "english": "Up one level",
           "current": "Up one level"
-        },
-        {
-          "keyPath": "Media.MediaGrid.heading.no_media_files",
-          "english": "No media files",
-          "current": "No media files"
-        },
-        {
-          "keyPath": "Media.MediaPreview.text.failed_to_load",
-          "english": "Failed to load",
-          "current": "Failed to load"
-        },
-        {
-          "keyPath": "Media.MediaViewer.heading.failed_to_load_media",
-          "english": "Failed to load media",
-          "current": "Failed to load media"
-        },
-        {
-          "keyPath": "Media.MediaViewer.text.preview_not_available_for",
-          "english": "Preview not available for this file type",
-          "current": "Preview not available for this file type"
-        },
-        {
-          "keyPath": "Media.MediaViewer.text.there_was_an_error",
-          "english": "There was an error loading this file",
-          "current": "There was an error loading this file"
         },
         {
           "keyPath": "Media.MediaViewer.text.your_browser_does_not",
@@ -11710,69 +10320,9 @@
           "current": "Add people by email"
         },
         {
-          "keyPath": "ShareCard.heading.people_with_access",
-          "english": "People with access",
-          "current": "People with access"
-        },
-        {
-          "keyPath": "ShareCard.heading.share_with_others",
-          "english": "Share with others",
-          "current": "Share with others"
-        },
-        {
           "keyPath": "ShareCard.placeholder.enter_email_address",
           "english": "Enter email address",
           "current": "Enter email address"
-        },
-        {
-          "keyPath": "ShareCard.text.allow_editors_to_change",
-          "english": "Allow editors to change permissions and share",
-          "current": "Allow editors to change permissions and share"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_in_your_org",
-          "english": "Anyone in your org can view",
-          "current": "Anyone in your org can view"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_in_your_org_2",
-          "english": "Anyone in your org can edit",
-          "current": "Anyone in your org can edit"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_on_the_internet",
-          "english": "Anyone on the internet can view",
-          "current": "Anyone on the internet can view"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_on_the_internet_2",
-          "english": "Anyone on the internet can edit",
-          "current": "Anyone on the internet can edit"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_with_link_can",
-          "english": "Anyone with link can view",
-          "current": "Anyone with link can view"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_with_link_can_2",
-          "english": "Anyone with link can edit",
-          "current": "Anyone with link can edit"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_with_the_link",
-          "english": "Anyone with the link can view",
-          "current": "Anyone with the link can view"
-        },
-        {
-          "keyPath": "ShareCard.text.anyone_with_the_link_2",
-          "english": "Anyone with the link can edit",
-          "current": "Anyone with the link can edit"
-        },
-        {
-          "keyPath": "ShareCard.text.commenters_and_viewers",
-          "english": "Commenters and viewers",
-          "current": "Commenters and viewers"
         },
         {
           "keyPath": "ShareCard.text.done_button_clicked_emitting",
@@ -11785,24 +10335,9 @@
           "current": "Editors will be able to change permissions and share this with others"
         },
         {
-          "keyPath": "ShareCard.text.only_people_with_access",
-          "english": "Only people with access",
-          "current": "Only people with access"
-        },
-        {
           "keyPath": "ShareCard.text.people_in_your_organization",
           "english": "People in your organization",
           "current": "People in your organization"
-        },
-        {
-          "keyPath": "ShareCard.text.public_and_editable",
-          "english": "Public and editable",
-          "current": "Public and editable"
-        },
-        {
-          "keyPath": "ShareCard.text.public_on_the_web",
-          "english": "Public on the web",
-          "current": "Public on the web"
         },
         {
           "keyPath": "ShareCard.text.share_the_link_with",
@@ -11830,34 +10365,9 @@
           "current": "Source Sans 3"
         },
         {
-          "keyPath": "Slides.SlidesInspector.text.bring_existing_content_into",
-          "english": "Bring existing content into your slide deck.",
-          "current": "Bring existing content into your slide deck."
-        },
-        {
           "keyPath": "Slides.SlidesInspector.text.combine_smart_snapping_with",
           "english": "Combine smart snapping with grid overlays for pixel-perfect layouts.",
           "current": "Combine smart snapping with grid overlays for pixel-perfect layouts."
-        },
-        {
-          "keyPath": "Slides.SlidesInspector.text.control_alignment_helpers_for",
-          "english": "Control alignment helpers for precise layouts.",
-          "current": "Control alignment helpers for precise layouts."
-        },
-        {
-          "keyPath": "Slides.SlidesInspector.text.processing_your_file",
-          "english": "Processing your file…",
-          "current": "Processing your file…"
-        },
-        {
-          "keyPath": "Slides.SlidesInspector.text.ready_for_new_imports",
-          "english": "Ready for new imports.",
-          "current": "Ready for new imports."
-        },
-        {
-          "keyPath": "Slides.SlidesInspector.text.use_a_smaller_grid",
-          "english": "Use a smaller grid for dense layouts or increase spacing for broader guides.",
-          "current": "Use a smaller grid for dense layouts or increase spacing for broader guides."
         },
         {
           "keyPath": "Slides.SlidesInspector.text.use_alignment_guides_to",
@@ -12521,11 +11031,6 @@
           "current": "Let’s get to know you better"
         },
         {
-          "keyPath": "Store.FormSettings.text.thank_you",
-          "english": "Thank you!",
-          "current": "Thank you!"
-        },
-        {
           "keyPath": "Store.FormSettings.text.we_ve_received_your",
           "english": "We’ve received your response.",
           "current": "We’ve received your response."
@@ -12658,809 +11163,19 @@
       "localeFile": "zh\\views.json",
       "issues": [
         {
-          "keyPath": "Views.Bin.text.cannot_download_this_item",
-          "english": "Cannot download this item",
-          "current": "Cannot download this item"
+          "keyPath": "Views.Home.heading.choose_a_template",
+          "english": "Choose a Template",
+          "current": "Choose a Template"
         },
         {
-          "keyPath": "Views.Bin.text.error_loading_trash_items",
-          "english": "Error loading trash items:",
-          "current": "Error loading trash items:"
-        },
-        {
-          "keyPath": "Views.Bin.text.error_permanently_deleting_file",
-          "english": "Error permanently deleting file:",
-          "current": "Error permanently deleting file:"
-        },
-        {
-          "keyPath": "Views.Bin.text.error_restoring_file",
-          "english": "Error restoring file:",
-          "current": "Error restoring file:"
-        },
-        {
-          "keyPath": "Views.Bin.text.failed_to_delete_item",
-          "english": "Failed to delete item permanently",
-          "current": "Failed to delete item permanently"
-        },
-        {
-          "keyPath": "Views.Bin.text.failed_to_download_file",
-          "english": "Failed to download file",
-          "current": "Failed to download file"
-        },
-        {
-          "keyPath": "Views.Bin.text.failed_to_empty_bin",
-          "english": "Failed to empty bin",
-          "current": "Failed to empty bin"
-        },
-        {
-          "keyPath": "Views.Bin.text.failed_to_load_trash",
-          "english": "Failed to load trash items",
-          "current": "Failed to load trash items"
-        },
-        {
-          "keyPath": "Views.Bin.text.failed_to_preview_file",
-          "english": "Failed to preview file",
-          "current": "Failed to preview file"
-        },
-        {
-          "keyPath": "Views.Bin.text.failed_to_restore_item",
-          "english": "Failed to restore item",
-          "current": "Failed to restore item"
-        },
-        {
-          "keyPath": "Views.Bin.text.no_items_selected",
-          "english": "No items selected",
-          "current": "No items selected"
-        },
-        {
-          "keyPath": "Views.Bin.text.preview_not_available_for",
-          "english": "Preview not available for this item",
-          "current": "Preview not available for this item"
-        },
-        {
-          "keyPath": "Views.Bin.text.trash_file_manager",
-          "english": "Trash - File Manager",
-          "current": "Trash - File Manager"
-        },
-        {
-          "keyPath": "Views.Bin.text.trash_is_already_empty",
-          "english": "Trash is already empty",
-          "current": "Trash is already empty"
-        },
-        {
-          "keyPath": "Views.DocsEditor.link.open_direct_link",
-          "english": "Open direct link",
-          "current": "Open direct link"
-        },
-        {
-          "keyPath": "Views.DocsEditor.placeholder.i_d_like_to",
-          "english": "I’d like to view this document.",
-          "current": "I’d like to view this document."
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.add_column_after",
-          "english": "Add column after",
-          "current": "Add column after"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.add_headings_to_see",
-          "english": "Add headings to see outline",
-          "current": "Add headings to see outline"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.add_row_below",
-          "english": "Add row below",
-          "current": "Add row below"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.add_some_content_before",
-          "english": "Add some content before saving.",
-          "current": "Add some content before saving."
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.adjust_font_size",
-          "english": "Adjust font size",
-          "current": "Adjust font size"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.brand_foreground_color",
-          "english": "Brand foreground color",
-          "current": "Brand foreground color"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.configure_chart_data",
-          "english": "Configure chart data",
-          "current": "Configure chart data"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.document_created_from_template",
-          "english": "Document created from template",
-          "current": "Document created from template"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.docx_export_error",
-          "english": "DOCX export error:",
-          "current": "DOCX export error:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.docx_exported_successfully",
-          "english": "DOCX exported successfully",
-          "current": "DOCX exported successfully"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.edit_chart_title",
-          "english": "Edit chart title",
-          "current": "Edit chart title"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_applying_remote_change",
-          "english": "Error applying remote change:",
-          "current": "Error applying remote change:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_broadcasting_cursor_presence",
-          "english": "Error broadcasting cursor presence:",
-          "current": "Error broadcasting cursor presence:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_joining_document",
-          "english": "Error joining document:",
-          "current": "Error joining document:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_loading_content",
-          "english": "Error loading content:",
-          "current": "Error loading content:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_loading_version_content",
-          "english": "Error loading version content:",
-          "current": "Error loading version content:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.error_sending_chat_message",
-          "english": "Error sending chat message:",
-          "current": "Error sending chat message:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_create_document",
-          "english": "Failed to create document from template:",
-          "current": "Failed to create document from template:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_create_document_2",
-          "english": "Failed to create document",
-          "current": "Failed to create document"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_create_document_3",
-          "english": "Failed to create document:",
-          "current": "Failed to create document:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_export_docx",
-          "english": "Failed to export DOCX",
-          "current": "Failed to export DOCX"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_export_pdf",
-          "english": "Failed to export PDF",
-          "current": "Failed to export PDF"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_load_document",
-          "english": "Failed to load document:",
-          "current": "Failed to load document:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_load_document_2",
-          "english": "Failed to load document",
-          "current": "Failed to load document"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_load_version",
-          "english": "Failed to load version content",
-          "current": "Failed to load version content"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_save_document",
-          "english": "Failed to save document:",
-          "current": "Failed to save document:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.failed_to_save_document_2",
-          "english": "Failed to save document",
-          "current": "Failed to save document"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.html_exported_successfully",
-          "english": "HTML exported successfully",
-          "current": "HTML exported successfully"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.link_copied_to_clipboard",
-          "english": "Link copied to clipboard",
-          "current": "Link copied to clipboard"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.loaded_as_plain_text",
-          "english": "✓ Loaded as plain text",
-          "current": "✓ Loaded as plain text"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.loaded_html_content",
-          "english": "✓ Loaded HTML content",
-          "current": "✓ Loaded HTML content"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.loaded_tiptap_json_content",
-          "english": "✓ Loaded Tiptap JSON content",
-          "current": "✓ Loaded Tiptap JSON content"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.no_headings_found",
-          "english": "No headings found",
-          "current": "No headings found"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.pdf_export_error",
-          "english": "PDF export error:",
-          "current": "PDF export error:"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.pdf_export_started",
-          "english": "PDF export started",
-          "current": "PDF export started"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.reset_row_height",
-          "english": "Reset row height",
-          "current": "Reset row height"
-        },
-        {
-          "keyPath": "Views.DocsEditor.text.upload_new_image",
-          "english": "Upload new image",
-          "current": "Upload new image"
-        },
-        {
-          "keyPath": "Views.Documents.text.error_creating_document_folder",
-          "english": "Error creating document folder:",
-          "current": "Error creating document folder:"
-        },
-        {
-          "keyPath": "Views.Documents.text.error_deleting_documents",
-          "english": "Error deleting documents:",
-          "current": "Error deleting documents:"
-        },
-        {
-          "keyPath": "Views.Documents.text.failed_to_create_folder",
-          "english": "Failed to create folder",
-          "current": "Failed to create folder"
-        },
-        {
-          "keyPath": "Views.Documents.text.failed_to_delete_some",
-          "english": "Failed to delete some documents",
-          "current": "Failed to delete some documents"
-        },
-        {
-          "keyPath": "Views.FilePicker.heading.no_files_found",
+          "keyPath": "Views.Home.heading.no_files_found",
           "english": "No files found",
           "current": "No files found"
         },
         {
-          "keyPath": "Views.FilePicker.text.try_adjusting_your_search",
-          "english": "Try adjusting your search or filter criteria.",
-          "current": "Try adjusting your search or filter criteria."
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.add_first_question",
-          "english": "Add First Question",
-          "current": "Add First Question"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.back_to_share_link",
-          "english": "Back to share link",
-          "current": "Back to share link"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.copy_editor_link",
-          "english": "Copy editor link",
-          "current": "Copy editor link"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.generate_with_ai",
-          "english": "Generate with AI",
-          "current": "Generate with AI"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.set_up_webhooks",
-          "english": "Set up webhooks",
-          "current": "Set up webhooks"
-        },
-        {
-          "keyPath": "Views.FormBuilder.button.skip_for_now",
-          "english": "Skip for now",
-          "current": "Skip for now"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.choose_a_footer_image",
-          "english": "Choose a footer image",
-          "current": "Choose a footer image"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.choose_a_logo",
-          "english": "Choose a logo",
-          "current": "Choose a logo"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.choose_who_in_your",
-          "english": "Choose who in your workspace can open or edit this form.",
-          "current": "Choose who in your workspace can open or edit this form."
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.configure_webhook_endpoints",
-          "english": "Configure webhook endpoints",
-          "current": "Configure webhook endpoints"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.generate_with_ai",
-          "english": "Generate with AI",
-          "current": "Generate with AI"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.how_it_works",
-          "english": "How it works",
-          "current": "How it works"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.send_the_live_form",
-          "english": "Send the live form link and control who can respond.",
-          "current": "Send the live form link and control who can respond."
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.start_building_your_form",
-          "english": "Start building your form",
-          "current": "Start building your form"
-        },
-        {
-          "keyPath": "Views.FormBuilder.heading.when_do_webhooks_fire",
-          "english": "When do webhooks fire?",
-          "current": "When do webhooks fire?"
-        },
-        {
-          "keyPath": "Views.FormBuilder.label.amount_to_charge",
-          "english": "Amount to charge",
-          "current": "Amount to charge"
-        },
-        {
-          "keyPath": "Views.FormBuilder.label.stripe_account_id",
-          "english": "Stripe account ID",
-          "current": "Stripe account ID"
-        },
-        {
-          "keyPath": "Views.FormBuilder.label.stripe_publishable_key",
-          "english": "Stripe publishable key",
-          "current": "Stripe publishable key"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.add_a_question",
-          "english": "Add a question",
-          "current": "Add a question"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.add_questions_customize_fields",
-          "english": "Add questions, customize fields, and create the perfect form for your needs.",
-          "current": "Add questions, customize fields, and create the perfect form for your needs."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.and_set_to_public",
-          "english": "and set to public",
-          "current": "and set to public"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.any_custom_events_you",
-          "english": "Any custom events you define",
-          "current": "Any custom events you define"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.anyone_with_the_link",
-          "english": "Anyone with the link can respond.",
-          "current": "Anyone with the link can respond."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.anyone_with_this_link",
-          "english": "Anyone with this link can access the form based on its publish settings.",
-          "current": "Anyone with this link can access the form based on its publish settings."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.collaborators_workspace_access",
-          "english": "Collaborators & workspace access",
-          "current": "Collaborators & workspace access"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.could_not_delete_form",
-          "english": "Could not delete form.",
-          "current": "Could not delete form."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.editor_link_copied_to",
-          "english": "Editor link copied to clipboard",
-          "current": "Editor link copied to clipboard"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.ensure_published_share_slug",
-          "english": "Ensure published share slug for form:",
-          "current": "Ensure published share slug for form:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.existing_share_slug",
-          "english": "Existing share slug:",
-          "current": "Existing share slug:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_auto_set",
-          "english": "Failed to auto-set form visibility to public on publish:",
-          "current": "Failed to auto-set form visibility to public on publish:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_generate_blocks",
-          "english": "Failed to generate blocks:",
-          "current": "Failed to generate blocks:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_hydrate_form",
-          "english": "Failed to hydrate form sharing details",
-          "current": "Failed to hydrate form sharing details"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_hydrate_template",
-          "english": "Failed to hydrate template payload:",
-          "current": "Failed to hydrate template payload:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_publish_form",
-          "english": "Failed to publish form:",
-          "current": "Failed to publish form:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_publish_form_2",
-          "english": "Failed to publish form",
-          "current": "Failed to publish form"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_remove_collaborator",
-          "english": "Failed to remove collaborator",
-          "current": "Failed to remove collaborator"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_save_changes",
-          "english": "Failed to save changes",
-          "current": "Failed to save changes"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_save_form",
-          "english": "Failed to save form:",
-          "current": "Failed to save form:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_update_collaborators",
-          "english": "Failed to update collaborators",
-          "current": "Failed to update collaborators"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_update_form",
-          "english": "Failed to update form privacy_type",
-          "current": "Failed to update form privacy_type"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.failed_to_update_form_2",
-          "english": "Failed to update form visibility:",
-          "current": "Failed to update form visibility:"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.form_published_but_share",
-          "english": "Form published but share slug is unavailable",
-          "current": "Form published but share slug is unavailable"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.form_will_accept_new",
-          "english": "Form will accept new submissions.",
-          "current": "Form will accept new submissions."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.form_will_not_accept",
-          "english": "Form will not accept new submissions.",
-          "current": "Form will not accept new submissions."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.manage_who_in_your",
-          "english": "Manage who in your workspace can open and edit this form.",
-          "current": "Manage who in your workspace can open and edit this form."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.only_the_form_owner",
-          "english": "Only the form owner can update payment settings when using platform payments.",
-          "current": "Only the form owner can update payment settings when using platform payments."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.payment_succeeded_or_failed",
-          "english": "Payment succeeded or failed",
-          "current": "Payment succeeded or failed"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.publishing_form_to_generate",
-          "english": "Publishing form to generate share link…",
-          "current": "Publishing form to generate share link…"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.questions_generated_successfully",
-          "english": "Questions generated successfully!",
-          "current": "Questions generated successfully!"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.send_form_responses_and",
-          "english": "Send form responses and payment events to your downstream systems in real time.",
-          "current": "Send form responses and payment events to your downstream systems in real time."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.share_link_copied_to",
-          "english": "Share link copied to clipboard",
-          "current": "Share link copied to clipboard"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.unable_to_remove_collaborator",
-          "english": "Unable to remove collaborator",
-          "current": "Unable to remove collaborator"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.unable_to_update_access",
-          "english": "Unable to update access level",
-          "current": "Unable to update access level"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.unable_to_update_collaborators",
-          "english": "Unable to update collaborators",
-          "current": "Unable to update collaborators"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.unable_to_update_response",
-          "english": "Unable to update response settings.",
-          "current": "Unable to update response settings."
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.use_my_own_stripe",
-          "english": "Use my own Stripe account",
-          "current": "Use my own Stripe account"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.use_platform_account",
-          "english": "Use platform account",
-          "current": "Use platform account"
-        },
-        {
-          "keyPath": "Views.FormBuilder.text.why_webhooks",
-          "english": "Why webhooks?",
-          "current": "Why webhooks?"
-        },
-        {
-          "keyPath": "Views.FormBuilder.title.stop_accepting_responses",
-          "english": "Stop accepting responses",
-          "current": "Stop accepting responses"
-        },
-        {
-          "keyPath": "Views.FormPaymentSuccess.text.thank_you_for_your",
-          "english": "Thank you for your payment",
-          "current": "Thank you for your payment"
-        },
-        {
-          "keyPath": "Views.FormPaymentSuccess.text.your_response_has_been",
-          "english": "Your response has been submitted and the payment is confirmed.",
-          "current": "Your response has been submitted and the payment is confirmed."
-        },
-        {
-          "keyPath": "Views.FormPaymentSuccess.text.your_response_was_submitted",
-          "english": "Your response was submitted successfully.",
-          "current": "Your response was submitted successfully."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.authentication_required_to_preview",
-          "english": "Authentication required to preview this form.",
-          "current": "Authentication required to preview this form."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.failed_to_finalize_response",
-          "english": "Failed to finalize response.",
-          "current": "Failed to finalize response."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.failed_to_load_form",
-          "english": "Failed to load form.",
-          "current": "Failed to load form."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.failed_to_resolve_payment",
-          "english": "Failed to resolve payment success URL",
-          "current": "Failed to resolve payment success URL"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.failed_to_submit_response",
-          "english": "Failed to submit response.",
-          "current": "Failed to submit response."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.missing_form_identifier",
-          "english": "Missing form identifier",
-          "current": "Missing form identifier"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.missing_response_id",
-          "english": "Missing response ID",
-          "current": "Missing response ID"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.payment_confirmed_thank_you",
-          "english": "Payment confirmed. Thank you!",
-          "current": "Payment confirmed. Thank you!"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.response_submitted_successfully",
-          "english": "Response submitted successfully.",
-          "current": "Response submitted successfully."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.thank_you",
-          "english": "Thank you!",
-          "current": "Thank you!"
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.we_will_ask_for",
-          "english": "We will ask for your email address so we can send confirmations and receipts.",
-          "current": "We will ask for your email address so we can send confirmations and receipts."
-        },
-        {
-          "keyPath": "Views.FormPlayerHost.text.your_response_has_been",
-          "english": "Your response has been recorded.",
-          "current": "Your response has been recorded."
-        },
-        {
-          "keyPath": "Views.FormResponses.button.back_to_forms",
-          "english": "Back to Forms",
-          "current": "Back to Forms"
-        },
-        {
-          "keyPath": "Views.FormResponses.button.export_to_sheet",
-          "english": "Export to Sheet",
-          "current": "Export to Sheet"
-        },
-        {
-          "keyPath": "Views.FormResponses.heading.review_submission_metadata_and",
-          "english": "Review submission metadata and answers.",
-          "current": "Review submission metadata and answers."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.csv_exported_successfully",
-          "english": "CSV exported successfully",
-          "current": "CSV exported successfully"
-        },
-        {
-          "keyPath": "Views.FormResponses.text.failed_to_export_csv",
-          "english": "Failed to export CSV",
-          "current": "Failed to export CSV"
-        },
-        {
-          "keyPath": "Views.FormResponses.text.failed_to_export_to",
-          "english": "Failed to export to sheet",
-          "current": "Failed to export to sheet"
-        },
-        {
-          "keyPath": "Views.FormResponses.text.failed_to_load_response",
-          "english": "Failed to load response detail.",
-          "current": "Failed to load response detail."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.failed_to_load_responses",
-          "english": "Failed to load responses.",
-          "current": "Failed to load responses."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.manage_submissions_monitor_payment",
-          "english": "Manage submissions, monitor payment status, and drill into individual answers.",
-          "current": "Manage submissions, monitor payment status, and drill into individual answers."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.monitor_how_respondents_engage",
-          "english": "Monitor how respondents engage with your form and spot trends across completion states.",
-          "current": "Monitor how respondents engage with your form and spot trends across completion states."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.no_answers_captured_for",
-          "english": "No answers captured for this response.",
-          "current": "No answers captured for this response."
-        },
-        {
-          "keyPath": "Views.FormResponses.text.sheet_updated_successfully",
-          "english": "Sheet updated successfully",
-          "current": "Sheet updated successfully"
-        },
-        {
-          "keyPath": "Views.FormResponses.text.visualize_completion_ratio_at",
-          "english": "Visualize completion ratio at a glance",
-          "current": "Visualize completion ratio at a glance"
-        },
-        {
-          "keyPath": "Views.FormTemplateHandler.text.collect_user_signups",
-          "english": "Collect user signups",
-          "current": "Collect user signups"
-        },
-        {
-          "keyPath": "Views.FormTemplateHandler.text.quick_feedback_survey",
-          "english": "Quick feedback survey",
-          "current": "Quick feedback survey"
-        },
-        {
-          "keyPath": "Views.Forms.heading.create_and_manage_forms",
-          "english": "Create and Manage Forms",
-          "current": "Create and Manage Forms"
-        },
-        {
-          "keyPath": "Views.Forms.heading.share_this_form_with",
-          "english": "Share this form with participants or collaborators using the link below.",
-          "current": "Share this form with participants or collaborators using the link below."
-        },
-        {
-          "keyPath": "Views.Forms.text.anyone_with_this_link",
-          "english": "Anyone with this link can access the form based on its publish settings.",
-          "current": "Anyone with this link can access the form based on its publish settings."
-        },
-        {
-          "keyPath": "Views.Forms.text.failed_to_publish_form",
-          "english": "Failed to publish form for sharing",
-          "current": "Failed to publish form for sharing"
-        },
-        {
-          "keyPath": "Views.Forms.text.form_is_missing_an",
-          "english": "Form is missing an identifier.",
-          "current": "Form is missing an identifier."
-        },
-        {
-          "keyPath": "Views.Forms.text.no_more_forms_to",
-          "english": "No more forms to load.",
-          "current": "No more forms to load."
-        },
-        {
-          "keyPath": "Views.Forms.text.publish_the_form_to",
-          "english": "Publish the form to get a shareable link.",
-          "current": "Publish the form to get a shareable link."
-        },
-        {
-          "keyPath": "Views.Forms.text.publishing_form_to_generate",
-          "english": "Publishing form to generate share link…",
-          "current": "Publishing form to generate share link…"
-        },
-        {
-          "keyPath": "Views.Forms.text.share_link_copied",
-          "english": "Share link copied",
-          "current": "Share link copied"
-        },
-        {
-          "keyPath": "Views.Forms.text.share_link_copied_to",
-          "english": "Share link copied to clipboard.",
-          "current": "Share link copied to clipboard."
-        },
-        {
-          "keyPath": "Views.Forms.text.share_link_unavailable",
-          "english": "Share link unavailable",
-          "current": "Share link unavailable"
-        },
-        {
-          "keyPath": "Views.Forms.text.the_form_link_was",
-          "english": "The form link was copied to your clipboard.",
-          "current": "The form link was copied to your clipboard."
-        },
-        {
-          "keyPath": "Views.Home.aria_label.up_one_level",
-          "english": "Up one level",
-          "current": "Up one level"
+          "keyPath": "Views.Home.heading.no_matching_files_found",
+          "english": "No matching files found",
+          "current": "No matching files found"
         },
         {
           "keyPath": "Views.Home.text.error_creating_folder",
@@ -13483,19 +11198,59 @@
           "current": "File not found in viewable files:"
         },
         {
+          "keyPath": "Views.Home.text.get_started_by_creating",
+          "english": "Get started by creating a new file or uploading an existing one.",
+          "current": "Get started by creating a new file or uploading an existing one."
+        },
+        {
+          "keyPath": "Views.Home.text.group_by_type",
+          "english": "Group by Type",
+          "current": "Group by Type"
+        },
+        {
+          "keyPath": "Views.Home.text.no_items_available_in",
+          "english": "No items available in this category.",
+          "current": "No items available in this category."
+        },
+        {
+          "keyPath": "Views.Home.text.sort_by_date",
+          "english": "Sort by Date",
+          "current": "Sort by Date"
+        },
+        {
+          "keyPath": "Views.Home.text.sort_by_name",
+          "english": "Sort by Name",
+          "current": "Sort by Name"
+        },
+        {
+          "keyPath": "Views.Home.text.sort_by_size",
+          "english": "Sort by Size",
+          "current": "Sort by Size"
+        },
+        {
+          "keyPath": "Views.Home.text.sort_by_type",
+          "english": "Sort by Type",
+          "current": "Sort by Type"
+        },
+        {
+          "keyPath": "Views.Home.text.try_adjusting_your_search",
+          "english": "Try adjusting your search or filters.",
+          "current": "Try adjusting your search or filters."
+        },
+        {
           "keyPath": "Views.Home.title.up_one_level",
           "english": "Up one level",
           "current": "Up one level"
         },
         {
-          "keyPath": "Views.Login.link.cookie_ccpa_preferences",
-          "english": "Cookie & CCPA preferences",
-          "current": "Cookie & CCPA preferences"
+          "keyPath": "Views.Media.heading.enter_a_new_name",
+          "english": "Enter a new name for \"\"",
+          "current": "Enter a new name for \"\""
         },
         {
-          "keyPath": "Views.Login.link.privacy_terms",
-          "english": "Privacy & terms",
-          "current": "Privacy & terms"
+          "keyPath": "Views.Media.placeholder.enter_new_file_name",
+          "english": "Enter new file name",
+          "current": "Enter new file name"
         },
         {
           "keyPath": "Views.Media.text.browse_all_media_files",
@@ -13531,406 +11286,6 @@
           "keyPath": "Views.Media.text.file_renamed_successfully",
           "english": "File renamed successfully",
           "current": "File renamed successfully"
-        },
-        {
-          "keyPath": "Views.MediaViewer.heading.request_access_to_this",
-          "english": "Request access to this file",
-          "current": "Request access to this file"
-        },
-        {
-          "keyPath": "Views.MediaViewer.link.download_open_original",
-          "english": "Download / Open original",
-          "current": "Download / Open original"
-        },
-        {
-          "keyPath": "Views.MediaViewer.placeholder.add_a_note_to",
-          "english": "Add a note to the owner",
-          "current": "Add a note to the owner"
-        },
-        {
-          "keyPath": "Views.MediaViewer.text.access_request_sent",
-          "english": "Access request sent",
-          "current": "Access request sent"
-        },
-        {
-          "keyPath": "Views.MediaViewer.text.cannot_preview_this_file",
-          "english": "Cannot preview this file type.",
-          "current": "Cannot preview this file type."
-        },
-        {
-          "keyPath": "Views.MediaViewer.text.failed_to_load_file",
-          "english": "Failed to load file",
-          "current": "Failed to load file"
-        },
-        {
-          "keyPath": "Views.MediaViewer.text.file_not_found",
-          "english": "File not found",
-          "current": "File not found"
-        },
-        {
-          "keyPath": "Views.OauthCallback.heading.completing_authentication",
-          "english": "Completing Authentication",
-          "current": "Completing Authentication"
-        },
-        {
-          "keyPath": "Views.OauthCallback.heading.oops_login_failed",
-          "english": "Oops! Login Failed",
-          "current": "Oops! Login Failed"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.auth_failed_with_code",
-          "english": "Auth failed with code:",
-          "current": "Auth failed with code:"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.auth_failed_with_cookie",
-          "english": "Auth failed with cookie:",
-          "current": "Auth failed with cookie:"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.error_during_authentication_with",
-          "english": "Error during authentication with cookie:",
-          "current": "Error during authentication with cookie:"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.error_during_authentication_with_2",
-          "english": "Error during authentication with code:",
-          "current": "Error during authentication with code:"
-        },
-        {
-          "keyPath": "Views.OauthCallback.text.error_value_set_to",
-          "english": "Error value set to:",
-          "current": "Error value set to:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.heading.request_access_to_this",
-          "english": "Request access to this sheet",
-          "current": "Request access to this sheet"
-        },
-        {
-          "keyPath": "Views.SheetEditor.heading.this_spreadsheet_is_large",
-          "english": "This spreadsheet is large",
-          "current": "This spreadsheet is large"
-        },
-        {
-          "keyPath": "Views.SheetEditor.placeholder.add_a_note_to",
-          "english": "Add a note to the owner",
-          "current": "Add a note to the owner"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.all_changes_saved",
-          "english": "All changes saved",
-          "current": "All changes saved"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.cannot_join_realtime",
-          "english": "Cannot join realtime:",
-          "current": "Cannot join realtime:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.cannot_save_missing_document",
-          "english": "Cannot save: Missing document reference or ID",
-          "current": "Cannot save: Missing document reference or ID"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.creating_completely_new_document",
-          "english": "Creating completely new document",
-          "current": "Creating completely new document"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.creating_new_document_from",
-          "english": "Creating new document from template:",
-          "current": "Creating new document from template:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.creating_new_document_with",
-          "english": "Creating new document with ID:",
-          "current": "Creating new document with ID:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.document_got_new_server",
-          "english": "Document got new server ID after title change, redirecting to:",
-          "current": "Document got new server ID after title change, redirecting to:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.document_got_new_server_2",
-          "english": "Document got new server ID, redirecting to:",
-          "current": "Document got new server ID, redirecting to:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.document_saved_and_synced",
-          "english": "Document saved and synced successfully",
-          "current": "Document saved and synced successfully"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.document_saved_successfully",
-          "english": "Document saved successfully",
-          "current": "Document saved successfully"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_joining_sheet",
-          "english": "Error joining sheet:",
-          "current": "Error joining sheet:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_loading_spreadsheet_data",
-          "english": "Error loading spreadsheet data:",
-          "current": "Error loading spreadsheet data:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_parsing_spreadsheet_contents",
-          "english": "Error parsing spreadsheet contents:",
-          "current": "Error parsing spreadsheet contents:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_saving_document",
-          "english": "Error saving document:",
-          "current": "Error saving document:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.error_saving_title",
-          "english": "Error saving title:",
-          "current": "Error saving title:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.export_is_not_available",
-          "english": "Export is not available yet",
-          "current": "Export is not available yet"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_capture_spreadsheet",
-          "english": "Failed to capture spreadsheet data",
-          "current": "Failed to capture spreadsheet data"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_load_document",
-          "english": "Failed to load document:",
-          "current": "Failed to load document:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_load_spreadsheet",
-          "english": "Failed to load spreadsheet",
-          "current": "Failed to load spreadsheet"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_navigate_to",
-          "english": "Failed to navigate to collaborator cell:",
-          "current": "Failed to navigate to collaborator cell:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_push_latest",
-          "english": "Failed to push latest data into UniverSheet:",
-          "current": "Failed to push latest data into UniverSheet:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_remove_access",
-          "english": "Failed to remove access",
-          "current": "Failed to remove access"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.failed_to_share",
-          "english": "Failed to share",
-          "current": "Failed to share"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.initializing_websocket_for_sheet",
-          "english": "Initializing WebSocket for sheet:",
-          "current": "Initializing WebSocket for sheet:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.loaded_existing_document",
-          "english": "Loaded existing document:",
-          "current": "Loaded existing document:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.loading_spreadsheet_data_for",
-          "english": "Loading spreadsheet data for ID:",
-          "current": "Loading spreadsheet data for ID:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.public_link_access_initializing",
-          "english": "Public link access: initializing viewer with default structure",
-          "current": "Public link access: initializing viewer with default structure"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.replying_to",
-          "english": "Replying to :",
-          "current": "Replying to :"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.saving_document_with_complete",
-          "english": "Saving document with complete data:",
-          "current": "Saving document with complete data:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.set_title_from_existing",
-          "english": "Set title from existing store data:",
-          "current": "Set title from existing store data:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.set_title_from_loaded",
-          "english": "Set title from loaded document:",
-          "current": "Set title from loaded document:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.successfully_parsed_spreadsheet_data",
-          "english": "Successfully parsed spreadsheet data:",
-          "current": "Successfully parsed spreadsheet data:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.websocket_connection_lost",
-          "english": "WebSocket connection lost.",
-          "current": "WebSocket connection lost."
-        },
-        {
-          "keyPath": "Views.SheetEditor.text.websocket_connection_state_changed",
-          "english": "WebSocket connection state changed:",
-          "current": "WebSocket connection state changed:"
-        },
-        {
-          "keyPath": "Views.SheetEditor.title.click_to_save_now",
-          "english": "Click to save now",
-          "current": "Click to save now"
-        },
-        {
-          "keyPath": "Views.Sheets.text.error_creating_spreadsheet_folder",
-          "english": "Error creating spreadsheet folder:",
-          "current": "Error creating spreadsheet folder:"
-        },
-        {
-          "keyPath": "Views.Sheets.text.error_deleting_spreadsheets",
-          "english": "Error deleting spreadsheets:",
-          "current": "Error deleting spreadsheets:"
-        },
-        {
-          "keyPath": "Views.Sheets.text.failed_to_create_folder",
-          "english": "Failed to create folder",
-          "current": "Failed to create folder"
-        },
-        {
-          "keyPath": "Views.Sheets.text.failed_to_delete_some",
-          "english": "Failed to delete some spreadsheets",
-          "current": "Failed to delete some spreadsheets"
-        },
-        {
-          "keyPath": "Views.Sidebar.heading.choose_a_template",
-          "english": "Choose a Template",
-          "current": "Choose a Template"
-        },
-        {
-          "keyPath": "Views.Sidebar.text.creating_new_file",
-          "english": "Creating new file:",
-          "current": "Creating new file:"
-        },
-        {
-          "keyPath": "Views.Sidebar.text.navigating_directly_to_sheets",
-          "english": "Navigating directly to /sheets/new",
-          "current": "Navigating directly to /sheets/new"
-        },
-        {
-          "keyPath": "Views.Sidebar.text.no_matching_item_found",
-          "english": "No matching item found for path:",
-          "current": "No matching item found for path:"
-        },
-        {
-          "keyPath": "Views.Sidebar.text.sidebar_mounted_initial_route",
-          "english": "Sidebar mounted, initial route path:",
-          "current": "Sidebar mounted, initial route path:"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_hydrate_sharing",
-          "english": "Failed to hydrate sharing details",
-          "current": "Failed to hydrate sharing details"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_invite_collaborator",
-          "english": "Failed to invite collaborator",
-          "current": "Failed to invite collaborator"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_remove_collaborator",
-          "english": "Failed to remove collaborator",
-          "current": "Failed to remove collaborator"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_save_deck",
-          "english": "Failed to save deck",
-          "current": "Failed to save deck"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.failed_to_update_visibility",
-          "english": "Failed to update visibility",
-          "current": "Failed to update visibility"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.html_import_failed",
-          "english": "HTML import failed",
-          "current": "HTML import failed"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.powerpoint_import_failed",
-          "english": "PowerPoint import failed",
-          "current": "PowerPoint import failed"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.save_the_deck_before",
-          "english": "Save the deck before adjusting visibility",
-          "current": "Save the deck before adjusting visibility"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.save_the_deck_before_2",
-          "english": "Save the deck before inviting collaborators",
-          "current": "Save the deck before inviting collaborators"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.save_the_deck_before_3",
-          "english": "Save the deck before removing collaborators",
-          "current": "Save the deck before removing collaborators"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.select_or_add_a",
-          "english": "Select or add a slide to begin.",
-          "current": "Select or add a slide to begin."
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.share_link_copied",
-          "english": "Share link copied",
-          "current": "Share link copied"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.share_link_not_available",
-          "english": "Share link not available yet",
-          "current": "Share link not available yet"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.slide_template_load_failed",
-          "english": "Slide template load failed",
-          "current": "Slide template load failed"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.template_unavailable_starting_with",
-          "english": "Template unavailable, starting with blank deck.",
-          "current": "Template unavailable, starting with blank deck."
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.unable_to_invite_collaborator",
-          "english": "Unable to invite collaborator",
-          "current": "Unable to invite collaborator"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.unable_to_load_slide",
-          "english": "Unable to load slide deck",
-          "current": "Unable to load slide deck"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.unable_to_remove_collaborator",
-          "english": "Unable to remove collaborator",
-          "current": "Unable to remove collaborator"
-        },
-        {
-          "keyPath": "Views.SlidesEditor.text.unable_to_update_visibility",
-          "english": "Unable to update visibility",
-          "current": "Unable to update visibility"
         }
       ]
     }

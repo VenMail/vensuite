@@ -202,6 +202,18 @@ function buildKeyMapFromTranslations(translations) {
         if (!map.has(keyId)) {
           map.set(keyId, fullKey);
         }
+
+        // Also register a generic "text" alias so that minor kind
+        // mismatches (e.g. button vs text) during rewrite don't prevent
+        // us from finding an existing translation. This only affects the
+        // internal keyMap used by the rewrite script; the actual
+        // translation JSON structure (namespace.kind.slug) is unchanged.
+        if (kind !== 'text') {
+          const textAliasId = `${namespace}|text|${value}`;
+          if (!map.has(textAliasId)) {
+            map.set(textAliasId, fullKey);
+          }
+        }
       } else {
         walk(value, nextPath);
       }
@@ -347,6 +359,443 @@ function generateTCallWithPlaceholders(fullKey, placeholders) {
 // ============================================================================
 // File Processing
 // ============================================================================
+
+// Simple state machine states for Vue template rewriting
+const VUE_STATE = {
+  TEXT: 'TEXT',
+  TAG_NAME: 'TAG_NAME',
+  TAG_SPACE: 'TAG_SPACE',
+  ATTR_NAME: 'ATTR_NAME',
+  ATTR_VALUE_START: 'ATTR_VALUE_START',
+  ATTR_VALUE: 'ATTR_VALUE',
+  TAG_CLOSE: 'TAG_CLOSE',
+  COMMENT: 'COMMENT',
+  SCRIPT: 'SCRIPT',
+  STYLE: 'STYLE',
+};
+
+/**
+ * Extract the main <template> section from a Vue SFC, handling nested
+ * <template> slots by tracking depth instead of relying on a single
+ * non-greedy regex.
+ */
+function extractVueTemplateRange(code) {
+  if (!code || typeof code !== 'string') return null;
+
+  const openMatch = code.match(/^[\s\S]*?<template(\s[^>]*)?>|<template(\s[^>]*)?>/i);
+  if (!openMatch) return null;
+
+  const fullStart = openMatch.index;
+  const innerStart = fullStart + openMatch[0].length;
+  let depth = 1;
+  let pos = innerStart;
+  const len = code.length;
+
+  while (pos < len && depth > 0) {
+    const nextOpen = code.indexOf('<template', pos);
+    const nextClose = code.indexOf('</template>', pos);
+
+    if (nextClose === -1) {
+      break;
+    }
+
+    if (nextOpen !== -1 && nextOpen < nextClose) {
+      const afterOpen = code[nextOpen + 9];
+      if (!afterOpen || /[\s>\/]/.test(afterOpen)) {
+        depth += 1;
+      }
+      pos = nextOpen + 9;
+    } else {
+      depth -= 1;
+      if (depth === 0) {
+        const innerEnd = nextClose;
+        const fullEnd = nextClose + 11; // '</template>'.length
+        return { fullStart, fullEnd, innerStart, innerEnd };
+      }
+      pos = nextClose + 11;
+    }
+  }
+
+  // Fallback: greedy match for last </template>
+  const greedy = code.match(/<template[^>]*>([\s\S]*)<\/template>/i);
+  if (!greedy || typeof greedy.index !== 'number') return null;
+
+  const gFullStart = greedy.index;
+  const gInnerStart = gFullStart + greedy[0].length - greedy[1].length - 11;
+  const gInnerEnd = gInnerStart + greedy[1].length;
+  const gFullEnd = gInnerEnd + 11;
+  return { fullStart: gFullStart, fullEnd: gFullEnd, innerStart: gInnerStart, innerEnd: gInnerEnd };
+}
+
+/**
+ * Rewrite the inner Vue template content by walking tags/text with a
+ * lightweight state machine. For each plain-text node, look up the
+ * corresponding translation key and, if found, wrap it in {{$t('key')}}.
+ */
+function rewriteVueTemplate(template, namespace, keyMap) {
+  if (!template || typeof template !== 'string') return template;
+
+  let state = VUE_STATE.TEXT;
+  let pos = 0;
+  let textStart = 0;
+  let tagName = '';
+  let currentTag = '';
+  let attrName = '';
+  let attrValue = '';
+  let attrQuote = '';
+  const tagStack = [];
+  const len = template.length;
+  let out = '';
+  let lastEmitPos = 0;
+
+  const getCurrentParentTag = () =>
+    (tagStack.length > 0 ? tagStack[tagStack.length - 1] : null);
+
+  function maybeRewriteTextSegment(start, end) {
+    if (end <= start) return;
+    const rawText = template.slice(start, end);
+    if (!rawText || !rawText.trim()) return;
+    const parentTag = getCurrentParentTag();
+    const kind = inferKindFromJsxElementName(parentTag || 'div');
+
+    function rewritePlainTextFragment(fragment) {
+      if (!fragment || !fragment.trim()) return fragment;
+
+      const cleaned = normalizeText(fragment);
+      if (!cleaned) return fragment;
+
+      const nsForKey = isCommonShortText(cleaned) ? 'Commons' : namespace;
+      let keyId = `${nsForKey}|${kind}|${cleaned}`;
+      let fullKey = keyMap.get(keyId);
+
+      // Fallback: allow generic "text" alias if kind-specific key is missing.
+      if (!fullKey && kind !== 'text') {
+        keyId = `${nsForKey}|text|${cleaned}`;
+        fullKey = keyMap.get(keyId);
+      }
+
+      if (!fullKey) return fragment;
+
+      const leadingSpaceMatch = fragment.match(/^\s*/);
+      const trailingSpaceMatch = fragment.match(/\s*$/);
+      const leadingSpace = leadingSpaceMatch ? leadingSpaceMatch[0] : '';
+      const trailingSpace = trailingSpaceMatch ? trailingSpaceMatch[0] : '';
+
+      const escapedKey = String(fullKey).replace(/'/g, "\\'");
+      return `${leadingSpace}{{$t('${escapedKey}')}}${trailingSpace}`;
+    }
+
+    // Handle Vue mustache expressions specially so we can rewrite
+    // string literals inside expressions (e.g. ternaries) to $t() calls.
+    if (rawText.includes('{{') && rawText.includes('}}')) {
+      const mustacheRegex = /\{\{([^}]+)\}\}/g;
+      let resultText = '';
+      let lastIndex = 0;
+      let hasChange = false;
+
+      let match;
+      while ((match = mustacheRegex.exec(rawText)) !== null) {
+        const before = rawText.slice(lastIndex, match.index);
+        if (before) {
+          resultText += rewritePlainTextFragment(before);
+        }
+
+        const expr = match[1] || '';
+        let exprChanged = false;
+        const stringRegex = /(['"])([^'"\\]*(?:\\.[^'"\\]*)*)\1/g;
+
+        const rewrittenExpr = expr.replace(stringRegex, (m, quote, body) => {
+          const candidate = (body || '').trim();
+          if (!candidate) return m;
+
+          const cleaned = normalizeText(candidate);
+          if (!cleaned) return m;
+
+          const nsForKey = isCommonShortText(cleaned) ? 'Commons' : namespace;
+          let keyId = `${nsForKey}|${kind}|${cleaned}`;
+          let fullKey = keyMap.get(keyId);
+
+          if (!fullKey && kind !== 'text') {
+            keyId = `${nsForKey}|text|${cleaned}`;
+            fullKey = keyMap.get(keyId);
+          }
+
+          if (!fullKey) return m;
+
+          const escapedKey = String(fullKey).replace(/'/g, "\\'");
+          exprChanged = true;
+          return `$t('${escapedKey}')`;
+        });
+
+        if (exprChanged) {
+          hasChange = true;
+        }
+
+        resultText += `{{${rewrittenExpr}}}`;
+        lastIndex = match.index + match[0].length;
+      }
+
+      const tail = rawText.slice(lastIndex);
+      if (tail) {
+        resultText += rewritePlainTextFragment(tail);
+      }
+
+      if (!hasChange) return;
+
+      out += template.slice(lastEmitPos, start);
+      out += resultText;
+      lastEmitPos = end;
+      return;
+    }
+
+    const rewritten = rewritePlainTextFragment(rawText);
+    if (rewritten === rawText) return;
+
+    out += template.slice(lastEmitPos, start);
+    out += rewritten;
+    lastEmitPos = end;
+  }
+
+  while (pos < len) {
+    const char = template[pos];
+    const nextChar = pos + 1 < len ? template[pos + 1] : '';
+
+    switch (state) {
+      case VUE_STATE.TEXT: {
+        if (char === '<' && template.slice(pos, pos + 4) === '<!--') {
+          maybeRewriteTextSegment(textStart, pos);
+          state = VUE_STATE.COMMENT;
+          pos += 4;
+          continue;
+        }
+
+        if (char === '<') {
+          maybeRewriteTextSegment(textStart, pos);
+          if (nextChar === '/') {
+            state = VUE_STATE.TAG_CLOSE;
+            pos += 2;
+            tagName = '';
+          } else if (/[a-zA-Z]/.test(nextChar)) {
+            state = VUE_STATE.TAG_NAME;
+            pos += 1;
+            tagName = '';
+          } else {
+            pos += 1;
+          }
+          continue;
+        }
+
+        pos += 1;
+        break;
+      }
+
+      case VUE_STATE.COMMENT: {
+        if (char === '-' && template.slice(pos, pos + 3) === '-->') {
+          pos += 3;
+          state = VUE_STATE.TEXT;
+          textStart = pos;
+          continue;
+        }
+        pos += 1;
+        break;
+      }
+
+      case VUE_STATE.TAG_NAME: {
+        if (/[a-zA-Z0-9_:-]/.test(char)) {
+          tagName += char;
+          pos += 1;
+        } else if (char === '>' || char === '/') {
+          currentTag = tagName;
+          const lowerTag = tagName.toLowerCase();
+
+          if (lowerTag === 'script') {
+            state = VUE_STATE.SCRIPT;
+          } else if (lowerTag === 'style') {
+            state = VUE_STATE.STYLE;
+          } else if (char === '/') {
+            if (template[pos + 1] === '>') pos += 2; else pos += 1;
+            state = VUE_STATE.TEXT;
+            textStart = pos;
+          } else {
+            tagStack.push(tagName);
+            pos += 1;
+            state = VUE_STATE.TEXT;
+            textStart = pos;
+          }
+        } else if (/\s/.test(char)) {
+          currentTag = tagName;
+          state = VUE_STATE.TAG_SPACE;
+          pos += 1;
+        } else {
+          pos += 1;
+        }
+        break;
+      }
+
+      case VUE_STATE.TAG_SPACE: {
+        if (/\s/.test(char)) {
+          pos += 1;
+        } else if (char === '>') {
+          const lowerTag = currentTag.toLowerCase();
+          if (lowerTag === 'script') {
+            state = VUE_STATE.SCRIPT;
+            pos += 1;
+          } else if (lowerTag === 'style') {
+            state = VUE_STATE.STYLE;
+            pos += 1;
+          } else {
+            tagStack.push(currentTag);
+            pos += 1;
+            state = VUE_STATE.TEXT;
+            textStart = pos;
+          }
+        } else if (char === '/') {
+          if (template[pos + 1] === '>') pos += 2; else pos += 1;
+          state = VUE_STATE.TEXT;
+          textStart = pos;
+        } else if (/[a-zA-Z@:#v]/.test(char)) {
+          state = VUE_STATE.ATTR_NAME;
+          attrName = char;
+          pos += 1;
+        } else {
+          pos += 1;
+        }
+        break;
+      }
+
+      case VUE_STATE.ATTR_NAME: {
+        if (/[a-zA-Z0-9_:@#.\-\[\]]/.test(char)) {
+          attrName += char;
+          pos += 1;
+        } else if (char === '=') {
+          state = VUE_STATE.ATTR_VALUE_START;
+          pos += 1;
+        } else if (/\s/.test(char)) {
+          state = VUE_STATE.TAG_SPACE;
+          pos += 1;
+        } else if (char === '>' || char === '/') {
+          if (char === '/') {
+            if (template[pos + 1] === '>') pos += 2; else pos += 1;
+            state = VUE_STATE.TEXT;
+            textStart = pos;
+          } else {
+            tagStack.push(currentTag);
+            pos += 1;
+            state = VUE_STATE.TEXT;
+            textStart = pos;
+          }
+        } else {
+          pos += 1;
+        }
+        break;
+      }
+
+      case VUE_STATE.ATTR_VALUE_START: {
+        if (char === '"' || char === "'") {
+          attrQuote = char;
+          attrValue = '';
+          state = VUE_STATE.ATTR_VALUE;
+          pos += 1;
+        } else if (/\s/.test(char)) {
+          pos += 1;
+        } else {
+          attrQuote = '';
+          attrValue = char;
+          state = VUE_STATE.ATTR_VALUE;
+          pos += 1;
+        }
+        break;
+      }
+
+      case VUE_STATE.ATTR_VALUE: {
+        if (attrQuote) {
+          if (char === attrQuote) {
+            // Vue attributes are rewritten via JS/TS rewrite; we only
+            // consume the value here.
+            state = VUE_STATE.TAG_SPACE;
+            pos += 1;
+          } else {
+            attrValue += char;
+            pos += 1;
+          }
+        } else {
+          if (/[\s>\/]/.test(char)) {
+            state = VUE_STATE.TAG_SPACE;
+            if (char === '>') {
+              tagStack.push(currentTag);
+              state = VUE_STATE.TEXT;
+              textStart = pos + 1;
+            }
+            pos += 1;
+          } else {
+            attrValue += char;
+            pos += 1;
+          }
+        }
+        break;
+      }
+
+      case VUE_STATE.TAG_CLOSE: {
+        if (char === '>') {
+          const closingTag = tagName.toLowerCase();
+          while (tagStack.length > 0) {
+            const top = tagStack.pop();
+            if (top.toLowerCase() === closingTag) break;
+          }
+          pos += 1;
+          state = VUE_STATE.TEXT;
+          textStart = pos;
+          tagName = '';
+        } else if (/[a-zA-Z0-9_:-]/.test(char)) {
+          tagName += char;
+          pos += 1;
+        } else {
+          pos += 1;
+        }
+        break;
+      }
+
+      case VUE_STATE.SCRIPT: {
+        if (char === '<' && template.slice(pos, pos + 9).toLowerCase() === '</script>') {
+          pos += 9;
+          state = VUE_STATE.TEXT;
+          textStart = pos;
+          continue;
+        }
+        pos += 1;
+        break;
+      }
+
+      case VUE_STATE.STYLE: {
+        if (char === '<' && template.slice(pos, pos + 8).toLowerCase() === '</style>') {
+          pos += 8;
+          state = VUE_STATE.TEXT;
+          textStart = pos;
+          continue;
+        }
+        pos += 1;
+        break;
+      }
+
+      default:
+        pos += 1;
+    }
+  }
+
+  if (state === VUE_STATE.TEXT && textStart < len) {
+    maybeRewriteTextSegment(textStart, len);
+  }
+
+  if (lastEmitPos === 0) {
+    return template;
+  }
+
+  if (lastEmitPos < len) {
+    out += template.slice(lastEmitPos);
+  }
+
+  return out;
+}
 
 async function processFile(filePath, keyMap) {
   const code = await readFile(filePath, 'utf8');
@@ -669,51 +1118,20 @@ async function processVueFile(filePath, keyMap) {
   let code = await readFile(filePath, 'utf8');
   const namespace = getNamespaceFromFile(filePath, srcRoot);
   
-  const templateMatch = code.match(/<template[^>]*>([\s\S]*?)<\/template>/i);
-  if (!templateMatch) {
+  const range = extractVueTemplateRange(code);
+  if (!range) {
     return { changed: false };
   }
   
-  const fullTemplate = templateMatch[0];
-  let inner = templateMatch[1] || '';
+  const { innerStart, innerEnd } = range;
+  const inner = code.slice(innerStart, innerEnd);
+  const rewritten = rewriteVueTemplate(inner, namespace, keyMap);
   
-  // Strip HTML comments
-  inner = inner.replace(/<!--([\s\S]*?)-->/g, ' ');
-  
-  const tagRegex = /<([A-Za-z][A-Za-z0-9-_]*)\b([^>]*)>([^<]+)<\/\1>/g;
-  let changed = false;
-  
-  inner = inner.replace(tagRegex, (whole, tagName, attrs, rawText) => {
-    if (!rawText || typeof rawText !== 'string') return whole;
-    // Skip if already has translation
-    if (rawText.includes('$t(') || rawText.includes('{{$t')) return whole;
-    
-    const cleaned = normalizeText(rawText);
-    if (!shouldTranslateText(cleaned, ignorePatterns)) return whole;
-    
-    const kind = inferKindFromJsxElementName(tagName);
-    const keyId = `${namespace}|${kind}|${cleaned}`;
-    const fullKey = keyMap.get(keyId);
-    if (!fullKey) return whole;
-    
-    changed = true;
-    
-    const leadingSpaceMatch = rawText.match(/^\s*/);
-    const trailingSpaceMatch = rawText.match(/\s*$/);
-    const leadingSpace = leadingSpaceMatch ? leadingSpaceMatch[0] : '';
-    const trailingSpace = trailingSpaceMatch ? trailingSpaceMatch[0] : '';
-    
-    const escapedKey = String(fullKey).replace(/'/g, "\\'");
-    const wrapped = `${leadingSpace}{{$t('${escapedKey}')}}${trailingSpace}`;
-    return `<${tagName}${attrs}>${wrapped}</${tagName}>`;
-  });
-  
-  if (!changed) {
+  if (rewritten === inner) {
     return { changed: false };
   }
   
-  const newTemplate = fullTemplate.replace(templateMatch[1], inner);
-  code = code.replace(fullTemplate, newTemplate);
+  code = code.slice(0, innerStart) + rewritten + code.slice(innerEnd);
   await writeFile(filePath, code, 'utf8');
   return { changed: true };
 }

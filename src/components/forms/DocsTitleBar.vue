@@ -67,7 +67,7 @@
                 @click.stop
               >
                 <div class="p-3 border-b border-gray-200 dark:border-gray-700">
-                  <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">Version History</h3>
+                  <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-sm">{{$t('Commons.heading.version_history')}}</h3>
                   <button
                     @click="isVersionDropdownOpen = false"
                     class="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -87,7 +87,7 @@
                         <div class="flex items-center justify-between">
                           <div class="flex items-center gap-2">
                             <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">Current version</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.text.current_version')}}</span>
                           </div>
                           <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(currentVersion.updated_at_human) }}</span>
                         </div>
@@ -156,12 +156,12 @@
         <DialogTrigger asChild>
           <Button variant="outline" class="dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
             <Share2 class="h-4 w-4 mr-2" />
-            Share
+            {{$t('Commons.button.share')}}
           </Button>
         </DialogTrigger>
         <DialogContent class="dark:bg-gray-900 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle class="dark:text-gray-100">Share Document</DialogTitle>
+            <DialogTitle class="dark:text-gray-100">{{$t('Commons.heading.share_document')}}</DialogTitle>
           </DialogHeader>
           <ShareCard
             @close="shareDialogOpen = false"

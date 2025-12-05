@@ -6,7 +6,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Form Configuration
+              {{$t('Commons.heading.form_configuration')}}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Step {{ currentStep }} of 3
@@ -35,7 +35,7 @@
         <div v-if="currentStep === 1" class="space-y-6">
           <div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Form Appearance
+              {{$t('Commons.heading.form_appearance')}}
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
               {{$t('Forms.FormConfigWizard.text.customize_how_your_form')}}
@@ -45,7 +45,7 @@
            
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Theme
+              {{$t('Commons.label.theme')}}
             </label>
             <div class="grid grid-cols-2 gap-3">
               <button
@@ -68,7 +68,7 @@
            
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Header Style
+              {{$t('Commons.label.header_style')}}
             </label>
             <div class="grid grid-cols-2 gap-3">
               <button
@@ -113,7 +113,7 @@
         <div v-if="currentStep === 2" class="space-y-6">
           <div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Response Logic
+              {{$t('Commons.heading.response_logic')}}
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
               {{$t('Forms.FormConfigWizard.text.control_how_responses_are')}}
@@ -123,7 +123,7 @@
            
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Navigation Type
+              {{$t('Commons.label.navigation_type')}}
             </label>
             <div class="space-y-3">
               <button
@@ -213,7 +213,7 @@
         <div v-if="currentStep === 3" class="space-y-6">
           <div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Response Format
+              {{$t('Commons.heading.response_format')}}
             </h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
               {{$t('Forms.FormConfigWizard.text.choose_how_you_want')}}
@@ -251,7 +251,7 @@
            
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Email Notifications
+              {{$t('Commons.label.email_notifications')}}
             </label>
             <div class="space-y-3">
               <div class="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
@@ -301,7 +301,7 @@
           class="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
           @click="handleSkip"
         >
-          Skip Configuration
+          {{$t('Commons.button.skip_configuration')}}
         </button>
 
         <button
@@ -309,7 +309,7 @@
           class="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors"
           @click="currentStep++"
         >
-          Next
+          {{$t('Commons.button.next')}}
           <ChevronRight class="w-4 h-4 inline ml-1" />
         </button>
         <button
@@ -318,7 +318,7 @@
           @click="handleComplete"
         >
           <Check class="w-4 h-4 inline mr-1" />
-          Complete Setup
+          {{$t('Commons.button.complete_setup')}}
         </button>
       </div>
     </div>

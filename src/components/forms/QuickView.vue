@@ -230,7 +230,7 @@ function formatRelative(value?: string | Date | null) {
           </div>
 
           <h3 class="text-lg sm:text-xl font-semibold leading-tight text-slate-900 line-clamp-2 dark:text-white break-words">
-            {{ form.title || "Untitled Form" }}
+            {{ form.title || $t('Commons.heading.untitled_form') }}
           </h3>
         </div>
 
@@ -246,7 +246,7 @@ function formatRelative(value?: string | Date | null) {
       <div :class="statsClass">
         <div class="flex flex-col gap-1 min-w-0">
           <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
-            Fields
+            {{$t('Commons.text.fields')}}
           </span>
           <span class="text-sm font-medium tabular-nums text-slate-900 dark:text-white truncate">
             {{ fieldCount }}
@@ -261,7 +261,7 @@ function formatRelative(value?: string | Date | null) {
           @click="handleResponsesClick"
         >
           <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
-            Responses
+            {{$t('Commons.text.responses')}}
           </span>
           <span :class="responseValueClass">
             {{ totalResponses.toLocaleString() }}
@@ -270,7 +270,7 @@ function formatRelative(value?: string | Date | null) {
 
         <div class="flex flex-col gap-1 min-w-0">
           <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
-            Last response
+            {{$t('Commons.text.last_response')}}
           </span>
           <span class="text-sm font-medium tabular-nums text-slate-700 dark:text-slate-300 truncate">
             {{ lastResponseLabel }}
@@ -289,8 +289,8 @@ function formatRelative(value?: string | Date | null) {
         @click="launchEditor"
       >
         <Edit3 class="h-3.5 w-3.5 flex-shrink-0" />
-        <span class="hidden xs:inline sm:inline">Edit</span>
-        <span class="xs:hidden sm:hidden">Edit</span>
+        <span class="hidden xs:inline sm:inline">{{$t('Commons.heading.edit')}}</span>
+        <span class="xs:hidden sm:hidden">{{$t('Commons.heading.edit')}}</span>
       </Button>
 
       <div class="flex items-center gap-1 sm:gap-1.5 ml-auto">

@@ -117,7 +117,7 @@ onMounted(() => {
     <div class="relative w-full max-w-lg overflow-hidden p-8 text-center">
       <div class="mb-8">
         <h2 class="mb-4 text-[40px] text-black font-semibold leading-normal">
-          {{ errorMessage ? "Oops! Login Failed" : "Completing Authentication" }}
+          {{ errorMessage ? $t('Views.OauthCallback.heading.oops_login_failed') : $t('Views.OauthCallback.heading.completing_authentication') }}
         </h2>
         <div class="flex flex-col items-center justify-center space-y-4">
           <template v-if="isLoading">
@@ -130,7 +130,7 @@ onMounted(() => {
               @click="returnToLogin"
               class="bg-primary-600 text-white px-6 py-2 rounded-sm hover:bg-primary-700"
             >
-              Return to Login
+              {{$t('Views.OauthCallback.button.return_to_login')}}
             </Button>
           </template>
         </div>
@@ -144,7 +144,7 @@ onMounted(() => {
         target="_blank"
         rel="noopener noreferrer"
         class="hover:underline"
-        >Privacy & terms</a
+        >{{$t('Views.OauthCallback.link.privacy_terms')}}</a
       >
       <span>•</span>
       <a
@@ -152,7 +152,7 @@ onMounted(() => {
         target="_blank"
         rel="noopener noreferrer"
         class="hover:underline"
-        >Cookie policy</a
+        >{{$t('Commons.link.cookie_policy')}}</a
       >
       <span>•</span>
       <a
@@ -160,7 +160,7 @@ onMounted(() => {
         target="_blank"
         rel="noopener noreferrer"
         class="hover:underline"
-        >Cookie & CCPA preferences</a
+        >{{$t('Views.OauthCallback.link.cookie_ccpa_preferences')}}</a
       >
       <span>•</span>
       <a
@@ -168,7 +168,7 @@ onMounted(() => {
         target="_blank"
         rel="noopener noreferrer"
         class="hover:underline"
-        >AI Principles</a
+        >{{$t('Commons.link.ai_principles')}}</a
       >
     </div>
   </div>

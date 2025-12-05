@@ -29,7 +29,7 @@
      
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-8">
       <div class="w-full max-w-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Request access</h2>
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{{$t('Commons.heading.request_access')}}</h2>
         <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
           You don’t have access to this document. Enter your email to request access from the owner.
         </p>
@@ -43,16 +43,16 @@
             <textarea v-model="requestMessage" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="I’d like to view this document."></textarea>
           </div>
           <div>
-            <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Requested access</label>
+            <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">{{$t('Commons.label.requested_access')}}</label>
             <select v-model="accessLevel" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-              <option value="v">View</option>
-              <option value="c">Comment</option>
-              <option value="e">Edit</option>
+              <option value="v">{{$t('Commons.text.view')}}</option>
+              <option value="c">{{$t('Commons.text.comment')}}</option>
+              <option value="e">{{$t('Commons.heading.edit')}}</option>
             </select>
           </div>
           <div class="flex items-center gap-2">
             <button @click="submitAccessRequestDoc" :disabled="requestSubmitting || !requestEmail" class="px-4 py-2 bg-primary-600 text-white rounded-md disabled:opacity-50">
-              {{ requestSubmitting ? 'Sending…' : 'Request access' }}
+              {{ requestSubmitting ? 'Sending…' : $t('Commons.button.request_access') }}
             </button>
             <a :href="shareLinkDoc" class="text-sm text-blue-600 dark:text-blue-400 underline" target="_blank" rel="noopener">{{$t('Views.DocsEditor.link.open_direct_link')}}</a>
           </div>
@@ -77,7 +77,7 @@
       @print="handlePrint"
     />
     <div v-if="collaboratorList.length" class="px-6 py-1 flex flex-wrap gap-2 items-center justify-end bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 text-xs">
-      <span class="text-gray-500 dark:text-gray-400">Also editing:</span>
+      <span class="text-gray-500 dark:text-gray-400">{{$t('Commons.text.also_editing')}}</span>
       <button
         v-for="c in collaboratorList"
         :key="c.id"
@@ -409,8 +409,8 @@ function setDocumentTitleFromName(name?: string | null) {
           </div>
         </template>
         <div v-else class="text-center text-gray-500 dark:text-gray-400 text-sm py-8">
-          <p>No messages yet.</p>
-          <p class="mt-2 text-xs">Start a conversation with your collaborators.</p>
+          <p>{{$t('Views.DocsEditor.text.no_messages_yet')}}</p>
+          <p class="mt-2 text-xs">{{$t('Views.DocsEditor.text.start_a_conversation_with')}}</p>
         </div>
       </div>
       <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
@@ -429,7 +429,7 @@ function setDocumentTitleFromName(name?: string | null) {
               type="submit"
               class="bg-primary-600 text-white px-4 py-2 rounded-r-md text-sm hover:bg-primary-700 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400"
             >
-              Send
+              {{$t('Commons.button.send')}}
             </button>
           </div>
         </form>
@@ -439,7 +439,7 @@ function setDocumentTitleFromName(name?: string | null) {
     <Dialog v-model:open="shareOpen">
       <DialogContent class="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Share</DialogTitle>
+          <DialogTitle>{{$t('Commons.button.share')}}</DialogTitle>
         </DialogHeader>
         <ShareCard
           @close="shareOpen = false"
@@ -461,7 +461,7 @@ function setDocumentTitleFromName(name?: string | null) {
     <Dialog v-model:open="showImageUrlDialog">
       <DialogContent class="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Replace Image</DialogTitle>
+          <DialogTitle>{{$t('Commons.heading.replace_image')}}</DialogTitle>
         </DialogHeader>
         <ImagePicker
           :initial-url="imageUrlInput"
@@ -476,7 +476,7 @@ function setDocumentTitleFromName(name?: string | null) {
     <Dialog v-model:open="conflictDialogOpen">
       <DialogContent class="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Content versions differ</DialogTitle>
+          <DialogTitle>{{$t('Views.DocsEditor.heading.content_versions_differ')}}</DialogTitle>
           <DialogDescription>
             {{ conflictDialogMessage }}
           </DialogDescription>
@@ -484,29 +484,29 @@ function setDocumentTitleFromName(name?: string | null) {
         <div class="space-y-4 text-sm text-gray-600 dark:text-gray-300">
           <div class="space-y-2">
             <p>
-              <span class="font-medium">Local copy:</span>
+              <span class="font-medium">{{$t('Commons.text.local_copy')}}</span>
               {{ conflictLocalLength }} bytes
             </p>
             <details class="rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900/70 dark:text-gray-200">
               <summary class="cursor-pointer select-none px-3 py-2 font-medium">
-                Preview local version
+                {{$t('Views.DocsEditor.text.preview_local_version')}}
               </summary>
               <div class="border-t border-gray-200 px-3 py-3 dark:border-gray-700">
-                {{ conflictLocalPreview ?? 'Preview unavailable.' }}
+                {{ conflictLocalPreview ?? $t('Views.DocsEditor.text.preview_unavailable') }}
               </div>
             </details>
           </div>
           <div class="space-y-2">
             <p>
-              <span class="font-medium">Online copy:</span>
+              <span class="font-medium">{{$t('Commons.text.online_copy')}}</span>
               {{ conflictRemoteLength }} bytes
             </p>
             <details class="rounded-md border border-gray-200 bg-gray-50 text-xs text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900/70 dark:text-gray-200">
               <summary class="cursor-pointer select-none px-3 py-2 font-medium">
-                Preview online version
+                {{$t('Views.DocsEditor.text.preview_online_version')}}
               </summary>
               <div class="border-t border-gray-200 px-3 py-3 dark:border-gray-700">
-                {{ conflictRemotePreview ?? 'Preview unavailable.' }}
+                {{ conflictRemotePreview ?? $t('Views.DocsEditor.text.preview_unavailable') }}
               </div>
             </details>
           </div>
@@ -515,8 +515,8 @@ function setDocumentTitleFromName(name?: string | null) {
           </p>
         </div>
         <DialogFooter>
-          <Button variant="secondary" @click="keepLocalVersion">Keep local version</Button>
-          <Button variant="default" @click="keepRemoteVersion">Keep online version</Button>
+          <Button variant="secondary" @click="keepLocalVersion">{{$t('Views.DocsEditor.button.keep_local_version')}}</Button>
+          <Button variant="default" @click="keepRemoteVersion">{{$t('Views.DocsEditor.button.keep_online_version')}}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
