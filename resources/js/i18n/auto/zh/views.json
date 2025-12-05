@@ -2,8 +2,6 @@
   "Views": {
     "Bin": {
       "text": {
-        "cannot_download_this_item": "Cannot download this item",
-        "error_loading_trash_items": "Error loading trash items:",
         "error_permanently_deleting_file": "Error permanently deleting file:",
         "error_restoring_file": "Error restoring file:",
         "failed_to_delete_item": "Failed to delete item permanently",
