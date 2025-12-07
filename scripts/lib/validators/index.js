@@ -147,11 +147,6 @@ function looksLikeHumanText(text) {
     
     // Allow single capitalized words that look like labels (including contractions)
     if (/^[A-Z][a-zA-Z0-9']*$/.test(word)) {
-      // Reject camelCase if it looks like code (e.g. "userName") 
-      // but allow "iPad", "WiFi" type things if they start with Cap? 
-      // Actually "userName" starts with lower. "UserName" is PascalCase.
-      // We want to allow "Password", "Done", "IDs".
-      // We want to reject "User_Name", "user_name".
       return true;
     }
 
@@ -160,9 +155,24 @@ function looksLikeHumanText(text) {
       return true;
     }
     
+    // **NEW**: Allow common UI button/action words even if lowercase
+    const commonUIWords = new Set([
+      'back', 'next', 'cancel', 'done', 'close', 'save', 'delete', 'edit', 'view',
+      'add', 'create', 'update', 'remove', 'search', 'filter', 'sort', 'export',
+      'import', 'upload', 'download', 'share', 'copy', 'paste', 'cut', 'undo',
+      'redo', 'refresh', 'reload', 'reset', 'clear', 'submit', 'send', 'continue',
+      'skip', 'finish', 'start', 'stop', 'pause', 'play', 'resume', 'retry',
+      'confirm', 'ok', 'yes', 'no', 'all', 'none', 'any', 'other', 'more', 'less'
+    ]);
+    if (commonUIWords.has(word.toLowerCase())) {
+      return true;
+    }
+    
     // Reject camelCase (starts with lower), snake_case, kebab-case
-    if (/^[a-z]/.test(word) || /_/.test(word) || /-/.test(word)) {
-      return false;
+    if (/^[a-z]/.test(word) && !commonUIWords.has(word.toLowerCase())) {
+      if (/_/.test(word) || /-/.test(word)) {
+        return false;
+      }
     }
     
     return false;
@@ -171,7 +181,7 @@ function looksLikeHumanText(text) {
   // Multi-word: check if it looks like a sentence/phrase
   let validWordCount = 0;
   for (const word of words) {
-    // Remove punctuation for checking
+    // Remove punctuation and parentheses for checking
     const cleaned = word.replace(/[^\w]/g, '');
     if (!cleaned) continue;
     
@@ -205,6 +215,58 @@ function normalizeSpecialChars(text) {
 }
 
 /**
+ * Check if text matches common UI string patterns (should be allowed through)
+ * This provides an early exit before running aggressive technical validators
+ */
+function isCommonUIString(text) {
+  const trimmed = String(text || '').trim();
+  if (!trimmed) return false;
+  
+  // Pattern 1: Action words with optional parameters: "Import emails", "Delete {count} items"
+  const actionPattern = /^(cancel|delete|edit|view|add|create|update|remove|search|filter|sort|export|import|upload|download|share|copy|paste|cut|undo|redo|refresh|reload|reset|clear|submit|send|continue|skip|finish|start|stop|pause|play|resume|retry|confirm|select|choose|pick|open|close|save|load|back|next|previous|forward|done|ok|yes|no)/i;
+  if (actionPattern.test(trimmed)) {
+    return true;
+  }
+  
+  // Pattern 2: UI labels with optional placeholders: "Total: {count}", "Found {total} matches"
+  const labelPattern = /^(found|extracted|uploaded|downloaded|processed|selected|total|valid|invalid|detected|configured|showing|displaying|loading|saving)\s+/i;
+  if (labelPattern.test(trimmed)) {
+    return true;
+  }
+  
+  // Pattern 3: Status messages: "Import completed successfully", "Processing..."
+  const statusPattern = /(successfully|failed|completed|started|finished|resumed|cancelled|paused|stopped|pending|processing|loading|ready)/i;
+  if (statusPattern.test(trimmed)) {
+    return true;
+  }
+  
+  // Pattern 4: Questions/prompts: "Select a user", "Enter your password"
+  const promptPattern = /^(select|choose|enter|type|provide|upload|download|connect|configure|setup|install)\s+(a|an|the|your)\s+/i;
+  if (promptPattern.test(trimmed)) {
+    return true;
+  }
+  
+  // Pattern 5: Time/duration expressions: "Last 2 years", "1 year ago"
+  const timePattern = /^(last|past|next|in|within|after|before)\s+\d+\s+(second|minute|hour|day|week|month|year)s?\b/i;
+  if (timePattern.test(trimmed)) {
+    return true;
+  }
+  
+  // Pattern 6: Helpful hints/notes: "or drag and drop", "Click to upload"
+  const hintPattern = /^(or|and|to|for|with|from|into|onto|click|tap|press|drag|drop)\s+/i;
+  if (hintPattern.test(trimmed)) {
+    return true;
+  }
+  
+  // Pattern 7: Recommendations/suggestions: "Full emails (recommended)"
+  if (/\(recommended\)$/i.test(trimmed)) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Main validation function: Check if text should be translated
  * 
  * @param {string} text - The text to validate
@@ -233,6 +295,15 @@ function shouldTranslate(text, options = {}) {
   // Placeholder-only check
   if (isPlaceholderOnly(trimmed)) {
     return false;
+  }
+  
+  // **NEW**: Early exit for common UI strings (before aggressive technical checks)
+  // This prevents false positives on legitimate UI text
+  if (isCommonUIString(trimmed)) {
+    // Still check for obvious code patterns even if it looks like UI
+    if (!isCodeContent(trimmed) && !isHtmlContent(trimmed) && !isUrl(trimmed)) {
+      return true;
+    }
   }
   
   // Context-specific checks

@@ -17,6 +17,20 @@
           "single_selection_from_options": "Single selection from options",
           "star_or_number_rating": "Star or number rating"
         }
+      },
+      "BlockEditor": {
+        "text": {
+          "add_a_question": "Add a question",
+          "for_commands_or_click": "for commands or click the button above"
+        },
+        "heading": {
+          "start_building_your_form": "Start building your form"
+        }
+      },
+      "BlockItem": {
+        "text": {
+          "click_or_drag_files": "Click or drag files here"
+        }
       }
     },
     "Fields": {
@@ -59,6 +73,35 @@
           "destructive_group_border_destructive": "destructive group border-destructive bg-destructive text-destructive-foreground"
         }
       }
+    }
+  },
+  "Buttons": {
+    "AddFieldButton": {
+      "text": {
+        "no_field_types_found": "No field types found."
+      }
+    }
+  },
+  "Editor": {
+    "ChartConfigurator": {
+      "text": {
+        "polar_area_chart": "Polar Area Chart",
+        "no_datasets_yet": "No datasets yet"
+      },
+      "button": {
+        "add_first_dataset": "Add First Dataset"
+      }
+    },
+    "ChartNode": {
+      "text": {
+        "no_data_to_display": "No data to display"
+      }
+    }
+  },
+  "FileUploader": {
+    "text": {
+      "allowed_file_types": "Allowed file types:",
+      "all_file_types": "all file types"
     }
   }
 }

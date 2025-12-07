@@ -10,7 +10,7 @@
  */
 
 const { BaseParser } = require('./baseParser');
-const { shouldTranslate } = require('../validators');
+const { shouldTranslate, LOGGING_LINE_PATTERNS } = require('../validators');
 
 class GenericParser extends BaseParser {
   static getExtensions() {
@@ -120,12 +120,20 @@ class GenericParser extends BaseParser {
 
     // Build set of i18n lines
     const lines = content.split('\n');
-    const i18nLines = new Set();
+    const skipLines = new Set();
     for (let i = 0; i < lines.length; i++) {
       for (const pattern of i18nPatterns) {
         if (pattern.test(lines[i])) {
-          i18nLines.add(i);
+          skipLines.add(i);
           break;
+        }
+      }
+      if (!skipLines.has(i)) {
+        for (const logPattern of LOGGING_LINE_PATTERNS) {
+          if (logPattern.test(lines[i])) {
+            skipLines.add(i);
+            break;
+          }
         }
       }
     }
@@ -136,7 +144,7 @@ class GenericParser extends BaseParser {
       let match;
       while ((match = fstringPattern.exec(content)) !== null) {
         const lineNum = content.substring(0, match.index).split('\n').length - 1;
-        if (i18nLines.has(lineNum)) continue;
+        if (skipLines.has(lineNum)) continue;
 
         let text = match[1].trim();
         if (!text) continue;
@@ -371,15 +379,25 @@ class GenericParser extends BaseParser {
    * Extract strings using patterns
    */
   extractStrings(content, patterns, i18nPatterns, results) {
-    // First, identify lines that are already i18n-ized
+    // First, identify lines that are already i18n-ized or are logging/debug lines
     const lines = content.split('\n');
-    const i18nLines = new Set();
+    const skipLines = new Set();
 
     for (let i = 0; i < lines.length; i++) {
       for (const pattern of i18nPatterns) {
         if (pattern.test(lines[i])) {
-          i18nLines.add(i);
+          skipLines.add(i);
           break;
+        }
+      }
+
+      // Skip logging/debug statements
+      if (!skipLines.has(i)) {
+        for (const logPattern of LOGGING_LINE_PATTERNS) {
+          if (logPattern.test(lines[i])) {
+            skipLines.add(i);
+            break;
+          }
         }
       }
     }
@@ -393,7 +411,7 @@ class GenericParser extends BaseParser {
 
         // Check if this match is on an i18n line
         const matchLine = content.substring(0, match.index).split('\n').length - 1;
-        if (i18nLines.has(matchLine)) continue;
+        if (skipLines.has(matchLine)) continue;
 
         // Validate the text
         if (shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {

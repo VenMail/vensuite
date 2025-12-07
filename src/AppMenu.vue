@@ -25,11 +25,11 @@ import {
       <MenubarContent>
         <MenubarItem>
           <FilePlusIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.create_spreadsheet')}}
+          {{$t('Commons.text.blank_spreadsheet')}}
         </MenubarItem>
         <MenubarItem>
           <FilePlus2Icon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.create_document')}}
+          {{$t('Commons.text.blank_document')}}
         </MenubarItem>
         <MenubarItem>
           <FolderPlusIcon class="h-4 w-4 mr-2" />
@@ -37,14 +37,14 @@ import {
         </MenubarItem>
         <MenubarItem>
           <UploadIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.button.upload_files')}}
+          {{$t('Commons.button.upload_file')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
 
     <!-- Actions Menu -->
     <MenubarMenu>
-      <MenubarTrigger>{{$t('Commons.text.actions')}}</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.active')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem>
           <EyeIcon class="h-4 w-4 mr-2" />

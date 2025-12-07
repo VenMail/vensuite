@@ -137,7 +137,7 @@
                 <div v-if="expandedDatasets.has(i)" class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
                   <div class="grid grid-cols-2 gap-2">
                     <label class="block">
-                      <span class="text-xs text-gray-600 dark:text-gray-400">{{$t('Commons.text.border_color')}}</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">{{$t('Commons.text.order_form')}}</span>
                       <input
                         v-model="dataset.borderColor"
                         type="color"
@@ -145,7 +145,7 @@
                       />
                     </label>
                     <label class="block">
-                      <span class="text-xs text-gray-600 dark:text-gray-400">{{$t('Commons.text.border_width')}}</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">{{$t('Commons.text.order_form')}}</span>
                       <input
                         v-model.number="dataset.borderWidth"
                         type="number"
@@ -158,7 +158,7 @@
                   
                   <label v-if="form.chartType === 'line'" class="block">
                     <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      <span>{{$t('Commons.text.curve')}}</span>
+                      <span>{{$t('Commons.text.active')}}</span>
                       <span class="font-mono">{{ dataset.tension || 0 }}</span>
                     </div>
                     <input
@@ -188,7 +188,7 @@
       <DialogFooter class="gap-2">
         <Button variant="outline" @click="handleCancel">{{$t('Commons.button.cancel')}}</Button>
         <Button @click="handleSubmit" :disabled="!isValid">
-          {{ isEditing ? $t('Commons.button.update') : $t('Commons.button.insert') }}
+          {{ isEditing ? $t('Commons.button.date') : $t('Commons.button.insert') }}
         </Button>
       </DialogFooter>
     </DialogContent>

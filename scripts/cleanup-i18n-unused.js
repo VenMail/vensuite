@@ -109,7 +109,8 @@ async function buildUsageIndex() {
     const rel = path.relative(projectRoot, file).replace(/\\/g, '/');
     const code = await readFile(file, 'utf8');
     const lines = code.split(/\r?\n/);
-    const regex = /t\(\s*['"]([^'\"]+)['"]\s*\)/g;
+    // Match t('key'), t(\"key\"), t(`key`), $t('key'), with or without params
+    const regex = /\$?t\(\s*['"`]([^'"`]+)['"`]\s*(?:,|\))/g;
 
     for (let i = 0; i < lines.length; i += 1) {
       const lineText = lines[i];
@@ -144,6 +145,12 @@ async function applyDeletions(unusedKeys) {
 
   for (const entry of unusedKeys) {
     const { keyPath, baseFileRel } = entry;
+    // Safety guard: skip deletion if key is still referenced in source
+    const usage = await indexKeyUsage(keyPath);
+    if (usage && usage.length > 0) {
+      console.log(`[cleanup-i18n-unused] Skipping "${keyPath}" because it is still referenced in source (${usage.length} usage(s)).`);
+      continue;
+    }
     for (const locale of locales) {
       const rel = baseFileRel.startsWith(baseLocale)
         ? path.join(locale, path.relative(baseLocale, baseFileRel))

@@ -13,6 +13,10 @@ function isPlainObject(value) {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
+/**
+ * Fill missing keys from base into target, preserving existing translations.
+ * Does NOT prune keys - use deepSyncFromBase for that.
+ */
 function deepFillFromBase(base, target) {
   const result = isPlainObject(target) ? { ...target } : {};
   if (!isPlainObject(base)) {
@@ -28,6 +32,33 @@ function deepFillFromBase(base, target) {
       result[key] = baseVal;
     }
   }
+  return result;
+}
+
+/**
+ * Sync target with base: add missing keys, preserve existing translations,
+ * AND remove keys from target that don't exist in base.
+ * This is the primary sync function that keeps locales consistent.
+ */
+function deepSyncFromBase(base, target) {
+  if (!isPlainObject(base)) {
+    return {};
+  }
+  const result = {};
+  for (const key of Object.keys(base)) {
+    const baseVal = base[key];
+    const hasTargetKey = isPlainObject(target) && Object.prototype.hasOwnProperty.call(target, key);
+    
+    if (isPlainObject(baseVal)) {
+      // Recursively sync nested objects
+      const targetVal = hasTargetKey && isPlainObject(target[key]) ? target[key] : {};
+      result[key] = deepSyncFromBase(baseVal, targetVal);
+    } else {
+      // Leaf value: use target's translation if exists, otherwise use base value
+      result[key] = hasTargetKey && typeof target[key] === 'string' ? target[key] : baseVal;
+    }
+  }
+  // Note: keys in target that don't exist in base are intentionally NOT copied
   return result;
 }
 
@@ -139,7 +170,8 @@ async function writeJson(filePath, data) {
           const existingFileData = (existsSync(targetPath) ? await readJson(targetPath) : null) || {};
           const fromSingle = maskPick(singleLocaleData, baseObj) || {};
           const seededExisting = deepFillFromBase(fromSingle, existingFileData);
-          const merged = deepFillFromBase(baseObj, seededExisting);
+          // Use deepSyncFromBase to both fill missing keys AND prune keys not in base
+          const merged = deepSyncFromBase(baseObj, seededExisting);
           const sorted = sortObjectDeep(merged);
           await mkdir(path.dirname(targetPath), { recursive: true });
           await writeJson(targetPath, sorted);
@@ -169,7 +201,8 @@ async function writeJson(filePath, data) {
         for (const localeName of configuredLocales) {
           const localePath = path.resolve(autoDir, `${localeName}.json`);
           const localeData = (await readJson(localePath)) || {};
-          const merged = deepFillFromBase(baseData, localeData);
+          // Use deepSyncFromBase to both fill missing keys AND prune keys not in base
+          const merged = deepSyncFromBase(baseData, localeData);
           const sorted = sortObjectDeep(merged);
           await writeJson(localePath, sorted);
           updatedCount += 1;
@@ -182,7 +215,8 @@ async function writeJson(filePath, data) {
           if (localeName === baseLocale) continue;
           const localePath = path.resolve(autoDir, entry.name);
           const localeData = (await readJson(localePath)) || {};
-          const merged = deepFillFromBase(baseData, localeData);
+          // Use deepSyncFromBase to both fill missing keys AND prune keys not in base
+          const merged = deepSyncFromBase(baseData, localeData);
           const sorted = sortObjectDeep(merged);
           await writeJson(localePath, sorted);
           updatedCount += 1;

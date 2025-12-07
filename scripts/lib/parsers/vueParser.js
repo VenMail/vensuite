@@ -12,7 +12,7 @@
  */
 
 const { BaseParser, decodeHtmlEntities } = require('./baseParser');
-const { shouldTranslate, isTranslatableAttribute, isNonTranslatableAttribute } = require('../validators');
+const { shouldTranslate, isTranslatableAttribute, isNonTranslatableAttribute, LOGGING_LINE_PATTERNS } = require('../validators');
 
 // Parser states
 const STATE = {
@@ -500,9 +500,9 @@ class VueParser extends BaseParser {
 
     const lines = script.split('\n');
 
-    // First, identify lines that contain explicit i18n key lookups so we can
-    // avoid treating those keys as human-facing text.
-    const i18nLineIndexes = new Set();
+    // First, identify lines that contain explicit i18n key lookups or logging
+    // so we avoid treating those strings as user-facing text.
+    const skipLineIndexes = new Set();
     const i18nLinePatterns = [
       /\$?t\s*\(\s*['"][^'"]+['"]\s*\)/,
       /i18n\.t\s*\(\s*['"][^'"]+['"]\s*\)/,
@@ -513,8 +513,16 @@ class VueParser extends BaseParser {
       const line = lines[i];
       for (const pattern of i18nLinePatterns) {
         if (pattern.test(line)) {
-          i18nLineIndexes.add(i);
+          skipLineIndexes.add(i);
           break;
+        }
+      }
+      if (!skipLineIndexes.has(i)) {
+        for (const logPattern of LOGGING_LINE_PATTERNS) {
+          if (logPattern.test(line)) {
+            skipLineIndexes.add(i);
+            break;
+          }
         }
       }
     }
@@ -547,7 +555,7 @@ class VueParser extends BaseParser {
           const candidate = (match[1] || '').trim();
           if (!candidate) continue;
 
-          if (i18nLineIndexes.has(lineIndex)) continue;
+          if (skipLineIndexes.has(lineIndex)) continue;
 
           if (!shouldTranslate(candidate, { ignorePatterns: this.ignorePatterns })) {
             continue;
@@ -572,7 +580,7 @@ class VueParser extends BaseParser {
 
           // Skip obvious i18n key lookups; validators will also reject most keys,
           // but this keeps noise down if keys look like natural language.
-          if (i18nLineIndexes.has(lineIndex)) {
+          if (skipLineIndexes.has(lineIndex)) {
             continue;
           }
 

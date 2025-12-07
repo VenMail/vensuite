@@ -12,7 +12,7 @@
  */
 
 const { BaseParser } = require('./baseParser');
-const { shouldTranslate, isTranslatableAttribute, isNonTranslatableAttribute } = require('../validators');
+const { shouldTranslate, isTranslatableAttribute, isNonTranslatableAttribute, LOGGING_LINE_PATTERNS } = require('../validators');
 
 // Parser states
 const STATE = {
@@ -87,8 +87,8 @@ class SvelteParser extends BaseParser {
 
     const lines = script.split('\n');
 
-    // First, identify lines that contain explicit i18n key lookups
-    const i18nLineIndexes = new Set();
+    // First, identify lines that contain explicit i18n key lookups or logging
+    const skipLineIndexes = new Set();
     const i18nLinePatterns = [
       /\$?t\s*\(\s*['"][^'"]+['"]\s*\)/,
       /i18n\.t\s*\(\s*['"][^'"]+['"]\s*\)/,
@@ -100,8 +100,16 @@ class SvelteParser extends BaseParser {
       const line = lines[i];
       for (const pattern of i18nLinePatterns) {
         if (pattern.test(line)) {
-          i18nLineIndexes.add(i);
+          skipLineIndexes.add(i);
           break;
+        }
+      }
+      if (!skipLineIndexes.has(i)) {
+        for (const logPattern of LOGGING_LINE_PATTERNS) {
+          if (logPattern.test(line)) {
+            skipLineIndexes.add(i);
+            break;
+          }
         }
       }
     }
@@ -127,7 +135,7 @@ class SvelteParser extends BaseParser {
           if (!candidate) continue;
 
           // Skip i18n key lookups
-          if (i18nLineIndexes.has(lineIndex)) {
+          if (skipLineIndexes.has(lineIndex)) {
             continue;
           }
 

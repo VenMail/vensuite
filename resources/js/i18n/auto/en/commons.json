@@ -30,7 +30,16 @@
       "size": "Size",
       "type": "Type",
       "upload_file": "Upload File",
-      "upload_spreadsheet": "Upload Spreadsheet"
+      "upload_spreadsheet": "Upload Spreadsheet",
+      "add": "+ Add",
+      "advanced": "Advanced",
+      "cancel": "Cancel",
+      "insert": "Insert",
+      "select_folder": "Select Folder",
+      "change_type": "Change type",
+      "add_option": "Add option",
+      "yes": "Yes",
+      "no": "No"
     },
     "heading": {
       "document": "Document",
@@ -43,10 +52,15 @@
       "share": "Share \"\"",
       "title_slide": "Title Slide",
       "untitled_deck": "Untitled Deck",
-      "welcome": "Welcome"
+      "welcome": "Welcome",
+      "edit_chart": "Edit Chart",
+      "insert_chart": "Insert Chart"
     },
     "label": {
-      "select_all": "Select All"
+      "select_all": "Select All",
+      "chart_type": "Chart Type",
+      "x_axis_labels": "X-Axis Labels",
+      "datasets": "Datasets"
     },
     "link": {
       "ai_principles": "AI principles",
@@ -443,7 +457,13 @@
       "yes": "Yes",
       "your_answer": "Your answer",
       "your_organization": "your organization",
-      "your_organization_2": "Your organization"
+      "your_organization_2": "Your organization",
+      "view": "View",
+      "bar_chart": "Bar Chart",
+      "line_chart": "Line Chart",
+      "pie_chart": "Pie Chart",
+      "doughnut_chart": "Doughnut Chart",
+      "radar_chart": "Radar Chart"
     },
     "title": {
       "add_below": "Add below",

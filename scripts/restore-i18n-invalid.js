@@ -112,17 +112,30 @@ async function buildUsageIndex() {
     const rel = path.relative(projectRoot, file).replace(/\\/g, '/');
     const code = await readFile(file, 'utf8');
     const lines = code.split(/\r?\n/);
-    const regex = /t\(\s*['"]([^'\"]+)['"]\s*(?:,|\))/g;
+    
+    // Multiple patterns to catch different t() call formats
+    const patterns = [
+      /(?:^|[^a-zA-Z0-9_])t\(\s*['"]([^'\"]+)['"]\s*(?:,|\))/g,      // t('key') or t("key")
+      /(?:^|[^a-zA-Z0-9_])t\(\s*`([^`]+)`\s*(?:,|\))/g,              // t(`key`)
+      /(?:^|[^a-zA-Z0-9_])\$t\(\s*['"]([^'\"]+)['"]\s*(?:,|\))/g,    // $t('key')
+      /(?:^|[^a-zA-Z0-9_])\$t\(\s*`([^`]+)`\s*(?:,|\))/g,            // $t(`key`)
+    ];
 
     for (let i = 0; i < lines.length; i += 1) {
       const lineText = lines[i];
-      let match;
-      while ((match = regex.exec(lineText)) !== null) {
-        const key = match[1];
-        if (!index[key]) {
-          index[key] = [];
+      
+      for (const regex of patterns) {
+        regex.lastIndex = 0; // Reset regex state
+        let match;
+        while ((match = regex.exec(lineText)) !== null) {
+          const key = match[1];
+          if (!key || key.includes('${')) continue; // Skip template literals with interpolation
+          
+          if (!index[key]) {
+            index[key] = [];
+          }
+          index[key].push({ file: rel, line: i + 1 });
         }
-        index[key].push({ file: rel, line: i + 1 });
       }
     }
   }
@@ -156,6 +169,8 @@ async function collectInvalidBaseKeys() {
   // Build usage index once for all keys (more efficient)
   const usageIndex = await buildUsageIndex();
 
+  let skippedCount = 0;
+  
   for (const [keyPath, info] of baseKeys.entries()) {
     if (!isInvalidBaseValue(info.value)) continue;
     
@@ -174,15 +189,22 @@ async function collectInvalidBaseKeys() {
     // - Removing it would break the application
     if (usages.length === 0) {
       // Unused key with invalid base value - safe to remove
+      console.log(`[restore-i18n-invalid] Flagging unused invalid key: "${keyPath}" = "${info.value}"`);
       invalid.push({
         keyPath,
         baseValue: info.value,
         baseFileRel: info.localeFileRel,
         usages: [],
       });
+    } else {
+      // Key is used in code, skip it even though value looks non-translatable
+      console.log(`[restore-i18n-invalid] Skipping used key: "${keyPath}" (${usages.length} usage(s)) = "${info.value}"`);
+      skippedCount++;
     }
-    // Note: We intentionally skip keys that are used in code, even if the base value
-    // looks non-translatable. The user can manually review these cases if needed.
+  }
+  
+  if (skippedCount > 0) {
+    console.log(`[restore-i18n-invalid] Skipped ${skippedCount} key(s) that are still in use (even though values look non-translatable).`);
   }
 
   return invalid;
