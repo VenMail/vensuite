@@ -964,7 +964,7 @@ onUnmounted(() => {
               {{
                 trashItems.length === 0
                   ? $t('Views.Bin.heading.trash_is_empty')
-                  : searchValue || filters.type !== "all" || filters.source !== "all"
+                  : searchValue || filters.type !== $t('Commons.heading.all') || filters.source !== $t('Commons.heading.all')
                   ? $t('Views.Bin.heading.no_matching_items_found')
                   : $t('Views.Bin.heading.no_items_found')
               }}
@@ -1271,7 +1271,7 @@ onUnmounted(() => {
                     <th
                       class="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400"
                     >
-                      {{$t('Commons.text.deleted')}}
+                      {{$t('Commons.text.delete')}}
                     </th>
                     <th
                       class="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400"

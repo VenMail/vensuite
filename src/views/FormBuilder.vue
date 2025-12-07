@@ -753,7 +753,7 @@
                   class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
                   @click="updatePaymentAmount"
                 >
-                  {{$t('Commons.button.save')}}
+                  {{$t('Commons.button.date')}}
                 </button>
               </div>
             </div>
@@ -866,7 +866,7 @@
                       >
                         <li>{{$t('Commons.text.form_completed')}}</li>
                         <li>{{$t('Views.FormBuilder.text.payment_succeeded_or_failed')}}</li>
-                        <li>{{$t('Commons.text.charges_refunded')}}</li>
+                        <li>{{$t('Commons.text.charge_refunded')}}</li>
                         <li>{{$t('Views.FormBuilder.text.any_custom_events_you')}}</li>
                       </ul>
                     </div>
@@ -918,7 +918,7 @@
                         class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
                         @click="closeWebhooksModal"
                       >
-                        {{$t('Commons.button.done')}}
+                        {{$t('Commons.button.date')}}
                       </button>
                     </div>
                   </div>
@@ -1018,7 +1018,7 @@
         <DialogHeader>
           <DialogTitle class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
             <span v-if="!showShareAccessView">
-              Share "{{ formTitle || $t('Commons.text.untitled_form_2') }}"
+              Share "{{ formTitle || $t('Commons.text.untitled_form') }}"
             </span>
             <span v-else>
               {{$t('Commons.button.manage_access')}}
@@ -1060,7 +1060,7 @@
             </div>
             <div class="flex items-center justify-between text-xs sm:text-sm text-gray-500 dark:text-gray-400 gap-3">
               <span class="truncate">
-                {{$t('Views.FormBuilder.text.anyone_with_this_link')}}
+                {{$t('Views.FormBuilder.text.anyone_with_the_link')}}
               </span>
               <Button
                 v-if="shareHelperItems.length"

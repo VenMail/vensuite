@@ -80,7 +80,7 @@
             <Card class="border-none bg-gradient-to-br from-primary/10 via-primary/5 to-background shadow-sm ring-1 ring-primary/20 dark:via-primary/10 dark:to-background">
               <CardContent class="flex items-center justify-between gap-4 p-5">
                 <div>
-                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{$t('Commons.text.total_responses')}}</span>
+                  <span class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{$t('Commons.text.total_expenses')}}</span>
                   <p class="mt-2 text-3xl font-semibold text-foreground">
                     {{ responseMeta.total_responses.toLocaleString() }}
                   </p>

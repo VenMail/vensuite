@@ -1,19 +1,237 @@
 {
   "Views": {
-    "DocsEditor": {
+    "Bin": {
+      "button": {
+        "login_with_venmail": "Se connecter avec Venmail"
+      },
       "heading": {
-        "comments_chat": "Comments & Chat"
+        "delete_selected_items_permanently": "Supprimer définitivement les éléments sélectionnés ?",
+        "empty_bin": "Vider la corbeille ?",
+        "no_items_found": "Aucun élément trouvé",
+        "no_matching_items_found": "Aucun élément correspondant trouvé",
+        "restore_selected_items": "Rétablir les éléments sélectionnés ?",
+        "trash_is_empty": "La corbeille est vide",
+        "welcome_to_venmail_file": "Bienvenue dans le gestionnaire de fichiers Venmail"
       },
       "text": {
-        "error_broadcasting_change": "Error broadcasting change:",
-        "paginationplus_initialized_with_page": "PaginationPlus initialized with page size:"
+        "deleted_files_will_appear": "Les fichiers supprimés apparaîtront ici et peuvent être restaurés ou supprimés définitivement.",
+        "login_to_access_your": "Connectez-vous pour accéder à votre corbeille et gérer les fichiers supprimés.",
+        "preparing_your_deleted_items": "Préparation de vos éléments supprimés…",
+        "sort_by_name": "Trier par nom",
+        "sort_by_size": "Trier par taille",
+        "sort_by_type": "Trier par type",
+        "try_adjusting_your_search": "Essayez d'ajuster votre recherche ou vos filtres pour trouver des éléments spécifiques."
+      }
+    },
+    "DocsEditor": {
+      "button": {
+        "keep_local_version": "Garder la version locale",
+        "keep_online_version": "Garder la version en ligne"
+      },
+      "heading": {
+        "content_versions_differ": "Les versions du contenu diffèrent"
+      },
+      "link": {
+        "open_direct_link": "Ouvrir le lien direct"
+      },
+      "text": {
+        "add_headings_to_see": "Ajoutez des titres pour voir le plan",
+        "no_headings_found": "Aucun titre trouvé",
+        "no_messages_yet": "Aucun message pour le moment.",
+        "preview_local_version": "Aperçu de la version locale",
+        "preview_online_version": "Aperçu de la version en ligne",
+        "preview_unavailable": "Aperçu indisponible.",
+        "start_a_conversation_with": "Démarrez une conversation avec vos collaborateurs."
+      }
+    },
+    "Documents": {
+      "heading": {
+        "create_new_document": "Créer un nouveau document",
+        "no_documents_found": "Aucun document trouvé"
+      },
+      "text": {
+        "get_started_by_creating": "Commencez par créer un nouveau document ou en téléchargeant un existant."
+      }
+    },
+    "FilePicker": {
+      "heading": {
+        "no_files_found": "Aucun fichier trouvé"
+      },
+      "text": {
+        "try_adjusting_your_search": "Essayez d'ajuster votre recherche ou vos critères de filtre."
+      }
+    },
+    "FormBuilder": {
+      "button": {
+        "add_first_question": "Ajouter la première question",
+        "back_to_share_link": "Retour au lien de partage",
+        "copy_editor_link": "Copier le lien de l'éditeur",
+        "generate_with_ai": "Générer avec l'IA",
+        "set_up_webhooks": "Configurer les webhooks",
+        "skip_for_now": "Passer pour l'instant"
+      },
+      "heading": {
+        "choose_a_footer_image": "Choisissez une image de pied de page",
+        "choose_a_logo": "Choisissez un logo",
+        "choose_who_in_your": "Choisissez qui dans votre espace de travail peut ouvrir ou modifier ce formulaire.",
+        "configure_webhook_endpoints": "Configurer les points de terminaison des webhooks",
+        "generate_with_ai": "Générer avec l'IA",
+        "how_it_works": "Comment ça fonctionne",
+        "send_the_live_form": "Envoyez le lien du formulaire en direct et contrôlez qui peut répondre.",
+        "start_building_your_form": "Démarrez la création de votre formulaire",
+        "when_do_webhooks_fire": "Quand les webhooks se déclenchent-ils ?"
+      },
+      "label": {
+        "amount_to_charge": "Montant à facturer",
+        "stripe_account_id": "ID de compte Stripe",
+        "stripe_publishable_key": "Clef publique Stripe"
+      },
+      "text": {
+        "add_a_question": "Ajouter une question",
+        "add_questions_customize_fields": "Ajoutez des questions, personnalisez les champs et créez le formulaire parfait pour vos besoins.",
+        "any_custom_events_you": "Tous les événements personnalisés que vous définissez",
+        "anyone_with_the_link": "Quiconque possède le lien peut répondre.",
+        "collaborators_workspace_access": "Collaborateurs et accès à l'espace de travail",
+        "failed_to_publish_form_2": "Échec de la publication du formulaire",
+        "manage_who_in_your": "Gérez qui dans votre espace de travail peut ouvrir et modifier ce formulaire.",
+        "payment_succeeded_or_failed": "Paiement réussi ou échoué",
+        "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
+        "send_form_responses_and": "Envoyez les réponses du formulaire et les événements de paiement à vos systèmes en temps réel.",
+        "use_my_own_stripe": "Utiliser mon propre compte Stripe",
+        "use_platform_account": "Utiliser le compte de la plateforme",
+        "why_webhooks": "Pourquoi les webhooks ?"
+      }
+    },
+    "FormPaymentSuccess": {
+      "button": {
+        "view_form_again": "Afficher à nouveau le formulaire"
+      }
+    },
+    "FormPlayerHost": {
+      "text": {
+        "we_will_ask_for": "Nous vous demanderons votre adresse e-mail afin de pouvoir envoyer des confirmations et des reçus."
+      }
+    },
+    "FormResponses": {
+      "button": {
+        "back_to_forms": "Retour aux formulaires",
+        "export_to_sheet": "Exporter vers une feuille"
+      },
+      "heading": {
+        "review_submission_metadata_and": "Examinez les métadonnées de soumission et les réponses."
+      },
+      "text": {
+        "manage_submissions_monitor_payment": "Gérez les soumissions, surveillez l'état des paiements et examinez les réponses individuelles.",
+        "monitor_how_respondents_engage": "Surveillez comment les répondants interagissent avec votre formulaire et repérez les tendances à travers les états de complétion.",
+        "no_answers_captured_for": "Aucune réponse capturée pour cette réponse.",
+        "visualize_completion_ratio_at": "Vizualisez le ratio de complétion d'un coup d'œil"
+      }
+    },
+    "FormTemplateHandler": {
+      "text": {
+        "collect_user_signups": "Collecter les inscriptions des utilisateurs",
+        "quick_feedback_survey": "Sondage de retour rapide"
+      }
+    },
+    "Forms": {
+      "heading": {
+        "create_and_manage_forms": "Créer et gérer des formulaires",
+        "share_this_form_with": "Partagez ce formulaire avec des participants ou des collaborateurs en utilisant le lien ci-dessous."
+      },
+      "text": {
+        "anyone_with_this_link": "Toute personne disposant de ce lien peut accéder au formulaire en fonction de ses paramètres de publication.",
+        "form_is_missing_an": "Le formulaire manque d'un identifiant.",
+        "no_more_forms_to": "Aucun autre formulaire à charger.",
+        "publish_the_form_to": "Publiquez le formulaire pour obtenir un lien partageable.",
+        "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
+        "share_link_copied_to": "Lien de partage copié dans le presse-papiers.",
+        "the_form_link_was": "Le lien du formulaire a été copié dans votre presse-papiers."
+      }
+    },
+    "Home": {
+      "button": {
+        "login_with_venmail": "Se connecter avec Venmail"
+      },
+      "heading": {
+        "choose_a_template": "Choisissez un modèle",
+        "no_files_found": "Aucun fichier trouvé",
+        "no_matching_files_found": "Aucun fichier correspondant trouvé",
+        "welcome_to_venmail_file": "Bienvenue dans le gestionnaire de fichiers Venmail"
+      },
+      "text": {
+        "get_started_by_creating": "Commencez par créer un nouveau fichier ou en téléchargeant un fichier existant.",
+        "group_by_type": "Grouper par type",
+        "login_to_manage_your": "Connectez-vous pour gérer vos fichiers et dossiers sur Venmail.",
+        "no_items_available_in": "Aucun élément disponible dans cette catégorie.",
+        "sort_by_date": "Trier par date",
+        "sort_by_name": "Trier par nom",
+        "sort_by_size": "Trier par taille",
+        "sort_by_type": "Trier par type",
+        "try_adjusting_your_search": "Essayez d'ajuster votre recherche ou vos filtres."
+      }
+    },
+    "Login": {
+      "button": {
+        "login_with_venmail": "Se connecter avec Venmail"
+      },
+      "heading": {
+        "welcome_to_venmail_files": "Venmail Drive"
+      },
+      "link": {
+        "cookie_ccpa_preferences": "Préférences en matière de cookies et de CCPA",
+        "privacy_terms": "Confidentialité et conditions"
+      },
+      "text": {
+        "login_to_manage_your": "Connectez-vous pour gérer vos fichiers et dossiers sur Venmail."
+      }
+    },
+    "MediaViewer": {
+      "heading": {
+        "request_access_to_this": "Demander l'accès à ce fichier"
+      },
+      "link": {
+        "download_open_original": "Télécharger / Ouvrir l'original"
+      },
+      "text": {
+        "cannot_preview_this_file": "Impossible de prévisualiser ce type de fichier."
+      }
+    },
+    "OauthCallback": {
+      "button": {
+        "return_to_login": "Retour à la connexion"
+      },
+      "heading": {
+        "completing_authentication": "Finalisation de l'authentification",
+        "oops_login_failed": "Oups ! Échec de la connexion"
+      },
+      "link": {
+        "cookie_ccpa_preferences": "Préférences en matière de cookies et de CCPA",
+        "privacy_terms": "Confidentialité et conditions"
+      }
+    },
+    "SheetEditor": {
+      "heading": {
+        "request_access_to_this": "Demander l'accès à cette feuille",
+        "this_spreadsheet_is_large": "Cette feuille de calcul est grande"
+      }
+    },
+    "Sheets": {
+      "heading": {
+        "create_new_spreadsheet": "Créer une nouvelle feuille de calcul",
+        "no_spreadsheets_found": "Aucune feuille de calcul trouvée"
+      },
+      "text": {
+        "get_started_by_creating": "Commencez par créer"
       }
     },
     "Sidebar": {
+      "heading": {
+        "choose_a_template": "Choisissez un modèle"
+      }
+    },
+    "SlidesEditor": {
       "text": {
-        "found_matching_item": "Found matching item:",
-        "h_full_border_r": "h-full border-r transition-all duration-200",
-        "route_path_changed": "Route path changed:"
+        "select_or_add_a": "Sélectionnez ou ajoutez une diapositive pour commencer."
       }
     }
   }

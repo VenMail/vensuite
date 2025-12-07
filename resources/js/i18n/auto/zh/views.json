@@ -1,19 +1,237 @@
 {
   "Views": {
-    "DocsEditor": {
+    "Bin": {
+      "button": {
+        "login_with_venmail": "使用 Venmail 登录"
+      },
       "heading": {
-        "comments_chat": "Comments & Chat"
+        "delete_selected_items_permanently": "永久删除选定项目？",
+        "empty_bin": "清空垃圾箱？",
+        "no_items_found": "未找到项目",
+        "no_matching_items_found": "未找到匹配的项目",
+        "restore_selected_items": "恢复选定项目？",
+        "trash_is_empty": "垃圾箱是空的",
+        "welcome_to_venmail_file": "欢迎使用 Venmail 文件管理器"
       },
       "text": {
-        "error_broadcasting_change": "Error broadcasting change:",
-        "paginationplus_initialized_with_page": "PaginationPlus initialized with page size:"
+        "deleted_files_will_appear": "已删除的文件将出现在这里，可以恢复或永久删除。",
+        "login_to_access_your": "登录以访问您的垃圾箱并管理已删除的文件。",
+        "preparing_your_deleted_items": "正在准备您的已删除项目……",
+        "sort_by_name": "按名称排序",
+        "sort_by_size": "按大小排序",
+        "sort_by_type": "按类型排序",
+        "try_adjusting_your_search": "尝试调整您的搜索或过滤器以查找特定项目。"
+      }
+    },
+    "DocsEditor": {
+      "button": {
+        "keep_local_version": "保留本地版本",
+        "keep_online_version": "保留在线版本"
+      },
+      "heading": {
+        "content_versions_differ": "内容版本不同"
+      },
+      "link": {
+        "open_direct_link": "打开直接链接"
+      },
+      "text": {
+        "add_headings_to_see": "添加标题以查看大纲",
+        "no_headings_found": "未找到标题",
+        "no_messages_yet": "尚无消息。",
+        "preview_local_version": "预览本地版本",
+        "preview_online_version": "预览在线版本",
+        "preview_unavailable": "预览不可用。",
+        "start_a_conversation_with": "与您的协作者开始对话。"
+      }
+    },
+    "Documents": {
+      "heading": {
+        "create_new_document": "创建新文档",
+        "no_documents_found": "未找到文档"
+      },
+      "text": {
+        "get_started_by_creating": "通过创建新文档或上传现有文档开始。"
+      }
+    },
+    "FilePicker": {
+      "heading": {
+        "no_files_found": "未找到文件"
+      },
+      "text": {
+        "try_adjusting_your_search": "尝试调整您的搜索或过滤条件。"
+      }
+    },
+    "FormBuilder": {
+      "button": {
+        "add_first_question": "添加第一个问题",
+        "back_to_share_link": "返回共享链接",
+        "copy_editor_link": "复制编辑器链接",
+        "generate_with_ai": "使用 AI 生成",
+        "set_up_webhooks": "设置 Webhook",
+        "skip_for_now": "暂时跳过"
+      },
+      "heading": {
+        "choose_a_footer_image": "选择页脚图像",
+        "choose_a_logo": "选择徽标",
+        "choose_who_in_your": "选择谁可以在您的工作区打开或编辑此表单。",
+        "configure_webhook_endpoints": "配置 Webhook 端点",
+        "generate_with_ai": "使用 AI 生成",
+        "how_it_works": "它是如何工作的",
+        "send_the_live_form": "发送实时表单链接并控制谁可以回复。",
+        "start_building_your_form": "开始构建您的表单",
+        "when_do_webhooks_fire": "Webhook 何时触发？"
+      },
+      "label": {
+        "amount_to_charge": "收费金额",
+        "stripe_account_id": "Stripe 账户 ID",
+        "stripe_publishable_key": "Stripe 可发布密钥"
+      },
+      "text": {
+        "add_a_question": "添加问题",
+        "add_questions_customize_fields": "添加问题，自定义字段，创建满足您需求的完美表单。",
+        "any_custom_events_you": "您定义的任何自定义事件",
+        "anyone_with_the_link": "任何拥有链接的人都可以回复。",
+        "collaborators_workspace_access": "协作者和工作区访问",
+        "failed_to_publish_form_2": "发布表单失败",
+        "manage_who_in_your": "管理谁可以在您的工作区打开和编辑此表单。",
+        "payment_succeeded_or_failed": "支付成功或失败",
+        "publishing_form_to_generate": "正在发布表单以生成分享链接…",
+        "send_form_responses_and": "实时将表单响应和支付事件发送到您的下游系统。",
+        "use_my_own_stripe": "使用我自己的Stripe账户",
+        "use_platform_account": "使用平台账户",
+        "why_webhooks": "为什么使用Webhook？"
+      }
+    },
+    "FormPaymentSuccess": {
+      "button": {
+        "view_form_again": "再次查看表单"
+      }
+    },
+    "FormPlayerHost": {
+      "text": {
+        "we_will_ask_for": "我们将询问您的电子邮件地址，以便发送确认和收据。"
+      }
+    },
+    "FormResponses": {
+      "button": {
+        "back_to_forms": "返回表单",
+        "export_to_sheet": "导出到表格"
+      },
+      "heading": {
+        "review_submission_metadata_and": "查看提交元数据和答案。"
+      },
+      "text": {
+        "manage_submissions_monitor_payment": "管理提交，监控支付状态，并深入了解个别答案。",
+        "monitor_how_respondents_engage": "监控响应者如何与您的表单互动，并发现完成状态的趋势。",
+        "no_answers_captured_for": "此响应未捕获任何答案。",
+        "visualize_completion_ratio_at": "一目了然地可视化完成比例"
+      }
+    },
+    "FormTemplateHandler": {
+      "text": {
+        "collect_user_signups": "收集用户注册",
+        "quick_feedback_survey": "快速反馈调查"
+      }
+    },
+    "Forms": {
+      "heading": {
+        "create_and_manage_forms": "创建和管理表单",
+        "share_this_form_with": "使用下面的链接与参与者或协作者分享此表单。"
+      },
+      "text": {
+        "anyone_with_this_link": "任何拥有此链接的人都可以根据其发布设置访问表单。",
+        "form_is_missing_an": "表单缺少标识符。",
+        "no_more_forms_to": "没有更多表单可加载。",
+        "publish_the_form_to": "发布表单以获取可分享链接。",
+        "publishing_form_to_generate": "正在发布表单以生成分享链接…",
+        "share_link_copied_to": "分享链接已复制到剪贴板。",
+        "the_form_link_was": "表单链接已复制到您的剪贴板。"
+      }
+    },
+    "Home": {
+      "button": {
+        "login_with_venmail": "使用 Venmail 登录"
+      },
+      "heading": {
+        "choose_a_template": "选择一个模板",
+        "no_files_found": "未找到文件",
+        "no_matching_files_found": "未找到匹配的文件",
+        "welcome_to_venmail_file": "欢迎使用 Venmail 文件管理器"
+      },
+      "text": {
+        "get_started_by_creating": "通过创建新文件或上传现有文件开始。",
+        "group_by_type": "按类型分组",
+        "login_to_manage_your": "登录以管理您在Venmail上的文件和文件夹。",
+        "no_items_available_in": "此类别中没有可用项目。",
+        "sort_by_date": "按日期排序",
+        "sort_by_name": "按名称排序",
+        "sort_by_size": "按大小排序",
+        "sort_by_type": "按类型排序",
+        "try_adjusting_your_search": "尝试调整您的搜索或筛选条件。"
+      }
+    },
+    "Login": {
+      "button": {
+        "login_with_venmail": "使用 Venmail 登录"
+      },
+      "heading": {
+        "welcome_to_venmail_files": "Venmail云盘"
+      },
+      "link": {
+        "cookie_ccpa_preferences": "Cookie和CCPA偏好设置",
+        "privacy_terms": "隐私和条款"
+      },
+      "text": {
+        "login_to_manage_your": "登录以管理您在Venmail上的文件和文件夹。"
+      }
+    },
+    "MediaViewer": {
+      "heading": {
+        "request_access_to_this": "请求访问此文件"
+      },
+      "link": {
+        "download_open_original": "下载/打开原件"
+      },
+      "text": {
+        "cannot_preview_this_file": "无法预览此文件类型。"
+      }
+    },
+    "OauthCallback": {
+      "button": {
+        "return_to_login": "返回登录"
+      },
+      "heading": {
+        "completing_authentication": "完成身份验证",
+        "oops_login_failed": "哎呀！登录失败"
+      },
+      "link": {
+        "cookie_ccpa_preferences": "Cookie和CCPA偏好设置",
+        "privacy_terms": "隐私和条款"
+      }
+    },
+    "SheetEditor": {
+      "heading": {
+        "request_access_to_this": "请求访问此表格",
+        "this_spreadsheet_is_large": "此电子表格很大"
+      }
+    },
+    "Sheets": {
+      "heading": {
+        "create_new_spreadsheet": "创建新电子表格",
+        "no_spreadsheets_found": "未找到电子表格"
+      },
+      "text": {
+        "get_started_by_creating": "通过创建开始使用"
       }
     },
     "Sidebar": {
+      "heading": {
+        "choose_a_template": "选择一个模板"
+      }
+    },
+    "SlidesEditor": {
       "text": {
-        "found_matching_item": "Found matching item:",
-        "h_full_border_r": "h-full border-r transition-all duration-200",
-        "route_path_changed": "Route path changed:"
+        "select_or_add_a": "选择或添加幻灯片以开始。"
       }
     }
   }

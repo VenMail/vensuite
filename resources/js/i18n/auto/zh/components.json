@@ -1,11 +1,64 @@
 {
+  "Buttons": {
+    "AddFieldButton": {
+      "text": {
+        "no_field_types_found": "未找到字段类型。"
+      }
+    }
+  },
+  "Editor": {
+    "ChartConfigurator": {
+      "button": {
+        "add_first_dataset": "添加第一个数据集"
+      },
+      "text": {
+        "no_datasets_yet": "尚无数据集",
+        "polar_area_chart": "极区图"
+      }
+    },
+    "ChartNode": {
+      "text": {
+        "no_data_to_display": "没有数据可显示"
+      }
+    }
+  },
   "FileItem": {
     "text": {
-      "transition_all_duration_200": "transition-all duration-200 cursor-pointer"
+      "transition_all_duration_200": "过渡所有持续时间-200 光标指针"
+    }
+  },
+  "FileUploader": {
+    "text": {
+      "all_file_types": "所有文件类型",
+      "allowed_file_types": "允许的文件类型："
     }
   },
   "Forms": {
     "Blocks": {
+      "BlockEditor": {
+        "heading": {
+          "start_building_your_form": "开始构建您的表单"
+        },
+        "text": {
+          "add_a_question": "添加问题",
+          "for_commands_or_click": "用于命令或点击上面的按钮"
+        }
+      },
+      "BlockItem": {
+        "text": {
+          "click_or_drag_files": "点击或拖动文件到这里"
+        }
+      },
+      "BlockItemNew": {
+        "text": {
+          "click_or_drag_files": "点击或拖动文件到这里"
+        }
+      },
+      "SlashMenu": {
+        "text": {
+          "no_blocks_found": "未找到任何区块"
+        }
+      },
       "Types": {
         "text": {
           "email_address_input": "电子邮件地址输入",
@@ -19,45 +72,278 @@
         }
       }
     },
-    "Fields": {
-      "TextQuestion": {
-        "text": {
-          "invalid_email_format": "Invalid email format"
+    "DocsTitleBar": {
+      "text": {
+        "no_previous_versions": "没有以前的版本"
+      }
+    },
+    "DocsToolbar": {
+      "heading": {
+        "create_new_document": "创建新文档"
+      },
+      "label": {
+        "include_header_row": "包含标题行",
+        "open_in_new_tab": "在新标签页中打开",
+        "page_number_position": "页码位置",
+        "show_page_border": "显示页面边框",
+        "show_page_numbers": "显示页码",
+        "show_page_numbers_when": "打印时显示页码",
+        "show_page_shadow": "显示页面阴影"
+      },
+      "text": {
+        "choose_a_template_to": "选择一个模板以快速开始",
+        "professional_correspondence": "专业信函",
+        "start_from_scratch": "从头开始"
+      }
+    },
+    "Editor": {
+      "text": {
+        "edit_your_form_fields": "在下面编辑您的表单字段"
+      }
+    },
+    "Editors": {
+      "FileEditor": {
+        "heading": {
+          "file_upload_properties": "文件上传属性"
+        },
+        "label": {
+          "allow_multiple_files": "允许多个文件：",
+          "allowed_file_types": "允许的文件类型："
+        }
+      },
+      "LogicEditor": {
+        "label": {
+          "if_question_id": "如果问题 ID：",
+          "jump_to_question_id": "跳转到问题 ID："
+        }
+      },
+      "RatingEditor": {
+        "label": {
+          "allow_half_ratings": "允许半评分："
+        }
+      },
+      "TextEditor": {
+        "heading": {
+          "current_validation_rules": "当前验证规则：",
+          "text_field_properties": "文本字段属性"
         }
       }
     },
     "FormConfigWizard": {
       "label": {
-        "show_confirmation_page": "Show Confirmation Page"
+        "allow_multiple_submissions": "允许多次提交",
+        "collect_email_addresses": "收集电子邮件地址",
+        "default_response_view": "默认响应视图",
+        "notify_on_new_response": "新响应时通知",
+        "show_confirmation_page": "显示确认页面",
+        "show_progress_bar": "显示进度条"
+      },
+      "text": {
+        "all_questions_on_one": "所有问题在一个可滚动页面上",
+        "choose_how_you_want": "选择您希望如何接收和查看响应",
+        "clean_header_with_just": "干净的标题仅包含标题",
+        "control_how_responses_are": "控制如何收集和处理响应",
+        "customize_how_your_form": "自定义您的表单在受访者眼中的外观",
+        "display_a_thank_you": "提交后显示感谢消息",
+        "display_completion_progress_to": "向受访者显示完成进度",
+        "get_an_email_for": "每次新提交获取电子邮件",
+        "one_question_at_a": "一次一个问题，带有下一步/上一步按钮",
+        "require_respondents_to_provide": "要求受访者提供他们的电子邮件",
+        "review_responses_one_at": "逐个查看响应",
+        "see_aggregated_statistics_and": "查看汇总统计和图表",
+        "users_can_submit_the": "用户可以多次提交表单",
+        "view_all_responses_in": "在类似电子表格的表格中查看所有响应"
       }
     },
-    "QuickView": {
+    "FormConfigWizardSimple": {
       "text": {
-        "group_relative_flex_flex": "group relative flex flex-col rounded-xl border bg-white shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden",
-        "text_slate_400_dark": "text-slate-400 dark:text-slate-500 cursor-not-allowed",
-        "text_sm_font_medium": "text-sm font-medium tabular-nums transition-colors text-left"
+        "accept_payments_via_stripe": "通过 Stripe 接受付款",
+        "aggregated_statistics_and_charts": "汇总统计和图表",
+        "all_questions_on_one": "所有问题在一个可滚动页面上",
+        "choose_how_labels_should": "选择标签应如何与输入对齐。",
+        "choose_the_best_experience": "选择为您的受访者提供最佳体验",
+        "choose_your_preferred_response": "选择您首选的响应查看格式",
+        "clean_and_bright_interface": "干净明亮的界面",
+        "control_how_much_breathing": "控制每个字段使用多少呼吸空间。",
+        "display_your_brand_logo": "在表单顶部显示您的品牌标志",
+        "easy_on_the_eyes": "视觉上舒适",
+        "enable_payment_processing_for": "为您的表单启用支付处理",
+        "friendly_and_approachable": "友好且易于接近",
+        "how_should_your_form": "您的表单应该如何呈现给受访者？",
+        "integrate_with_other_tools": "与其他工具集成",
+        "just_store_responses": "仅存储响应",
+        "keep_it_simple": "保持简单",
+        "labels_sit_above_each": "标签位于每个字段上方，以确保最大清晰度。",
+        "match_system_preference": "匹配系统偏好",
+        "modern_and_clean": "现代且简洁",
+        "one_question_at_a": "一次一个问题，使用下一步/上一步",
+        "place_labels_beside_inputs": "将标签放置在输入框旁边，以实现更紧凑的布局。",
+        "professional_and_readable": "专业且易读",
+        "reduce_spacing_to_fit": "减少间距以在屏幕上适配更多字段。",
+        "review_responses_one_at": "逐个查看响应",
+        "select_the_typography_for": "选择您的表单的排版",
+        "send_form_submissions_to": "将表单提交发送到您的 webhook 端点",
+        "show_logo_in_form": "在表单标题中显示标志",
+        "spreadsheet_like_view_of": "类似电子表格的所有响应视图",
+        "standard_spacing_that_balances": "标准间距，平衡可读性和空间。",
+        "this_is_a_free": "这是一个免费表单"
       }
+    },
+    "FormWizard": {
+      "button": {
+        "generate_form": "生成表单 →",
+        "skip_create_blank": "跳过并创建空白"
+      },
+      "heading": {
+        "create_your_form": "创建您的表单",
+        "review_your_form": "审查您的表单"
+      },
+      "label": {
+        "what_kind_of_form": "您想创建什么类型的表单？"
+      },
+      "text": {
+        "ai_generated_form_ready": "AI生成的表单已准备好！",
+        "ai_is_analyzing_your": "AI正在分析您的描述并构建完美的表单结构",
+        "ai_is_building_your": "AI正在构建您的表单结构",
+        "create_your_account": "创建您的帐户",
+        "describe_what_you_want": "用简单的英语描述您想要创建的内容",
+        "get_in_touch_with": "与我们联系",
+        "help_us_improve_by": "通过分享您的反馈帮助我们改进",
+        "or_choose_a_template": "或选择一个模板：",
+        "product_and_shipping_info": "产品和运输信息",
+        "rating_and_comments": "评分和评论",
+        "review_and_customize_your": "审查并自定义您的表单",
+        "user_signup_details": "用户注册详细信息"
+      }
+    },
+    "Player": {
+      "ClassicPlayer": {
+        "text": {
+          "complete_required_fields": "完成必填字段",
+          "no_questions_available_in": "此表单中没有可用的问题。",
+          "please_complete_required_fields": "请完成必填字段",
+          "ready_to_submit": "准备提交",
+          "required_fields_are_marked": "必填字段用 * 标记",
+          "review_your_responses_before": "在提交之前审查您的响应。"
+        }
+      },
+      "FocusPlayer": {
+        "text": {
+          "no_questions_available": "没有可用的问题。"
+        }
+      },
+      "PaymentStep": {
+        "button": {
+          "pay_submit": "支付并提交"
+        },
+        "text": {
+          "please_complete_the_payment": "请完成支付以提交您的响应。"
+        }
+      },
+      "QuestionRenderer": {
+        "text": {
+          "select_an_option": "选择一个选项"
+        }
+      }
+    },
+    "WebhooksPanel": {
+      "text": {
+        "add_new_webhook": "添加新 webhook",
+        "connect_form_events_to": "将表单事件连接到外部服务，快速验证。",
+        "no_webhooks_configured_yet": "尚未配置任何网络钩子。"
+      }
+    }
+  },
+  "ImagePicker": {
+    "label": {
+      "select_from_library": "从库中选择"
+    },
+    "text": {
+      "click_to_upload_or": "点击上传或拖放",
+      "no_images_found": "未找到图像"
+    }
+  },
+  "LanguageSwitcher": {
+    "aria_label": {
+      "change_language": "更改语言"
+    },
+    "text": {
+      "chinese": "中文",
+      "english": "英语",
+      "francais": "法语",
+      "select_language": "选择语言"
     }
   },
   "Layout": {
-    "WorkspaceTopBar": {
+    "SearchBar": {
       "text": {
-        "opacity_50_cursor_not": "opacity-50 cursor-not-allowed"
+        "filter_by_type": "按类型过滤"
       }
     }
   },
-  "Ui": {
-    "CustomToast": {
-      "text": {
-        "border_border_gray_200": "border border-gray-200 dark:border-gray-700"
+  "Media": {
+    "MediaGrid": {
+      "heading": {
+        "no_media_files": "没有媒体文件"
       }
     },
-    "Toast": {
-      "Index": {
-        "text": {
-          "border_bg_background_text": "border bg-background text-foreground",
-          "destructive_group_border_destructive": "destructive group border-destructive bg-destructive text-destructive-foreground"
-        }
+    "MediaPreview": {
+      "text": {
+        "failed_to_load": "加载失败"
+      }
+    },
+    "MediaViewer": {
+      "heading": {
+        "failed_to_load_media": "加载媒体失败"
+      },
+      "text": {
+        "preview_not_available_for": "此文件类型的预览不可用",
+        "there_was_an_error": "加载此文件时出错",
+        "your_browser_does_not": "您的浏览器不支持视频标签。",
+        "your_browser_does_not_2": "您的浏览器不支持音频标签。"
+      }
+    }
+  },
+  "ShareCard": {
+    "button": {
+      "add_people_by_email": "通过电子邮件添加人员"
+    },
+    "heading": {
+      "people_with_access": "有访问权限的人",
+      "share_with_others": "与他人分享"
+    },
+    "text": {
+      "allow_editors_to_change": "允许编辑者更改权限和分享",
+      "anyone_in_your_org": "您组织中的任何人都可以查看",
+      "anyone_in_your_org_2": "您组织中的任何人都可以编辑",
+      "anyone_on_the_internet": "互联网上的任何人都可以查看",
+      "anyone_on_the_internet_2": "互联网上的任何人都可以编辑",
+      "anyone_with_link_can": "任何拥有链接的人都可以查看",
+      "anyone_with_link_can_2": "任何拥有链接的人都可以编辑",
+      "anyone_with_the_link": "任何拥有链接的人都可以查看",
+      "anyone_with_the_link_2": "任何拥有链接的人都可以编辑",
+      "commenters_and_viewers": "评论者和查看者",
+      "only_people_with_access": "只有有访问权限的人",
+      "public_and_editable": "公开且可编辑",
+      "public_on_the_web": "在网上公开"
+    }
+  },
+  "Slides": {
+    "SlidesInspector": {
+      "text": {
+        "bring_existing_content_into": "将现有内容带入您的幻灯片。",
+        "combine_smart_snapping_with": "将智能对齐与网格叠加结合，以实现像素完美的布局。",
+        "control_alignment_helpers_for": "控制对齐助手以实现精确布局。",
+        "processing_your_file": "正在处理您的文件…",
+        "ready_for_new_imports": "准备好进行新导入。",
+        "use_a_smaller_grid": "使用较小的网格以实现紧凑布局，或增加间距以获得更宽的指导。",
+        "use_alignment_guides_to": "使用对齐指南均匀分布形状。",
+        "while_dragging_to_constrain": "在拖动时约束轴。"
+      }
+    },
+    "SlidesToolbar": {
+      "text": {
+        "use_smart_snapping_to": "使用智能对齐将形状对齐到中心并保持间距相等。"
       }
     }
   }

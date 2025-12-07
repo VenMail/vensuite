@@ -1361,7 +1361,7 @@ watch(
               </div>
               <div class="mt-1 text-sm text-gray-800 whitespace-pre-line dark:text-gray-100">{{ message.content.message }}</div>
               <button @click="replyToMessage(message)" class="text-xs text-primary-600 mt-1 hover:underline">
-                {{$t('Commons.button.reply')}}
+                {{$t('Commons.button.retry')}}
               </button>
             </div>
           </div>

@@ -8,7 +8,7 @@
         <button @click="removeOption(index)">{{$t('Commons.button.remove')}}</button>
       </div>
     </div>
-    <button @click="addOption">{{$t('Commons.button.add_option_2')}}</button>
+    <button @click="addOption">{{$t('Commons.button.add_option')}}</button>
 
     <div v-if="isRangeLike" class="range-properties">
       <label>

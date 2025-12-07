@@ -13,7 +13,7 @@
       {{$t('Commons.label.icon_type')}}
       <select :value="iconType" @change="onIconTypeChange">
         <option value="star">{{$t('Commons.text.star')}}</option>
-        <option value="heart">{{$t('Commons.text.heart')}}</option>
+        <option value="heart">{{$t('Commons.text.start')}}</option>
         <option value="thumb">{{$t('Commons.text.thumb')}}</option>
       </select>
     </label>

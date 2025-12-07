@@ -4,7 +4,7 @@
       <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div class="flex flex-col gap-2.5">
           <span class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-gray-500 dark:text-gray-400">
-            {{ definition?.organization_id ? $t('Commons.text.form_preview') : $t('Commons.text.form_response') }}
+            {{ definition?.organization_id ? $t('Commons.text.form_preview') : $t('Commons.text.form_responses') }}
           </span>
           <h1 class="font-serif text-[2.25rem] font-semibold leading-tight text-gray-900 sm:text-[2.6rem] dark:text-gray-100">
             {{ definition?.title || $t('Commons.heading.untitled_form') }}

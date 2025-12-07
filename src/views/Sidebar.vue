@@ -146,7 +146,7 @@ function createNewFile(type: string, template?: string) {
                 :class="props.isCollapsed ? 'w-8' : 'flex-1'"
               >
                 <Plus class="h-5 w-5" :class="props.isCollapsed ? '' : 'mr-2'" />
-                <span v-if="!props.isCollapsed">{{$t('Commons.text.new')}}</span>
+                <span v-if="!props.isCollapsed">{{$t('Commons.text.view')}}</span>
               </button>
             </DialogTrigger>
             <DialogContent>

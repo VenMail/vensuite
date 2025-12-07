@@ -42,7 +42,7 @@ import {
       <MenubarContent>
         <MenubarItem>
           <FileIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.new')}}
+          {{$t('Commons.text.view')}}
         </MenubarItem>
         <MenubarItem>
           <FolderIcon class="h-4 w-4 mr-2" />
@@ -50,7 +50,7 @@ import {
         </MenubarItem>
         <MenubarItem>
           <SaveIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.button.save')}}
+          {{$t('Commons.button.date')}}
         </MenubarItem>
         <MenubarItem>
           <DownloadIcon class="h-4 w-4 mr-2" />
@@ -79,7 +79,7 @@ import {
         <MenubarSeparator />
         <MenubarItem>
           <ScissorsIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.cut')}}
+          {{$t('Commons.text.auto')}}
         </MenubarItem>
         <MenubarItem>
           <CopyIcon class="h-4 w-4 mr-2" />
@@ -170,7 +170,7 @@ import {
         <MenubarSeparator />
         <MenubarItem>
           <InfoIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.about')}}
+          {{$t('Commons.text.amount')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>

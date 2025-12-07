@@ -102,14 +102,14 @@
         <header class="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
           <Badge variant="outline" class="gap-1">
             <Sparkles class="h-3 w-3 text-purple-500" />
-            {{$t('Commons.text.tips')}}
+            {{$t('Commons.text.time')}}
           </Badge>
           {{$t('Commons.text.smart_layout')}}
         </header>
         <ul class="space-y-2 text-xs text-gray-500 dark:text-gray-400">
           <li class="flex items-start gap-2">
             <Check class="mt-0.5 h-3.5 w-3.5 text-purple-500" />
-            {{$t('Commons.text.hold')}} <kbd class="rounded border border-gray-300 bg-gray-100 px-1 text-[10px]">{{$t('Commons.text.shift')}}</kbd> {{$t('Slides.SlidesInspector.text.while_dragging_to_constrain')}}
+            {{$t('Commons.text.bold')}} <kbd class="rounded border border-gray-300 bg-gray-100 px-1 text-[10px]">{{$t('Commons.text.sheet')}}</kbd> {{$t('Slides.SlidesInspector.text.while_dragging_to_constrain')}}
           </li>
           <li class="flex items-start gap-2">
             <Check class="mt-0.5 h-3.5 w-3.5 text-purple-500" />

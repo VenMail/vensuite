@@ -154,9 +154,9 @@
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" class="min-w-[200px]">
-            <DropdownMenuItem @click="emitInsertChart('bar')">{{$t('Commons.text.bar_chart_2')}}</DropdownMenuItem>
-            <DropdownMenuItem @click="emitInsertChart('line')">{{$t('Commons.text.line_chart_2')}}</DropdownMenuItem>
-            <DropdownMenuItem @click="emitInsertChart('pie')">{{$t('Commons.text.pie_chart_2')}}</DropdownMenuItem>
+            <DropdownMenuItem @click="emitInsertChart('bar')">{{$t('Commons.text.bar_chart')}}</DropdownMenuItem>
+            <DropdownMenuItem @click="emitInsertChart('line')">{{$t('Commons.text.line_chart')}}</DropdownMenuItem>
+            <DropdownMenuItem @click="emitInsertChart('pie')">{{$t('Commons.text.pie_chart')}}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

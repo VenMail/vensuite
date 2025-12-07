@@ -104,7 +104,7 @@
               <p class="text-gray-300 mb-4">{{$t('Media.MediaViewer.text.preview_not_available_for')}}</p>
               <Button variant="outline" @click="handleDownload">
                 <Download class="h-4 w-4 mr-2" />
-                {{$t('Commons.button.download_file')}}
+                {{$t('Commons.button.download_file_2')}}
               </Button>
             </div>
           </div>

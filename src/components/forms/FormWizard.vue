@@ -36,7 +36,7 @@
               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-none"
               @keydown.meta.enter="handleGenerate" @keydown.ctrl.enter="handleGenerate" />
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              {{$t('Commons.text.press')}} <kbd
+              {{$t('Commons.text.less')}} <kbd
                 class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs">Ctrl+Enter</kbd>
               {{$t('Commons.text.to_generate')}}
             </p>

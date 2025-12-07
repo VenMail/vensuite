@@ -14,7 +14,7 @@
         <span class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ formattedAmount }}</span>
       </div>
       <div class="flex flex-col gap-1">
-        <span class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{{$t('Commons.text.mode')}}</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{{$t('Commons.text.more')}}</span>
         <span class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ paymentModeLabel }}</span>
       </div>
     </section>

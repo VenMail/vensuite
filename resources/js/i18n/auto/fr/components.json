@@ -1,11 +1,64 @@
 {
+  "Buttons": {
+    "AddFieldButton": {
+      "text": {
+        "no_field_types_found": "Aucun type de champ trouvé."
+      }
+    }
+  },
+  "Editor": {
+    "ChartConfigurator": {
+      "button": {
+        "add_first_dataset": "Ajouter le premier ensemble de données"
+      },
+      "text": {
+        "no_datasets_yet": "Aucun ensemble de données pour le moment",
+        "polar_area_chart": "Graphique en aire polaire"
+      }
+    },
+    "ChartNode": {
+      "text": {
+        "no_data_to_display": "Aucune donnée à afficher"
+      }
+    }
+  },
   "FileItem": {
     "text": {
-      "transition_all_duration_200": "transition-all duration-200 curseur-pointer"
+      "transition_all_duration_200": "transition-all durée-200 curseur-pointer"
+    }
+  },
+  "FileUploader": {
+    "text": {
+      "all_file_types": "tous les types de fichiers",
+      "allowed_file_types": "Types de fichiers autorisés :"
     }
   },
   "Forms": {
     "Blocks": {
+      "BlockEditor": {
+        "heading": {
+          "start_building_your_form": "Commencez à créer votre formulaire"
+        },
+        "text": {
+          "add_a_question": "Ajouter une question",
+          "for_commands_or_click": "pour les commandes ou cliquez sur le bouton ci-dessus"
+        }
+      },
+      "BlockItem": {
+        "text": {
+          "click_or_drag_files": "Cliquez ou faites glisser des fichiers ici"
+        }
+      },
+      "BlockItemNew": {
+        "text": {
+          "click_or_drag_files": "Cliquez ou faites glisser des fichiers ici"
+        }
+      },
+      "SlashMenu": {
+        "text": {
+          "no_blocks_found": "Aucun bloc trouvé"
+        }
+      },
       "Types": {
         "text": {
           "email_address_input": "Champ d'adresse e-mail",
@@ -19,45 +72,278 @@
         }
       }
     },
-    "Fields": {
-      "TextQuestion": {
-        "text": {
-          "invalid_email_format": "Format d'email invalide"
+    "DocsTitleBar": {
+      "text": {
+        "no_previous_versions": "Aucune version précédente"
+      }
+    },
+    "DocsToolbar": {
+      "heading": {
+        "create_new_document": "Créer un nouveau document"
+      },
+      "label": {
+        "include_header_row": "Inclure une ligne d'en-tête",
+        "open_in_new_tab": "Ouvrir dans un nouvel onglet",
+        "page_number_position": "Position du numéro de page",
+        "show_page_border": "Afficher la bordure de la page",
+        "show_page_numbers": "Afficher les numéros de page",
+        "show_page_numbers_when": "Afficher les numéros de page lors de l'impression",
+        "show_page_shadow": "Afficher l'ombre de la page"
+      },
+      "text": {
+        "choose_a_template_to": "Choisissez un modèle pour commencer rapidement",
+        "professional_correspondence": "Correspondance professionnelle",
+        "start_from_scratch": "Commencer à partir de zéro"
+      }
+    },
+    "Editor": {
+      "text": {
+        "edit_your_form_fields": "Modifiez vos champs de formulaire ci-dessous"
+      }
+    },
+    "Editors": {
+      "FileEditor": {
+        "heading": {
+          "file_upload_properties": "Propriétés de téléchargement de fichiers"
+        },
+        "label": {
+          "allow_multiple_files": "Autoriser plusieurs fichiers :",
+          "allowed_file_types": "Tipos de fichiers autorisés :"
+        }
+      },
+      "LogicEditor": {
+        "label": {
+          "if_question_id": "Si ID de question :",
+          "jump_to_question_id": "Sauter à l'ID de question :"
+        }
+      },
+      "RatingEditor": {
+        "label": {
+          "allow_half_ratings": "Autoriser les évaluations à demi :"
+        }
+      },
+      "TextEditor": {
+        "heading": {
+          "current_validation_rules": "Règles de validation actuelles :",
+          "text_field_properties": "Propriétés du champ de texte"
         }
       }
     },
     "FormConfigWizard": {
       "label": {
-        "show_confirmation_page": "Afficher la page de confirmation"
+        "allow_multiple_submissions": "Autoriser plusieurs soumissions",
+        "collect_email_addresses": "Collecter les adresses e-mail",
+        "default_response_view": "Vue de réponse par défaut",
+        "notify_on_new_response": "Notifier lors d'une nouvelle réponse",
+        "show_confirmation_page": "Afficher la page de confirmation",
+        "show_progress_bar": "Afficher la barre de progression"
+      },
+      "text": {
+        "all_questions_on_one": "Toutes les questions sur une page défilable",
+        "choose_how_you_want": "Choisissez comment vous souhaitez recevoir et afficher les réponses",
+        "clean_header_with_just": "En-tête propre avec juste le titre",
+        "control_how_responses_are": "Contrôlez comment les réponses sont collectées et traitées",
+        "customize_how_your_form": "Personnalisez l'apparence de votre formulaire pour les répondants",
+        "display_a_thank_you": "Afficher un message de remerciement après la soumission",
+        "display_completion_progress_to": "Afficher la progression de la complétion aux répondants",
+        "get_an_email_for": "Recevoir un e-mail pour chaque nouvelle soumission",
+        "one_question_at_a": "Une question à la fois avec des boutons suivant/précédent",
+        "require_respondents_to_provide": "Exiger que les répondants fournissent leur e-mail",
+        "review_responses_one_at": "Examiner les réponses une à la fois",
+        "see_aggregated_statistics_and": "Voir les statistiques agrégées et les graphiques",
+        "users_can_submit_the": "Les utilisateurs peuvent soumettre le formulaire plusieurs fois",
+        "view_all_responses_in": "Voir toutes les réponses dans un tableau semblable à une feuille de calcul"
       }
     },
-    "QuickView": {
+    "FormConfigWizardSimple": {
       "text": {
-        "group_relative_flex_flex": "groupe relatif flex flex-col arrondi-xl bord bg-blanc ombre-sm transition-tout durée-200 hover:ombre-md débordement-caché",
-        "text_slate_400_dark": "texte-ardoise-400 sombre:texte-ardoise-500 curseur-non-autorisé",
-        "text_sm_font_medium": "texte-sm police-moyenne chiffres-tabulaires transition-couleurs texte-gauche"
+        "accept_payments_via_stripe": "Accepter les paiements via Stripe",
+        "aggregated_statistics_and_charts": "Statistiques agrégées et graphiques",
+        "all_questions_on_one": "Toutes les questions sur une page défilable",
+        "choose_how_labels_should": "Choisissez comment les étiquettes doivent s'aligner avec les entrées.",
+        "choose_the_best_experience": "Choisissez la meilleure expérience pour vos répondants",
+        "choose_your_preferred_response": "Choisissez votre format de visualisation des réponses préféré",
+        "clean_and_bright_interface": "Interface propre et lumineuse",
+        "control_how_much_breathing": "Contrôlez combien d'espace chaque champ utilise.",
+        "display_your_brand_logo": "Affichez le logo de votre marque en haut du formulaire",
+        "easy_on_the_eyes": "Facile pour les yeux",
+        "enable_payment_processing_for": "Activer le traitement des paiements pour votre formulaire",
+        "friendly_and_approachable": "Amical et accessible",
+        "how_should_your_form": "À quoi devrait ressembler votre formulaire pour les répondants ?",
+        "integrate_with_other_tools": "Intégrer avec d'autres outils",
+        "just_store_responses": "Juste stocker les réponses",
+        "keep_it_simple": "Gardez-le simple",
+        "labels_sit_above_each": "Les étiquettes se trouvent au-dessus de chaque champ pour une clarté maximale.",
+        "match_system_preference": "Correspondre à la préférence du système",
+        "modern_and_clean": "Moderne et épuré",
+        "one_question_at_a": "Une question à la fois avec suivant/précédent",
+        "place_labels_beside_inputs": "Placez les étiquettes à côté des champs pour un agencement plus compact.",
+        "professional_and_readable": "Professionnel et lisible",
+        "reduce_spacing_to_fit": "Réduisez l'espacement pour faire tenir plus de champs à l'écran.",
+        "review_responses_one_at": "Examiner les réponses une à la fois",
+        "select_the_typography_for": "Sélectionnez la typographie pour votre formulaire",
+        "send_form_submissions_to": "Envoyer les soumissions de formulaire à votre point de terminaison webhook",
+        "show_logo_in_form": "Afficher le logo dans l'en-tête du formulaire",
+        "spreadsheet_like_view_of": "Vue de type feuille de calcul de toutes les réponses",
+        "standard_spacing_that_balances": "Espacement standard qui équilibre lisibilité et espace.",
+        "this_is_a_free": "Ceci est un formulaire gratuit"
       }
+    },
+    "FormWizard": {
+      "button": {
+        "generate_form": "Générer le formulaire →",
+        "skip_create_blank": "Passer et créer un vide"
+      },
+      "heading": {
+        "create_your_form": "Créez votre formulaire",
+        "review_your_form": "Examinez votre formulaire"
+      },
+      "label": {
+        "what_kind_of_form": "Quel type de formulaire souhaitez-vous créer ?"
+      },
+      "text": {
+        "ai_generated_form_ready": "Formulaire généré par l'IA prêt !",
+        "ai_is_analyzing_your": "L'IA analyse votre description et construit la structure de formulaire parfaite",
+        "ai_is_building_your": "L'IA construit la structure de votre formulaire",
+        "create_your_account": "Créez votre compte",
+        "describe_what_you_want": "Décrivez ce que vous souhaitez créer en anglais simple",
+        "get_in_touch_with": "Contactez-nous",
+        "help_us_improve_by": "Aidez-nous à nous améliorer en partageant vos commentaires",
+        "or_choose_a_template": "Ou choisissez un modèle :",
+        "product_and_shipping_info": "Informations sur le produit et l'expédition",
+        "rating_and_comments": "Évaluation et commentaires",
+        "review_and_customize_your": "Examinez et personnalisez votre formulaire",
+        "user_signup_details": "Détails d'inscription de l'utilisateur"
+      }
+    },
+    "Player": {
+      "ClassicPlayer": {
+        "text": {
+          "complete_required_fields": "Complétez les champs obligatoires",
+          "no_questions_available_in": "Aucune question disponible dans ce formulaire.",
+          "please_complete_required_fields": "Veuillez compléter les champs obligatoires",
+          "ready_to_submit": "Prêt à soumettre",
+          "required_fields_are_marked": "Les champs obligatoires sont marqués d'un *",
+          "review_your_responses_before": "Examinez vos réponses avant de soumettre."
+        }
+      },
+      "FocusPlayer": {
+        "text": {
+          "no_questions_available": "Aucune question disponible."
+        }
+      },
+      "PaymentStep": {
+        "button": {
+          "pay_submit": "Payer et soumettre"
+        },
+        "text": {
+          "please_complete_the_payment": "Veuillez compléter le paiement pour soumettre votre réponse."
+        }
+      },
+      "QuestionRenderer": {
+        "text": {
+          "select_an_option": "Sélectionnez une option"
+        }
+      }
+    },
+    "WebhooksPanel": {
+      "text": {
+        "add_new_webhook": "Ajouter un nouveau webhook",
+        "connect_form_events_to": "Connectez les événements de formulaire à des services externes avec validation rapide.",
+        "no_webhooks_configured_yet": "Aucun webhook configuré pour le moment."
+      }
+    }
+  },
+  "ImagePicker": {
+    "label": {
+      "select_from_library": "Sélectionner dans la bibliothèque"
+    },
+    "text": {
+      "click_to_upload_or": "Cliquez pour télécharger ou faites glisser et déposez",
+      "no_images_found": "Aucune image trouvée"
+    }
+  },
+  "LanguageSwitcher": {
+    "aria_label": {
+      "change_language": "Changer de langue"
+    },
+    "text": {
+      "chinese": "Chinois",
+      "english": "Anglais",
+      "francais": "Français",
+      "select_language": "Sélectionner la langue"
     }
   },
   "Layout": {
-    "WorkspaceTopBar": {
+    "SearchBar": {
       "text": {
-        "opacity_50_cursor_not": "opacité-50 curseur-non-autorisé"
+        "filter_by_type": "Filtrer par type"
       }
     }
   },
-  "Ui": {
-    "CustomToast": {
-      "text": {
-        "border_border_gray_200": "bord bord-gris-200 sombre:bord-gris-700"
+  "Media": {
+    "MediaGrid": {
+      "heading": {
+        "no_media_files": "Aucun fichier multimédia"
       }
     },
-    "Toast": {
-      "Index": {
-        "text": {
-          "border_bg_background_text": "bord bg-arrière-plan texte-premier-plan",
-          "destructive_group_border_destructive": "groupe destructeur bord-destructeur bg-destructeur texte-destructeur-premier-plan"
-        }
+    "MediaPreview": {
+      "text": {
+        "failed_to_load": "Échec du chargement"
+      }
+    },
+    "MediaViewer": {
+      "heading": {
+        "failed_to_load_media": "Échec du chargement des médias"
+      },
+      "text": {
+        "preview_not_available_for": "Aperçu non disponible pour ce type de fichier",
+        "there_was_an_error": "Une erreur s'est produite lors du chargement de ce fichier",
+        "your_browser_does_not": "Votre navigateur ne prend pas en charge la balise vidéo.",
+        "your_browser_does_not_2": "Votre navigateur ne prend pas en charge la balise audio."
+      }
+    }
+  },
+  "ShareCard": {
+    "button": {
+      "add_people_by_email": "Ajouter des personnes par e-mail"
+    },
+    "heading": {
+      "people_with_access": "Personnes ayant accès",
+      "share_with_others": "Partager avec d'autres"
+    },
+    "text": {
+      "allow_editors_to_change": "Autoriser les éditeurs à modifier les autorisations et à partager",
+      "anyone_in_your_org": "Quiconque dans votre organisation peut voir",
+      "anyone_in_your_org_2": "Quiconque dans votre organisation peut modifier",
+      "anyone_on_the_internet": "Quiconque sur Internet peut voir",
+      "anyone_on_the_internet_2": "Quiconque sur Internet peut modifier",
+      "anyone_with_link_can": "Quiconque avec le lien peut voir",
+      "anyone_with_link_can_2": "Quiconque avec le lien peut modifier",
+      "anyone_with_the_link": "Quiconque avec le lien peut voir",
+      "anyone_with_the_link_2": "Quiconque avec le lien peut modifier",
+      "commenters_and_viewers": "Commentateurs et spectateurs",
+      "only_people_with_access": "Seulement les personnes ayant accès",
+      "public_and_editable": "Public et modifiable",
+      "public_on_the_web": "Public sur le web"
+    }
+  },
+  "Slides": {
+    "SlidesInspector": {
+      "text": {
+        "bring_existing_content_into": "Intégrez le contenu existant dans votre présentation.",
+        "combine_smart_snapping_with": "Combinez l'accrochage intelligent avec des superpositions de grille pour des mises en page parfaites.",
+        "control_alignment_helpers_for": "Contrôlez les aides à l'alignement pour des mises en page précises.",
+        "processing_your_file": "Traitement de votre fichier…",
+        "ready_for_new_imports": "Prêt pour de nouvelles importations.",
+        "use_a_smaller_grid": "Utilisez une grille plus petite pour des mises en page denses ou augmentez l'espacement pour des guides plus larges.",
+        "use_alignment_guides_to": "Utilisez des guides d'alignement pour répartir uniformément les formes.",
+        "while_dragging_to_constrain": "pendant le glissement pour contraindre l'axe."
+      }
+    },
+    "SlidesToolbar": {
+      "text": {
+        "use_smart_snapping_to": "Utilisez l'accrochage intelligent pour aligner les formes au centre et à espacement égal."
       }
     }
   }

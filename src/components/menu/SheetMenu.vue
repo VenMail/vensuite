@@ -444,7 +444,7 @@ function about() {
       <MenubarContent>
         <MenubarItem @click="handleNew">
           <FileIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.new')}}
+          {{$t('Commons.text.view')}}
         </MenubarItem>
         <MenubarItem @click="handleLoadDialog">
           <FolderIcon class="h-4 w-4 mr-2" />
@@ -452,7 +452,7 @@ function about() {
         </MenubarItem>
         <MenubarItem @click="handleSave">
           <SaveIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.button.save')}}
+          {{$t('Commons.button.date')}}
         </MenubarItem>
         <MenubarSub>
           <MenubarSubTrigger>
@@ -508,7 +508,7 @@ function about() {
         <MenubarSeparator />
         <MenubarItem @click="cut">
           <ScissorsIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.cut')}}
+          {{$t('Commons.text.auto')}}
         </MenubarItem>
         <MenubarItem @click="copy">
           <CopyIcon class="h-4 w-4 mr-2" />
@@ -571,7 +571,7 @@ function about() {
 
     <!-- Data Menu -->
     <MenubarMenu>
-      <MenubarTrigger>{{$t('Commons.text.data')}}</MenubarTrigger>
+      <MenubarTrigger>{{$t('Commons.text.date')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="sort">
           <SortAscIcon class="h-4 w-4 mr-2" />
@@ -630,7 +630,7 @@ function about() {
         <MenubarSeparator />
         <MenubarItem @click="about">
           <InfoIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.about')}}
+          {{$t('Commons.text.amount')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>

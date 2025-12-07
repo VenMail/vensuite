@@ -14,7 +14,7 @@
       <span class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label text-gray-500 dark:text-gray-400">{{$t('Commons.text.new')}}</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label text-gray-500 dark:text-gray-400">{{$t('Commons.text.view')}}</div>
        
       <button
         class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
@@ -294,7 +294,7 @@
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.headings')}}</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.heading_2')}}</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
         <button
           class="tiptap-toolbar__btn tiptap-toolbar__btn--heading"
@@ -372,7 +372,7 @@
       <span v-if="isExpanded" class="tiptap-toolbar__divider" />
 
        
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.blocks')}}</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.clock')}}</div>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
         <button
           class="tiptap-toolbar__btn"
@@ -548,7 +548,7 @@
   <Dialog v-model:open="showPaginationDialog">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>{{$t('Commons.heading.page_settings')}}</DialogTitle>
+        <DialogTitle>{{$t('Commons.heading.payment_settings')}}</DialogTitle>
       </DialogHeader>
       <div class="space-y-4">
         <div class="space-y-3">
@@ -682,7 +682,7 @@
               </div>
             </div>
             <div class="relative text-center">
-              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{$t('Commons.text.report')}}</span>
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{$t('Commons.text.export')}}</span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Commons.text.structured_analysis')}}</p>
             </div>
           </button>

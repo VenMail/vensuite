@@ -171,7 +171,7 @@ function formatSelectionLabel(selection: any): string {
       <MenubarContent>
         <MenubarItem @click="handleNew">
           <FileIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.new')}}
+          {{$t('Commons.text.view')}}
         </MenubarItem>
         <MenubarItem @click="handleOpenDialog">
           <FolderIcon class="h-4 w-4 mr-2" />
@@ -179,7 +179,7 @@ function formatSelectionLabel(selection: any): string {
         </MenubarItem>
         <MenubarItem @click="handleSave">
           <SaveIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.button.save')}}
+          {{$t('Commons.button.date')}}
         </MenubarItem>
         <MenubarSub>
           <MenubarSubTrigger>
@@ -270,7 +270,7 @@ function formatSelectionLabel(selection: any): string {
       </MenubarMenu>
 
       <MenubarMenu>
-        <MenubarTrigger>{{$t('Commons.text.data')}}</MenubarTrigger>
+        <MenubarTrigger>{{$t('Commons.text.date')}}</MenubarTrigger>
         <MenubarContent>
           <MenubarItem @click="emit('data-sort')">
             <SortAscIcon class="h-4 w-4 mr-2" />
@@ -326,7 +326,7 @@ function formatSelectionLabel(selection: any): string {
         </MenubarItem>
         <MenubarItem>
           <InfoIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.about')}}
+          {{$t('Commons.text.amount')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>

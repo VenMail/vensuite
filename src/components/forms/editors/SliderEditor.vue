@@ -1,6 +1,6 @@
 <template>
   <div class="slider-editor">
-    <h3>{{ modelValue.type === 'slider' ? $t('Commons.heading.slider') : $t('Commons.heading.range') }} {{$t('Commons.heading.properties')}}</h3>
+    <h3>{{ modelValue.type === 'slider' ? $t('Commons.heading.slides') : $t('Commons.heading.range') }} {{$t('Commons.heading.properties')}}</h3>
 
     <label>
       Min Value:

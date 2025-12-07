@@ -34,7 +34,7 @@
             <h2>{{ welcomeScreen?.title ?? $t('Commons.heading.welcome') }}</h2>
             <p v-if="welcomeScreen?.subtitle">{{ welcomeScreen?.subtitle }}</p>
             <button type="button" class="player-host__button player-host__button--primary" @click="startForm">
-              {{ welcomeScreen?.button_text ?? $t('Commons.button.start') }}
+              {{ welcomeScreen?.button_text ?? $t('Commons.button.share') }}
             </button>
           </div>
         </section>

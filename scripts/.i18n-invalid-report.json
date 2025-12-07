@@ -1,173 +1,53 @@
 {
-  "generatedAt": "2025-12-05T00:44:05.425Z",
+  "generatedAt": "2025-12-07T20:25:13.686Z",
   "baseLocale": "en",
   "autoDir": "resources/js/i18n/auto",
   "invalid": [
     {
-      "keyPath": "Commons.alt.venmail_logo",
-      "baseValue": "VenMail Logo",
+      "keyPath": "Commons.button.logo",
+      "baseValue": "Logo",
       "baseFileRel": "en/commons.json",
       "usages": []
     },
     {
-      "keyPath": "Commons.button.apply",
-      "baseValue": "Apply",
-      "baseFileRel": "en/commons.json",
+      "keyPath": "FileItem.text.transition_all_duration_200",
+      "baseValue": "transition-all duration-200 cursor-pointer",
+      "baseFileRel": "en/components.json",
       "usages": []
     },
     {
-      "keyPath": "Commons.button.reply",
-      "baseValue": "Reply",
-      "baseFileRel": "en/commons.json",
+      "keyPath": "LanguageSwitcher.aria_label.change_language",
+      "baseValue": "Change Language",
+      "baseFileRel": "en/components.json",
       "usages": []
     },
     {
-      "keyPath": "Commons.button.retry",
-      "baseValue": "Retry",
-      "baseFileRel": "en/commons.json",
+      "keyPath": "LanguageSwitcher.text.francais",
+      "baseValue": "Français",
+      "baseFileRel": "en/components.json",
       "usages": []
     },
     {
-      "keyPath": "Commons.button.type",
-      "baseValue": "Type",
-      "baseFileRel": "en/commons.json",
+      "keyPath": "key",
+      "baseValue": "[restore-i18n-invalid] Scanning {value1} source files for key usage...",
+      "baseFileRel": "en/scripts.json",
       "usages": []
     },
     {
-      "keyPath": "Commons.heading.type",
-      "baseValue": "Type",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.label.right",
-      "baseValue": "Right",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.as_is",
-      "baseValue": "AS IS",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.blocks",
-      "baseValue": "Blocks",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.bytes",
-      "baseValue": "Bytes",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.empty",
-      "baseValue": "Empty",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.fields",
-      "baseValue": "Fields",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.forms",
-      "baseValue": "Forms",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.height",
-      "baseValue": "Height",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.right",
-      "baseValue": "Right",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.search",
-      "baseValue": "Search",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.system",
-      "baseValue": "System",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.type",
-      "baseValue": "Type",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Commons.text.width",
-      "baseValue": "Width",
-      "baseFileRel": "en/commons.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Lib.Pagination.PaginationUi.text.control_group_custom_size",
-      "baseValue": "control-group custom-size",
-      "baseFileRel": "en/lib.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Plugins.Exporters.PDFExporter.text.table_row_unit_header",
-      "baseValue": "table-row-unit header-row",
-      "baseFileRel": "en/plugins.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Store.Files.text.client_side_conversion_failed",
-      "baseValue": "Client-side conversion failed:",
-      "baseFileRel": "en/store.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Views.Bin.button.login_with_venmail",
-      "baseValue": "Login with Venmail",
+      "keyPath": "Views.Bin.text.preparing_your_deleted_items",
+      "baseValue": "Preparing your deleted items…",
       "baseFileRel": "en/views.json",
       "usages": []
     },
     {
-      "keyPath": "Views.Bin.heading.welcome_to_venmail_file",
-      "baseValue": "Welcome to Venmail File Manager",
+      "keyPath": "Views.FormBuilder.text.publishing_form_to_generate",
+      "baseValue": "Publishing form to generate share link…",
       "baseFileRel": "en/views.json",
       "usages": []
     },
     {
-      "keyPath": "Views.Home.button.login_with_venmail",
-      "baseValue": "Login with Venmail",
-      "baseFileRel": "en/views.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Views.Home.heading.welcome_to_venmail_file",
-      "baseValue": "Welcome to Venmail File Manager",
-      "baseFileRel": "en/views.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Views.Home.text.login_to_manage_your",
-      "baseValue": "Login to manage your files and folders on Venmail.",
-      "baseFileRel": "en/views.json",
-      "usages": []
-    },
-    {
-      "keyPath": "Views.Login.button.login_with_venmail",
-      "baseValue": "Login with Venmail",
+      "keyPath": "Views.Forms.text.publishing_form_to_generate",
+      "baseValue": "Publishing form to generate share link…",
       "baseFileRel": "en/views.json",
       "usages": []
     }

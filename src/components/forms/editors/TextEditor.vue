@@ -14,7 +14,7 @@
 
      
     <label>
-      {{$t('Commons.label.validation_type')}}
+      {{$t('Commons.label.navigation_type')}}
       <select v-model="validation.inputType" @change="applyDefaultValidation">
         <option v-for="type in validationTypes" :key="type" :value="type">
           {{ formatLabel(type) }}

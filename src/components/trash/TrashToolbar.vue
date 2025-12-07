@@ -19,7 +19,7 @@
         <DropdownMenuTrigger asChild>
           <Button variant="outline" class="shrink-0">
             <Filter class="h-4 w-4 mr-2" />
-            {{ filters.type === 'all' || !filters.type ? $t('Commons.button.all_types') : filters.type }}
+            {{ filters.type === $t('Commons.button.all') || !filters.type ? $t('Commons.button.all_types') : filters.type }}
             <ChevronDown class="h-4 w-4 ml-2" />
           </Button>
         </DropdownMenuTrigger>
@@ -40,7 +40,7 @@
         <DropdownMenuTrigger asChild>
           <Button variant="outline" class="shrink-0">
             <Filter class="h-4 w-4 mr-2" />
-            {{ filters.source === 'all' || !filters.source ? $t('Commons.button.all_sources') : filters.source }}
+            {{ filters.source === $t('Commons.button.all') || !filters.source ? $t('Commons.button.all_sources') : filters.source }}
             <ChevronDown class="h-4 w-4 ml-2" />
           </Button>
         </DropdownMenuTrigger>

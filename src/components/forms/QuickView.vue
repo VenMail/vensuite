@@ -246,7 +246,7 @@ function formatRelative(value?: string | Date | null) {
       <div :class="statsClass">
         <div class="flex flex-col gap-1 min-w-0">
           <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
-            {{$t('Commons.text.fields')}}
+            {{$t('Commons.text.files')}}
           </span>
           <span class="text-sm font-medium tabular-nums text-slate-900 dark:text-white truncate">
             {{ fieldCount }}

@@ -13,9 +13,9 @@
         <label for="matchType">Match Type:</label>
         <select v-model="logic.matchType">
           <option value="equal">{{$t('Commons.text.equal')}}</option>
-          <option value="greater">{{$t('Commons.text.greater')}}</option>
+          <option value="greater">{{$t('Commons.text.create')}}</option>
           <option value="less">{{$t('Commons.text.less')}}</option>
-          <option value="contains">{{$t('Commons.text.contains')}}</option>
+          <option value="contains">{{$t('Commons.text.contacts')}}</option>
           <option value="regex">{{$t('Commons.text.regex')}}</option>
         </select>
       </div>
