@@ -270,9 +270,12 @@ export const useFileStore = defineStore("files", {
             try {
               const token = this.getToken();
               const isAbsolute = /^https?:\/\//i.test(url);
-              const isSameOrigin = isAbsolute && (url.startsWith(BASE_URL) || url.startsWith(API_BASE_URL));
-              const isRelative = !isAbsolute;
-              if (token && (isRelative || isSameOrigin)) {
+              const apiDownloadPrefix = `${FILES_ENDPOINT}/`;
+              const isApiDownload = isAbsolute && url.startsWith(apiDownloadPrefix);
+              const isRelativeApiDownload = !isAbsolute && url.startsWith('/app-files/');
+              // Only attach Authorization when calling the protected /app-files download endpoints,
+              // never for public storage URLs like file_public_url to avoid unnecessary CORS preflights.
+              if (token && (isApiDownload || isRelativeApiDownload)) {
                 config.headers = { Authorization: `Bearer ${token}` };
               }
             } catch { }
@@ -1494,33 +1497,39 @@ export const useFileStore = defineStore("files", {
         const ext = this.normalizeFileType(normalized.file_type, normalized.file_name);
         const isConvertible = !!ext && ["docx", "xlsx"].includes(ext.toLowerCase());
 
-        if (isConvertible) {
-          const target = ext!.toLowerCase() as "docx" | "xlsx";
+        // For DOCX/XLSX attachments, delegate conversion to backend /app-files/convert
+        if (isConvertible && normalized.id) {
+          try {
+            const target = ext!.toLowerCase() as "docx" | "xlsx";
+            const convRes = await axios.post(
+              `${FILES_ENDPOINT}/convert`,
+              {
+                app_file_id: normalized.id,
+                target,
+              },
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${this.getToken()}`,
+                },
+              },
+            );
 
-          let sourceUrl: string | undefined;
-
-          if ((raw as any).download_url) {
-            sourceUrl = (raw as any).download_url;
-          } else if ((raw as any).file_url) {
-            sourceUrl = this.constructFullUrl((raw as any).file_url);
-          } else if (normalized.file_url) {
-            sourceUrl = this.constructFullUrl(normalized.file_url);
-          }
-
-          if (sourceUrl) {
-            const converted = await this.convertUploadedFile({ url: sourceUrl, target });
-            if (converted) {
-              return converted;
+            const convRaw = convRes.data?.data ?? convRes.data;
+            if (convRaw) {
+              const convNormalized = this.normalizeDocumentShape(convRaw);
+              convNormalized.last_viewed = new Date();
+              this.saveToLocalCache(convNormalized);
+              this.updateFiles(convNormalized);
+              return convNormalized;
             }
+          } catch (e) {
+            console.error("Server-side attachment conversion failed", e);
+            // fall through to caching original metadata
           }
-
-          // Fallback: at least cache the imported metadata so the file appears
-          this.saveToLocalCache(normalized);
-          this.updateFiles(normalized);
-          return normalized;
         }
 
-        // Non-convertible attachments: just normalize and cache
+        // Non-convertible or failed conversion: just normalize and cache
         this.saveToLocalCache(normalized);
         this.updateFiles(normalized);
         return normalized;
