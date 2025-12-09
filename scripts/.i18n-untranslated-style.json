@@ -1,0 +1,24 @@
+{
+  "issueType": "style",
+  "generatedAt": "2025-12-09T08:31:29.875Z",
+  "files": [
+    {
+      "locale": "fr",
+      "localeFile": "fr\\commons.json",
+      "issues": [
+        {
+          "keyPath": "Commons.button.view_details",
+          "english": "View details",
+          "current": "Voir les détails",
+          "suggested": "Détails"
+        },
+        {
+          "keyPath": "Commons.button.copy_link",
+          "english": "Copy link",
+          "current": "Copier le lien",
+          "suggested": "Copier"
+        }
+      ]
+    }
+  ]
+}

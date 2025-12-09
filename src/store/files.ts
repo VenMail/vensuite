@@ -12,7 +12,6 @@ const UPLOAD_BASE = `${API_BASE_URI}/app-files/upload`;
 const UPLOAD_INIT = `${UPLOAD_BASE}/initiate`;
 const UPLOAD_CHUNK = `${UPLOAD_BASE}/chunk`;
 const UPLOAD_COMPLETE = `${UPLOAD_BASE}/complete`;
-const CONVERT_ENDPOINT = `${API_BASE_URI}/app-files/convert`;
 
 // Extract base URL for constructing full URLs from relative paths
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
@@ -243,9 +242,13 @@ export const useFileStore = defineStore("files", {
     },
 
     /**
-     * Convert an uploaded file (docx/xlsx) into app content usable by editors.
-     * Uses client-side conversion first (DOCX via mammoth, XLSX via xlsx),
-     * then falls back to backend /app-files/convert if client conversion fails.
+     * Convert an uploaded file (DOCX/XLSX) into app content usable by editors.
+     * Fully client-side:
+     *  - DOCX → HTML via Mammoth (mammoth.browser, exposed as window.mammoth)
+     *  - XLSX → Univer workbook JSON via LuckyExcel (from @mertdeveci55/univer-import-export)
+     *
+     * The source binary is downloaded from the file's /download endpoint or a direct URL,
+     * then parsed and saved back via saveToAPI. No backend /app-files/convert calls.
      */
     async convertUploadedFile(options: { appFileId?: string; url?: string; target?: 'docx' | 'xlsx' }): Promise<FileData | null> {
       // Helper: load binary as ArrayBuffer from id or URL
@@ -262,7 +265,18 @@ export const useFileStore = defineStore("files", {
             return { buf, meta };
           }
           if (options.url) {
-            const buf = await axios.get(options.url, { responseType: 'arraybuffer' }).then(r => r.data as ArrayBuffer);
+            const url = options.url;
+            const config: any = { responseType: 'arraybuffer' as const };
+            try {
+              const token = this.getToken();
+              const isAbsolute = /^https?:\/\//i.test(url);
+              const isSameOrigin = isAbsolute && (url.startsWith(BASE_URL) || url.startsWith(API_BASE_URL));
+              const isRelative = !isAbsolute;
+              if (token && (isRelative || isSameOrigin)) {
+                config.headers = { Authorization: `Bearer ${token}` };
+              }
+            } catch { }
+            const buf = await axios.get(url, config).then(r => r.data as ArrayBuffer);
             return { buf };
           }
         } catch (e) {
@@ -271,7 +285,7 @@ export const useFileStore = defineStore("files", {
         return null;
       };
 
-      // Client-side first
+      // Client-side conversion
       try {
         const loaded = await loadArrayBuffer();
         if (loaded?.buf) {
@@ -339,26 +353,6 @@ export const useFileStore = defineStore("files", {
       } catch (clientErr) {
         console.warn('Client-side conversion failed:', clientErr);
       }
-
-      // Fallback: server-side conversion if available
-      try {
-        const payload: any = {};
-        if (options.appFileId) payload.app_file_id = options.appFileId;
-        if (options.url) payload.url = options.url;
-        if (options.target) payload.target = options.target;
-        const res = await axios.post(CONVERT_ENDPOINT, payload, { headers: { Authorization: `Bearer ${this.getToken()}` } });
-        const data = res.data?.data || res.data;
-        if (data?.id) {
-          const refreshed = this.normalizeDocumentShape(data);
-          refreshed.title = this.computeTitle(data);
-          this.cacheDocument(refreshed);
-          this.updateFiles(refreshed);
-          return refreshed;
-        }
-      } catch (e) {
-        console.warn('Server conversion failed or not available:', (e as any)?.response?.data || e);
-      }
-
       return null;
     },
 
@@ -1487,9 +1481,46 @@ export const useFileStore = defineStore("files", {
         const response = await axios.get(`${FILES_ENDPOINT}/import/${attachId}`, {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
-        console.log("Imported attachment:", response.data.data);
-        const normalized = this.normalizeDocumentShape(response.data.data);
+        const raw = response.data?.data ?? response.data;
+        console.log("Imported attachment:", raw);
+
+        if (!raw) {
+          return null;
+        }
+
+        const normalized = this.normalizeDocumentShape(raw);
         normalized.last_viewed = new Date();
+
+        const ext = this.normalizeFileType(normalized.file_type, normalized.file_name);
+        const isConvertible = !!ext && ["docx", "xlsx"].includes(ext.toLowerCase());
+
+        if (isConvertible) {
+          const target = ext!.toLowerCase() as "docx" | "xlsx";
+
+          let sourceUrl: string | undefined;
+
+          if ((raw as any).download_url) {
+            sourceUrl = (raw as any).download_url;
+          } else if ((raw as any).file_url) {
+            sourceUrl = this.constructFullUrl((raw as any).file_url);
+          } else if (normalized.file_url) {
+            sourceUrl = this.constructFullUrl(normalized.file_url);
+          }
+
+          if (sourceUrl) {
+            const converted = await this.convertUploadedFile({ url: sourceUrl, target });
+            if (converted) {
+              return converted;
+            }
+          }
+
+          // Fallback: at least cache the imported metadata so the file appears
+          this.saveToLocalCache(normalized);
+          this.updateFiles(normalized);
+          return normalized;
+        }
+
+        // Non-convertible attachments: just normalize and cache
         this.saveToLocalCache(normalized);
         this.updateFiles(normalized);
         return normalized;

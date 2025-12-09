@@ -144,13 +144,20 @@
         "no_items_available_in": "No items available in this category.",
         "try_adjusting_your_search": "Try adjusting your search or filters.",
         "get_started_by_creating": "Get started by creating a new file or uploading an existing one.",
-        "login_to_manage_your": "Login to manage your files and folders on Venmail."
+        "login_to_manage_your": "Login to manage your files and folders on Venmail.",
+        "attachment_import_importing": "Importing attachment...",
+        "attachment_import_preparing_document": "Preparing document...",
+        "attachment_import_opening_document": "Opening document...",
+        "attachment_import_failed": "Failed to import attachment",
+        "attachment_import_default_message": "Please wait while we import your file."
       },
       "heading": {
         "choose_a_template": "Choose a Template",
         "no_matching_files_found": "No matching files found",
         "no_files_found": "No files found",
-        "welcome_to_venmail_file": "Welcome to Venmail File Manager"
+        "welcome_to_venmail_file": "Welcome to Venmail File Manager",
+        "attachment_import_failed": "Attachment import failed",
+        "attachment_import_in_progress": "Importing attachment"
       },
       "button": {
         "login_with_venmail": "Login with Venmail"

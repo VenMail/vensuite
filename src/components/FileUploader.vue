@@ -70,7 +70,9 @@
         class="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg"
       >
         <p class="text-sm text-destructive mb-2">
-          <strong>{{ rejectedFiles.length }} file(s) rejected:</strong>
+          <strong>
+            {{ rejectedFiles.length }} {{ $t('FileUploader.text.files_rejected') }}
+          </strong>
         </p>
         <ul class="text-xs text-destructive/80 space-y-1">
           <li v-for="rejected in rejectedFiles.slice(0, 3)" :key="rejected.name">
@@ -97,6 +99,9 @@
               <p class="text-sm font-medium truncate">{{ file.title }}</p>
               <p class="text-xs text-muted-foreground">
                 {{ formatBytes(file.file_size || 0) }}
+                <span v-if="getFileStatusText(file)" class="ml-2">
+                  · {{ getFileStatusText(file) }}
+                </span>
               </p>
               <div class="w-full bg-muted rounded-full h-2 mt-2">
                 <div
@@ -137,17 +142,17 @@
       <div class="mt-4 flex items-center justify-between">
         <p class="text-sm text-muted-foreground">
           {{ files.length }}
-          {{ files.length === 1 ? "file" : "files" }} selected
+          {{ files.length === 1 ? $t('Commons.text.file') : $t('Commons.text.files') }} selected
         </p>
         <p class="text-sm text-muted-foreground">
-          Total size: {{ formatBytes(totalSize) }}
+          {{ $t('FileUploader.text.total_size') }} {{ formatBytes(totalSize) }}
         </p>
       </div>
 
       <DialogFooter>
         <Button variant="outline" @click="$emit('close')">{{$t('Commons.button.cancel')}}</Button>
         <Button @click="uploadFiles" :disabled="files.length === 0 || isUploading">
-          {{ isUploading ? "Uploading..." : $t('Commons.button.upload_file') }}
+          {{ isUploading ? $t('FileUploader.text.status_uploading') : $t('Commons.button.upload_file') }}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -184,6 +189,8 @@ interface FileData {
   error?: boolean;
   folderName?: string;
   relativePath?: string;
+  isConverting?: boolean;
+  completed?: boolean;
 }
 
 interface RejectedFile {
@@ -212,8 +219,8 @@ const FILE_TYPE_CONFIG: Record<
   all: {
     extensions: [],
     mimeTypes: [],
-    description: t('FileUploader.text.all_file_types'),
-    instructions: "Drag and drop files or folders here, or click to browse",
+    description: t('FileUploader.text.description_all'),
+    instructions: t('FileUploader.text.instructions_all'),
   },
   documents: {
     extensions: ["doc", "docx", "pdf", "txt", "rtf", "odt", "pages"],
@@ -226,8 +233,8 @@ const FILE_TYPE_CONFIG: Record<
       "application/vnd.oasis.opendocument.text",
       "application/vnd.apple.pages",
     ],
-    description: "document files (PDF, Word, Text, etc.)",
-    instructions: "Drag and drop document files here, or click to browse",
+    description: t('FileUploader.text.description_documents'),
+    instructions: t('FileUploader.text.instructions_documents'),
   },
   spreadsheets: {
     extensions: ["xls", "xlsx", "csv", "ods", "numbers"],
@@ -238,8 +245,8 @@ const FILE_TYPE_CONFIG: Record<
       "application/vnd.oasis.opendocument.spreadsheet",
       "application/vnd.apple.numbers",
     ],
-    description: "spreadsheet files (Excel, CSV, etc.)",
-    instructions: "Drag and drop spreadsheet files here, or click to browse",
+    description: t('FileUploader.text.description_spreadsheets'),
+    instructions: t('FileUploader.text.instructions_spreadsheets'),
   },
   media: {
     extensions: [
@@ -260,8 +267,8 @@ const FILE_TYPE_CONFIG: Record<
       "aac",
     ],
     mimeTypes: ["image/*", "video/*", "audio/*"],
-    description: "media files (images, videos, audio)",
-    instructions: "Drag and drop media files here, or click to browse",
+    description: t('FileUploader.text.description_media'),
+    instructions: t('FileUploader.text.instructions_media'),
   },
 };
 
@@ -294,7 +301,7 @@ const acceptedMimeTypes = computed(() => {
 
 const getUploadDescription = () => {
   const config = FILE_TYPE_CONFIG[currentFilter.value];
-  return `Drag and drop ${config.description}, or click to select`;
+  return config.description;
 };
 
 const getUploadInstructions = () => {
@@ -352,7 +359,10 @@ const isFileAllowed = (file: File): { allowed: boolean; reason?: string } => {
   const fileMimeType = file.type || "unknown";
 
   if (config.extensions.length > 0 && !config.extensions.includes(fileExtension)) {
-    return { allowed: false, reason: `File type .${fileExtension} not allowed` };
+    return {
+      allowed: false,
+      reason: `${t('FileUploader.text.file_type_not_allowed')} (.${fileExtension})`,
+    };
   }
 
   if (config.mimeTypes.length > 0) {
@@ -364,7 +374,10 @@ const isFileAllowed = (file: File): { allowed: boolean; reason?: string } => {
       return fileMimeType === allowedType;
     });
     if (!mimeTypeMatch) {
-      return { allowed: false, reason: `MIME type ${fileMimeType} not allowed` };
+      return {
+        allowed: false,
+        reason: `${t('FileUploader.text.mime_type_not_allowed')} (${fileMimeType})`,
+      };
     }
   }
 
@@ -444,7 +457,7 @@ const addFiles = (newFiles: File[]) => {
     if (fileExists) {
       currentRejected.push({
         name: file.name,
-        reason: "File already selected",
+        reason: t('FileUploader.text.file_already_selected'),
       });
       return;
     }
@@ -455,7 +468,7 @@ const addFiles = (newFiles: File[]) => {
     } else {
       currentRejected.push({
         name: file.name,
-        reason: reason || "File type not allowed",
+        reason: reason || t('FileUploader.text.file_type_not_allowed'),
       });
     }
   });
@@ -475,6 +488,8 @@ const addFiles = (newFiles: File[]) => {
       error: false,
       folderName: folderName,
       relativePath: (file as any).webkitRelativePath || file.name,
+      isConverting: false,
+      completed: false,
     }))
   );
 };
@@ -490,6 +505,18 @@ const isImageFileData = (fileData: FileData) => {
 const totalSize = computed(() => {
   return files.value.reduce((total, file) => total + (file.file_size || 0), 0);
 });
+
+const getFileStatusText = (file: FileData): string => {
+  if (file.error) return t('FileUploader.text.status_failed');
+  if (file.completed) return t('FileUploader.text.status_done');
+  if (isUploading.value) {
+    if (file.isConverting) return t('FileUploader.text.status_converting');
+    if ((file.progress ?? 0) > 0 && (file.progress ?? 0) < 100) {
+      return t('FileUploader.text.status_uploading');
+    }
+  }
+  return "";
+};
 
 const removeFile = (file: FileData) => {
   const index = files.value.findIndex((f) => f.id === file.id);
@@ -635,6 +662,9 @@ const uploadFile = async (
       const index = files.value.findIndex((f) => f.id === file.id);
       if (index !== -1) {
         files.value[index].progress = progress;
+        if (progress >= 100) {
+          files.value[index].isConverting = true;
+        }
       }
     };
 
@@ -652,6 +682,8 @@ const uploadFile = async (
       if (index !== -1) {
         files.value[index].progress = 100;
         files.value[index].error = false;
+        files.value[index].isConverting = false;
+        files.value[index].completed = true;
       }
 
       return uploadedFile;
@@ -664,6 +696,8 @@ const uploadFile = async (
     if (index !== -1) {
       files.value[index].error = true;
       files.value[index].progress = 0;
+      files.value[index].isConverting = false;
+      files.value[index].completed = false;
     }
     return null;
   }

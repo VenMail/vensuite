@@ -25,7 +25,7 @@
       "complete": "Terminer",
       "complete_setup": "Terminer la configuration",
       "copy": "Copier",
-      "copy_link": "Copier le lien",
+      "copy_link": "Copier",
       "create_form": "Créer un formulaire",
       "date": "Date",
       "delete": "Supprimer",
@@ -80,9 +80,10 @@
       "upload_file": "Télécharger un Fichier",
       "upload_media": "Télécharger des médias",
       "upload_spreadsheet": "Télécharger un Tableur",
-      "view_details": "Voir les détails",
+      "view_details": "Détails",
       "webhooks": "Webhooks",
-      "yes": "Oui"
+      "yes": "Oui",
+      "new": "Nouveau"
     },
     "heading": {
       "add_people": "Ajouter des personnes",

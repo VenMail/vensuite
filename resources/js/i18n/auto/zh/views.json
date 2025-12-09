@@ -153,12 +153,19 @@
         "login_with_venmail": "使用 Venmail 登录"
       },
       "heading": {
+        "attachment_import_failed": "附件导入失败",
+        "attachment_import_in_progress": "正在导入附件",
         "choose_a_template": "选择一个模板",
         "no_files_found": "未找到文件",
         "no_matching_files_found": "未找到匹配的文件",
         "welcome_to_venmail_file": "欢迎使用 Venmail 文件管理器"
       },
       "text": {
+        "attachment_import_default_message": "请稍候，我们正在导入您的文件。",
+        "attachment_import_failed": "导入附件失败",
+        "attachment_import_importing": "正在导入附件...",
+        "attachment_import_opening_document": "正在打开文档...",
+        "attachment_import_preparing_document": "正在准备文档...",
         "get_started_by_creating": "通过创建新文件或上传现有文件开始。",
         "group_by_type": "按类型分组",
         "login_to_manage_your": "登录以管理您在Venmail上的文件和文件夹。",

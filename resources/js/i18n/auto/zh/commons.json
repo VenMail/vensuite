@@ -82,7 +82,8 @@
       "upload_spreadsheet": "上传电子表格",
       "view_details": "查看详情",
       "webhooks": "网络钩子",
-      "yes": "是"
+      "yes": "是",
+      "new": "新建"
     },
     "heading": {
       "add_people": "添加人员",
@@ -165,7 +166,7 @@
       "theme": "主题",
       "top": "顶部",
       "upload_image": "上传图片",
-      "webhook_url": "Webhook URL",
+      "webhook_url": "网络钩子 URL",
       "x_axis_labels": "X轴标签"
     },
     "link": {

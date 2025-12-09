@@ -25,7 +25,24 @@
   "FileUploader": {
     "text": {
       "all_file_types": "all file types",
-      "allowed_file_types": "Allowed file types:"
+      "allowed_file_types": "Allowed file types:",
+      "description_all": "Drag and drop files or folders here, or click to browse",
+      "description_documents": "Document files (PDF, Word, Text, etc.)",
+      "description_spreadsheets": "Spreadsheet files (Excel, CSV, etc.)",
+      "description_media": "Media files (images, videos, audio)",
+      "instructions_all": "Drag and drop files or folders here, or click to browse",
+      "instructions_documents": "Drag and drop document files here, or click to browse",
+      "instructions_spreadsheets": "Drag and drop spreadsheet files here, or click to browse",
+      "instructions_media": "Drag and drop media files here, or click to browse",
+      "file_already_selected": "File already selected",
+      "file_type_not_allowed": "File type not allowed",
+      "mime_type_not_allowed": "MIME type not allowed",
+      "files_rejected": "file(s) rejected:",
+      "status_uploading": "Uploading...",
+      "status_converting": "Converting...",
+      "status_done": "Done",
+      "status_failed": "Failed",
+      "total_size": "Total size:"
     }
   },
   "Forms": {

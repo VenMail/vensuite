@@ -30,7 +30,24 @@
   "FileUploader": {
     "text": {
       "all_file_types": "所有文件类型",
-      "allowed_file_types": "允许的文件类型："
+      "allowed_file_types": "允许的文件类型：",
+      "description_all": "将文件或文件夹拖放到此处，或单击浏览",
+      "description_documents": "文档文件（PDF、Word、文本等）",
+      "description_media": "媒体文件（图片、视频、音频）",
+      "description_spreadsheets": "电子表格文件（Excel、CSV等）",
+      "file_already_selected": "文件已被选择",
+      "file_type_not_allowed": "不允许的文件类型",
+      "files_rejected": "文件被拒绝：",
+      "instructions_all": "将文件或文件夹拖放到此处，或单击浏览",
+      "instructions_documents": "将文档文件拖放到此处，或单击浏览",
+      "instructions_media": "将媒体文件拖放到此处，或单击浏览",
+      "instructions_spreadsheets": "将电子表格文件拖放到此处，或单击浏览",
+      "mime_type_not_allowed": "不允许的 MIME 类型",
+      "status_converting": "转换中...",
+      "status_done": "完成",
+      "status_failed": "失败",
+      "status_uploading": "上传中...",
+      "total_size": "总大小："
     }
   },
   "Forms": {

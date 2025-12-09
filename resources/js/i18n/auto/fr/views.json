@@ -153,12 +153,19 @@
         "login_with_venmail": "Se connecter avec Venmail"
       },
       "heading": {
+        "attachment_import_failed": "Échec de l'importation de l'attachement",
+        "attachment_import_in_progress": "Importation de l'attachement",
         "choose_a_template": "Choisissez un modèle",
         "no_files_found": "Aucun fichier trouvé",
         "no_matching_files_found": "Aucun fichier correspondant trouvé",
         "welcome_to_venmail_file": "Bienvenue dans le gestionnaire de fichiers Venmail"
       },
       "text": {
+        "attachment_import_default_message": "Veuillez patienter pendant que nous importons votre fichier.",
+        "attachment_import_failed": "Échec de l'importation de l'attachement",
+        "attachment_import_importing": "Importation de l'attachement...",
+        "attachment_import_opening_document": "Ouverture du document...",
+        "attachment_import_preparing_document": "Préparation du document...",
         "get_started_by_creating": "Commencez par créer un nouveau fichier ou en téléchargeant un fichier existant.",
         "group_by_type": "Grouper par type",
         "login_to_manage_your": "Connectez-vous pour gérer vos fichiers et dossiers sur Venmail.",

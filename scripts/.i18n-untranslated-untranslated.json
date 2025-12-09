@@ -1,17 +1,5 @@
 {
   "issueType": "untranslated",
-  "generatedAt": "2025-12-07T20:50:00.533Z",
-  "files": [
-    {
-      "locale": "fr",
-      "localeFile": "fr\\components.json",
-      "issues": [
-        {
-          "keyPath": "LanguageSwitcher.text.francais",
-          "english": "Français",
-          "current": "Français"
-        }
-      ]
-    }
-  ]
+  "generatedAt": "2025-12-09T08:31:29.875Z",
+  "files": []
 }

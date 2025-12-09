@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -71,6 +72,10 @@ const sortBy = ref("name");
 const groupByFileType = ref(false);
 const searchValue = ref("");
 const isUploadDialogOpen = ref(false);
+const isImportingAttachment = ref(false);
+const isAttachmentDialogOpen = ref(false);
+const attachmentDialogMessage = ref("");
+const attachmentDialogError = ref<string | null>(null);
 
 // Initialize explorer navigation
 const {
@@ -225,14 +230,29 @@ function loginWithVenmail() {
 
 onMounted(async () => {
   watchEffect(async () => {
-    if (route.params.id) {
-      console.log("importing..", route.params.id);
-      const attachId = route.params?.id as string;
+    const attachId = route.params?.id as string | undefined;
+    if (!attachId) return;
+
+    console.log("importing..", attachId);
+    isAttachmentDialogOpen.value = true;
+    attachmentDialogError.value = null;
+    attachmentDialogMessage.value = t('Views.Home.text.attachment_import_importing');
+    isImportingAttachment.value = true;
+    try {
       const doc = await fileStore.importAttachment(attachId);
       if (doc) {
-        toast.info(doc.file_name + " imported successfully");
+        attachmentDialogMessage.value = t('Views.Home.text.attachment_import_preparing_document');
+        await refresh();
+        if (doc.id) {
+          attachmentDialogMessage.value = t('Views.Home.text.attachment_import_opening_document');
+          await openFile(doc.id);
+          isAttachmentDialogOpen.value = false;
+        }
+      } else {
+        attachmentDialogError.value = t('Views.Home.text.attachment_import_failed');
       }
-      router.replace("/");
+    } finally {
+      isImportingAttachment.value = false;
     }
   });
 
@@ -583,12 +603,24 @@ function openUploadDialog() {
 
 async function handleUploadComplete(files: any[]) {
   console.log("Upload completed:", files);
-  toast.success(
-    `Successfully uploaded ${files.length} file${files.length !== 1 ? "s" : ""}`
-  );
 
+  const uploaded: FileData[] = Array.isArray(files)
+    ? files.filter((f): f is FileData => !!f && typeof f === 'object')
+    : [];
+
+  const primary = uploaded.find((f) =>
+    !!f.file_type && ['docx', 'xlsx'].includes(String(f.file_type).toLowerCase()),
+  ) || uploaded[0];
   await refresh();
   isUploadDialogOpen.value = false;
+
+  if (primary && primary.id) {
+    try {
+      await openFile(primary.id);
+    } catch (e) {
+      console.warn('Failed to auto-open uploaded file', e);
+    }
+  }
 }
 
 function formatGroupName(name: string) {
@@ -696,9 +728,44 @@ function handleEscapeKey(event: KeyboardEvent) {
       <!-- Main content -->
       <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Loading bar -->
-        <div v-if="isLoading || fileStore.isSyncing" class="loading-bar">
+        <div v-if="isLoading || fileStore.isSyncing || isImportingAttachment" class="loading-bar">
           <div class="loading-progress"></div>
         </div>
+
+        <Dialog v-if="isAttachmentDialogOpen" :open="true">
+          <DialogContent class="sm:max-w-md bg-white dark:bg-gray-900 border border-border/50">
+            <DialogHeader>
+              <DialogTitle class="text-lg font-semibold">
+                {{
+                  attachmentDialogError
+                    ? $t('Views.Home.heading.attachment_import_failed')
+                    : $t('Views.Home.heading.attachment_import_in_progress')
+                }}
+              </DialogTitle>
+              <DialogDescription>
+                <p class="text-sm" :class="attachmentDialogError ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'">
+                  {{
+                    attachmentDialogError
+                      || attachmentDialogMessage
+                      || $t('Views.Home.text.attachment_import_default_message')
+                  }}
+                </p>
+              </DialogDescription>
+            </DialogHeader>
+            <div class="mt-2 space-y-3">
+              <div v-if="!attachmentDialogError" class="flex items-center space-x-3">
+                <div class="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div class="h-1.5 w-1/2 bg-primary-500 animate-pulse"></div>
+                </div>
+              </div>
+              <div v-else class="flex justify-end pt-2">
+                <Button variant="outline" size="sm" @click="isAttachmentDialogOpen = false">
+                  {{ $t('Commons.button.close') }}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <!-- File browser -->
         <div class="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden">

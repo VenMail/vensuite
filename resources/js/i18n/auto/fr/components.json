@@ -30,7 +30,24 @@
   "FileUploader": {
     "text": {
       "all_file_types": "tous les types de fichiers",
-      "allowed_file_types": "Types de fichiers autorisés :"
+      "allowed_file_types": "Types de fichiers autorisés :",
+      "description_all": "Déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
+      "description_documents": "Fichiers de documents (PDF, Word, Texte, etc.)",
+      "description_media": "Fichiers multimédias (images, vidéos, audio)",
+      "description_spreadsheets": "Fichiers de tableur (Excel, CSV, etc.)",
+      "file_already_selected": "Fichier déjà sélectionné",
+      "file_type_not_allowed": "Type de fichier non autorisé",
+      "files_rejected": "fichier(s) rejeté(s) :",
+      "instructions_all": "Déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
+      "instructions_documents": "Déposez des fichiers de documents ici, ou cliquez pour parcourir",
+      "instructions_media": "Déposez des fichiers multimédias ici, ou cliquez pour parcourir",
+      "instructions_spreadsheets": "Déposez des fichiers de tableur ici, ou cliquez pour parcourir",
+      "mime_type_not_allowed": "Type MIME non autorisé",
+      "status_converting": "Conversion en cours...",
+      "status_done": "Terminé",
+      "status_failed": "Échoué",
+      "status_uploading": "Téléchargement en cours...",
+      "total_size": "Taille totale :"
     }
   },
   "Forms": {
