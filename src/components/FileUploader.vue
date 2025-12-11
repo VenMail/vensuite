@@ -9,6 +9,7 @@
           {{ getUploadDescription() }}
         </DialogDescription>
       </DialogHeader>
+      
       <div
         class="border-2 border-dashed border-muted rounded-xl p-8 text-center mb-6 transition-all duration-300 cursor-pointer hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-950/50"
         :class="{ 'border-primary-500 bg-primary-50 dark:bg-primary-950': isDragging }"
@@ -59,10 +60,9 @@
         />
       </div>
 
-      <div v-if="fileTypeFilter !== 'all'" class="mb-4 p-3 bg-muted/50 rounded-lg">
-        <p class="text-sm text-muted-foreground">
-          <strong>{{$t('FileUploader.text.allowed_file_types')}}</strong> {{ getAllowedExtensions() }}
-        </p>
+      <!-- Minimal helper text -->
+      <div v-if="fileTypeFilter !== 'all'" class="mb-3 text-sm text-muted-foreground">
+        {{$t('FileUploader.text.allowed_file_types')}} {{ getAllowedExtensions() }}
       </div>
 
       <div
@@ -99,6 +99,9 @@
               <p class="text-sm font-medium truncate">{{ file.title }}</p>
               <p class="text-xs text-muted-foreground">
                 {{ formatBytes(file.file_size || 0) }}
+                <span v-if="file.willConvert" class="ml-2 text-blue-600 dark:text-blue-400">
+                  · Will convert to {{ file.targetFormat }}
+                </span>
                 <span v-if="getFileStatusText(file)" class="ml-2">
                   · {{ getFileStatusText(file) }}
                 </span>
@@ -142,10 +145,7 @@
       <div class="mt-4 flex items-center justify-between">
         <p class="text-sm text-muted-foreground">
           {{ files.length }}
-          {{ files.length === 1 ? $t('Commons.text.file') : $t('Commons.text.files') }} selected
-        </p>
-        <p class="text-sm text-muted-foreground">
-          {{ $t('FileUploader.text.total_size') }} {{ formatBytes(totalSize) }}
+          {{ files.length === 1 ? $t('Commons.text.file') : $t('Commons.text.files') }} • {{ formatBytes(totalSize) }}
         </p>
       </div>
 
@@ -161,6 +161,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useRouter } from 'vue-router';
+
 import {
   Dialog,
   DialogContent,
@@ -175,6 +177,8 @@ import { UploadCloud, File, X, CheckCircle2, RefreshCw } from "lucide-vue-next";
 import { useFileStore } from "@/store/files";
 import { formatBytes } from "@/utils/lib";
 import { t } from '@/i18n';
+import { convertFileForEditor } from '@/utils/fileConverter';
+import type { ConversionResult } from '@/utils/fileConverter';
 
 interface FileData {
   id: string;
@@ -191,6 +195,10 @@ interface FileData {
   relativePath?: string;
   isConverting?: boolean;
   completed?: boolean;
+  willConvert?: boolean;
+  targetFormat?: 'document' | 'spreadsheet';
+  originalFormat?: string;
+  convertedContent?: string | any;
 }
 
 interface RejectedFile {
@@ -223,18 +231,19 @@ const FILE_TYPE_CONFIG: Record<
     instructions: t('FileUploader.text.instructions_all'),
   },
   documents: {
-    extensions: ["doc", "docx", "pdf", "txt", "rtf", "odt", "pages"],
+    extensions: ["doc", "docx", "pdf", "txt", "rtf", "odt", "pages", "html", "htm"],
     mimeTypes: [
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "text/plain",
       "text/rtf",
+      "text/html",
       "application/vnd.oasis.opendocument.text",
       "application/vnd.apple.pages",
     ],
     description: t('FileUploader.text.description_documents'),
-    instructions: t('FileUploader.text.instructions_documents'),
+    instructions: 'Drop documents here (HTML, DOCX, PDF will be auto-converted)',
   },
   spreadsheets: {
     extensions: ["xls", "xlsx", "csv", "ods", "numbers"],
@@ -246,7 +255,7 @@ const FILE_TYPE_CONFIG: Record<
       "application/vnd.apple.numbers",
     ],
     description: t('FileUploader.text.description_spreadsheets'),
-    instructions: t('FileUploader.text.instructions_spreadsheets'),
+    instructions: 'Drop spreadsheets here (XLSX, CSV will be auto-converted)',
   },
   media: {
     extensions: [
@@ -272,7 +281,13 @@ const FILE_TYPE_CONFIG: Record<
   },
 };
 
+// Convertible file extensions
+const CONVERTIBLE_DOCUMENT_FORMATS = ['html', 'htm', 'docx', 'pdf'];
+const CONVERTIBLE_SPREADSHEET_FORMATS = ['xlsx', 'xls', 'csv'];
+
 const fileStore = useFileStore();
+const router = useRouter();
+
 const emit = defineEmits(["close", "upload"]);
 const props = withDefaults(
   defineProps<{
@@ -349,6 +364,35 @@ const onFolderInputChange = (e: Event) => {
   const inputFiles = Array.from((e.target as HTMLInputElement).files || []);
   addFiles(inputFiles);
 };
+
+/**
+ * Check if file needs conversion and determine target format
+ */
+function checkFileConversion(file: File): {
+  willConvert: boolean;
+  targetFormat?: 'document' | 'spreadsheet';
+  originalFormat?: string;
+} {
+  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+  
+  if (CONVERTIBLE_DOCUMENT_FORMATS.includes(extension)) {
+    return {
+      willConvert: true,
+      targetFormat: 'document',
+      originalFormat: extension,
+    };
+  }
+  
+  if (CONVERTIBLE_SPREADSHEET_FORMATS.includes(extension)) {
+    return {
+      willConvert: true,
+      targetFormat: 'spreadsheet',
+      originalFormat: extension,
+    };
+  }
+  
+  return { willConvert: false };
+}
 
 const isFileAllowed = (file: File): { allowed: boolean; reason?: string } => {
   if (currentFilter.value === "all") {
@@ -476,21 +520,36 @@ const addFiles = (newFiles: File[]) => {
   rejectedFiles.value = currentRejected;
 
   files.value.push(
-    ...allowedFiles.map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      title: file.name,
-      file_name: file.name,
-      file_type: file.name.split(".").pop()?.toLowerCase(),
-      file_size: file.size,
-      progress: 0,
-      preview: isImageFile(file) ? URL.createObjectURL(file) : undefined,
-      file: file,
-      error: false,
-      folderName: folderName,
-      relativePath: (file as any).webkitRelativePath || file.name,
-      isConverting: false,
-      completed: false,
-    }))
+    ...allowedFiles.map((file) => {
+      const conversionInfo = checkFileConversion(file);
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+      
+      // Determine final file type after conversion
+      let finalFileType = fileExtension;
+      if (conversionInfo.willConvert) {
+        finalFileType = conversionInfo.targetFormat === 'document' ? 'docx' : 'xlsx';
+      }
+      
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        title: file.name,
+        file_name: file.name,
+        file_type: finalFileType,
+        file_size: file.size,
+        progress: 0,
+        preview: isImageFile(file) ? URL.createObjectURL(file) : undefined,
+        file: file,
+        error: false,
+        folderName: folderName,
+        relativePath: (file as any).webkitRelativePath || file.name,
+        isConverting: false,
+        completed: false,
+        willConvert: conversionInfo.willConvert,
+        targetFormat: conversionInfo.targetFormat,
+        originalFormat: conversionInfo.originalFormat,
+        convertedContent: undefined,
+      };
+    })
   );
 };
 
@@ -510,7 +569,7 @@ const getFileStatusText = (file: FileData): string => {
   if (file.error) return t('FileUploader.text.status_failed');
   if (file.completed) return t('FileUploader.text.status_done');
   if (isUploading.value) {
-    if (file.isConverting) return t('FileUploader.text.status_converting');
+    if (file.isConverting) return 'Converting...';
     if ((file.progress ?? 0) > 0 && (file.progress ?? 0) < 100) {
       return t('FileUploader.text.status_uploading');
     }
@@ -537,10 +596,29 @@ const retryUpload = (file: FileData) => {
 const uploadFiles = async () => {
   isUploading.value = true;
 
+  const uploadedFiles: any[] = [];
+  const createdDocs: any[] = [];
+
+  // First handle all convertible files purely on the client: convert → save → open editor
+  const convertibleFiles = files.value.filter((f) => f.willConvert && f.file);
+  for (const file of convertibleFiles) {
+    try {
+      const saved = await createDocumentFromConvertedFile(file);
+      if (saved) {
+        createdDocs.push(saved);
+      }
+    } catch (e) {
+      console.error('Failed to convert & create document from file', file.title, e);
+    }
+  }
+
+  // Then handle non-convertible files with the existing upload/chunked flow
+  const nonConvertibleFiles = files.value.filter((f) => !f.willConvert);
+
   const filesGroupedByFolder: Record<string, FileData[]> = {};
   const standaloneFiles: FileData[] = [];
 
-  files.value.forEach((file) => {
+  nonConvertibleFiles.forEach((file) => {
     if (file.folderName) {
       if (!filesGroupedByFolder[file.folderName]) {
         filesGroupedByFolder[file.folderName] = [];
@@ -550,8 +628,6 @@ const uploadFiles = async () => {
       standaloneFiles.push(file);
     }
   });
-
-  const uploadedFiles: any[] = [];
 
   for (const [folderName, folderFiles] of Object.entries(filesGroupedByFolder)) {
     const uploadedFolderFiles = await uploadFolderWithContents(folderName, folderFiles);
@@ -566,7 +642,78 @@ const uploadFiles = async () => {
   uploadedFiles.push(...uploadedStandaloneFiles);
 
   isUploading.value = false;
-  emit("upload", uploadedFiles);
+
+  const allResults = [...createdDocs, ...uploadedFiles];
+  emit("upload", allResults);
+
+  // After creation, open the first created document in the appropriate editor
+  if (createdDocs.length > 0) {
+    const first = createdDocs[0];
+    const type = (first.file_type || '').toString().toLowerCase();
+    if (type === 'docx') {
+      await router.push({ name: 'docs-edit', params: { appFileId: first.id } });
+    } else if (type === 'xlsx') {
+      await router.push({ name: 'sheet', params: { id: first.id } });
+    }
+  }
+};
+
+/**
+ * Create & save a new document from a convertible file, without uploading the binary.
+ * Uses convertFileForEditor on the client, then saves via fileStore.saveToAPI
+ * and returns the created FileData.
+ */
+const createDocumentFromConvertedFile = async (file: FileData): Promise<any | null> => {
+  if (!file.file) return null;
+
+  const index = files.value.findIndex((f) => f.id === file.id);
+  if (index !== -1) {
+    files.value[index].isConverting = true;
+    files.value[index].progress = 10;
+  }
+
+  const conversionResult: ConversionResult = await convertFileForEditor(file.file);
+
+  if (index !== -1) {
+    files.value[index].isConverting = false;
+    files.value[index].progress = 60;
+  }
+
+  const originalName = file.file_name || file.title || 'Converted File';
+  const baseTitle = originalName.replace(/\.[^/.]+$/, '') || 'Converted File';
+
+  const targetType = conversionResult.fileType; // 'docx' | 'xlsx'
+  let content: string;
+
+  if (targetType === 'docx') {
+    content = typeof conversionResult.content === 'string'
+      ? conversionResult.content
+      : JSON.stringify(conversionResult.content);
+  } else {
+    // xlsx/univer workbook JSON
+    content = typeof conversionResult.content === 'string'
+      ? conversionResult.content
+      : JSON.stringify(conversionResult.content as any);
+  }
+
+  const payload: any = {
+    title: baseTitle,
+    file_name: `${baseTitle}.${targetType}`,
+    file_type: targetType,
+    is_folder: false,
+    content,
+    folder_id: props.folderId || null,
+  };
+
+  const saved = await fileStore.saveToAPI(payload);
+
+  if (saved && index !== -1) {
+    files.value[index].progress = 100;
+    files.value[index].completed = true;
+    files.value[index].error = false;
+  }
+
+  return saved;
 };
 
 const uploadFolderWithContents = async (
@@ -590,7 +737,6 @@ const uploadFolderWithContents = async (
 
     const uploadedFiles: any[] = [];
 
-    // Sort files by depth to ensure parent folders are created before child folders
     const sortedFiles = [...folderFiles].sort((a, b) => {
       const aDepth = (a.relativePath || "").split("/").length;
       const bDepth = (b.relativePath || "").split("/").length;
@@ -601,11 +747,10 @@ const uploadFolderWithContents = async (
       if (!file.relativePath || !file.file) continue;
 
       const pathParts = file.relativePath.split("/");
-      const fileName = pathParts.pop(); // Remove filename from path
+      const fileName = pathParts.pop();
 
       let parentFolderId = rootFolder.id;
 
-      // Build folder hierarchy
       for (let i = 1; i < pathParts.length; i++) {
         const currentPath = pathParts.slice(0, i + 1).join("/");
 
@@ -629,7 +774,6 @@ const uploadFolderWithContents = async (
         }
       }
 
-      // Upload the actual file to its parent folder
       try {
         const uploadedFile = await uploadFile(file, parentFolderId);
         if (uploadedFile) {
@@ -639,7 +783,6 @@ const uploadFolderWithContents = async (
         }
       } catch (fileError) {
         console.error(`Error uploading file ${fileName}:`, fileError);
-        // Continue with other files even if one fails
       }
     }
 
@@ -657,25 +800,30 @@ const uploadFile = async (
   if (!file.file) return null;
 
   try {
-    const useChunked = (file.file.size || 0) > 5 * 1024 * 1024;
+    // This function now only handles non-convertible files.
+    // Convertible files are processed by createDocumentFromConvertedFile().
+
     const progressCb = (progress: number) => {
       const index = files.value.findIndex((f) => f.id === file.id);
       if (index !== -1) {
         files.value[index].progress = progress;
-        if (progress >= 100) {
-          files.value[index].isConverting = true;
-        }
       }
     };
 
     const destinationFolderId = targetFolderId || props.folderId || null;
+    const fileToUpload = file.file;
+    const useChunked = (fileToUpload.size || 0) > 5 * 1024 * 1024;
 
     const uploadedFile = useChunked
-      ? await fileStore.uploadChunked(file.file, {
+      ? await fileStore.uploadChunked(fileToUpload, {
           folderId: destinationFolderId,
           onProgress: progressCb,
         })
-      : await fileStore.uploadFile(file.file, progressCb, destinationFolderId);
+      : await fileStore.uploadFile(
+          fileToUpload,
+          progressCb,
+          destinationFolderId,
+        );
 
     if (uploadedFile) {
       const index = files.value.findIndex((f) => f.id === file.id);

@@ -145,12 +145,6 @@
             @click="scrollToHeading(index)"
           >
             {{ item.text }}
-
-// Normalize and apply document title from a file name
-function setDocumentTitleFromName(name?: string | null) {
-  const clean = (name || '').replace(/\.[^/.]+$/, '').trim();
-  documentTitle.value = clean || 'Untitled Document';
-}
           </button>
         </div>
       </div>
@@ -177,7 +171,6 @@ function setDocumentTitleFromName(name?: string | null) {
            
           <BubbleMenu
             v-if="editor"
-            ref="bubbleMenuRef"
             :editor="editor"
             :tippy-options="bubbleMenuTippyOptions"
             :should-show="bubbleShouldShow"
@@ -1183,10 +1176,34 @@ function handleLinkCtrlClick(event: MouseEvent) {
   if (!linkEl) {
     return false;
   }
+
   const href = linkEl.getAttribute('href') || '';
   if (!href) {
     return false;
   }
+
+  const ctrlOrMeta = isMacLike
+    ? (event.metaKey || event.ctrlKey)
+    : event.ctrlKey;
+
+  // Internal in-document TOC links use a special href prefix and only
+  // activate on Ctrl/Cmd + click.
+  if (href.startsWith('#toc:')) {
+    if (!ctrlOrMeta) {
+      return false;
+    }
+
+    event.preventDefault();
+    const rawLabel = decodeURIComponent(href.slice('#toc:'.length));
+    scrollToHeadingByLabel(rawLabel);
+    return true;
+  }
+
+  // For normal links, require Ctrl/Cmd as hinted by the tooltip.
+  if (!ctrlOrMeta) {
+    return false;
+  }
+
   event.preventDefault();
   openHrefInNewTab(href);
   return true;
@@ -1630,7 +1647,7 @@ function getSelectedChartAttrs(): ChartAttrs | null {
   return attrs;
 }
 
-const bubbleMenuRef = ref<any>(null);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in template via ref
 
 function closeTiptapBubbleMenu(): void {
   // Query all Tippy root containers (used by Tiptap BubbleMenu)
@@ -1999,6 +2016,23 @@ const tocItems = computed(() => {
   return items;
 });
 
+const normalizeHeadingLabel = (value: string) => value.replace(/\s+/g, ' ').trim().toLowerCase();
+
+function scrollToHeadingByLabel(label: string) {
+  if (!editor.value) return;
+
+  // Strip common numeric prefixes like "1." or "1)" from TOC entries
+  const target = normalizeHeadingLabel(label.replace(/^\d+[).]?\s*/, ''));
+
+  const index = tocItems.value.findIndex((item) => {
+    const itemLabel = normalizeHeadingLabel(item.text.replace(/^\d+[).]?\s*/, ''));
+    return itemLabel === target;
+  });
+
+  if (index === -1) return;
+  scrollToHeading(index);
+}
+
 function getNearestScrollContainer(element: HTMLElement | null): HTMLElement | null {
   let el: HTMLElement | null = element;
   while (el) {
@@ -2053,12 +2087,56 @@ function scrollToHeading(index: number) {
   });
 }
 
+// Helper: safe JSON parse with double-parse support
+function tryParseDocJson(raw: string): any | null {
+  try {
+    const first = JSON.parse(raw);
+    if (typeof first === 'string') {
+      try {
+        return JSON.parse(first);
+      } catch {
+        return first;
+      }
+    }
+    return first;
+  } catch {
+    return null;
+  }
+}
+
 // Helper function to detect content type and load appropriately
-function loadContentIntoEditor(content: string) {
-  if (!editor.value || !content) return;
+function loadContentIntoEditor(content: any) {
+  if (!editor.value || content == null) return;
 
   try {
+    // If we were given a pre-parsed Tiptap JSON doc, apply it directly
+    if (typeof content === 'object' && content) {
+      const maybeDoc = content as any;
+      if (maybeDoc.type === 'doc' || Array.isArray(maybeDoc.content)) {
+        editor.value.commands.setContent(maybeDoc, false);
+        hasEnteredContent.value = true;
+        updateEditorEmptyState(editor.value);
+        console.log('✓ Loaded pre-parsed Tiptap JSON content', {
+          hasContent: !!maybeDoc.content,
+          nodes: Array.isArray(maybeDoc.content) ? maybeDoc.content.length : 0,
+        });
+        return;
+      }
+
+      // For non-doc objects, fall back to stringification so existing logic can still run
+      try {
+        content = JSON.stringify(maybeDoc);
+      } catch {
+        content = String(maybeDoc);
+      }
+    }
+
+    if (typeof content !== 'string') {
+      content = String(content);
+    }
+
     const trimmedContent = content.trim();
+    console.info('[docs] loadContentIntoEditor', { length: trimmedContent.length, startsWith: trimmedContent.slice(0, 30) });
     
     // Check if it's HTML (starts with < and contains HTML tags)
     const isHTML = trimmedContent.startsWith('<') && (
@@ -2071,24 +2149,18 @@ function loadContentIntoEditor(content: string) {
       editor.value.commands.setContent(trimmedContent, false);
       hasEnteredContent.value = true;
       updateEditorEmptyState(editor.value);
-      console.log('✓ Loaded HTML content');
+      console.log('✓ Loaded HTML content', { length: trimmedContent.length });
       return;
     }
     
-    // Try to parse as Tiptap JSON
-    try {
-      const parsed = JSON.parse(trimmedContent);
-      
-      // Validate it's a Tiptap document structure
-      if (parsed && typeof parsed === 'object' && (parsed.type === 'doc' || parsed.content)) {
-        editor.value.commands.setContent(parsed, false);
-        hasEnteredContent.value = true;
-        updateEditorEmptyState(editor.value);
-        console.log('✓ Loaded Tiptap JSON content');
-        return;
-      }
-    } catch (jsonError) {
-      // Not valid JSON, continue to fallback
+    // Try to parse as Tiptap JSON (supports double-stringified payloads)
+    const parsed = tryParseDocJson(trimmedContent);
+    if (parsed && typeof parsed === 'object' && (parsed.type === 'doc' || parsed.content)) {
+      editor.value.commands.setContent(parsed, false);
+      hasEnteredContent.value = true;
+      updateEditorEmptyState(editor.value);
+      console.log('✓ Loaded Tiptap JSON content', { hasContent: !!parsed.content, nodes: Array.isArray(parsed.content) ? parsed.content.length : 0 });
+      return;
     }
     
     // Fallback: treat as plain text wrapped in paragraph
@@ -2693,6 +2765,12 @@ async function initializeDocument() {
     // Load existing document
     try {
       const doc = await fileStore.loadDocument(docId, 'docx');
+      console.info('[docs] loaded document meta', {
+        id: doc?.id,
+        file_type: doc?.file_type,
+        contentLength: typeof doc?.content === 'string' ? doc?.content.length : undefined,
+        contentsLength: typeof (doc as any)?.contents === 'string' ? (doc as any)?.contents.length : undefined,
+      });
       if (doc) {
         currentDoc.value = doc;
         documentTitle.value = doc.title || 'Untitled Document';
@@ -2728,8 +2806,26 @@ async function initializeDocument() {
           }
         }
         
+        // Prefer inline JSON content saved during upload (if present) before falling back to server content
+        let loadedFromInline = false;
+        try {
+          const inlineKey = doc.id ? `DOC_INLINE_JSON_${doc.id}` : '';
+          if (inlineKey) {
+            const inline = localStorage.getItem(inlineKey);
+            if (inline && inline.trim()) {
+              console.info('[docs] applying inline JSON content for document', {
+                id: doc.id,
+                length: inline.length,
+              });
+              loadContentIntoEditor(inline);
+              loadedFromInline = true;
+              localStorage.removeItem(inlineKey);
+            }
+          }
+        } catch {}
+
         // Load content into editor using helper function
-        if (doc.content) {
+        if (!loadedFromInline && doc.content) {
           loadContentIntoEditor(doc.content);
         }
         
@@ -3252,6 +3348,19 @@ onUnmounted(() => {
   opacity: 0.8;
 }
 
+/* In-document Table of Contents links (generated from DOCX imports).
+   Only links with href starting with "#toc:" get this behavior, so
+   regular external links are unaffected. */
+:deep(.ProseMirror a[href^="#toc:"]) {
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 1px dotted transparent;
+}
+
+:deep(.ProseMirror a[href^="#toc:"]:hover) {
+  border-bottom-color: currentColor;
+}
+
 @media print {
   .editor-placeholder-overlay {
     display: none !important;
@@ -3339,17 +3448,35 @@ onUnmounted(() => {
 }
 
 :deep(.ProseMirror h1) {
-  font-size: 2em;
-  font-weight: bold;
-  margin-top: 0.67em;
-  margin-bottom: 0.67em;
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #111827;
+}
+
+:deep(.dark .ProseMirror h1) {
+  color: #e5e7eb;
 }
 
 :deep(.ProseMirror h2) {
-  font-size: 1.5em;
-  font-weight: bold;
-  margin-top: 0.83em;
-  margin-bottom: 0.83em;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+:deep(.dark .ProseMirror h2) {
+  color: #e5e7eb;
+}
+
+:deep(.ProseMirror h3) {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+:deep(.dark .ProseMirror h3) {
+  color: #e5e7eb;
 }
 
 :deep(.ProseMirror blockquote) {

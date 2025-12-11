@@ -4,6 +4,7 @@ import { useAuthStore } from "./auth";
 import type { DocumentFormat, LoadDocumentOptions, LoadDocumentResult, FileData } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 import { DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
+import { convertFileForEditor } from "@/utils/fileConverter";
 
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
@@ -357,6 +358,73 @@ export const useFileStore = defineStore("files", {
         console.warn('Client-side conversion failed:', clientErr);
       }
       return null;
+    },
+
+    async convertAttachmentClientSide(meta: FileData, ext: string): Promise<FileData | null> {
+      if (!meta.id) {
+        return null;
+      }
+
+      const normalizedExt = (ext || '').toLowerCase();
+      const convertibleDocExts = ['docx', 'pdf', 'html', 'htm'];
+      const convertibleSheetExts = ['xlsx', 'xls', 'csv'];
+
+      if (!convertibleDocExts.includes(normalizedExt) && !convertibleSheetExts.includes(normalizedExt)) {
+        return null;
+      }
+
+      try {
+        const downloadUrl = `${FILES_ENDPOINT}/${meta.id}/download`;
+        const buf = await axios.get(downloadUrl, {
+          responseType: 'arraybuffer',
+          headers: { Authorization: `Bearer ${this.getToken()}` },
+        }).then(r => r.data as ArrayBuffer);
+
+        let mime = 'application/octet-stream';
+        if (normalizedExt === 'docx') mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        else if (normalizedExt === 'pdf') mime = 'application/pdf';
+        else if (normalizedExt === 'html' || normalizedExt === 'htm') mime = 'text/html';
+        else if (normalizedExt === 'xlsx') mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        else if (normalizedExt === 'xls') mime = 'application/vnd.ms-excel';
+        else if (normalizedExt === 'csv') mime = 'text/csv';
+
+        const originalName = typeof meta.file_name === 'string' && meta.file_name.trim().length
+          ? meta.file_name
+          : (meta.title || `attachment.${normalizedExt || 'bin'}`);
+        const baseTitle = originalName.replace(/\.[^/.]+$/, '') || 'Attachment';
+
+        const blob = new Blob([buf], { type: mime });
+        const browserFile = new File([blob], originalName, { type: mime });
+
+        const conversion = await convertFileForEditor(browserFile);
+        const targetType = conversion.fileType;
+
+        let content: string;
+        if (targetType === 'docx') {
+          content = typeof conversion.content === 'string'
+            ? conversion.content
+            : JSON.stringify(conversion.content);
+        } else {
+          content = typeof conversion.content === 'string'
+            ? conversion.content
+            : JSON.stringify(conversion.content as any);
+        }
+
+        const payload: any = {
+          title: baseTitle,
+          file_name: `${baseTitle}.${targetType}`,
+          file_type: targetType,
+          is_folder: false,
+          content,
+          folder_id: meta.folder_id || null,
+        };
+
+        const saved = await this.saveToAPI(payload as FileData);
+        return saved;
+      } catch (e) {
+        console.error('Client-side attachment conversion failed', e);
+        return null;
+      }
     },
 
     /** Simple upload (legacy). Prefer uploadChunked for large files. Optionally accepts folderId */
@@ -1495,41 +1563,48 @@ export const useFileStore = defineStore("files", {
         normalized.last_viewed = new Date();
 
         const ext = this.normalizeFileType(normalized.file_type, normalized.file_name);
-        const isConvertible = !!ext && ["docx", "xlsx"].includes(ext.toLowerCase());
+        const normalizedExt = (ext || '').toLowerCase();
+        const convertibleDocExts = ['docx', 'pdf', 'html', 'htm'];
+        const convertibleSheetExts = ['xlsx', 'xls', 'csv'];
+        const isConvertible = !!normalizedExt && (convertibleDocExts.includes(normalizedExt) || convertibleSheetExts.includes(normalizedExt));
 
-        // For DOCX/XLSX attachments, delegate conversion to backend /app-files/convert
         if (isConvertible && normalized.id) {
-          try {
-            const target = ext!.toLowerCase() as "docx" | "xlsx";
-            const convRes = await axios.post(
-              `${FILES_ENDPOINT}/convert`,
-              {
-                app_file_id: normalized.id,
-                target,
-              },
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${this.getToken()}`,
-                },
-              },
-            );
+          const clientConverted = await this.convertAttachmentClientSide(normalized, normalizedExt);
+          if (clientConverted) {
+            return clientConverted;
+          }
 
-            const convRaw = convRes.data?.data ?? convRes.data;
-            if (convRaw) {
-              const convNormalized = this.normalizeDocumentShape(convRaw);
-              convNormalized.last_viewed = new Date();
-              this.saveToLocalCache(convNormalized);
-              this.updateFiles(convNormalized);
-              return convNormalized;
+          if (['docx', 'xlsx'].includes(normalizedExt)) {
+            try {
+              const target = normalizedExt as "docx" | "xlsx";
+              const convRes = await axios.post(
+                `${FILES_ENDPOINT}/convert`,
+                {
+                  app_file_id: normalized.id,
+                  target,
+                },
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${this.getToken()}`,
+                  },
+                },
+              );
+
+              const convRaw = convRes.data?.data ?? convRes.data;
+              if (convRaw) {
+                const convNormalized = this.normalizeDocumentShape(convRaw);
+                convNormalized.last_viewed = new Date();
+                this.saveToLocalCache(convNormalized);
+                this.updateFiles(convNormalized);
+                return convNormalized;
+              }
+            } catch (e) {
+              console.error("Server-side attachment conversion failed", e);
             }
-          } catch (e) {
-            console.error("Server-side attachment conversion failed", e);
-            // fall through to caching original metadata
           }
         }
 
-        // Non-convertible or failed conversion: just normalize and cache
         this.saveToLocalCache(normalized);
         this.updateFiles(normalized);
         return normalized;
