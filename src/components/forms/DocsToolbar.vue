@@ -24,6 +24,13 @@
         <Plus class="h-4 w-4" />
       </button>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.import')}}</div>
+      <span class="tiptap-toolbar__divider bg-gray-300 dark:bg-gray-600" />
+        <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title="Import File (PDF, DOCX, HTML)" @click="showImportDialog = true">
+          <Upload class="h-4 w-4" />
+        </button>
+      </div>
+      <div v-if="isExpanded" class="tiptap-toolbar__group">
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.export')}}</div>
       <span class="tiptap-toolbar__divider bg-gray-300 dark:bg-gray-600" />
         <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title="Export PDF" @click="handleExport('pdf')">
@@ -764,6 +771,50 @@
     @submit="handleChartSubmit"
     @cancel="handleChartCancel"
   />
+
+  <Dialog v-model:open="showImportDialog">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{{$t('Forms.DocsToolbar.heading.import_file')}}</DialogTitle>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          {{$t('Forms.DocsToolbar.text.import_file_description')}}
+        </p>
+      </DialogHeader>
+      <div class="space-y-4 py-4">
+        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+          <Upload class="h-12 w-12 mx-auto mb-4 text-gray-400" />
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            {{$t('Forms.DocsToolbar.text.select_file_to_import')}}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-gray-500 mb-4">
+            PDF, DOCX, HTML supported
+          </p>
+          <input
+            ref="importFileInput"
+            type="file"
+            accept=".pdf,.docx,.html,.htm"
+            class="hidden"
+            @change="handleImportFileSelect"
+          />
+          <Button @click="importFileInput?.click()">
+            {{$t('Commons.button.select_file')}}
+          </Button>
+        </div>
+        <div v-if="importingFile" class="text-sm text-gray-600 dark:text-gray-400">
+          <p>Importing: {{ importingFileName }}</p>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
+            <div
+              class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              :style="{ width: `${importProgress}%` }"
+            ></div>
+          </div>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="showImportDialog = false">{{$t('Commons.button.cancel')}}</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -804,6 +855,7 @@ import {
   Table,
   Undo2,
   Underline as UnderlineIcon,
+  Upload,
 } from 'lucide-vue-next';
 import {
   Dialog,
@@ -825,6 +877,12 @@ import ChartConfigurator from '@/components/editor/ChartConfigurator.vue';
 import ImagePicker from '@/components/ImagePicker.vue';
 import type { ChartAttrs } from '@/extensions/chart';
 import { NodeSelection } from '@tiptap/pm/state';
+import { convertFileForEditor } from '@/utils/fileConverter';
+import type { ConversionResult } from '@/utils/fileConverter';
+import { useFileStore } from '@/store/files';
+import { useAuthStore } from '@/store/auth';
+import axios from 'axios';
+import { toast } from 'vue-sonner';
 
 const props = defineProps<{
   editor: Editor | null | undefined;
@@ -869,8 +927,15 @@ const showImageDialog = ref(false);
 const showNewFileDialog = ref(false);
 const showPaginationDialog = ref(false);
 const showChartDialog = ref(false);
+const showImportDialog = ref(false);
 
 const chartInitialValue = ref<Partial<ChartAttrs> | null>(null);
+
+// Import state
+const importFileInput = ref<HTMLInputElement | null>(null);
+const importingFile = ref(false);
+const importingFileName = ref('');
+const importProgress = ref(0);
 
 // Pagination settings
 const paginationSettings = ref({
@@ -1246,7 +1311,155 @@ function handleExport(format: string) {
   emit('export', format);
 }
 
+async function handleImportFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file || !props.editor) return;
+
+  importingFile.value = true;
+  importingFileName.value = file.name;
+  importProgress.value = 10;
+
+  try {
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+    const isPdf = fileExtension === 'pdf';
+    const isOnline = fileStore.isOnline;
+
+    let content: string | null = null;
+
+    // For PDFs, prefer server-side conversion when online
+    if (isPdf && isOnline) {
+      importProgress.value = 20;
+      try {
+        // Upload PDF first
+        const uploadedPdf = await fileStore.uploadFile(file, (progress) => {
+          importProgress.value = 20 + (progress * 0.3);
+        });
+
+        if (uploadedPdf?.id) {
+          importProgress.value = 60;
+          // Convert using server-side
+          const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+          const FILES_ENDPOINT = `${API_BASE_URI}/app-files`;
+          const token = authStore.getToken?.();
+
+          if (token) {
+            const convertResponse = await axios.post(
+              `${FILES_ENDPOINT}/convert`,
+              {
+                app_file_id: uploadedPdf.id,
+                target: 'docx',
+                return_contents: true, // Get HTML content back
+              },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            const convertedData = convertResponse.data?.data ?? convertResponse.data;
+            if (convertedData?.content) {
+              content = convertedData.content;
+            }
+          }
+        }
+      } catch (serverError) {
+        console.warn('[Import] Server-side PDF conversion failed, falling back to client-side:', serverError);
+        // Fall through to client-side conversion
+      }
+    }
+
+    // Client-side conversion (for non-PDFs or PDF fallback)
+    if (!content) {
+      importProgress.value = isPdf ? 50 : 30;
+      const conversionResult: ConversionResult = await convertFileForEditor(file);
+      
+      if (conversionResult.fileType === 'docx') {
+        // convertFileForEditor returns Tiptap JSON string for docx
+        content = typeof conversionResult.content === 'string'
+          ? conversionResult.content
+          : JSON.stringify(conversionResult.content);
+      } else {
+        toast.error('Unsupported file type for import. Only PDF, DOCX, and HTML are supported.');
+        importingFile.value = false;
+        importingFileName.value = '';
+        importProgress.value = 0;
+        return;
+      }
+    }
+
+    if (!content) {
+      toast.error('Failed to convert file');
+      return;
+    }
+
+    importProgress.value = 90;
+
+    // Insert content into editor at cursor position
+    try {
+      // Parse content - could be HTML or Tiptap JSON
+      let parsedContent: any = content;
+      let isTiptapJson = false;
+      
+      // Try to parse as JSON first
+      try {
+        parsedContent = JSON.parse(content);
+        if (parsedContent && typeof parsedContent === 'object' && (parsedContent.type === 'doc' || Array.isArray(parsedContent.content))) {
+          // Valid Tiptap JSON - extract content nodes if it's a full doc
+          if (parsedContent.type === 'doc' && Array.isArray(parsedContent.content)) {
+            // Insert the content nodes, not the doc wrapper
+            props.editor.commands.insertContent(parsedContent.content);
+          } else {
+            props.editor.commands.insertContent(parsedContent);
+          }
+          isTiptapJson = true;
+        }
+      } catch {
+        // Not JSON, will treat as HTML below
+      }
+      
+      // If not Tiptap JSON, treat as HTML
+      if (!isTiptapJson) {
+        // Check if it's HTML
+        const trimmed = content.trim();
+        const isHTML = trimmed.startsWith('<') && (trimmed.includes('</') || trimmed.match(/<[a-z][\s\S]*>/i));
+        
+        if (isHTML) {
+          props.editor.commands.insertContent(content);
+        } else {
+          // Plain text - wrap in paragraph
+          props.editor.commands.insertContent(`<p>${content}</p>`);
+        }
+      }
+
+      importProgress.value = 100;
+      toast.success('File imported successfully');
+      showImportDialog.value = false;
+      
+      // Reset file input
+      if (importFileInput.value) {
+        importFileInput.value.value = '';
+      }
+    } catch (insertError) {
+      console.error('Error inserting content:', insertError);
+      toast.error('Failed to insert content into document');
+      throw insertError; // Re-throw to be caught by outer catch
+    }
+  } catch (error) {
+    console.error('Import error:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to import file');
+  } finally {
+    importingFile.value = false;
+    importingFileName.value = '';
+    importProgress.value = 0;
+  }
+}
+
 const router = useRouter();
+const fileStore = useFileStore();
+const authStore = useAuthStore();
 
 // Template cache
 const templateCache = new Map<string, string>();

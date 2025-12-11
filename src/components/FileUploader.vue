@@ -99,7 +99,7 @@
               <p class="text-sm font-medium truncate">{{ file.title }}</p>
               <p class="text-xs text-muted-foreground">
                 {{ formatBytes(file.file_size || 0) }}
-                <span v-if="file.willConvert" class="ml-2 text-blue-600 dark:text-blue-400">
+                <span v-if="file.willConvert && file.originalFormat !== 'pdf'" class="ml-2 text-blue-600 dark:text-blue-400">
                   · Will convert to {{ file.targetFormat }}
                 </span>
                 <span v-if="getFileStatusText(file)" class="ml-2">
@@ -178,10 +178,12 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UploadCloud, File, X, CheckCircle2, RefreshCw } from "lucide-vue-next";
 import { useFileStore } from "@/store/files";
+import { useAuthStore } from "@/store/auth";
 import { formatBytes } from "@/utils/lib";
 import { t } from '@/i18n';
 import { convertFileForEditor } from '@/utils/fileConverter';
 import type { ConversionResult } from '@/utils/fileConverter';
+import axios from 'axios';
 
 interface FileData {
   id: string;
@@ -371,6 +373,8 @@ const onFolderInputChange = (e: Event) => {
 
 /**
  * Check if file needs conversion and determine target format
+ * Note: PDFs are excluded from auto-conversion - they should remain as raw files
+ * and can only be converted explicitly via import menu in DocsEditor
  */
 function checkFileConversion(file: File): {
   willConvert: boolean;
@@ -378,6 +382,11 @@ function checkFileConversion(file: File): {
   originalFormat?: string;
 } {
   const extension = file.name.split('.').pop()?.toLowerCase() || '';
+  
+  // Exclude PDFs from auto-conversion
+  if (extension === 'pdf') {
+    return { willConvert: false };
+  }
   
   if (CONVERTIBLE_DOCUMENT_FORMATS.includes(extension)) {
     return {
@@ -603,8 +612,16 @@ const uploadFiles = async () => {
   const uploadedFiles: any[] = [];
   const createdDocs: any[] = [];
 
-  // First handle all convertible files purely on the client: convert → save → open editor
-  const convertibleFiles = files.value.filter((f) => f.willConvert && f.file);
+  // Exclude PDFs from auto-conversion - they should remain as raw files
+  // PDFs can only be converted explicitly via import menu in DocsEditor
+  const convertibleFiles = files.value.filter((f) => 
+    f.willConvert && 
+    f.file && 
+    !f.file.name.toLowerCase().endsWith('.pdf') && 
+    f.originalFormat !== 'pdf'
+  );
+
+  // Handle convertible files (DOCX, HTML, XLSX, CSV): client-side conversion
   for (const file of convertibleFiles) {
     const index = files.value.findIndex((f) => f.id === file.id);
     try {
@@ -632,8 +649,11 @@ const uploadFiles = async () => {
     }
   }
 
-  // Then handle non-convertible files with the existing upload/chunked flow
-  const nonConvertibleFiles = files.value.filter((f) => !f.willConvert);
+  // Handle all non-convertible files (including PDFs) with the existing upload/chunked flow
+  const nonConvertibleFiles = files.value.filter((f) => 
+    !f.willConvert || 
+    (f.file && (f.file.name.toLowerCase().endsWith('.pdf') || f.originalFormat === 'pdf'))
+  );
 
   const filesGroupedByFolder: Record<string, FileData[]> = {};
   const standaloneFiles: FileData[] = [];

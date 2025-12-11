@@ -771,43 +771,65 @@ export async function convertDocxToTiptap(file: File): Promise<string> {
 
 /**
  * Convert PDF to Tiptap JSON format
- * Uses pdf.js for text extraction, with improved formatting
+ * Uses enhanced extraction with tables, images, and better formatting
  */
 export async function convertPdfToTiptap(file: File): Promise<string> {
   try {
-    console.info('[convert] PDF start', { name: file.name, size: file.size });
+    console.info('[convert] PDF start (enhanced extraction)', { name: file.name, size: file.size });
     
-    // Extract text from PDF
+    // Use enhanced extraction that handles tables, images, and formatting
+    let extractionResult: PdfExtractionResult;
+    try {
+      extractionResult = await extractPdfContent(file);
+    } catch (extractionError) {
+      // Fallback to simple text extraction if enhanced extraction fails
+      console.warn('[PDF] Enhanced extraction failed, falling back to text-only', extractionError);
     const text = await extractTextFromPdf(file);
     
-    // Check if extraction returned an error message
-    if (text.startsWith('PDF:') && text.includes('Error:') || text.includes('Note:')) {
-      // This is an error/fallback message, convert it to a user-friendly paragraph
-      const errorText = text.split('\n\n').slice(1).join(' ').trim();
-      const html = `<p><strong>PDF Import Notice:</strong> ${escapeHtml(errorText)}</p>`;
+      if (text.startsWith('PDF:') && (text.includes('Error:') || text.includes('Note:'))) {
+        const errorText = text.split('\n\n').slice(1).join(' ').trim();
+        const html = `<p><strong>PDF Import Notice:</strong> ${escapeHtml(errorText)}</p>`;
+        return htmlToTiptapJson(html);
+      }
+      
+      // Convert text to HTML
+    const paragraphs = text
+        .split(/\n\n+/)
+        .filter(p => p.trim())
+        .map(paragraph => {
+          const lines = paragraph.split('\n').filter(l => l.trim());
+          if (lines.length === 1) {
+            return `<p>${escapeHtml(lines[0].trim())}</p>`;
+          }
+          return `<p>${lines.map(l => escapeHtml(l.trim())).join('<br>')}</p>`;
+        });
+      
+      const html = paragraphs.length > 0 ? paragraphs.join('') : '<p></p>';
       return htmlToTiptapJson(html);
     }
     
-    // Convert plain text to HTML paragraphs with better structure
-    // Split by double newlines (paragraph breaks) and single newlines (line breaks within paragraphs)
-    const paragraphs = text
-      .split(/\n\n+/)
+    // Use enhanced extraction result
+    let html = extractionResult.html;
+    
+    // If no HTML was generated but we have text, create basic HTML
+    if (!html || html.trim() === '') {
+      if (extractionResult.text) {
+        const paragraphs = extractionResult.text
+          .split(/\n\n+/)
       .filter(p => p.trim())
-      .map(paragraph => {
-        // Within each paragraph, preserve single line breaks as <br>
-        const lines = paragraph.split('\n').filter(l => l.trim());
-        if (lines.length === 1) {
-          return `<p>${escapeHtml(lines[0].trim())}</p>`;
-        }
-        // Multiple lines in a paragraph - use <br> for line breaks
-        return `<p>${lines.map(l => escapeHtml(l.trim())).join('<br>')}</p>`;
-      });
+      .map(p => `<p>${escapeHtml(p.trim())}</p>`)
+      .join('');
+        html = paragraphs || '<p></p>';
+      } else {
+        html = '<p>No content extracted from PDF.</p>';
+      }
+    }
     
-    const html = paragraphs.length > 0 ? paragraphs.join('') : '<p></p>';
-    
-    console.info('[convert] PDF extracted text', { 
-      textLength: text.length, 
-      paragraphCount: paragraphs.length 
+    console.info('[convert] PDF enhanced extraction completed', { 
+      textLength: extractionResult.text.length,
+      tablesCount: extractionResult.tables.length,
+      imagesCount: extractionResult.images.length,
+      htmlLength: html.length
     });
     
     // Convert HTML to Tiptap JSON format
@@ -815,14 +837,12 @@ export async function convertPdfToTiptap(file: File): Promise<string> {
   } catch (error) {
     console.error('[convert] PDF conversion error:', error);
     
-    // Provide a helpful error message in the document
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorHtml = `<p><strong>PDF Conversion Error:</strong> ${escapeHtml(errorMessage)}</p><p>For best results, convert PDFs to DOCX before importing, or use server-side conversion for large files.</p>`;
     
     try {
       return htmlToTiptapJson(errorHtml);
     } catch (fallbackError) {
-      // Ultimate fallback - minimal valid structure
       console.error('[convert] Even fallback conversion failed:', fallbackError);
       return JSON.stringify({
         type: 'doc',
@@ -1043,7 +1063,460 @@ function cleanHtmlForEditor(html: string): string {
 }
 
 /**
- * Extract text from PDF using pdfjs-dist
+ * Enhanced PDF extraction result with structured data
+ */
+interface PdfExtractionResult {
+  text: string;
+  tables: Array<{
+    rows: string[][];
+    page: number;
+  }>;
+  images: Array<{
+    data: string; // base64
+    mimeType: string;
+    page: number;
+  }>;
+  html: string; // Final HTML with tables and images embedded
+}
+
+/**
+ * Extract comprehensive content from PDF using pdfjs-dist
+ * Handles text, tables, images, and formatting
+ */
+async function extractPdfContent(file: File): Promise<PdfExtractionResult> {
+  const result: PdfExtractionResult = {
+    text: '',
+    tables: [],
+    images: [],
+    html: '',
+  };
+
+  try {
+    // Dynamically import pdfjs-dist
+    let pdfjsLib: any;
+    try {
+      const pdfjsModule = await import('pdfjs-dist');
+      pdfjsLib = pdfjsModule;
+      
+      if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
+        try {
+          const workerUrl = new URL(
+            'pdfjs-dist/build/pdf.worker.min.mjs',
+            import.meta.url
+          ).toString();
+          pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+        } catch (workerError) {
+          try {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
+          } catch (relativeError) {
+            const version = pdfjsLib.version || '3.11.174';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
+          }
+        }
+      }
+    } catch (importError) {
+      console.error('[PDF] Failed to import pdfjs-dist', importError);
+      throw new Error('PDF extraction library failed to load');
+    }
+
+    if (!pdfjsLib || !pdfjsLib.getDocument) {
+      throw new Error('pdfjs-dist is not properly loaded');
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+      disableFontFace: true,
+      useSystemFonts: true,
+      verbosity: 0,
+    });
+    
+    const pdf = await loadingTask.promise;
+    const numPages = pdf.numPages;
+    
+    console.info('[PDF] Starting enhanced extraction', { 
+      fileName: file.name, 
+      numPages,
+      fileSize: file.size 
+    });
+    
+    const pageHtmls: string[] = [];
+    
+    // Process each page
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      try {
+        const page = await pdf.getPage(pageNum);
+        const [textContent, operatorList] = await Promise.all([
+          page.getTextContent({
+            normalizeWhitespace: false,
+            disableCombineTextItems: false,
+          }),
+          page.getOperatorList(), // Get operator list for image detection
+        ]);
+        
+        // Extract images from operator list
+        const pageImages = await extractImagesFromPage(page, operatorList, pageNum);
+        result.images.push(...pageImages);
+        
+        // Extract text with formatting
+        const pageTextData = extractTextWithFormatting(textContent, pageNum);
+        
+        // Detect and extract tables
+        const pageTables = detectTables(textContent, pageNum);
+        result.tables.push(...pageTables);
+        
+        // Build HTML for this page
+        const pageHtml = buildPageHtml(pageTextData, pageTables, pageImages, pageNum);
+        pageHtmls.push(pageHtml);
+        
+        result.text += pageTextData.text + (pageNum < numPages ? '\n\n' : '');
+      } catch (pageError) {
+        console.warn(`[PDF] Failed to process page ${pageNum}`, pageError);
+      }
+    }
+    
+    // Combine all pages
+    result.html = pageHtmls.join('\n');
+    
+    // Clean up
+    try {
+      await pdf.destroy();
+    } catch (destroyError) {
+      console.warn('[PDF] Failed to destroy PDF document', destroyError);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('[PDF] Enhanced extraction failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Extract images from PDF page
+ */
+async function extractImagesFromPage(
+  page: any,
+  _operatorList: any,
+  pageNum: number
+): Promise<PdfExtractionResult['images']> {
+  const images: PdfExtractionResult['images'] = [];
+  
+  try {
+    // Try to get images from the page's resources
+    const resources = await page.getResources();
+    if (resources && resources.get) {
+      const xObject = resources.get('XObject');
+      if (xObject) {
+        const xObjectKeys = xObject.keys();
+        for (const key of xObjectKeys) {
+          try {
+            const xObjectItem = xObject.get(key);
+            if (xObjectItem && xObjectItem.subtype === 'Image') {
+              // Extract image data
+              const imageData = await xObjectItem.getImageData();
+              if (imageData) {
+                const base64 = arrayBufferToBase64(imageData.data);
+                const mimeType = imageData.colorSpace === 'DeviceRGB' ? 'image/png' : 'image/jpeg';
+                images.push({
+                  data: `data:${mimeType};base64,${base64}`,
+                  mimeType,
+                  page: pageNum,
+                });
+              }
+            }
+          } catch (imgError) {
+            console.warn(`[PDF] Failed to extract image ${key} from page ${pageNum}`, imgError);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`[PDF] Image extraction failed for page ${pageNum}`, error);
+  }
+  
+  return images;
+}
+
+/**
+ * Detect tables in PDF text content using positioning analysis
+ */
+function detectTables(textContent: any, pageNum: number): PdfExtractionResult['tables'] {
+  const tables: PdfExtractionResult['tables'] = [];
+  
+  try {
+    const textItems = textContent.items.filter((item: any) => 
+      item.str && typeof item.str === 'string' && item.str.trim().length > 0
+    );
+    
+    if (textItems.length === 0) return tables;
+    
+    // Group items by Y position (rows)
+    const rowGroups = new Map<number, typeof textItems>();
+    for (const item of textItems) {
+      const y = Math.round((item.transform?.[5] || 0) * 10) / 10;
+      if (!rowGroups.has(y)) {
+        rowGroups.set(y, []);
+      }
+      rowGroups.get(y)!.push(item);
+    }
+    
+    // Sort rows by Y position
+    const sortedRows = Array.from(rowGroups.entries())
+      .sort((a: [number, any], b: [number, any]) => b[0] - a[0])
+      .map(([, items]) => items.sort((a: any, b: any) => {
+        const aX = a.transform?.[4] || 0;
+        const bX = b.transform?.[4] || 0;
+        return aX - bX;
+      }));
+    
+    // Detect table patterns: consistent column alignment across multiple rows
+    if (sortedRows.length >= 2) {
+      // Analyze column positions
+      const columnPositions = new Set<number>();
+      for (const row of sortedRows) {
+        for (const item of row) {
+          const x = item.transform?.[4] || 0;
+          columnPositions.add(Math.round(x / 10) * 10); // Round to nearest 10
+        }
+      }
+      
+      const cols = Array.from(columnPositions).sort((a: number, b: number) => a - b);
+      
+      // If we have consistent column structure across multiple rows, it's likely a table
+      if (cols.length >= 2 && sortedRows.length >= 2) {
+        // Check if rows have similar structure
+        let consistentRows = 0;
+        for (const row of sortedRows) {
+          const rowCols = row.map((item: any) => Math.round((item.transform?.[4] || 0) / 10) * 10);
+          // Check if row has items aligned with detected columns
+          const alignedItems = rowCols.filter((x: number) => cols.some((c: number) => Math.abs(c - x) < 20)).length;
+          if (alignedItems >= 2) {
+            consistentRows++;
+          }
+        }
+        
+        // If at least 2 rows have consistent column alignment, treat as table
+        if (consistentRows >= 2) {
+          const tableRows: string[][] = [];
+          for (const row of sortedRows) {
+            const cells: string[] = [];
+            let currentCell = '';
+            let lastX = -1;
+            
+            for (const item of row) {
+              const x = item.transform?.[4] || 0;
+              const roundedX = Math.round(x / 10) * 10;
+              
+              // Check if this item starts a new column
+              if (lastX !== -1) {
+                const gap = roundedX - lastX;
+                if (gap > 30) { // Significant gap indicates new column
+                  if (currentCell.trim()) {
+                    cells.push(currentCell.trim());
+                    currentCell = '';
+                  }
+                }
+              }
+              
+              // Add space if needed
+              if (currentCell && lastX !== -1) {
+                const gap = x - lastX;
+                if (gap > (item.width || 0) * 0.3) {
+                  currentCell += ' ';
+                }
+              }
+              
+              currentCell += item.str;
+              lastX = x + (item.width || 0);
+            }
+            
+            if (currentCell.trim()) {
+              cells.push(currentCell.trim());
+            }
+            
+            if (cells.length > 0) {
+              tableRows.push(cells);
+            }
+          }
+          
+          if (tableRows.length >= 2) {
+            tables.push({
+              rows: tableRows,
+              page: pageNum,
+            });
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`[PDF] Table detection failed for page ${pageNum}`, error);
+  }
+  
+  return tables;
+}
+
+/**
+ * Extract text with formatting information
+ */
+function extractTextWithFormatting(textContent: any, _pageNum: number): { text: string; lines: string[] } {
+  const textItems = textContent.items.filter((item: any) => 
+    item.str && typeof item.str === 'string' && item.str.trim().length > 0
+  ) as Array<{
+    str: string;
+    transform?: number[];
+    width?: number;
+    fontSize?: number;
+  }>;
+  
+  if (textItems.length === 0) {
+    return { text: '', lines: [] };
+  }
+  
+  // Group by Y position
+  const lineGroups = new Map<number, typeof textItems>();
+  for (const item of textItems) {
+    const y = Math.round((item.transform?.[5] || 0) * 10) / 10;
+    if (!lineGroups.has(y)) {
+      lineGroups.set(y, []);
+    }
+    lineGroups.get(y)!.push(item);
+  }
+  
+  const sortedLines = Array.from(lineGroups.entries())
+    .sort((a, b) => b[0] - a[0])
+    .map(([, items]) => items.sort((a, b) => {
+      const aX = a.transform?.[4] || 0;
+      const bX = b.transform?.[4] || 0;
+      return aX - bX;
+    }));
+  
+  const pageLines: string[] = [];
+  for (const lineItems of sortedLines) {
+    let lineText = '';
+    let lastX = -1;
+    
+    for (const item of lineItems) {
+      const currentX = item.transform?.[4] || 0;
+      const itemWidth = item.width || 0;
+      
+      if (lastX !== -1) {
+        const gap = currentX - (lastX + itemWidth);
+        if (gap > itemWidth * 0.3) {
+          lineText += ' ';
+        }
+      }
+      
+      lineText += item.str;
+      lastX = currentX + itemWidth;
+    }
+    
+    const trimmedLine = lineText.trim();
+    if (trimmedLine) {
+      pageLines.push(trimmedLine);
+    }
+  }
+  
+  return {
+    text: pageLines.join('\n'),
+    lines: pageLines,
+  };
+}
+
+/**
+ * Build HTML from extracted page data
+ */
+function buildPageHtml(
+  textData: { text: string; lines: string[] },
+  tables: PdfExtractionResult['tables'],
+  images: PdfExtractionResult['images'],
+  pageNum: number
+): string {
+  const parts: string[] = [];
+  
+  // Add images first
+  const pageImages = images.filter(img => img.page === pageNum);
+  for (const img of pageImages) {
+    parts.push(`<img src="${img.data}" alt="PDF Image" style="max-width: 100%; height: auto;" />`);
+  }
+  
+  // Process text lines and detect where tables should be inserted
+  let lineIndex = 0;
+  const pageTables = tables.filter(t => t.page === pageNum);
+  
+  for (const line of textData.lines) {
+    // Check if this line is part of a table (simple heuristic)
+    const isTableLine = pageTables.some(table => 
+      table.rows.some(row => row.some(cell => cell.includes(line.substring(0, 20))))
+    );
+    
+    if (!isTableLine) {
+      // Regular text line
+      const isHeading = line.length < 80 && /^[A-Z]/.test(line.trim());
+      if (isHeading) {
+        parts.push(`<h2>${escapeHtml(line)}</h2>`);
+      } else {
+        parts.push(`<p>${escapeHtml(line)}</p>`);
+      }
+    }
+    lineIndex++;
+  }
+  
+  // Add tables at the end (or we could try to insert them at detected positions)
+  for (const table of pageTables) {
+    parts.push(buildTableHtml(table));
+  }
+  
+  return parts.join('\n');
+}
+
+/**
+ * Build HTML table from extracted table data
+ */
+function buildTableHtml(table: PdfExtractionResult['tables'][0]): string {
+  if (table.rows.length === 0) return '';
+  
+  let html = '<table border="1" style="border-collapse: collapse; width: 100%; margin: 1em 0;">';
+  
+  // First row as header if it looks like one
+  const firstRow = table.rows[0];
+  const isHeader = firstRow.every(cell => 
+    cell.length < 50 && /^[A-Z]/.test(cell.trim())
+  );
+  
+  if (isHeader && table.rows.length > 1) {
+    html += '<thead><tr>';
+    for (const cell of firstRow) {
+      html += `<th style="padding: 0.5em; text-align: left;">${escapeHtml(cell)}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+    
+    for (let i = 1; i < table.rows.length; i++) {
+      html += '<tr>';
+      for (const cell of table.rows[i]) {
+        html += `<td style="padding: 0.5em;">${escapeHtml(cell)}</td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody>';
+  } else {
+    html += '<tbody>';
+    for (const row of table.rows) {
+      html += '<tr>';
+      for (const cell of row) {
+        html += `<td style="padding: 0.5em;">${escapeHtml(cell)}</td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody>';
+  }
+  
+  html += '</table>';
+  return html;
+}
+
+/**
+ * Extract text from PDF using pdfjs-dist (legacy function for backward compatibility)
  * Properly configured with worker and error handling
  */
 async function extractTextFromPdf(file: File): Promise<string> {
@@ -1121,24 +1594,129 @@ async function extractTextFromPdf(file: File): Promise<string> {
       fileSize: file.size 
     });
     
-    // Extract text from each page sequentially to avoid memory issues
+    // Extract text from each page sequentially with enhanced formatting detection
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       try {
         const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
+        const textContent = await page.getTextContent({
+          // Enable more detailed text extraction
+          normalizeWhitespace: false, // Preserve original spacing
+          disableCombineTextItems: false, // Combine items for better structure
+        });
         
-        // Process text items with better spacing logic
-        const pageText = textContent.items
-          .map((item: any) => {
-            // Handle text items
-            if (item.str && typeof item.str === 'string') {
-              return item.str;
+        // Enhanced text extraction with formatting awareness using text item positioning
+        // Group text items by Y position to reconstruct lines accurately
+        const textItems = textContent.items.filter((item: any) => 
+          item.str && typeof item.str === 'string' && item.str.trim().length > 0
+        ) as Array<{
+          str: string;
+          transform?: number[];
+          width?: number;
+          height?: number;
+          fontName?: string;
+          fontSize?: number;
+        }>;
+        
+        if (textItems.length === 0) {
+          continue; // Skip empty pages
+        }
+        
+        // Group items by Y coordinate (line grouping) - more accurate than simple threshold
+        const lineGroups = new Map<number, typeof textItems>();
+        
+        for (const item of textItems) {
+          const y = Math.round((item.transform?.[5] || 0) * 10) / 10; // Round to 0.1 precision for grouping
+          if (!lineGroups.has(y)) {
+            lineGroups.set(y, []);
+          }
+          lineGroups.get(y)!.push(item);
+        }
+        
+        // Sort lines by Y position (top to bottom, reverse order since PDF Y is bottom-up)
+        const sortedLines = Array.from(lineGroups.entries())
+          .sort((a, b) => b[0] - a[0]) // Higher Y first (top of page)
+          .map(([, items]) => {
+            // Sort items in line by X position (left to right)
+            return items.sort((a, b) => {
+              const aX = a.transform?.[4] || 0;
+              const bX = b.transform?.[4] || 0;
+              return aX - bX;
+            });
+          });
+        
+        // Reconstruct text with proper spacing based on actual positions
+        const pageLines: string[] = [];
+        
+        for (const lineItems of sortedLines) {
+          let lineText = '';
+          let lastX = -1;
+          
+          for (const item of lineItems) {
+            const currentX = item.transform?.[4] || 0;
+            const itemWidth = item.width || 0;
+            
+            // Add space if there's a gap between items (preserves word spacing)
+            if (lastX !== -1) {
+              const gap = currentX - (lastX + itemWidth);
+              // Add space if gap is significant (more than 0.3 of average character width)
+              if (gap > itemWidth * 0.3) {
+                lineText += ' ';
+              }
             }
-            return '';
-          })
-          .filter((text: string) => text.trim().length > 0)
-          .join(' ')
-          .trim();
+            
+            lineText += item.str;
+            lastX = currentX + itemWidth;
+          }
+          
+          const trimmedLine = lineText.trim();
+          if (trimmedLine) {
+            pageLines.push(trimmedLine);
+          }
+        }
+        
+        // Detect formatting patterns (headings, lists, paragraphs) using font size and patterns
+        const formattedLines: string[] = [];
+        let lastFontSize = 0;
+        
+        for (let i = 0; i < pageLines.length; i++) {
+          const line = pageLines[i];
+          const nextLine = pageLines[i + 1];
+          
+          // Get average font size for this line (if available from text items)
+          const lineItems = sortedLines[i] || [];
+          const avgFontSize = lineItems.length > 0
+            ? lineItems.reduce((sum, item) => sum + (item.fontSize || 12), 0) / lineItems.length
+            : 12;
+          
+          // Detect headings: larger font, short lines, or all caps
+          const isLargerFont = avgFontSize > lastFontSize * 1.2;
+          const isShortLine = line.length < 80;
+          const isAllCaps = line === line.toUpperCase() && line.length > 3 && line.length < 50;
+          const isFollowedByBlank = !nextLine || nextLine.trim().length === 0;
+          const hasNumberedPrefix = /^\d+[\.\)]\s/.test(line);
+          
+          // Detect lists (numbered, bulleted, lettered)
+          const isListItem = hasNumberedPrefix || /^[•\-\*]\s/.test(line) || /^[a-z][\.\)]\s/i.test(line);
+          
+          if (isListItem) {
+            formattedLines.push(line);
+          } else if ((isLargerFont || isShortLine || isAllCaps) && (isFollowedByBlank || i === 0)) {
+            // Likely a heading - preserve as separate paragraph
+            formattedLines.push(line);
+            if (nextLine && nextLine.trim().length > 0) {
+              formattedLines.push(''); // Blank line after heading
+            }
+          } else if (line.trim().length === 0) {
+            // Preserve blank lines (paragraph breaks)
+            formattedLines.push('');
+          } else {
+            formattedLines.push(line);
+          }
+          
+          lastFontSize = avgFontSize;
+        }
+        
+        const pageText = formattedLines.join('\n').trim();
         
         if (pageText) {
           fullText += pageText;
