@@ -771,28 +771,70 @@ export async function convertDocxToTiptap(file: File): Promise<string> {
 
 /**
  * Convert PDF to Tiptap JSON format
- * Note: PDF text extraction is limited - complex layouts may not preserve well
+ * Uses pdf.js for text extraction, with improved formatting
  */
 export async function convertPdfToTiptap(file: File): Promise<string> {
   try {
-    // For PDF, we need to extract text
-    // This is a basic implementation - for better results, use a PDF parsing library
+    console.info('[convert] PDF start', { name: file.name, size: file.size });
+    
+    // Extract text from PDF
     const text = await extractTextFromPdf(file);
     
-    // Convert plain text to simple HTML paragraphs
-    const paragraphs = text
-      .split('\n\n')
-      .filter(p => p.trim())
-      .map(p => `<p>${escapeHtml(p.trim())}</p>`)
-      .join('');
+    // Check if extraction returned an error message
+    if (text.startsWith('PDF:') && text.includes('Error:') || text.includes('Note:')) {
+      // This is an error/fallback message, convert it to a user-friendly paragraph
+      const errorText = text.split('\n\n').slice(1).join(' ').trim();
+      const html = `<p><strong>PDF Import Notice:</strong> ${escapeHtml(errorText)}</p>`;
+      return htmlToTiptapJson(html);
+    }
     
-    const html = paragraphs || '<p></p>';
+    // Convert plain text to HTML paragraphs with better structure
+    // Split by double newlines (paragraph breaks) and single newlines (line breaks within paragraphs)
+    const paragraphs = text
+      .split(/\n\n+/)
+      .filter(p => p.trim())
+      .map(paragraph => {
+        // Within each paragraph, preserve single line breaks as <br>
+        const lines = paragraph.split('\n').filter(l => l.trim());
+        if (lines.length === 1) {
+          return `<p>${escapeHtml(lines[0].trim())}</p>`;
+        }
+        // Multiple lines in a paragraph - use <br> for line breaks
+        return `<p>${lines.map(l => escapeHtml(l.trim())).join('<br>')}</p>`;
+      });
+    
+    const html = paragraphs.length > 0 ? paragraphs.join('') : '<p></p>';
+    
+    console.info('[convert] PDF extracted text', { 
+      textLength: text.length, 
+      paragraphCount: paragraphs.length 
+    });
     
     // Convert HTML to Tiptap JSON format
     return htmlToTiptapJson(html);
   } catch (error) {
-    console.error('Error converting PDF:', error);
-    throw new Error('Failed to convert PDF file. Consider using DOCX format for better results.');
+    console.error('[convert] PDF conversion error:', error);
+    
+    // Provide a helpful error message in the document
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorHtml = `<p><strong>PDF Conversion Error:</strong> ${escapeHtml(errorMessage)}</p><p>For best results, convert PDFs to DOCX before importing, or use server-side conversion for large files.</p>`;
+    
+    try {
+      return htmlToTiptapJson(errorHtml);
+    } catch (fallbackError) {
+      // Ultimate fallback - minimal valid structure
+      console.error('[convert] Even fallback conversion failed:', fallbackError);
+      return JSON.stringify({
+        type: 'doc',
+        content: [{
+          type: 'paragraph',
+          content: [{
+            type: 'text',
+            text: `PDF conversion failed: ${errorMessage}. Please try converting the PDF to DOCX format first.`
+          }]
+        }]
+      });
+    }
   }
 }
 
@@ -1001,12 +1043,157 @@ function cleanHtmlForEditor(html: string): string {
 }
 
 /**
- * Extract text from PDF (basic implementation)
+ * Extract text from PDF using pdfjs-dist
+ * Properly configured with worker and error handling
  */
 async function extractTextFromPdf(file: File): Promise<string> {
-  // This is a placeholder - for production, use a library like pdf.js
-  // For now, return a message
-  return `PDF content from: ${file.name}\n\nNote: PDF text extraction requires additional setup. For best results, convert PDFs to DOCX before importing.`;
+  try {
+    // For very large PDFs (> 10MB), warn about potential performance issues
+    if (file.size > 10 * 1024 * 1024) {
+      console.warn('[PDF] Very large file detected, extraction may take time');
+    }
+
+    // Dynamically import pdfjs-dist
+    let pdfjsLib: any;
+    try {
+      // Import pdfjs-dist - this is a large library, so dynamic import is important
+      const pdfjsModule = await import('pdfjs-dist');
+      pdfjsLib = pdfjsModule;
+      
+      // Configure worker for pdfjs-dist
+      // Use the worker from the package, not CDN for better reliability
+      if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
+        // Set worker source - pdfjs-dist includes the worker
+        // For Vite, we need to use the worker from node_modules
+        try {
+          // Method 1: Try to use the worker from pdfjs-dist package via import.meta.url
+          // This works in development and production builds with Vite
+          const workerUrl = new URL(
+            'pdfjs-dist/build/pdf.worker.min.mjs',
+            import.meta.url
+          ).toString();
+          pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+          console.info('[PDF] Worker configured from package');
+        } catch (workerError) {
+          // Method 2: Try relative path (works in some build configurations)
+          try {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '/node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
+            console.info('[PDF] Worker configured from relative path');
+          } catch (relativeError) {
+            // Method 3: Fallback to CDN if local worker fails
+            const version = pdfjsLib.version || '3.11.174';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.mjs`;
+            console.warn('[PDF] Using CDN worker fallback', { version, error: workerError });
+          }
+        }
+      }
+    } catch (importError) {
+      console.error('[PDF] Failed to import pdfjs-dist', importError);
+      return `PDF: ${file.name}\n\nError: PDF extraction library failed to load. Please refresh the page and try again, or convert PDFs to DOCX before importing.`;
+    }
+
+    if (!pdfjsLib || !pdfjsLib.getDocument) {
+      throw new Error('pdfjs-dist is not properly loaded');
+    }
+
+    // Read file as ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    
+    // Configure loading options
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+      // Disable font face loading for faster extraction (text only)
+      disableFontFace: true,
+      // Use native font fallback
+      useSystemFonts: true,
+      // Verbose logging for debugging (can be disabled in production)
+      verbosity: 0,
+    });
+    
+    const pdf = await loadingTask.promise;
+    
+    let fullText = '';
+    const numPages = pdf.numPages;
+    
+    console.info('[PDF] Starting text extraction', { 
+      fileName: file.name, 
+      numPages,
+      fileSize: file.size 
+    });
+    
+    // Extract text from each page sequentially to avoid memory issues
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      try {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        // Process text items with better spacing logic
+        const pageText = textContent.items
+          .map((item: any) => {
+            // Handle text items
+            if (item.str && typeof item.str === 'string') {
+              return item.str;
+            }
+            return '';
+          })
+          .filter((text: string) => text.trim().length > 0)
+          .join(' ')
+          .trim();
+        
+        if (pageText) {
+          fullText += pageText;
+          // Add paragraph break between pages (except after last page)
+          if (pageNum < numPages) {
+            fullText += '\n\n';
+          }
+        }
+      } catch (pageError) {
+        console.warn(`[PDF] Failed to extract text from page ${pageNum}`, pageError);
+        // Continue with other pages even if one fails
+        fullText += `\n\n[Page ${pageNum}: Text extraction failed]`;
+      }
+    }
+    
+    // Clean up PDF document to free memory
+    try {
+      await pdf.destroy();
+    } catch (destroyError) {
+      console.warn('[PDF] Failed to destroy PDF document', destroyError);
+    }
+    
+    if (!fullText.trim()) {
+      // If no text extracted, the PDF might be image-based or encrypted
+      return `PDF: ${file.name}\n\nNote: This PDF appears to be image-based or contains no extractable text. Text extraction was not possible. For best results, convert PDFs to DOCX before importing, or use OCR tools.`;
+    }
+    
+    console.info('[PDF] Text extraction completed', { 
+      textLength: fullText.length,
+      numPages 
+    });
+    
+    return fullText;
+  } catch (error) {
+    console.error('[PDF] Text extraction failed:', error);
+    
+    // Provide helpful error message based on error type
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Handle specific PDF.js error types
+    if (errorMessage.includes('encrypted') || errorMessage.includes('password') || errorMessage.includes('password required')) {
+      return `PDF: ${file.name}\n\nError: This PDF is password-protected or encrypted. Please decrypt the PDF before importing.`;
+    }
+    
+    if (errorMessage.includes('Invalid PDF') || errorMessage.includes('invalid') || errorMessage.includes('corrupted')) {
+      return `PDF: ${file.name}\n\nError: Invalid or corrupted PDF file format. Please verify the file is a valid PDF.`;
+    }
+    
+    if (errorMessage.includes('Missing PDF') || errorMessage.includes('not found')) {
+      return `PDF: ${file.name}\n\nError: PDF file data is missing or incomplete. Please try uploading again.`;
+    }
+    
+    // Generic fallback with error details
+    return `PDF: ${file.name}\n\nError: PDF text extraction failed (${errorMessage}). For best results, convert PDFs to DOCX before importing, or use server-side conversion.`;
+  }
 }
 
 /**

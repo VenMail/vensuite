@@ -106,6 +106,9 @@
                   · {{ getFileStatusText(file) }}
                 </span>
               </p>
+              <p v-if="file.errorMessage" class="text-xs text-destructive mt-1">
+                {{ file.errorMessage }}
+              </p>
               <div class="w-full bg-muted rounded-full h-2 mt-2">
                 <div
                   class="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
@@ -199,6 +202,7 @@ interface FileData {
   targetFormat?: 'document' | 'spreadsheet';
   originalFormat?: string;
   convertedContent?: string | any;
+  errorMessage?: string;
 }
 
 interface RejectedFile {
@@ -602,13 +606,29 @@ const uploadFiles = async () => {
   // First handle all convertible files purely on the client: convert → save → open editor
   const convertibleFiles = files.value.filter((f) => f.willConvert && f.file);
   for (const file of convertibleFiles) {
+    const index = files.value.findIndex((f) => f.id === file.id);
     try {
       const saved = await createDocumentFromConvertedFile(file);
       if (saved) {
         createdDocs.push(saved);
+      } else {
+        // Conversion succeeded but save failed
+        if (index !== -1) {
+          files.value[index].error = true;
+          files.value[index].isConverting = false;
+        }
+        console.error('Failed to save converted document:', file.title);
       }
     } catch (e) {
       console.error('Failed to convert & create document from file', file.title, e);
+      if (index !== -1) {
+        files.value[index].error = true;
+        files.value[index].isConverting = false;
+        files.value[index].progress = 0;
+        // Store error message for display
+        const errorMsg = e instanceof Error ? e.message : String(e);
+        files.value[index].errorMessage = `Conversion failed: ${errorMsg}`;
+      }
     }
   }
 
@@ -670,50 +690,71 @@ const createDocumentFromConvertedFile = async (file: FileData): Promise<any | nu
   if (index !== -1) {
     files.value[index].isConverting = true;
     files.value[index].progress = 10;
-  }
-
-  const conversionResult: ConversionResult = await convertFileForEditor(file.file);
-
-  if (index !== -1) {
-    files.value[index].isConverting = false;
-    files.value[index].progress = 60;
-  }
-
-  const originalName = file.file_name || file.title || 'Converted File';
-  const baseTitle = originalName.replace(/\.[^/.]+$/, '') || 'Converted File';
-
-  const targetType = conversionResult.fileType; // 'docx' | 'xlsx'
-  let content: string;
-
-  if (targetType === 'docx') {
-    content = typeof conversionResult.content === 'string'
-      ? conversionResult.content
-      : JSON.stringify(conversionResult.content);
-  } else {
-    // xlsx/univer workbook JSON
-    content = typeof conversionResult.content === 'string'
-      ? conversionResult.content
-      : JSON.stringify(conversionResult.content as any);
-  }
-
-  const payload: any = {
-    title: baseTitle,
-    file_name: `${baseTitle}.${targetType}`,
-    file_type: targetType,
-    is_folder: false,
-    content,
-    folder_id: props.folderId || null,
-  };
-
-  const saved = await fileStore.saveToAPI(payload);
-
-  if (saved && index !== -1) {
-    files.value[index].progress = 100;
-    files.value[index].completed = true;
     files.value[index].error = false;
+    files.value[index].errorMessage = undefined;
   }
 
-  return saved;
+  try {
+    const conversionResult: ConversionResult = await convertFileForEditor(file.file);
+
+    if (index !== -1) {
+      files.value[index].isConverting = false;
+      files.value[index].progress = 60;
+    }
+
+    const originalName = file.file_name || file.title || 'Converted File';
+    const baseTitle = originalName.replace(/\.[^/.]+$/, '') || 'Converted File';
+
+    const targetType = conversionResult.fileType; // 'docx' | 'xlsx'
+    let content: string;
+
+    if (targetType === 'docx') {
+      content = typeof conversionResult.content === 'string'
+        ? conversionResult.content
+        : JSON.stringify(conversionResult.content);
+    } else {
+      // xlsx/univer workbook JSON
+      content = typeof conversionResult.content === 'string'
+        ? conversionResult.content
+        : JSON.stringify(conversionResult.content as any);
+    }
+
+    // Validate content before saving
+    if (!content || content.trim() === '' || content === '{}') {
+      throw new Error('Conversion produced empty content. The file may be corrupted or in an unsupported format.');
+    }
+
+    const payload: any = {
+      title: baseTitle,
+      file_name: `${baseTitle}.${targetType}`,
+      file_type: targetType,
+      is_folder: false,
+      content,
+      folder_id: props.folderId || null,
+    };
+
+    const saved = await fileStore.saveToAPI(payload);
+
+    if (saved && index !== -1) {
+      files.value[index].progress = 100;
+      files.value[index].completed = true;
+      files.value[index].error = false;
+      files.value[index].errorMessage = undefined;
+    } else if (index !== -1) {
+      throw new Error('Failed to save converted document to server');
+    }
+
+    return saved;
+  } catch (error) {
+    if (index !== -1) {
+      files.value[index].isConverting = false;
+      files.value[index].error = true;
+      files.value[index].progress = 0;
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      files.value[index].errorMessage = errorMsg;
+    }
+    throw error;
+  }
 };
 
 const uploadFolderWithContents = async (
