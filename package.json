@@ -13,7 +13,7 @@
     "i18n:sync": "node ./scripts/sync-i18n.js",
     "i18n:fix-untranslated": "node ./scripts/fix-untranslated.js",
     "i18n:rewrite-blade": "node ./scripts/rewrite-i18n-blade.js",
-    "postbuild": "pnpm run i18n:extract && pnpm run i18n:rewrite && pnpm run i18n:sync",
+    "postbuild": "pnpm run i18n:sync",
     "i18n:cleanup-unused": "node ./scripts/cleanup-i18n-unused.js",
     "i18n:restore-invalid": "node ./scripts/restore-i18n-invalid.js"
   },

@@ -178,12 +178,10 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UploadCloud, File, X, CheckCircle2, RefreshCw } from "lucide-vue-next";
 import { useFileStore } from "@/store/files";
-import { useAuthStore } from "@/store/auth";
 import { formatBytes } from "@/utils/lib";
 import { t } from '@/i18n';
 import { convertFileForEditor } from '@/utils/fileConverter';
 import type { ConversionResult } from '@/utils/fileConverter';
-import axios from 'axios';
 
 interface FileData {
   id: string;
