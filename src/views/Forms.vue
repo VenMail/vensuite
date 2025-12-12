@@ -55,7 +55,6 @@ const TEMPLATE_STORAGE_PREFIX = "VENX_FORM_TEMPLATE_";
 const formStore = useFormStore();
 
 const loading = computed(() => formStore.loading);
-const errorMessage = computed(() => formStore.error);
 const hasMore = computed(() => formStore.pagination.hasMore);
 const forms = computed(() => formStore.allForms);
 
@@ -256,11 +255,6 @@ function createNewForm() {
   showWizard.value = true;
 }
 
-function createNewFormFromTemplate(template: { name: string; description: string }) {
-  wizardPreset.value = template.description;
-  showWizard.value = true;
-}
-
 async function handleWizardCreate(data: { title: string; description: string; blocks: any[] }) {
   let pageId: string = crypto.randomUUID();
 
@@ -457,65 +451,6 @@ function viewResponses() {
 const handleResize = () => {
   isMobile.value = window.innerWidth < 768;
 };
-
-const formTemplates = [
-  {
-    name: "Customer Feedback",
-    subtitle: "CSAT, NPS, follow-ups",
-    badge: "Feedback",
-    description: "A customer feedback form with CSAT, NPS, product ratings, contact info, and open comments for improvement ideas.",
-    previewStyle: "background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);",
-  },
-  {
-    name: "Job Application",
-    subtitle: "Hiring funnel",
-    badge: "Hiring",
-    description: "Job application form collecting contact info, desired role, experience, portfolio links, and resume upload.",
-    previewStyle: "background: linear-gradient(135deg, #10b981 0%, #6ee7b7 100%);",
-  },
-  {
-    name: "Event Registration",
-    subtitle: "Tickets & sessions",
-    badge: "Events",
-    description: "Event registration with attendee details, ticket type selection, dietary needs, and session preferences.",
-    previewStyle: "background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);",
-  },
-  {
-    name: "Support Request",
-    subtitle: "Issue intake",
-    badge: "Support",
-    description: "Support intake form capturing contact info, product area, priority, issue description, environment details, and attachments.",
-    previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);",
-  },
-  {
-    name: "Onboarding Survey",
-    subtitle: "New customers",
-    badge: "Onboarding",
-    description: "Onboarding survey covering goals, team size, timeline, success metrics, key workflows, and desired integrations.",
-    previewStyle: "background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);",
-  },
-  {
-    name: "Vendor Signup",
-    subtitle: "B2B partners",
-    badge: "Vendors",
-    description: "Vendor registration with company profile, services offered, compliance documents, banking and payment preferences.",
-    previewStyle: "background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);",
-  },
-  {
-    name: "Sales Lead Capture",
-    subtitle: "Pipeline intake",
-    badge: "Leads",
-    description: "Lead capture form for inbound prospects: contact info, company size, budget range, use case, and follow-up consent.",
-    previewStyle: "background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%);",
-  },
-  {
-    name: "Employee Satisfaction",
-    subtitle: "eNPS pulse",
-    badge: "People",
-    description: "Employee pulse survey with eNPS, manager feedback, benefits satisfaction, workload, and open-ended comments.",
-    previewStyle: "background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);",
-  },
-];
 
 onMounted(() => {
   handleResize();

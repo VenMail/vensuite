@@ -20,11 +20,8 @@ import {
   DEFAULT_WORKBOOK_DATA,
   BUDGET_TEMPLATE_DATA,
   INVOICE_TEMPLATE_DATA,
-  EXPENSE_TRACKER_TEMPLATE_DATA,
-  PROJECT_TIMELINE_TEMPLATE_DATA,
-  SALES_CRM_TEMPLATE_DATA,
-  INVENTORY_TEMPLATE_DATA,
-  CONTENT_CALENDAR_TEMPLATE_DATA,
+  OKR_TEMPLATE_DATA,
+  TASKS_TEMPLATE_DATA,
 } from '@/assets/default-workbook-data'
 import UserProfile from '@/components/layout/UserProfile.vue'
 import Button from '@/components/ui/button/Button.vue'
@@ -414,19 +411,19 @@ onMounted(async () => {
         templateData = createWorkbookFromTemplate(INVOICE_TEMPLATE_DATA)
         docTitle = 'Invoice'
       } else if (slug.includes('expenses')) {
-        templateData = createWorkbookFromTemplate(EXPENSE_TRACKER_TEMPLATE_DATA)
+        templateData = createWorkbookFromTemplate(BUDGET_TEMPLATE_DATA)
         docTitle = 'Expense Tracker'
       } else if (slug.includes('timeline')) {
-        templateData = createWorkbookFromTemplate(PROJECT_TIMELINE_TEMPLATE_DATA)
+        templateData = createWorkbookFromTemplate(DEFAULT_WORKBOOK_DATA)
         docTitle = 'Project Timeline'
       } else if (slug.includes('crm')) {
-        templateData = createWorkbookFromTemplate(SALES_CRM_TEMPLATE_DATA)
+        templateData = createWorkbookFromTemplate(DEFAULT_WORKBOOK_DATA)
         docTitle = 'Sales CRM'
       } else if (slug.includes('inventory')) {
-        templateData = createWorkbookFromTemplate(INVENTORY_TEMPLATE_DATA)
+        templateData = createWorkbookFromTemplate(DEFAULT_WORKBOOK_DATA)
         docTitle = 'Inventory Tracker'
       } else if (slug.includes('calendar')) {
-        templateData = createWorkbookFromTemplate(CONTENT_CALENDAR_TEMPLATE_DATA)
+        templateData = createWorkbookFromTemplate(DEFAULT_WORKBOOK_DATA)
         docTitle = 'Content Calendar'
       } else if (slug.includes('okr')) {
         templateData = createWorkbookFromTemplate(OKR_TEMPLATE_DATA)
