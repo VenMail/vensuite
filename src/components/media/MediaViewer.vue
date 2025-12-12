@@ -35,7 +35,7 @@
           <div v-if="currentIsImage" class="relative w-full h-full flex items-center justify-center">
             <img
               :key="currentFile?.id"
-              :src="currentFile?.file_url"
+              :src="currentFile?.file_public_url || currentFile?.file_url"
               :alt="currentFile?.title"
               :class="[
                 'transition-all duration-700 ease-out transform',
@@ -52,7 +52,7 @@
           <div v-else-if="currentIsVideo" class="relative w-full h-full flex items-center justify-center">
             <video
               :key="currentFile?.id"
-              :src="currentFile?.file_url"
+              :src="currentFile?.file_public_url || currentFile?.file_url"
               :class="[
                 'transition-all duration-700 ease-out transform',
                 mediaAnimationClass
@@ -63,7 +63,7 @@
               @error="handleMediaError"
               ref="mediaElement"
             >
-              <source :src="currentFile?.file_url" :type="`video/${currentFile?.file_type}`">
+              <source :src="currentFile?.file_public_url || currentFile?.file_url" :type="`video/${currentFile?.file_type}`">
               {{$t('Media.MediaViewer.text.your_browser_does_not')}}
             </video>
           </div>
@@ -83,13 +83,13 @@
               <p class="text-gray-300">{{ formatFileSize(currentFile?.file_size) }}</p>
             </div>
             <audio
-              :src="currentFile?.file_url"
+              :src="currentFile?.file_public_url || currentFile?.file_url"
               controls
               class="w-full"
               @loadeddata="handleMediaLoad"
               @error="handleMediaError"
             >
-              <source :src="currentFile?.file_url" :type="`audio/${currentFile?.file_type}`">
+              <source :src="currentFile?.file_public_url || currentFile?.file_url" :type="`audio/${currentFile?.file_type}`">
               {{$t('Media.MediaViewer.text.your_browser_does_not_2')}}
             </audio>
           </div>
@@ -138,7 +138,7 @@
                  
                 <img
                   v-if="isImageFile(file)"
-                  :src="file.file_url"
+                  :src="file.file_public_url || file.file_url"
                   :alt="file.title"
                   class="w-full h-full object-cover"
                   loading="lazy"

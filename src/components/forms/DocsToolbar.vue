@@ -24,7 +24,7 @@
         <Plus class="h-4 w-4" />
       </button>
       <div v-if="isExpanded" class="tiptap-toolbar__group">
-      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.import')}}</div>
+      <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.text.export')}}</div>
       <span class="tiptap-toolbar__divider bg-gray-300 dark:bg-gray-600" />
         <button class="tiptap-toolbar__btn bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:text-blue-600 dark:hover:text-blue-400" title="Import File (PDF, DOCX, HTML)" @click="showImportDialog = true">
           <Upload class="h-4 w-4" />

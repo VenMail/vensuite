@@ -131,12 +131,16 @@ export const useFileStore = defineStore("files", {
       const normalizedType = this.normalizeFileType(doc?.file_type, doc?.file_name)
       const isFolder = !!doc?.is_folder
       const normalizedContent = this.normalizeContentPayload(doc?.content ?? doc?.contents, normalizedType)
+      const fileUrl = doc?.file_url ? this.constructFullUrl(doc.file_url) : undefined
+      const publicUrl = doc?.file_public_url ? this.constructFullUrl(doc.file_public_url) : undefined
       return {
         ...doc,
         id: doc.id,
         file_type: normalizedType,
         is_folder: isFolder,
         content: normalizedContent,
+        file_url: fileUrl,
+        file_public_url: publicUrl,
         title: this.computeTitle(doc),
       } as FileData
     },
@@ -209,6 +213,7 @@ export const useFileStore = defineStore("files", {
         file_type: this.normalizeFileType(responseData.file_type, responseData.file_name),
         file_size: responseData.file_size,
         file_url: this.constructFullUrl(responseData.file_url),
+        file_public_url: responseData.file_public_url ? this.constructFullUrl(responseData.file_public_url) : undefined,
         folder_id: responseData.folder_id,
         is_folder: !!responseData.is_folder,
         is_template: responseData.is_template || false,
@@ -230,6 +235,7 @@ export const useFileStore = defineStore("files", {
       const normalized = this.normalizeDocumentShape(raw);
       normalized.title = this.computeTitle(raw);
       normalized.file_url = raw.file_url ? this.constructFullUrl(raw.file_url) : undefined;
+      normalized.file_public_url = raw.file_public_url ? this.constructFullUrl(raw.file_public_url) : undefined;
       normalized.file_size = raw.file_size;
       normalized.mime_type = raw.mime_type;
       normalized.source = raw.source;
@@ -1080,6 +1086,7 @@ export const useFileStore = defineStore("files", {
         const data = response.data.data;
         const doc = this.normalizeDocumentShape(data);
         doc.file_url = data.file_url ? this.constructFullUrl(data.file_url) : doc.file_url;
+        doc.file_public_url = data.file_public_url ? this.constructFullUrl(data.file_public_url) : doc.file_public_url;
         doc.isNew = false;
         doc.isDirty = false;
         // Attach large-file hints for front-end handling without breaking types

@@ -44,7 +44,7 @@
      
     <div v-if="mediaCategory === 'image'" class="relative w-full h-full">
       <img 
-        :src="file.file_url" 
+        :src="file.file_public_url || file.file_url" 
         :alt="file.title"
         class="w-full h-full object-cover cursor-pointer transition-transform duration-200 group-hover:scale-105"
         @click="emit('preview', file)"
@@ -60,7 +60,7 @@
      
     <div v-else-if="mediaCategory === 'video'" class="relative w-full h-full bg-black group">
       <video 
-        :src="file.file_url"
+        :src="file.file_public_url || file.file_url"
         class="w-full h-full object-cover cursor-pointer"
         @click="emit('preview', file)"
         @loadeddata="handleMediaLoad"
@@ -69,7 +69,7 @@
         preload="metadata"
         muted
       >
-        <source :src="file.file_url" :type="`video/${file.file_type}`">
+        <source :src="file.file_public_url || file.file_url" :type="`video/${file.file_type}`">
       </video>
       <div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors duration-200">
         <div class="w-12 h-12 bg-white/80 rounded-full flex items-center justify-center group-hover:bg-white transition-colors duration-200">

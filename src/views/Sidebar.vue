@@ -40,7 +40,6 @@ const route = useRoute()
 const activeItem = ref('Home')
 const isMobile = ref(false)
 const isDialogOpen = ref(false)
-const dialogRef = ref(null)
 
 watch(() => route.path, (path) => {
   console.log('Route path changed:', path)
