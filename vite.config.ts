@@ -9,6 +9,7 @@ import { univerPlugin } from '@univerjs/vite-plugin';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const shareBaseUrl = env.VITE_SHARE_BASE_URL || 'https://venia.cloud';
 
   return {
     css: {
@@ -27,6 +28,12 @@ export default defineConfig(({ mode }) => {
           target: "http://127.0.0.1:8000",
           changeOrigin: true,
           secure: false,
+        },
+        // Proxy storage/media to avoid CORS during local development
+        "/storage": {
+          target: shareBaseUrl,
+          changeOrigin: true,
+          secure: true,
         },
       },
     },

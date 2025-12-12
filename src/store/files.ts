@@ -16,7 +16,7 @@ const UPLOAD_COMPLETE = `${UPLOAD_BASE}/complete`;
 
 // Extract base URL for constructing full URLs from relative paths
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || "http://localhost:8000";
+const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || "https://venia.cloud";
 
 const BASE_URL = API_BASE_URL.replace('/api/v1', '');
 
@@ -194,6 +194,20 @@ export const useFileStore = defineStore("files", {
       if (!filePath) return '';
 
       const PROXY_ORIGIN = SHARE_BASE_URL;
+      const isDev = (() => {
+        try {
+          return (import.meta as any)?.env?.DEV === true
+        } catch {
+          return false
+        }
+      })()
+      const mediaDebugEnabled = (() => {
+        try {
+          return localStorage.getItem('media_debug') === '1' || localStorage.getItem('MEDIA_DEBUG') === '1'
+        } catch {
+          return false
+        }
+      })()
 
       // If it's already a full URL, return as is
       if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
@@ -203,8 +217,23 @@ export const useFileStore = defineStore("files", {
           const isStoragePath = u.pathname.startsWith('/storage/')
 
           if (isStoragePath || isVenmailHost) {
-            const encodedPath = encodeURI(u.pathname)
-            return `${PROXY_ORIGIN}${encodedPath}${u.search}${u.hash}`
+            const decodedPath = decodeURI(u.pathname)
+            const encodedPath = encodeURI(decodedPath)
+
+            // In dev, prefer same-origin /storage to avoid cross-origin image loads.
+            if (isDev && encodedPath.startsWith('/storage/')) {
+              const rewritten = `${encodedPath}${u.search}${u.hash}`
+              if (mediaDebugEnabled) {
+                console.info('[media_debug] constructFullUrl rewrite (absolute->dev-proxy)', { input: filePath, rewritten })
+              }
+              return rewritten
+            }
+
+            const rewritten = `${PROXY_ORIGIN}${encodedPath}${u.search}${u.hash}`
+            if (mediaDebugEnabled) {
+              console.info('[media_debug] constructFullUrl rewrite (absolute)', { input: filePath, rewritten })
+            }
+            return rewritten
           }
 
           return filePath;
@@ -217,8 +246,15 @@ export const useFileStore = defineStore("files", {
       const relativeIsStoragePath = filePath.startsWith('/storage/') || filePath.startsWith('storage/')
       if (relativeIsStoragePath) {
         const normalized = filePath.startsWith('/') ? filePath : `/${filePath}`
-        const encodedPath = encodeURI(normalized)
-        return `${PROXY_ORIGIN}${encodedPath}`
+        const decodedPath = decodeURI(normalized)
+        const encodedPath = encodeURI(decodedPath)
+
+        // In dev, prefer same-origin /storage to avoid cross-origin image loads.
+        const rewritten = isDev ? `${encodedPath}` : `${PROXY_ORIGIN}${encodedPath}`
+        if (mediaDebugEnabled) {
+          console.info('[media_debug] constructFullUrl rewrite (relative)', { input: filePath, rewritten })
+        }
+        return rewritten
       }
 
       // If it's a relative path, prepend the base URL

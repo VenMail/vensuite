@@ -24,19 +24,13 @@
        
       <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
          
-        <div 
-          :class="[
-            'relative transition-all duration-500 ease-out overflow-hidden',
-            hasMultipleFiles && showThumbnails ? 'mr-24' : 'mr-0'
-          ]"
-          :style="mediaContainerStyle"
-        >
+        <div class="w-full h-full pt-16 pb-14 px-4 sm:px-6 flex items-center justify-center">
            
           <div v-if="currentIsImage" class="relative w-full h-full flex items-center justify-center">
             <img
-              :key="currentFile?.id"
               :src="currentFile?.file_public_url || currentFile?.file_url"
               :alt="currentFile?.title"
+              referrerpolicy="no-referrer"
               :class="[
                 'transition-all duration-700 ease-out transform',
                 mediaAnimationClass
@@ -44,15 +38,14 @@
               :style="imageStyle"
               @load="handleMediaLoad"
               @error="handleMediaError"
-              ref="mediaElement"
             />
           </div>
 
            
           <div v-else-if="currentIsVideo" class="relative w-full h-full flex items-center justify-center">
             <video
-              :key="currentFile?.id"
               :src="currentFile?.file_public_url || currentFile?.file_url"
+              referrerpolicy="no-referrer"
               :class="[
                 'transition-all duration-700 ease-out transform',
                 mediaAnimationClass
@@ -61,9 +54,8 @@
               controls
               @loadeddata="handleMediaLoad"
               @error="handleMediaError"
-              ref="mediaElement"
             >
-              <source :src="currentFile?.file_public_url || currentFile?.file_url" :type="`video/${currentFile?.file_type}`">
+              <source :src="currentFile?.file_public_url || currentFile?.file_url" :type="`video/${currentFile?.file_type}`" />
               {{$t('Media.MediaViewer.text.your_browser_does_not')}}
             </video>
           </div>
@@ -84,12 +76,13 @@
             </div>
             <audio
               :src="currentFile?.file_public_url || currentFile?.file_url"
+              referrerpolicy="no-referrer"
               controls
               class="w-full"
               @loadeddata="handleMediaLoad"
               @error="handleMediaError"
             >
-              <source :src="currentFile?.file_public_url || currentFile?.file_url" :type="`audio/${currentFile?.file_type}`">
+              <source :src="currentFile?.file_public_url || currentFile?.file_url" :type="`audio/${currentFile?.file_type}`" />
               {{$t('Media.MediaViewer.text.your_browser_does_not_2')}}
             </audio>
           </div>
@@ -293,11 +286,19 @@ const emit = defineEmits<{
 
 const { isImage, isVideo, isAudio, formatFileSize, formatDateLong } = useMediaTypes()
 
+const mediaDebugEnabled = (() => {
+  try {
+    return localStorage.getItem('media_debug') === '1' || localStorage.getItem('MEDIA_DEBUG') === '1'
+  } catch {
+    return false
+  }
+})()
+
 const isLoading = ref(false)
 const hasError = ref(false)
 const isAnimating = ref(false)
 const showThumbnails = ref(false)
-const mediaElement = ref<HTMLElement | null>(null)
+const loadedSrcCache = new Set<string>()
 
 const currentIsImage = computed(() => isImage(props.currentFile?.file_type))
 const currentIsVideo = computed(() => isVideo(props.currentFile?.file_type))
@@ -307,12 +308,6 @@ const hasMultipleFiles = computed(() => props.files.length > 1)
 const totalFiles = computed(() => props.files.length)
 const hasPrevious = computed(() => props.currentIndex > 0)
 const hasNext = computed(() => props.currentIndex < props.files.length - 1)
-
-const mediaContainerStyle = computed(() => ({
-  width: hasMultipleFiles.value && showThumbnails.value ? 'calc(100% - 6rem)' : '100%',
-  height: '100%',
-  padding: '4rem 1rem'
-}))
 
 const mediaAnimationClass = computed(() => {
   if (isLoading.value) {
@@ -340,34 +335,44 @@ const isImageFile = (file: FileData): boolean => isImage(file.file_type)
 const isVideoFile = (file: FileData): boolean => isVideo(file.file_type)
 const isAudioFile = (file: FileData): boolean => isAudio(file.file_type)
 
-// Reset states and trigger animation when file changes
-watch(() => props.currentFile, async () => {
-  if (!props.currentFile) return
-  
-  isLoading.value = true
-  hasError.value = false
-  isAnimating.value = false
-  
-  await nextTick()
-  
-  // Start with overflow scale
-  requestAnimationFrame(() => {
-    isAnimating.value = true
-  })
-}, { immediate: true })
-
-// Auto-show thumbnails after first navigation
-let hasNavigated = false
-watch(() => props.currentIndex, () => {
-  if (!hasNavigated && hasMultipleFiles.value) {
-    hasNavigated = true
-    showThumbnails.value = true
+const preloadImage = (src: string | undefined) => {
+  if (!src) return
+  if (loadedSrcCache.has(src)) return
+  try {
+    const img = new Image()
+    img.decoding = 'async'
+    img.loading = 'eager'
+    img.src = src
+  } catch {
+    // ignore
   }
-})
+}
+
+watch(
+  () => props.currentFile,
+  async () => {
+    const src = props.currentFile?.file_public_url || props.currentFile?.file_url
+    if (!props.currentFile || !src) return
+
+    hasError.value = false
+    isAnimating.value = false
+    isLoading.value = !loadedSrcCache.has(src)
+
+    const prev = props.files[props.currentIndex - 1]
+    const next = props.files[props.currentIndex + 1]
+    preloadImage(prev?.file_public_url || prev?.file_url)
+    preloadImage(next?.file_public_url || next?.file_url)
+
+    await nextTick()
+    requestAnimationFrame(() => {
+      isAnimating.value = true
+    })
+  },
+  { immediate: true },
+)
 
 const handleClose = () => {
   showThumbnails.value = false
-  hasNavigated = false
   emit('close')
 }
 
@@ -402,6 +407,9 @@ const toggleThumbnails = () => {
 const handleMediaLoad = async () => {
   isLoading.value = false
   hasError.value = false
+
+  const src = props.currentFile?.file_public_url || props.currentFile?.file_url
+  if (src) loadedSrcCache.add(src)
   
   // Smooth animation completion
   await nextTick()
@@ -410,10 +418,24 @@ const handleMediaLoad = async () => {
   }, 50)
 }
 
-const handleMediaError = () => {
+const handleMediaError = (event?: Event) => {
   isLoading.value = false
   hasError.value = true
   isAnimating.value = false
+
+  if (mediaDebugEnabled) {
+    const file = props.currentFile
+    const src = file?.file_public_url || file?.file_url
+    const target = (event?.target as HTMLImageElement | HTMLVideoElement | HTMLAudioElement | null) || null
+    console.warn('[media_debug] MediaViewer media error', {
+      id: file?.id,
+      title: file?.title,
+      file_type: file?.file_type,
+      src,
+      currentSrc: (target as any)?.currentSrc,
+      tag: (target as any)?.tagName,
+    })
+  }
 }
 
 const formatDate = (date: Date | string | undefined): string => {

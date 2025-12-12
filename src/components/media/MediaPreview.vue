@@ -46,6 +46,7 @@
       <img 
         :src="file.file_public_url || file.file_url" 
         :alt="file.title"
+        referrerpolicy="no-referrer"
         class="w-full h-full object-cover cursor-pointer transition-transform duration-200 group-hover:scale-105"
         @click="emit('preview', file)"
         @error="handleMediaError"
@@ -61,6 +62,7 @@
     <div v-else-if="mediaCategory === 'video'" class="relative w-full h-full bg-black group">
       <video 
         :src="file.file_public_url || file.file_url"
+        referrerpolicy="no-referrer"
         class="w-full h-full object-cover cursor-pointer"
         @click="emit('preview', file)"
         @loadeddata="handleMediaLoad"
@@ -163,6 +165,14 @@ const emit = defineEmits<{
 
 const { getMediaCategory, formatFileSize, formatDate } = useMediaTypes()
 
+const mediaDebugEnabled = (() => {
+  try {
+    return localStorage.getItem('media_debug') === '1' || localStorage.getItem('MEDIA_DEBUG') === '1'
+  } catch {
+    return false
+  }
+})()
+
 const isMediaLoading = ref(false)
 const mediaLoaded = ref(false)
 const hasMediaError = ref(false)
@@ -181,9 +191,22 @@ const handleMediaLoad = () => {
   hasMediaError.value = false
 }
 
-const handleMediaError = () => {
+const handleMediaError = (event?: Event) => {
   isMediaLoading.value = false
   mediaLoaded.value = false
   hasMediaError.value = true
+
+  if (mediaDebugEnabled) {
+    const src = props.file.file_public_url || props.file.file_url
+    const target = (event?.target as HTMLImageElement | HTMLVideoElement | null) || null
+    console.warn('[media_debug] MediaPreview media error', {
+      id: props.file.id,
+      title: props.file.title,
+      file_type: props.file.file_type,
+      src,
+      currentSrc: (target as any)?.currentSrc,
+      tag: (target as any)?.tagName,
+    })
+  }
 }
-</script> 
+</script>
