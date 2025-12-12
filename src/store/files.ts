@@ -16,6 +16,8 @@ const UPLOAD_COMPLETE = `${UPLOAD_BASE}/complete`;
 
 // Extract base URL for constructing full URLs from relative paths
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || "http://localhost:8000";
+
 const BASE_URL = API_BASE_URL.replace('/api/v1', '');
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -191,7 +193,7 @@ export const useFileStore = defineStore("files", {
     constructFullUrl(filePath: string): string {
       if (!filePath) return '';
 
-      const PROXY_ORIGIN = 'https://venia.cloud'
+      const PROXY_ORIGIN = SHARE_BASE_URL;
 
       // If it's already a full URL, return as is
       if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
