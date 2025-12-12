@@ -16,7 +16,16 @@ import { FUniver } from '@univerjs/core/facade'
 import { IWebsocketService, Message, useWebSocket, WebSocketService } from '@/lib/wsService'
 import { toast } from '@/composables/useToast'
 import { useFavicon } from '@vueuse/core'
-import { DEFAULT_WORKBOOK_DATA, BUDGET_TEMPLATE_DATA, INVOICE_TEMPLATE_DATA } from '@/assets/default-workbook-data'
+import {
+  DEFAULT_WORKBOOK_DATA,
+  BUDGET_TEMPLATE_DATA,
+  INVOICE_TEMPLATE_DATA,
+  EXPENSE_TRACKER_TEMPLATE_DATA,
+  PROJECT_TIMELINE_TEMPLATE_DATA,
+  SALES_CRM_TEMPLATE_DATA,
+  INVENTORY_TEMPLATE_DATA,
+  CONTENT_CALENDAR_TEMPLATE_DATA,
+} from '@/assets/default-workbook-data'
 import UserProfile from '@/components/layout/UserProfile.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -397,12 +406,28 @@ onMounted(async () => {
       let templateData: IWorkbookData = DEFAULT_WORKBOOK_DATA as IWorkbookData
       let docTitle = 'New Spreadsheet'
 
-      if (templateName.toLowerCase().includes('budget')) {
+      const slug = templateName.toLowerCase()
+      if (slug.includes('budget')) {
         templateData = createWorkbookFromTemplate(BUDGET_TEMPLATE_DATA)
-        docTitle = 'Budget'
-      } else if (templateName.toLowerCase().includes('invoice')) {
+        docTitle = 'Monthly Budget'
+      } else if (slug.includes('invoice')) {
         templateData = createWorkbookFromTemplate(INVOICE_TEMPLATE_DATA)
         docTitle = 'Invoice'
+      } else if (slug.includes('expenses')) {
+        templateData = createWorkbookFromTemplate(EXPENSE_TRACKER_TEMPLATE_DATA)
+        docTitle = 'Expense Tracker'
+      } else if (slug.includes('timeline')) {
+        templateData = createWorkbookFromTemplate(PROJECT_TIMELINE_TEMPLATE_DATA)
+        docTitle = 'Project Timeline'
+      } else if (slug.includes('crm')) {
+        templateData = createWorkbookFromTemplate(SALES_CRM_TEMPLATE_DATA)
+        docTitle = 'Sales CRM'
+      } else if (slug.includes('inventory')) {
+        templateData = createWorkbookFromTemplate(INVENTORY_TEMPLATE_DATA)
+        docTitle = 'Inventory Tracker'
+      } else if (slug.includes('calendar')) {
+        templateData = createWorkbookFromTemplate(CONTENT_CALENDAR_TEMPLATE_DATA)
+        docTitle = 'Content Calendar'
       }
 
       console.log('Creating new document from template:', templateName)

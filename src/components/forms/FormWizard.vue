@@ -228,6 +228,10 @@ import {
 import type { FormBlock } from "./blocks/types";
 import { t } from '@/i18n';
 
+const props = defineProps<{
+  initialDescription?: string
+}>()
+
 const emit = defineEmits<{
   (e: "create", data: { title: string; description: string; blocks: FormBlock[] }): void;
   (e: "create-blank"): void;
@@ -545,10 +549,16 @@ function mockGenerateForm(description: string): {
 }
 
 onMounted(() => {
+  if (props.initialDescription) {
+    description.value = props.initialDescription;
+  }
   nextTick(() => {
-    descriptionInput.value?.focus();
+    if (descriptionInput.value) {
+      descriptionInput.value.focus();
+    }
   });
 });
+
 </script>
 
 <style scoped>

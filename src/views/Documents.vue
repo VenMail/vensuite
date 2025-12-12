@@ -141,6 +141,48 @@
         </template>
       </WorkspaceTopBar>
 
+      <!-- Template previews -->
+      <div
+        class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/70 backdrop-blur shadow-sm overflow-hidden group hover:shadow-lg transition-all duration-300"
+      >
+        <div class="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200/70 dark:border-gray-800/70">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">
+              Start a new document
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Choose a template or start blank</p>
+          </div>
+          <Button variant="ghost" size="sm" class="text-primary-600" @click="createNewDocument('blank')">
+            <Plus class="h-4 w-4 mr-1" /> Blank
+          </Button>
+        </div>
+        <div class="relative">
+          <div class="absolute inset-0 bg-gradient-to-r from-gray-50/90 via-white/70 to-gray-50/90 dark:from-gray-900/80 dark:via-gray-900/40 dark:to-gray-900/80 blur-xl opacity-70 group-hover:opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+          <div class="overflow-x-auto px-3 sm:px-5 py-4 space-x-4 flex">
+            <div
+              v-for="template in documentTemplates"
+              :key="template.name"
+              class="w-44 min-w-[11rem] rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+              @click="createNewDocument(template.slug)"
+            >
+              <div
+                class="h-32 relative overflow-hidden"
+                :style="template.previewStyle"
+              >
+                <div class="absolute inset-0 mix-blend-overlay opacity-70"></div>
+                <div class="absolute top-3 left-3 text-xs text-white/90 font-semibold bg-black/20 px-2 py-1 rounded">
+                  {{ template.badge }}
+                </div>
+              </div>
+              <div class="px-3 py-3 space-y-1">
+                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{{ template.name }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ template.subtitle }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Content area -->
       <ScrollArea
         :class="[
@@ -502,13 +544,66 @@ const {
   buildContextMenuActions,
 });
 
-const documentTemplates = [
-  { name: "Blank Document", icon: defaultIcons.IconMicrosoftWord },
-  { name: "Resume", icon: defaultIcons.IconMicrosoftWord },
-  { name: "Letter", icon: defaultIcons.IconMicrosoftWord },
+type DocumentTemplate = {
+  name: string;
+  slug: string;
+  subtitle: string;
+  badge: string;
+  icon: any;
+  previewStyle: string;
+};
+
+const documentTemplates: DocumentTemplate[] = [
+  {
+    name: "Blank Document",
+    slug: "blank",
+    subtitle: "Start from scratch",
+    badge: "Blank",
+    icon: defaultIcons.IconMicrosoftWord,
+    previewStyle: "background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);",
+  },
+  {
+    name: "Meeting Notes",
+    slug: "notes",
+    subtitle: "Agenda, decisions, owners",
+    badge: "Notes",
+    icon: defaultIcons.IconMicrosoftWord,
+    previewStyle: "background: linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%);",
+  },
+  {
+    name: "Project Proposal",
+    slug: "article",
+    subtitle: "Executive summary & plan",
+    badge: "Proposal",
+    icon: defaultIcons.IconMicrosoftWord,
+    previewStyle: "background: linear-gradient(135deg, #10b981 0%, #6ee7b7 100%);",
+  },
+  {
+    name: "Progress Report",
+    slug: "report",
+    subtitle: "Status, risks, next steps",
+    badge: "Report",
+    icon: defaultIcons.IconMicrosoftWord,
+    previewStyle: "background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);",
+  },
+  {
+    name: "Business Letter",
+    slug: "letter",
+    subtitle: "Formal correspondence",
+    badge: "Letter",
+    icon: defaultIcons.IconMicrosoftWord,
+    previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);",
+  },
+  {
+    name: "Resume",
+    slug: "resume",
+    subtitle: "Modern CV layout",
+    badge: "Resume",
+    icon: defaultIcons.IconMicrosoftWord,
+    previewStyle: "background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);",
+  },
 ];
 
-// Remove folder items - Documents view should only show document files
 const folderItems = computed(() => []);
 
 const documentFiles = computed(() => {
@@ -692,10 +787,15 @@ const handleBreadcrumbNavigate = async (index: number) => {
 };
 
 function createNewDocument(template: string) {
-  if (template.toLowerCase().includes("blank")) {
+  const selected = documentTemplates.find(
+    (t) => t.name === template || t.slug === template
+  );
+  const slug = selected?.slug || template.toLowerCase();
+
+  if (slug.includes("blank")) {
     router.push("/docs/new");
   } else {
-    router.push("/docs/t/" + template);
+    router.push(`/docs/t/${slug}`);
   }
 }
 
@@ -731,11 +831,23 @@ async function handleUploadComplete(files: any[]) {
 
 async function openFile(id: string) {
   const file = fileStore.allFiles.find((f) => f.id === id);
-  if (file?.is_folder) {
+  if (!file) return;
+
+  if (file.is_folder) {
     await openFolder(id, file.title);
     return;
   }
-  router.push(`/docs/${id}`);
+
+  const ext = file.file_type?.toLowerCase();
+  const isPdf = ext === "pdf";
+  const fileUrl = file.file_public_url || file.file_url;
+
+  if (isPdf && fileUrl) {
+    window.open(fileUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  router.push(`/documents/${id}`);
 }
 
 async function handleBulkDelete() {

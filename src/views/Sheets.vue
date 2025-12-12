@@ -144,6 +144,48 @@
         </template>
       </WorkspaceTopBar>
 
+      <!-- Template previews -->
+      <div
+        class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/70 backdrop-blur shadow-sm overflow-hidden group hover:shadow-lg transition-all duration-300"
+      >
+        <div class="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200/70 dark:border-gray-800/70">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">
+              Start a new spreadsheet
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Pick a template or start blank</p>
+          </div>
+          <Button variant="ghost" size="sm" class="text-primary-600" @click="createNewSpreadsheet('blank')">
+            <Plus class="h-4 w-4 mr-1" /> Blank
+          </Button>
+        </div>
+        <div class="relative">
+          <div class="absolute inset-0 bg-gradient-to-r from-gray-50/90 via-white/70 to-gray-50/90 dark:from-gray-900/80 dark:via-gray-900/40 dark:to-gray-900/80 blur-xl opacity-70 group-hover:opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+          <div class="overflow-x-auto px-3 sm:px-5 py-4 space-x-4 flex">
+            <div
+              v-for="template in spreadsheetTemplates"
+              :key="template.slug"
+              class="w-44 min-w-[11rem] rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+              @click="createNewSpreadsheet(template.slug)"
+            >
+              <div
+                class="h-32 relative overflow-hidden"
+                :style="template.previewStyle"
+              >
+                <div class="absolute inset-0 mix-blend-overlay opacity-70"></div>
+                <div class="absolute top-3 left-3 text-xs text-white/90 font-semibold bg-black/20 px-2 py-1 rounded">
+                  {{ template.badge }}
+                </div>
+              </div>
+              <div class="px-3 py-3 space-y-1">
+                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{{ template.name }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ template.subtitle }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Content area -->
       <ScrollArea
         :class="[
@@ -484,11 +526,80 @@ const {
   buildContextMenuActions,
 });
 
-const spreadsheetTemplates = [
-  { name: "Blank Spreadsheet", icon: defaultIcons.IconMicrosoftExcel },
-  { name: "Budget", icon: defaultIcons.IconMicrosoftExcel },
-  { name: "Expense Tracker", icon: defaultIcons.IconMicrosoftExcel },
-  { name: "Project Timeline", icon: defaultIcons.IconMicrosoftExcel },
+type SpreadsheetTemplate = {
+  name: string;
+  slug: string;
+  subtitle: string;
+  badge: string;
+  icon: any;
+  previewStyle: string;
+};
+
+const spreadsheetTemplates: SpreadsheetTemplate[] = [
+  {
+    name: "Blank Spreadsheet",
+    slug: "blank",
+    subtitle: "Start from scratch",
+    badge: "Blank",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);",
+  },
+  {
+    name: "Monthly Budget",
+    slug: "budget",
+    subtitle: "Income, expenses, savings",
+    badge: "Finance",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #16a34a 0%, #4ade80 100%);",
+  },
+  {
+    name: "Expense Tracker",
+    slug: "expenses",
+    subtitle: "Receipts & categories",
+    badge: "Tracker",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);",
+  },
+  {
+    name: "Project Timeline",
+    slug: "timeline",
+    subtitle: "Milestones & owners",
+    badge: "Project",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);",
+  },
+  {
+    name: "Sales CRM",
+    slug: "crm",
+    subtitle: "Pipeline & deals",
+    badge: "Sales",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);",
+  },
+  {
+    name: "Inventory Tracker",
+    slug: "inventory",
+    subtitle: "Stock, reorder levels",
+    badge: "Ops",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);",
+  },
+  {
+    name: "Content Calendar",
+    slug: "calendar",
+    subtitle: "Campaigns & channels",
+    badge: "Marketing",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);",
+  },
+  {
+    name: "Invoice",
+    slug: "invoice",
+    subtitle: "Bill clients fast",
+    badge: "Billing",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #0f172a 0%, #334155 100%);",
+  },
 ];
 
 // Filter spreadsheets (xlsx, xls, csv, etc.)
