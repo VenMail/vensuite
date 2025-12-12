@@ -83,7 +83,8 @@
       "view_details": "查看详情",
       "webhooks": "网络钩子",
       "yes": "是",
-      "new": "新建"
+      "new": "新建",
+      "done": "完成"
     },
     "heading": {
       "add_people": "添加人员",

@@ -160,9 +160,9 @@
           </Button>
         </DialogTrigger>
         <DialogContent class="dark:bg-gray-900 dark:border-gray-700">
-          <DialogHeader>
+          <!-- <DialogHeader>
             <DialogTitle class="dark:text-gray-100">{{$t('Commons.heading.share_document')}}</DialogTitle>
-          </DialogHeader>
+          </DialogHeader> -->
           <ShareCard
             @close="shareDialogOpen = false"
             mode="doc"

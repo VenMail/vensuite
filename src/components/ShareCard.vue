@@ -573,7 +573,7 @@ function getStatusColor(status?: string) {
           </svg>
           {{$t('Commons.button.copy_link')}}
         </Button>
-        <Button variant="default" @click="handleDone">{{$t('Commons.button.date')}}</Button>
+        <Button variant="default" @click="handleDone">{{$t('Commons.button.done')}}</Button>
       </div>
     </div>
 
