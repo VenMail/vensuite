@@ -131,8 +131,9 @@ export const useFileStore = defineStore("files", {
       const normalizedType = this.normalizeFileType(doc?.file_type, doc?.file_name)
       const isFolder = !!doc?.is_folder
       const normalizedContent = this.normalizeContentPayload(doc?.content ?? doc?.contents, normalizedType)
+      const publicUrlRaw = doc?.file_public_url || (doc as any)?.public_url
       const fileUrl = doc?.file_url ? this.constructFullUrl(doc.file_url) : undefined
-      const publicUrl = doc?.file_public_url ? this.constructFullUrl(doc.file_public_url) : undefined
+      const publicUrl = publicUrlRaw ? this.constructFullUrl(publicUrlRaw) : undefined
       return {
         ...doc,
         id: doc.id,
@@ -206,6 +207,7 @@ export const useFileStore = defineStore("files", {
 
     /** Process uploaded file data from API response */
     processUploadedFile(responseData: any): FileData {
+      const publicUrlRaw = responseData.file_public_url || responseData.public_url
       const file: FileData = {
         id: responseData.id,
         title: responseData.title || responseData.file_name?.replace(/\.[^/.]+$/, "") || 'Untitled',
@@ -213,7 +215,7 @@ export const useFileStore = defineStore("files", {
         file_type: this.normalizeFileType(responseData.file_type, responseData.file_name),
         file_size: responseData.file_size,
         file_url: this.constructFullUrl(responseData.file_url),
-        file_public_url: responseData.file_public_url ? this.constructFullUrl(responseData.file_public_url) : undefined,
+        file_public_url: publicUrlRaw ? this.constructFullUrl(publicUrlRaw) : undefined,
         folder_id: responseData.folder_id,
         is_folder: !!responseData.is_folder,
         is_template: responseData.is_template || false,
@@ -235,7 +237,8 @@ export const useFileStore = defineStore("files", {
       const normalized = this.normalizeDocumentShape(raw);
       normalized.title = this.computeTitle(raw);
       normalized.file_url = raw.file_url ? this.constructFullUrl(raw.file_url) : undefined;
-      normalized.file_public_url = raw.file_public_url ? this.constructFullUrl(raw.file_public_url) : undefined;
+      const publicUrlRaw = raw.file_public_url || (raw as any)?.public_url;
+      normalized.file_public_url = publicUrlRaw ? this.constructFullUrl(publicUrlRaw) : undefined;
       normalized.file_size = raw.file_size;
       normalized.mime_type = raw.mime_type;
       normalized.source = raw.source;
@@ -1086,7 +1089,8 @@ export const useFileStore = defineStore("files", {
         const data = response.data.data;
         const doc = this.normalizeDocumentShape(data);
         doc.file_url = data.file_url ? this.constructFullUrl(data.file_url) : doc.file_url;
-        doc.file_public_url = data.file_public_url ? this.constructFullUrl(data.file_public_url) : doc.file_public_url;
+        const publicUrlRaw = data.file_public_url || (data as any)?.public_url;
+        doc.file_public_url = publicUrlRaw ? this.constructFullUrl(publicUrlRaw) : doc.file_public_url;
         doc.isNew = false;
         doc.isDirty = false;
         // Attach large-file hints for front-end handling without breaking types
@@ -1277,6 +1281,7 @@ export const useFileStore = defineStore("files", {
         const processedDocs = docs.map((doc) => {
           const normalized = this.normalizeDocumentShape(doc)
           normalized.file_url = doc.file_url ? this.constructFullUrl(doc.file_url) : undefined
+          normalized.file_public_url = doc.file_public_url ? this.constructFullUrl(doc.file_public_url) : undefined
           normalized.isNew = false
           normalized.isDirty = false
           return normalized
