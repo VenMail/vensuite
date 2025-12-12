@@ -191,9 +191,32 @@ export const useFileStore = defineStore("files", {
     constructFullUrl(filePath: string): string {
       if (!filePath) return '';
 
+      const PROXY_ORIGIN = 'https://venia.cloud'
+
       // If it's already a full URL, return as is
       if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-        return filePath;
+        try {
+          const u = new URL(filePath)
+          const isVenmailHost = /(^|\.)venmail\.io$/i.test(u.hostname)
+          const isStoragePath = u.pathname.startsWith('/storage/')
+
+          if (isStoragePath || isVenmailHost) {
+            const encodedPath = encodeURI(u.pathname)
+            return `${PROXY_ORIGIN}${encodedPath}${u.search}${u.hash}`
+          }
+
+          return filePath;
+        } catch {
+          return filePath;
+        }
+      }
+
+      // Ensure relative storage paths are also served via proxy to avoid hotlinking/CORS issues
+      const relativeIsStoragePath = filePath.startsWith('/storage/') || filePath.startsWith('storage/')
+      if (relativeIsStoragePath) {
+        const normalized = filePath.startsWith('/') ? filePath : `/${filePath}`
+        const encodedPath = encodeURI(normalized)
+        return `${PROXY_ORIGIN}${encodedPath}`
       }
 
       // If it's a relative path, prepend the base URL
