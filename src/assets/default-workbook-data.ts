@@ -134,6 +134,117 @@ export const BUDGET_TEMPLATE_DATA = {
 }
 
 /**
+ * OKR tracker template workbook data
+ */
+export const OKR_TEMPLATE_DATA = {
+  id: 'okr-template',
+  locale: LocaleType.EN_US,
+  name: 'OKR Tracker',
+  sheetOrder: ['okr-sheet'],
+  appVersion: '3.0.0-alpha',
+  styles: {
+    header: { bl: 1, bg: { rgb: '#1d4ed8' }, cl: { rgb: '#ffffff' } },
+    objective: { bl: 1, bg: { rgb: '#e0f2fe' } },
+    kr: { bg: { rgb: '#f8fafc' } },
+  },
+  sheets: {
+    'okr-sheet': {
+      type: SheetTypes.GRID,
+      id: 'okr-sheet',
+      name: 'OKRs',
+      cellData: {
+        0: {
+          0: { v: 'Objective', t: 1, s: 'header' },
+          1: { v: 'Key Result', t: 1, s: 'header' },
+          2: { v: 'Owner', t: 1, s: 'header' },
+          3: { v: 'Target', t: 1, s: 'header' },
+          4: { v: 'Current', t: 1, s: 'header' },
+          5: { v: 'Confidence', t: 1, s: 'header' },
+        },
+        1: {
+          0: { v: 'Increase product adoption', t: 1, s: 'objective' },
+          1: { v: 'Weekly active users to 15k', t: 1, s: 'kr' },
+          2: { v: 'Growth', t: 1 },
+          3: { v: 15000, t: 2 },
+          4: { v: 9200, t: 2 },
+          5: { v: 'Medium', t: 1 },
+        },
+        2: {
+          0: { v: '', t: 1 },
+          1: { v: 'Activation rate to 45%', t: 1, s: 'kr' },
+          2: { v: 'Product', t: 1 },
+          3: { v: 0.45, t: 2 },
+          4: { v: 0.32, t: 2 },
+          5: { v: 'Medium', t: 1 },
+        },
+        3: {
+          0: { v: 'Delight customers', t: 1, s: 'objective' },
+          1: { v: 'CSAT 4.6+', t: 1, s: 'kr' },
+          2: { v: 'Support', t: 1 },
+          3: { v: 4.6, t: 2 },
+          4: { v: 4.4, t: 2 },
+          5: { v: 'High', t: 1 },
+        },
+      },
+    },
+  },
+}
+
+/**
+ * Task tracker template workbook data
+ */
+export const TASKS_TEMPLATE_DATA = {
+  id: 'tasks-template',
+  locale: LocaleType.EN_US,
+  name: 'Task Tracker',
+  sheetOrder: ['tasks-sheet'],
+  appVersion: '3.0.0-alpha',
+  styles: {
+    header: { bl: 1, bg: { rgb: '#0f172a' }, cl: { rgb: '#ffffff' } },
+    todo: { bg: { rgb: '#fff7ed' } },
+    doing: { bg: { rgb: '#e0f2fe' } },
+    done: { bg: { rgb: '#dcfce7' } },
+  },
+  sheets: {
+    'tasks-sheet': {
+      type: SheetTypes.GRID,
+      id: 'tasks-sheet',
+      name: 'Tasks',
+      cellData: {
+        0: {
+          0: { v: 'Task', t: 1, s: 'header' },
+          1: { v: 'Assignee', t: 1, s: 'header' },
+          2: { v: 'Status', t: 1, s: 'header' },
+          3: { v: 'Due', t: 1, s: 'header' },
+          4: { v: 'Notes', t: 1, s: 'header' },
+        },
+        1: {
+          0: { v: 'Scope homepage revamp', t: 1 },
+          1: { v: 'Alex', t: 1 },
+          2: { v: 'In Progress', t: 1, s: 'doing' },
+          3: { v: new Date(Date.now() + 5 * 86400000).toLocaleDateString(), t: 1 },
+          4: { v: 'Finalize IA', t: 1 },
+        },
+        2: {
+          0: { v: 'Migrate billing webhooks', t: 1 },
+          1: { v: 'Sam', t: 1 },
+          2: { v: 'To Do', t: 1, s: 'todo' },
+          3: { v: new Date(Date.now() + 10 * 86400000).toLocaleDateString(), t: 1 },
+          4: { v: '', t: 1 },
+        },
+        3: {
+          0: { v: 'Publish Q1 roadmap', t: 1 },
+          1: { v: 'Taylor', t: 1 },
+          2: { v: 'Done', t: 1, s: 'done' },
+          3: { v: new Date().toLocaleDateString(), t: 1 },
+          4: { v: 'Share with GTM', t: 1 },
+        },
+      },
+    },
+  },
+}
+
+/**
  * Invoice template workbook data
  */
 export const INVOICE_TEMPLATE_DATA = {

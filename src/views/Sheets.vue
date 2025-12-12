@@ -600,6 +600,22 @@ const spreadsheetTemplates: SpreadsheetTemplate[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #0f172a 0%, #334155 100%);",
   },
+  {
+    name: "OKR Tracker",
+    slug: "okr",
+    subtitle: "Objectives & key results",
+    badge: "Strategy",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);",
+  },
+  {
+    name: "Task Tracker",
+    slug: "tasks",
+    subtitle: "To-dos & owners",
+    badge: "Productivity",
+    icon: defaultIcons.IconMicrosoftExcel,
+    previewStyle: "background: linear-gradient(135deg, #0f172a 0%, #475569 100%);",
+  },
 ];
 
 // Filter spreadsheets (xlsx, xls, csv, etc.)

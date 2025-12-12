@@ -428,6 +428,12 @@ onMounted(async () => {
       } else if (slug.includes('calendar')) {
         templateData = createWorkbookFromTemplate(CONTENT_CALENDAR_TEMPLATE_DATA)
         docTitle = 'Content Calendar'
+      } else if (slug.includes('okr')) {
+        templateData = createWorkbookFromTemplate(OKR_TEMPLATE_DATA)
+        docTitle = 'OKR Tracker'
+      } else if (slug.includes('tasks')) {
+        templateData = createWorkbookFromTemplate(TASKS_TEMPLATE_DATA)
+        docTitle = 'Task Tracker'
       }
 
       console.log('Creating new document from template:', templateName)

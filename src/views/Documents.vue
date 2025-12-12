@@ -572,7 +572,7 @@ const documentTemplates: DocumentTemplate[] = [
   },
   {
     name: "Project Proposal",
-    slug: "article",
+    slug: "proposal",
     subtitle: "Executive summary & plan",
     badge: "Proposal",
     icon: defaultIcons.IconMicrosoftWord,
@@ -601,6 +601,22 @@ const documentTemplates: DocumentTemplate[] = [
     badge: "Resume",
     icon: defaultIcons.IconMicrosoftWord,
     previewStyle: "background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);",
+  },
+  {
+    name: "Case Study",
+    slug: "case-study",
+    subtitle: "Problem, solution, results",
+    badge: "Case Study",
+    icon: defaultIcons.IconMicrosoftWord,
+    previewStyle: "background: linear-gradient(135deg, #1d4ed8 0%, #22c55e 100%);",
+  },
+  {
+    name: "SOP",
+    slug: "sop",
+    subtitle: "Standard procedure",
+    badge: "Operations",
+    icon: defaultIcons.IconMicrosoftWord,
+    previewStyle: "background: linear-gradient(135deg, #0f172a 0%, #475569 100%);",
   },
 ];
 
