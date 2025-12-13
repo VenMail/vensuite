@@ -148,17 +148,17 @@
         <div class="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200/70 dark:border-gray-800/70">
           <div>
             <p class="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">
-              Start a new document
+              {{$t('Views.Documents.heading.start_a_new_document')}}
             </p>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Choose a template or start blank</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">{{$t('Views.Documents.text.choose_a_template_or_start_blank')}}</p>
           </div>
           <Button variant="ghost" size="sm" class="text-primary-600" @click="createNewDocument('blank')">
-            <Plus class="h-4 w-4 mr-1" /> Blank
+            <Plus class="h-4 w-4 mr-1" /> {{$t('Commons.button.blank')}}
           </Button>
         </div>
         <div class="relative">
           <div class="absolute inset-0 bg-gradient-to-r from-gray-50/90 via-white/70 to-gray-50/90 dark:from-gray-900/80 dark:via-gray-900/40 dark:to-gray-900/80 blur-xl opacity-70 group-hover:opacity-0 transition-opacity duration-300 pointer-events-none"></div>
-          <div class="overflow-x-auto px-3 sm:px-5 py-4 space-x-4 flex">
+          <div class="template-preview-scroll overflow-x-auto px-3 sm:px-5 py-4 space-x-4 flex">
             <div
               v-for="template in documentTemplates"
               :key="template.name"
@@ -1014,6 +1014,36 @@ function handleOutsideClick(event: MouseEvent) {
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: center;
+}
+
+.template-preview-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.template-preview-scroll::-webkit-scrollbar {
+  height: 0px;
+}
+
+.group:hover .template-preview-scroll {
+  scrollbar-width: thin;
+}
+
+.group:hover .template-preview-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.group:hover .template-preview-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.group:hover .template-preview-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.55);
+  border-radius: 9999px;
+}
+
+.dark .group:hover .template-preview-scroll::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.6);
 }
 
 @keyframes loading {

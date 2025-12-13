@@ -47,10 +47,12 @@
     "Documents": {
       "heading": {
         "create_new_document": "创建新文档",
+        "start_a_new_document": "开始新建文档",
         "no_documents_found": "未找到文档"
       },
       "text": {
-        "get_started_by_creating": "通过创建新文档或上传现有文档开始。"
+        "get_started_by_creating": "通过创建新文档或上传现有文档开始。",
+        "choose_a_template_or_start_blank": "选择一个模板或从空白开始"
       }
     },
     "FilePicker": {
@@ -216,19 +218,22 @@
         "privacy_terms": "隐私和条款"
       }
     },
+
     "SheetEditor": {
       "heading": {
         "request_access_to_this": "请求访问此表格",
-        "this_spreadsheet_is_large": "此电子表格很大"
+        "this_spreadsheet_is_large": "此电子表格较大"
       }
     },
     "Sheets": {
-      "heading": {
-        "create_new_spreadsheet": "创建新电子表格",
-        "no_spreadsheets_found": "未找到电子表格"
-      },
       "text": {
-        "get_started_by_creating": "通过创建开始使用"
+        "get_started_by_creating": "通过创建开始",
+        "pick_a_template_or_start_blank": "选择一个模板或从空白开始"
+      },
+      "heading": {
+        "create_new_spreadsheet": "创建新的电子表格",
+        "start_a_new_spreadsheet": "开始新建电子表格",
+        "no_spreadsheets_found": "未找到电子表格"
       }
     },
     "Sidebar": {

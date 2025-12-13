@@ -46,10 +46,12 @@
     },
     "Documents": {
       "text": {
-        "get_started_by_creating": "Get started by creating a new document or uploading an existing one."
+        "get_started_by_creating": "Get started by creating a new document or uploading an existing one.",
+        "choose_a_template_or_start_blank": "Choose a template or start blank"
       },
       "heading": {
         "create_new_document": "Create New Document",
+        "start_a_new_document": "Start a new document",
         "no_documents_found": "No documents found"
       }
     },
@@ -182,10 +184,12 @@
     },
     "Sheets": {
       "text": {
-        "get_started_by_creating": "Get started by creating"
+        "get_started_by_creating": "Get started by creating",
+        "pick_a_template_or_start_blank": "Pick a template or start blank"
       },
       "heading": {
         "create_new_spreadsheet": "Create new spreadsheet",
+        "start_a_new_spreadsheet": "Start a new spreadsheet",
         "no_spreadsheets_found": "No spreadsheets found"
       }
     },
