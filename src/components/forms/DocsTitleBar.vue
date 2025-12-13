@@ -184,7 +184,7 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { ArrowLeft, PencilIcon, Share2, Wifi, WifiOff, Sun, Moon, Clock, X } from 'lucide-vue-next';
-import { Dialog, DialogHeader, DialogTitle, DialogTrigger, DialogContent } from '../ui/dialog';
+import { Dialog, DialogTrigger, DialogContent } from '../ui/dialog';
 import * as defaultIcons from "@iconify-prerendered/vue-file-icons";
 import Button from '@/components/ui/button/Button.vue';
 import ShareCard from '@/components/ShareCard.vue';

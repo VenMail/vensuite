@@ -1,106 +1,115 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Project Proposal</title>
-  <style>
-    body { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #0f172a; margin: 0; padding: 0; background: #f8fafc; }
-    .page { max-width: 820px; margin: 48px auto; background: #ffffff; padding: 48px; box-shadow: 0 12px 35px rgba(15,23,42,0.08); border-radius: 18px; }
-    h1 { margin: 0 0 8px; font-size: 30px; color: #0f172a; }
-    h2 { margin: 24px 0 12px; font-size: 18px; color: #0f172a; letter-spacing: -0.01em; }
-    h3 { margin: 16px 0 8px; font-size: 15px; color: #1f2937; }
-    p { margin: 0 0 12px; line-height: 1.6; color: #334155; }
-    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: linear-gradient(135deg, #0ea5e9, #2563eb); color: #fff; font-weight: 600; font-size: 12px; letter-spacing: 0.01em; }
-    .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0 28px; }
-    .meta-item { padding: 12px 14px; border-radius: 12px; background: #f1f5f9; color: #0f172a; font-weight: 600; }
-    .meta-item span { display: block; color: #475569; font-weight: 500; font-size: 13px; margin-bottom: 4px; }
-    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
-    ul { padding-left: 18px; color: #334155; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 10px; background: #e0f2fe; color: #0ea5e9; font-weight: 600; font-size: 12px; letter-spacing: 0.01em; }
-    .table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 14px; }
-    .table th { text-align: left; background: #f1f5f9; color: #0f172a; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
-    .table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; color: #334155; }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <div class="pill">Project Proposal</div>
-    <h1>Project Title</h1>
-    <p>One-line description of the initiative and the value it delivers.</p>
+<h1 style="margin: 0 0 6px; text-align: left">
+   <span style="font-family: Inter; font-size: 30pt; color: #0f172a">Project Proposal</span>
+ </h1>
+ <p style="margin: 0 0 10px">
+   <span style="font-family: Inter; font-size: 12pt; color: #475569"><strong>[Project Title]</strong> — <em>[One-line description of the initiative and the value it delivers]</em></span>
+ </p>
 
-    <div class="meta">
-      <div class="meta-item"><span>Prepared For</span>Client / Team</div>
-      <div class="meta-item"><span>Prepared By</span>Owner Name</div>
-      <div class="meta-item"><span>Date</span>Jan 1, 2025</div>
-      <div class="meta-item"><span>Version</span>v1.0</div>
-    </div>
+ <table style="width: 100%; border-collapse: collapse; margin: 14px 0 18px; font-family: Inter; font-size: 11pt">
+   <tbody>
+     <tr>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #334155"><strong>Prepared For</strong></td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #0f172a">[Client / Team]</td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #334155"><strong>Prepared By</strong></td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #0f172a">[Owner Name]</td>
+     </tr>
+     <tr>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #334155"><strong>Date</strong></td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #0f172a">[YYYY-MM-DD]</td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #334155"><strong>Version</strong></td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #0f172a">[v1.0]</td>
+     </tr>
+   </tbody>
+ </table>
 
-    <h2>Executive Summary</h2>
-    <p>Summarize the problem, the proposed solution, expected impact, and top-line timeline. Keep it concise—three to five sentences.</p>
+ <blockquote>
+   <p>
+     <mark style="background-color: #eef2ff">
+       <span style="font-family: Inter; font-size: 11pt; color: #1e3a8a"><strong>Executive Summary:</strong> [Summarize the problem, the proposed solution, expected impact, and top-line timeline in 3–5 sentences.]</span>
+     </mark>
+   </p>
+ </blockquote>
 
-    <h2>Objectives</h2>
-    <div class="grid">
-      <div class="card">
-        <div class="badge">Primary</div>
-        <p>Objective 1 — define the measurable outcome and the KPI it moves.</p>
-      </div>
-      <div class="card">
-        <div class="badge">Secondary</div>
-        <p>Objective 2 — supporting goal with clear metric ownership.</p>
-      </div>
-      <div class="card">
-        <div class="badge">Secondary</div>
-        <p>Objective 3 — risk mitigation or enablement milestone.</p>
-      </div>
-    </div>
+ <h2><span style="font-family: Inter; font-size: 18pt; color: #0f172a">1. Objectives</span></h2>
+ <table style="width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-family: Inter; font-size: 11pt">
+   <thead>
+     <tr>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Priority</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Objective</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">KPI</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Owner</th>
+     </tr>
+   </thead>
+   <tbody>
+     <tr>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #0f172a">Primary</td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #0f172a">[Objective 1]</td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #334155">[Metric / target]</td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #334155">[Role]</td>
+     </tr>
+     <tr>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #0f172a">Secondary</td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #0f172a">[Objective 2]</td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #334155">[Metric / target]</td>
+       <td style="padding: 10px 12px; border: 1px solid #e2e8f0; color: #334155">[Role]</td>
+     </tr>
+   </tbody>
+ </table>
 
-    <h2>Scope & Deliverables</h2>
-    <ul>
-      <li>Deliverable 1 — description, format, owner, due date.</li>
-      <li>Deliverable 2 — description, format, owner, due date.</li>
-      <li>Out of scope — clearly list what is intentionally excluded.</li>
-    </ul>
+ <h2><span style="font-family: Inter; font-size: 18pt; color: #0f172a">2. Scope & Deliverables</span></h2>
+ <ul>
+   <li><span style="font-family: Inter; font-size: 12pt; color: #334155"><strong>Deliverable 1:</strong> [Description] — [Owner] — [Due date]</span></li>
+   <li><span style="font-family: Inter; font-size: 12pt; color: #334155"><strong>Deliverable 2:</strong> [Description] — [Owner] — [Due date]</span></li>
+   <li><span style="font-family: Inter; font-size: 12pt; color: #334155"><strong>Out of scope:</strong> [Explicitly list exclusions]</span></li>
+ </ul>
 
-    <h2>Approach</h2>
-    <p>Outline the methodology, technologies, and collaboration plan. Include key assumptions and dependencies on other teams.</p>
+ <h2><span style="font-family: Inter; font-size: 18pt; color: #0f172a">3. Approach</span></h2>
+ <p><span style="font-family: Inter; font-size: 12pt; color: #334155">[Outline the methodology, technologies, and collaboration plan. Include assumptions and dependencies.]</span></p>
 
-    <h2>Timeline & Milestones</h2>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Milestone</th>
-          <th>Owner</th>
-          <th>Due</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Discovery & alignment</td><td>PM</td><td>Jan 15</td><td>Planned</td></tr>
-        <tr><td>Design & validation</td><td>Design</td><td>Feb 05</td><td>Planned</td></tr>
-        <tr><td>Build & QA</td><td>Engineering</td><td>Mar 10</td><td>Planned</td></tr>
-        <tr><td>Launch</td><td>PMM</td><td>Mar 24</td><td>Planned</td></tr>
-      </tbody>
-    </table>
+ <h2><span style="font-family: Inter; font-size: 18pt; color: #0f172a">4. Timeline & Milestones</span></h2>
+ <table style="width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-family: Inter; font-size: 11pt">
+   <thead>
+     <tr>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Milestone</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Owner</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Due</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Status</th>
+     </tr>
+   </thead>
+   <tbody>
+     <tr><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Discovery & alignment</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">PM</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[YYYY-MM-DD]</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Planned</td></tr>
+     <tr><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Design & validation</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Design</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[YYYY-MM-DD]</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Planned</td></tr>
+     <tr><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Build & QA</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Engineering</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[YYYY-MM-DD]</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Planned</td></tr>
+     <tr><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Launch</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">PMM</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[YYYY-MM-DD]</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Planned</td></tr>
+   </tbody>
+ </table>
 
-    <h2>Risks & Mitigations</h2>
-    <ul>
-      <li>Risk 1 — brief description and mitigation plan.</li>
-      <li>Risk 2 — brief description and mitigation plan.</li>
-      <li>Risk 3 — brief description and mitigation plan.</li>
-    </ul>
+ <h2><span style="font-family: Inter; font-size: 18pt; color: #0f172a">5. Risks & Mitigations</span></h2>
+ <table style="width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-family: Inter; font-size: 11pt">
+   <thead>
+     <tr>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Risk</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Impact</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Mitigation</th>
+     </tr>
+   </thead>
+   <tbody>
+     <tr><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[Risk]</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[Impact]</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[Mitigation]</td></tr>
+   </tbody>
+ </table>
 
-    <h2>Budget Summary</h2>
-    <table class="table">
-      <thead>
-        <tr><th>Item</th><th>Estimate</th><th>Notes</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Design</td><td>$10,000</td><td>Vendor or in-house</td></tr>
-        <tr><td>Engineering</td><td>$35,000</td><td>Build & QA</td></tr>
-        <tr><td>Marketing</td><td>$8,000</td><td>Launch campaigns</td></tr>
-      </tbody>
-    </table>
-  </div>
-</body>
-</html>
+ <h2><span style="font-family: Inter; font-size: 18pt; color: #0f172a">6. Budget Summary</span></h2>
+ <table style="width: 100%; border-collapse: collapse; margin: 8px 0 0; font-family: Inter; font-size: 11pt">
+   <thead>
+     <tr>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Item</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Estimate</th>
+       <th style="text-align: left; padding: 10px 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a">Notes</th>
+     </tr>
+   </thead>
+   <tbody>
+     <tr><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Design</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[$]</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[Notes]</td></tr>
+     <tr><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Engineering</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[$]</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[Notes]</td></tr>
+     <tr><td style="padding: 10px 12px; border: 1px solid #e2e8f0">Other</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[$]</td><td style="padding: 10px 12px; border: 1px solid #e2e8f0">[Notes]</td></tr>
+   </tbody>
+ </table>

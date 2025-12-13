@@ -155,6 +155,16 @@ const canJoinRealtime = computed(() => {
 
 const canEditSheet = computed(() => authStore.isAuthenticated || editablePrivacyTypes.has(privacyType.value))
 
+function goBack() {
+  const canGoBack = typeof window !== 'undefined' && !!(window.history.state && (window.history.state as any).back)
+  if (canGoBack) {
+    router.back()
+    return
+  }
+
+  router.push({ name: 'sheets-view' })
+}
+
 // Handler for univerRefChange event
 function onUniverRefChange(childUniverRef: FUniver | null) {
   univerCoreRef.value = childUniverRef
@@ -1183,7 +1193,7 @@ watch(
       class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
     >
       <div class="flex items-center gap-4">
-        <button class="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800" @click="router.back()">
+        <button class="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800" @click="goBack">
           <ArrowLeft class="h-5 w-5" />
         </button>
         <router-link to="/">

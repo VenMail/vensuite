@@ -2865,7 +2865,13 @@ async function initializeDocument() {
 }
 
 function goBack() {
-  router.push('/');
+  const canGoBack = typeof window !== 'undefined' && !!(window.history.state && (window.history.state as any).back);
+  if (canGoBack) {
+    router.back();
+    return;
+  }
+
+  router.push({ name: 'docs-view' });
 }
 
 function handleVersionSelect(version: any) {
