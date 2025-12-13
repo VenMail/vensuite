@@ -863,7 +863,7 @@ async function openFile(id: string) {
     return;
   }
 
-  router.push(`/documents/${id}`);
+  router.push(`/docs/${id}`);
 }
 
 async function handleBulkDelete() {

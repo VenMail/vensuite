@@ -823,7 +823,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                       <Plus class="h-5 w-5 text-primary-600" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent class="rounded-lg shadow-2xl border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                  <DialogContent class="rounded-lg shadow-2xl border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 w-[calc(100vw-2rem)] sm:w-full max-w-lg sm:max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle class="text-xl font-semibold text-gray-800 dark:text-gray-100">
                         {{$t('Views.Home.heading.choose_a_template')}}
@@ -840,7 +840,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                         </TabsTrigger>
                       </TabsList>
                       <TabsContent v-for="(items, category) in templates" :key="category" :value="category" class="p-2">
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <Button
                             v-for="template in items"
                             :key="template.name"

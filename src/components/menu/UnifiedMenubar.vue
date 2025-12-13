@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineEmits, defineProps } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   FileIcon,
@@ -12,6 +12,7 @@ import {
   MessageCircleIcon,
   HelpCircleIcon,
   InfoIcon,
+  PlugIcon,
   BoldIcon,
   ItalicIcon,
   UnderlineIcon,
@@ -49,6 +50,7 @@ const emit = defineEmits([
   'toggleChat',
   'export',
   'open-dialog',
+  'open-integrations',
   'undo',
   'redo',
   'toggle-page-layout',
@@ -123,6 +125,10 @@ function handleRedo() {
 
 function toggleChat() {
   emit('toggleChat')
+}
+
+function openIntegrations() {
+  emit('open-integrations')
 }
 
 function handleCollaboratorClick(uid: string) {
@@ -283,6 +289,16 @@ function formatSelectionLabel(selection: any): string {
           <MenubarItem @click="emit('data-group')">
             <GroupIcon class="h-4 w-4 mr-2" />
             Group
+          </MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+
+      <MenubarMenu>
+        <MenubarTrigger>Integrations</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem @click="openIntegrations">
+            <PlugIcon class="h-4 w-4 mr-2" />
+            Integrate this sheet
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>

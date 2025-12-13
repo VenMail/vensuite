@@ -25,6 +25,7 @@ import {
 } from '@/assets/default-workbook-data'
 import UserProfile from '@/components/layout/UserProfile.vue'
 import Button from '@/components/ui/button/Button.vue'
+import Switch from '@/components/ui/switch/Switch.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import type { FileData } from '@/types'
 import { ExportService, ExportFormat, PDFEngine, type IExportOptions } from '@/plugins/ExportPlugin'
@@ -99,6 +100,10 @@ const titleRef = ref<HTMLElement | null>(null)
 const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({})
 
 const shareOpen = ref(false)
+const integrationsOpen = ref(false)
+const sheetPublicApiKey = ref<string>('')
+const sheetPublicApiEnabled = ref<boolean>(false)
+const isUpdatingSheetPublicApi = ref(false)
 // Large-file handling
 const isLarge = ref(false)
 const downloadUrl = ref<string | null>(null)
@@ -137,10 +142,24 @@ const lastSavedText = computed(() => {
 
 const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin
 
+const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+const FILES_ENDPOINT = `${API_BASE_URI}/app-files`
+
 const shareLinkSheet = computed(() => {
   const id = route.params.id as string
   if (!id) return ''
   return `${SHARE_BASE_URL}/share/sheet/${id}`
+})
+
+const embedSheetSnippet = computed(() => {
+  const link = shareLinkSheet.value
+  if (!link) return ''
+  return `<iframe src="${link}" style="width:100%;height:700px;border:0" loading="lazy" referrerpolicy="no-referrer"></iframe>`
+})
+
+const sheetPublicInsertEndpoint = computed(() => {
+  if (!sheetPublicApiKey.value) return ''
+  return `${API_BASE_URI}/public/sheets/${sheetPublicApiKey.value}/rows`
 })
 
 const guestAccessiblePrivacyTypes = new Set<number>([1, 2, 3, 4])
@@ -922,9 +941,6 @@ function copyShareLink() {
   navigator.clipboard.writeText(url).then(() => toast.success('Link copied'))
 }
 
-const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
-const FILES_ENDPOINT = `${API_BASE_URI}/app-files`
-
 // sharing helpers imported from '@/utils/sharing'
 
 async function fetchSharingInfo() {
@@ -939,7 +955,60 @@ async function fetchSharingInfo() {
     const parsed = parseSharingInfoString(payload.sharing_info)
     shareMembers.value = parsed
     if (typeof payload.privacy_type === 'number') privacyType.value = Number(payload.privacy_type)
+    sheetPublicApiEnabled.value = Boolean(payload.public_api_enabled)
+    sheetPublicApiKey.value = (payload.public_api_key || payload.publicApiKey || '') as string
   } catch {}
+}
+
+async function openIntegrationsDialog() {
+  await fetchSharingInfo()
+  integrationsOpen.value = true
+}
+
+async function handleSetSheetPublicApiEnabled(enabled: boolean) {
+  const id = route.params.id as string
+  if (!id) return
+  if (isUpdatingSheetPublicApi.value) return
+  isUpdatingSheetPublicApi.value = true
+  try {
+    const res = await axios.put(`${FILES_ENDPOINT}/${id}/public-api`, { enabled })
+    const payload = res.data?.data || res.data || {}
+    sheetPublicApiEnabled.value = Boolean(payload.public_api_enabled ?? enabled)
+    sheetPublicApiKey.value = (payload.public_api_key || sheetPublicApiKey.value || '') as string
+    toast.success(sheetPublicApiEnabled.value ? 'Public API enabled' : 'Public API disabled')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Failed to update Public API settings')
+  } finally {
+    isUpdatingSheetPublicApi.value = false
+  }
+}
+
+async function handleRotateSheetPublicApiKey() {
+  const id = route.params.id as string
+  if (!id) return
+  if (isUpdatingSheetPublicApi.value) return
+  isUpdatingSheetPublicApi.value = true
+  try {
+    const res = await axios.post(`${FILES_ENDPOINT}/${id}/public-api/key`)
+    const payload = res.data?.data || res.data || {}
+    sheetPublicApiEnabled.value = Boolean(payload.public_api_enabled ?? sheetPublicApiEnabled.value)
+    sheetPublicApiKey.value = (payload.public_api_key || payload.publicApiKey || '') as string
+    toast.success('API key updated')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Failed to rotate API key')
+  } finally {
+    isUpdatingSheetPublicApi.value = false
+  }
+}
+
+async function copyToClipboard(value: string, successMessage: string) {
+  if (!value) return
+  try {
+    await navigator.clipboard.writeText(value)
+    toast.success(successMessage)
+  } catch {
+    toast.error('Unable to copy. Try copying manually.')
+  }
 }
 
 async function handleInviteMember(payload: { email: string; permission?: 'view' | 'comment' | 'edit' | 'owner'; shareLevel?: ShareLevel; note?: string }) {
@@ -1190,21 +1259,21 @@ watch(
     </div>
 
     <div
-      class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
     >
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3 sm:gap-4 min-w-0">
         <button class="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800" @click="goBack">
           <ArrowLeft class="h-5 w-5" />
         </button>
         <router-link to="/">
           <defaultIcons.IconMicrosoftExcel ref="iconRef" class="w-[1.5rem] h-[3rem] text-green-600" xmlns="http://www.w3.org/2000/svg" />
         </router-link>
-        <div class="flex flex-col">
-          <div class="flex items-center gap-2">
+        <div class="flex flex-col min-w-0">
+          <div class="flex items-center gap-2 min-w-0">
             <div
               :contenteditable="isTitleEdit"
               ref="titleRef"
-              class="font-bold border-b border-dotted border-gray-300 min-w-[100px] px-2 py-1 relative"
+              class="font-bold border-b border-dotted border-gray-300 min-w-[100px] px-2 py-1 relative truncate max-w-[55vw] sm:max-w-none"
               :class="{ 'cursor-text': isTitleEdit, 'hover:bg-gray-100': !isTitleEdit }"
               @click="editTitle"
               @input="updateTitle"
@@ -1225,7 +1294,7 @@ watch(
                 >
                   {{ syncStatusText }}
                 </span>
-                <span class="text-gray-500 cursor-pointer" title="Click to save now" @click="saveData">
+                <span class="hidden sm:inline text-gray-500 cursor-pointer" title="Click to save now" @click="saveData">
                   {{ lastSavedText }}
                 </span>
               </div>
@@ -1234,12 +1303,12 @@ watch(
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 self-end sm:self-auto">
         <Dialog v-model:open="shareOpen">
           <DialogTrigger asChild>
             <Button variant="outline" @click="openShareDialog">
               <Share2 class="h-4 w-4 mr-2" />
-              {{$t('Commons.button.share')}}
+              <span class="hidden sm:inline">{{$t('Commons.button.share')}}</span>
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -1296,7 +1365,125 @@ watch(
       @data-group="handleDataGroup"
       @print="handlePrint"
       @navigate-to-collaborator="navigateToCollaborator"
+      @open-integrations="openIntegrationsDialog"
     />
+
+    <Dialog v-model:open="integrationsOpen">
+      <DialogContent class="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Integrations</DialogTitle>
+        </DialogHeader>
+
+        <div class="space-y-6">
+          <div class="space-y-3">
+            <div class="text-sm font-medium">Public Insert API (authenticated controls)</div>
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-xs text-gray-500">Enable key-based inserts for this sheet</div>
+              <Switch
+                :checked="sheetPublicApiEnabled"
+                :disabled="isUpdatingSheetPublicApi"
+                @update:checked="handleSetSheetPublicApiEnabled"
+              />
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs text-gray-500">Rotate / generate API key</div>
+              <Button
+                variant="outline"
+                size="sm"
+                :disabled="isUpdatingSheetPublicApi || !route.params.id"
+                @click="handleRotateSheetPublicApiKey"
+              >
+                {{$t('Commons.button.refresh')}}
+              </Button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-sm font-medium">Embed this sheet</div>
+            <div class="grid gap-2">
+              <div class="text-xs text-gray-500">Share URL</div>
+              <div class="flex gap-2">
+                <input
+                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                  :value="shareLinkSheet"
+                  readonly
+                  @focus="(e:any)=>e?.target?.select?.()"
+                />
+                <Button variant="outline" @click="copyToClipboard(shareLinkSheet, 'Share URL copied')">{{$t('Commons.button.copy')}}</Button>
+              </div>
+
+              <div class="text-xs text-gray-500">Iframe snippet</div>
+              <div class="flex gap-2">
+                <textarea
+                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                  :value="embedSheetSnippet"
+                  rows="3"
+                  readonly
+                  @focus="(e:any)=>e?.target?.select?.()"
+                />
+                <Button variant="outline" @click="copyToClipboard(embedSheetSnippet, 'Embed snippet copied')">{{$t('Commons.button.copy')}}</Button>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-sm font-medium">Use this sheet in a website form</div>
+            <div class="text-xs text-gray-500">
+              Use the public insert API to append a row from your frontend or server.
+            </div>
+
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="text-xs text-gray-500">Endpoint</div>
+                <div v-if="!sheetPublicApiEnabled" class="text-xs text-amber-600">
+                  Public API is not enabled for this sheet.
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <input
+                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                  :value="sheetPublicInsertEndpoint"
+                  readonly
+                  @focus="(e:any)=>e?.target?.select?.()"
+                />
+                <Button variant="outline" :disabled="!sheetPublicInsertEndpoint" @click="copyToClipboard(sheetPublicInsertEndpoint, 'Endpoint copied')">
+                  {{$t('Commons.button.copy')}}
+                </Button>
+              </div>
+
+              <div class="text-xs text-gray-500">Example payload (row array)</div>
+              <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
+  "row": ["test@example.com", "Alice", "2025-12-13"]
+}</pre>
+
+              <div class="text-xs text-gray-500">Example payload (header-mapped)</div>
+              <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
+  "data": {
+    "Email": "test@example.com",
+    "Name": "Alice"
+  }
+}</pre>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-sm font-medium">Get API Sheet Secret</div>
+            <div class="text-xs text-gray-500">This is the sheet's public API key used in the endpoint path.</div>
+            <div class="flex gap-2">
+              <input
+                class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                :value="sheetPublicApiKey"
+                readonly
+                @focus="(e:any)=>e?.target?.select?.()"
+              />
+              <Button variant="outline" :disabled="!sheetPublicApiKey" @click="copyToClipboard(sheetPublicApiKey, 'API key copied')">
+                {{$t('Commons.button.copy')}}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
 
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-6">
       <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
@@ -1374,7 +1561,7 @@ watch(
 
     <div
       v-if="!accessDenied && isChatOpen"
-      class="fixed right-4 bottom-4 w-80 h-96 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl flex flex-col"
+      class="fixed right-4 bottom-4 w-[calc(100vw-2rem)] max-w-sm h-[70vh] max-h-96 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl flex flex-col"
     >
       <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700">
         <h3 class="font-semibold text-sm text-gray-900 dark:text-gray-100">{{$t('Commons.heading.sheet_chat')}}</h3>

@@ -64,6 +64,14 @@
             {{$t('Commons.button.share')}}
           </button>
 
+          <button
+            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            @click="openIntegrationsModal"
+          >
+            <Plug class="w-4 h-4" />
+            Integrations
+          </button>
+
            
           <button
             v-if="isFormPublished && acceptingResponses"
@@ -224,6 +232,17 @@
               >
                 <Share2 class="w-4 h-4" />
                 {{$t('Commons.button.share')}}
+              </button>
+
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  openIntegrationsModal();
+                  openDropdown = null;
+                "
+              >
+                <Plug class="w-4 h-4" />
+                Integrations
               </button>
 
                
@@ -1188,6 +1207,148 @@
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <Dialog v-model:open="showIntegrationsModal">
+      <DialogContent class="w-full max-w-md sm:max-w-2xl sm:max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <DialogHeader>
+          <DialogTitle class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Integrations
+          </DialogTitle>
+          <DialogDescription class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            Embed your form or submit entries via the public insert API.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-6">
+          <div class="space-y-3">
+            <div class="text-sm font-medium">Public Insert API (authenticated controls)</div>
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-xs text-gray-500">Enable API-key-based inserts for this form</div>
+              <Switch
+                :checked="formPublicApiEnabled"
+                :disabled="isUpdatingPublicApi"
+                @update:checked="handleSetFormPublicApiEnabled"
+              />
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs text-gray-500">Rotate / generate API key</div>
+              <Button
+                variant="outline"
+                size="sm"
+                :disabled="isUpdatingPublicApi || !formId"
+                @click="handleRotateFormPublicApiKey"
+              >
+                {{$t('Commons.button.refresh')}}
+              </Button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-sm font-medium">Embed form</div>
+            <div class="grid gap-2">
+              <div class="text-xs text-gray-500">Public URL</div>
+              <div class="flex gap-2">
+                <input
+                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                  :value="formPublicUrl"
+                  readonly
+                  @focus="(e:any)=>e?.target?.select?.()"
+                />
+                <Button variant="outline" :disabled="!formPublicUrl" @click="copyToClipboard(formPublicUrl, 'Public URL copied')">
+                  {{$t('Commons.button.copy')}}
+                </Button>
+              </div>
+
+              <div class="text-xs text-gray-500">Iframe snippet</div>
+              <div class="flex gap-2">
+                <textarea
+                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                  :value="embedFormSnippet"
+                  rows="3"
+                  readonly
+                  @focus="(e:any)=>e?.target?.select?.()"
+                />
+                <Button variant="outline" :disabled="!embedFormSnippet" @click="copyToClipboard(embedFormSnippet, 'Embed snippet copied')">
+                  {{$t('Commons.button.copy')}}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-sm font-medium">Use this form in a website/app</div>
+            <div class="text-xs text-gray-500">
+              You can submit entries using either the share slug (when public/published/accepting) or the API key (when enabled).
+            </div>
+
+            <div class="space-y-3">
+              <div class="space-y-2">
+                <div class="text-xs text-gray-500">Endpoint (share slug)</div>
+                <div class="flex gap-2">
+                  <input
+                    class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                    :value="formPublicInsertEndpointShareSlug"
+                    readonly
+                    @focus="(e:any)=>e?.target?.select?.()"
+                  />
+                  <Button variant="outline" :disabled="!formPublicInsertEndpointShareSlug" @click="copyToClipboard(formPublicInsertEndpointShareSlug, 'Endpoint copied')">
+                    {{$t('Commons.button.copy')}}
+                  </Button>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <div class="text-xs text-gray-500">Endpoint (API key)</div>
+                <div class="flex gap-2">
+                  <input
+                    class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                    :value="formPublicInsertEndpointApiKey"
+                    readonly
+                    @focus="(e:any)=>e?.target?.select?.()"
+                  />
+                  <Button variant="outline" :disabled="!formPublicInsertEndpointApiKey" @click="copyToClipboard(formPublicInsertEndpointApiKey, 'Endpoint copied')">
+                    {{$t('Commons.button.copy')}}
+                  </Button>
+                </div>
+              </div>
+
+              <div class="text-xs text-gray-500">Example payload</div>
+              <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
+  "answers": [
+    { "question_id": 123, "value": "test@example.com" },
+    { "question_id": 124, "value": "Alice" }
+  ],
+  "submit": true,
+  "source": "public_api",
+  "meta": { "campaign": "winter" }
+}</pre>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="text-sm font-medium">Get API Form Secret</div>
+            <div class="text-xs text-gray-500">This is the form's public API key used in the endpoint path.</div>
+            <div class="flex gap-2">
+              <input
+                class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                :value="formPublicApiKey"
+                readonly
+                @focus="(e:any)=>e?.target?.select?.()"
+              />
+              <Button variant="outline" :disabled="!formPublicApiKey" @click="copyToClipboard(formPublicApiKey, 'API key copied')">
+                {{$t('Commons.button.copy')}}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <DialogClose as-child>
+            <Button type="button" variant="secondary">{{$t('Commons.button.close')}}</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
@@ -1210,6 +1371,7 @@ import {
   AlignCenter,
   AlignRight,
   Share2,
+  Plug,
 } from "lucide-vue-next";
 import { toast } from "@/composables/useToast";
 import BlockItemNew from "@/components/forms/blocks/BlockItemNew.vue";
@@ -1236,6 +1398,7 @@ import {
 import { generateCompleteForm } from "../services/ai";
 import Input from "@/components/ui/input/Input.vue";
 import Button from "@/components/ui/button/Button.vue";
+import Switch from "@/components/ui/switch/Switch.vue";
 import {
   Dialog,
   DialogContent,
@@ -1286,6 +1449,10 @@ const stripeAccountId = ref(settingsStore.state.payment.stripe_account_id || "")
 
 const acceptingResponses = ref(true);
 const showShareModal = ref(false);
+const showIntegrationsModal = ref(false);
+const formPublicApiEnabled = ref(false);
+const formPublicApiKey = ref('');
+const isUpdatingPublicApi = ref(false);
 const isPublishingShare = ref(false);
 const shareTarget = ref<any>(null);
 const shareAutoPublic = ref(false);
@@ -1326,6 +1493,33 @@ const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000
 const FORMS_ENDPOINT = `${API_BASE_URI}/app-forms`;
 
 const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin;
+
+const formShareSlug = computed(() => {
+  const form = formStore.allForms.find((f) => f.id === formId.value) as any;
+  return (form?.sharing?.share_slug ?? form?.slug ?? '') as string;
+});
+
+const formPublicUrl = computed(() => {
+  if (formShareSlug.value) return `${SHARE_BASE_URL}/share/form/${formShareSlug.value}`;
+  if (formId.value) return `${window.location.origin}/f/by-id/${formId.value}`;
+  return '';
+});
+
+const embedFormSnippet = computed(() => {
+  const link = formPublicUrl.value;
+  if (!link) return '';
+  return `<iframe src="${link}" style="width:100%;height:700px;border:0" loading="lazy" referrerpolicy="no-referrer"></iframe>`;
+});
+
+const formPublicInsertEndpointShareSlug = computed(() => {
+  if (!formShareSlug.value) return '';
+  return `${API_BASE_URI}/public/forms/${formShareSlug.value}/entries`;
+});
+
+const formPublicInsertEndpointApiKey = computed(() => {
+  if (!formPublicApiKey.value) return '';
+  return `${API_BASE_URI}/public/forms/${formPublicApiKey.value}/entries`;
+});
 
 const computedShareLink = computed(() => {
   const target: any = shareTarget.value;
@@ -1388,6 +1582,16 @@ const handleShareLinkFocus = (event: FocusEvent) => {
   const target = event.target as HTMLInputElement | null;
   target?.select();
 };
+
+const copyToClipboard = async (value: string, successMessage: string) => {
+  if (!value) return;
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success(successMessage);
+  } catch {
+    toast.error("Unable to copy. Try copying manually.");
+  }
+};
 const closeShareModal = () => {
   if (isPublishingShare.value) return;
   showShareModal.value = false;
@@ -1430,8 +1634,49 @@ const hydrateFormSharing = async () => {
       privacyType.value = Number(payload.privacy_type);
     }
     shareMembers.value = parseSharingInfoString(payload.sharing_info);
+    formPublicApiEnabled.value = Boolean(payload.public_api_enabled);
+    formPublicApiKey.value = (payload.public_api_key || payload.publicApiKey || '') as string;
   } catch (error) {
     console.warn("Failed to hydrate form sharing details", error);
+  }
+};
+
+const openIntegrationsModal = async () => {
+  await hydrateFormSharing();
+  showIntegrationsModal.value = true;
+};
+
+const handleSetFormPublicApiEnabled = async (enabled: boolean) => {
+  if (!formId.value) return;
+  if (isUpdatingPublicApi.value) return;
+  isUpdatingPublicApi.value = true;
+  try {
+    const res = await axios.put(`${FORMS_ENDPOINT}/${formId.value}/public-api`, { enabled });
+    const payload = res.data?.data || res.data || {};
+    formPublicApiEnabled.value = Boolean(payload.public_api_enabled ?? enabled);
+    formPublicApiKey.value = (payload.public_api_key || formPublicApiKey.value || '') as string;
+    toast.success(formPublicApiEnabled.value ? 'Public API enabled' : 'Public API disabled');
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Failed to update Public API settings');
+  } finally {
+    isUpdatingPublicApi.value = false;
+  }
+};
+
+const handleRotateFormPublicApiKey = async () => {
+  if (!formId.value) return;
+  if (isUpdatingPublicApi.value) return;
+  isUpdatingPublicApi.value = true;
+  try {
+    const res = await axios.post(`${FORMS_ENDPOINT}/${formId.value}/public-api/key`);
+    const payload = res.data?.data || res.data || {};
+    formPublicApiEnabled.value = Boolean(payload.public_api_enabled ?? formPublicApiEnabled.value);
+    formPublicApiKey.value = (payload.public_api_key || payload.publicApiKey || '') as string;
+    toast.success('API key updated');
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Failed to rotate API key');
+  } finally {
+    isUpdatingPublicApi.value = false;
   }
 };
 

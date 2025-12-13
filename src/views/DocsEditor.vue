@@ -372,7 +372,7 @@
     <!-- Chat Panel -->
     <div
       v-if="isChatOpen"
-      class="fixed right-4 bottom-4 w-80 h-96 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl flex flex-col"
+      class="fixed right-4 bottom-4 w-[calc(100vw-2rem)] max-w-sm h-[70vh] max-h-96 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl flex flex-col"
     >
       <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700">
         <h3 class="font-semibold text-sm text-gray-900 dark:text-gray-100">Comments &amp; Chat</h3>
