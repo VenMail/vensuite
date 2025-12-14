@@ -1247,31 +1247,38 @@
             <div class="text-sm font-medium">Embed form</div>
             <div class="grid gap-2">
               <div class="text-xs text-gray-500">Public URL</div>
-              <div class="flex gap-2">
+              <div class="flex flex-col sm:flex-row gap-2">
                 <input
                   class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
                   :value="formPublicUrl"
                   readonly
                   @focus="(e:any)=>e?.target?.select?.()"
                 />
-                <Button variant="outline" :disabled="!formPublicUrl" @click="copyToClipboard(formPublicUrl, 'Public URL copied')">
+                <Button size="sm" class="w-full sm:w-auto" variant="outline" :disabled="!formPublicUrl" @click="copyToClipboard(formPublicUrl, 'Public URL copied')">
                   {{$t('Commons.button.copy')}}
                 </Button>
               </div>
 
-              <div class="text-xs text-gray-500">Iframe snippet</div>
-              <div class="flex gap-2">
-                <textarea
-                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
-                  :value="embedFormSnippet"
-                  rows="3"
-                  readonly
-                  @focus="(e:any)=>e?.target?.select?.()"
-                />
-                <Button variant="outline" :disabled="!embedFormSnippet" @click="copyToClipboard(embedFormSnippet, 'Embed snippet copied')">
-                  {{$t('Commons.button.copy')}}
-                </Button>
-              </div>
+              <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
+                <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
+                  Show iframe snippet
+                </summary>
+                <div class="mt-3 space-y-2">
+                  <div class="text-xs text-gray-500">Iframe snippet</div>
+                  <div class="flex flex-col sm:flex-row gap-2">
+                    <textarea
+                      class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                      :value="embedFormSnippet"
+                      rows="3"
+                      readonly
+                      @focus="(e:any)=>e?.target?.select?.()"
+                    />
+                    <Button size="sm" class="w-full sm:w-auto" variant="outline" :disabled="!embedFormSnippet" @click="copyToClipboard(embedFormSnippet, 'Embed snippet copied')">
+                      {{$t('Commons.button.copy')}}
+                    </Button>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
 
@@ -1284,14 +1291,14 @@
             <div class="space-y-3">
               <div class="space-y-2">
                 <div class="text-xs text-gray-500">Endpoint (share slug)</div>
-                <div class="flex gap-2">
+                <div class="flex flex-col sm:flex-row gap-2">
                   <input
                     class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
                     :value="formPublicInsertEndpointShareSlug"
                     readonly
                     @focus="(e:any)=>e?.target?.select?.()"
                   />
-                  <Button variant="outline" :disabled="!formPublicInsertEndpointShareSlug" @click="copyToClipboard(formPublicInsertEndpointShareSlug, 'Endpoint copied')">
+                  <Button size="sm" class="w-full sm:w-auto" variant="outline" :disabled="!formPublicInsertEndpointShareSlug" @click="copyToClipboard(formPublicInsertEndpointShareSlug, 'Endpoint copied')">
                     {{$t('Commons.button.copy')}}
                   </Button>
                 </div>
@@ -1299,21 +1306,26 @@
 
               <div class="space-y-2">
                 <div class="text-xs text-gray-500">Endpoint (API key)</div>
-                <div class="flex gap-2">
+                <div class="flex flex-col sm:flex-row gap-2">
                   <input
                     class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
                     :value="formPublicInsertEndpointApiKey"
                     readonly
                     @focus="(e:any)=>e?.target?.select?.()"
                   />
-                  <Button variant="outline" :disabled="!formPublicInsertEndpointApiKey" @click="copyToClipboard(formPublicInsertEndpointApiKey, 'Endpoint copied')">
+                  <Button size="sm" class="w-full sm:w-auto" variant="outline" :disabled="!formPublicInsertEndpointApiKey" @click="copyToClipboard(formPublicInsertEndpointApiKey, 'Endpoint copied')">
                     {{$t('Commons.button.copy')}}
                   </Button>
                 </div>
               </div>
 
-              <div class="text-xs text-gray-500">Example payload</div>
-              <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
+              <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
+                <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
+                  Show example payload
+                </summary>
+                <div class="mt-3">
+                  <div class="text-xs text-gray-500">Example payload</div>
+                  <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
   "answers": [
     { "question_id": 123, "value": "test@example.com" },
     { "question_id": 124, "value": "Alice" }
@@ -1322,23 +1334,30 @@
   "source": "public_api",
   "meta": { "campaign": "winter" }
 }</pre>
+                </div>
+              </details>
             </div>
           </div>
 
           <div class="space-y-2">
             <div class="text-sm font-medium">Get API Form Secret</div>
             <div class="text-xs text-gray-500">This is the form's public API key used in the endpoint path.</div>
-            <div class="flex gap-2">
-              <input
-                class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
-                :value="formPublicApiKey"
-                readonly
-                @focus="(e:any)=>e?.target?.select?.()"
-              />
-              <Button variant="outline" :disabled="!formPublicApiKey" @click="copyToClipboard(formPublicApiKey, 'API key copied')">
-                {{$t('Commons.button.copy')}}
-              </Button>
-            </div>
+            <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
+              <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
+                Reveal API key
+              </summary>
+              <div class="mt-3 flex flex-col sm:flex-row gap-2">
+                <input
+                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                  :value="formPublicApiKey"
+                  readonly
+                  @focus="(e:any)=>e?.target?.select?.()"
+                />
+                <Button size="sm" class="w-full sm:w-auto" variant="outline" :disabled="!formPublicApiKey" @click="copyToClipboard(formPublicApiKey, 'API key copied')">
+                  {{$t('Commons.button.copy')}}
+                </Button>
+              </div>
+            </details>
           </div>
         </div>
 

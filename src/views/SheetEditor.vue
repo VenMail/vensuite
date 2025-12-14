@@ -1369,7 +1369,7 @@ watch(
     />
 
     <Dialog v-model:open="integrationsOpen">
-      <DialogContent class="sm:max-w-2xl">
+      <DialogContent class="w-[calc(100vw-2rem)] sm:w-full sm:max-w-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Integrations</DialogTitle>
         </DialogHeader>
@@ -1402,27 +1402,34 @@ watch(
             <div class="text-sm font-medium">Embed this sheet</div>
             <div class="grid gap-2">
               <div class="text-xs text-gray-500">Share URL</div>
-              <div class="flex gap-2">
+              <div class="flex flex-col sm:flex-row gap-2">
                 <input
                   class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
                   :value="shareLinkSheet"
                   readonly
                   @focus="(e:any)=>e?.target?.select?.()"
                 />
-                <Button variant="outline" @click="copyToClipboard(shareLinkSheet, 'Share URL copied')">{{$t('Commons.button.copy')}}</Button>
+                <Button size="sm" class="w-full sm:w-auto" variant="outline" @click="copyToClipboard(shareLinkSheet, 'Share URL copied')">{{$t('Commons.button.copy')}}</Button>
               </div>
 
-              <div class="text-xs text-gray-500">Iframe snippet</div>
-              <div class="flex gap-2">
-                <textarea
-                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
-                  :value="embedSheetSnippet"
-                  rows="3"
-                  readonly
-                  @focus="(e:any)=>e?.target?.select?.()"
-                />
-                <Button variant="outline" @click="copyToClipboard(embedSheetSnippet, 'Embed snippet copied')">{{$t('Commons.button.copy')}}</Button>
-              </div>
+              <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
+                <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
+                  Show iframe snippet
+                </summary>
+                <div class="mt-3 space-y-2">
+                  <div class="text-xs text-gray-500">Iframe snippet</div>
+                  <div class="flex flex-col sm:flex-row gap-2">
+                    <textarea
+                      class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                      :value="embedSheetSnippet"
+                      rows="3"
+                      readonly
+                      @focus="(e:any)=>e?.target?.select?.()"
+                    />
+                    <Button size="sm" class="w-full sm:w-auto" variant="outline" @click="copyToClipboard(embedSheetSnippet, 'Embed snippet copied')">{{$t('Commons.button.copy')}}</Button>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
 
@@ -1439,47 +1446,63 @@ watch(
                   Public API is not enabled for this sheet.
                 </div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex flex-col sm:flex-row gap-2">
                 <input
                   class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
                   :value="sheetPublicInsertEndpoint"
                   readonly
                   @focus="(e:any)=>e?.target?.select?.()"
                 />
-                <Button variant="outline" :disabled="!sheetPublicInsertEndpoint" @click="copyToClipboard(sheetPublicInsertEndpoint, 'Endpoint copied')">
+                <Button size="sm" class="w-full sm:w-auto" variant="outline" :disabled="!sheetPublicInsertEndpoint" @click="copyToClipboard(sheetPublicInsertEndpoint, 'Endpoint copied')">
                   {{$t('Commons.button.copy')}}
                 </Button>
               </div>
 
-              <div class="text-xs text-gray-500">Example payload (row array)</div>
-              <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
+              <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
+                <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
+                  Show example payloads
+                </summary>
+                <div class="mt-3 space-y-3">
+                  <div>
+                    <div class="text-xs text-gray-500">Example payload (row array)</div>
+                    <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
   "row": ["test@example.com", "Alice", "2025-12-13"]
 }</pre>
+                  </div>
 
-              <div class="text-xs text-gray-500">Example payload (header-mapped)</div>
-              <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
+                  <div>
+                    <div class="text-xs text-gray-500">Example payload (header-mapped)</div>
+                    <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
   "data": {
     "Email": "test@example.com",
     "Name": "Alice"
   }
 }</pre>
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
 
           <div class="space-y-2">
             <div class="text-sm font-medium">Get API Sheet Secret</div>
             <div class="text-xs text-gray-500">This is the sheet's public API key used in the endpoint path.</div>
-            <div class="flex gap-2">
-              <input
-                class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
-                :value="sheetPublicApiKey"
-                readonly
-                @focus="(e:any)=>e?.target?.select?.()"
-              />
-              <Button variant="outline" :disabled="!sheetPublicApiKey" @click="copyToClipboard(sheetPublicApiKey, 'API key copied')">
-                {{$t('Commons.button.copy')}}
-              </Button>
-            </div>
+            <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
+              <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
+                Reveal API key
+              </summary>
+              <div class="mt-3 flex flex-col sm:flex-row gap-2">
+                <input
+                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
+                  :value="sheetPublicApiKey"
+                  readonly
+                  @focus="(e:any)=>e?.target?.select?.()"
+                />
+                <Button size="sm" class="w-full sm:w-auto" variant="outline" :disabled="!sheetPublicApiKey" @click="copyToClipboard(sheetPublicApiKey, 'API key copied')">
+                  {{$t('Commons.button.copy')}}
+                </Button>
+              </div>
+            </details>
           </div>
         </div>
       </DialogContent>
