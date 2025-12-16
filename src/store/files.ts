@@ -194,6 +194,13 @@ export const useFileStore = defineStore("files", {
       if (!filePath) return '';
 
       const PROXY_ORIGIN = SHARE_BASE_URL;
+      // Special case: backend sometimes returns relative API paths like /app-files/:id/download.
+      // Those must be prefixed with API_BASE_URI (which includes /api/v1), not BASE_URL.
+      const apiRelative = filePath.startsWith('/app-files/') || filePath.startsWith('app-files/')
+      if (apiRelative) {
+        const normalized = filePath.startsWith('/') ? filePath : `/${filePath}`
+        return `${API_BASE_URI}${normalized}`
+      }
       const isDev = (() => {
         try {
           return (import.meta as any)?.env?.DEV === true
@@ -277,6 +284,7 @@ export const useFileStore = defineStore("files", {
         file_size: responseData.file_size,
         file_url: this.constructFullUrl(responseData.file_url),
         file_public_url: publicUrlRaw ? this.constructFullUrl(publicUrlRaw) : undefined,
+        download_url: responseData.id ? `${FILES_ENDPOINT}/${responseData.id}/download` : undefined,
         folder_id: responseData.folder_id,
         is_folder: !!responseData.is_folder,
         is_template: responseData.is_template || false,
@@ -1156,9 +1164,7 @@ export const useFileStore = defineStore("files", {
         doc.isDirty = false;
         // Attach large-file hints for front-end handling without breaking types
         (doc as any).is_large = !!data.is_large;
-        if ((data as any).file_url) {
-          (doc as any).download_url = `${FILES_ENDPOINT}/${data.id}/download`;
-        }
+        doc.download_url = data?.id ? `${FILES_ENDPOINT}/${data.id}/download` : undefined;
 
         return doc;
       } catch (error) {
@@ -1515,6 +1521,7 @@ export const useFileStore = defineStore("files", {
         const processedDocs = docs.map((doc) => {
           const normalized = this.normalizeDocumentShape(doc)
           normalized.file_url = doc.file_url ? this.constructFullUrl(doc.file_url) : undefined
+          normalized.download_url = doc?.id ? `${FILES_ENDPOINT}/${doc.id}/download` : undefined
           normalized.isNew = false
           normalized.isDirty = false
           return normalized

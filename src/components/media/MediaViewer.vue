@@ -11,6 +11,16 @@
             </Badge>
           </div>
           <div class="flex items-center gap-2">
+            <Button
+              v-if="currentIsPdf"
+              variant="ghost"
+              size="sm"
+              @click="handleImportToDocument"
+              class="text-white hover:bg-white/20"
+              :disabled="importing"
+            >
+              <FileText class="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="sm" @click="handleDownload" class="text-white hover:bg-white/20">
               <Download class="h-4 w-4" />
             </Button>
@@ -25,8 +35,25 @@
       <div class="relative w-full h-full flex items-center justify-center overflow-hidden">
          
         <div class="w-full h-full pt-16 pb-14 px-4 sm:px-6 flex items-center justify-center">
+          <div v-if="currentIsPdf" class="w-full h-full">
+            <iframe
+              v-if="pdfBlobUrl"
+              :src="pdfBlobUrl"
+              class="w-full h-full rounded"
+              title="PDF Preview"
+            />
+            <div v-else class="w-full h-full flex items-center justify-center">
+              <div class="text-white text-center">
+                <p class="text-gray-300 mb-4">{{$t('Media.MediaViewer.text.preview_not_available_for')}}</p>
+                <Button variant="outline" @click="handleDownload">
+                  <Download class="h-4 w-4 mr-2" />
+                  {{$t('Commons.button.download_file_2')}}
+                </Button>
+              </div>
+            </div>
+          </div>
            
-          <div v-if="currentIsImage" class="relative w-full h-full flex items-center justify-center">
+          <div v-else-if="currentIsImage" class="relative w-full h-full flex items-center justify-center">
             <img
               :src="currentFile?.file_public_url || currentFile?.file_url"
               :alt="currentFile?.title"
@@ -152,6 +179,13 @@
                 </div>
                  
                 <div 
+                  v-else-if="isPdfFile(file)" 
+                  class="w-full h-full bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center"
+                >
+                  <FileText class="w-4 h-4 text-white" />
+                </div>
+                 
+                <div 
                   v-else 
                   class="w-full h-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center"
                 >
@@ -246,6 +280,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   X,
   Download,
@@ -256,13 +291,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Play,
-  Grid
+  Grid,
+  FileText
 } from 'lucide-vue-next'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { FileData } from '@/types'
 import { useMediaTypes } from '@/composables/useMediaTypes'
+import axios from 'axios'
+import { useFileStore } from '@/store/files'
+import { toast } from '@/composables/useToast'
 
 interface Props {
   isOpen: boolean
@@ -284,6 +323,8 @@ const emit = defineEmits<{
   navigate: [index: number]
 }>()
 
+const router = useRouter()
+const fileStore = useFileStore()
 const { isImage, isVideo, isAudio, formatFileSize, formatDateLong } = useMediaTypes()
 
 const mediaDebugEnabled = (() => {
@@ -300,9 +341,13 @@ const isAnimating = ref(false)
 const showThumbnails = ref(false)
 const loadedSrcCache = new Set<string>()
 
+const importing = ref(false)
+const pdfBlobUrl = ref<string | null>(null)
+
 const currentIsImage = computed(() => isImage(props.currentFile?.file_type))
 const currentIsVideo = computed(() => isVideo(props.currentFile?.file_type))
 const currentIsAudio = computed(() => isAudio(props.currentFile?.file_type))
+const currentIsPdf = computed(() => (props.currentFile?.file_type || '').toLowerCase() === 'pdf')
 
 const hasMultipleFiles = computed(() => props.files.length > 1)
 const totalFiles = computed(() => props.files.length)
@@ -330,10 +375,10 @@ const videoStyle = computed(() => ({
   maxHeight: '100%'
 }))
 
-// Utility functions for thumbnail type checking
 const isImageFile = (file: FileData): boolean => isImage(file.file_type)
 const isVideoFile = (file: FileData): boolean => isVideo(file.file_type)
 const isAudioFile = (file: FileData): boolean => isAudio(file.file_type)
+const isPdfFile = (file: FileData): boolean => (file.file_type || '').toLowerCase() === 'pdf'
 
 const preloadImage = (src: string | undefined) => {
   if (!src) return
@@ -351,8 +396,30 @@ const preloadImage = (src: string | undefined) => {
 watch(
   () => props.currentFile,
   async () => {
-    const src = props.currentFile?.file_public_url || props.currentFile?.file_url
-    if (!props.currentFile || !src) return
+    if (!props.currentFile) return
+    const src = props.currentFile?.file_public_url || props.currentFile?.file_url || props.currentFile?.download_url
+    if (!src) return
+
+    if (currentIsPdf.value) {
+      try {
+        if (pdfBlobUrl.value) {
+          URL.revokeObjectURL(pdfBlobUrl.value)
+          pdfBlobUrl.value = null
+        }
+        const url = props.currentFile?.download_url || props.currentFile?.file_public_url || props.currentFile?.file_url
+        if (url) {
+          const token = fileStore.getToken()
+          const isApiDownload = typeof url === 'string' && url.includes('/app-files/') && url.includes('/download')
+          const res = await axios.get(url, {
+            responseType: 'blob',
+            headers: token && isApiDownload ? { Authorization: `Bearer ${token}` } : undefined,
+          })
+          pdfBlobUrl.value = URL.createObjectURL(res.data as Blob)
+        }
+      } catch {
+        pdfBlobUrl.value = null
+      }
+    }
 
     hasError.value = false
     isAnimating.value = false
@@ -373,12 +440,41 @@ watch(
 
 const handleClose = () => {
   showThumbnails.value = false
+  if (pdfBlobUrl.value) {
+    try {
+      URL.revokeObjectURL(pdfBlobUrl.value)
+    } catch {
+      // ignore
+    }
+    pdfBlobUrl.value = null
+  }
   emit('close')
 }
 
 const handleDownload = () => {
   if (props.currentFile) {
     emit('download', props.currentFile)
+  }
+}
+
+const handleImportToDocument = async () => {
+  const f = props.currentFile
+  if (!f || !currentIsPdf.value || !f.id) return
+
+  importing.value = true
+  try {
+    const converted = await fileStore.convertAttachmentClientSide(f, 'pdf')
+    if (converted?.id) {
+      toast.success('Imported to document')
+      await router.push({ name: 'docs-edit', params: { appFileId: converted.id } })
+      handleClose()
+    } else {
+      toast.error('Failed to import file')
+    }
+  } catch {
+    toast.error('Failed to import file')
+  } finally {
+    importing.value = false
   }
 }
 

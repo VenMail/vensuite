@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Button from '@/components/ui/button/Button.vue'
 import UserProfile from '@/components/layout/UserProfile.vue'
 import { useFileStore } from '@/store/files'
 import { useAuthStore } from '@/store/auth'
 import { toast } from '@/composables/useToast'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +15,8 @@ const authStore = useAuthStore()
 
 const isLoading = ref(false)
 const file = ref<any | null>(null)
+const pdfBlobUrl = ref<string | null>(null)
+const importing = ref(false)
 
 // Access interstitial state
 const accessDenied = ref(false)
@@ -25,7 +28,12 @@ const requestSuccess = ref<string | null>(null)
 
 const fileType = computed(() => (file.value?.file_type || '').toLowerCase())
 const fileUrl = computed(() => file.value?.file_url || '')
+const filePublicUrl = computed(() => file.value?.file_public_url || '')
+const downloadUrl = computed(() => file.value?.download_url || '')
+const openOriginalUrl = computed(() => filePublicUrl.value || fileUrl.value)
 const title = computed(() => file.value?.title || file.value?.file_name || 'File')
+
+const isPdf = computed(() => fileType.value === 'pdf')
 
 function goBack() {
   router.back()
@@ -42,6 +50,7 @@ async function loadFile(id: string) {
     if (f) {
       file.value = f
       document.title = title.value
+      await loadPdfPreviewIfNeeded()
     } else {
       if (!authStore.isAuthenticated) {
         accessDenied.value = true
@@ -54,6 +63,85 @@ async function loadFile(id: string) {
     toast.error('Failed to load file')
   } finally {
     isLoading.value = false
+  }
+}
+
+async function loadPdfPreviewIfNeeded() {
+  if (!isPdf.value) return
+  if (pdfBlobUrl.value) {
+    try {
+      URL.revokeObjectURL(pdfBlobUrl.value)
+    } catch {
+      // ignore
+    }
+    pdfBlobUrl.value = null
+  }
+
+  const url = downloadUrl.value || filePublicUrl.value || fileUrl.value
+  if (!url) return
+
+  try {
+    const token = fileStore.getToken()
+    const isApiDownload = typeof url === 'string' && url.includes('/app-files/') && url.includes('/download')
+    const res = await axios.get(url, {
+      responseType: 'blob',
+      headers: token && isApiDownload ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+    pdfBlobUrl.value = URL.createObjectURL(res.data as Blob)
+  } catch {
+    pdfBlobUrl.value = null
+  }
+}
+
+async function downloadFile() {
+  const url = downloadUrl.value || filePublicUrl.value || fileUrl.value
+  if (!url) return
+
+  const token = fileStore.getToken()
+  const isApiDownload = typeof url === 'string' && url.includes('/app-files/') && url.includes('/download')
+
+  if (token && isApiDownload) {
+    try {
+      const res = await axios.get(url, {
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const blobUrl = URL.createObjectURL(res.data as Blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = file.value?.file_name || title.value
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      toast.error('Failed to download file')
+    }
+    return
+  }
+
+  const link = document.createElement('a')
+  link.href = url
+  link.download = file.value?.file_name || title.value
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+async function importPdfToDocument() {
+  if (!isPdf.value || !file.value?.id) return
+  importing.value = true
+  try {
+    const converted = await fileStore.convertAttachmentClientSide(file.value, 'pdf')
+    if (converted?.id) {
+      await router.push({ name: 'docs-edit', params: { appFileId: converted.id } })
+    } else {
+      toast.error('Failed to import file')
+    }
+  } catch {
+    toast.error('Failed to import file')
+  } finally {
+    importing.value = false
   }
 }
 
@@ -102,6 +190,24 @@ onMounted(() => {
   const id = route.params.id as string
   if (id) loadFile(id)
 })
+
+watch(
+  () => file.value?.id,
+  async () => {
+    await loadPdfPreviewIfNeeded()
+  }
+)
+
+onUnmounted(() => {
+  if (pdfBlobUrl.value) {
+    try {
+      URL.revokeObjectURL(pdfBlobUrl.value)
+    } catch {
+      // ignore
+    }
+    pdfBlobUrl.value = null
+  }
+})
 </script>
 
 <template>
@@ -120,7 +226,13 @@ onMounted(() => {
         <div class="font-bold px-2 py-1">{{ title }}</div>
       </div>
       <div class="flex items-center gap-3">
-        <a v-if="fileUrl" :href="fileUrl" target="_blank" rel="noopener" class="text-sm text-blue-600">{{$t('Commons.link.open_original')}}</a>
+        <Button v-if="isPdf" variant="outline" size="sm" @click="importPdfToDocument" :disabled="importing">
+          {{$t('Commons.button.import_to_document')}}
+        </Button>
+        <Button v-if="downloadUrl || fileUrl || filePublicUrl" variant="outline" size="sm" @click="downloadFile">
+          {{$t('Commons.button.download')}}
+        </Button>
+        <a v-if="openOriginalUrl" :href="openOriginalUrl" target="_blank" rel="noopener" class="text-sm text-blue-600">{{$t('Commons.link.open_original')}}</a>
         <UserProfile :isMobile="false" />
       </div>
     </div>
@@ -166,12 +278,15 @@ onMounted(() => {
      
     <div v-else class="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-950">
       <div class="max-w-6xl w-full p-4 flex items-center justify-center">
-        <img v-if="isImage() && fileUrl" :src="fileUrl" :alt="title" class="max-h-[80vh] max-w-full object-contain rounded shadow" />
+        <iframe v-if="isPdf && pdfBlobUrl" :src="pdfBlobUrl" class="w-full h-[80vh] rounded shadow bg-white" title="PDF Preview" />
+        <img v-else-if="isImage() && fileUrl" :src="fileUrl" :alt="title" class="max-h-[80vh] max-w-full object-contain rounded shadow" />
         <video v-else-if="isVideo() && fileUrl" :src="fileUrl" controls class="max-h-[80vh] max-w-full rounded shadow"></video>
         <audio v-else-if="isAudio() && fileUrl" :src="fileUrl" controls class="w-full"></audio>
         <div v-else class="text-center">
           <p class="mb-3">{{$t('Views.MediaViewer.text.cannot_preview_this_file')}}</p>
-          <a v-if="fileUrl" :href="fileUrl" target="_blank" rel="noopener" class="text-blue-600">{{$t('Views.MediaViewer.link.download_open_original')}}</a>
+          <Button v-if="downloadUrl || fileUrl || filePublicUrl" variant="outline" size="sm" @click="downloadFile">
+            {{$t('Views.MediaViewer.link.download_open_original')}}
+          </Button>
         </div>
       </div>
     </div>

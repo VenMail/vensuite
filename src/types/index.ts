@@ -26,6 +26,7 @@ export interface FileData {
   file_size?: number | string;
   file_url?: string;
   file_public_url?: string;
+  download_url?: string;
   thumbnail_url?: string;
   url?: boolean;
   is_template?: boolean;

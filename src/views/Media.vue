@@ -238,6 +238,7 @@
 </template>
 
 <script setup lang="ts">
+import axios from 'axios'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useExplorerNavigation } from '@/composables/useExplorerNavigation'
 import { useFileStore } from '@/store/files'
@@ -729,15 +730,43 @@ const handleViewerNavigate = (index: number) => {
 }
 
 const handleDownload = (file: FileData) => {
-  if (file.file_url) {
-    const link = document.createElement('a')
-    link.href = file.file_url
-    link.download = file.title
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    toast.success(`Downloaded ${file.title}`)
+  const url = file.download_url || file.file_public_url || file.file_url
+  if (!url) return
+
+  const token = fileStore.getToken()
+  const isApiDownload = typeof url === 'string' && url.includes('/app-files/') && url.includes('/download')
+
+  if (token && isApiDownload) {
+    axios
+      .get(url, {
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const blob = res.data as Blob
+        const blobUrl = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = file.file_name || file.title
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(blobUrl)
+        toast.success(`Downloaded ${file.title}`)
+      })
+      .catch(() => {
+        toast.error('Failed to download file')
+      })
+    return
   }
+
+  const link = document.createElement('a')
+  link.href = url
+  link.download = file.file_name || file.title
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  toast.success(`Downloaded ${file.title}`)
 }
 
 const handleRename = (file: FileData) => {
