@@ -11,11 +11,11 @@
       "add_option": "Ajouter une option",
       "advanced": "Avancé",
       "all": "tout",
-      "blank": "Vierge",
       "all_sources": "Toutes les sources",
       "all_types": "Tous les types",
       "apply": "Appliquer",
       "back": "← Retour",
+      "blank": "Vierge",
       "cancel": "Annuler",
       "change": "Modifier",
       "change_type": "Changer de type",
@@ -31,6 +31,7 @@
       "date": "Date",
       "delete": "Supprimer",
       "disable_payments": "Désactiver les paiements",
+      "done": "Terminé",
       "download": "Télécharger",
       "download_file_2": "Télécharger le fichier",
       "download_instead": "Télécharger à la place",
@@ -44,6 +45,7 @@
       "logo": "Logo",
       "manage_access": "Gérer l'accès",
       "name": "Nom",
+      "new": "Nouveau",
       "new_document": "Nouveau Document",
       "new_form": "Nouveau formulaire",
       "new_spreadsheet": "Nouveau Tableur",
@@ -84,8 +86,7 @@
       "view_details": "Détails",
       "webhooks": "Webhooks",
       "yes": "Oui",
-      "new": "Nouveau",
-      "done": "Terminé"
+      "save": "Enregistrer"
     },
     "heading": {
       "add_people": "Ajouter des personnes",

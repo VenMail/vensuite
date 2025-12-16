@@ -1,7 +1,4 @@
 <template>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;600;700&family=Raleway:wght@400;600;700&family=Nunito:wght@400;600;700&family=Poppins:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-  
   <div class="flex flex-col h-screen bg-gray-50">
      
     <DocsTitleBar
@@ -579,6 +576,15 @@ import { LineHeight } from '@/extensions/line-height';
 import { ParagraphSpacing } from '@/extensions/paragraph-spacing';
 import { ChartExtension } from '@/extensions/chart';
 import type { ChartAttrs } from '@/extensions/chart';
+import { FormExtension } from '@/extensions/form';
+import { FormControlExtension } from '@/extensions/form-control';
+import { AbsBlock } from '@/extensions/abs-block';
+import { AbsLayer } from '@/extensions/abs-layer';
+import { AbsPage } from '@/extensions/abs-page';
+import { AbsTable } from '@/extensions/abs-table';
+import { AbsImage } from '@/extensions/abs-image';
+import { AbsShape } from '@/extensions/abs-shape';
+import { maybeConvertHtmlToAnnotatedAbsoluteHtml } from '@/utils/html-to-tiptap';
 
 // Predefined page sizes for PaginationPlus (in pixels at 96 DPI)
 const PAGE_SIZES = {
@@ -620,7 +626,7 @@ import ImagePicker from '@/components/ImagePicker.vue';
 import { Button } from '@/components/ui/button';
 import { useDocumentConflictResolver } from '@/composables/useDocumentConflictResolver';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
-import { applyContentToEditor, guardEditorBeforeSave } from '@/composables/useTiptapContent';
+import { guardEditorBeforeSave } from '@/composables/useTiptapContent';
 import { saveAs } from 'file-saver';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
@@ -673,6 +679,46 @@ const collaboratorList = computed(() =>
 );
 
 let detachEditorListeners: (() => void) | null = null;
+
+let paginationPlusEnabledForEditor = true;
+
+function docHasAbsPages(doc: any): boolean {
+  try {
+    if (!doc || typeof doc !== 'object') return false;
+    let found = false;
+    const visit = (node: any) => {
+      if (!node || typeof node !== 'object' || found) return;
+      if (node.type === 'absPage') {
+        found = true;
+        return;
+      }
+      if (Array.isArray(node.content)) {
+        for (const child of node.content) visit(child);
+      }
+    };
+    visit(doc);
+    return found;
+  } catch {
+    return false;
+  }
+}
+
+function htmlHasAbsPages(html: string): boolean {
+  try {
+    if (typeof html !== 'string') return false;
+    return /data-abs-page\b/i.test(html);
+  } catch {
+    return false;
+  }
+}
+
+function editorHasPaginationPlus(instance: Editor | undefined): boolean {
+  try {
+    return !!instance?.extensionManager?.extensions?.some((ext) => ext?.name === 'PaginationPlus');
+  } catch {
+    return false;
+  }
+}
 
 // WebSocket collaboration state
 const { initializeWebSocket } = useWebSocket();
@@ -868,7 +914,14 @@ function applyRemoteChange(delta: any) {
     changesPending.value = true;
     // Apply the delta/JSON content from remote
     if (delta && typeof delta === 'object') {
-      editor.value.commands.setContent(delta, false);
+      const hasAbs = docHasAbsPages(delta);
+      const wantPaginationPlus = !hasAbs;
+      if (wantPaginationPlus !== paginationPlusEnabledForEditor) {
+        paginationPlusEnabledForEditor = wantPaginationPlus;
+        initializeEditor(delta);
+      } else {
+        editor.value.commands.setContent(delta, false);
+      }
     }
     setTimeout(() => {
       requestAnimationFrame(() => {
@@ -2109,13 +2162,43 @@ function loadContentIntoEditor(content: any) {
   if (!editor.value || content == null) return;
 
   try {
+    const countNodeTypes = (node: any, out: Record<string, number>) => {
+      if (!node || typeof node !== 'object') return;
+      if (typeof node.type === 'string') {
+        out[node.type] = (out[node.type] || 0) + 1;
+      }
+      if (Array.isArray(node.content)) {
+        for (const child of node.content) countNodeTypes(child, out);
+      }
+    };
+
+    const getDocStats = (doc: any) => {
+      const counts: Record<string, number> = {};
+      countNodeTypes(doc, counts);
+      const topLevel = Array.isArray(doc?.content) ? doc.content.length : 0;
+      return { topLevel, counts };
+    };
+
     // If we were given a pre-parsed Tiptap JSON doc, apply it directly
     if (typeof content === 'object' && content) {
       const maybeDoc = content as any;
       if (maybeDoc.type === 'doc' || Array.isArray(maybeDoc.content)) {
-        editor.value.commands.setContent(maybeDoc, false);
+        const hasAbs = docHasAbsPages(maybeDoc);
+        const wantPaginationPlus = !hasAbs;
+        if (wantPaginationPlus !== paginationPlusEnabledForEditor) {
+          paginationPlusEnabledForEditor = wantPaginationPlus;
+          initializeEditor(maybeDoc);
+        } else {
+          editor.value.commands.setContent(maybeDoc, false);
+        }
         hasEnteredContent.value = true;
         updateEditorEmptyState(editor.value);
+        try {
+          const stats = getDocStats(editor.value.getJSON());
+          console.info('[docs] editor state after JSON setContent', stats);
+        } catch {
+          // ignore
+        }
         console.log('✓ Loaded pre-parsed Tiptap JSON content', {
           hasContent: !!maybeDoc.content,
           nodes: Array.isArray(maybeDoc.content) ? maybeDoc.content.length : 0,
@@ -2145,10 +2228,51 @@ function loadContentIntoEditor(content: any) {
     );
     
     if (isHTML) {
-      // Load as HTML - Tiptap will parse it
-      editor.value.commands.setContent(trimmedContent, false);
+      const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
+      const converted = maybeConvertHtmlToAnnotatedAbsoluteHtml(trimmedContent, {
+        pageWidthPx: metrics.widthPx,
+        pageHeightPx: metrics.heightPx,
+      });
+
+      const initialHtml = converted || trimmedContent;
+
+      const hasAbs = htmlHasAbsPages(initialHtml);
+      const wantPaginationPlus = !hasAbs;
+      if (wantPaginationPlus !== paginationPlusEnabledForEditor) {
+        paginationPlusEnabledForEditor = wantPaginationPlus;
+        initializeEditor(initialHtml);
+      } else {
+        // Load as HTML - Tiptap will parse it
+        editor.value.commands.setContent(initialHtml, false);
+      }
       hasEnteredContent.value = true;
       updateEditorEmptyState(editor.value);
+
+      try {
+        const json = editor.value.getJSON();
+        const stats = getDocStats(json);
+        console.info('[docs] editor state after HTML setContent', {
+          usedConverted: !!converted,
+          inputLength: initialHtml.length,
+          stats,
+          pagination: getPaginationPlusConfig(),
+        });
+
+        const hasAnyContent = Array.isArray(json?.content) && json.content.length > 0;
+        if (!hasAnyContent && converted) {
+          console.warn('[docs] converted HTML produced empty doc, retrying with original HTML', {
+            convertedLength: converted.length,
+            originalLength: trimmedContent.length,
+            convertedPreview: converted.slice(0, 300),
+          });
+          editor.value.commands.setContent(trimmedContent, false);
+          const retryStats = getDocStats(editor.value.getJSON());
+          console.info('[docs] editor state after retrying original HTML', retryStats);
+        }
+      } catch (e) {
+        console.warn('[docs] failed to compute post-load stats', e);
+      }
+
       console.log('✓ Loaded HTML content', { length: trimmedContent.length });
       return;
     }
@@ -2156,9 +2280,40 @@ function loadContentIntoEditor(content: any) {
     // Try to parse as Tiptap JSON (supports double-stringified payloads)
     const parsed = tryParseDocJson(trimmedContent);
     if (parsed && typeof parsed === 'object' && (parsed.type === 'doc' || parsed.content)) {
-      editor.value.commands.setContent(parsed, false);
+      const hasAbs = docHasAbsPages(parsed);
+      const wantPaginationPlus = !hasAbs;
+      if (wantPaginationPlus !== paginationPlusEnabledForEditor) {
+        paginationPlusEnabledForEditor = wantPaginationPlus;
+        initializeEditor(parsed);
+      } else {
+        editor.value.commands.setContent(parsed, false);
+      }
       hasEnteredContent.value = true;
       updateEditorEmptyState(editor.value);
+      try {
+        const stats = getDocStats(editor.value.getJSON());
+        console.info('[docs] editor state after parsed-JSON setContent', stats);
+
+        requestAnimationFrame(() => {
+          try {
+            const dom = editor.value?.view?.dom as HTMLElement | undefined;
+            const rendered = dom
+              ? {
+                  absPage: dom.querySelectorAll('section[data-abs-page]').length,
+                  absLayer: dom.querySelectorAll('div[data-abs-layer]').length,
+                  absBlock: dom.querySelectorAll('[data-abs-block]').length,
+                  absTable: dom.querySelectorAll('div[data-abs-table]').length,
+                  rmPagination: dom.querySelectorAll('[data-rm-pagination]').length,
+                }
+              : null;
+            console.info('[docs] DOM rendered counts (post JSON load)', rendered);
+          } catch {
+            // ignore
+          }
+        });
+      } catch {
+        // ignore
+      }
       console.log('✓ Loaded Tiptap JSON content', { hasContent: !!parsed.content, nodes: Array.isArray(parsed.content) ? parsed.content.length : 0 });
       return;
     }
@@ -2294,7 +2449,7 @@ function updatePrintStyles() {
   
   styleEl.textContent = `
   @page {
-    margin: 0;
+    margin: var(--print-margin-top, 0) var(--print-margin-right, 0) var(--print-margin-bottom, 0) var(--print-margin-left, 0);
     size: var(--page-width, 210mm) var(--page-height, 297mm);
   }
   @media print {
@@ -2304,9 +2459,12 @@ function updatePrintStyles() {
     .editor,
     .editor-content,
     .ProseMirror {
-      padding: var(--print-padding, 0) !important;
+      padding: 0 !important;
     }
     .rm-page-break { break-after: page; }
+    section[data-abs-page] { break-after: page; page-break-after: always; break-inside: avoid; page-break-inside: avoid; position: relative !important; display: block; overflow: hidden; }
+    section[data-abs-page]:last-child { break-after: auto; page-break-after: auto; }
+    section[data-abs-page] > div[data-abs-layer] { break-inside: avoid; }
     /* Do not force a break before the very first or last page marker; prevents blank pages */
     .rm-page-break:first-child,
     .rm-page-break:last-child { break-after: auto; }
@@ -2444,6 +2602,7 @@ async function saveDocument(isManual = false) {
 // }
 
 function handlePrint() {
+  updatePrintStyles();
   window.print();
 }
 
@@ -2890,9 +3049,7 @@ async function loadVersionContent(version: any) {
 
     if (versionData && typeof versionData.content === 'string') {
       const raw = versionData.content;
-      const ed = editor.value;
-      if (!ed) return;
-      applyContentToEditor(ed, raw);
+      loadContentIntoEditor(raw);
 
       // Update the document title if needed
       if (documentTitle.value == 'Untitled Document' && versionData.file_name && versionData.file_name !== documentTitle.value) {
@@ -2949,6 +3106,11 @@ function updatePaginationSettings(settings: any) {
   paginationSettings.headerLeft = headerLeft;
   paginationSettings.headerRight = headerRight;
 
+  if (!editorHasPaginationPlus(editor.value)) {
+    updatePrintStyles();
+    return;
+  }
+
   // Apply settings via PaginationPlus commands
   editor.value.chain().focus()
     .updateMargins({
@@ -2969,6 +3131,10 @@ function handlePageSizeChange(size: string) {
   pageSize.value = size;
   
   if (!editor.value) return;
+  if (!editorHasPaginationPlus(editor.value)) {
+    updatePrintStyles();
+    return;
+  }
 
   // Map page size to PaginationPlus PAGE_SIZES
   const pageSizeMap: Record<string, typeof PAGE_SIZES[keyof typeof PAGE_SIZES]> = {
@@ -3133,8 +3299,9 @@ function getPaginationPlusConfig() {
 }
 
 // Helper to (re)initialize the editor with pagination settings
-function initializeEditor() {
+function initializeEditor(contentOverride?: any) {
   const existingContent = editor.value ? editor.value.getJSON() : undefined;
+  const shouldEnablePaginationPlus = paginationPlusEnabledForEditor;
   if (editor.value) {
     try {
       detachEditorListeners?.();
@@ -3166,6 +3333,12 @@ function initializeEditor() {
       Link.configure({ openOnClick: false }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      AbsBlock,
+      AbsTable,
+      AbsImage,
+      AbsShape,
+      AbsLayer,
+      AbsPage,
       // Use PaginationTable extensions for table pagination support
       TablePlus,
       TableRowPlus,
@@ -3173,10 +3346,11 @@ function initializeEditor() {
       TableHeaderPlus,
       ImagePlus.configure({ allowBase64: true }),
       ChartExtension,
-      // PaginationPlus extension for document pagination
-      PaginationPlus.configure(paginationConfig as any),
+      FormExtension,
+      FormControlExtension,
+      ...(shouldEnablePaginationPlus ? [PaginationPlus.configure(paginationConfig as any)] : []),
     ],
-    content: existingContent || '',
+    content: contentOverride ?? (existingContent || ''),
     editable: canEditDoc.value,
     editorProps: {
       attributes: {
@@ -3202,6 +3376,31 @@ function initializeEditor() {
       }
     }
   });
+
+  // Hook editor events for table-active visuals and bubble visibility
+  const instance = editor.value;
+  if (!instance) return;
+
+  const selectionHandler = () => {
+    const active = !!instance.isActive('table');
+    setTableActiveUI(active || isTableActiveByClick.value);
+    broadcastCursorPresence();
+  };
+  instance.on('selectionUpdate', selectionHandler);
+
+  // Attach click listener to detect table clicks and collapse/expand page gaps
+  const dom = instance.view.dom as HTMLElement;
+  dom.addEventListener('click', handleEditorClick, true);
+
+  detachEditorListeners = () => {
+    try {
+      dom.removeEventListener('click', handleEditorClick, true);
+    } catch {}
+    try {
+      instance.off('selectionUpdate', selectionHandler);
+    } catch {}
+    detachEditorListeners = null;
+  };
 }
 
 function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -3222,18 +3421,6 @@ onMounted(async () => {
   // Wait for editor to be ready
   await nextTick();
 
-  // Hook editor events for table-active visuals and bubble visibility
-  editor.value?.on('selectionUpdate', () => {
-    // If selection enters/leaves a table, reflect via class
-    const active = !!editor.value?.isActive('table');
-    setTableActiveUI(active || isTableActiveByClick.value);
-    broadcastCursorPresence();
-  });
-
-  // Attach click listener to detect table clicks (no selection change)
-  const dom = editor.value?.view.dom as HTMLElement | undefined;
-  dom?.addEventListener('click', handleEditorClick, true);
-
   // Initialize/load document
   await initializeDocument();
 
@@ -3251,6 +3438,10 @@ onMounted(async () => {
 
 watch([pageSize, pageOrientation], () => {
   if (!editor.value) return;
+  if (!editorHasPaginationPlus(editor.value)) {
+    updatePrintStyles();
+    return;
+  }
 
   // Get new page dimensions
   const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
@@ -3297,6 +3488,9 @@ onUnmounted(() => {
   }
 
   // Cleanup
+  try {
+    detachEditorListeners?.();
+  } catch {}
   if (saveTimeout) clearTimeout(saveTimeout);
   if (maxWaitTimeout) clearTimeout(maxWaitTimeout);
   if (authStore.isAuthenticated) {
@@ -3374,6 +3568,10 @@ onUnmounted(() => {
 }
 
 /* PaginationPlus breaker & page gap styling */
+:deep(.rm-with-pagination) {
+  box-sizing: border-box;
+}
+
 :deep(.breaker) {
   /* Ensure the gap wrapper blends with the editor background */
   background-color: transparent;

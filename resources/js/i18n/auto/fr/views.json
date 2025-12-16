@@ -47,12 +47,12 @@
     "Documents": {
       "heading": {
         "create_new_document": "Créer un nouveau document",
-        "start_a_new_document": "Commencer un nouveau document",
-        "no_documents_found": "Aucun document trouvé"
+        "no_documents_found": "Aucun document trouvé",
+        "start_a_new_document": "Commencer un nouveau document"
       },
       "text": {
-        "get_started_by_creating": "Commencez par créer un nouveau document ou en téléchargeant un existant.",
-        "choose_a_template_or_start_blank": "Choisissez un modèle ou commencez à partir de zéro"
+        "choose_a_template_or_start_blank": "Choisissez un modèle ou commencez à partir de zéro",
+        "get_started_by_creating": "Commencez par créer un nouveau document ou en téléchargeant un existant."
       }
     },
     "FilePicker": {
@@ -227,8 +227,8 @@
     "Sheets": {
       "heading": {
         "create_new_spreadsheet": "Créer une nouvelle feuille de calcul",
-        "start_a_new_spreadsheet": "Commencer une nouvelle feuille de calcul",
-        "no_spreadsheets_found": "Aucune feuille de calcul trouvée"
+        "no_spreadsheets_found": "Aucune feuille de calcul trouvée",
+        "start_a_new_spreadsheet": "Commencer une nouvelle feuille de calcul"
       },
       "text": {
         "get_started_by_creating": "Commencez par créer",

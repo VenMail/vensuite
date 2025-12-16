@@ -1,4 +1,6 @@
 import type { Editor } from '@tiptap/vue-3';
+import { maybeConvertHtmlToAnnotatedAbsoluteHtml } from '@/utils/html-to-tiptap';
+import { preprocessHtmlEmbeds } from '@/utils/html-preprocess';
 
 function tryParseJSON(input: string): any | null {
   try {
@@ -13,7 +15,7 @@ function isTiptapDoc(obj: any): boolean {
 }
 
 function isLikelyHTML(input: string): boolean {
-  return /<\s*(p|div|h\d|span|ul|ol|li|table|thead|tbody|tr|td|img|a)[^>]*>/i.test(input);
+  return /<\s*(p|div|h\d|span|ul|ol|li|table|thead|tbody|tr|td|img|a|canvas|script|form|input|select|textarea|button)[^>]*>/i.test(input);
 }
 
 function isLikelyBase64(input: string): boolean {
@@ -43,6 +45,30 @@ export function applyContentToEditor(editor: Editor, raw: string): void {
   if (!editor) return;
   if (typeof raw !== 'string' || !raw.length) return;
 
+  const countNodeTypes = (node: any, out: Record<string, number>) => {
+    if (!node || typeof node !== 'object') return;
+    if (typeof node.type === 'string') {
+      out[node.type] = (out[node.type] || 0) + 1;
+    }
+    if (Array.isArray(node.content)) {
+      for (const child of node.content) countNodeTypes(child, out);
+    }
+  };
+
+  const getDocStats = () => {
+    try {
+      const doc = editor.getJSON();
+      const counts: Record<string, number> = {};
+      countNodeTypes(doc, counts);
+      return {
+        topLevel: Array.isArray(doc?.content) ? doc.content.length : 0,
+        counts,
+      };
+    } catch {
+      return null;
+    }
+  };
+
   let applied = false;
 
   // 1) Tiptap JSON string
@@ -61,7 +87,7 @@ export function applyContentToEditor(editor: Editor, raw: string): void {
         editor.commands.setContent(decodedJson);
         applied = true;
       } else if (isLikelyHTML(decoded)) {
-        editor.commands.setContent(decoded);
+        editor.commands.setContent(preprocessHtmlEmbeds(decoded));
         applied = true;
       }
     }
@@ -69,7 +95,29 @@ export function applyContentToEditor(editor: Editor, raw: string): void {
 
   // 3) HTML
   if (!applied && isLikelyHTML(raw)) {
-    editor.commands.setContent(raw);
+    const preprocessed = preprocessHtmlEmbeds(raw);
+    const converted = maybeConvertHtmlToAnnotatedAbsoluteHtml(preprocessed, {
+      pageWidthPx: 794,
+      pageHeightPx: 1123,
+    });
+    const html = converted || preprocessed;
+    editor.commands.setContent(html);
+
+    const stats = getDocStats();
+    console.info('[tiptap-content] applied HTML content', {
+      usedConverted: !!converted,
+      inputLength: html.length,
+      stats,
+    });
+
+    if (converted && stats && stats.topLevel === 0) {
+      console.warn('[tiptap-content] converted HTML produced empty doc, retrying with original HTML', {
+        convertedLength: converted.length,
+        originalLength: preprocessed.length,
+      });
+      editor.commands.setContent(preprocessed);
+      console.info('[tiptap-content] after retrying original HTML', { stats: getDocStats() });
+    }
     applied = true;
   }
 

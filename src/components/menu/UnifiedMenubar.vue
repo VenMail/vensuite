@@ -185,7 +185,7 @@ function formatSelectionLabel(selection: any): string {
         </MenubarItem>
         <MenubarItem @click="handleSave">
           <SaveIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.button.date')}}
+          {{$t('Commons.button.save')}}
         </MenubarItem>
         <MenubarSub>
           <MenubarSubTrigger>
@@ -207,7 +207,7 @@ function formatSelectionLabel(selection: any): string {
         <MenubarSub>
           <MenubarSubTrigger>
             <DownloadIcon class="h-4 w-4 mr-2" />
-            Recent Files...
+            {{ $t('Commons.heading.recent_files') }}
           </MenubarSubTrigger>
           <MenubarSubContent>
             <MenubarItem v-for="file in recentFiles" :key="file.id || file.title" @click="handleOpenRecent(file.id)">

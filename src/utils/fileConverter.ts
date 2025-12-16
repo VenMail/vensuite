@@ -1,7 +1,7 @@
 // src/utils/fileConverter.ts
 import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
-import type { IWorkbookData } from '@univerjs/core';
+import { LocaleType, SheetTypes, type IWorkbookData } from '@univerjs/core';
 import { Editor, generateJSON } from '@tiptap/core';
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
@@ -22,6 +22,17 @@ import { PaginationTable } from 'tiptap-table-plus';
 import { FontSize } from '@/extensions/font-size';
 import { LineHeight } from '@/extensions/line-height';
 import { ParagraphSpacing } from '@/extensions/paragraph-spacing';
+import { AbsBlock } from '@/extensions/abs-block';
+import { AbsLayer } from '@/extensions/abs-layer';
+import { AbsPage } from '@/extensions/abs-page';
+import { AbsTable } from '@/extensions/abs-table';
+import { AbsImage } from '@/extensions/abs-image';
+import { AbsShape } from '@/extensions/abs-shape';
+import { ChartExtension } from '@/extensions/chart';
+import { FormExtension } from '@/extensions/form';
+import { FormControlExtension } from '@/extensions/form-control';
+import { detectAbsoluteLayoutHtml, maybeConvertHtmlToAnnotatedAbsoluteHtml } from '@/utils/html-to-tiptap';
+import { preprocessHtmlEmbeds } from '@/utils/html-preprocess';
 
 /**
  * Converts various file formats to editor-compatible formats
@@ -59,6 +70,15 @@ function getTiptapExtensions() {
     Link.configure({ openOnClick: false }),
     TaskList,
     TaskItem.configure({ nested: true }),
+    AbsBlock,
+    AbsTable,
+    AbsImage,
+    AbsShape,
+    AbsLayer,
+    AbsPage,
+    ChartExtension,
+    FormExtension,
+    FormControlExtension,
     TablePlus,
     TableRowPlus,
     TableCellPlus,
@@ -526,7 +546,7 @@ function sanitizeDocForEditor(doc: any): any {
  * Convert HTML to Tiptap JSON format with validation
  * Validates that the generated JSON can actually be loaded by Tiptap
  */
-function htmlToTiptapJson(html: string): string {
+function htmlToTiptapJson(html: string, opts?: { forceLayoutCapture?: boolean }): string {
   try {
     const extensions = getTiptapExtensions();
     console.info('[convert] starting htmlToTiptapJson', { htmlLength: html?.length ?? 0 });
@@ -536,13 +556,58 @@ function htmlToTiptapJson(html: string): string {
       console.warn('HTML appears to be full document but missing body tag');
     }
     
-    const json = generateJSON(html, extensions);
+    const converted = maybeConvertHtmlToAnnotatedAbsoluteHtml(html, {
+      pageWidthPx: 794,
+      pageHeightPx: 1123,
+      forceLayoutCapture: opts?.forceLayoutCapture === true,
+    });
+
+    const inputHtml = converted || html;
+    const json = generateJSON(inputHtml, extensions);
+
+    const countNodeTypes = (node: any, out: Record<string, number>) => {
+      if (!node || typeof node !== 'object') return;
+      if (typeof node.type === 'string') {
+        out[node.type] = (out[node.type] || 0) + 1;
+      }
+      if (Array.isArray(node.content)) {
+        for (const child of node.content) countNodeTypes(child, out);
+      }
+    };
+
+    const getDocStats = (doc: any) => {
+      const counts: Record<string, number> = {};
+      countNodeTypes(doc, counts);
+      return {
+        topLevel: Array.isArray(doc?.content) ? doc.content.length : 0,
+        counts,
+      };
+    };
+
     console.info('[convert] generateJSON produced', { 
       hasContent: !!json?.content, 
       contentLength: Array.isArray(json?.content) ? json.content.length : 0,
       jsonPreview: JSON.stringify(json).substring(0, 200),
       json: json
     });
+
+    try {
+      console.info('[convert] generateJSON stats', {
+        usedConverted: !!converted,
+        inputLength: inputHtml.length,
+        annotatedMarkers: {
+          absPage: (inputHtml.match(/data-abs-page/g) || []).length,
+          absLayer: (inputHtml.match(/data-abs-layer/g) || []).length,
+          absBlock: (inputHtml.match(/data-abs-block/g) || []).length,
+          absTable: (inputHtml.match(/data-abs-table/g) || []).length,
+          absImage: (inputHtml.match(/data-abs-image/g) || []).length,
+          absShape: (inputHtml.match(/data-abs-shape/g) || []).length,
+        },
+        docStats: getDocStats(json),
+      });
+    } catch {
+      // ignore
+    }
     
     // Step 1: Basic structure validation
     if (!isValidTiptapJson(json)) {
@@ -588,6 +653,11 @@ function htmlToTiptapJson(html: string): string {
     // Step 5: Additional structural sanitization (e.g. tables) to simplify
     // complex node patterns that may cause editor position errors
     finalJson = sanitizeDocForEditor(finalJson);
+    try {
+      console.info('[convert] after sanitizeDocForEditor', { docStats: getDocStats(finalJson) });
+    } catch {
+      // ignore
+    }
 
     // Step 6: Additional validation - ensure JSON can be stringified and parsed back
     const jsonString = JSON.stringify(finalJson);
@@ -647,324 +717,10 @@ function htmlToTiptapJson(html: string): string {
 }
 
 /**
- * Convert HTML file to Tiptap JSON format
- */
-export async function convertHtmlToTiptap(file: File): Promise<string> {
-  try {
-    const htmlContent = await file.text();
-    console.info('[convert] HTML file read', { name: file.name, size: htmlContent.length });
-    
-    // Clean HTML - remove script tags, meta tags, etc.
-    const cleanHtml = cleanHtmlForEditor(htmlContent);
-    console.info('[convert] HTML cleaned', { length: cleanHtml.length });
-    
-    // Convert HTML to Tiptap JSON format
-    return htmlToTiptapJson(cleanHtml);
-  } catch (error) {
-    console.error('Error converting HTML:', error);
-    throw new Error('Failed to convert HTML file');
-  }
-}
-
-/**
- * Convert DOCX to Tiptap JSON format
- */
-export async function convertDocxToTiptap(file: File): Promise<string> {
-  try {
-    const docPath = (file as any).path as string | undefined;
-    let arrayBuffer: ArrayBuffer | undefined;
-    if (typeof (file as any).arrayBuffer === 'function') {
-      arrayBuffer = await (file as any).arrayBuffer();
-    } else if ((file as any).buffer instanceof ArrayBuffer) {
-      arrayBuffer = (file as any).buffer as ArrayBuffer;
-    } else if ((file as any).buffer?.buffer instanceof ArrayBuffer) {
-      // Node Buffer case
-      const buf: Buffer = (file as any).buffer;
-      arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
-    }
-    
-    if (!arrayBuffer && !docPath) {
-      throw new Error('Missing arrayBuffer or path for DOCX conversion');
-    }
-    
-    console.info('[convert] DOCX start', { name: file.name, size: file.size, hasArrayBuffer: !!arrayBuffer, hasPath: !!docPath, bufferLength: arrayBuffer?.byteLength });
-    
-    const mammothInput = docPath
-      ? { path: docPath }
-      : { arrayBuffer: arrayBuffer as ArrayBuffer };
-    
-    // Use mammoth to convert DOCX to HTML with comprehensive style mapping
-    const result = await mammoth.convertToHtml(
-      mammothInput,
-      {
-        styleMap: [
-          // Heading mappings (Tiptap supports h1-h4)
-          "p[style-name='Heading 1'] => h1",
-          "p[style-name='Heading 2'] => h2",
-          "p[style-name='Heading 3'] => h3",
-          "p[style-name='Heading 4'] => h4",
-          "p[style-name='Title'] => h1",
-          "p[style-name='Subtitle'] => h2",
-          "p[style-name='Heading'] => h2",
-          // Text formatting
-          "r[style-name='Strong'] => strong",
-          "r[style-name='Emphasis'] => em",
-          "r[style-name='Bold'] => strong",
-          "r[style-name='Italic'] => em",
-          // Lists
-          "p[style-name='List Paragraph'] => p",
-          // Block quotes
-          "p[style-name='Quote'] => blockquote p",
-          "p[style-name='Intense Quote'] => blockquote p",
-        ],
-        convertImage: mammoth.images.imgElement(async (image) => {
-          try {
-            // Convert images to base64 for Tiptap ImagePlus extension
-            const buffer = await image.read();
-            let arrayBuffer: ArrayBuffer;
-            if (buffer instanceof ArrayBuffer) {
-              arrayBuffer = buffer;
-            } else {
-              const view = new Uint8Array(buffer);
-              arrayBuffer = view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength);
-            }
-            const base64 = arrayBufferToBase64(arrayBuffer);
-            return {
-              src: `data:${image.contentType || 'image/png'};base64,${base64}`,
-            };
-          } catch (imgError) {
-            console.warn('Failed to convert image:', imgError);
-            // Return placeholder if image conversion fails
-            return {
-              src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZTwvdGV4dD48L3N2Zz4=',
-            };
-          }
-        }),
-        // Preserve formatting but clean up Word-specific attributes
-        ignoreEmptyParagraphs: false,
-      }
-    );
-
-    if (result.messages && result.messages.length > 0) {
-      console.warn('DOCX conversion warnings:', result.messages);
-    }
-
-    // Clean and normalize the HTML for Tiptap
-    const cleanedHtml = cleanHtmlForEditor(result.value);
-    console.info('[convert] DOCX cleaned HTML', { length: cleanedHtml.length });
-    
-    // Validate the output is valid HTML that Tiptap can parse
-    if (!cleanedHtml || cleanedHtml.trim() === '') {
-      return JSON.stringify({
-        type: 'doc',
-        content: [{ type: 'paragraph', attrs: { textAlign: null, lineHeight: null, paragraphSpacing: null } }],
-      });
-    }
-    
-    // Convert HTML to Tiptap JSON format
-    return htmlToTiptapJson(cleanedHtml);
-  } catch (error) {
-    console.error('Error converting DOCX:', error);
-    throw new Error('Failed to convert DOCX file');
-  }
-}
-
-/**
- * Convert PDF to Tiptap JSON format
- * Uses enhanced extraction with tables, images, and better formatting
- */
-export async function convertPdfToTiptap(file: File): Promise<string> {
-  try {
-    console.info('[convert] PDF start (enhanced extraction)', { name: file.name, size: file.size });
-    
-    // Use enhanced extraction that handles tables, images, and formatting
-    let extractionResult: PdfExtractionResult;
-    try {
-      extractionResult = await extractPdfContent(file);
-    } catch (extractionError) {
-      // Fallback to simple text extraction if enhanced extraction fails
-      console.warn('[PDF] Enhanced extraction failed, falling back to text-only', extractionError);
-    const text = await extractTextFromPdf(file);
-    
-      if (text.startsWith('PDF:') && (text.includes('Error:') || text.includes('Note:'))) {
-        const errorText = text.split('\n\n').slice(1).join(' ').trim();
-        const html = `<p><strong>PDF Import Notice:</strong> ${escapeHtml(errorText)}</p>`;
-        return htmlToTiptapJson(html);
-      }
-      
-      // Convert text to HTML
-    const paragraphs = text
-        .split(/\n\n+/)
-        .filter(p => p.trim())
-        .map(paragraph => {
-          const lines = paragraph.split('\n').filter(l => l.trim());
-          if (lines.length === 1) {
-            return `<p>${escapeHtml(lines[0].trim())}</p>`;
-          }
-          return `<p>${lines.map(l => escapeHtml(l.trim())).join('<br>')}</p>`;
-        });
-      
-      const html = paragraphs.length > 0 ? paragraphs.join('') : '<p></p>';
-      return htmlToTiptapJson(html);
-    }
-    
-    // Use enhanced extraction result
-    let html = extractionResult.html;
-    
-    // If no HTML was generated but we have text, create basic HTML
-    if (!html || html.trim() === '') {
-      if (extractionResult.text) {
-        const paragraphs = extractionResult.text
-          .split(/\n\n+/)
-      .filter(p => p.trim())
-      .map(p => `<p>${escapeHtml(p.trim())}</p>`)
-      .join('');
-        html = paragraphs || '<p></p>';
-      } else {
-        html = '<p>No content extracted from PDF.</p>';
-      }
-    }
-    
-    console.info('[convert] PDF enhanced extraction completed', { 
-      textLength: extractionResult.text.length,
-      tablesCount: extractionResult.tables.length,
-      imagesCount: extractionResult.images.length,
-      htmlLength: html.length
-    });
-    
-    // Convert HTML to Tiptap JSON format
-    return htmlToTiptapJson(html);
-  } catch (error) {
-    console.error('[convert] PDF conversion error:', error);
-    
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorHtml = `<p><strong>PDF Conversion Error:</strong> ${escapeHtml(errorMessage)}</p><p>For best results, convert PDFs to DOCX before importing, or use server-side conversion for large files.</p>`;
-    
-    try {
-      return htmlToTiptapJson(errorHtml);
-    } catch (fallbackError) {
-      console.error('[convert] Even fallback conversion failed:', fallbackError);
-      return JSON.stringify({
-        type: 'doc',
-        content: [{
-          type: 'paragraph',
-          content: [{
-            type: 'text',
-            text: `PDF conversion failed: ${errorMessage}. Please try converting the PDF to DOCX format first.`
-          }]
-        }]
-      });
-    }
-  }
-}
-
-// ============================================
-// SPREADSHEET CONVERSIONS (for Univer)
-// ============================================
-
-/**
- * Convert XLSX to Univer workbook format using LuckyExcel (trusted code from store)
- */
-export async function convertXlsxToUniver(file: File): Promise<IWorkbookData> {
-  try {
-    // Use LuckyExcel for XLSX conversion (same approach as store/files.ts:1900-1949)
-    const impMod: any = await import(/* @vite-ignore */ '@mertdeveci55/univer-import-export').catch(() => null);
-
-    // The univer-import-export bundle may expose LuckyExcel in a few different ways, depending
-    // on whether the ESM/CJS build is loaded:
-    // - impMod.LuckyExcel (named export object)
-    // - impMod.default (class with static methods)
-    // - impMod itself (CommonJS default export)
-    const LuckyExcel: any =
-      impMod?.LuckyExcel ??
-      impMod?.default ??
-      impMod;
-
-    if (!LuckyExcel || typeof LuckyExcel.transformExcelToUniver !== 'function') {
-      throw new Error('LuckyExcel (univer-import-export) not available for XLSX conversion');
-    }
-
-    const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    const arrayBuffer = await file.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: mime });
-    const name = file.name || 'workbook.xlsx';
-    const fileObj = new File([blob], name, { type: mime });
-    
-    const workbookData: any = await new Promise((resolve, reject) => {
-      try {
-        LuckyExcel.transformExcelToUniver(
-          fileObj,
-          (univerData: any) => resolve(univerData),
-          (error: any) => reject(error)
-        );
-      } catch (err) {
-        reject(err);
-      }
-    });
-
-    if (!workbookData) {
-      throw new Error('LuckyExcel conversion returned no data');
-    }
-
-    // Generate a new ID for the workbook data
-    if (!workbookData.id) {
-      workbookData.id = 'wkbook-' + Math.random().toString(36).slice(2);
-    }
-    if (!workbookData.name) {
-      workbookData.name = file.name?.replace(/\.xlsx$/i, '') || 'Spreadsheet';
-    }
-
-    return workbookData as IWorkbookData;
-  } catch (error) {
-    console.error('LuckyExcel conversion failed:', error);
-    throw new Error('Failed to convert XLSX file');
-  }
-}
-
-/**
- * Convert CSV to Univer workbook format
- * Note: CSV is first converted to XLSX format, then processed with LuckyExcel
- */
-export async function convertCsvToUniver(file: File): Promise<IWorkbookData> {
-  try {
-    const text = await file.text();
-    
-    // Parse CSV using XLSX to convert to workbook format
-    const workbook = XLSX.read(text, { 
-      type: 'string',
-      raw: true,
-      cellDates: true,
-    });
-
-    // Convert XLSX workbook to binary format for LuckyExcel
-    const xlsxBuffer = XLSX.write(workbook, { 
-      type: 'array', 
-      bookType: 'xlsx' 
-    });
-    
-    // Create a File object from the XLSX buffer
-    const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    const blob = new Blob([xlsxBuffer], { type: mime });
-    const xlsxFile = new File([blob], file.name.replace(/\.csv$/i, '.xlsx'), { type: mime });
-
-    // Use LuckyExcel for conversion (same as XLSX)
-    return await convertXlsxToUniver(xlsxFile);
-  } catch (error) {
-    console.error('Error converting CSV:', error);
-    throw new Error('Failed to convert CSV file');
-  }
-}
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-
-/**
  * Clean HTML for editor consumption
  * Returns HTML that Tiptap can parse directly via setContent()
  */
-function cleanHtmlForEditor(html: string): string {
+function cleanHtmlForEditor(html: string, opts?: { keepStyleBlocks?: boolean }): string {
   if (!html || typeof html !== 'string') {
     return '<p></p>';
   }
@@ -974,6 +730,15 @@ function cleanHtmlForEditor(html: string): string {
 
   // Extract body content if full HTML document
   let clean = html;
+  const keepStyleBlocks = opts?.keepStyleBlocks === true ? true : detectAbsoluteLayoutHtml(html);
+  const styleBlocks = keepStyleBlocks
+    ? [
+        ...(html.match(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi) || []),
+        ...(html.match(/<link\b[^>]*rel=["']?stylesheet["']?[^>]*>/gi) || []),
+      ].join('')
+    : '';
+
+  clean = preprocessHtmlEmbeds(clean);
   
   // Remove full document wrappers (html, head, body tags) but keep content
   const bodyMatch = clean.match(/<body[^>]*>([\s\S]*)<\/body>/i);
@@ -985,7 +750,9 @@ function cleanHtmlForEditor(html: string): string {
   clean = clean.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
   clean = clean.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
   clean = clean.replace(/<meta\b[^>]*>/gi, '');
-  clean = clean.replace(/<link\b[^>]*>/gi, '');
+  clean = keepStyleBlocks
+    ? clean.replace(/<link\b[^>]*rel=["']?stylesheet["']?[^>]*>/gi, '')
+    : clean.replace(/<link\b[^>]*>/gi, '');
   clean = clean.replace(/<title\b[^<]*(?:(?!<\/title>)<[^<]*)*<\/title>/gi, '');
   
   // Remove Word-specific artifacts (Mso classes and styles)
@@ -998,13 +765,21 @@ function cleanHtmlForEditor(html: string): string {
   
   // Normalize whitespace between tags (preserve structure)
   // Remove whitespace between tags (this is safe - HTML naturally handles this)
-  clean = clean.replace(/>\s+</g, '><');
+  if (!keepStyleBlocks) {
+    clean = clean.replace(/>\s+</g, '><');
+  }
   
   // Collapse multiple spaces/tabs/newlines within text content to single space
   // This preserves readability while cleaning up Word's excessive whitespace
-  clean = clean.replace(/([^>])\s{2,}([^<])/g, '$1 $2');
+  if (!keepStyleBlocks) {
+    clean = clean.replace(/([^>])\s{2,}([^<])/g, '$1 $2');
+  }
   
   clean = clean.trim();
+
+  if (keepStyleBlocks && styleBlocks) {
+    clean = `${styleBlocks}${clean}`;
+  }
   
   // Log cleaned HTML for debugging
   console.info('[cleanHtml] Cleaned HTML', { length: clean.length, startsWith: clean.substring(0, 100) });
@@ -1015,8 +790,8 @@ function cleanHtmlForEditor(html: string): string {
   }
   
   // Validate HTML structure for Tiptap compatibility
-  // Tiptap expects block-level elements: p, h1-h6, ul, ol, blockquote, pre, table, etc.
-  const hasBlockElements = /<(p|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th|div)/i.test(clean);
+  // Tiptap expects block-level elements: p, h1-h6, ul, ol, li, blockquote, pre, table, etc.
+  const hasBlockElements = /<(p|h[1-6]|ul|ol|li|blockquote|pre|table|tr|td|th|div|form)/i.test(clean);
   
   if (!hasBlockElements) {
     // If no block elements found, wrap in paragraph
@@ -1060,6 +835,147 @@ function cleanHtmlForEditor(html: string): string {
   }
   
   return clean;
+}
+
+async function convertHtmlToTiptap(file: File): Promise<string> {
+  const html = await file.text();
+  const cleaned = cleanHtmlForEditor(html, { keepStyleBlocks: true });
+  return htmlToTiptapJson(cleaned, { forceLayoutCapture: true });
+}
+
+async function convertDocxToTiptap(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const result: any = await (mammoth as any).convertToHtml({ arrayBuffer: buf });
+  const html: string = result?.value || '';
+  const cleaned = cleanHtmlForEditor(html);
+  return htmlToTiptapJson(cleaned);
+}
+
+async function convertPdfToTiptap(file: File): Promise<string> {
+  let html = '';
+  try {
+    const extracted = await extractPdfContent(file);
+    html = extracted?.html || '';
+  } catch (error) {
+    const text = await extractTextFromPdf(file);
+    html = `<p>${escapeHtml(text).replace(/\n/g, '<br>')}</p>`;
+    console.warn('[PDF] Enhanced extraction failed, using text-only fallback', error);
+  }
+
+  const cleaned = cleanHtmlForEditor(html);
+  return htmlToTiptapJson(cleaned);
+}
+
+function buildUniverWorkbookFromGrid(values: any[][], opts?: { title?: string; sheetName?: string }): IWorkbookData {
+  const sheetId = 'sheet-01';
+  const title = (opts?.title || 'New Spreadsheet').toString();
+  const sheetName = (opts?.sheetName || 'Sheet1').toString();
+
+  const cellData: Record<number, Record<number, any>> = {};
+  for (let r = 0; r < values.length; r++) {
+    const row = values[r] || [];
+    for (let c = 0; c < row.length; c++) {
+      const v = row[c];
+      if (v == null || v === '') continue;
+      if (!cellData[r]) cellData[r] = {};
+      cellData[r][c] = {
+        v,
+        t: typeof v === 'number' ? 2 : 1,
+      };
+    }
+  }
+
+  return {
+    id: `wk_${Math.random().toString(36).slice(2)}`,
+    locale: LocaleType.EN_US,
+    name: title,
+    sheetOrder: [sheetId],
+    appVersion: '3.0.0-alpha',
+    styles: {},
+    sheets: {
+      [sheetId]: {
+        type: SheetTypes.GRID,
+        id: sheetId,
+        name: sheetName,
+        cellData,
+      },
+    },
+  } as unknown as IWorkbookData;
+}
+
+async function convertXlsxToUniver(file: File): Promise<IWorkbookData> {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
+  const firstName = wb.SheetNames?.[0] || 'Sheet1';
+  const sheet = wb.Sheets?.[firstName];
+  const grid = sheet
+    ? (XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true }) as any[][])
+    : [];
+  return buildUniverWorkbookFromGrid(grid, { title: file.name.replace(/\.[^/.]+$/, '') || 'New Spreadsheet', sheetName: firstName });
+}
+
+function parseCsvToGrid(input: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let inQuotes = false;
+
+  const pushCell = () => {
+    row.push(cell);
+    cell = '';
+  };
+
+  const pushRow = () => {
+    rows.push(row);
+    row = [];
+  };
+
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    const next = input[i + 1];
+
+    if (ch === '"') {
+      if (inQuotes && next === '"') {
+        cell += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (!inQuotes && (ch === ',' || ch === ';')) {
+      pushCell();
+      continue;
+    }
+
+    if (!inQuotes && ch === '\n') {
+      pushCell();
+      pushRow();
+      continue;
+    }
+
+    if (!inQuotes && ch === '\r') {
+      continue;
+    }
+
+    cell += ch;
+  }
+
+  pushCell();
+  pushRow();
+
+  while (rows.length && rows[rows.length - 1].every((c) => !String(c || '').length)) {
+    rows.pop();
+  }
+
+  return rows;
+}
+
+async function convertCsvToUniver(file: File): Promise<IWorkbookData> {
+  const text = await file.text();
+  const grid = parseCsvToGrid(text);
+  return buildUniverWorkbookFromGrid(grid, { title: file.name.replace(/\.[^/.]+$/, '') || 'New Spreadsheet', sheetName: 'Sheet1' });
 }
 
 /**
