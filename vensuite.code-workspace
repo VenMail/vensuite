@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../tiptap-table-plus"
+		},
+		{
+			"path": "../tiptap-pagination-plus"
+		}
+	],
+	"settings": {}
+}
