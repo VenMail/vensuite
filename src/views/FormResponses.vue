@@ -172,7 +172,7 @@
 
         <CardContent class="flex h-full flex-col gap-4 overflow-hidden p-0">
           <div v-if="isLoading" class="flex flex-1 items-center justify-center rounded-none border-none bg-muted/30 py-16 text-sm text-muted-foreground">
-            {{$t('Commons.text.loading_responses')}}
+            {{$t('commons.text.loading_responses')}}
           </div>
 
           <div v-else-if="loadError" class="flex flex-1 flex-col items-center justify-center gap-4 rounded-none border-none bg-destructive/5 py-20 text-center">
@@ -251,7 +251,7 @@
 
         <div class="px-6 py-5">
           <div v-if="detailState.isLoading" class="flex items-center justify-center rounded-lg bg-muted/30 py-12 text-sm text-muted-foreground">
-            {{$t('Commons.text.loading_response')}}
+            {{$t('commons.text.loading_response')}}
           </div>
           <div v-else-if="detailState.error" class="flex flex-col items-center justify-center gap-4 rounded-lg bg-destructive/5 py-12 text-center">
             <p class="max-w-sm text-sm font-medium text-destructive">{{ detailState.error }}</p>

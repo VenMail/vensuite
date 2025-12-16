@@ -1,11 +1,41 @@
 {
-  "generatedAt": "2025-12-07T20:25:13.686Z",
+  "generatedAt": "2025-12-16T21:16:13.308Z",
   "baseLocale": "en",
   "autoDir": "resources/js/i18n/auto",
   "invalid": [
     {
+      "keyPath": "Commons.button.apply",
+      "baseValue": "Apply",
+      "baseFileRel": "en/commons.json",
+      "usages": []
+    },
+    {
       "keyPath": "Commons.button.logo",
       "baseValue": "Logo",
+      "baseFileRel": "en/commons.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Commons.button.retry",
+      "baseValue": "Retry",
+      "baseFileRel": "en/commons.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Commons.button.type",
+      "baseValue": "Type",
+      "baseFileRel": "en/commons.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Commons.heading.type",
+      "baseValue": "Type",
+      "baseFileRel": "en/commons.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Commons.label.right",
+      "baseValue": "Right",
       "baseFileRel": "en/commons.json",
       "usages": []
     },
@@ -16,21 +46,57 @@
       "usages": []
     },
     {
-      "keyPath": "LanguageSwitcher.aria_label.change_language",
+      "keyPath": "components.LanguageSwitcher.aria_label.change_language",
       "baseValue": "Change Language",
       "baseFileRel": "en/components.json",
       "usages": []
     },
     {
-      "keyPath": "LanguageSwitcher.text.francais",
+      "keyPath": "components.LanguageSwitcher.text.francais",
       "baseValue": "Français",
       "baseFileRel": "en/components.json",
       "usages": []
     },
     {
-      "keyPath": "key",
-      "baseValue": "[restore-i18n-invalid] Scanning {value1} source files for key usage...",
-      "baseFileRel": "en/scripts.json",
+      "keyPath": "components.FileUploader.text.files_rejected",
+      "baseValue": "file(s) rejected:",
+      "baseFileRel": "en/components.json",
+      "usages": []
+    },
+    {
+      "keyPath": "components.FileUploader.text.status_uploading",
+      "baseValue": "Uploading...",
+      "baseFileRel": "en/components.json",
+      "usages": []
+    },
+    {
+      "keyPath": "components.FileUploader.text.description_documents",
+      "baseValue": "Document files (PDF, Word, Text, etc.)",
+      "baseFileRel": "en/components.json",
+      "usages": []
+    },
+    {
+      "keyPath": "components.FileUploader.text.description_spreadsheets",
+      "baseValue": "Spreadsheet files (Excel, CSV, etc.)",
+      "baseFileRel": "en/components.json",
+      "usages": []
+    },
+    {
+      "keyPath": "components.FileUploader.text.description_media",
+      "baseValue": "Media files (images, videos, audio)",
+      "baseFileRel": "en/components.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Views.Bin.button.login_with_venmail",
+      "baseValue": "Login with Venmail",
+      "baseFileRel": "en/views.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Views.Bin.heading.welcome_to_venmail_file",
+      "baseValue": "Welcome to Venmail File Manager",
+      "baseFileRel": "en/views.json",
       "usages": []
     },
     {
@@ -48,6 +114,48 @@
     {
       "keyPath": "Views.Forms.text.publishing_form_to_generate",
       "baseValue": "Publishing form to generate share link…",
+      "baseFileRel": "en/views.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Views.Home.button.login_with_venmail",
+      "baseValue": "Login with Venmail",
+      "baseFileRel": "en/views.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Views.Home.heading.welcome_to_venmail_file",
+      "baseValue": "Welcome to Venmail File Manager",
+      "baseFileRel": "en/views.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Views.Home.text.attachment_import_preparing_document",
+      "baseValue": "Preparing document...",
+      "baseFileRel": "en/views.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Views.Home.text.login_to_manage_your",
+      "baseValue": "Login to manage your files and folders on Venmail.",
+      "baseFileRel": "en/views.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Views.Login.button.login_with_venmail",
+      "baseValue": "Login with Venmail",
+      "baseFileRel": "en/views.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Views.Login.heading.welcome_to_venmail_files",
+      "baseValue": "Venmail Drive",
+      "baseFileRel": "en/views.json",
+      "usages": []
+    },
+    {
+      "keyPath": "Views.Login.text.login_to_manage_your",
+      "baseValue": "Login to manage your files and folders on Venmail.",
       "baseFileRel": "en/views.json",
       "usages": []
     }

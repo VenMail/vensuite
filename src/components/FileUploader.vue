@@ -71,7 +71,7 @@
       >
         <p class="text-sm text-destructive mb-2">
           <strong>
-            {{ rejectedFiles.length }} {{ $t('FileUploader.text.files_rejected') }}
+            {{ rejectedFiles.length }} {{ $t('components.FileUploader.text.files_rejected') }}
           </strong>
         </p>
         <ul class="text-xs text-destructive/80 space-y-1">
@@ -155,7 +155,7 @@
       <DialogFooter>
         <Button variant="outline" @click="$emit('close')">{{$t('Commons.button.cancel')}}</Button>
         <Button @click="uploadFiles" :disabled="files.length === 0 || isUploading">
-          {{ isUploading ? $t('FileUploader.text.status_uploading') : $t('Commons.button.upload_file') }}
+          {{ isUploading ? $t('components.FileUploader.text.status_uploading') : $t('Commons.button.upload_file') }}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -231,8 +231,8 @@ const FILE_TYPE_CONFIG: Record<
   all: {
     extensions: [],
     mimeTypes: [],
-    description: t('FileUploader.text.description_all'),
-    instructions: t('FileUploader.text.instructions_all'),
+    description: t('components.FileUploader.text.description_all'),
+    instructions: t('components.FileUploader.text.instructions_all'),
   },
   documents: {
     extensions: ["doc", "docx", "pdf", "txt", "rtf", "odt", "pages", "html", "htm"],
@@ -246,7 +246,7 @@ const FILE_TYPE_CONFIG: Record<
       "application/vnd.oasis.opendocument.text",
       "application/vnd.apple.pages",
     ],
-    description: t('FileUploader.text.description_documents'),
+    description: t('components.FileUploader.text.description_documents'),
     instructions: 'Drop documents here (HTML, DOCX, PDF will be auto-converted)',
   },
   spreadsheets: {
@@ -258,7 +258,7 @@ const FILE_TYPE_CONFIG: Record<
       "application/vnd.oasis.opendocument.spreadsheet",
       "application/vnd.apple.numbers",
     ],
-    description: t('FileUploader.text.description_spreadsheets'),
+    description: t('components.FileUploader.text.description_spreadsheets'),
     instructions: 'Drop spreadsheets here (XLSX, CSV will be auto-converted)',
   },
   media: {
@@ -280,8 +280,8 @@ const FILE_TYPE_CONFIG: Record<
       "aac",
     ],
     mimeTypes: ["image/*", "video/*", "audio/*"],
-    description: t('FileUploader.text.description_media'),
-    instructions: t('FileUploader.text.instructions_media'),
+    description: t('components.FileUploader.text.description_media'),
+    instructions: t('components.FileUploader.text.instructions_media'),
   },
 };
 
@@ -582,7 +582,7 @@ const getFileStatusText = (file: FileData): string => {
   if (isUploading.value) {
     if (file.isConverting) return 'Converting...';
     if ((file.progress ?? 0) > 0 && (file.progress ?? 0) < 100) {
-      return t('FileUploader.text.status_uploading');
+      return t('components.FileUploader.text.status_uploading');
     }
   }
   return "";

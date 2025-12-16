@@ -69,7 +69,7 @@
             @click="openIntegrationsModal"
           >
             <Plug class="w-4 h-4" />
-            Integrations
+            {{$t('Commons.button.integrations')}}
           </button>
 
            
@@ -242,7 +242,7 @@
                 "
               >
                 <Plug class="w-4 h-4" />
-                Integrations
+                {{$t('Commons.button.integrations')}}
               </button>
 
                
@@ -1212,10 +1212,10 @@
       <DialogContent class="w-full max-w-md sm:max-w-2xl sm:max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Integrations
+            {{$t('Commons.button.integrations')}}
           </DialogTitle>
           <DialogDescription class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-            Embed your form or submit entries via the public insert API.
+            {{$t('Views.FormBuilder.heading.embed_your_form_or')}}
           </DialogDescription>
         </DialogHeader>
 
@@ -1223,7 +1223,7 @@
           <div class="space-y-3">
             <div class="text-sm font-medium">Public Insert API (authenticated controls)</div>
             <div class="flex items-center justify-between gap-3">
-              <div class="text-xs text-gray-500">Enable API-key-based inserts for this form</div>
+              <div class="text-xs text-gray-500">{{$t('Views.FormBuilder.text.enable_api_key_based')}}</div>
               <Switch
                 :checked="formPublicApiEnabled"
                 :disabled="isUpdatingPublicApi"
@@ -1231,7 +1231,7 @@
               />
             </div>
             <div class="flex items-center justify-between gap-2">
-              <div class="text-xs text-gray-500">Rotate / generate API key</div>
+              <div class="text-xs text-gray-500">{{$t('Views.FormBuilder.text.rotate_generate_api_key')}}</div>
               <Button
                 variant="outline"
                 size="sm"
@@ -1244,9 +1244,9 @@
           </div>
 
           <div class="space-y-2">
-            <div class="text-sm font-medium">Embed form</div>
+            <div class="text-sm font-medium">{{$t('Commons.text.embed_form')}}</div>
             <div class="grid gap-2">
-              <div class="text-xs text-gray-500">Public URL</div>
+              <div class="text-xs text-gray-500">{{$t('Commons.text.public_url')}}</div>
               <div class="flex flex-col sm:flex-row gap-2">
                 <input
                   class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
@@ -1261,10 +1261,10 @@
 
               <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
                 <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
-                  Show iframe snippet
+                  {{$t('Views.FormBuilder.text.show_iframe_snippet')}}
                 </summary>
                 <div class="mt-3 space-y-2">
-                  <div class="text-xs text-gray-500">Iframe snippet</div>
+                  <div class="text-xs text-gray-500">{{$t('Commons.text.iframe_snippet')}}</div>
                   <div class="flex flex-col sm:flex-row gap-2">
                     <textarea
                       class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
@@ -1283,7 +1283,7 @@
           </div>
 
           <div class="space-y-2">
-            <div class="text-sm font-medium">Use this form in a website/app</div>
+            <div class="text-sm font-medium">{{$t('Views.FormBuilder.text.use_this_form_in')}}</div>
             <div class="text-xs text-gray-500">
               You can submit entries using either the share slug (when public/published/accepting) or the API key (when enabled).
             </div>
@@ -1321,10 +1321,10 @@
 
               <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
                 <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
-                  Show example payload
+                  {{$t('Views.FormBuilder.text.show_example_payload')}}
                 </summary>
                 <div class="mt-3">
-                  <div class="text-xs text-gray-500">Example payload</div>
+                  <div class="text-xs text-gray-500">{{$t('Commons.text.example_payload')}}</div>
                   <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
   "answers": [
     { "question_id": 123, "value": "test@example.com" },
@@ -1340,11 +1340,11 @@
           </div>
 
           <div class="space-y-2">
-            <div class="text-sm font-medium">Get API Form Secret</div>
+            <div class="text-sm font-medium">{{$t('Views.FormBuilder.text.get_api_form_secret')}}</div>
             <div class="text-xs text-gray-500">This is the form's public API key used in the endpoint path.</div>
             <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
               <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
-                Reveal API key
+                {{$t('Views.FormBuilder.text.reveal_api_key')}}
               </summary>
               <div class="mt-3 flex flex-col sm:flex-row gap-2">
                 <input

@@ -29,25 +29,12 @@
   },
   "FileUploader": {
     "text": {
-      "all_file_types": "tous les types de fichiers",
       "allowed_file_types": "Types de fichiers autorisés :",
-      "description_all": "Déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
-      "description_documents": "Fichiers de documents (PDF, Word, Texte, etc.)",
-      "description_media": "Fichiers multimédias (images, vidéos, audio)",
-      "description_spreadsheets": "Fichiers de tableur (Excel, CSV, etc.)",
       "file_already_selected": "Fichier déjà sélectionné",
       "file_type_not_allowed": "Type de fichier non autorisé",
-      "files_rejected": "fichier(s) rejeté(s) :",
-      "instructions_all": "Déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
-      "instructions_documents": "Déposez des fichiers de documents ici, ou cliquez pour parcourir",
-      "instructions_media": "Déposez des fichiers multimédias ici, ou cliquez pour parcourir",
-      "instructions_spreadsheets": "Déposez des fichiers de tableur ici, ou cliquez pour parcourir",
       "mime_type_not_allowed": "Type MIME non autorisé",
-      "status_converting": "Conversion en cours...",
       "status_done": "Terminé",
-      "status_failed": "Échoué",
-      "status_uploading": "Téléchargement en cours...",
-      "total_size": "Taille totale :"
+      "status_failed": "Échoué"
     }
   },
   "Forms": {
@@ -281,13 +268,9 @@
     }
   },
   "LanguageSwitcher": {
-    "aria_label": {
-      "change_language": "Changer de langue"
-    },
     "text": {
       "chinese": "Chinois",
       "english": "Anglais",
-      "francais": "Français",
       "select_language": "Sélectionner la langue"
     }
   },
@@ -318,6 +301,13 @@
         "there_was_an_error": "Une erreur s'est produite lors du chargement de ce fichier",
         "your_browser_does_not": "Votre navigateur ne prend pas en charge la balise vidéo.",
         "your_browser_does_not_2": "Votre navigateur ne prend pas en charge la balise audio."
+      }
+    }
+  },
+  "Menu": {
+    "UnifiedMenubar": {
+      "text": {
+        "integrate_this_sheet": "Integrate this sheet"
       }
     }
   },
@@ -361,6 +351,34 @@
     "SlidesToolbar": {
       "text": {
         "use_smart_snapping_to": "Utilisez l'accrochage intelligent pour aligner les formes au centre et à espacement égal."
+      }
+    }
+  },
+  "components": {
+    "LanguageSwitcher": {
+      "aria_label": {
+        "change_language": "Changer de langue"
+      },
+      "text": {
+        "francais": "Français"
+      }
+    },
+    "slides": {
+      "commons": {
+        "text": {
+          "saving_deck": "Sauvegarde du deck…"
+        }
+      }
+    },
+    "FileUploader": {
+      "text": {
+        "files_rejected": "fichier(s) rejeté(s) :",
+        "description_all": "Faites glisser et déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
+        "instructions_all": "Faites glisser et déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
+        "description_documents": "Fichiers de documents (PDF, Word, Texte, etc.)",
+        "description_spreadsheets": "Fichiers de tableur (Excel, CSV, etc.)",
+        "description_media": "Fichiers multimédias (images, vidéos, audio)",
+        "instructions_media": "Faites glisser et déposez des fichiers multimédias ici, ou cliquez pour parcourir"
       }
     }
   }

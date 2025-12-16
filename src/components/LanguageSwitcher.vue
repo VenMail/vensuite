@@ -2,7 +2,7 @@
   <div ref="root" class="relative inline-flex items-center">
     <button
       type="button"
-      :aria-label="t('LanguageSwitcher.aria_label.change_language')"
+      :aria-label="t('components.LanguageSwitcher.aria_label.change_language')"
       :aria-expanded="open"
       @click.stop="toggle"
       class="
@@ -115,7 +115,7 @@ const badgeText = computed(() => {
 
 const languages = [
   { code: 'en', flag: '\ud83c\uddfa\ud83c\uddf8', label: t('LanguageSwitcher.text.english'), nativeLabel: 'English' },
-  { code: 'fr', flag: '\ud83c\uddeb\ud83c\uddf7', label: t('LanguageSwitcher.text.francais'), nativeLabel: 'Français' },
+  { code: 'fr', flag: '\ud83c\uddeb\ud83c\uddf7', label: t('components.LanguageSwitcher.text.francais'), nativeLabel: 'Français' },
   { code: 'zh', flag: '\ud83c\udde8\ud83c\uddf3', label: t('LanguageSwitcher.text.chinese'), nativeLabel: '中文' },
 ];
 

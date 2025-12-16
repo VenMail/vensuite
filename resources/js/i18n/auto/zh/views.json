@@ -77,6 +77,7 @@
         "choose_a_logo": "选择徽标",
         "choose_who_in_your": "选择谁可以在您的工作区打开或编辑此表单。",
         "configure_webhook_endpoints": "配置 Webhook 端点",
+        "embed_your_form_or": "嵌入您的表单或通过公共插入 API 提交条目。",
         "generate_with_ai": "使用 AI 生成",
         "how_it_works": "它是如何工作的",
         "send_the_live_form": "发送实时表单链接并控制谁可以回复。",
@@ -94,13 +95,20 @@
         "any_custom_events_you": "您定义的任何自定义事件",
         "anyone_with_the_link": "任何拥有链接的人都可以回复。",
         "collaborators_workspace_access": "协作者和工作区访问",
+        "enable_api_key_based": "为此表单启用基于 API 密钥的插入",
         "failed_to_publish_form_2": "发布表单失败",
+        "get_api_form_secret": "获取 API 表单密钥",
         "manage_who_in_your": "管理谁可以在您的工作区打开和编辑此表单。",
         "payment_succeeded_or_failed": "支付成功或失败",
         "publishing_form_to_generate": "正在发布表单以生成分享链接…",
+        "reveal_api_key": "显示 API 密钥",
+        "rotate_generate_api_key": "旋转/生成 API 密钥",
         "send_form_responses_and": "实时将表单响应和支付事件发送到您的下游系统。",
+        "show_example_payload": "显示示例有效负载",
+        "show_iframe_snippet": "显示 iframe 代码片段",
         "use_my_own_stripe": "使用我自己的Stripe账户",
         "use_platform_account": "使用平台账户",
+        "use_this_form_in": "在网站/应用中使用此表单",
         "why_webhooks": "为什么使用Webhook？"
       }
     },
@@ -222,6 +230,18 @@
       "heading": {
         "request_access_to_this": "请求访问此表格",
         "this_spreadsheet_is_large": "此电子表格较大"
+      },
+      "text": {
+        "embed_this_sheet": "嵌入此表",
+        "enable_key_based_inserts": "为此表启用基于密钥的插入",
+        "get_api_sheet_secret": "获取 API 表密钥",
+        "public_api_is_not": "此表未启用公共 API。",
+        "reveal_api_key": "显示 API 密钥",
+        "rotate_generate_api_key": "旋转/生成 API 密钥",
+        "show_example_payloads": "显示示例有效负载",
+        "show_iframe_snippet": "显示 iframe 代码片段",
+        "use_the_public_insert": "使用公共插入 API 从您的前端或服务器附加一行。",
+        "use_this_sheet_in": "在网站表单中使用此表"
       }
     },
     "Sheets": {
@@ -244,6 +264,13 @@
       "text": {
         "select_or_add_a": "选择或添加幻灯片以开始。"
       }
+    }
+  },
+  "commons": {
+    "text": {
+      "loading_responses": "加载响应中…",
+      "loading_response": "加载响应中…",
+      "loading_form": "加载表单中…"
     }
   }
 }

@@ -1371,14 +1371,14 @@ watch(
     <Dialog v-model:open="integrationsOpen">
       <DialogContent class="w-[calc(100vw-2rem)] sm:w-full sm:max-w-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle>Integrations</DialogTitle>
+          <DialogTitle>{{$t('Commons.button.integrations')}}</DialogTitle>
         </DialogHeader>
 
         <div class="space-y-6">
           <div class="space-y-3">
             <div class="text-sm font-medium">Public Insert API (authenticated controls)</div>
             <div class="flex items-center justify-between gap-3">
-              <div class="text-xs text-gray-500">Enable key-based inserts for this sheet</div>
+              <div class="text-xs text-gray-500">{{$t('Views.SheetEditor.text.enable_key_based_inserts')}}</div>
               <Switch
                 :checked="sheetPublicApiEnabled"
                 :disabled="isUpdatingSheetPublicApi"
@@ -1386,7 +1386,7 @@ watch(
               />
             </div>
             <div class="flex items-center justify-between gap-2">
-              <div class="text-xs text-gray-500">Rotate / generate API key</div>
+              <div class="text-xs text-gray-500">{{$t('Views.SheetEditor.text.rotate_generate_api_key')}}</div>
               <Button
                 variant="outline"
                 size="sm"
@@ -1399,9 +1399,9 @@ watch(
           </div>
 
           <div class="space-y-2">
-            <div class="text-sm font-medium">Embed this sheet</div>
+            <div class="text-sm font-medium">{{$t('Views.SheetEditor.text.embed_this_sheet')}}</div>
             <div class="grid gap-2">
-              <div class="text-xs text-gray-500">Share URL</div>
+              <div class="text-xs text-gray-500">{{$t('Commons.text.share_url')}}</div>
               <div class="flex flex-col sm:flex-row gap-2">
                 <input
                   class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
@@ -1414,10 +1414,10 @@ watch(
 
               <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
                 <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
-                  Show iframe snippet
+                  {{$t('Views.SheetEditor.text.show_iframe_snippet')}}
                 </summary>
                 <div class="mt-3 space-y-2">
-                  <div class="text-xs text-gray-500">Iframe snippet</div>
+                  <div class="text-xs text-gray-500">{{$t('Commons.text.iframe_snippet')}}</div>
                   <div class="flex flex-col sm:flex-row gap-2">
                     <textarea
                       class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
@@ -1434,16 +1434,16 @@ watch(
           </div>
 
           <div class="space-y-2">
-            <div class="text-sm font-medium">Use this sheet in a website form</div>
+            <div class="text-sm font-medium">{{$t('Views.SheetEditor.text.use_this_sheet_in')}}</div>
             <div class="text-xs text-gray-500">
-              Use the public insert API to append a row from your frontend or server.
+              {{$t('Views.SheetEditor.text.use_the_public_insert')}}
             </div>
 
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <div class="text-xs text-gray-500">Endpoint</div>
+                <div class="text-xs text-gray-500">{{$t('Commons.text.endpoint')}}</div>
                 <div v-if="!sheetPublicApiEnabled" class="text-xs text-amber-600">
-                  Public API is not enabled for this sheet.
+                  {{$t('Views.SheetEditor.text.public_api_is_not')}}
                 </div>
               </div>
               <div class="flex flex-col sm:flex-row gap-2">
@@ -1460,7 +1460,7 @@ watch(
 
               <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
                 <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
-                  Show example payloads
+                  {{$t('Views.SheetEditor.text.show_example_payloads')}}
                 </summary>
                 <div class="mt-3 space-y-3">
                   <div>
@@ -1485,11 +1485,11 @@ watch(
           </div>
 
           <div class="space-y-2">
-            <div class="text-sm font-medium">Get API Sheet Secret</div>
+            <div class="text-sm font-medium">{{$t('Views.SheetEditor.text.get_api_sheet_secret')}}</div>
             <div class="text-xs text-gray-500">This is the sheet's public API key used in the endpoint path.</div>
             <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
               <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
-                Reveal API key
+                {{$t('Views.SheetEditor.text.reveal_api_key')}}
               </summary>
               <div class="mt-3 flex flex-col sm:flex-row gap-2">
                 <input

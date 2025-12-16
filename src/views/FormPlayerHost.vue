@@ -21,7 +21,7 @@
 
       <main :class="['player-host__body', isClassicMode ? 'player-host__body--classic' : 'player-host__body--focus']">
         <section v-if="stage === 'loading'" class="player-host__state">
-          <span>{{$t('Commons.text.loading_form')}}</span>
+          <span>{{$t('commons.text.loading_form')}}</span>
         </section>
 
         <section v-else-if="stage === 'error'" class="player-host__state player-host__state--error">

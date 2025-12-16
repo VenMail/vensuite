@@ -22,27 +22,19 @@
       }
     }
   },
+  "FileItem": {
+    "text": {
+      "transition_all_duration_200": "transition-all duration-200 cursor-pointer"
+    }
+  },
   "FileUploader": {
     "text": {
-      "all_file_types": "all file types",
       "allowed_file_types": "Allowed file types:",
-      "description_all": "Drag and drop files or folders here, or click to browse",
-      "description_documents": "Document files (PDF, Word, Text, etc.)",
-      "description_spreadsheets": "Spreadsheet files (Excel, CSV, etc.)",
-      "description_media": "Media files (images, videos, audio)",
-      "instructions_all": "Drag and drop files or folders here, or click to browse",
-      "instructions_documents": "Drag and drop document files here, or click to browse",
-      "instructions_spreadsheets": "Drag and drop spreadsheet files here, or click to browse",
-      "instructions_media": "Drag and drop media files here, or click to browse",
       "file_already_selected": "File already selected",
       "file_type_not_allowed": "File type not allowed",
       "mime_type_not_allowed": "MIME type not allowed",
-      "files_rejected": "file(s) rejected:",
-      "status_uploading": "Uploading...",
-      "status_converting": "Converting...",
       "status_done": "Done",
-      "status_failed": "Failed",
-      "total_size": "Total size:"
+      "status_failed": "Failed"
     }
   },
   "Forms": {
@@ -66,6 +58,11 @@
           "click_or_drag_files": "Click or drag files here"
         }
       },
+      "SlashMenu": {
+        "text": {
+          "no_blocks_found": "No blocks found"
+        }
+      },
       "Types": {
         "text": {
           "email_address_input": "Email address input",
@@ -77,11 +74,6 @@
           "single_selection_from_options": "Single selection from options",
           "star_or_number_rating": "Star or number rating"
         }
-      },
-      "SlashMenu": {
-        "text": {
-          "no_blocks_found": "No blocks found"
-        }
       }
     },
     "DocsTitleBar": {
@@ -90,22 +82,22 @@
       }
     },
     "DocsToolbar": {
-      "label": {
-        "include_header_row": "Include header row",
-        "open_in_new_tab": "Open in new tab",
-        "show_page_numbers": "Show Page Numbers",
-        "page_number_position": "Page Number Position",
-        "show_page_numbers_when": "Show page numbers when printing",
-        "show_page_border": "Show Page Border",
-        "show_page_shadow": "Show Page Shadow"
-      },
       "heading": {
         "create_new_document": "Create New Document"
       },
+      "label": {
+        "include_header_row": "Include header row",
+        "open_in_new_tab": "Open in new tab",
+        "page_number_position": "Page Number Position",
+        "show_page_border": "Show Page Border",
+        "show_page_numbers": "Show Page Numbers",
+        "show_page_numbers_when": "Show page numbers when printing",
+        "show_page_shadow": "Show Page Shadow"
+      },
       "text": {
         "choose_a_template_to": "Choose a template to get started quickly",
-        "start_from_scratch": "Start from scratch",
-        "professional_correspondence": "Professional correspondence"
+        "professional_correspondence": "Professional correspondence",
+        "start_from_scratch": "Start from scratch"
       }
     },
     "Editor": {
@@ -114,6 +106,15 @@
       }
     },
     "Editors": {
+      "FileEditor": {
+        "heading": {
+          "file_upload_properties": "File Upload Properties"
+        },
+        "label": {
+          "allow_multiple_files": "Allow Multiple Files:",
+          "allowed_file_types": "Allowed File Types:"
+        }
+      },
       "LogicEditor": {
         "label": {
           "if_question_id": "If Question ID:",
@@ -125,96 +126,77 @@
           "allow_half_ratings": "Allow Half Ratings:"
         }
       },
-      "FileEditor": {
-        "heading": {
-          "file_upload_properties": "File Upload Properties"
-        },
-        "label": {
-          "allow_multiple_files": "Allow Multiple Files:",
-          "allowed_file_types": "Allowed File Types:"
-        }
-      },
       "TextEditor": {
         "heading": {
-          "text_field_properties": "Text Field Properties",
-          "current_validation_rules": "Current Validation Rules:"
+          "current_validation_rules": "Current Validation Rules:",
+          "text_field_properties": "Text Field Properties"
         }
       }
     },
     "FormConfigWizard": {
       "label": {
-        "show_confirmation_page": "Show Confirmation Page",
-        "show_progress_bar": "Show Progress Bar",
         "allow_multiple_submissions": "Allow Multiple Submissions",
         "collect_email_addresses": "Collect Email Addresses",
         "default_response_view": "Default Response View",
-        "notify_on_new_response": "Notify on New Response"
+        "notify_on_new_response": "Notify on New Response",
+        "show_confirmation_page": "Show Confirmation Page",
+        "show_progress_bar": "Show Progress Bar"
       },
       "text": {
-        "customize_how_your_form": "Customize how your form looks to respondents",
-        "display_completion_progress_to": "Display completion progress to respondents",
-        "control_how_responses_are": "Control how responses are collected and processed",
-        "users_can_submit_the": "Users can submit the form multiple times",
-        "display_a_thank_you": "Display a thank you message after submission",
-        "require_respondents_to_provide": "Require respondents to provide their email",
-        "choose_how_you_want": "Choose how you want to receive and view responses",
-        "get_an_email_for": "Get an email for each new submission",
-        "clean_header_with_just": "Clean header with just the title",
         "all_questions_on_one": "All questions on one scrollable page",
+        "choose_how_you_want": "Choose how you want to receive and view responses",
+        "clean_header_with_just": "Clean header with just the title",
+        "control_how_responses_are": "Control how responses are collected and processed",
+        "customize_how_your_form": "Customize how your form looks to respondents",
+        "display_a_thank_you": "Display a thank you message after submission",
+        "display_completion_progress_to": "Display completion progress to respondents",
+        "get_an_email_for": "Get an email for each new submission",
         "one_question_at_a": "One question at a time with next/previous buttons",
-        "view_all_responses_in": "View all responses in a spreadsheet-like table",
+        "require_respondents_to_provide": "Require respondents to provide their email",
         "review_responses_one_at": "Review responses one at a time",
-        "see_aggregated_statistics_and": "See aggregated statistics and charts"
+        "see_aggregated_statistics_and": "See aggregated statistics and charts",
+        "users_can_submit_the": "Users can submit the form multiple times",
+        "view_all_responses_in": "View all responses in a spreadsheet-like table"
       }
     },
     "FormConfigWizardSimple": {
       "text": {
-        "how_should_your_form": "How should your form look to respondents?",
-        "clean_and_bright_interface": "Clean and bright interface",
-        "easy_on_the_eyes": "Easy on the eyes",
-        "match_system_preference": "Match system preference",
-        "select_the_typography_for": "Select the typography for your form",
-        "modern_and_clean": "Modern and clean",
-        "professional_and_readable": "Professional and readable",
-        "friendly_and_approachable": "Friendly and approachable",
-        "choose_how_labels_should": "Choose how labels should align with inputs.",
-        "labels_sit_above_each": "Labels sit above each field for maximum clarity.",
-        "place_labels_beside_inputs": "Place labels beside inputs for a tighter layout.",
-        "control_how_much_breathing": "Control how much breathing room each field uses.",
-        "standard_spacing_that_balances": "Standard spacing that balances readability and space.",
-        "reduce_spacing_to_fit": "Reduce spacing to fit more fields on screen.",
-        "choose_the_best_experience": "Choose the best experience for your respondents",
-        "all_questions_on_one": "All questions on one scrollable page",
-        "one_question_at_a": "One question at a time with next/previous",
-        "enable_payment_processing_for": "Enable payment processing for your form",
         "accept_payments_via_stripe": "Accept payments via Stripe",
-        "this_is_a_free": "This is a free form",
+        "aggregated_statistics_and_charts": "Aggregated statistics and charts",
+        "all_questions_on_one": "All questions on one scrollable page",
+        "choose_how_labels_should": "Choose how labels should align with inputs.",
+        "choose_the_best_experience": "Choose the best experience for your respondents",
+        "choose_your_preferred_response": "Choose your preferred response viewing format",
+        "clean_and_bright_interface": "Clean and bright interface",
+        "control_how_much_breathing": "Control how much breathing room each field uses.",
         "display_your_brand_logo": "Display your brand logo at the top of the form",
-        "show_logo_in_form": "Show logo in form header",
-        "keep_it_simple": "Keep it simple",
-        "send_form_submissions_to": "Send form submissions to your webhook endpoint",
+        "easy_on_the_eyes": "Easy on the eyes",
+        "enable_payment_processing_for": "Enable payment processing for your form",
+        "friendly_and_approachable": "Friendly and approachable",
+        "how_should_your_form": "How should your form look to respondents?",
         "integrate_with_other_tools": "Integrate with other tools",
         "just_store_responses": "Just store responses",
-        "choose_your_preferred_response": "Choose your preferred response viewing format",
-        "spreadsheet_like_view_of": "Spreadsheet-like view of all responses",
+        "keep_it_simple": "Keep it simple",
+        "labels_sit_above_each": "Labels sit above each field for maximum clarity.",
+        "match_system_preference": "Match system preference",
+        "modern_and_clean": "Modern and clean",
+        "one_question_at_a": "One question at a time with next/previous",
+        "place_labels_beside_inputs": "Place labels beside inputs for a tighter layout.",
+        "professional_and_readable": "Professional and readable",
+        "reduce_spacing_to_fit": "Reduce spacing to fit more fields on screen.",
         "review_responses_one_at": "Review responses one at a time",
-        "aggregated_statistics_and_charts": "Aggregated statistics and charts"
+        "select_the_typography_for": "Select the typography for your form",
+        "send_form_submissions_to": "Send form submissions to your webhook endpoint",
+        "show_logo_in_form": "Show logo in form header",
+        "spreadsheet_like_view_of": "Spreadsheet-like view of all responses",
+        "standard_spacing_that_balances": "Standard spacing that balances readability and space.",
+        "this_is_a_free": "This is a free form"
       }
     },
     "FormWizard": {
-      "text": {
-        "describe_what_you_want": "Describe what you want to create in plain English",
-        "ai_is_building_your": "AI is building your form structure",
-        "review_and_customize_your": "Review and customize your form",
-        "or_choose_a_template": "Or choose a template:",
-        "ai_is_analyzing_your": "AI is analyzing your description and building the perfect form structure",
-        "ai_generated_form_ready": "AI-generated form ready!",
-        "rating_and_comments": "Rating and comments",
-        "user_signup_details": "User signup details",
-        "product_and_shipping_info": "Product and shipping info",
-        "get_in_touch_with": "Get in touch with us",
-        "help_us_improve_by": "Help us improve by sharing your feedback",
-        "create_your_account": "Create your account"
+      "button": {
+        "generate_form": "Generate Form →",
+        "skip_create_blank": "Skip & Create Blank"
       },
       "heading": {
         "create_your_form": "Create Your Form",
@@ -223,47 +205,73 @@
       "label": {
         "what_kind_of_form": "What kind of form do you want to create?"
       },
-      "button": {
-        "skip_create_blank": "Skip & Create Blank",
-        "generate_form": "Generate Form →"
+      "text": {
+        "ai_generated_form_ready": "AI-generated form ready!",
+        "ai_is_analyzing_your": "AI is analyzing your description and building the perfect form structure",
+        "ai_is_building_your": "AI is building your form structure",
+        "create_your_account": "Create your account",
+        "describe_what_you_want": "Describe what you want to create in plain English",
+        "get_in_touch_with": "Get in touch with us",
+        "help_us_improve_by": "Help us improve by sharing your feedback",
+        "or_choose_a_template": "Or choose a template:",
+        "product_and_shipping_info": "Product and shipping info",
+        "rating_and_comments": "Rating and comments",
+        "review_and_customize_your": "Review and customize your form",
+        "user_signup_details": "User signup details"
       }
     },
     "Player": {
+      "ClassicPlayer": {
+        "text": {
+          "complete_required_fields": "Complete required fields",
+          "no_questions_available_in": "No questions available in this form.",
+          "please_complete_required_fields": "Please complete required fields",
+          "ready_to_submit": "Ready to submit",
+          "required_fields_are_marked": "Required fields are marked with *",
+          "review_your_responses_before": "Review your responses before submitting."
+        }
+      },
       "FocusPlayer": {
         "text": {
           "no_questions_available": "No questions available."
         }
       },
       "PaymentStep": {
-        "text": {
-          "please_complete_the_payment": "Please complete the payment to submit your response."
-        },
         "button": {
           "pay_submit": "Pay & Submit"
+        },
+        "text": {
+          "please_complete_the_payment": "Please complete the payment to submit your response."
         }
       },
       "QuestionRenderer": {
         "text": {
           "select_an_option": "Select an option"
         }
-      },
-      "ClassicPlayer": {
-        "text": {
-          "ready_to_submit": "Ready to submit",
-          "please_complete_required_fields": "Please complete required fields",
-          "review_your_responses_before": "Review your responses before submitting.",
-          "required_fields_are_marked": "Required fields are marked with *",
-          "complete_required_fields": "Complete required fields",
-          "no_questions_available_in": "No questions available in this form."
-        }
       }
     },
     "WebhooksPanel": {
       "text": {
+        "add_new_webhook": "Add new webhook",
         "connect_form_events_to": "Connect form events to external services with quick validation.",
-        "no_webhooks_configured_yet": "No webhooks configured yet.",
-        "add_new_webhook": "Add new webhook"
+        "no_webhooks_configured_yet": "No webhooks configured yet."
       }
+    }
+  },
+  "ImagePicker": {
+    "label": {
+      "select_from_library": "Select from Library"
+    },
+    "text": {
+      "click_to_upload_or": "Click to upload or drag and drop",
+      "no_images_found": "No images found"
+    }
+  },
+  "LanguageSwitcher": {
+    "text": {
+      "chinese": "Chinese",
+      "english": "English",
+      "select_language": "Select Language"
     }
   },
   "Layout": {
@@ -273,79 +281,10 @@
       }
     }
   },
-  "ShareCard": {
-    "text": {
-      "only_people_with_access": "Only people with access",
-      "anyone_in_your_org": "Anyone in your org can view",
-      "anyone_in_your_org_2": "Anyone in your org can edit",
-      "anyone_with_the_link": "Anyone with the link can view",
-      "anyone_with_link_can": "Anyone with link can view",
-      "anyone_with_the_link_2": "Anyone with the link can edit",
-      "anyone_with_link_can_2": "Anyone with link can edit",
-      "anyone_on_the_internet": "Anyone on the internet can view",
-      "public_on_the_web": "Public on the web",
-      "anyone_on_the_internet_2": "Anyone on the internet can edit",
-      "public_and_editable": "Public and editable",
-      "allow_editors_to_change": "Allow editors to change permissions and share",
-      "commenters_and_viewers": "Commenters and viewers"
-    },
-    "heading": {
-      "people_with_access": "People with access",
-      "share_with_others": "Share with others"
-    },
-    "button": {
-      "add_people_by_email": "Add people by email"
-    }
-  },
-  "Slides": {
-    "SlidesToolbar": {
-      "text": {
-        "use_smart_snapping_to": "Use smart snapping to align shapes to center and equal spacing."
-      }
-    },
-    "SlidesInspector": {
-      "text": {
-        "control_alignment_helpers_for": "Control alignment helpers for precise layouts.",
-        "use_a_smaller_grid": "Use a smaller grid for dense layouts or increase spacing for broader guides.",
-        "bring_existing_content_into": "Bring existing content into your slide deck.",
-        "processing_your_file": "Processing your file…",
-        "ready_for_new_imports": "Ready for new imports.",
-        "while_dragging_to_constrain": "while dragging to constrain axis.",
-        "use_alignment_guides_to": "Use alignment guides to evenly distribute shapes.",
-        "combine_smart_snapping_with": "Combine smart snapping with grid overlays for pixel-perfect layouts."
-      }
-    }
-  },
-  "ImagePicker": {
-    "text": {
-      "click_to_upload_or": "Click to upload or drag and drop",
-      "no_images_found": "No images found"
-    },
-    "label": {
-      "select_from_library": "Select from Library"
-    }
-  },
-  "LanguageSwitcher": {
-    "text": {
-      "select_language": "Select Language",
-      "english": "English",
-      "chinese": "Chinese",
-      "francais": "Français"
-    },
-    "aria_label": {
-      "change_language": "Change Language"
-    }
-  },
   "Media": {
-    "MediaViewer": {
-      "text": {
-        "your_browser_does_not": "Your browser does not support the video tag.",
-        "your_browser_does_not_2": "Your browser does not support the audio tag.",
-        "preview_not_available_for": "Preview not available for this file type",
-        "there_was_an_error": "There was an error loading this file"
-      },
+    "MediaGrid": {
       "heading": {
-        "failed_to_load_media": "Failed to load media"
+        "no_media_files": "No media files"
       }
     },
     "MediaPreview": {
@@ -353,15 +292,95 @@
         "failed_to_load": "Failed to load"
       }
     },
-    "MediaGrid": {
+    "MediaViewer": {
       "heading": {
-        "no_media_files": "No media files"
+        "failed_to_load_media": "Failed to load media"
+      },
+      "text": {
+        "preview_not_available_for": "Preview not available for this file type",
+        "there_was_an_error": "There was an error loading this file",
+        "your_browser_does_not": "Your browser does not support the video tag.",
+        "your_browser_does_not_2": "Your browser does not support the audio tag."
       }
     }
   },
-  "FileItem": {
+  "Menu": {
+    "UnifiedMenubar": {
+      "text": {
+        "integrate_this_sheet": "Integrate this sheet"
+      }
+    }
+  },
+  "ShareCard": {
+    "button": {
+      "add_people_by_email": "Add people by email"
+    },
+    "heading": {
+      "people_with_access": "People with access",
+      "share_with_others": "Share with others"
+    },
     "text": {
-      "transition_all_duration_200": "transition-all duration-200 cursor-pointer"
+      "allow_editors_to_change": "Allow editors to change permissions and share",
+      "anyone_in_your_org": "Anyone in your org can view",
+      "anyone_in_your_org_2": "Anyone in your org can edit",
+      "anyone_on_the_internet": "Anyone on the internet can view",
+      "anyone_on_the_internet_2": "Anyone on the internet can edit",
+      "anyone_with_link_can": "Anyone with link can view",
+      "anyone_with_link_can_2": "Anyone with link can edit",
+      "anyone_with_the_link": "Anyone with the link can view",
+      "anyone_with_the_link_2": "Anyone with the link can edit",
+      "commenters_and_viewers": "Commenters and viewers",
+      "only_people_with_access": "Only people with access",
+      "public_and_editable": "Public and editable",
+      "public_on_the_web": "Public on the web"
+    }
+  },
+  "Slides": {
+    "SlidesInspector": {
+      "text": {
+        "bring_existing_content_into": "Bring existing content into your slide deck.",
+        "combine_smart_snapping_with": "Combine smart snapping with grid overlays for pixel-perfect layouts.",
+        "control_alignment_helpers_for": "Control alignment helpers for precise layouts.",
+        "processing_your_file": "Processing your file…",
+        "ready_for_new_imports": "Ready for new imports.",
+        "use_a_smaller_grid": "Use a smaller grid for dense layouts or increase spacing for broader guides.",
+        "use_alignment_guides_to": "Use alignment guides to evenly distribute shapes.",
+        "while_dragging_to_constrain": "while dragging to constrain axis."
+      }
+    },
+    "SlidesToolbar": {
+      "text": {
+        "use_smart_snapping_to": "Use smart snapping to align shapes to center and equal spacing."
+      }
+    }
+  },
+  "components": {
+    "LanguageSwitcher": {
+      "aria_label": {
+        "change_language": "Change Language"
+      },
+      "text": {
+        "francais": "Français"
+      }
+    },
+    "slides": {
+      "commons": {
+        "text": {
+          "saving_deck": "Saving deck…"
+        }
+      }
+    },
+    "FileUploader": {
+      "text": {
+        "files_rejected": "file(s) rejected:",
+        "status_uploading": "Uploading...",
+        "description_all": "Drag and drop files or folders here, or click to browse",
+        "instructions_all": "Drag and drop files or folders here, or click to browse",
+        "description_documents": "Document files (PDF, Word, Text, etc.)",
+        "description_spreadsheets": "Spreadsheet files (Excel, CSV, etc.)",
+        "description_media": "Media files (images, videos, audio)",
+        "instructions_media": "Drag and drop media files here, or click to browse"
+      }
     }
   }
 }

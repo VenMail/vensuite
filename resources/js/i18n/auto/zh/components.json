@@ -29,25 +29,12 @@
   },
   "FileUploader": {
     "text": {
-      "all_file_types": "所有文件类型",
       "allowed_file_types": "允许的文件类型：",
-      "description_all": "将文件或文件夹拖放到此处，或单击浏览",
-      "description_documents": "文档文件（PDF、Word、文本等）",
-      "description_media": "媒体文件（图片、视频、音频）",
-      "description_spreadsheets": "电子表格文件（Excel、CSV等）",
       "file_already_selected": "文件已被选择",
       "file_type_not_allowed": "不允许的文件类型",
-      "files_rejected": "文件被拒绝：",
-      "instructions_all": "将文件或文件夹拖放到此处，或单击浏览",
-      "instructions_documents": "将文档文件拖放到此处，或单击浏览",
-      "instructions_media": "将媒体文件拖放到此处，或单击浏览",
-      "instructions_spreadsheets": "将电子表格文件拖放到此处，或单击浏览",
       "mime_type_not_allowed": "不允许的 MIME 类型",
-      "status_converting": "转换中...",
       "status_done": "完成",
-      "status_failed": "失败",
-      "status_uploading": "上传中...",
-      "total_size": "总大小："
+      "status_failed": "失败"
     }
   },
   "Forms": {
@@ -281,13 +268,9 @@
     }
   },
   "LanguageSwitcher": {
-    "aria_label": {
-      "change_language": "更改语言"
-    },
     "text": {
       "chinese": "中文",
       "english": "英语",
-      "francais": "法语",
       "select_language": "选择语言"
     }
   },
@@ -318,6 +301,13 @@
         "there_was_an_error": "加载此文件时出错",
         "your_browser_does_not": "您的浏览器不支持视频标签。",
         "your_browser_does_not_2": "您的浏览器不支持音频标签。"
+      }
+    }
+  },
+  "Menu": {
+    "UnifiedMenubar": {
+      "text": {
+        "integrate_this_sheet": "Integrate this sheet"
       }
     }
   },
@@ -361,6 +351,34 @@
     "SlidesToolbar": {
       "text": {
         "use_smart_snapping_to": "使用智能对齐将形状对齐到中心并保持间距相等。"
+      }
+    }
+  },
+  "components": {
+    "LanguageSwitcher": {
+      "aria_label": {
+        "change_language": "更改语言"
+      },
+      "text": {
+        "francais": "法语"
+      }
+    },
+    "slides": {
+      "commons": {
+        "text": {
+          "saving_deck": "正在保存演示文稿…"
+        }
+      }
+    },
+    "FileUploader": {
+      "text": {
+        "files_rejected": "被拒绝的文件：",
+        "description_all": "将文件或文件夹拖放到此处，或单击以浏览",
+        "instructions_all": "将文件或文件夹拖放到此处，或单击以浏览",
+        "description_documents": "文档文件（PDF、Word、文本等）",
+        "description_spreadsheets": "电子表格文件（Excel、CSV等）",
+        "description_media": "媒体文件（图像、视频、音频）",
+        "instructions_media": "将媒体文件拖放到此处，或单击以浏览"
       }
     }
   }

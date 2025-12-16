@@ -166,7 +166,7 @@
       <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
         <span v-if="isSaving" class="flex items-center gap-1 text-blue-600 dark:text-blue-400">
           <Loader2 class="h-3 w-3 animate-spin" />
-          {{$t('Commons.text.saving_deck')}}
+          {{$t('components.slides.commons.text.saving_deck')}}
         </span>
         <span v-else class="flex items-center gap-1">
           <Sparkles class="h-3 w-3 text-purple-500" />

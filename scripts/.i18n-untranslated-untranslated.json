@@ -1,5 +1,175 @@
 {
   "issueType": "untranslated",
-  "generatedAt": "2025-12-09T08:31:29.875Z",
-  "files": []
+  "generatedAt": "2025-12-16T21:16:19.082Z",
+  "files": [
+    {
+      "locale": "fr",
+      "localeFile": "fr\\commons.json",
+      "issues": [
+        {
+          "keyPath": "Commons.button.date",
+          "english": "Date",
+          "current": "Date"
+        },
+        {
+          "keyPath": "Commons.button.integrations",
+          "english": "Integrations",
+          "current": "Integrations"
+        },
+        {
+          "keyPath": "Commons.button.public",
+          "english": "Public",
+          "current": "Public"
+        },
+        {
+          "keyPath": "Commons.button.webhooks",
+          "english": "Webhooks",
+          "current": "Webhooks"
+        },
+        {
+          "keyPath": "Commons.heading.options",
+          "english": "Options",
+          "current": "Options"
+        },
+        {
+          "keyPath": "Commons.heading.permissions",
+          "english": "Permissions",
+          "current": "Permissions"
+        },
+        {
+          "keyPath": "Commons.heading.source",
+          "english": "Source",
+          "current": "Source"
+        },
+        {
+          "keyPath": "Commons.heading.webhooks",
+          "english": "Webhooks",
+          "current": "Webhooks"
+        },
+        {
+          "keyPath": "Commons.label.orientation",
+          "english": "Orientation",
+          "current": "Orientation"
+        },
+        {
+          "keyPath": "Commons.text.actions",
+          "english": "Actions",
+          "current": "Actions"
+        },
+        {
+          "keyPath": "Commons.text.collaboration",
+          "english": "Collaboration",
+          "current": "Collaboration"
+        },
+        {
+          "keyPath": "Commons.text.contacts",
+          "english": "Contacts",
+          "current": "Contacts"
+        },
+        {
+          "keyPath": "Commons.text.date",
+          "english": "Date",
+          "current": "Date"
+        },
+        {
+          "keyPath": "Commons.text.documents",
+          "english": "Documents",
+          "current": "Documents"
+        },
+        {
+          "keyPath": "Commons.text.embed_form",
+          "english": "Embed form",
+          "current": "Embed form"
+        },
+        {
+          "keyPath": "Commons.text.endpoint",
+          "english": "Endpoint",
+          "current": "Endpoint"
+        },
+        {
+          "keyPath": "Commons.text.iframe_snippet",
+          "english": "Iframe snippet",
+          "current": "Iframe snippet"
+        },
+        {
+          "keyPath": "Commons.text.portrait",
+          "english": "Portrait",
+          "current": "Portrait"
+        },
+        {
+          "keyPath": "Commons.text.public_url",
+          "english": "Public URL",
+          "current": "Public URL"
+        },
+        {
+          "keyPath": "Commons.text.regex",
+          "english": "Regex",
+          "current": "Regex"
+        },
+        {
+          "keyPath": "Commons.text.share_url",
+          "english": "Share URL",
+          "current": "Share URL"
+        }
+      ]
+    },
+    {
+      "locale": "fr",
+      "localeFile": "fr\\components.json",
+      "issues": [
+        {
+          "keyPath": "Menu.UnifiedMenubar.text.integrate_this_sheet",
+          "english": "Integrate this sheet",
+          "current": "Integrate this sheet"
+        }
+      ]
+    },
+    {
+      "locale": "zh",
+      "localeFile": "zh\\commons.json",
+      "issues": [
+        {
+          "keyPath": "Commons.button.integrations",
+          "english": "Integrations",
+          "current": "Integrations"
+        },
+        {
+          "keyPath": "Commons.text.embed_form",
+          "english": "Embed form",
+          "current": "Embed form"
+        },
+        {
+          "keyPath": "Commons.text.endpoint",
+          "english": "Endpoint",
+          "current": "Endpoint"
+        },
+        {
+          "keyPath": "Commons.text.iframe_snippet",
+          "english": "Iframe snippet",
+          "current": "Iframe snippet"
+        },
+        {
+          "keyPath": "Commons.text.public_url",
+          "english": "Public URL",
+          "current": "Public URL"
+        },
+        {
+          "keyPath": "Commons.text.share_url",
+          "english": "Share URL",
+          "current": "Share URL"
+        }
+      ]
+    },
+    {
+      "locale": "zh",
+      "localeFile": "zh\\components.json",
+      "issues": [
+        {
+          "keyPath": "Menu.UnifiedMenubar.text.integrate_this_sheet",
+          "english": "Integrate this sheet",
+          "current": "Integrate this sheet"
+        }
+      ]
+    }
+  ]
 }

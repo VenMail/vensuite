@@ -77,6 +77,7 @@
         "choose_a_logo": "Choisissez un logo",
         "choose_who_in_your": "Choisissez qui dans votre espace de travail peut ouvrir ou modifier ce formulaire.",
         "configure_webhook_endpoints": "Configurer les points de terminaison des webhooks",
+        "embed_your_form_or": "Intégrez votre formulaire ou soumettez des entrées via l'API d'insertion publique.",
         "generate_with_ai": "Générer avec l'IA",
         "how_it_works": "Comment ça fonctionne",
         "send_the_live_form": "Envoyez le lien du formulaire en direct et contrôlez qui peut répondre.",
@@ -94,13 +95,20 @@
         "any_custom_events_you": "Tous les événements personnalisés que vous définissez",
         "anyone_with_the_link": "Quiconque possède le lien peut répondre.",
         "collaborators_workspace_access": "Collaborateurs et accès à l'espace de travail",
+        "enable_api_key_based": "Activez les insertions basées sur la clé API pour ce formulaire",
         "failed_to_publish_form_2": "Échec de la publication du formulaire",
+        "get_api_form_secret": "Obtenir le secret de l'API du formulaire",
         "manage_who_in_your": "Gérez qui dans votre espace de travail peut ouvrir et modifier ce formulaire.",
         "payment_succeeded_or_failed": "Paiement réussi ou échoué",
         "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
+        "reveal_api_key": "Révéler la clé API",
+        "rotate_generate_api_key": "Faites tourner / générez la clé API",
         "send_form_responses_and": "Envoyez les réponses du formulaire et les événements de paiement à vos systèmes en temps réel.",
+        "show_example_payload": "Afficher un exemple de charge utile",
+        "show_iframe_snippet": "Afficher le code iframe",
         "use_my_own_stripe": "Utiliser mon propre compte Stripe",
         "use_platform_account": "Utiliser le compte de la plateforme",
+        "use_this_form_in": "Utilisez ce formulaire dans un site web/application",
         "why_webhooks": "Pourquoi les webhooks ?"
       }
     },
@@ -222,6 +230,18 @@
       "heading": {
         "request_access_to_this": "Demander l'accès à cette feuille",
         "this_spreadsheet_is_large": "Cette feuille de calcul est grande"
+      },
+      "text": {
+        "embed_this_sheet": "Intégrez cette feuille",
+        "enable_key_based_inserts": "Activez les insertions basées sur la clé pour cette feuille",
+        "get_api_sheet_secret": "Obtenir le secret de l'API de la feuille",
+        "public_api_is_not": "L'API publique n'est pas activée pour cette feuille.",
+        "reveal_api_key": "Révéler la clé API",
+        "rotate_generate_api_key": "Faites tourner / générez la clé API",
+        "show_example_payloads": "Afficher des exemples de charges utiles",
+        "show_iframe_snippet": "Afficher le code iframe",
+        "use_the_public_insert": "Utilisez l'API d'insertion publique pour ajouter une ligne depuis votre frontend ou serveur.",
+        "use_this_sheet_in": "Utilisez cette feuille dans un formulaire de site web"
       }
     },
     "Sheets": {
@@ -244,6 +264,13 @@
       "text": {
         "select_or_add_a": "Sélectionnez ou ajoutez une diapositive pour commencer."
       }
+    }
+  },
+  "commons": {
+    "text": {
+      "loading_responses": "Chargement des réponses…",
+      "loading_response": "Chargement de la réponse…",
+      "loading_form": "Chargement du formulaire…"
     }
   }
 }

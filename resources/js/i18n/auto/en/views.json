@@ -1,99 +1,115 @@
 {
   "Views": {
     "Bin": {
-      "text": {
-        "sort_by_name": "Sort by Name",
-        "sort_by_type": "Sort by Type",
-        "sort_by_size": "Sort by Size",
-        "deleted_files_will_appear": "Deleted files will appear here and can be restored or permanently deleted.",
-        "try_adjusting_your_search": "Try adjusting your search or filters to find specific items.",
-        "login_to_access_your": "Login to access your trash and manage deleted files.",
-        "preparing_your_deleted_items": "Preparing your deleted items…"
-      },
-      "heading": {
-        "trash_is_empty": "Trash is empty",
-        "no_matching_items_found": "No matching items found",
-        "no_items_found": "No items found",
-        "welcome_to_venmail_file": "Welcome to Venmail File Manager",
-        "empty_bin": "Empty Bin?",
-        "restore_selected_items": "Restore Selected Items?",
-        "delete_selected_items_permanently": "Delete Selected Items Permanently?"
-      },
       "button": {
         "login_with_venmail": "Login with Venmail"
+      },
+      "heading": {
+        "delete_selected_items_permanently": "Delete Selected Items Permanently?",
+        "empty_bin": "Empty Bin?",
+        "no_items_found": "No items found",
+        "no_matching_items_found": "No matching items found",
+        "restore_selected_items": "Restore Selected Items?",
+        "trash_is_empty": "Trash is empty",
+        "welcome_to_venmail_file": "Welcome to Venmail File Manager"
+      },
+      "text": {
+        "deleted_files_will_appear": "Deleted files will appear here and can be restored or permanently deleted.",
+        "login_to_access_your": "Login to access your trash and manage deleted files.",
+        "preparing_your_deleted_items": "Preparing your deleted items…",
+        "sort_by_name": "Sort by Name",
+        "sort_by_size": "Sort by Size",
+        "sort_by_type": "Sort by Type",
+        "try_adjusting_your_search": "Try adjusting your search or filters to find specific items."
       }
     },
     "DocsEditor": {
+      "button": {
+        "keep_local_version": "Keep local version",
+        "keep_online_version": "Keep online version"
+      },
       "heading": {
         "content_versions_differ": "Content versions differ"
-      },
-      "text": {
-        "no_headings_found": "No headings found",
-        "add_headings_to_see": "Add headings to see outline",
-        "no_messages_yet": "No messages yet.",
-        "start_a_conversation_with": "Start a conversation with your collaborators.",
-        "preview_local_version": "Preview local version",
-        "preview_unavailable": "Preview unavailable.",
-        "preview_online_version": "Preview online version"
       },
       "link": {
         "open_direct_link": "Open direct link"
       },
-      "button": {
-        "keep_local_version": "Keep local version",
-        "keep_online_version": "Keep online version"
+      "text": {
+        "add_headings_to_see": "Add headings to see outline",
+        "no_headings_found": "No headings found",
+        "no_messages_yet": "No messages yet.",
+        "preview_local_version": "Preview local version",
+        "preview_online_version": "Preview online version",
+        "preview_unavailable": "Preview unavailable.",
+        "start_a_conversation_with": "Start a conversation with your collaborators."
       }
     },
     "Documents": {
-      "text": {
-        "get_started_by_creating": "Get started by creating a new document or uploading an existing one.",
-        "choose_a_template_or_start_blank": "Choose a template or start blank"
-      },
       "heading": {
         "create_new_document": "Create New Document",
-        "start_a_new_document": "Start a new document",
-        "no_documents_found": "No documents found"
+        "no_documents_found": "No documents found",
+        "start_a_new_document": "Start a new document"
+      },
+      "text": {
+        "choose_a_template_or_start_blank": "Choose a template or start blank",
+        "get_started_by_creating": "Get started by creating a new document or uploading an existing one."
+      }
+    },
+    "FilePicker": {
+      "heading": {
+        "no_files_found": "No files found"
+      },
+      "text": {
+        "try_adjusting_your_search": "Try adjusting your search or filter criteria."
       }
     },
     "FormBuilder": {
-      "text": {
-        "anyone_with_the_link": "Anyone with the link can respond.",
-        "add_a_question": "Add a question",
-        "add_questions_customize_fields": "Add questions, customize fields, and create the perfect form for your needs.",
-        "use_platform_account": "Use platform account",
-        "use_my_own_stripe": "Use my own Stripe account",
-        "why_webhooks": "Why webhooks?",
-        "send_form_responses_and": "Send form responses and payment events to your downstream systems in real time.",
-        "payment_succeeded_or_failed": "Payment succeeded or failed",
-        "any_custom_events_you": "Any custom events you define",
-        "collaborators_workspace_access": "Collaborators & workspace access",
-        "manage_who_in_your": "Manage who in your workspace can open and edit this form.",
-        "failed_to_publish_form_2": "Failed to publish form",
-        "publishing_form_to_generate": "Publishing form to generate share link…"
-      },
-      "heading": {
-        "start_building_your_form": "Start building your form",
-        "configure_webhook_endpoints": "Configure webhook endpoints",
-        "when_do_webhooks_fire": "When do webhooks fire?",
-        "how_it_works": "How it works",
-        "choose_a_logo": "Choose a logo",
-        "choose_a_footer_image": "Choose a footer image",
-        "generate_with_ai": "Generate with AI",
-        "send_the_live_form": "Send the live form link and control who can respond.",
-        "choose_who_in_your": "Choose who in your workspace can open or edit this form."
-      },
       "button": {
         "add_first_question": "Add First Question",
-        "generate_with_ai": "Generate with AI",
-        "skip_for_now": "Skip for now",
-        "set_up_webhooks": "Set up webhooks",
         "back_to_share_link": "Back to share link",
-        "copy_editor_link": "Copy editor link"
+        "copy_editor_link": "Copy editor link",
+        "generate_with_ai": "Generate with AI",
+        "set_up_webhooks": "Set up webhooks",
+        "skip_for_now": "Skip for now"
+      },
+      "heading": {
+        "choose_a_footer_image": "Choose a footer image",
+        "choose_a_logo": "Choose a logo",
+        "choose_who_in_your": "Choose who in your workspace can open or edit this form.",
+        "configure_webhook_endpoints": "Configure webhook endpoints",
+        "embed_your_form_or": "Embed your form or submit entries via the public insert API.",
+        "generate_with_ai": "Generate with AI",
+        "how_it_works": "How it works",
+        "send_the_live_form": "Send the live form link and control who can respond.",
+        "start_building_your_form": "Start building your form",
+        "when_do_webhooks_fire": "When do webhooks fire?"
       },
       "label": {
         "amount_to_charge": "Amount to charge",
-        "stripe_publishable_key": "Stripe publishable key",
-        "stripe_account_id": "Stripe account ID"
+        "stripe_account_id": "Stripe account ID",
+        "stripe_publishable_key": "Stripe publishable key"
+      },
+      "text": {
+        "add_a_question": "Add a question",
+        "add_questions_customize_fields": "Add questions, customize fields, and create the perfect form for your needs.",
+        "any_custom_events_you": "Any custom events you define",
+        "anyone_with_the_link": "Anyone with the link can respond.",
+        "collaborators_workspace_access": "Collaborators & workspace access",
+        "enable_api_key_based": "Enable API-key-based inserts for this form",
+        "failed_to_publish_form_2": "Failed to publish form",
+        "get_api_form_secret": "Get API Form Secret",
+        "manage_who_in_your": "Manage who in your workspace can open and edit this form.",
+        "payment_succeeded_or_failed": "Payment succeeded or failed",
+        "publishing_form_to_generate": "Publishing form to generate share link…",
+        "reveal_api_key": "Reveal API key",
+        "rotate_generate_api_key": "Rotate / generate API key",
+        "send_form_responses_and": "Send form responses and payment events to your downstream systems in real time.",
+        "show_example_payload": "Show example payload",
+        "show_iframe_snippet": "Show iframe snippet",
+        "use_my_own_stripe": "Use my own Stripe account",
+        "use_platform_account": "Use platform account",
+        "use_this_form_in": "Use this form in a website/app",
+        "why_webhooks": "Why webhooks?"
       }
     },
     "FormPaymentSuccess": {
@@ -107,90 +123,136 @@
       }
     },
     "FormResponses": {
-      "text": {
-        "monitor_how_respondents_engage": "Monitor how respondents engage with your form and spot trends across completion states.",
-        "visualize_completion_ratio_at": "Visualize completion ratio at a glance",
-        "manage_submissions_monitor_payment": "Manage submissions, monitor payment status, and drill into individual answers.",
-        "no_answers_captured_for": "No answers captured for this response."
-      },
       "button": {
         "back_to_forms": "Back to Forms",
         "export_to_sheet": "Export to Sheet"
       },
       "heading": {
         "review_submission_metadata_and": "Review submission metadata and answers."
+      },
+      "text": {
+        "manage_submissions_monitor_payment": "Manage submissions, monitor payment status, and drill into individual answers.",
+        "monitor_how_respondents_engage": "Monitor how respondents engage with your form and spot trends across completion states.",
+        "no_answers_captured_for": "No answers captured for this response.",
+        "visualize_completion_ratio_at": "Visualize completion ratio at a glance"
+      }
+    },
+    "FormTemplateHandler": {
+      "text": {
+        "collect_user_signups": "Collect user signups",
+        "quick_feedback_survey": "Quick feedback survey"
       }
     },
     "Forms": {
-      "text": {
-        "publish_the_form_to": "Publish the form to get a shareable link.",
-        "the_form_link_was": "The form link was copied to your clipboard.",
-        "form_is_missing_an": "Form is missing an identifier.",
-        "share_link_copied_to": "Share link copied to clipboard.",
-        "no_more_forms_to": "No more forms to load.",
-        "anyone_with_this_link": "Anyone with this link can access the form based on its publish settings.",
-        "publishing_form_to_generate": "Publishing form to generate share link…"
-      },
       "heading": {
         "create_and_manage_forms": "Create and Manage Forms",
         "share_this_form_with": "Share this form with participants or collaborators using the link below."
+      },
+      "text": {
+        "anyone_with_this_link": "Anyone with this link can access the form based on its publish settings.",
+        "form_is_missing_an": "Form is missing an identifier.",
+        "no_more_forms_to": "No more forms to load.",
+        "publish_the_form_to": "Publish the form to get a shareable link.",
+        "publishing_form_to_generate": "Publishing form to generate share link…",
+        "share_link_copied_to": "Share link copied to clipboard.",
+        "the_form_link_was": "The form link was copied to your clipboard."
       }
     },
     "Home": {
-      "text": {
-        "sort_by_name": "Sort by Name",
-        "sort_by_date": "Sort by Date",
-        "sort_by_type": "Sort by Type",
-        "sort_by_size": "Sort by Size",
-        "group_by_type": "Group by Type",
-        "no_items_available_in": "No items available in this category.",
-        "try_adjusting_your_search": "Try adjusting your search or filters.",
-        "get_started_by_creating": "Get started by creating a new file or uploading an existing one.",
-        "login_to_manage_your": "Login to manage your files and folders on Venmail.",
-        "attachment_import_importing": "Importing attachment...",
-        "attachment_import_preparing_document": "Preparing document...",
-        "attachment_import_opening_document": "Opening document...",
-        "attachment_import_failed": "Failed to import attachment",
-        "attachment_import_default_message": "Please wait while we import your file."
-      },
-      "heading": {
-        "choose_a_template": "Choose a Template",
-        "no_matching_files_found": "No matching files found",
-        "no_files_found": "No files found",
-        "welcome_to_venmail_file": "Welcome to Venmail File Manager",
-        "attachment_import_failed": "Attachment import failed",
-        "attachment_import_in_progress": "Importing attachment"
-      },
       "button": {
         "login_with_venmail": "Login with Venmail"
+      },
+      "heading": {
+        "attachment_import_failed": "Attachment import failed",
+        "attachment_import_in_progress": "Importing attachment",
+        "choose_a_template": "Choose a Template",
+        "no_files_found": "No files found",
+        "no_matching_files_found": "No matching files found",
+        "welcome_to_venmail_file": "Welcome to Venmail File Manager"
+      },
+      "text": {
+        "attachment_import_default_message": "Please wait while we import your file.",
+        "attachment_import_failed": "Failed to import attachment",
+        "attachment_import_importing": "Importing attachment...",
+        "attachment_import_opening_document": "Opening document...",
+        "attachment_import_preparing_document": "Preparing document...",
+        "get_started_by_creating": "Get started by creating a new file or uploading an existing one.",
+        "group_by_type": "Group by Type",
+        "login_to_manage_your": "Login to manage your files and folders on Venmail.",
+        "no_items_available_in": "No items available in this category.",
+        "sort_by_date": "Sort by Date",
+        "sort_by_name": "Sort by Name",
+        "sort_by_size": "Sort by Size",
+        "sort_by_type": "Sort by Type",
+        "try_adjusting_your_search": "Try adjusting your search or filters."
+      }
+    },
+    "Login": {
+      "button": {
+        "login_with_venmail": "Login with Venmail"
+      },
+      "heading": {
+        "welcome_to_venmail_files": "Venmail Drive"
+      },
+      "link": {
+        "cookie_ccpa_preferences": "Cookie & CCPA preferences",
+        "privacy_terms": "Privacy & terms"
+      },
+      "text": {
+        "login_to_manage_your": "Login to manage your files and folders on Venmail."
       }
     },
     "MediaViewer": {
-      "text": {
-        "cannot_preview_this_file": "Cannot preview this file type."
-      },
       "heading": {
         "request_access_to_this": "Request access to this file"
       },
       "link": {
         "download_open_original": "Download / Open original"
+      },
+      "text": {
+        "cannot_preview_this_file": "Cannot preview this file type."
+      }
+    },
+    "OauthCallback": {
+      "button": {
+        "return_to_login": "Return to Login"
+      },
+      "heading": {
+        "completing_authentication": "Completing Authentication",
+        "oops_login_failed": "Oops! Login Failed"
+      },
+      "link": {
+        "cookie_ccpa_preferences": "Cookie & CCPA preferences",
+        "privacy_terms": "Privacy & terms"
       }
     },
     "SheetEditor": {
       "heading": {
         "request_access_to_this": "Request access to this sheet",
         "this_spreadsheet_is_large": "This spreadsheet is large"
+      },
+      "text": {
+        "embed_this_sheet": "Embed this sheet",
+        "enable_key_based_inserts": "Enable key-based inserts for this sheet",
+        "get_api_sheet_secret": "Get API Sheet Secret",
+        "public_api_is_not": "Public API is not enabled for this sheet.",
+        "reveal_api_key": "Reveal API key",
+        "rotate_generate_api_key": "Rotate / generate API key",
+        "show_example_payloads": "Show example payloads",
+        "show_iframe_snippet": "Show iframe snippet",
+        "use_the_public_insert": "Use the public insert API to append a row from your frontend or server.",
+        "use_this_sheet_in": "Use this sheet in a website form"
       }
     },
     "Sheets": {
+      "heading": {
+        "create_new_spreadsheet": "Create new spreadsheet",
+        "no_spreadsheets_found": "No spreadsheets found",
+        "start_a_new_spreadsheet": "Start a new spreadsheet"
+      },
       "text": {
         "get_started_by_creating": "Get started by creating",
         "pick_a_template_or_start_blank": "Pick a template or start blank"
-      },
-      "heading": {
-        "create_new_spreadsheet": "Create new spreadsheet",
-        "start_a_new_spreadsheet": "Start a new spreadsheet",
-        "no_spreadsheets_found": "No spreadsheets found"
       }
     },
     "Sidebar": {
@@ -202,48 +264,13 @@
       "text": {
         "select_or_add_a": "Select or add a slide to begin."
       }
-    },
-    "FormTemplateHandler": {
-      "text": {
-        "collect_user_signups": "Collect user signups",
-        "quick_feedback_survey": "Quick feedback survey"
-      }
-    },
-    "Login": {
-      "heading": {
-        "welcome_to_venmail_files": "Venmail Drive"
-      },
-      "text": {
-        "login_to_manage_your": "Login to manage your files and folders on Venmail."
-      },
-      "button": {
-        "login_with_venmail": "Login with Venmail"
-      },
-      "link": {
-        "privacy_terms": "Privacy & terms",
-        "cookie_ccpa_preferences": "Cookie & CCPA preferences"
-      }
-    },
-    "OauthCallback": {
-      "heading": {
-        "oops_login_failed": "Oops! Login Failed",
-        "completing_authentication": "Completing Authentication"
-      },
-      "button": {
-        "return_to_login": "Return to Login"
-      },
-      "link": {
-        "privacy_terms": "Privacy & terms",
-        "cookie_ccpa_preferences": "Cookie & CCPA preferences"
-      }
-    },
-    "FilePicker": {
-      "heading": {
-        "no_files_found": "No files found"
-      },
-      "text": {
-        "try_adjusting_your_search": "Try adjusting your search or filter criteria."
-      }
+    }
+  },
+  "commons": {
+    "text": {
+      "loading_responses": "Loading responses…",
+      "loading_response": "Loading response…",
+      "loading_form": "Loading form…"
     }
   }
 }

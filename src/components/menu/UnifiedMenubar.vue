@@ -294,11 +294,11 @@ function formatSelectionLabel(selection: any): string {
       </MenubarMenu>
 
       <MenubarMenu>
-        <MenubarTrigger>Integrations</MenubarTrigger>
+        <MenubarTrigger>{{$t('Commons.button.integrations')}}</MenubarTrigger>
         <MenubarContent>
           <MenubarItem @click="openIntegrations">
             <PlugIcon class="h-4 w-4 mr-2" />
-            Integrate this sheet
+            {{$t('Menu.UnifiedMenubar.text.integrate_this_sheet')}}
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
