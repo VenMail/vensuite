@@ -117,9 +117,9 @@ export function preprocessHtmlEmbeds(html: string): string {
   const forms = Array.from(doc.querySelectorAll('form'));
   for (const form of forms) {
     const nodes = Array.from(form.childNodes);
-    let currentP: HTMLParagraphElement | null = null;
+    let currentP: HTMLElement | null = null;
 
-    const ensureP = () => {
+    const ensureP = (): HTMLElement => {
       if (!currentP) {
         currentP = doc.createElement('p');
         form.appendChild(currentP);
@@ -164,8 +164,9 @@ export function preprocessHtmlEmbeds(html: string): string {
       node.remove();
     }
 
-    if (currentP && !currentP.childNodes.length) {
-      currentP.remove();
+    const p = currentP as HTMLElement | null;
+    if (p && p.childNodes.length === 0) {
+      p.remove();
     }
   }
 
