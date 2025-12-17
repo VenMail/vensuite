@@ -6,7 +6,7 @@
         class="player-host__brand"
         :class="`player-host__brand--${logoAlignment}`"
       >
-        <img :src="logoUrl" :style="logoStyle" alt="Form logo" />
+        <img :src="logoSrc" :style="logoStyle" alt="Form logo" />
       </header>
 
       <div v-if="emailRequired" class="player-host__callout">
@@ -181,6 +181,39 @@ const accentColorStrong = computed(() => {
   return adjustColor(accentColor.value, -12) || '#1d4ed8';
 });
 
+const apiOrigin = computed(() => {
+  const base = import.meta.env.VITE_API_BASE_URL;
+  if (typeof base !== 'string' || !base) return null;
+  try {
+    return new URL(base).origin;
+  } catch {
+    return null;
+  }
+});
+
+const resolveAssetUrl = (value?: string | null): string => {
+  if (!value) return '';
+  const raw = value.trim();
+  if (!raw) return '';
+  if (raw.startsWith('data:') || raw.startsWith('blob:')) return raw;
+
+  try {
+    return new URL(raw).toString();
+  } catch {
+    // continue
+  }
+
+  const origin = apiOrigin.value ?? (typeof window !== 'undefined' ? window.location.origin : '');
+  if (!origin) return raw;
+
+  if (raw.startsWith('//')) {
+    const protocol = typeof window !== 'undefined' ? window.location.protocol : 'https:';
+    return `${protocol}${raw}`;
+  }
+  if (raw.startsWith('/')) return `${origin}${raw}`;
+  return `${origin}/${raw}`;
+};
+
 const rootStyle = computed(() => {
   const backgroundColor = theme.value?.background_color ?? '#f4f5f9';
   const textColor = theme.value?.text_color ?? '#0f172a';
@@ -219,8 +252,8 @@ const rootStyle = computed(() => {
   return styles;
 });
 
-const showBrand = computed(() => Boolean(header.value?.enabled && header.value?.logo_url));
-const logoUrl = computed(() => header.value?.logo_url ?? '');
+const logoSrc = computed(() => resolveAssetUrl(header.value?.logo_url ?? ''));
+const showBrand = computed(() => Boolean(header.value?.enabled && logoSrc.value));
 const logoWidth = computed(() => header.value?.logo_width ?? 120);
 const logoStyle = computed(() => ({
   width: `${Math.min(Math.max(40, logoWidth.value), 220)}px`,
