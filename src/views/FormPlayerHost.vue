@@ -1,5 +1,8 @@
 <template>
-  <div class="player-host" :style="rootStyle">
+  <div
+    class="player-host bg-[var(--player-bg)] text-[var(--player-text-color)] dark:bg-slate-950 dark:text-slate-100"
+    :style="rootStyle"
+  >
     <div class="player-host__shell">
       <header
         v-if="showBrand"
@@ -9,17 +12,30 @@
         <img :src="logoSrc" :style="logoStyle" alt="Form logo" />
       </header>
 
-      <div v-if="emailRequired" class="player-host__callout">
+      <div
+        v-if="emailRequired"
+        class="player-host__callout border border-primary-200/60 bg-primary-50/70 text-primary-950 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-100"
+      >
         <h3>{{$t('Commons.heading.email_required')}}</h3>
         <p>{{$t('Views.FormPlayerHost.text.we_will_ask_for')}}</p>
       </div>
 
-      <div v-if="showPaymentReminder" class="player-host__callout player-host__callout--payment">
+      <div
+        v-if="showPaymentReminder"
+        class="player-host__callout player-host__callout--payment border border-emerald-200/60 bg-emerald-50/70 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100"
+      >
         <h3>{{$t('Commons.heading.payment_due')}}</h3>
         <p>{{ paymentSummaryText }}</p>
       </div>
 
-      <main :class="['player-host__body', isClassicMode ? 'player-host__body--classic' : 'player-host__body--focus']">
+      <main
+        :class="[
+          'player-host__body',
+          isClassicMode
+            ? 'player-host__body--classic rounded-3xl border border-slate-200/70 bg-white/90 shadow-2xl shadow-slate-900/10 dark:border-slate-800/80 dark:bg-slate-900/70 dark:shadow-black/40'
+            : 'player-host__body--focus'
+        ]"
+      >
         <section v-if="stage === 'loading'" class="player-host__state">
           <span>{{$t('commons.text.loading_form')}}</span>
         </section>
@@ -30,10 +46,16 @@
         </section>
 
         <section v-else-if="stage === 'welcome'" class="player-host__welcome">
-          <div class="welcome-card">
+          <div
+            class="welcome-card rounded-3xl border border-slate-200/70 bg-white/90 text-slate-900 shadow-2xl shadow-slate-900/10 dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-100 dark:shadow-black/40"
+          >
             <h2>{{ welcomeScreen?.title ?? $t('Commons.heading.welcome') }}</h2>
-            <p v-if="welcomeScreen?.subtitle">{{ welcomeScreen?.subtitle }}</p>
-            <button type="button" class="player-host__button player-host__button--primary" @click="startForm">
+            <p v-if="welcomeScreen?.subtitle" class="text-slate-600 dark:text-slate-300">{{ welcomeScreen?.subtitle }}</p>
+            <button
+              type="button"
+              class="player-host__button player-host__button--primary border border-transparent bg-[var(--player-accent)] text-white shadow-lg shadow-primary-500/25 hover:bg-[var(--player-accent-strong)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:shadow-black/40 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-950"
+              @click="startForm"
+            >
               {{ welcomeScreen?.button_text ?? $t('Commons.button.share') }}
             </button>
           </div>
@@ -68,8 +90,20 @@
         />
 
         <section v-else-if="stage === 'completed'" class="player-host__completion">
-          <div :class="['completion-card', isClassicMode ? 'completion-card--classic' : 'completion-card--focus']">
-            <div :class="['completion-card__badge', isClassicMode ? 'completion-card__badge--classic' : 'completion-card__badge--focus']">
+          <div
+            :class="[
+              'completion-card rounded-3xl border border-slate-200/70 bg-white/90 text-slate-900 shadow-2xl shadow-slate-900/10 dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-100 dark:shadow-black/40',
+              isClassicMode ? 'completion-card--classic' : 'completion-card--focus'
+            ]"
+          >
+            <div
+              :class="[
+                'completion-card__badge',
+                isClassicMode
+                  ? 'completion-card__badge--classic'
+                  : 'completion-card__badge--focus border border-primary-200/70 bg-white dark:border-primary-500/40 dark:bg-slate-950'
+              ]"
+            >
               <svg viewBox="0 0 52 52" aria-hidden="true">
                 <circle cx="26" cy="26" r="25" />
                 <polyline points="16 26 23 33 36 20" />
@@ -77,11 +111,11 @@
             </div>
             <div class="completion-card__body">
               <h2>{{ completionTitle }}</h2>
-              <p v-if="completionMessage">{{ completionMessage }}</p>
+              <p v-if="completionMessage" class="text-slate-600 dark:text-slate-300">{{ completionMessage }}</p>
               <button
                 v-if="completionButtonText"
                 type="button"
-                class="player-host__button completion-card__button"
+                class="player-host__button completion-card__button border border-slate-300/60 bg-white/90 text-slate-800 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:hover:bg-slate-950 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-950"
                 @click="reload"
               >
                 {{ completionButtonText }}
@@ -226,8 +260,7 @@ const rootStyle = computed(() => {
   const mutedElevation = (theme.value as any)?.muted_elevation ?? '0 12px 32px rgba(15, 23, 42, 0.08)';
 
   const styles: Record<string, string> = {
-    background: backgroundColor,
-    color: textColor,
+    '--player-bg': backgroundColor,
     '--player-text-color': textColor,
     '--player-accent': accentColor.value,
     '--player-accent-strong': accentColorStrong.value,
@@ -638,7 +671,6 @@ watch(
   padding: clamp(2rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3rem);
   display: flex;
   justify-content: center;
-  color: #0f172a;
 }
 
 .player-host__shell {
@@ -693,10 +725,7 @@ watch(
 
 .player-host__callout {
   border-radius: 1.25rem;
-  border: 1px solid rgba(99, 102, 241, 0.15);
-  background: rgba(99, 102, 241, 0.08);
   padding: 1rem 1.5rem;
-  color: #312e81;
   display: grid;
   gap: 0.25rem;
 }
@@ -713,9 +742,6 @@ watch(
 }
 
 .player-host__callout--payment {
-  border-color: rgba(22, 163, 74, 0.2);
-  background: rgba(34, 197, 94, 0.08);
-  color: #166534;
 }
 
 .player-host__body {
@@ -727,11 +753,8 @@ watch(
 }
 
 .player-host__body--classic {
-  background: rgba(255, 255, 255, 0.92);
   border-radius: 1.75rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
   padding: clamp(1.5rem, 4vw, 3rem);
-  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
 }
 
 .player-host__body--focus {
@@ -746,9 +769,7 @@ watch(
   justify-content: center;
   align-items: center;
   min-height: 240px;
-  background: rgba(241, 245, 249, 0.6);
   border-radius: 1rem;
-  border: 1px dashed rgba(148, 163, 184, 0.5);
   padding: 2rem;
 }
 
@@ -765,9 +786,6 @@ watch(
   gap: 0.5rem;
   padding: 0.8rem 1.75rem;
   border-radius: 9999px;
-  border: 1px solid rgba(100, 116, 139, 0.35);
-  background: rgba(255, 255, 255, 0.9);
-  color: #1f2937;
   font-weight: 600;
   transition: background 0.2s ease, transform 0.2s ease;
 }
@@ -778,10 +796,6 @@ watch(
 }
 
 .player-host__button--primary {
-  background: var(--player-accent, #2563eb);
-  border-color: transparent;
-  color: white;
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
 }
 
 .player-host__button--primary:hover {
@@ -800,11 +814,8 @@ watch(
 .completion-card {
   width: min(480px, 100%);
   text-align: center;
-  background: white;
   padding: 2.5rem 2rem;
   border-radius: 1.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
   display: grid;
   gap: 2rem;
 }
@@ -817,7 +828,6 @@ watch(
 
 .welcome-card p,
 .completion-card p {
-  color: rgba(15, 23, 42, 0.7);
   margin-bottom: 1.5rem;
 }
 
