@@ -41,6 +41,104 @@ function escapeHtml(input: string): string {
     .replace(/'/g, '&#039;');
 }
 
+/**
+ * Safely set content on the editor with error handling for unknown nodes/markers
+ */
+function safeSetContent(editor: Editor, content: any, fallbackContent?: string): boolean {
+  try {
+    editor.commands.setContent(content);
+    return true;
+  } catch (error) {
+    console.warn('[tiptap-content] Error setting content, attempting recovery:', error);
+    
+    // Try to strip unknown nodes if content is JSON
+    if (typeof content === 'object' && content !== null) {
+      try {
+        const sanitized = sanitizeTiptapDoc(content);
+        editor.commands.setContent(sanitized);
+        console.info('[tiptap-content] Successfully recovered with sanitized content');
+        return true;
+      } catch (sanitizeError) {
+        console.error('[tiptap-content] Sanitization failed:', sanitizeError);
+      }
+    }
+    
+    // Last resort: use fallback or empty doc
+    if (fallbackContent) {
+      try {
+        editor.commands.setContent(fallbackContent);
+        console.info('[tiptap-content] Recovered with fallback content');
+        return true;
+      } catch (fallbackError) {
+        console.error('[tiptap-content] Fallback content also failed:', fallbackError);
+      }
+    }
+    
+    // Ultimate fallback: empty paragraph
+    try {
+      editor.commands.setContent('<p>Error loading document. Content may contain unsupported elements.</p>');
+      return false;
+    } catch {
+      return false;
+    }
+  }
+}
+
+/**
+ * Sanitize Tiptap document by removing unknown node types
+ */
+function sanitizeTiptapDoc(doc: any): any {
+  if (!doc || typeof doc !== 'object') return doc;
+  
+  const knownNodeTypes = new Set([
+    'doc', 'paragraph', 'text', 'heading', 'bulletList', 'orderedList', 'listItem',
+    'blockquote', 'codeBlock', 'horizontalRule', 'hardBreak', 'image', 'table',
+    'tableRow', 'tableCell', 'tableHeader', 'taskList', 'taskItem', 'pageBreak',
+    'absPage', 'absLayer', 'absBlock', 'absTable', 'absImage', 'absShape',
+    'chart', 'form', 'formControl'
+  ]);
+  
+  const sanitizeNode = (node: any): any => {
+    if (!node || typeof node !== 'object') return node;
+    
+    // If node type is unknown, convert to paragraph or remove
+    if (node.type && !knownNodeTypes.has(node.type)) {
+      console.warn(`[tiptap-content] Removing unknown node type: ${node.type}`);
+      
+      // If it has text content, preserve as paragraph
+      if (node.content && Array.isArray(node.content)) {
+        return {
+          type: 'paragraph',
+          content: node.content.map(sanitizeNode).filter(Boolean)
+        };
+      }
+      return null;
+    }
+    
+    // Recursively sanitize content
+    const sanitized = { ...node };
+    if (Array.isArray(sanitized.content)) {
+      sanitized.content = sanitized.content.map(sanitizeNode).filter(Boolean);
+    }
+    
+    // Remove unknown marks
+    if (Array.isArray(sanitized.marks)) {
+      const knownMarks = new Set(['bold', 'italic', 'strike', 'underline', 'code', 'link', 'textStyle', 'highlight', 'subscript', 'superscript']);
+      sanitized.marks = sanitized.marks.filter((mark: any) => {
+        if (mark && mark.type && !knownMarks.has(mark.type)) {
+          console.warn(`[tiptap-content] Removing unknown mark: ${mark.type}`);
+          return false;
+        }
+        return true;
+      });
+    }
+    
+    return sanitized;
+  };
+  
+  return sanitizeNode(doc);
+}
+
 export function applyContentToEditor(editor: Editor, raw: string): void {
   if (!editor) return;
   if (typeof raw !== 'string' || !raw.length) return;
@@ -74,8 +172,7 @@ export function applyContentToEditor(editor: Editor, raw: string): void {
   // 1) Tiptap JSON string
   const json = tryParseJSON(raw);
   if (json && isTiptapDoc(json)) {
-    editor.commands.setContent(json);
-    applied = true;
+    applied = safeSetContent(editor, json, '<p></p>');
   }
 
   // 2) Base64 -> JSON/HTML
@@ -84,11 +181,9 @@ export function applyContentToEditor(editor: Editor, raw: string): void {
     if (decoded) {
       const decodedJson = tryParseJSON(decoded);
       if (decodedJson && isTiptapDoc(decodedJson)) {
-        editor.commands.setContent(decodedJson);
-        applied = true;
+        applied = safeSetContent(editor, decodedJson, decoded);
       } else if (isLikelyHTML(decoded)) {
-        editor.commands.setContent(preprocessHtmlEmbeds(decoded));
-        applied = true;
+        applied = safeSetContent(editor, preprocessHtmlEmbeds(decoded));
       }
     }
   }
@@ -101,30 +196,33 @@ export function applyContentToEditor(editor: Editor, raw: string): void {
       pageHeightPx: 1123,
     });
     const html = converted || preprocessed;
-    editor.commands.setContent(html);
-
-    const stats = getDocStats();
-    console.info('[tiptap-content] applied HTML content', {
-      usedConverted: !!converted,
-      inputLength: html.length,
-      stats,
-    });
-
-    if (converted && stats && stats.topLevel === 0) {
-      console.warn('[tiptap-content] converted HTML produced empty doc, retrying with original HTML', {
-        convertedLength: converted.length,
-        originalLength: preprocessed.length,
+    
+    if (!safeSetContent(editor, html, preprocessed)) {
+      applied = false;
+    } else {
+      const stats = getDocStats();
+      console.info('[tiptap-content] applied HTML content', {
+        usedConverted: !!converted,
+        inputLength: html.length,
+        stats,
       });
-      editor.commands.setContent(preprocessed);
-      console.info('[tiptap-content] after retrying original HTML', { stats: getDocStats() });
+
+      if (converted && stats && stats.topLevel === 0) {
+        console.warn('[tiptap-content] converted HTML produced empty doc, retrying with original HTML', {
+          convertedLength: converted.length,
+          originalLength: preprocessed.length,
+        });
+        safeSetContent(editor, preprocessed);
+        console.info('[tiptap-content] after retrying original HTML', { stats: getDocStats() });
+      }
+      applied = true;
     }
-    applied = true;
   }
 
   // 4) Plain text fallback
   if (!applied) {
     const escaped = escapeHtml(raw);
-    editor.commands.setContent(`<p>${escaped.replace(/\n/g, '<br>')}</p>`);
+    safeSetContent(editor, `<p>${escaped.replace(/\n/g, '<br>')}</p>`);
   }
 }
 

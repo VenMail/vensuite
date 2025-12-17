@@ -160,16 +160,6 @@ export const DEFAULT_OPTIONS: PaginationOptions = {
 };
 
 /**
- * Print safety factor - reduces content height to account for
- * differences between screen and print rendering.
- * 
- * Browser print engines use different font metrics and line heights,
- * which can cause content to be 5-15% taller in print than on screen.
- * This factor provides a conservative buffer.
- */
-const PRINT_SAFETY_FACTOR = 0.92; // Use 92% of calculated height
-
-/**
  * Calculate effective page dimensions after margins
  */
 export function getContentArea(options: PaginationOptions): { width: number; height: number } {
@@ -178,15 +168,9 @@ export function getContentArea(options: PaginationOptions): { width: number; hei
   const pageWidth = pageOrientation === 'landscape' ? pageSize.height : pageSize.width;
   const pageHeight = pageOrientation === 'landscape' ? pageSize.width : pageSize.height;
   
-  // Calculate raw content height
-  const rawHeight = pageHeight - pageMargins.top - pageMargins.bottom - contentMargins.top - contentMargins.bottom;
-  
-  // Apply print safety factor to prevent overflow in print
-  const safeHeight = Math.floor(rawHeight * PRINT_SAFETY_FACTOR);
-  
   return {
     width: pageWidth - pageMargins.left - pageMargins.right,
-    height: safeHeight,
+    height: pageHeight - pageMargins.top - pageMargins.bottom - contentMargins.top - contentMargins.bottom,
   };
 }
 

@@ -86,5 +86,11 @@ export {
   getImagePrintStyles,
 } from './image-handler';
 
+// Print preview utilities
+export {
+  openPrintPreview,
+  printDirect,
+} from './print-preview';
+
 // CSS import helper
 export const PAGINATION_CSS_PATH = './pagination.css';

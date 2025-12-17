@@ -224,15 +224,11 @@
 
 @media print {
   /* ============================================
-     PRINT STRATEGY: Force page breaks at our
-     calculated positions using the pagination-gap
-     elements. Hide visual decorations but keep
-     the elements as page break triggers.
+     PRINT STRATEGY: Hide all pagination decorations
+     and let browser handle page breaks naturally.
      
-     This is a HYBRID approach that works because:
-     1. We force breaks where WE calculated them
-     2. Browser doesn't add extra breaks
-     3. Visual elements are hidden
+     The key is to make the content flow exactly as
+     it would without our visual pagination elements.
      ============================================ */
   
   /* Reset html/body for print */
@@ -244,47 +240,32 @@
     print-color-adjust: exact !important;
   }
   
-  /* Editor container - remove visual chrome but keep structure */
+  /* Editor container - remove visual chrome */
   .with-pagination {
     box-shadow: none !important;
     border: none !important;
     width: auto !important;
     max-width: none !important;
     min-height: auto !important;
-    /* Keep some padding for content positioning */
     padding: 0 !important;
     margin: 0 !important;
     background: white !important;
   }
   
   /* ============================================
-     PAGE BREAK STRATEGY
-     
-     The .pagination-gap elements mark where we
-     want page breaks. We force a break BEFORE
-     each gap, then hide the visual parts.
+     HIDE ALL PAGINATION DECORATIONS
+     These add extra height that breaks print layout.
      ============================================ */
   
-  /* Force page break at each pagination gap */
+  /* Completely remove pagination gaps - they add height */
   .pagination-gap {
-    display: block !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    /* FORCE page break before this element */
-    page-break-before: always !important;
-    break-before: page !important;
+    display: none !important;
   }
   
-  /* Hide all visual content inside the gap */
   .pagination-gap-space,
   .pagination-gap-footer,
   .pagination-gap-header {
     display: none !important;
-    height: 0 !important;
-    visibility: hidden !important;
   }
   
   /* Hide first page header/footer decorations */
@@ -293,39 +274,13 @@
     display: none !important;
   }
   
-  /* Explicit page breaks should also trigger */
+  /* Hide page break indicators */
   .pagination-break {
-    display: block !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    border: none !important;
-    margin: 0 !important;
-    page-break-after: always !important;
-    break-after: page !important;
+    display: none !important;
   }
   
   .pagination-break::before {
     display: none !important;
-  }
-  
-  /* ============================================
-     PREVENT EXTRA PAGE BREAKS
-     
-     Tell browser NOT to add its own breaks
-     ============================================ */
-  
-  .with-pagination .ProseMirror {
-    /* Prevent browser from adding extra breaks */
-    page-break-inside: auto !important;
-    break-inside: auto !important;
-  }
-  
-  /* Allow content to flow without extra breaks */
-  .with-pagination p,
-  .with-pagination div,
-  .with-pagination li {
-    page-break-inside: auto !important;
-    break-inside: auto !important;
   }
   
   /* ============================================

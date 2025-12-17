@@ -10,6 +10,7 @@ import { Extension, Editor } from '@tiptap/core';
 import { createPaginationPlugin, paginationPluginKey } from './pagination-plugin';
 import type { PaginationOptions, PageSize, PageMargins, HeaderFooterContent } from './types';
 import { DEFAULT_OPTIONS, PAGE_SIZES, getPageDimensions, getContentArea } from './types';
+import { openPrintPreview, printDirect } from './print-preview';
 
 export interface PaginationExtensionOptions extends Partial<PaginationOptions> {}
 
@@ -195,6 +196,16 @@ declare module '@tiptap/core' {
        * Update multiple pagination options at once
        */
       updatePagination: (options: Partial<PaginationOptions>) => ReturnType;
+      
+      /**
+       * Open print preview window
+       */
+      openPrintPreview: () => ReturnType;
+      
+      /**
+       * Print directly (opens print dialog)
+       */
+      print: () => ReturnType;
     };
   }
 }
@@ -329,6 +340,16 @@ export const Pagination = Extension.create<PaginationExtensionOptions>({
           extension.storage.options = { ...extension.storage.options, ...options };
           applyCssVariables(extension.editor, extension.storage.options as PaginationOptions);
         }
+        return true;
+      },
+
+      openPrintPreview: () => () => {
+        openPrintPreview(extension.editor, extension.storage.options as PaginationOptions);
+        return true;
+      },
+
+      print: () => () => {
+        printDirect(extension.editor, extension.storage.options as PaginationOptions);
         return true;
       },
     };

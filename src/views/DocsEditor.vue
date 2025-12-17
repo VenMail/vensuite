@@ -2138,6 +2138,48 @@ function scrollElementIntoViewWithinContainer(targetEl: HTMLElement) {
   container.scrollTo({ top: currentScrollTop + deltaTop, behavior: 'smooth' });
 }
 
+/**
+ * Migrate old pagination nodes to new format
+ * Removes pageContainer nodes that no longer exist in the schema
+ */
+function migrateOldPaginationNodes(doc: any): any {
+  if (!doc || typeof doc !== 'object') return doc;
+  
+  // Recursively process content arrays
+  const processContent = (content: any[]): any[] => {
+    if (!Array.isArray(content)) return content;
+    
+    return content.flatMap(node => {
+      // Remove pageContainer nodes and extract their content
+      if (node.type === 'pageContainer') {
+        console.info('[docs] Migrating old pageContainer node');
+        // Return the content of the pageContainer, or empty array if no content
+        return node.content ? processContent(node.content) : [];
+      }
+      
+      // Recursively process nested content
+      if (node.content) {
+        return {
+          ...node,
+          content: processContent(node.content)
+        };
+      }
+      
+      return node;
+    });
+  };
+  
+  // Process the document
+  if (doc.content) {
+    return {
+      ...doc,
+      content: processContent(doc.content)
+    };
+  }
+  
+  return doc;
+}
+
 function scrollToHeading(index: number) {
   if (!editor.value) return;
   const item = tocItems.value[index] as { pos: number } | undefined;
@@ -2301,13 +2343,16 @@ function loadContentIntoEditor(content: any) {
     // Try to parse as Tiptap JSON (supports double-stringified payloads)
     const parsed = tryParseDocJson(trimmedContent);
     if (parsed && typeof parsed === 'object' && (parsed.type === 'doc' || parsed.content)) {
-      const hasAbs = docHasAbsPages(parsed);
+      // Migrate old pagination nodes (pageContainer) to new format
+      const migrated = migrateOldPaginationNodes(parsed);
+      
+      const hasAbs = docHasAbsPages(migrated);
       const wantPaginationPlus = !hasAbs;
       if (wantPaginationPlus !== paginationPlusEnabledForEditor) {
         paginationPlusEnabledForEditor = wantPaginationPlus;
-        initializeEditor(parsed);
+        initializeEditor(migrated);
       } else {
-        editor.value.commands.setContent(parsed, false);
+        editor.value.commands.setContent(migrated, false);
       }
       hasEnteredContent.value = true;
       updateEditorEmptyState(editor.value);
@@ -2625,6 +2670,9 @@ async function saveDocument(isManual = false) {
 // }
 
 function handlePrint() {
+  if (!editor.value) return;
+  
+  // Use standard browser print with @page CSS control
   updatePrintStyles();
   window.print();
 }
