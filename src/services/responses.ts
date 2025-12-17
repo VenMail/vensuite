@@ -242,15 +242,47 @@ const toNumericId = (value: unknown): number | undefined => {
   return undefined;
 };
 
+const normalizeAnswerValueForApi = (value: unknown): unknown => {
+  if (value == null) return value;
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+    return String(value);
+  }
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+  return String(value);
+};
+
 const normalizeCreateAnswers = (
   answers: CreateResponseAnswers | undefined,
 ): CreateResponseAnswers | undefined => {
   if (!answers) return undefined;
-  if (Array.isArray(answers)) return answers;
+  if (Array.isArray(answers)) {
+    return answers.map((row) => {
+      if (!row || typeof row !== "object") return row as any;
+      const record = row as Record<string, unknown>;
+      return {
+        ...record,
+        value: normalizeAnswerValueForApi(record.value),
+      } as any;
+    });
+  }
   const entries = Object.entries(answers as Record<string, unknown>);
   return entries.map(([key, value]) => {
     const numeric = toNumericId(key);
-    return { question_id: typeof numeric === "number" ? numeric : key, value } as any;
+    return {
+      question_id: typeof numeric === "number" ? numeric : key,
+      value: normalizeAnswerValueForApi(value),
+    } as any;
   });
 };
 
