@@ -1,0 +1,534 @@
+/**
+ * Pagination Extension Styles
+ * 
+ * CSS for the pagination system including:
+ * - Editor styling with page boundaries (PDF/Word-like)
+ * - Page gap decorations
+ * - Header/footer styling
+ * - Print-specific styles for EXACT fidelity between screen and print
+ * 
+ * Key principle: What you see on screen is exactly what prints.
+ */
+
+/* ============================================
+   Editor Container Styles (PDF/Word-like)
+   ============================================ */
+
+.with-pagination {
+  box-sizing: border-box;
+  position: relative;
+  margin: 0 auto;
+  background: var(--page-background, #ffffff);
+  border: var(--page-border, 1px solid #e5e7eb);
+  box-shadow: var(--page-shadow, 0 4px 8px 0 rgba(0, 0, 0, 0.1));
+  
+  /* Page dimensions from CSS variables */
+  width: var(--page-width, 794px);
+  min-height: var(--page-height, 1123px);
+  
+  /* Margins */
+  padding-top: var(--page-margin-top, 72px);
+  padding-bottom: var(--page-margin-bottom, 72px);
+  padding-left: var(--page-margin-left, 72px);
+  padding-right: var(--page-margin-right, 72px);
+  
+  /* CSS counter for page numbers */
+  counter-reset: page-number 1;
+  
+  /* Ensure crisp rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.with-pagination .ProseMirror {
+  min-height: var(--page-content-height, 800px);
+  outline: none;
+  /* Ensure content doesn't overflow page width */
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* ============================================
+   Page Gap Decorations
+   ============================================ */
+
+.pagination-gap {
+  position: relative;
+  width: calc(100% + var(--page-margin-left, 72px) + var(--page-margin-right, 72px));
+  margin-left: calc(-1 * var(--page-margin-left, 72px));
+  margin-right: calc(-1 * var(--page-margin-right, 72px));
+  z-index: 10;
+  
+  /* Increment page counter */
+  counter-increment: page-number;
+}
+
+.pagination-gap-footer,
+.pagination-gap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px var(--page-margin-right, 72px) 8px var(--page-margin-left, 72px);
+  font-size: 11px;
+  color: #6b7280;
+  background: var(--page-background, #ffffff);
+}
+
+.pagination-gap-footer {
+  padding-bottom: var(--page-margin-bottom, 72px);
+  border-bottom: 1px solid var(--page-border-color, #e5e7eb);
+}
+
+.pagination-gap-header {
+  padding-top: var(--page-margin-top, 72px);
+  border-top: 1px solid var(--page-border-color, #e5e7eb);
+}
+
+.pagination-gap-space {
+  height: var(--page-gap, 40px);
+  background: var(--page-gap-color, #f3f4f6);
+  border-top: 1px solid var(--page-border-color, #e5e7eb);
+  border-bottom: 1px solid var(--page-border-color, #e5e7eb);
+}
+
+/* Footer/Header content alignment */
+.footer-left,
+.header-left {
+  flex: 1;
+  text-align: left;
+}
+
+.footer-center,
+.header-center {
+  flex: 1;
+  text-align: center;
+}
+
+.footer-right,
+.header-right {
+  flex: 1;
+  text-align: right;
+}
+
+/* ============================================
+   First Page Header
+   ============================================ */
+
+.pagination-first-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  margin-bottom: var(--content-margin-top, 16px);
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.pagination-first-header:empty {
+  display: none;
+}
+
+/* ============================================
+   First Page Footer (for single-page documents)
+   ============================================ */
+
+.pagination-first-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0 8px 0;
+  margin-top: auto;
+  font-size: var(--footer-font-size, 11px);
+  color: var(--footer-color, #6b7280);
+  border-top: 1px solid #e5e7eb;
+  position: absolute;
+  bottom: var(--page-margin-bottom, 50px);
+  left: 0;
+  right: 0;
+}
+
+.pagination-first-footer:empty {
+  display: none;
+}
+
+/* ============================================
+   Page Break Node
+   ============================================ */
+
+.pagination-break {
+  display: block;
+  width: 100%;
+  height: 0;
+  border: none;
+  border-top: 2px dashed #d1d5db;
+  margin: 16px 0;
+  position: relative;
+}
+
+.pagination-break::before {
+  content: 'Page Break';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--page-background, #ffffff);
+  padding: 0 8px;
+  font-size: 10px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pagination-break:hover::before {
+  color: #6b7280;
+}
+
+/* ============================================
+   Content Constraints
+   ============================================ */
+
+/* Prevent content from exceeding page height */
+.with-pagination .image-plus-wrapper,
+.with-pagination img {
+  max-height: calc(var(--page-content-height, 800px) - 40px);
+  object-fit: contain;
+}
+
+.with-pagination table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.with-pagination table td,
+.with-pagination table th {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Chart containers */
+.with-pagination .chart-container {
+  max-height: calc(var(--page-content-height, 800px) - 40px);
+  overflow: hidden;
+}
+
+/* ============================================
+   Print Styles - EXACT FIDELITY
+   
+   These styles ensure that what you see on screen
+   is exactly what prints. The key is to:
+   1. Use @page to set exact page size and margins
+   2. Preserve content positioning from screen
+   3. Handle page breaks at the same positions
+   ============================================ */
+
+@media print {
+  /* ============================================
+     PRINT STRATEGY: Force page breaks at our
+     calculated positions using the pagination-gap
+     elements. Hide visual decorations but keep
+     the elements as page break triggers.
+     
+     This is a HYBRID approach that works because:
+     1. We force breaks where WE calculated them
+     2. Browser doesn't add extra breaks
+     3. Visual elements are hidden
+     ============================================ */
+  
+  /* Reset html/body for print */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Editor container - remove visual chrome but keep structure */
+  .with-pagination {
+    box-shadow: none !important;
+    border: none !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: auto !important;
+    /* Keep some padding for content positioning */
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+  
+  /* ============================================
+     PAGE BREAK STRATEGY
+     
+     The .pagination-gap elements mark where we
+     want page breaks. We force a break BEFORE
+     each gap, then hide the visual parts.
+     ============================================ */
+  
+  /* Force page break at each pagination gap */
+  .pagination-gap {
+    display: block !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    /* FORCE page break before this element */
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  
+  /* Hide all visual content inside the gap */
+  .pagination-gap-space,
+  .pagination-gap-footer,
+  .pagination-gap-header {
+    display: none !important;
+    height: 0 !important;
+    visibility: hidden !important;
+  }
+  
+  /* Hide first page header/footer decorations */
+  .pagination-first-header,
+  .pagination-first-footer {
+    display: none !important;
+  }
+  
+  /* Explicit page breaks should also trigger */
+  .pagination-break {
+    display: block !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  
+  .pagination-break::before {
+    display: none !important;
+  }
+  
+  /* ============================================
+     PREVENT EXTRA PAGE BREAKS
+     
+     Tell browser NOT to add its own breaks
+     ============================================ */
+  
+  .with-pagination .ProseMirror {
+    /* Prevent browser from adding extra breaks */
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+  
+  /* Allow content to flow without extra breaks */
+  .with-pagination p,
+  .with-pagination div,
+  .with-pagination li {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
+  
+  /* ============================================
+     Content Flow Control
+     ============================================ */
+  
+  /* Prevent orphans and widows (single lines at page top/bottom) */
+  .with-pagination p,
+  .with-pagination li {
+    orphans: 2;
+    widows: 2;
+  }
+  
+  /* Keep headings with following content */
+  .with-pagination h1,
+  .with-pagination h2,
+  .with-pagination h3,
+  .with-pagination h4,
+  .with-pagination h5,
+  .with-pagination h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  
+  /* ============================================
+     Element-specific Print Rules
+     ============================================ */
+  
+  /* Tables - prevent splitting unless very large */
+  .with-pagination table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Table headers should repeat on each page */
+  .with-pagination table thead {
+    display: table-header-group;
+  }
+  
+  .with-pagination table tbody {
+    display: table-row-group;
+  }
+  
+  /* Table rows shouldn't split */
+  .with-pagination table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Images - prevent splitting */
+  .with-pagination img,
+  .with-pagination figure,
+  .with-pagination .image-plus-wrapper,
+  .with-pagination .image-plus-container {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    max-height: 100vh; /* Prevent images larger than page */
+  }
+  
+  /* Charts - prevent splitting */
+  .with-pagination .chart-container,
+  .with-pagination [data-type="chart"] {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
+  /* Code blocks - prevent splitting */
+  .with-pagination pre,
+  .with-pagination code {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Blockquotes - prevent splitting */
+  .with-pagination blockquote {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Task lists - prevent splitting items */
+  .with-pagination ul[data-type="taskList"] li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* ============================================
+     Header/Footer Print Styling
+     ============================================ */
+  
+  .pagination-gap-footer,
+  .pagination-gap-header {
+    background: transparent !important;
+    border: none !important;
+    /* Ensure text is visible */
+    color: var(--footer-color, #6b7280) !important;
+    font-size: var(--footer-font-size, 11px) !important;
+  }
+  
+  .pagination-first-header {
+    background: transparent !important;
+    color: var(--header-color, #6b7280) !important;
+    font-size: var(--header-font-size, 11px) !important;
+  }
+  
+  /* Page numbers should print */
+  .pagination-gap-footer .footer-right,
+  .pagination-gap-footer .footer-left,
+  .pagination-gap-footer .footer-center {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* ============================================
+     Link Styling for Print
+     ============================================ */
+  
+  /* Optionally show URLs after links */
+  .with-pagination a[href]:not([href^="#"])::after {
+    /* Uncomment to show URLs: content: " (" attr(href) ")"; */
+    font-size: 0.8em;
+    color: #6b7280;
+  }
+  
+  /* ============================================
+     Color Preservation
+     ============================================ */
+  
+  /* Ensure highlights and colors print */
+  .with-pagination mark,
+  .with-pagination [style*="background"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  
+  /* Ensure text colors print */
+  .with-pagination [style*="color"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* ============================================
+   Print Preview Mode
+   ============================================ */
+
+.print-preview .with-pagination {
+  /* Show page boundaries clearly */
+  box-shadow: 0 0 0 1px #e5e7eb, 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.print-preview .pagination-gap {
+  /* Highlight page gaps in preview */
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(0, 0, 0, 0.02) 10px,
+    rgba(0, 0, 0, 0.02) 20px
+  );
+}
+
+/* ============================================
+   Dark Mode Support
+   ============================================ */
+
+.dark .with-pagination {
+  --page-background: #1f2937;
+  --page-border-color: #374151;
+  --page-gap-color: #111827;
+}
+
+.dark .pagination-gap-footer,
+.dark .pagination-gap-header,
+.dark .pagination-first-header {
+  color: #9ca3af;
+}
+
+.dark .pagination-break {
+  border-top-color: #4b5563;
+}
+
+.dark .pagination-break::before {
+  background: #1f2937;
+  color: #6b7280;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+@media (max-width: 900px) {
+  .with-pagination {
+    /* Scale down for smaller screens */
+    transform-origin: top center;
+    transform: scale(0.9);
+    margin-bottom: -10%;
+  }
+}
+
+@media (max-width: 600px) {
+  .with-pagination {
+    transform: scale(0.7);
+    margin-bottom: -30%;
+  }
+}
