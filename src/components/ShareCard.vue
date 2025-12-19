@@ -712,7 +712,7 @@ function getStatusColor(status?: string) {
 
        
       <div>
-        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Add a note (optional)</h4>
+        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">{{$t('Components.ShareCard.heading.add_a_note_optional')}}</h4>
         <textarea
           v-model="inviteNote"
           placeholder="Write a message to include with the invitation..."

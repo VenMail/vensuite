@@ -49,7 +49,7 @@
           </div>
           <div class="flex items-center gap-2">
             <button @click="submitAccessRequestDoc" :disabled="requestSubmitting || !requestEmail" class="px-4 py-2 bg-primary-600 text-white rounded-md disabled:opacity-50">
-              {{ requestSubmitting ? 'Sending…' : $t('Commons.button.request_access') }}
+              {{ requestSubmitting ? $t('Commons.button.sending') : $t('Commons.button.request_access') }}
             </button>
             <a :href="shareLinkDoc" class="text-sm text-blue-600 dark:text-blue-400 underline" target="_blank" rel="noopener">{{$t('Views.DocsEditor.link.open_direct_link')}}</a>
           </div>
@@ -273,7 +273,7 @@
               <template v-if="showBgColorPicker">
                 <div :class="bubbleInlineFormClass">
                   <label class="flex items-center gap-2">
-                    <span class="text-xs text-gray-600 dark:text-gray-400">Background:</span>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">{{$t('Commons.text.background')}}</span>
                     <input
                       type="color"
                       :value="bubbleBgColor"

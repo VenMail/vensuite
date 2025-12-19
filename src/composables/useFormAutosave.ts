@@ -5,6 +5,7 @@ import { useFormSettingsStore } from "@/store/formSettings";
 import { toast } from "@/composables/useToast";
 import type { FormDefinition } from "@/types";
 import { debounce } from "@univerjs/core";
+import { t } from '@/i18n';
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
 
@@ -76,7 +77,7 @@ export const useFormAutosave = (options: AutosaveOptions = {}) => {
         toast.error("This form was updated elsewhere. Reload to continue editing.");
         isEnabled.value = false;
       } else {
-        toast.error("Autosave failed. Retry or check connection.");
+        toast.error(t('Composables.UseFormAutosave.toast.autosave_failed_retry_or'));
       }
     } finally {
       editorStore.markSaving(false);

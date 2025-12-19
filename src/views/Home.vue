@@ -946,7 +946,7 @@ function handleEscapeKey(event: KeyboardEvent) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" class="flex-1 sm:flex-initial border-gray-300 dark:border-gray-600 dark:text-gray-100">
-                        <span class="hidden sm:inline">Sort: </span>
+                        <span class="hidden sm:inline">{{$t('Commons.button.sort_2')}} </span>
                         {{ sortBy === "name" ? $t('Commons.button.name') : sortBy === "date" ? $t('Commons.button.date') : sortBy === "type" ? $t('Commons.button.type') : $t('Commons.button.size') }}
                         <ChevronDown class="ml-2 h-4 w-4" />
                       </Button>
@@ -1077,7 +1077,7 @@ function handleEscapeKey(event: KeyboardEvent) {
               <div class="loading-state">
                 <div class="flex flex-col items-center justify-center py-16 px-6">
                   <div class="loading-spinner"></div>
-                  <p class="loading-text">Loading your files...</p>
+                  <p class="loading-text">{{$t('Views.Home.text.loading_your_files')}}</p>
                 </div>
               </div>
             </template>

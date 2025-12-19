@@ -89,7 +89,7 @@
        
       <div class="max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
         <div v-if="isLoading" class="text-center py-8 text-gray-500">
-          Loading images...
+          {{$t('Components.ImagePicker.text.loading_images')}}
         </div>
         <div v-else-if="filteredImages.length === 0" class="text-center py-8 text-gray-500">
           {{$t('ImagePicker.text.no_images_found')}}

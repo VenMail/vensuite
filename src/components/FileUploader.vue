@@ -155,7 +155,7 @@
       <DialogFooter>
         <Button variant="outline" @click="$emit('close')">{{$t('Commons.button.cancel')}}</Button>
         <Button @click="uploadFiles" :disabled="files.length === 0 || isUploading">
-          {{ isUploading ? $t('components.FileUploader.text.status_uploading') : $t('Commons.button.upload_file') }}
+          {{ isUploading ? $t('components.FileUploader.components.fileuploader.text.status_uploading') : $t('Commons.button.upload_file') }}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -582,7 +582,7 @@ const getFileStatusText = (file: FileData): string => {
   if (isUploading.value) {
     if (file.isConverting) return 'Converting...';
     if ((file.progress ?? 0) > 0 && (file.progress ?? 0) < 100) {
-      return t('components.FileUploader.text.status_uploading');
+      return t('components.FileUploader.components.fileuploader.text.status_uploading');
     }
   }
   return "";

@@ -4,7 +4,7 @@
       <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{$t('Commons.heading.inspector')}}</h2>
       <Badge v-if="importStatus?.isImporting" variant="secondary" class="gap-1">
         <Loader2 class="h-3 w-3 animate-spin" />
-        Importing…
+        {{$t('Commons.text.importing_2')}}
       </Badge>
     </header>
 

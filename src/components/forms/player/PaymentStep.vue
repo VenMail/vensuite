@@ -51,7 +51,7 @@
         :disabled="isSubmitting || !isCardReady || isPreparing"
         @click="confirmPayment"
       >
-        {{ isSubmitting ? 'Processing…' : $t('Forms.Player.PaymentStep.button.pay_submit') }}
+        {{ isSubmitting ? $t('Commons.button.processing') : $t('Forms.Player.PaymentStep.button.pay_submit') }}
       </button>
     </footer>
   </div>

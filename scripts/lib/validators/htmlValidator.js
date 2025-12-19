@@ -361,6 +361,35 @@ function containsBindingSyntax(text) {
 }
 
 function containsVueBindingSyntax(text) {
+  const trimmed = String(text || '').trim();
+  if (!trimmed) return false;
+  
+  // Only reject if the text is PURELY Vue binding syntax without translatable content
+  // Allow text that contains Vue bindings as placeholders within legitimate translatable content
+  
+  // Check if text is ONLY Vue expressions (no actual translatable content)
+  const withoutExpressions = trimmed
+    .replace(/\{\{[^}]+\}\}/g, '')  // Remove Vue mustache expressions
+    .replace(/\{[^}]+\}/g, '')      // Remove simple placeholders
+    .replace(/\$\{[^}]+\}/g, '')    // Remove template literals
+    .trim();
+  
+  // If nothing left after removing expressions, it's pure binding syntax
+  if (!withoutExpressions) {
+    return true;
+  }
+  
+  // If there's substantial translatable content left, allow it
+  // Check if at least 30% of the content is actual text (not just placeholders)
+  const totalLength = trimmed.length;
+  const expressionLength = totalLength - withoutExpressions.length;
+  
+  // Allow if less than 70% is expressions (i.e., at least 30% is actual text)
+  if (expressionLength < totalLength * 0.7) {
+    return false; // Allow - has sufficient translatable content
+  }
+  
+  // Otherwise, it's mostly expressions, reject
   return containsBindingSyntax(text);
 }
 

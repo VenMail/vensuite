@@ -53,7 +53,7 @@
             :disabled="isSubmitting || !canGoBack"
             @click="handleBack"
           >
-            Back
+            {{$t('Commons.button.back_2')}}
           </button>
 
           <button

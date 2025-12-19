@@ -264,7 +264,7 @@ onUnmounted(() => {
           <div class="flex items-center justify-between pt-2">
             <Button type="submit" :disabled="requestSubmitting || !requestEmail" variant="default">
               <span v-if="!requestSubmitting">{{$t('Commons.button.request_access')}}</span>
-              <span v-else>Sending...</span>
+              <span v-else>{{$t('Views.MediaViewer.text.sending')}}</span>
             </Button>
             <div class="flex items-center gap-3">
               <span v-if="requestSuccess" class="text-sm text-green-600">{{ requestSuccess }}</span>

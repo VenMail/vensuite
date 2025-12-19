@@ -294,7 +294,7 @@
           @click="currentStep--"
         >
           <ChevronLeft class="w-4 h-4 inline mr-1" />
-          Back
+          {{$t('Commons.button.back_2')}}
         </button>
         <button
           v-else

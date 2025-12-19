@@ -80,7 +80,7 @@
           @click="goBack"
         >
           <ChevronLeft class="w-4 h-4 inline mr-1" />
-          Back
+          {{$t('Commons.button.back_2')}}
         </button>
         <button
           v-else
@@ -241,7 +241,7 @@ const questions: Question[] = [
       {
         value: "system",
         label: "System Default",
-        description: "Use device's default font",
+        description: t('Components.Forms.FormConfigWizardSimple.text.use_device_s_default'),
         icon: Type,
       },
       {

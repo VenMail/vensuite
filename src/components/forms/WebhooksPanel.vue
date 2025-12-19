@@ -81,7 +81,7 @@
           </tr>
           <tr v-if="isLoading" class="border-t border-gray-200 dark:border-gray-800 text-center text-gray-500 dark:text-gray-400">
             <td colspan="4" class="px-4 py-8">
-              Loading…
+              {{$t('Commons.text.loading')}}
             </td>
           </tr>
         </tbody>

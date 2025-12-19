@@ -26,7 +26,7 @@
             <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div class="flex items-center gap-2">
                 <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-                Completed: <span class="font-semibold text-foreground">{{ responseMeta.completed_responses }}</span>
+                {{$t('Commons.text.completed_3')}} <span class="font-semibold text-foreground">{{ responseMeta.completed_responses }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <span class="inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
@@ -46,7 +46,7 @@
             </Button>
             <Button size="sm" class="min-w-[140px]" :disabled="isExporting || !responseRows.length" @click="exportCsv">
               <Download class="mr-2 h-4 w-4" />
-              {{ isExporting ? 'Exporting…' : $t('Commons.button.export_csv') }}
+              {{ isExporting ? $t('Commons.button.exporting') : $t('Commons.button.export_csv') }}
             </Button>
             <Button size="sm" class="min-w-[160px]" :disabled="isExporting || !responseRows.length" @click="exportToSheet">
               <FileSpreadsheet class="mr-2 h-4 w-4" />
@@ -182,7 +182,7 @@
 
           <div v-else class="flex flex-1 flex-col overflow-hidden">
             <div v-if="!responseRows.length" class="flex flex-1 items-center justify-center bg-muted/10 py-20 text-sm text-muted-foreground">
-              No responses yet. Share your form to start collecting submissions.
+              {{$t('Views.FormResponses.text.no_responses_yet_share')}}
             </div>
 
             <div v-else class="flex h-full flex-col overflow-hidden">

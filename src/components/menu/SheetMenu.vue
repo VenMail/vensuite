@@ -457,7 +457,7 @@ function about() {
         <MenubarSub>
           <MenubarSubTrigger>
             <DownloadIcon class="h-4 w-4 mr-2" />
-            Export As...
+            {{$t('Components.Menu.SheetMenu.text.export_as')}}
           </MenubarSubTrigger>
           <MenubarSubContent>
             <MenubarItem @click="exportAs('csv')">
@@ -516,7 +516,7 @@ function about() {
         </MenubarItem>
         <MenubarItem @click="paste">
           <ClipboardPasteIcon class="h-4 w-4 mr-2" />
-          Paste
+          {{$t('Commons.text.paste')}}
         </MenubarItem>
         <MenubarSeparator />
         <MenubarItem @click="deleteSelected">

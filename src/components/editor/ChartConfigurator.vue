@@ -58,7 +58,7 @@
             </div>
           </div>
           <p v-else class="text-xs text-gray-400 dark:text-gray-500 py-2 text-center mb-3">
-            No labels yet. Add labels for your chart's X-axis.
+            {{$t('Components.Editor.ChartConfigurator.text.no_labels_yet_add')}}
           </p>
 
           <div class="flex gap-1.5">

@@ -896,9 +896,7 @@
                         {{$t('Views.FormBuilder.heading.how_it_works')}}
                       </h4>
                       <p class="text-sm text-gray-600 dark:text-gray-400">
-                        Provide a secure HTTPS endpoint and we will POST a signed payload
-                        whenever the selected events occur. You can pause delivery at any
-                        time.
+                        {{$t('Views.FormBuilder.text.provide_a_secure_https')}}
                       </p>
                     </div>
                   </div>
@@ -930,7 +928,7 @@
                       class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                       @click="webhookStep = 'intro'"
                     >
-                      Back
+                      {{$t('Commons.button.back_2')}}
                     </button>
                     <div class="flex items-center gap-3">
                       <button

@@ -709,7 +709,7 @@
               </div>
             </div>
             <div class="relative text-center">
-              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">Resume/CV</span>
+              <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{$t('Components.Forms.DocsToolbar.text.resume_cv')}}</span>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{$t('Commons.text.professional_profile')}}</p>
             </div>
           </button>

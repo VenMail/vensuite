@@ -205,7 +205,7 @@
         <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-black/50 z-30">
           <div class="flex flex-col items-center gap-4 text-white">
             <Loader class="w-8 h-8 animate-spin" />
-            <p>Loading media...</p>
+            <p>{{$t('Components.Media.MediaViewer.text.loading_media')}}</p>
           </div>
         </div>
 

@@ -54,7 +54,7 @@ import {
         </MenubarItem>
         <MenubarItem>
           <DownloadIcon class="h-4 w-4 mr-2" />
-          Export As...
+          {{$t('Components.Menu.SlideMenu.text.export_as')}}
         </MenubarItem>
         <MenubarSeparator />
         <MenubarItem>
@@ -87,7 +87,7 @@ import {
         </MenubarItem>
         <MenubarItem>
           <ClipboardPasteIcon class="h-4 w-4 mr-2" />
-          Paste
+          {{$t('Commons.text.paste')}}
         </MenubarItem>
         <MenubarSeparator />
         <MenubarItem>

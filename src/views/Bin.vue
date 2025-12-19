@@ -783,7 +783,7 @@ onUnmounted(() => {
                           : 'border-gray-300',
                       ]"
                     >
-                      <span class="hidden sm:inline">Sort: </span>
+                      <span class="hidden sm:inline">{{$t('Commons.button.sort_2')}} </span>
                       {{
                         sortBy === "title"
                           ? $t('Commons.button.name')
@@ -801,10 +801,10 @@ onUnmounted(() => {
                       {{$t('Views.Bin.text.sort_by_name')}}
                     </DropdownMenuItem>
                     <DropdownMenuItem @click="sortValue = 'updated_at-desc'">
-                      Sort by Date (Newest)
+                      {{$t('Views.Bin.text.sort_by_date_newest')}}
                     </DropdownMenuItem>
                     <DropdownMenuItem @click="sortValue = 'updated_at-asc'">
-                      Sort by Date (Oldest)
+                      {{$t('Views.Bin.text.sort_by_date_oldest')}}
                     </DropdownMenuItem>
                     <DropdownMenuItem @click="sortValue = 'file_type-asc'">
                       {{$t('Views.Bin.text.sort_by_type')}}
@@ -1126,7 +1126,7 @@ onUnmounted(() => {
                     <span class="font-medium">{{ formatFileSize(item.file_size) }}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span>Deleted:</span>
+                    <span>{{$t('Commons.text.deleted')}}</span>
                     <span class="font-medium">{{ formatDate(item.updated_at) }}</span>
                   </div>
                   <div class="flex justify-center">
@@ -1229,7 +1229,7 @@ onUnmounted(() => {
                     <span>{{ formatFileSize(item.file_size) }}</span>
                   </div>
                   <div class="flex justify-between">
-                    <span>Deleted:</span>
+                    <span>{{$t('Commons.text.deleted')}}</span>
                     <span>{{ formatDate(item.updated_at) }}</span>
                   </div>
                 </div>

@@ -4,13 +4,13 @@
     <div class="space-y-4">
       <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
         <Key class="w-4 h-4 text-blue-600" />
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">API Configuration</h3>
+        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.api_configuration')}}</h3>
       </div>
       
       <div class="space-y-3">
         <div class="flex items-center justify-between gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <div class="flex-1">
-            <div class="text-sm font-medium text-blue-900 dark:text-blue-100">Enable Public API</div>
+            <div class="text-sm font-medium text-blue-900 dark:text-blue-100">{{$t('Components.Forms.IntegrationDialog.text.enable_public_api')}}</div>
             <div class="text-xs text-blue-700 dark:text-blue-300 mt-1">
               Allow external applications to submit data to this {{ type }}
             </div>
@@ -23,7 +23,7 @@
         </div>
         
         <div class="flex items-center justify-between gap-2">
-          <div class="text-xs text-gray-500">Generate new API key</div>
+          <div class="text-xs text-gray-500">{{$t('Components.Forms.IntegrationDialog.text.generate_new_api_key')}}</div>
           <Button
             variant="outline"
             size="sm"
@@ -31,7 +31,7 @@
             @click="handleRotateApiKey"
           >
             <RefreshCw class="w-3 h-3 mr-1" />
-            Refresh
+            {{$t('Commons.button.refresh')}}
           </Button>
         </div>
       </div>
@@ -41,13 +41,13 @@
     <div class="space-y-4">
       <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
         <Share class="w-4 h-4 text-green-600" />
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">Share & Embed</h3>
+        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Components.Forms.IntegrationDialog.heading.share_embed')}}</h3>
       </div>
       
       <div class="space-y-3">
         <div>
           <label class="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-2">
-            Public URL
+            {{$t('Commons.label.public_url')}}
           </label>
           <div class="flex gap-2">
             <input
@@ -68,7 +68,7 @@
         <Collapsible>
           <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer">
             <ChevronRight class="w-3 h-3 transition-transform" :class="{ 'rotate-90': isOpen }" />
-            Embed as iframe
+            {{$t('Components.Forms.IntegrationDialog.text.embed_as_iframe')}}
           </CollapsibleTrigger>
           <CollapsibleContent class="mt-2">
             <div class="space-y-2">
@@ -81,7 +81,7 @@
               />
               <Button size="sm" variant="outline" @click="copyToClipboard(embedSnippet, 'Embed code copied')">
                 <Copy class="w-3 h-3 mr-1" />
-                Copy Embed Code
+                {{$t('Components.Forms.IntegrationDialog.button.copy_embed_code')}}
               </Button>
             </div>
           </CollapsibleContent>
@@ -93,13 +93,13 @@
     <div class="space-y-4">
       <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
         <Code class="w-4 h-4 text-purple-600" />
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">API Integration</h3>
+        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.api_integration')}}</h3>
       </div>
       
       <div class="space-y-3">
         <div>
           <label class="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-2">
-            API Endpoint
+            {{$t('Commons.label.api_endpoint')}}
           </label>
           <div class="flex gap-2">
             <input
@@ -117,7 +117,7 @@
           </div>
           <div v-if="!apiEnabled" class="mt-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
             <AlertCircle class="w-3 h-3 inline mr-1" />
-            Enable Public API to reveal endpoint
+            {{$t('Components.Forms.IntegrationDialog.text.enable_public_api_to')}}
           </div>
         </div>
 
@@ -125,7 +125,7 @@
         <Collapsible>
           <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer">
             <ChevronRight class="w-3 h-3 transition-transform" :class="{ 'rotate-90': examplesOpen }" />
-            View Integration Examples
+            {{$t('Components.Forms.IntegrationDialog.text.view_integration_examples')}}
           </CollapsibleTrigger>
           <CollapsibleContent class="mt-3 space-y-4">
             <!-- Tab Navigation -->
@@ -135,21 +135,21 @@
                 :class="activeTab === 'row' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
                 @click="activeTab = 'row'"
               >
-                Row Array
+                {{$t('Commons.button.row_array')}}
               </button>
               <button
                 class="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors"
                 :class="activeTab === 'mapped' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
                 @click="activeTab = 'mapped'"
               >
-                Header Mapped
+                {{$t('Commons.button.header_mapped')}}
               </button>
               <button
                 class="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors"
                 :class="activeTab === 'code' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
                 @click="activeTab = 'code'"
               >
-                Code Example
+                {{$t('Commons.button.code_example')}}
               </button>
             </div>
 
@@ -157,7 +157,7 @@
             <div class="space-y-3">
               <!-- Row Array Tab -->
               <div v-if="activeTab === 'row'" class="space-y-2">
-                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Request Body</div>
+                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.request_body')}}</div>
                 <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ rowArrayExample }}</code></pre>
                 <div class="text-xs text-gray-500">
                   Fields are submitted in the same order as they appear in your {{ type }}.
@@ -166,7 +166,7 @@
 
               <!-- Header Mapped Tab -->
               <div v-if="activeTab === 'mapped'" class="space-y-2">
-                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Request Body</div>
+                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.request_body')}}</div>
                 <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ headerMappedExample }}</code></pre>
                 <div class="text-xs text-gray-500">
                   Use field names as keys. More readable and maintainable.
@@ -175,10 +175,10 @@
 
               <!-- Code Example Tab -->
               <div v-if="activeTab === 'code'" class="space-y-2">
-                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">JavaScript Example</div>
+                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.javascript_example')}}</div>
                 <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ codeExample }}</code></pre>
                 <div class="text-xs text-gray-500">
-                  Copy and paste this code to integrate with your application.
+                  {{$t('Components.Forms.IntegrationDialog.text.copy_and_paste_this')}}
                 </div>
               </div>
             </div>
@@ -191,13 +191,13 @@
     <div class="space-y-4">
       <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
         <Shield class="w-4 h-4 text-orange-600" />
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">API Key</h3>
+        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.api_key')}}</h3>
       </div>
       
       <Collapsible>
         <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer">
           <Eye class="w-3 h-3" />
-          Reveal API Key
+          {{$t('Components.Forms.IntegrationDialog.text.reveal_api_key')}}
         </CollapsibleTrigger>
         <CollapsibleContent class="mt-2">
           <div class="flex gap-2">

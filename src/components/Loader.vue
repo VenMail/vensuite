@@ -1,7 +1,7 @@
 <!-- Loader.vue -->
 <template>
     <div class="flex justify-center items-center h-screen">
-      <div class="loader">Loading...</div>
+      <div class="loader">{{$t('Components.Loader.text.loading')}}</div>
     </div>
   </template>
   

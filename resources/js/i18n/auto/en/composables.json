@@ -1,34 +1,8 @@
 {
   "Composables": {
-    "UseDocumentConflictResolver": {
-      "text": {
-        "content_contains_formatting_without": "Content contains formatting without text preview.",
-        "failed_to_apply_local": "Failed to apply local version.",
-        "failed_to_apply_online": "Failed to apply online version.",
-        "local_changes_synced_online": "Local changes synced online.",
-        "no_content_available": "No content available.",
-        "online_version_applied": "Online version applied.",
-        "preview_not_available_for": "Preview not available for spreadsheet content.",
-        "preview_unavailable": "Preview unavailable."
-      }
-    },
-    "UseDocumentPersistence": {
-      "text": {
-        "document_is_read_only": "Document is read-only",
-        "document_not_loaded": "Document not loaded",
-        "save_operation_returned_no": "Save operation returned no document data"
-      }
-    },
     "UseFormAutosave": {
-      "text": {
-        "failed_to_autosave": "Failed to autosave"
-      }
-    },
-    "UsePaymentClient": {
-      "text": {
-        "failed_to_cancel_payment": "Failed to cancel payment.",
-        "failed_to_initialize_payment": "Failed to initialize payment.",
-        "missing_form_slug_for": "Missing form slug for payment intent creation."
+      "toast": {
+        "autosave_failed_retry_or": "Autosave failed. Retry or check connection."
       }
     }
   }

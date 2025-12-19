@@ -190,7 +190,7 @@ function formatSelectionLabel(selection: any): string {
         <MenubarSub>
           <MenubarSubTrigger>
             <DownloadIcon class="h-4 w-4 mr-2" />
-            Export As...
+            {{$t('Components.Menu.UnifiedMenubar.text.export_as')}}
           </MenubarSubTrigger>
           <MenubarSubContent>
             <MenubarItem @click="handleExport('pdf')">PDF</MenubarItem>

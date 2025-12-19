@@ -1,1 +1,9 @@
-{}
+{
+  "Composables": {
+    "UseFormAutosave": {
+      "toast": {
+        "autosave_failed_retry_or": "Échec de l'enregistrement automatique. Réessayez ou vérifiez la connexion."
+      }
+    }
+  }
+}

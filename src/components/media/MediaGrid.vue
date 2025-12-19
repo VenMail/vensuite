@@ -149,7 +149,7 @@
         {{$t('Media.MediaGrid.heading.no_media_files')}}
       </h3>
       <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
-        Upload your first media files to get started. Supported formats include images, videos, and audio files.
+        {{$t('Components.Media.MediaGrid.text.upload_your_first_media')}}
       </p>
       <Button @click="$emit('upload')">
         <Upload class="h-4 w-4 mr-2" />
@@ -161,7 +161,7 @@
     <div v-if="isLoading" class="flex items-center justify-center h-96">
       <div class="flex flex-col items-center">
         <Loader class="w-8 h-8 animate-spin text-primary-600 mb-4" />
-        <p class="text-gray-600 dark:text-gray-400">Loading media files...</p>
+        <p class="text-gray-600 dark:text-gray-400">{{$t('Components.Media.MediaGrid.text.loading_media_files')}}</p>
       </div>
     </div>
   </div>

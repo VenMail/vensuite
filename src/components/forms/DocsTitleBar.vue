@@ -78,7 +78,7 @@
 
                 <div class="max-h-80 overflow-y-auto">
                   <div v-if="isLoadingVersions" class="p-4 text-center text-gray-500 dark:text-gray-400">
-                    Loading versions...
+                    {{$t('Components.Forms.DocsTitleBar.text.loading_versions')}}
                   </div>
                   <template v-else>
                     <div class="divide-y divide-gray-200 dark:divide-gray-700">

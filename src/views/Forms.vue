@@ -624,8 +624,8 @@ const contextMenuActions = computed(() => {
        
       <div v-if="loading && hasMore" class="text-center mt-6 sm:mt-8">
         <div class="inline-block w-8 h-8 rounded-full border-4 border-gray-300 dark:border-gray-600 border-r-transparent animate-spin" role="status"></div>
-        <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-if="forms.length > 0">Loading more forms...</span>
-        <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-else>Loading...</span>
+        <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-if="forms.length > 0">{{$t('Views.Forms.text.loading_more_forms')}}</span>
+        <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-else>{{$t('Views.Forms.text.loading')}}</span>
       </div>
 
        

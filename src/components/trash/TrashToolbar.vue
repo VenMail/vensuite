@@ -76,11 +76,11 @@
           </DropdownMenuItem>
           <DropdownMenuItem @click="updateSortValue('updated_at-desc')">
             <Calendar class="h-4 w-4 mr-2" />
-            Deleted (Newest)
+            {{$t('Commons.text.deleted_newest')}}
           </DropdownMenuItem>
           <DropdownMenuItem @click="updateSortValue('updated_at-asc')">
             <Calendar class="h-4 w-4 mr-2" />
-            Deleted (Oldest)
+            {{$t('Commons.text.deleted_oldest')}}
           </DropdownMenuItem>
           <DropdownMenuItem @click="updateSortValue('file_type-asc')">
             <FileType class="h-4 w-4 mr-2" />

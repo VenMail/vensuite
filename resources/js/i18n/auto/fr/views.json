@@ -17,6 +17,8 @@
         "deleted_files_will_appear": "Les fichiers supprimés apparaîtront ici et peuvent être restaurés ou supprimés définitivement.",
         "login_to_access_your": "Connectez-vous pour accéder à votre corbeille et gérer les fichiers supprimés.",
         "preparing_your_deleted_items": "Préparation de vos éléments supprimés…",
+        "sort_by_date_newest": "Trier par date (le plus récent)",
+        "sort_by_date_oldest": "Trier par date (le plus ancien)",
         "sort_by_name": "Trier par nom",
         "sort_by_size": "Trier par taille",
         "sort_by_type": "Trier par type",
@@ -95,20 +97,14 @@
         "any_custom_events_you": "Tous les événements personnalisés que vous définissez",
         "anyone_with_the_link": "Quiconque possède le lien peut répondre.",
         "collaborators_workspace_access": "Collaborateurs et accès à l'espace de travail",
-        "enable_api_key_based": "Activez les insertions basées sur la clé API pour ce formulaire",
         "failed_to_publish_form_2": "Échec de la publication du formulaire",
-        "get_api_form_secret": "Obtenir le secret de l'API du formulaire",
         "manage_who_in_your": "Gérez qui dans votre espace de travail peut ouvrir et modifier ce formulaire.",
         "payment_succeeded_or_failed": "Paiement réussi ou échoué",
+        "provide_a_secure_https": "Fournissez un point de terminaison HTTPS sécurisé et nous enverrons une charge utile signée chaque fois que les événements sélectionnés se produisent. Vous pouvez suspendre la livraison à tout moment.",
         "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
-        "reveal_api_key": "Révéler la clé API",
-        "rotate_generate_api_key": "Faites tourner / générez la clé API",
         "send_form_responses_and": "Envoyez les réponses du formulaire et les événements de paiement à vos systèmes en temps réel.",
-        "show_example_payload": "Afficher un exemple de charge utile",
-        "show_iframe_snippet": "Afficher le code iframe",
         "use_my_own_stripe": "Utiliser mon propre compte Stripe",
         "use_platform_account": "Utiliser le compte de la plateforme",
-        "use_this_form_in": "Utilisez ce formulaire dans un site web/application",
         "why_webhooks": "Pourquoi les webhooks ?"
       }
     },
@@ -134,6 +130,7 @@
         "manage_submissions_monitor_payment": "Gérez les soumissions, surveillez l'état des paiements et examinez les réponses individuelles.",
         "monitor_how_respondents_engage": "Surveillez comment les répondants interagissent avec votre formulaire et repérez les tendances à travers les états de complétion.",
         "no_answers_captured_for": "Aucune réponse capturée pour cette réponse.",
+        "no_responses_yet_share": "Aucune réponse pour le moment. Partagez votre formulaire pour commencer à collecter des soumissions.",
         "visualize_completion_ratio_at": "Vizualisez le ratio de complétion d'un coup d'œil"
       }
     },
@@ -151,6 +148,8 @@
       "text": {
         "anyone_with_this_link": "Toute personne disposant de ce lien peut accéder au formulaire en fonction de ses paramètres de publication.",
         "form_is_missing_an": "Le formulaire manque d'un identifiant.",
+        "loading": "Loading...",
+        "loading_more_forms": "Chargement de plus de formulaires...",
         "no_more_forms_to": "Aucun autre formulaire à charger.",
         "publish_the_form_to": "Publiquez le formulaire pour obtenir un lien partageable.",
         "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
@@ -178,6 +177,7 @@
         "attachment_import_preparing_document": "Préparation du document...",
         "get_started_by_creating": "Commencez par créer un nouveau fichier ou en téléchargeant un fichier existant.",
         "group_by_type": "Grouper par type",
+        "loading_your_files": "Chargement de vos fichiers...",
         "login_to_manage_your": "Connectez-vous pour gérer vos fichiers et dossiers sur Venmail.",
         "no_items_available_in": "Aucun élément disponible dans cette catégorie.",
         "sort_by_date": "Trier par date",
@@ -210,7 +210,8 @@
         "download_open_original": "Télécharger / Ouvrir l'original"
       },
       "text": {
-        "cannot_preview_this_file": "Impossible de prévisualiser ce type de fichier."
+        "cannot_preview_this_file": "Impossible de prévisualiser ce type de fichier.",
+        "sending": "Sending..."
       }
     },
     "OauthCallback": {
@@ -232,16 +233,7 @@
         "this_spreadsheet_is_large": "Cette feuille de calcul est grande"
       },
       "text": {
-        "embed_this_sheet": "Intégrez cette feuille",
-        "enable_key_based_inserts": "Activez les insertions basées sur la clé pour cette feuille",
-        "get_api_sheet_secret": "Obtenir le secret de l'API de la feuille",
-        "public_api_is_not": "L'API publique n'est pas activée pour cette feuille.",
-        "reveal_api_key": "Révéler la clé API",
-        "rotate_generate_api_key": "Faites tourner / générez la clé API",
-        "show_example_payloads": "Afficher des exemples de charges utiles",
-        "show_iframe_snippet": "Afficher le code iframe",
-        "use_the_public_insert": "Utilisez l'API d'insertion publique pour ajouter une ligne depuis votre frontend ou serveur.",
-        "use_this_sheet_in": "Utilisez cette feuille dans un formulaire de site web"
+        "sending": "Sending..."
       }
     },
     "Sheets": {
@@ -268,9 +260,9 @@
   },
   "commons": {
     "text": {
-      "loading_responses": "Chargement des réponses…",
+      "loading_form": "Chargement du formulaire…",
       "loading_response": "Chargement de la réponse…",
-      "loading_form": "Chargement du formulaire…"
+      "loading_responses": "Chargement des réponses…"
     }
   }
 }
