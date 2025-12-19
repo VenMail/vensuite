@@ -1,1 +1,28 @@
-{}
+{
+  "Assets": {
+    "DefaultWorkbookData": {
+      "text": {
+        "123_business_street": "123 Business Street",
+        "activation_rate_to_45": "Activation rate to 45%",
+        "food_groceries": "Food & Groceries",
+        "increase_product_adoption": "Increase product adoption",
+        "invoice_inv_001": "Invoice #: INV-001",
+        "migrate_billing_webhooks": "Migrate billing webhooks",
+        "payment_is_due_within": "Payment is due within 30 days of invoice date.",
+        "publish_q1_roadmap": "Publish Q1 roadmap",
+        "scope_homepage_revamp": "Scope homepage revamp",
+        "share_with_gtm": "Share with GTM",
+        "thank_you_for_your": "Thank you for your business!",
+        "web_development_services": "Web Development Services",
+        "weekly_active_users_to": "Weekly active users to 15k",
+        "your_company_name": "Your Company Name"
+      }
+    },
+    "DocJson": {
+      "text": {
+        "technical_skills_leadership_industry": "Technical Skills • Leadership • Industry Expertise",
+        "your_full_name": "Your Full Name"
+      }
+    }
+  }
+}

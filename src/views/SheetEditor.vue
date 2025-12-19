@@ -25,14 +25,15 @@ import {
 } from '@/assets/default-workbook-data'
 import UserProfile from '@/components/layout/UserProfile.vue'
 import Button from '@/components/ui/button/Button.vue'
-import Switch from '@/components/ui/switch/Switch.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import IntegrationDialog from '@/components/forms/IntegrationDialog.vue'
 import type { FileData } from '@/types'
 import { ExportService, ExportFormat, PDFEngine, type IExportOptions } from '@/plugins/ExportPlugin'
 import { parseSharingInfoString, labelToShareLevel, type ShareLevel, type ShareMember } from '@/utils/sharing'
 import { useAuthStore } from '@/store/auth'
 import ShareCard from '@/components/ShareCard.vue'
 import axios from 'axios'
+import { extractSheetFields } from '@/utils/fieldExtractor'
 
 const route = useRoute()
 const router = useRouter()
@@ -104,6 +105,11 @@ const integrationsOpen = ref(false)
 const sheetPublicApiKey = ref<string>('')
 const sheetPublicApiEnabled = ref<boolean>(false)
 const isUpdatingSheetPublicApi = ref(false)
+// Extract sheet fields for integration examples
+const extractedSheetFields = computed(() => {
+  return extractSheetFields(data.value as IWorkbookData | null)
+})
+
 // Large-file handling
 const isLarge = ref(false)
 const downloadUrl = ref<string | null>(null)
@@ -149,12 +155,6 @@ const shareLinkSheet = computed(() => {
   const id = route.params.id as string
   if (!id) return ''
   return `${SHARE_BASE_URL}/share/sheet/${id}`
-})
-
-const embedSheetSnippet = computed(() => {
-  const link = shareLinkSheet.value
-  if (!link) return ''
-  return `<iframe src="${link}" style="width:100%;height:700px;border:0" loading="lazy" referrerpolicy="no-referrer"></iframe>`
 })
 
 const sheetPublicInsertEndpoint = computed(() => {
@@ -1001,16 +1001,6 @@ async function handleRotateSheetPublicApiKey() {
   }
 }
 
-async function copyToClipboard(value: string, successMessage: string) {
-  if (!value) return
-  try {
-    await navigator.clipboard.writeText(value)
-    toast.success(successMessage)
-  } catch {
-    toast.error('Unable to copy. Try copying manually.')
-  }
-}
-
 async function handleInviteMember(payload: { email: string; permission?: 'view' | 'comment' | 'edit' | 'owner'; shareLevel?: ShareLevel; note?: string }) {
   try {
     const id = route.params.id as string
@@ -1369,142 +1359,23 @@ watch(
     />
 
     <Dialog v-model:open="integrationsOpen">
-      <DialogContent class="w-[calc(100vw-2rem)] sm:w-full sm:max-w-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent class="w-[calc(100vw-2rem)] sm:w-full sm:max-w-4xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>{{$t('Commons.button.integrations')}}</DialogTitle>
         </DialogHeader>
 
-        <div class="space-y-6">
-          <div class="space-y-3">
-            <div class="text-sm font-medium">Public Insert API (authenticated controls)</div>
-            <div class="flex items-center justify-between gap-3">
-              <div class="text-xs text-gray-500">{{$t('Views.SheetEditor.text.enable_key_based_inserts')}}</div>
-              <Switch
-                :checked="sheetPublicApiEnabled"
-                :disabled="isUpdatingSheetPublicApi"
-                @update:checked="handleSetSheetPublicApiEnabled"
-              />
-            </div>
-            <div class="flex items-center justify-between gap-2">
-              <div class="text-xs text-gray-500">{{$t('Views.SheetEditor.text.rotate_generate_api_key')}}</div>
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="isUpdatingSheetPublicApi || !route.params.id"
-                @click="handleRotateSheetPublicApiKey"
-              >
-                {{$t('Commons.button.refresh')}}
-              </Button>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <div class="text-sm font-medium">{{$t('Views.SheetEditor.text.embed_this_sheet')}}</div>
-            <div class="grid gap-2">
-              <div class="text-xs text-gray-500">{{$t('Commons.text.share_url')}}</div>
-              <div class="flex flex-col sm:flex-row gap-2">
-                <input
-                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
-                  :value="shareLinkSheet"
-                  readonly
-                  @focus="(e:any)=>e?.target?.select?.()"
-                />
-                <Button size="sm" class="w-full sm:w-auto" variant="outline" @click="copyToClipboard(shareLinkSheet, 'Share URL copied')">{{$t('Commons.button.copy')}}</Button>
-              </div>
-
-              <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
-                <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
-                  {{$t('Views.SheetEditor.text.show_iframe_snippet')}}
-                </summary>
-                <div class="mt-3 space-y-2">
-                  <div class="text-xs text-gray-500">{{$t('Commons.text.iframe_snippet')}}</div>
-                  <div class="flex flex-col sm:flex-row gap-2">
-                    <textarea
-                      class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
-                      :value="embedSheetSnippet"
-                      rows="3"
-                      readonly
-                      @focus="(e:any)=>e?.target?.select?.()"
-                    />
-                    <Button size="sm" class="w-full sm:w-auto" variant="outline" @click="copyToClipboard(embedSheetSnippet, 'Embed snippet copied')">{{$t('Commons.button.copy')}}</Button>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <div class="text-sm font-medium">{{$t('Views.SheetEditor.text.use_this_sheet_in')}}</div>
-            <div class="text-xs text-gray-500">
-              {{$t('Views.SheetEditor.text.use_the_public_insert')}}
-            </div>
-
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <div class="text-xs text-gray-500">{{$t('Commons.text.endpoint')}}</div>
-                <div v-if="!sheetPublicApiEnabled" class="text-xs text-amber-600">
-                  {{$t('Views.SheetEditor.text.public_api_is_not')}}
-                </div>
-              </div>
-              <div class="flex flex-col sm:flex-row gap-2">
-                <input
-                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
-                  :value="sheetPublicInsertEndpoint"
-                  readonly
-                  @focus="(e:any)=>e?.target?.select?.()"
-                />
-                <Button size="sm" class="w-full sm:w-auto" variant="outline" :disabled="!sheetPublicInsertEndpoint" @click="copyToClipboard(sheetPublicInsertEndpoint, 'Endpoint copied')">
-                  {{$t('Commons.button.copy')}}
-                </Button>
-              </div>
-
-              <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
-                <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
-                  {{$t('Views.SheetEditor.text.show_example_payloads')}}
-                </summary>
-                <div class="mt-3 space-y-3">
-                  <div>
-                    <div class="text-xs text-gray-500">Example payload (row array)</div>
-                    <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
-  "row": ["test@example.com", "Alice", "2025-12-13"]
-}</pre>
-                  </div>
-
-                  <div>
-                    <div class="text-xs text-gray-500">Example payload (header-mapped)</div>
-                    <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto">{
-  "data": {
-    "Email": "test@example.com",
-    "Name": "Alice"
-  }
-}</pre>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <div class="text-sm font-medium">{{$t('Views.SheetEditor.text.get_api_sheet_secret')}}</div>
-            <div class="text-xs text-gray-500">This is the sheet's public API key used in the endpoint path.</div>
-            <details class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-950/40 p-3">
-              <summary class="cursor-pointer text-xs font-medium text-gray-700 dark:text-gray-200">
-                {{$t('Views.SheetEditor.text.reveal_api_key')}}
-              </summary>
-              <div class="mt-3 flex flex-col sm:flex-row gap-2">
-                <input
-                  class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
-                  :value="sheetPublicApiKey"
-                  readonly
-                  @focus="(e:any)=>e?.target?.select?.()"
-                />
-                <Button size="sm" class="w-full sm:w-auto" variant="outline" :disabled="!sheetPublicApiKey" @click="copyToClipboard(sheetPublicApiKey, 'API key copied')">
-                  {{$t('Commons.button.copy')}}
-                </Button>
-              </div>
-            </details>
-          </div>
-        </div>
+        <IntegrationDialog
+          type="sheet"
+          :id="route.params.id as string"
+          :api-enabled="sheetPublicApiEnabled"
+          :api-key="sheetPublicApiKey"
+          :is-updating-api="isUpdatingSheetPublicApi"
+          :public-url="shareLinkSheet"
+          :endpoint="sheetPublicInsertEndpoint"
+          :fields="extractedSheetFields"
+          @set-api-enabled="handleSetSheetPublicApiEnabled"
+          @rotate-api-key="handleRotateSheetPublicApiKey"
+        />
       </DialogContent>
     </Dialog>
 
