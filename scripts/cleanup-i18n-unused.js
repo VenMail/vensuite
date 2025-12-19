@@ -11,11 +11,27 @@ const autoDir = path.resolve(projectRoot, 'resources', 'js', 'i18n', 'auto');
 const baseLocale = 'en';
 const srcRoot = detectSrcRoot(projectRoot);
 
+const srcRoots = (() => {
+  const roots = new Set();
+  if (srcRoot && existsSync(srcRoot)) roots.add(srcRoot);
+  const resourcesJs = path.resolve(projectRoot, 'resources', 'js');
+  if (existsSync(resourcesJs)) roots.add(resourcesJs);
+  const srcDir = path.resolve(projectRoot, 'src');
+  if (existsSync(srcDir)) roots.add(srcDir);
+  // Fallback: include project root so we don't miss unconventional layouts
+  roots.add(projectRoot);
+  return Array.from(roots);
+})();
+
+let hadLocaleReadErrors = false;
+
 async function readJsonSafe(filePath) {
   try {
     const raw = await readFile(filePath, 'utf8');
     return JSON.parse(raw);
-  } catch {
+  } catch (err) {
+    console.error(`[cleanup-i18n-unused] Failed to read/parse JSON: ${filePath}`);
+    console.error(err?.message || err);
     return null;
   }
 }
@@ -59,7 +75,10 @@ async function loadBaseLocaleKeys() {
     await collectJsonFiles(groupedDir, files);
     for (const file of files) {
       const json = await readJsonSafe(file);
-      if (!json || typeof json !== 'object') continue;
+      if (!json || typeof json !== 'object') {
+        hadLocaleReadErrors = true;
+        continue;
+      }
       const rel = path.relative(autoDir, file).replace(/\\/g, '/');
       collectKeysFromObject(json, '', rel, keys);
     }
@@ -69,7 +88,10 @@ async function loadBaseLocaleKeys() {
       return keys;
     }
     const json = await readJsonSafe(singlePath);
-    if (!json || typeof json !== 'object') return keys;
+    if (!json || typeof json !== 'object') {
+      hadLocaleReadErrors = true;
+      return keys;
+    }
     const rel = path.relative(autoDir, singlePath).replace(/\\/g, '/');
     collectKeysFromObject(json, '', rel, keys);
   }
@@ -82,12 +104,15 @@ async function collectSourceFiles(dir, out) {
   for (const entry of entries) {
     const entryPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (['node_modules', 'vendor', '.git', 'storage', 'bootstrap', 'public'].includes(entry.name)) {
+      if ([
+        'node_modules', 'vendor', '.git', 'storage', 'bootstrap', 'public',
+        'dist', 'build', 'out', 'coverage', '.next', '.nuxt', '.vite', '.turbo',
+      ].includes(entry.name) || entry.name.startsWith('.')) {
         continue;
       }
       await collectSourceFiles(entryPath, out);
     } else if (entry.isFile()) {
-      if (/\.(tsx|ts|jsx|js)$/i.test(entry.name)) {
+      if (/\.(tsx|ts|jsx|js|vue|svelte|mjs|cjs|mts|cts)$/i.test(entry.name)) {
         out.push(entryPath);
       }
     }
@@ -95,32 +120,60 @@ async function collectSourceFiles(dir, out) {
 }
 
 let cachedUsageIndex = null;
+let cachedUsageKeySet = null;
 
-async function buildUsageIndex() {
+async function buildUsageIndex(candidateKeys) {
   const index = Object.create(null);
-  if (!srcRoot || !existsSync(srcRoot)) return index;
+  if (!srcRoots.length) return index;
+
+  const keySet = candidateKeys instanceof Set ? candidateKeys : null;
 
   const files = [];
-  await collectSourceFiles(srcRoot, files);
+  for (const root of srcRoots) {
+    // eslint-disable-next-line no-await-in-loop
+    await collectSourceFiles(root, files);
+  }
 
-  console.log(`[cleanup-i18n-unused] Scanning ${files.length} source files for key usage...`);
+  const uniqueFiles = Array.from(new Set(files));
 
-  for (const file of files) {
+  console.log(`[cleanup-i18n-unused] Scanning ${uniqueFiles.length} source files for key usage...`);
+
+  function getLineNumberFromIndex(text, idx) {
+    let line = 1;
+    for (let i = 0; i < idx && i < text.length; i += 1) {
+      if (text.charCodeAt(i) === 10) line += 1;
+    }
+    return line;
+  }
+
+  for (const file of uniqueFiles) {
     const rel = path.relative(projectRoot, file).replace(/\\/g, '/');
     const code = await readFile(file, 'utf8');
-    const lines = code.split(/\r?\n/);
-    // Match t('key'), t(\"key\"), t(`key`), $t('key'), with or without params
-    const regex = /\$?t\(\s*['"`]([^'"`]+)['"`]\s*(?:,|\))/g;
-
-    for (let i = 0; i < lines.length; i += 1) {
-      const lineText = lines[i];
-      let match;
-      while ((match = regex.exec(lineText)) !== null) {
-        const key = match[1];
+    const tCallRegex = /(?:^|[^a-zA-Z0-9_$])\$?t\s*(?:<[^>]+>\s*)?\(\s*(['"`])([A-Za-z0-9_\.\-:]+)\1\s*(?:,|\))/g;
+    let match;
+    while ((match = tCallRegex.exec(code)) !== null) {
+      const key = match[2];
+      if (keySet && !keySet.has(key)) {
+        continue;
+      }
+      if (!index[key]) {
+        index[key] = [];
+      }
+      const line = getLineNumberFromIndex(code, match.index);
+      index[key].push({ file: rel, line });
+    }
+    if (keySet) {
+      const keyLiteralRegex = /(['"`])([A-Za-z0-9_\.\-:]+)\1/g;
+      while ((match = keyLiteralRegex.exec(code)) !== null) {
+        const key = match[2];
+        if (!keySet.has(key)) {
+          continue;
+        }
         if (!index[key]) {
           index[key] = [];
         }
-        index[key].push({ file: rel, line: i + 1 });
+        const line = getLineNumberFromIndex(code, match.index);
+        index[key].push({ file: rel, line });
       }
     }
   }
@@ -132,7 +185,7 @@ async function buildUsageIndex() {
 async function indexKeyUsage(fullKey) {
   if (!fullKey) return [];
   if (!cachedUsageIndex) {
-    cachedUsageIndex = await buildUsageIndex();
+    cachedUsageIndex = await buildUsageIndex(cachedUsageKeySet);
   }
   return cachedUsageIndex[fullKey] || [];
 }
@@ -189,13 +242,21 @@ async function main() {
     process.exit(1);
   }
 
+  hadLocaleReadErrors = false;
+
   const apply = process.argv.includes('--apply');
 
   const baseKeys = await loadBaseLocaleKeys();
+  if (hadLocaleReadErrors) {
+    console.error('[cleanup-i18n-unused] Aborting: one or more locale JSON files could not be parsed. No locale files were modified.');
+    process.exit(1);
+  }
   if (baseKeys.size === 0) {
     console.log('[cleanup-i18n-unused] No base locale keys found. Nothing to do.');
     return;
   }
+  cachedUsageKeySet = new Set(baseKeys.keys());
+  cachedUsageIndex = await buildUsageIndex(cachedUsageKeySet);
 
   const unused = [];
 

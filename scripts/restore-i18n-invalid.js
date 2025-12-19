@@ -4,21 +4,35 @@ const { existsSync } = require('node:fs');
 const path = require('node:path');
 
 const { detectSrcRoot } = require('./lib/projectConfig');
-const { getIgnorePatterns, isNonTranslatableText } = require('./lib/ignorePatterns');
+const { isCssUtilityString } = require('./lib/ignorePatterns');
 const { listLocales, deleteKeyPathInObject } = require('./lib/localeUtils');
+const { validateText } = require('./lib/validators');
 
 const projectRoot = path.resolve(__dirname, '..');
 const autoDir = path.resolve(projectRoot, 'resources', 'js', 'i18n', 'auto');
 const baseLocale = 'en';
 const srcRoot = detectSrcRoot(projectRoot);
 
-const ignorePatterns = getIgnorePatterns(projectRoot);
+let hadLocaleReadErrors = false;
+const srcRoots = (() => {
+  const roots = new Set();
+  if (srcRoot && existsSync(srcRoot)) roots.add(srcRoot);
+  const resourcesJs = path.resolve(projectRoot, 'resources', 'js');
+  if (existsSync(resourcesJs)) roots.add(resourcesJs);
+  const srcDir = path.resolve(projectRoot, 'src');
+  if (existsSync(srcDir)) roots.add(srcDir);
+  // Fallback: include project root so we don't miss unconventional layouts
+  roots.add(projectRoot);
+  return Array.from(roots);
+})();
 
 async function readJsonSafe(filePath) {
   try {
     const raw = await readFile(filePath, 'utf8');
     return JSON.parse(raw);
-  } catch {
+  } catch (err) {
+    console.error(`[restore-i18n-invalid] Failed to read/parse JSON: ${filePath}`);
+    console.error(err?.message || err);
     return null;
   }
 }
@@ -62,7 +76,10 @@ async function loadBaseLocaleKeys() {
     await collectJsonFiles(groupedDir, files);
     for (const file of files) {
       const json = await readJsonSafe(file);
-      if (!json || typeof json !== 'object') continue;
+      if (!json || typeof json !== 'object') {
+        hadLocaleReadErrors = true;
+        continue;
+      }
       const rel = path.relative(autoDir, file).replace(/\\/g, '/');
       collectKeysFromObject(json, '', rel, keys);
     }
@@ -72,7 +89,10 @@ async function loadBaseLocaleKeys() {
       return keys;
     }
     const json = await readJsonSafe(singlePath);
-    if (!json || typeof json !== 'object') return keys;
+    if (!json || typeof json !== 'object') {
+      hadLocaleReadErrors = true;
+      return keys;
+    }
     const rel = path.relative(autoDir, singlePath).replace(/\\/g, '/');
     collectKeysFromObject(json, '', rel, keys);
   }
@@ -85,12 +105,16 @@ async function collectSourceFiles(dir, out) {
   for (const entry of entries) {
     const entryPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (['node_modules', 'vendor', '.git', 'storage', 'bootstrap', 'public'].includes(entry.name)) {
+      if ([
+        'node_modules', 'vendor', '.git', 'storage', 'bootstrap', 'public',
+        'dist', 'build', 'out', 'coverage', '.next', '.nuxt', '.vite', '.turbo',
+      ].includes(entry.name) || entry.name.startsWith('.')) {
         continue;
       }
       await collectSourceFiles(entryPath, out);
     } else if (entry.isFile()) {
-      if (/\.(tsx|ts|jsx|js)$/i.test(entry.name)) {
+      if (entry.name.endsWith('.d.ts')) continue;
+      if (/\.(tsx|ts|jsx|js|mjs|mts|vue|svelte)$/i.test(entry.name)) {
         out.push(entryPath);
       }
     }
@@ -101,42 +125,43 @@ let cachedUsageIndex = null;
 
 async function buildUsageIndex() {
   const index = Object.create(null);
-  if (!srcRoot || !existsSync(srcRoot)) return index;
+  if (!srcRoots.length) return index;
 
   const files = [];
-  await collectSourceFiles(srcRoot, files);
+  for (const root of srcRoots) {
+    // eslint-disable-next-line no-await-in-loop
+    await collectSourceFiles(root, files);
+  }
 
-  console.log(`[restore-i18n-invalid] Scanning ${files.length} source files for key usage...`);
+  const uniqueFiles = Array.from(new Set(files));
 
-  for (const file of files) {
+  console.log(`[restore-i18n-invalid] Scanning ${uniqueFiles.length} source files for key usage...`);
+
+  function getLineNumberFromIndex(text, idx) {
+    let line = 1;
+    for (let i = 0; i < idx && i < text.length; i += 1) {
+      if (text.charCodeAt(i) === 10) line += 1;
+    }
+    return line;
+  }
+
+  for (const file of uniqueFiles) {
     const rel = path.relative(projectRoot, file).replace(/\\/g, '/');
     const code = await readFile(file, 'utf8');
-    const lines = code.split(/\r?\n/);
-    
-    // Multiple patterns to catch different t() call formats
-    const patterns = [
-      /(?:^|[^a-zA-Z0-9_])t\(\s*['"]([^'\"]+)['"]\s*(?:,|\))/g,      // t('key') or t("key")
-      /(?:^|[^a-zA-Z0-9_])t\(\s*`([^`]+)`\s*(?:,|\))/g,              // t(`key`)
-      /(?:^|[^a-zA-Z0-9_])\$t\(\s*['"]([^'\"]+)['"]\s*(?:,|\))/g,    // $t('key')
-      /(?:^|[^a-zA-Z0-9_])\$t\(\s*`([^`]+)`\s*(?:,|\))/g,            // $t(`key`)
-    ];
 
-    for (let i = 0; i < lines.length; i += 1) {
-      const lineText = lines[i];
-      
-      for (const regex of patterns) {
-        regex.lastIndex = 0; // Reset regex state
-        let match;
-        while ((match = regex.exec(lineText)) !== null) {
-          const key = match[1];
-          if (!key || key.includes('${')) continue; // Skip template literals with interpolation
-          
-          if (!index[key]) {
-            index[key] = [];
-          }
-          index[key].push({ file: rel, line: i + 1 });
-        }
+    const tCallRegex = /(?:^|[^a-zA-Z0-9_$])\$?t\s*\(\s*(['"`])([A-Za-z0-9_\.\-]+)\1\s*(?:,|\))/g;
+
+    tCallRegex.lastIndex = 0;
+    let match;
+    while ((match = tCallRegex.exec(code)) !== null) {
+      const key = match[2];
+      if (!key || key.includes('${')) continue;
+
+      if (!index[key]) {
+        index[key] = [];
       }
+      const line = getLineNumberFromIndex(code, match.index);
+      index[key].push({ file: rel, line });
     }
   }
 
@@ -155,11 +180,38 @@ async function indexKeyUsage(fullKey) {
 // Expose buildUsageIndex for use in collectInvalidBaseKeys
 // (keeping the cached version for backward compatibility)
 
-function isInvalidBaseValue(text) {
+function classifyBaseValue(text) {
   const trimmed = String(text || '').trim();
-  if (!trimmed) return false;
-  // Reuse shared non-translatable heuristics (CSS, code, placeholders, domains, etc.).
-  return isNonTranslatableText(trimmed, ignorePatterns);
+  if (!trimmed) {
+    // Reuse shared non-translatable heuristics (CSS, code, placeholders, domains, etc.).
+    return { invalid: false, reason: 'empty' };
+  }
+
+  if (isCssUtilityString(trimmed)) {
+    return { invalid: true, reason: 'css_utility' };
+  }
+
+  let result;
+  try {
+    result = validateText(trimmed);
+  } catch {
+    return { invalid: false, reason: 'validator_error' };
+  }
+
+  if (!result) {
+    return { invalid: false, reason: 'unknown' };
+  }
+
+  if (!result.valid) {
+    return { invalid: true, reason: result.reason || 'non_translatable' };
+  }
+
+  return { invalid: false, reason: null };
+}
+
+function isInvalidBaseValue(text) {
+  const result = classifyBaseValue(text);
+  return result.invalid;
 }
 
 async function collectInvalidBaseKeys() {
@@ -172,10 +224,14 @@ async function collectInvalidBaseKeys() {
   let skippedCount = 0;
   
   for (const [keyPath, info] of baseKeys.entries()) {
-    if (!isInvalidBaseValue(info.value)) continue;
+    const classification = classifyBaseValue(info.value);
+    if (!classification.invalid) continue;
     
     // Check if key is actually used in code
     const usages = usageIndex[keyPath] || [];
+    const isCssLike =
+      classification.reason === 'css_utility' ||
+      classification.reason === 'css_content';
     
     // Only mark as invalid if:
     // 1. The base value is non-translatable AND
@@ -187,7 +243,7 @@ async function collectInvalidBaseKeys() {
     // - The value might be valid in other locales
     // - The key might be used correctly in code
     // - Removing it would break the application
-    if (usages.length === 0) {
+    if (usages.length === 0 || isCssLike) {
       // Unused key with invalid base value - safe to remove
       console.log(`[restore-i18n-invalid] Flagging unused invalid key: "${keyPath}" = "${info.value}"`);
       invalid.push({
@@ -486,9 +542,15 @@ async function main() {
     process.exit(1);
   }
 
+  hadLocaleReadErrors = false;
+
   const apply = process.argv.includes('--apply');
 
   const invalid = await collectInvalidBaseKeys();
+  if (hadLocaleReadErrors) {
+    console.error('[restore-i18n-invalid] Aborting: one or more locale JSON files could not be parsed. No locale files were modified.');
+    process.exit(1);
+  }
   if (!invalid.length) {
     console.log('[restore-i18n-invalid] No invalid/non-translatable base keys detected.');
     return;

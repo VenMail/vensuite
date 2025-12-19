@@ -612,7 +612,7 @@ function rewriteVueTemplate(template, namespace, keyMap) {
           // Idempotency guard: skip if this string is the argument of an existing $t() or t() call
           // Check if there's a $t( or t( immediately before this match position
           const beforeMatch = expr.slice(0, offset);
-          if (/\$?t\(\s*$/.test(beforeMatch)) return m;
+          if (/\$?t\s*\(\s*$/.test(beforeMatch)) return m;
           
           // Skip if text looks like a translation key (dot-separated path starting with capital)
           if (/^[A-Z][a-zA-Z0-9]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(candidate)) return m;
@@ -1515,11 +1515,15 @@ async function processVueFile(filePath, keyMap) {
 (async () => {
   try {
     // Load translations
+    let hadLocaleReadErrors = false;
     async function readJsonSafe(p) {
       try {
         const raw = await readFile(p, 'utf8');
         return JSON.parse(raw);
-      } catch {
+      } catch (err) {
+        hadLocaleReadErrors = true;
+        console.error(`[i18n-replace] Failed to read/parse JSON: ${p}`);
+        console.error(err?.message || err);
         return null;
       }
     }
@@ -1563,6 +1567,11 @@ async function processVueFile(filePath, keyMap) {
         console.error(`[i18n-replace] No translations found at ${translationsPath} or ${groupedDir}`);
         process.exit(1);
       }
+    }
+
+    if (hadLocaleReadErrors) {
+      console.error('[i18n-replace] Aborting: one or more locale JSON files could not be parsed. No source files were modified.');
+      process.exit(1);
     }
 
     const keyMap = buildKeyMapFromTranslations(translations);

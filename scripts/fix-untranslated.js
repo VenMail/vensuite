@@ -16,10 +16,28 @@ const ignorePatternsPath = path.resolve(projectRoot, 'scripts', 'i18n-ignore-pat
 // Initialize ignore patterns from shared utility
 getIgnorePatterns(projectRoot);
 
+function shouldPersistIgnorePattern(normalized) {
+  const value = String(normalized || '').trim();
+  if (!value) return false;
+
+  const isLower = value === value.toLowerCase();
+  const isKeyLike = isLower && /^[a-z0-9_]+(\.[a-z0-9_]+)+$/.test(value);
+  if (!isKeyLike) return true;
+
+  const lastSegment = value.split('.').pop();
+  const tlds = new Set(['com', 'net', 'org', 'io', 'dev', 'app', 'co', 'edu', 'gov', 'info']);
+  if (lastSegment && tlds.has(lastSegment)) {
+    return true;
+  }
+
+  return false;
+}
+
 function addExactIgnorePattern(value) {
   if (!value) return;
   const normalized = String(value).replace(/\s+/g, ' ').trim();
   if (!normalized) return;
+  if (!shouldPersistIgnorePattern(normalized)) return;
   const patterns = getIgnorePatterns(projectRoot);
   if (!patterns.exact) {
     patterns.exact = [];
@@ -51,7 +69,9 @@ async function readJsonSafe(filePath) {
   try {
     const raw = await readFile(filePath, 'utf8');
     return JSON.parse(raw);
-  } catch {
+  } catch (err) {
+    console.error(`[fix-untranslated] Failed to read/parse JSON: ${filePath}`);
+    console.error(err?.message || err);
     return null;
   }
 }
@@ -87,13 +107,13 @@ async function buildUsageIndex() {
     const rel = path.relative(projectRoot, file);
     const code = await readFile(file, 'utf8');
     const lines = code.split(/\r?\n/);
-    const regex = /t\(\s*['"]([^'\"]+)['"]\s*\)/g;
+    const regex = /(?:^|[^a-zA-Z0-9_$])\$?t\s*\(\s*(['"`])([A-Za-z0-9_\.\-]+)\1\s*(?:,|\))/g;
 
     for (let i = 0; i < lines.length; i += 1) {
       const lineText = lines[i];
       let match;
       while ((match = regex.exec(lineText)) !== null) {
-        const key = match[1];
+        const key = match[2];
         if (!index[key]) {
           index[key] = [];
         }
@@ -362,6 +382,8 @@ async function main() {
     process.exit(1);
   }
 
+  let hadLocaleReadErrors = false;
+
   const locales = await listLocales(autoDir, { includeJsonFiles: false });
   if (!locales.includes('en')) {
     console.error('[fix-untranslated] No "en" locale found under', autoDir);
@@ -439,7 +461,10 @@ async function main() {
 
       const locJson = await readJsonSafe(locFile);
       const enJson = await readJsonSafe(enFile);
-      if (!locJson || !enJson) continue;
+      if (!locJson || !enJson) {
+        hadLocaleReadErrors = true;
+        continue;
+      }
 
       const fileIssues = [];
       walkCompare(
@@ -459,8 +484,17 @@ async function main() {
   }
 
   if (issues.length === 0) {
+    if (hadLocaleReadErrors) {
+      console.error('[fix-untranslated] Aborting: one or more locale JSON files could not be parsed.');
+      process.exit(1);
+    }
     console.log('[fix-untranslated] No untranslated or style issues detected.');
     process.exit(0);
+  }
+
+  if (hadLocaleReadErrors) {
+    console.error('[fix-untranslated] Aborting: one or more locale JSON files could not be parsed.');
+    process.exit(1);
   }
 
   function groupIssuesByFile(issuesSubset) {

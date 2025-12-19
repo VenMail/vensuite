@@ -573,6 +573,15 @@ class JsxParser extends BaseParser {
       /useI18n\(\)\.t\s*\(\s*['"][^'"]+['"]\s*\)/,
     ];
 
+    // Skip module specifier strings (import/export from/require/import())
+    // These are almost never user-facing text and cause noisy false positives.
+    const moduleSpecifierLinePatterns = [
+      /^\s*import\s+[\s\S]*?from\s*['"][^'"]+['"]/,
+      /^\s*import\s*\(\s*['"][^'"]+['"]\s*\)/,
+      /^\s*export\s+[\s\S]*?from\s*['"][^'"]+['"]/,
+      /\brequire\s*\(\s*['"][^'"]+['"]\s*\)/,
+    ];
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
@@ -587,6 +596,16 @@ class JsxParser extends BaseParser {
       // Check for logging/debug patterns - skip these lines entirely
       if (!skipLineIndexes.has(i)) {
         for (const pattern of LOGGING_LINE_PATTERNS) {
+          if (pattern.test(line)) {
+            skipLineIndexes.add(i);
+            break;
+          }
+        }
+      }
+
+      // Skip module import/export specifier lines
+      if (!skipLineIndexes.has(i)) {
+        for (const pattern of moduleSpecifierLinePatterns) {
           if (pattern.test(line)) {
             skipLineIndexes.add(i);
             break;

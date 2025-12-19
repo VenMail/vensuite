@@ -103,16 +103,26 @@ function isCssPropertyDeclaration(text) {
   
   const property = match[1].toLowerCase();
   const value = match[2].trim();
-  
+
+  if (CSS_PROPERTIES.has(property)) {
+    const hasNestedDeclarations = /[a-z-]+\s*:\s*[^;]+;/.test(value);
+    const hasInlineHexOrUnit = /#[0-9a-f]{3,8}\b/i.test(value) || /\b\d+(?:\.\d+)?(?:px|em|rem|%|vh|vw|vmin|vmax|ch|ex|cm|mm|in|pt|pc|fr|deg|rad|turn|s|ms)\b/i.test(value);
+    const hasCssKeywordsOrFunctions =
+      CSS_UNIT_PATTERN.test(value) ||
+      CSS_COLOR_PATTERN.test(value) ||
+      CSS_VALUE_KEYWORDS.has(value.toLowerCase()) ||
+      CSS_FUNCTION_PATTERN.test(value);
+    const hasMultiDeclSemicolons = value.includes(';');
+
+    if (hasNestedDeclarations || hasMultiDeclSemicolons || hasInlineHexOrUnit || hasCssKeywordsOrFunctions) {
+      return true;
+    }
+  }
+
   // If the value contains multiple words without CSS indicators, it's probably not CSS
   const words = value.split(/\s+/);
   if (words.length > 3 && !CSS_UNIT_PATTERN.test(value) && !CSS_COLOR_PATTERN.test(value)) {
     return false;
-  }
-  
-  // Check if it's a known CSS property
-  if (CSS_PROPERTIES.has(property)) {
-    return true;
   }
   
   // Check if value looks like CSS (units, colors, keywords)
@@ -160,6 +170,11 @@ function isEnglishNotCss(text) {
   if (ENGLISH_NOT_CSS.has(lower)) {
     return true;
   }
+  const hasUtilityPrefixIndicators = /\b(?:items|justify|content|place|self|bg|text|font|leading|tracking|border|rounded|shadow|ring|outline|opacity|z|inset|top|right|bottom|left|overflow|cursor|transition|duration|delay|ease|space|gap|grid|flex|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|w|h|min-w|max-w|min-h|max-h)-[a-z0-9]/i.test(lower);
+  const hasCssIndicators = /-\d|hover:|focus:|active:|disabled:|sm:|md:|lg:|xl:|2xl:|dark:|\[|\]|\//.test(lower) || hasUtilityPrefixIndicators;
+  if (hasCssIndicators) {
+    return false;
+  }
   
   // Check for sentence-like patterns (multiple words with articles, prepositions, etc.)
   const sentenceIndicators = /\b(the|a|an|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|must|shall|can|to|for|of|in|on|at|by|with|from|into|through|during|before|after|above|below|between|under|over|out|up|down|off|about|against|along|among|around|as|behind|beside|besides|beyond|but|despite|except|inside|near|outside|since|than|toward|towards|until|upon|within|without|and|or|not|no|yes|all|any|both|each|every|few|many|more|most|much|other|some|such|these|those|this|that|what|which|who|whom|whose|how|when|where|why|if|then|else|because|although|though|unless|while|so|yet|now|just|only|also|even|still|already|always|never|often|sometimes|usually|very|too|quite|rather|really|almost|nearly|perhaps|maybe|probably|certainly|definitely|obviously|clearly|simply|actually|basically|essentially|generally|specifically|particularly|especially|mainly|mostly|largely|entirely|completely|totally|fully|partly|partially|slightly|somewhat|highly|extremely|incredibly|absolutely)\b/i;
@@ -171,7 +186,7 @@ function isEnglishNotCss(text) {
   // If it has 3+ words and no CSS-specific patterns, likely English
   const words = lower.split(/\s+/).filter(w => w.length > 0);
   if (words.length >= 3) {
-    const hasCssIndicators = /-\d|hover:|focus:|sm:|md:|lg:|xl:|dark:|\/\d|^\[|^\!|^@|^\./.test(text);
+    const hasCssIndicators = /-\d|hover:|focus:|sm:|md:|lg:|xl:|dark:|\/\d|^\[|^\!|^@|^\./.test(text) || hasUtilityPrefixIndicators;
     if (!hasCssIndicators) {
       return true;
     }
@@ -189,8 +204,23 @@ function isSingleCssClass(part) {
   if (!part) return false;
   
   const lower = part.toLowerCase();
+
+  const cssKeywords = [
+    'flex', 'grid', 'block', 'inline', 'hidden', 'visible', 'absolute', 'relative', 'fixed', 'sticky', 'static',
+    'container', 'wrapper', 'row', 'col', 'column', 'centered', 'center',
+    'prose', 'truncate', 'ellipsis', 'break', 'wrap', 'nowrap',
+    'bold', 'italic', 'underline', 'uppercase', 'lowercase', 'capitalize',
+    'rounded', 'circle', 'square', 'full', 'none', 'auto',
+    'primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark',
+    'small', 'medium', 'large', 'xlarge', 'xs', 'sm', 'md', 'lg', 'xl',
+    'disabled', 'active', 'inactive', 'selected', 'hovered', 'focused',
+    'group', 'peer', 'isolate', 'inset', 'outline', 'ring', 'sr-only', 'not-sr-only',
+  ];
   
-  // First, check if this looks like English that shouldn't be treated as CSS
+  if (cssKeywords.includes(lower)) {
+    return true;
+  }
+
   if (isEnglishNotCss(part)) {
     return false;
   }
@@ -287,23 +317,6 @@ function isSingleCssClass(part) {
     if (/flex|grid|text|font|color|background|border|margin|padding|width|height|display|position|container|wrapper|button|card|nav|header|footer|sidebar|main|content|item|element|component/i.test(part)) {
       return true;
     }
-  }
-  
-  // 8. Single CSS-related keywords
-  const cssKeywords = [
-    'flex', 'grid', 'block', 'inline', 'hidden', 'visible', 'absolute', 'relative', 'fixed', 'sticky', 'static',
-    'container', 'wrapper', 'row', 'col', 'column', 'centered', 'center',
-    'prose', 'truncate', 'ellipsis', 'break', 'wrap', 'nowrap',
-    'bold', 'italic', 'underline', 'uppercase', 'lowercase', 'capitalize',
-    'rounded', 'circle', 'square', 'full', 'none', 'auto',
-    'primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark',
-    'small', 'medium', 'large', 'xlarge', 'xs', 'sm', 'md', 'lg', 'xl',
-    'disabled', 'active', 'inactive', 'selected', 'hovered', 'focused',
-    'group', 'peer', 'isolate', 'inset', 'outline', 'ring', 'sr-only', 'not-sr-only',
-  ];
-  
-  if (cssKeywords.includes(lower)) {
-    return true;
   }
   
   // 9. Numeric suffixes with common patterns

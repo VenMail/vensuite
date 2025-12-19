@@ -90,7 +90,8 @@ function hasBalancedDelimiters(text) {
   }
   
   // Check quotes
-  const singleQuotes = (trimmed.match(/'/g) || []).length;
+  const apostrophes = (trimmed.match(/[A-Za-z]'[A-Za-z]/g) || []).length;
+  const singleQuotes = (trimmed.match(/'/g) || []).length - apostrophes;
   const doubleQuotes = (trimmed.match(/"/g) || []).length;
   if (singleQuotes % 2 !== 0 || doubleQuotes % 2 !== 0) {
     return false;
@@ -413,6 +414,13 @@ function validateText(text, options = {}) {
   
   if (isPlaceholderOnly(trimmed)) {
     return { valid: false, reason: 'placeholder_only' };
+  }
+
+  // Early allowlist for common UI text to avoid aggressive false positives
+  if (isCommonUIString(trimmed)) {
+    if (!isCodeContent(trimmed) && !isHtmlContent(trimmed) && !isUrl(trimmed)) {
+      return { valid: true, reason: null };
+    }
   }
   
   if (isCssContent(trimmed)) {

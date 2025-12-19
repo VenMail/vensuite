@@ -76,6 +76,8 @@ function simpleHash(str) {
 
 /**
  * Get namespace from file path
+ * Preserves full folder hierarchy for fidelity:
+ * components/Auth/xxx/yyy -> components.Auth.xxx.yyy
  */
 function getNamespaceFromFile(filePath, srcRoot) {
   const path = require('node:path');
@@ -83,16 +85,9 @@ function getNamespaceFromFile(filePath, srcRoot) {
   const withoutExt = rel.replace(path.extname(rel), '');
   const rawSegments = withoutExt.split(path.sep).filter(Boolean);
 
-  // Filter out generic top-level buckets like "Pages" or "Components"
-  const filteredSegments = rawSegments.filter((segment, index) => {
-    const lower = segment.toLowerCase();
-    if (index === 0 && (lower === 'pages' || lower === 'components')) {
-      return false;
-    }
-    return true;
-  });
-
-  const segments = (filteredSegments.length ? filteredSegments : rawSegments)
+  // Preserve all path segments to maintain folder hierarchy fidelity
+  // Convert each segment to PascalCase while keeping the structure
+  const segments = rawSegments
     .map((segment) => toPascalCase(segment))
     .filter(Boolean);
 

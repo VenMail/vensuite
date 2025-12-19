@@ -109,16 +109,72 @@ function isPlaceholderOnlyText(text) {
   return false;
 }
 
+function isUnderscoreCssToken(text) {
+  const token = String(text || '').trim().toLowerCase();
+  if (!token || token.indexOf('_') === -1) {
+    return false;
+  }
+
+  if (token.includes('flex_items_')) {
+    return true;
+  }
+
+  const segments = token.split('_').filter(Boolean);
+  if (segments.length < 2) {
+    return false;
+  }
+
+  const cssSegments = new Set([
+    'flex',
+    'grid',
+    'items',
+    'justify',
+    'content',
+    'self',
+    'place',
+    'start',
+    'end',
+    'center',
+    'between',
+    'around',
+    'evenly',
+  ]);
+
+  let matches = 0;
+  for (const seg of segments) {
+    if (cssSegments.has(seg)) {
+      matches += 1;
+    }
+  }
+
+  return matches >= 2;
+}
+
 function isCssUtilityString(text) {
   const withoutPlaceholders = String(text || '')
     .replace(/\{\{\s*[^}]+\s*\}\}/g, ' ')
     .replace(/\{[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*\}/g, ' ');
 
   const tokens = withoutPlaceholders.split(/\s+/).filter(Boolean);
+
+  const cssTokenPrefixPattern = /^(text|bg|border|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|w|h|min-w|max-w|min-h|max-h|flex|grid|gap|items|justify|self|place|content|space|divide|ring|shadow|opacity|z|top|left|right|bottom|inset|rounded|cursor|overflow|display|position|stroke|fill|animate|transition|transform|scale|rotate|translate|skew|origin|filter|backdrop|brightness|contrast|blur|saturate|hue|font|leading|tracking|col|row)-/i;
+  const hasStrongCssSignal = tokens.some((t) => {
+    const lower = String(t || '').toLowerCase();
+    return (
+      /-\d/.test(lower) ||
+      /[:\[\]\/]/.test(lower) ||
+      /^!/.test(lower) ||
+      cssTokenPrefixPattern.test(lower) ||
+      isUnderscoreCssToken(lower)
+    );
+  });
   
   // Handle edge case: single token that looks like CSS
   if (tokens.length === 1) {
     const token = tokens[0];
+    if (isUnderscoreCssToken(token)) {
+      return true;
+    }
     // Check for Tailwind-style classes: text-gray-200, stroke-current, etc.
     if (/^[a-z]+(?:-[a-z0-9]+)+$/i.test(token) && 
         (/\d+/.test(token) || /^(text|bg|border|p|m|w|h|flex|grid|items|justify|self|place|gap|space|divide|ring|shadow|opacity|z|top|left|right|bottom|inset|rounded|cursor|overflow|display|position|stroke|fill|animate|transition|transform|scale|rotate|translate|skew|origin|filter|backdrop|brightness|contrast|blur|saturate|hue|current|auto|full|none|start|end|center|stretch|between|around|evenly|primary|secondary|success|danger|warning|info|light|dark|white|black|gray|grey|red|blue|green|yellow|purple|pink|indigo|teal|orange|cyan|amber|lime|emerald|sky|violet|fuchsia|rose)-/i.test(token) || 
@@ -163,14 +219,20 @@ function isCssUtilityString(text) {
   let cssLikeCount = 0;
   for (const token of tokens) {
     const lower = String(token || '').toLowerCase();
+    if (isUnderscoreCssToken(lower)) {
+      cssLikeCount += 1;
+      continue;
+    }
     if (cssKeywords.has(lower)) {
       cssLikeCount += 1;
       continue;
     }
     // Tailwind-style classes: text-gray-200, stroke-current, bg-blue-500, etc.
     if (/^-?[a-z][a-z0-9]*(?:-[a-z0-9/:%]+)+$/.test(lower)) {
-      cssLikeCount += 1;
-      continue;
+      if (/\d/.test(lower) || /[:\[\]\/]/.test(lower) || /^!/.test(lower) || cssTokenPrefixPattern.test(lower)) {
+        cssLikeCount += 1;
+        continue;
+      }
     }
     // Numeric suffixes: mb3, p2, w100, etc.
     if (/^[a-z]+[0-9]+$/.test(lower)) {
@@ -180,7 +242,9 @@ function isCssUtilityString(text) {
     // CSS color/value keywords: current, auto, full, none, etc.
     // Use exact word boundaries to prevent substring matching
     if (/^(current|auto|full|none|start|end|center|stretch|between|around|evenly|primary|secondary|success|danger|warning|info|light|dark|white|black|gray|grey|red|blue|green|yellow|purple|pink|indigo|teal|orange|cyan|amber|lime|emerald|sky|violet|fuchsia|rose)$/i.test(lower)) {
-      cssLikeCount += 1;
+      if (hasStrongCssSignal) {
+        cssLikeCount += 1;
+      }
     }
   }
 
@@ -303,6 +367,7 @@ module.exports = {
   getIgnorePatterns,
   shouldIgnoreAttribute,
   isPlaceholderOnlyText,
+  isCssUtilityString,
   isNonTranslatableText,
   shouldTranslateText,
   shouldIgnoreText,
