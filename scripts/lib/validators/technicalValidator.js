@@ -621,10 +621,31 @@ function isTechnicalContent(text) {
   if (!trimmed) return false;
   
   // Quick reject: obvious prose with no technical markers
-  if (/^[A-Z][a-z]+(?:\s+[a-z]+)+[.!?]$/.test(trimmed) && 
-      !/[<>{}\[\]@#:=\/\\$%^&*|`~]/.test(trimmed) &&
-      !/-{2,}/.test(trimmed)) {
+  // But be more lenient with text that contains placeholders - check if it's mostly readable
+  const hasTechnicalMarkers = /[<>{}\[\]@#:=\/\\$%^&*|`~]/.test(trimmed);
+  const looksLikeProse = /^[A-Z][a-z]+(?:\s+[a-z]+)+[.!?]$/.test(trimmed);
+  
+  if (looksLikeProse && !hasTechnicalMarkers && !/-{2,}/.test(trimmed)) {
     return false;
+  }
+  
+  // If text has technical markers but also substantial readable content, 
+  // check if it's mostly placeholders vs actual text
+  if (hasTechnicalMarkers) {
+    // Calculate the ratio of placeholder characters to total characters
+    const placeholderMatches = [
+      ...trimmed.match(/\{\{[^}]+\}\}/g) || [],  // Vue mustache
+      ...trimmed.match(/\{[a-zA-Z_][a-zA-Z0-9_.]*\}/g) || [],  // Simple placeholders
+      ...trimmed.match(/\$\{[^}]+\}/g) || [],  // Template literals
+    ];
+    
+    const placeholderLength = placeholderMatches.reduce((sum, match) => sum + match.length, 0);
+    const totalLength = trimmed.length;
+    
+    // If less than 30% is placeholders, it's likely readable text with variables
+    if (placeholderLength < totalLength * 0.3) {
+      return false; // Allow - mostly readable text
+    }
   }
   
   // Check for URL

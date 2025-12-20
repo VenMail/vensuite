@@ -193,27 +193,42 @@ class VueParser extends BaseParser {
       }
 
       // Now handle any plain text outside of mustache expressions.
-      // Use robust extraction to handle expressions containing } in strings
-      // e.g., {{ "text with } brace" }} must be fully removed
+      // For validation, we need to preserve placeholders to ensure the text is still meaningful
       let cleanText = text;
       const mustacheRanges = this.getMustacheRanges(text);
-      // Remove mustache expressions in reverse order to preserve indices
+      
+      // Create a version with placeholders replaced for validation
+      let validationText = text;
+      // Replace mustache expressions with generic placeholders to preserve text structure
       for (let i = mustacheRanges.length - 1; i >= 0; i--) {
         const { start, end } = mustacheRanges[i];
-        cleanText = cleanText.slice(0, start) + cleanText.slice(end);
+        validationText = validationText.slice(0, start) + '{placeholder}' + validationText.slice(end);
       }
-      cleanText = cleanText.replace(/\s+/g, ' ').trim();
+      validationText = validationText.replace(/\s+/g, ' ').trim();
 
-      if (!cleanText) return;
+      if (!validationText) return;
       
       // Decode HTML entities before validation
-      cleanText = decodeHtmlEntities(cleanText);
+      validationText = decodeHtmlEntities(validationText);
 
-      if (shouldTranslate(cleanText, { ignorePatterns: this.ignorePatterns })) {
+      // Validate the text with placeholders preserved
+      if (shouldTranslate(validationText, { ignorePatterns: this.ignorePatterns })) {
+        // For the actual extracted text, preserve mustache expressions as placeholders
+        // This ensures the text is complete and can be properly replaced later
+        let extractedText = text;
+        // Replace mustache expressions with standardized placeholders for consistency
+        for (let i = mustacheRanges.length - 1; i >= 0; i--) {
+          const { start, end } = mustacheRanges[i];
+          const expression = text.slice(start + 2, end - 2).trim(); // Get content inside {{ }}
+          extractedText = extractedText.slice(0, start) + `{{ ${expression} }}` + extractedText.slice(end);
+        }
+        extractedText = extractedText.replace(/\s+/g, ' ').trim();
+        extractedText = decodeHtmlEntities(extractedText);
+
         const kind = this.inferKindFromTag(getCurrentParentTag());
         results.items.push({
           type: 'text',
-          text: cleanText,
+          text: extractedText,
           kind,
           parentTag: getCurrentParentTag(),
         });

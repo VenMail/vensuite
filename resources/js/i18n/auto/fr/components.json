@@ -444,6 +444,13 @@
   },
   "components": {
     "FileUploader": {
+      "components": {
+        "fileuploader": {
+          "text": {
+            "status_uploading": "Uploading..."
+          }
+        }
+      },
       "text": {
         "description_all": "Faites glisser et déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
         "description_documents": "Fichiers de documents (PDF, Word, Texte, etc.)",

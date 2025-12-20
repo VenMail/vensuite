@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-19T21:05:29.891Z",
+  "generatedAt": "2025-12-19T22:34:43.713Z",
   "baseLocale": "en",
   "autoDir": "resources/js/i18n/auto",
   "unused": [
@@ -660,19 +660,11 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.embed_form",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.empty",
       "baseFileRel": "en/commons.json"
     },
     {
       "keyPath": "Commons.text.enable",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.endpoint",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -685,10 +677,6 @@
     },
     {
       "keyPath": "Commons.text.escape",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.example_payload",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -837,10 +825,6 @@
     },
     {
       "keyPath": "Commons.text.home",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.iframe_snippet",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1404,10 +1388,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.public_url",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.publish_incomplete",
       "baseFileRel": "en/commons.json"
     },
@@ -1616,10 +1596,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.share_url",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.shared_successfully",
       "baseFileRel": "en/commons.json"
     },
@@ -1677,10 +1653,6 @@
     },
     {
       "keyPath": "Commons.text.sort",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.sort_2",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -2880,394 +2852,6 @@
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "FileUploader.text.failed_to_create_root",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "FileUploader.text.failed_to_save_converted",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "FileUploader.text.will_convert_to",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.choose_one_option",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.rate_from_1_to",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.select_a_date",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.select_a_time",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.select_all_that_apply",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.select_from_dropdown",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.short_answer_text",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.slide_to_select",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.upload_a_file",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.text.yes_or_no",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.title.add_block_below",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItem.title.drag_to_reorder",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItemNew.text.short_answer_text",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Blocks.BlockItemNew.title.drag_to_reorder",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsTitleBar.text.click_to_save_now",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsTitleBar.text.last_saved_time",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsTitleBar.text.saved_just_now",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsToolbar.text.failed_to_convert_file",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsToolbar.text.failed_to_import_file",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsToolbar.text.failed_to_insert_content",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsToolbar.text.file_imported_successfully",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsToolbar.title.comments_chat",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsToolbar.title.insert_edit_link",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.DocsToolbar.title.line_paragraph_spacing",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Editor.placeholder.select_jump_to_field",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Editors.LogicEditor.placeholder.question_id_to_jump",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Fields.TextQuestion.text.invalid_email_format",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Fields.TextQuestion.text.invalid_url_format",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormConfigWizard.text.step_of_3",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormConfigWizardSimple.text.add_your_logo",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormConfigWizardSimple.text.choose_your_font",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormConfigWizardSimple.text.choose_your_theme",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormConfigWizardSimple.text.connect_to_external_services",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormConfigWizardSimple.text.do_you_need_to",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormConfigWizardSimple.text.how_do_you_want",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormConfigWizardSimple.text.how_should_users_navigate",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormWizard.text.get_in_touch",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormWizard.text.how_can_we_help",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormWizard.text.how_would_you_rate",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormWizard.text.what_could_we_improve",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormWizard.text.what_did_you_like",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.FormWizard.text.would_you_recommend_us",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.button.copy_embed_code",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.heading.share_embed",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.allow_external_applications_to",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.copy_and_paste_this",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.embed_as_iframe",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.enable_public_api",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.enable_public_api_to",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.fields_are_submitted_in",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.generate_new_api_key",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.reveal_api_key",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.sample_message_text",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.IntegrationDialog.text.view_integration_examples",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.FocusPlayer.text.almost_there",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.FocusPlayer.text.great_progress",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.FocusPlayer.text.provide_your_answer_and",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.FocusPlayer.text.you_can_skip_this",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.PaymentStep.text.payment_confirmation_failed",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.PaymentStep.text.payment_successful",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.PaymentStep.text.unable_to_initialize_stripe",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.QuestionRenderer.text.enter_a_valid_email",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.QuestionRenderer.text.enter_a_valid_phone",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.QuestionRenderer.text.enter_a_valid_url",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.QuestionRenderer.text.this_field_is_required",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.Player.QuestionRenderer.text.yes_no",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.QuickView.aria_label.delete_draft_form",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.QuickView.text.group_relative_flex_flex",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.QuickView.text.text_slate_400_dark",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.QuickView.text.text_sm_font_medium",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.WebhooksPanel.text.failed_to_load_webhooks",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.WebhooksPanel.text.failed_to_send_sample",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Forms.WebhooksPanel.text.sample_event_sent_successfully",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Layout.WorkspaceTopBar.aria_label.up_one_level",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Layout.WorkspaceTopBar.text.opacity_50_cursor_not",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Layout.WorkspaceTopBar.title.up_one_level",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Media.MediaViewer.text.failed_to_import_file",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Media.MediaViewer.text.imported_to_document",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "ShareCard.placeholder.enter_email_address",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "ShareCard.text.editors_will_be_able",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "ShareCard.text.people_in_your_organization",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "ShareCard.text.share_the_link_with",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "ShareCard.text.this_may_appear_in",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Slides.SlidesTitleBar.text.all_changes_saved",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Slides.SlidesTitleBar.text.click_to_save_now",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Slides.SlidesTitleBar.text.last_saved_time",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Slides.SlidesTitleBar.text.saved_just_now",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Slides.SlidesToolbar.title.export_as_pdf",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Slides.SlidesToolbar.title.export_as_pptx",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Ui.CustomToast.text.border_border_gray_200",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Ui.Toast.Index.text.border_bg_background_text",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Ui.Toast.Index.text.destructive_group_border_destructive",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "UniverSheet.text.container_element_is_missing",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "UniverSheet.text.workbook_is_not_initialized",
-      "baseFileRel": "en/components.json"
-    },
-    {
       "keyPath": "Composables.UseDocumentConflictResolver.text.content_contains_formatting_without",
       "baseFileRel": "en/composables.json"
     },
@@ -3312,10 +2896,6 @@
       "baseFileRel": "en/composables.json"
     },
     {
-      "keyPath": "Composables.UseFormAutosave.text.autosave_failed_retry_or",
-      "baseFileRel": "en/composables.json"
-    },
-    {
       "keyPath": "Composables.UseFormAutosave.text.failed_to_autosave",
       "baseFileRel": "en/composables.json"
     },
@@ -3338,10 +2918,6 @@
     {
       "keyPath": "Extensions.Pagination.PageNode.text.background_var_page_background",
       "baseFileRel": "en/extensions.json"
-    },
-    {
-      "keyPath": "Layouts.AuthenticatedLayout.text.transition_all_duration_200",
-      "baseFileRel": "en/layouts.json"
     },
     {
       "keyPath": "Lib.Pagination.PaginationManager.toast.please_allow_popups_for",
@@ -3820,10 +3396,6 @@
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.enable_api_key_based",
-      "baseFileRel": "en/views.json"
-    },
-    {
       "keyPath": "Views.FormBuilder.text.failed_to_rotate_api",
       "baseFileRel": "en/views.json"
     },
@@ -3844,10 +3416,6 @@
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.get_api_form_secret",
-      "baseFileRel": "en/views.json"
-    },
-    {
       "keyPath": "Views.FormBuilder.text.only_the_form_owner",
       "baseFileRel": "en/views.json"
     },
@@ -3864,27 +3432,11 @@
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.reveal_api_key",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.FormBuilder.text.rotate_generate_api_key",
-      "baseFileRel": "en/views.json"
-    },
-    {
       "keyPath": "Views.FormBuilder.text.share_link_copied_to",
       "baseFileRel": "en/views.json"
     },
     {
       "keyPath": "Views.FormBuilder.text.share_link_unavailable_publish",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.FormBuilder.text.show_example_payload",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.FormBuilder.text.show_iframe_snippet",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3901,10 +3453,6 @@
     },
     {
       "keyPath": "Views.FormBuilder.text.unable_to_update_response",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.FormBuilder.text.use_this_form_in",
       "baseFileRel": "en/views.json"
     },
     {
@@ -4132,14 +3680,6 @@
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.embed_this_sheet",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SheetEditor.text.enable_key_based_inserts",
-      "baseFileRel": "en/views.json"
-    },
-    {
       "keyPath": "Views.SheetEditor.text.export_is_not_available",
       "baseFileRel": "en/views.json"
     },
@@ -4176,10 +3716,6 @@
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.get_api_sheet_secret",
-      "baseFileRel": "en/views.json"
-    },
-    {
       "keyPath": "Views.SheetEditor.text.public_api_disabled",
       "baseFileRel": "en/views.json"
     },
@@ -4188,35 +3724,7 @@
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.public_api_is_not",
-      "baseFileRel": "en/views.json"
-    },
-    {
       "keyPath": "Views.SheetEditor.text.replying_to",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SheetEditor.text.reveal_api_key",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SheetEditor.text.rotate_generate_api_key",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SheetEditor.text.show_example_payloads",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SheetEditor.text.show_iframe_snippet",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SheetEditor.text.use_the_public_insert",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SheetEditor.text.use_this_sheet_in",
       "baseFileRel": "en/views.json"
     },
     {
@@ -4261,10 +3769,6 @@
     },
     {
       "keyPath": "Views.Sheets.text.to_dos_owners",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.Sidebar.text.h_full_border_r",
       "baseFileRel": "en/views.json"
     },
     {

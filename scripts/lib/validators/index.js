@@ -103,12 +103,32 @@ function hasBalancedDelimiters(text) {
 /**
  * Check if text looks like a placeholder-only pattern
  * e.g., "{name}", "{{value}}", "{user.name}"
+ * But allow text that has both placeholders AND substantial translatable content
  */
 function isPlaceholderOnly(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return true;
   
-  // Remove all placeholder patterns
+  // Count total characters and placeholder characters
+  const totalLength = trimmed.length;
+  
+  // Calculate placeholder content length
+  const placeholderMatches = [
+    ...trimmed.match(/\{\{\s*[^}]+\s*\}\}/g) || [],  // Vue mustache: {{ expr }}
+    ...trimmed.match(/\{[a-zA-Z_][a-zA-Z0-9_.]*\}/g) || [],  // Simple placeholders: {name}
+    ...trimmed.match(/\$\{[^}]+\}/g) || [],  // Template literals: ${expr}
+    ...trimmed.match(/:[a-zA-Z_][a-zA-Z0-9_]*/g) || [],  // Named params: :name
+    ...trimmed.match(/%[sdifboOcj%]/g) || []  // Printf-style: %s, %d
+  ];
+  
+  const placeholderLength = placeholderMatches.reduce((sum, match) => sum + match.length, 0);
+  
+  // If placeholders are more than 70% of the content, consider it placeholder-only
+  if (placeholderLength > totalLength * 0.7) {
+    return true;
+  }
+  
+  // Remove all placeholder patterns for final check
   let stripped = trimmed
     .replace(/\{\{\s*[^}]+\s*\}\}/g, '')  // Vue mustache: {{ expr }}
     .replace(/\{[a-zA-Z_][a-zA-Z0-9_.]*\}/g, '')  // Simple placeholders: {name}

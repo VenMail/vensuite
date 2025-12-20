@@ -17,6 +17,8 @@
         "deleted_files_will_appear": "已删除的文件将出现在这里，可以恢复或永久删除。",
         "login_to_access_your": "登录以访问您的垃圾箱并管理已删除的文件。",
         "preparing_your_deleted_items": "正在准备您的已删除项目……",
+        "sort_by_date_newest": "按日期排序（最新）",
+        "sort_by_date_oldest": "按日期排序（最旧）",
         "sort_by_name": "按名称排序",
         "sort_by_size": "按大小排序",
         "sort_by_type": "按类型排序",
@@ -98,6 +100,7 @@
         "failed_to_publish_form_2": "发布表单失败",
         "manage_who_in_your": "管理谁可以在您的工作区打开和编辑此表单。",
         "payment_succeeded_or_failed": "支付成功或失败",
+        "provide_a_secure_https": "提供安全的HTTPS端点，我们将在所选事件发生时POST签名有效负载。您可以随时暂停交付。",
         "publishing_form_to_generate": "正在发布表单以生成分享链接…",
         "send_form_responses_and": "实时将表单响应和支付事件发送到您的下游系统。",
         "use_my_own_stripe": "使用我自己的Stripe账户",
@@ -127,6 +130,7 @@
         "manage_submissions_monitor_payment": "管理提交，监控支付状态，并深入了解个别答案。",
         "monitor_how_respondents_engage": "监控响应者如何与您的表单互动，并发现完成状态的趋势。",
         "no_answers_captured_for": "此响应未捕获任何答案。",
+        "no_responses_yet_share": "尚无响应。分享您的表单以开始收集提交。",
         "visualize_completion_ratio_at": "一目了然地可视化完成比例"
       }
     },
@@ -144,6 +148,8 @@
       "text": {
         "anyone_with_this_link": "任何拥有此链接的人都可以根据其发布设置访问表单。",
         "form_is_missing_an": "表单缺少标识符。",
+        "loading": "Loading...",
+        "loading_more_forms": "加载更多表单...",
         "no_more_forms_to": "没有更多表单可加载。",
         "publish_the_form_to": "发布表单以获取可分享链接。",
         "publishing_form_to_generate": "正在发布表单以生成分享链接…",
@@ -171,6 +177,7 @@
         "attachment_import_preparing_document": "正在准备文档...",
         "get_started_by_creating": "通过创建新文件或上传现有文件开始。",
         "group_by_type": "按类型分组",
+        "loading_your_files": "加载您的文件...",
         "login_to_manage_your": "登录以管理您在Venmail上的文件和文件夹。",
         "no_items_available_in": "此类别中没有可用项目。",
         "sort_by_date": "按日期排序",
@@ -203,7 +210,8 @@
         "download_open_original": "下载/打开原件"
       },
       "text": {
-        "cannot_preview_this_file": "无法预览此文件类型。"
+        "cannot_preview_this_file": "无法预览此文件类型。",
+        "sending": "Sending..."
       }
     },
     "OauthCallback": {
@@ -223,6 +231,9 @@
       "heading": {
         "request_access_to_this": "请求访问此表格",
         "this_spreadsheet_is_large": "此电子表格较大"
+      },
+      "text": {
+        "sending": "Sending..."
       }
     },
     "Sheets": {
@@ -249,9 +260,9 @@
   },
   "commons": {
     "text": {
-      "loading_responses": "加载响应中…",
+      "loading_form": "加载表单中…",
       "loading_response": "加载响应中…",
-      "loading_form": "加载表单中…"
+      "loading_responses": "加载响应中…"
     }
   }
 }

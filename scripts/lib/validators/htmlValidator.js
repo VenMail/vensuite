@@ -213,68 +213,27 @@ function isTemplateExpression(text) {
   const trimmed = String(text || '').trim();
   if (!trimmed) return false;
   
-  // Vue/Blade/Handlebars: {{ expression }}
-  if (/^\{\{[^}]*\}\}$/.test(trimmed) || /\{\{[^}]+\}\}/.test(trimmed)) {
+  // Calculate the ratio of template expression characters to total characters
+  const templateMatches = [
+    ...trimmed.match(/\{\{[^}]+\}\}/g) || [],  // Vue/Blade/Handlebars
+    ...trimmed.match(/\{%-?[^}]*-?%\}/g) || [],  // Twig/Liquid
+    ...trimmed.match(/<%[=-]?[^>]*%>/g) || [],  // EJS/JSP
+    ...trimmed.match(/@[a-z]+(?:\([^)]*\))?/gi) || [],  // Blade directives
+    ...trimmed.match(/\$\{[^}]+\}/g) || [],  // Template literals/JSP EL
+    ...trimmed.match(/#\{[^}]+\}/g) || []  // Pug/Jade
+  ];
+  
+  const templateLength = templateMatches.reduce((sum, match) => sum + match.length, 0);
+  const totalLength = trimmed.length;
+  
+  // If template expressions are more than 70% of the content, consider it template-only
+  if (templateLength > totalLength * 0.7) {
     return true;
   }
   
-  // Twig: {% %}, {{ }}, {# #}
-  if (/^\{[%#][^}]*[%#]\}$/.test(trimmed) || /\{[%#][^}]+[%#]\}/.test(trimmed)) {
-    return true;
-  }
-  
-  // EJS: <%= %>, <%- %>, <% %>
-  if (/<%[=-]?[^>]*%>/.test(trimmed)) {
-    return true;
-  }
-  
-  // JSP: <%= %>, ${ }
-  if (/<%[=!]?[^>]*%>/.test(trimmed) || /\$\{[^}]+\}/.test(trimmed)) {
-    return true;
-  }
-  
-  // Blade: @if, @foreach, @section, etc.
-  if (/@[a-z]+(?:\([^)]*\))?/.test(trimmed)) {
-    return true;
-  }
-  
-  // Handlebars/Mustache: {{#if}}, {{#each}}, {{{raw}}}
-  if (/\{\{[#\/^>!][^}]*\}\}/.test(trimmed) || /\{\{\{[^}]+\}\}\}/.test(trimmed)) {
-    return true;
-  }
-  
-  // Liquid: {% %}, {{ }}, {%- -%}
-  if (/\{%-?[^}]*-?%\}/.test(trimmed)) {
-    return true;
-  }
-  
-  // Pug/Jade: #{expression}
-  if (/#\{[^}]+\}/.test(trimmed)) {
-    return true;
-  }
-  
-  // Jinja2: {{ }}, {% %}, {# #}
-  if (/\{[{%#][^}]*[}%#]\}/.test(trimmed)) {
-    return true;
-  }
-  
-  // React JSX: {expression}
-  if (/^\{[^}]+\}$/.test(trimmed) && !/{.*:.*}/.test(trimmed)) {
-    return true;
-  }
-  
-  // Thymeleaf: th:text="${}", *{}, @{}
-  if (/[\$*@]\{[^}]+\}/.test(trimmed)) {
-    return true;
-  }
-  
-  // FreeMarker: ${}, <#>, <@>
-  if (/\$\{[^}]+\}/.test(trimmed) || /<[#@][^>]+>/.test(trimmed)) {
-    return true;
-  }
-  
-  // Check if text is mostly template expressions with little actual text
-  const withoutExpressions = trimmed
+  // For mixed content (less than 70% template), check if it's mostly template code
+  // Remove template expressions and see what's left
+  let stripped = trimmed
     .replace(/\{\{[^}]+\}\}/g, '')
     .replace(/\{%-?[^}]*-?%\}/g, '')
     .replace(/<%[=-]?[^>]*%>/g, '')
@@ -283,10 +242,12 @@ function isTemplateExpression(text) {
     .replace(/#\{[^}]+\}/g, '')
     .trim();
   
-  if (!withoutExpressions || withoutExpressions.length < trimmed.length * 0.3) {
+  // If very little actual text left, consider it template content
+  if (stripped.length < totalLength * 0.3) {
     return true;
   }
   
+  // Otherwise, it's mixed content with substantial translatable text
   return false;
 }
 

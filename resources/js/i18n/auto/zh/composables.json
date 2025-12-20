@@ -1,1 +1,9 @@
-{}
+{
+  "Composables": {
+    "UseFormAutosave": {
+      "toast": {
+        "autosave_failed_retry_or": "自动保存失败。请重试或检查连接。"
+      }
+    }
+  }
+}

@@ -6,6 +6,94 @@
       }
     }
   },
+  "Components": {
+    "Editor": {
+      "ChartConfigurator": {
+        "text": {
+          "no_labels_yet_add": "尚无标签。为您的图表的 X 轴添加标签。"
+        }
+      }
+    },
+    "Forms": {
+      "DocsTitleBar": {
+        "text": {
+          "loading_versions": "加载版本…"
+        }
+      },
+      "DocsToolbar": {
+        "text": {
+          "resume_cv": "简历/CV"
+        }
+      },
+      "FormConfigWizardSimple": {
+        "text": {
+          "use_device_s_default": "使用设备的默认字体"
+        }
+      },
+      "IntegrationDialog": {
+        "button": {
+          "copy_embed_code": "复制嵌入代码"
+        },
+        "heading": {
+          "share_embed": "分享与嵌入"
+        },
+        "text": {
+          "copy_and_paste_this": "复制并粘贴此代码以与您的应用程序集成。",
+          "embed_as_iframe": "作为 iframe 嵌入",
+          "enable_public_api": "启用公共API",
+          "enable_public_api_to": "启用公共API以显示端点",
+          "generate_new_api_key": "生成新的API密钥",
+          "reveal_api_key": "显示API密钥",
+          "view_integration_examples": "查看集成示例"
+        }
+      }
+    },
+    "ImagePicker": {
+      "text": {
+        "loading_images": "加载图片..."
+      }
+    },
+    "Loader": {
+      "text": {
+        "loading": "Loading..."
+      }
+    },
+    "Media": {
+      "MediaGrid": {
+        "text": {
+          "loading_media_files": "加载媒体文件...",
+          "upload_your_first_media": "上传您的第一批媒体文件以开始。支持的格式包括图片、视频和音频文件。"
+        }
+      },
+      "MediaViewer": {
+        "text": {
+          "loading_media": "加载媒体..."
+        }
+      }
+    },
+    "Menu": {
+      "SheetMenu": {
+        "text": {
+          "export_as": "导出为..."
+        }
+      },
+      "SlideMenu": {
+        "text": {
+          "export_as": "导出为..."
+        }
+      },
+      "UnifiedMenubar": {
+        "text": {
+          "export_as": "导出为..."
+        }
+      }
+    },
+    "ShareCard": {
+      "heading": {
+        "add_a_note_optional": "添加备注（可选）"
+      }
+    }
+  },
   "Editor": {
     "ChartConfigurator": {
       "button": {
@@ -355,6 +443,24 @@
     }
   },
   "components": {
+    "FileUploader": {
+      "components": {
+        "fileuploader": {
+          "text": {
+            "status_uploading": "Uploading..."
+          }
+        }
+      },
+      "text": {
+        "description_all": "将文件或文件夹拖放到此处，或单击以浏览",
+        "description_documents": "文档文件（PDF、Word、文本等）",
+        "description_media": "媒体文件（图像、视频、音频）",
+        "description_spreadsheets": "电子表格文件（Excel、CSV等）",
+        "files_rejected": "被拒绝的文件：",
+        "instructions_all": "将文件或文件夹拖放到此处，或单击以浏览",
+        "instructions_media": "将媒体文件拖放到此处，或单击以浏览"
+      }
+    },
     "LanguageSwitcher": {
       "aria_label": {
         "change_language": "更改语言"
@@ -368,17 +474,6 @@
         "text": {
           "saving_deck": "正在保存演示文稿…"
         }
-      }
-    },
-    "FileUploader": {
-      "text": {
-        "files_rejected": "被拒绝的文件：",
-        "description_all": "将文件或文件夹拖放到此处，或单击以浏览",
-        "instructions_all": "将文件或文件夹拖放到此处，或单击以浏览",
-        "description_documents": "文档文件（PDF、Word、文本等）",
-        "description_spreadsheets": "电子表格文件（Excel、CSV等）",
-        "description_media": "媒体文件（图像、视频、音频）",
-        "instructions_media": "将媒体文件拖放到此处，或单击以浏览"
       }
     }
   }
