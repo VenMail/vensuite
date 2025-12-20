@@ -15,7 +15,7 @@
       />
     </label>
     <label>
-      Max File Size (MB):
+      {{$t('Components.Forms.Editors.FileEditor.label.max_file_size_mb')}}
       <input type="number" :value="maxSize" min="1" @input="onMaxSizeInput" />
     </label>
   </div>

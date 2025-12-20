@@ -709,7 +709,7 @@
                 />
               </div>
               <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                Payments can be configured between $1 and $100.
+                {{$t('Views.FormBuilder.text.payments_can_be_configured')}}
               </p>
             </div>
 

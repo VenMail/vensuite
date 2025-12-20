@@ -1,4 +1,173 @@
 {
-  "generatedAt": "2025-12-19T22:34:52.218Z",
-  "issues": []
+  "generatedAt": "2025-12-20T00:26:08.895Z",
+  "issues": [
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.date",
+      "english": "Date",
+      "current": "Date",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.public",
+      "english": "Public",
+      "current": "Public",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.webhooks",
+      "english": "Webhooks",
+      "current": "Webhooks",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.options",
+      "english": "Options",
+      "current": "Options",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.permissions",
+      "english": "Permissions",
+      "current": "Permissions",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.source",
+      "english": "Source",
+      "current": "Source",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.webhooks",
+      "english": "Webhooks",
+      "current": "Webhooks",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.orientation",
+      "english": "Orientation",
+      "current": "Orientation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.actions",
+      "english": "Actions",
+      "current": "Actions",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.collaboration",
+      "english": "Collaboration",
+      "current": "Collaboration",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.contacts",
+      "english": "Contacts",
+      "current": "Contacts",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.date",
+      "english": "Date",
+      "current": "Date",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.documents",
+      "english": "Documents",
+      "current": "Documents",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.portrait",
+      "english": "Portrait",
+      "current": "Portrait",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.regex",
+      "english": "Regex",
+      "current": "Regex",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Forms.Editors.FileEditor.label.max_file_size_mb",
+      "english": "Max File Size (MB):",
+      "current": "Max File Size (MB):",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.Helpers.text.target_position_is_invalid",
+      "english": "Target position is invalid, you can't move the {type} {originIndex} to {targetIndex}, the target can't be split. You could use tryToFit option.",
+      "current": "Target position is invalid, you can't move the {type} {originIndex} to {targetIndex}, the target can't be split. You could use tryToFit option.",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.FormBuilder.text.payments_can_be_configured",
+      "english": "Payments can be configured between $1 and $100.",
+      "current": "Payments can be configured between $1 and $100.",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Forms.Editors.FileEditor.label.max_file_size_mb",
+      "english": "Max File Size (MB):",
+      "current": "Max File Size (MB):",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.Helpers.text.target_position_is_invalid",
+      "english": "Target position is invalid, you can't move the {type} {originIndex} to {targetIndex}, the target can't be split. You could use tryToFit option.",
+      "current": "Target position is invalid, you can't move the {type} {originIndex} to {targetIndex}, the target can't be split. You could use tryToFit option.",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.FormBuilder.text.payments_can_be_configured",
+      "english": "Payments can be configured between $1 and $100.",
+      "current": "Payments can be configured between $1 and $100.",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    }
+  ]
 }

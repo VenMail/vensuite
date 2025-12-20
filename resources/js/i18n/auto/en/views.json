@@ -100,6 +100,7 @@
         "failed_to_publish_form_2": "Failed to publish form",
         "manage_who_in_your": "Manage who in your workspace can open and edit this form.",
         "payment_succeeded_or_failed": "Payment succeeded or failed",
+        "payments_can_be_configured": "Payments can be configured between $1 and $100.",
         "provide_a_secure_https": "Provide a secure HTTPS endpoint and we will POST a signed payload whenever the selected events occur. You can pause delivery at any time.",
         "publishing_form_to_generate": "Publishing form to generate share link…",
         "send_form_responses_and": "Send form responses and payment events to your downstream systems in real time.",

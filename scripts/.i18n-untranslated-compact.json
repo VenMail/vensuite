@@ -1,5 +1,28 @@
 {
   "issueType": "untranslated",
-  "generatedAt": "2025-12-19T22:34:52.218Z",
-  "files": []
+  "generatedAt": "2025-12-20T00:26:08.895Z",
+  "files": [
+    {
+      "locale": "fr",
+      "localeFile": "fr\\utils.json",
+      "issues": [
+        {
+          "file": "src\\utils\\helpers.js",
+          "lineStart": 98,
+          "lineEnd": 98
+        }
+      ]
+    },
+    {
+      "locale": "zh",
+      "localeFile": "zh\\utils.json",
+      "issues": [
+        {
+          "file": "src\\utils\\helpers.js",
+          "lineStart": 98,
+          "lineEnd": 98
+        }
+      ]
+    }
+  ]
 }

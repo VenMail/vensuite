@@ -1,5 +1,153 @@
 {
   "issueType": "untranslated",
-  "generatedAt": "2025-12-19T22:34:52.218Z",
-  "files": []
+  "generatedAt": "2025-12-20T00:26:08.895Z",
+  "files": [
+    {
+      "locale": "fr",
+      "localeFile": "fr\\commons.json",
+      "issues": [
+        {
+          "keyPath": "Commons.button.date",
+          "english": "Date",
+          "current": "Date"
+        },
+        {
+          "keyPath": "Commons.button.public",
+          "english": "Public",
+          "current": "Public"
+        },
+        {
+          "keyPath": "Commons.button.webhooks",
+          "english": "Webhooks",
+          "current": "Webhooks"
+        },
+        {
+          "keyPath": "Commons.heading.options",
+          "english": "Options",
+          "current": "Options"
+        },
+        {
+          "keyPath": "Commons.heading.permissions",
+          "english": "Permissions",
+          "current": "Permissions"
+        },
+        {
+          "keyPath": "Commons.heading.source",
+          "english": "Source",
+          "current": "Source"
+        },
+        {
+          "keyPath": "Commons.heading.webhooks",
+          "english": "Webhooks",
+          "current": "Webhooks"
+        },
+        {
+          "keyPath": "Commons.label.orientation",
+          "english": "Orientation",
+          "current": "Orientation"
+        },
+        {
+          "keyPath": "Commons.text.actions",
+          "english": "Actions",
+          "current": "Actions"
+        },
+        {
+          "keyPath": "Commons.text.collaboration",
+          "english": "Collaboration",
+          "current": "Collaboration"
+        },
+        {
+          "keyPath": "Commons.text.contacts",
+          "english": "Contacts",
+          "current": "Contacts"
+        },
+        {
+          "keyPath": "Commons.text.date",
+          "english": "Date",
+          "current": "Date"
+        },
+        {
+          "keyPath": "Commons.text.documents",
+          "english": "Documents",
+          "current": "Documents"
+        },
+        {
+          "keyPath": "Commons.text.portrait",
+          "english": "Portrait",
+          "current": "Portrait"
+        },
+        {
+          "keyPath": "Commons.text.regex",
+          "english": "Regex",
+          "current": "Regex"
+        }
+      ]
+    },
+    {
+      "locale": "fr",
+      "localeFile": "fr\\components.json",
+      "issues": [
+        {
+          "keyPath": "Components.Forms.Editors.FileEditor.label.max_file_size_mb",
+          "english": "Max File Size (MB):",
+          "current": "Max File Size (MB):"
+        }
+      ]
+    },
+    {
+      "locale": "fr",
+      "localeFile": "fr\\utils.json",
+      "issues": [
+        {
+          "keyPath": "Utils.Helpers.text.target_position_is_invalid",
+          "english": "Target position is invalid, you can't move the {type} {originIndex} to {targetIndex}, the target can't be split. You could use tryToFit option.",
+          "current": "Target position is invalid, you can't move the {type} {originIndex} to {targetIndex}, the target can't be split. You could use tryToFit option."
+        }
+      ]
+    },
+    {
+      "locale": "fr",
+      "localeFile": "fr\\views.json",
+      "issues": [
+        {
+          "keyPath": "Views.FormBuilder.text.payments_can_be_configured",
+          "english": "Payments can be configured between $1 and $100.",
+          "current": "Payments can be configured between $1 and $100."
+        }
+      ]
+    },
+    {
+      "locale": "zh",
+      "localeFile": "zh\\components.json",
+      "issues": [
+        {
+          "keyPath": "Components.Forms.Editors.FileEditor.label.max_file_size_mb",
+          "english": "Max File Size (MB):",
+          "current": "Max File Size (MB):"
+        }
+      ]
+    },
+    {
+      "locale": "zh",
+      "localeFile": "zh\\utils.json",
+      "issues": [
+        {
+          "keyPath": "Utils.Helpers.text.target_position_is_invalid",
+          "english": "Target position is invalid, you can't move the {type} {originIndex} to {targetIndex}, the target can't be split. You could use tryToFit option.",
+          "current": "Target position is invalid, you can't move the {type} {originIndex} to {targetIndex}, the target can't be split. You could use tryToFit option."
+        }
+      ]
+    },
+    {
+      "locale": "zh",
+      "localeFile": "zh\\views.json",
+      "issues": [
+        {
+          "keyPath": "Views.FormBuilder.text.payments_can_be_configured",
+          "english": "Payments can be configured between $1 and $100.",
+          "current": "Payments can be configured between $1 and $100."
+        }
+      ]
+    }
+  ]
 }

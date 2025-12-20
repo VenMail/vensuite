@@ -100,6 +100,7 @@
         "failed_to_publish_form_2": "发布表单失败",
         "manage_who_in_your": "管理谁可以在您的工作区打开和编辑此表单。",
         "payment_succeeded_or_failed": "支付成功或失败",
+        "payments_can_be_configured": "Payments can be configured between $1 and $100.",
         "provide_a_secure_https": "提供安全的HTTPS端点，我们将在所选事件发生时POST签名有效负载。您可以随时暂停交付。",
         "publishing_form_to_generate": "正在发布表单以生成分享链接…",
         "send_form_responses_and": "实时将表单响应和支付事件发送到您的下游系统。",

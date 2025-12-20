@@ -25,6 +25,13 @@
           "resume_cv": "Resume/CV"
         }
       },
+      "Editors": {
+        "FileEditor": {
+          "label": {
+            "max_file_size_mb": "Max File Size (MB):"
+          }
+        }
+      },
       "FormConfigWizardSimple": {
         "text": {
           "use_device_s_default": "Use device's default font"

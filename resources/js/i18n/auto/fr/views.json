@@ -100,6 +100,7 @@
         "failed_to_publish_form_2": "Échec de la publication du formulaire",
         "manage_who_in_your": "Gérez qui dans votre espace de travail peut ouvrir et modifier ce formulaire.",
         "payment_succeeded_or_failed": "Paiement réussi ou échoué",
+        "payments_can_be_configured": "Payments can be configured between $1 and $100.",
         "provide_a_secure_https": "Fournissez un point de terminaison HTTPS sécurisé et nous enverrons une charge utile signée chaque fois que les événements sélectionnés se produisent. Vous pouvez suspendre la livraison à tout moment.",
         "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
         "send_form_responses_and": "Envoyez les réponses du formulaire et les événements de paiement à vos systèmes en temps réel.",

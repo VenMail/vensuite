@@ -1,6 +1,7 @@
 import { NodeSelection } from '@tiptap/pm/state'
 import { Fragment, Node as PMNode } from '@tiptap/pm/model'
 import { setTextSelection } from './transforms'
+import { t } from '@/i18n';
 
 // :: (selection: Selection) → boolean
 // 验证选中类型是 `NodeSelection`.
@@ -94,7 +95,7 @@ export function isEmptyParagraph(node) {
 
 export function checkInvalidMovements(originIndex, targetIndex, targets, type) {
   const direction = originIndex > targetIndex ? -1 : 1
-  const errorMessage = `Target position is invalid, you can't move the ${type} ${originIndex} to ${targetIndex}, the target can't be split. You could use tryToFit option.`
+  const errorMessage = t('Utils.Helpers.text.target_position_is_invalid', { type: type, originIndex: originIndex, targetIndex: targetIndex })
 
   if (direction === 1) {
     if (targets.slice(0, targets.length - 1).includes(targetIndex)) {

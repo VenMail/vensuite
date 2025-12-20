@@ -25,6 +25,13 @@
           "resume_cv": "简历/CV"
         }
       },
+      "Editors": {
+        "FileEditor": {
+          "label": {
+            "max_file_size_mb": "Max File Size (MB):"
+          }
+        }
+      },
       "FormConfigWizardSimple": {
         "text": {
           "use_device_s_default": "使用设备的默认字体"

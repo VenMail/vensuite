@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-19T22:34:43.713Z",
+  "generatedAt": "2025-12-20T00:26:00.546Z",
   "baseLocale": "en",
   "autoDir": "resources/js/i18n/auto",
   "unused": [
@@ -44,6 +44,10 @@
       "baseFileRel": "en/assets.json"
     },
     {
+      "keyPath": "Assets.DefaultWorkbookData.text.tax_8_5",
+      "baseFileRel": "en/assets.json"
+    },
+    {
       "keyPath": "Assets.DefaultWorkbookData.text.thank_you_for_your",
       "baseFileRel": "en/assets.json"
     },
@@ -57,6 +61,14 @@
     },
     {
       "keyPath": "Assets.DefaultWorkbookData.text.your_company_name",
+      "baseFileRel": "en/assets.json"
+    },
+    {
+      "keyPath": "Assets.DocJson.text.body_provide_detailed_information",
+      "baseFileRel": "en/assets.json"
+    },
+    {
+      "keyPath": "Assets.DocJson.text.closing_summarize_and_indicate",
       "baseFileRel": "en/assets.json"
     },
     {
@@ -100,10 +112,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.button.share_with",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.heading.document",
       "baseFileRel": "en/commons.json"
     },
@@ -113,14 +121,6 @@
     },
     {
       "keyPath": "Commons.heading.new_document",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.heading.response",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.heading.share",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -340,6 +340,14 @@
       "baseFileRel": "en/commons.json"
     },
     {
+      "keyPath": "Commons.text.bottom_0",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.text.break_after_page",
+      "baseFileRel": "en/commons.json"
+    },
+    {
       "keyPath": "Commons.text.budget",
       "baseFileRel": "en/commons.json"
     },
@@ -457,10 +465,6 @@
     },
     {
       "keyPath": "Commons.text.company_name",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.complete",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -812,6 +816,10 @@
       "baseFileRel": "en/commons.json"
     },
     {
+      "keyPath": "Commons.text.height_0",
+      "baseFileRel": "en/commons.json"
+    },
+    {
       "keyPath": "Commons.text.helvetica",
       "baseFileRel": "en/commons.json"
     },
@@ -845,10 +853,6 @@
     },
     {
       "keyPath": "Commons.text.import_powerpoint",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.importing",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -932,6 +936,10 @@
       "baseFileRel": "en/commons.json"
     },
     {
+      "keyPath": "Commons.text.left_0",
+      "baseFileRel": "en/commons.json"
+    },
+    {
       "keyPath": "Commons.text.letter",
       "baseFileRel": "en/commons.json"
     },
@@ -977,10 +985,6 @@
     },
     {
       "keyPath": "Commons.text.lora",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.media_file",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1136,10 +1140,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.of_answered",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.off",
       "baseFileRel": "en/commons.json"
     },
@@ -1260,7 +1260,7 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.page_of",
+      "keyPath": "Commons.text.page_break_after_always",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1404,10 +1404,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.question_of",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.radio",
       "baseFileRel": "en/commons.json"
     },
@@ -1480,6 +1476,10 @@
       "baseFileRel": "en/commons.json"
     },
     {
+      "keyPath": "Commons.text.right_0",
+      "baseFileRel": "en/commons.json"
+    },
+    {
       "keyPath": "Commons.text.right_2",
       "baseFileRel": "en/commons.json"
     },
@@ -1512,10 +1512,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.saved",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.savings",
       "baseFileRel": "en/commons.json"
     },
@@ -1545,10 +1541,6 @@
     },
     {
       "keyPath": "Commons.text.select_version",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.selected",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1585,10 +1577,6 @@
     },
     {
       "keyPath": "Commons.text.share_2",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.share_3",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1636,15 +1624,7 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.slide",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.slide_1",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.slide_of",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1689,10 +1669,6 @@
     },
     {
       "keyPath": "Commons.text.statement",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.step_of",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1876,10 +1852,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.update_firstlineindent",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.update_leftindent",
       "baseFileRel": "en/commons.json"
     },
@@ -1909,10 +1881,6 @@
     },
     {
       "keyPath": "Commons.text.update_open",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.update_pageorientation",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1981,10 +1949,6 @@
     },
     {
       "keyPath": "Commons.text.verdana",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.version",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -2404,10 +2368,6 @@
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.FileUploader.text.will_convert_to",
-      "baseFileRel": "en/components.json"
-    },
-    {
       "keyPath": "Components.Forms.Blocks.BlockEditor.placeholder.add_a_description",
       "baseFileRel": "en/components.json"
     },
@@ -2560,10 +2520,6 @@
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizard.text.step_of_3",
-      "baseFileRel": "en/components.json"
-    },
-    {
       "keyPath": "Components.Forms.FormConfigWizardSimple.text.add_your_logo",
       "baseFileRel": "en/components.json"
     },
@@ -2612,6 +2568,14 @@
       "baseFileRel": "en/components.json"
     },
     {
+      "keyPath": "Components.Forms.FormWizard.placeholder.example_a_customer_feedback",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.FormWizard.text.a_customer_feedback_survey",
+      "baseFileRel": "en/components.json"
+    },
+    {
       "keyPath": "Components.Forms.FormWizard.text.get_in_touch",
       "baseFileRel": "en/components.json"
     },
@@ -2645,6 +2609,10 @@
     },
     {
       "keyPath": "Components.Forms.IntegrationDialog.text.fields_are_submitted_in",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.IntegrationDialog.text.keep_this_key_secure",
       "baseFileRel": "en/components.json"
     },
     {
@@ -2788,10 +2756,6 @@
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.ShareCard.text.editors_will_be_able",
-      "baseFileRel": "en/components.json"
-    },
-    {
       "keyPath": "Components.ShareCard.text.people_in_your_organization",
       "baseFileRel": "en/components.json"
     },
@@ -2920,6 +2884,10 @@
       "baseFileRel": "en/extensions.json"
     },
     {
+      "keyPath": "Layouts.AuthenticatedLayout.text.prefers_color_scheme_dark",
+      "baseFileRel": "en/layouts.json"
+    },
+    {
       "keyPath": "Lib.Pagination.PaginationManager.toast.please_allow_popups_for",
       "baseFileRel": "en/lib.json"
     },
@@ -2954,6 +2922,10 @@
     {
       "keyPath": "Plugins.Services.ExportService.text.no_worksheets_found_in",
       "baseFileRel": "en/plugins.json"
+    },
+    {
+      "keyPath": "Providers.ThemeProvider.text.prefers_color_scheme_dark",
+      "baseFileRel": "en/providers.json"
     },
     {
       "keyPath": "Services.Ai.text.failed_to_generate_form",
@@ -3160,6 +3132,10 @@
       "baseFileRel": "en/utils.json"
     },
     {
+      "keyPath": "Utils.FileConverter.text.pdf_name_error_invalid",
+      "baseFileRel": "en/utils.json"
+    },
+    {
       "keyPath": "Utils.FileConverter.text.pdf_name_error_pdf",
       "baseFileRel": "en/utils.json"
     },
@@ -3169,6 +3145,14 @@
     },
     {
       "keyPath": "Utils.FileConverter.text.pdf_name_error_pdf_3",
+      "baseFileRel": "en/utils.json"
+    },
+    {
+      "keyPath": "Utils.FileConverter.text.pdf_name_error_this",
+      "baseFileRel": "en/utils.json"
+    },
+    {
+      "keyPath": "Utils.FileConverter.text.pdf_name_note_this",
       "baseFileRel": "en/utils.json"
     },
     {
@@ -3224,15 +3208,19 @@
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.items_in_trash",
-      "baseFileRel": "en/views.json"
-    },
-    {
       "keyPath": "Views.Bin.text.no_items_selected",
       "baseFileRel": "en/views.json"
     },
     {
       "keyPath": "Views.Bin.text.preview_not_available_for",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.Bin.text.this_will_permanently_delete",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.Bin.text.this_will_permanently_delete_2",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3340,6 +3328,14 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.DocsEditor.text.tip_hold_and_click",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.DocsEditor.text.tip_hold_ctrl_and",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.DocsEditor.text.upload_new_image",
       "baseFileRel": "en/views.json"
     },
@@ -3360,6 +3356,10 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.Documents.text.localecompare_b_title",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.Documents.text.modern_cv_layout",
       "baseFileRel": "en/views.json"
     },
@@ -3369,6 +3369,10 @@
     },
     {
       "keyPath": "Views.FilePicker.placeholder.search_files",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.FilePicker.text.localecompare_b_title",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3568,6 +3572,14 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.Home.text.home_final_files_with",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.Home.text.home_found_files_with",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.Home.title.up_one_level",
       "baseFileRel": "en/views.json"
     },
@@ -3609,6 +3621,14 @@
     },
     {
       "keyPath": "Views.Media.text.file_renamed_successfully",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.Media.text.localecompare_b_file_type",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.Media.text.localecompare_b_title",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3716,15 +3736,15 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.SheetEditor.text.group_coming_soon",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.SheetEditor.text.public_api_disabled",
       "baseFileRel": "en/views.json"
     },
     {
       "keyPath": "Views.SheetEditor.text.public_api_enabled",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SheetEditor.text.replying_to",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3745,6 +3765,10 @@
     },
     {
       "keyPath": "Views.Sheets.text.failed_to_delete_some",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.Sheets.text.localecompare_b_title",
       "baseFileRel": "en/views.json"
     },
     {

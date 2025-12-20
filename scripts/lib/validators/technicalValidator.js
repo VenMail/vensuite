@@ -621,12 +621,22 @@ function isTechnicalContent(text) {
   if (!trimmed) return false;
   
   // Quick reject: obvious prose with no technical markers
-  // But be more lenient with text that contains placeholders - check if it's mostly readable
+  // Use a heuristic approach to detect legitimate English prose
   const hasTechnicalMarkers = /[<>{}\[\]@#:=\/\\$%^&*|`~]/.test(trimmed);
-  const looksLikeProse = /^[A-Z][a-z]+(?:\s+[a-z]+)+[.!?]$/.test(trimmed);
   
-  if (looksLikeProse && !hasTechnicalMarkers && !/-{2,}/.test(trimmed)) {
-    return false;
+  if (!hasTechnicalMarkers && !/-{2,}/.test(trimmed)) {
+    // Check if it looks like legitimate English prose
+    const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+    const hasCapitalStart = /^[A-Z]/.test(trimmed);
+    const hasEndPunctuation = /[.!?]$/.test(trimmed);
+    const hasReasonableWordCount = words.length >= 3 && words.length <= 20;
+    // Clean words of punctuation for alpha check
+    const cleanWords = words.map(w => w.replace(/[.,!?;:]$/, ''));
+    const hasMostlyAlphaWords = cleanWords.filter(w => /^[a-zA-Z]+$/.test(w)).length / cleanWords.length > 0.7;
+    
+    if (hasCapitalStart && hasEndPunctuation && hasReasonableWordCount && hasMostlyAlphaWords) {
+      return false; // This looks like legitimate prose, allow it
+    }
   }
   
   // If text has technical markers but also substantial readable content, 
