@@ -1,5 +1,5 @@
-// Version: 0.1.8
 #!/usr/bin/env node
+// Version: 0.1.8
 const { readdir, readFile, writeFile, mkdir, rm } = require('node:fs/promises');
 const { existsSync } = require('node:fs');
 const path = require('node:path');

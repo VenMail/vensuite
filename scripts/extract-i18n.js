@@ -1,5 +1,5 @@
-// Version: 0.1.8
 #!/usr/bin/env node
+// Version: 0.1.8
 /**
  * i18n Extract Script - Unified Extraction Engine
  * 
