@@ -1,3 +1,4 @@
+// Version: 0.1.8
 #!/usr/bin/env node
 const { readdir, readFile, writeFile } = require('node:fs/promises');
 const { existsSync } = require('node:fs');

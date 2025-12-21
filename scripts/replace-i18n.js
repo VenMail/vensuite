@@ -1,3 +1,4 @@
+// Version: 0.1.8
 #!/usr/bin/env node
 /**
  * i18n Replace Script - oxc-parser based

@@ -167,7 +167,8 @@
       },
       "IntegrationDialog": {
         "button": {
-          "copy_embed_code": "Copy Embed Code"
+          "copy_embed_code": "Copy Embed Code",
+          "copy_public_url": "Copy Public URL"
         },
         "heading": {
           "share_embed": "Share & Embed"
@@ -176,13 +177,17 @@
           "allow_external_applications_to": "Allow external applications to submit data to this {{ type }}",
           "copy_and_paste_this": "Copy and paste this code to integrate with your application.",
           "embed_as_iframe": "Embed as iframe",
+          "enable_api_to_use": "Enable API to use integration examples",
           "enable_public_api": "Enable Public API",
           "enable_public_api_to": "Enable Public API to reveal endpoint",
           "fields_are_submitted_in": "Fields are submitted in the same order as they appear in your {{ type }}.",
           "generate_new_api_key": "Generate new API key",
           "keep_this_key_secure": "Keep this key secure. Anyone with this key can submit data to your {{ type }}.",
+          "postman_collection_downloaded": "Postman collection downloaded",
+          "response_submitted_successfully": "Response submitted successfully",
           "reveal_api_key": "Reveal API Key",
           "sample_message_text": "Sample message text",
+          "submit_a_new_response": "Submit a new response to the form",
           "unable_to_copy_try": "Unable to copy. Try copying manually.",
           "use_field_names_as": "Use field names as keys. More readable and maintainable.",
           "view_integration_examples": "View Integration Examples"
