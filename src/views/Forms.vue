@@ -129,7 +129,7 @@ const copyShareLink = async () => {
     await navigator.clipboard.writeText(link);
     toast({ title: "Share link copied", description: t('Views.Forms.text.the_form_link_was') });
   } catch {
-    toast({ title: "Copy failed", description: "Unable to copy link. Try copying manually.", variant: "destructive" });
+    toast({ title: "Copy failed", description: t('Views.Forms.text.unable_to_copy_link'), variant: "destructive" });
   }
 };
 
@@ -198,7 +198,7 @@ const openShareModal = async (form: AppForm) => {
       await navigator.clipboard.writeText(`${SHARE_BASE_URL}/share/form/${updated.sharing.share_slug}`);
       toast({ title: "Form published", description: t('Views.Forms.text.share_link_copied_to') });
     } else {
-      toast({ title: "Publish incomplete", description: "Unable to generate share slug. Please publish manually.", variant: "destructive" });
+      toast({ title: "Publish incomplete", description: t('Views.Forms.text.unable_to_generate_share'), variant: "destructive" });
     }
   } catch (error: any) {
     const message = error?.data?.message ?? "Failed to publish form for sharing";

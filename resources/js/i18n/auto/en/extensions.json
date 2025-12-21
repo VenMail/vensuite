@@ -1,1 +1,16 @@
-{}
+{
+  "Extensions": {
+    "Pagination": {
+      "ImageHandler": {
+        "text": {
+          "figcaption_image_caption": "figcaption, .image-caption"
+        }
+      },
+      "PageNode": {
+        "text": {
+          "background_var_page_background": "background: var(--page-background, #ffffff)"
+        }
+      }
+    }
+  }
+}

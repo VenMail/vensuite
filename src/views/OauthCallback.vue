@@ -122,10 +122,10 @@ onMounted(() => {
         <div class="flex flex-col items-center justify-center space-y-4">
           <template v-if="isLoading">
             <LoaderCircle class="h-8 w-8 animate-spin text-primary-600" />
-            <p class="text-gray-600">Securely connecting to Venmail services...</p>
+            <p class="text-gray-600">{{$t('Views.OauthCallback.text.securely_connecting_to_venmail')}}</p>
           </template>
           <template v-else>
-            <p class="text-red-600 mb-4">We're sorry, an error has occured and we're unable to log you in. Please try again.</p>
+            <p class="text-red-600 mb-4">{{$t('Views.OauthCallback.text.we_re_sorry_an')}}</p>
             <Button 
               @click="returnToLogin"
               class="bg-primary-600 text-white px-6 py-2 rounded-sm hover:bg-primary-700"

@@ -242,7 +242,7 @@ onUnmounted(() => {
       <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6">
         <div class="mb-4">
           <h2 class="text-lg font-semibold">{{$t('Views.MediaViewer.heading.request_access_to_this')}}</h2>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">This file is private. Enter your email to request access from the owner.</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{$t('Views.MediaViewer.text.this_file_is_private')}}</p>
         </div>
         <form @submit.prevent="submitAccessRequest" class="space-y-3">
           <div>

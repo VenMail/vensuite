@@ -169,7 +169,7 @@
                 <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.request_body')}}</div>
                 <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ headerMappedExample }}</code></pre>
                 <div class="text-xs text-gray-500">
-                  Use field names as keys. More readable and maintainable.
+                  {{$t('Components.Forms.IntegrationDialog.text.use_field_names_as')}}
                 </div>
               </div>
 

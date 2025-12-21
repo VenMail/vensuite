@@ -28,13 +28,18 @@
       "Editors": {
         "FileEditor": {
           "label": {
-            "max_file_size_mb": "Max File Size (MB):"
+            "max_file_size_mb": "Taille max du fichier (Mo) :"
           }
         }
       },
       "FormConfigWizardSimple": {
         "text": {
           "use_device_s_default": "Utiliser la police par défaut de l'appareil"
+        }
+      },
+      "FormWizard": {
+        "text": {
+          "you_can_edit_any": "Vous pouvez modifier n'importe quel champ dans le constructeur de formulaires après création. Cliquez sur \"Créer un formulaire\" pour continuer."
         }
       },
       "IntegrationDialog": {
@@ -51,6 +56,7 @@
           "enable_public_api_to": "Activer l'API publique pour révéler le point de terminaison",
           "generate_new_api_key": "Générer une nouvelle clé API",
           "reveal_api_key": "Révéler la clé API",
+          "use_field_names_as": "Utilisez les noms de champs comme clés. Plus lisible et maintenable.",
           "view_integration_examples": "Voir les exemples d'intégration"
         }
       }

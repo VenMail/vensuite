@@ -2,7 +2,8 @@
   "Composables": {
     "UseFormAutosave": {
       "toast": {
-        "autosave_failed_retry_or": "自动保存失败。请重试或检查连接。"
+        "autosave_failed_retry_or": "自动保存失败。请重试或检查连接。",
+        "this_form_was_updated": "此表单已在其他地方更新。重新加载以继续编辑。"
       }
     }
   }

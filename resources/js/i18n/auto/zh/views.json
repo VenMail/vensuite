@@ -43,7 +43,8 @@
         "preview_local_version": "预览本地版本",
         "preview_online_version": "预览在线版本",
         "preview_unavailable": "预览不可用。",
-        "start_a_conversation_with": "与您的协作者开始对话。"
+        "start_a_conversation_with": "与您的协作者开始对话。",
+        "you_dont_have_access": "您没有访问此文档的权限。输入您的电子邮件以请求所有者的访问权限。"
       }
     },
     "Documents": {
@@ -100,7 +101,7 @@
         "failed_to_publish_form_2": "发布表单失败",
         "manage_who_in_your": "管理谁可以在您的工作区打开和编辑此表单。",
         "payment_succeeded_or_failed": "支付成功或失败",
-        "payments_can_be_configured": "Payments can be configured between $1 and $100.",
+        "payments_can_be_configured": "付款可以在 1 美元到 100 美元之间配置。",
         "provide_a_secure_https": "提供安全的HTTPS端点，我们将在所选事件发生时POST签名有效负载。您可以随时暂停交付。",
         "publishing_form_to_generate": "正在发布表单以生成分享链接…",
         "send_form_responses_and": "实时将表单响应和支付事件发送到您的下游系统。",
@@ -155,7 +156,9 @@
         "publish_the_form_to": "发布表单以获取可分享链接。",
         "publishing_form_to_generate": "正在发布表单以生成分享链接…",
         "share_link_copied_to": "分享链接已复制到剪贴板。",
-        "the_form_link_was": "表单链接已复制到您的剪贴板。"
+        "the_form_link_was": "表单链接已复制到您的剪贴板。",
+        "unable_to_copy_link": "无法复制链接。请手动复制。",
+        "unable_to_generate_share": "无法生成分享 slug。请手动发布。"
       }
     },
     "Home": {
@@ -212,7 +215,8 @@
       },
       "text": {
         "cannot_preview_this_file": "无法预览此文件类型。",
-        "sending": "Sending..."
+        "sending": "Sending...",
+        "this_file_is_private": "此文件是私有的。输入您的电子邮件以请求所有者的访问权限。"
       }
     },
     "OauthCallback": {
@@ -226,6 +230,10 @@
       "link": {
         "cookie_ccpa_preferences": "Cookie和CCPA偏好设置",
         "privacy_terms": "隐私和条款"
+      },
+      "text": {
+        "securely_connecting_to_venmail": "Securely connecting to Venmail services...",
+        "we_re_sorry_an": "我们很抱歉，发生错误，我们无法登录。请再试一次。"
       }
     },
     "SheetEditor": {
@@ -234,7 +242,9 @@
         "this_spreadsheet_is_large": "此电子表格较大"
       },
       "text": {
-        "sending": "Sending..."
+        "sending": "Sending...",
+        "the_file_is_too": "该文件太大，无法在线预览。您可以下载以本地查看。",
+        "this_sheet_is_private": "此表格为私人。请输入您的电子邮件以请求访问权限。"
       }
     },
     "Sheets": {

@@ -43,7 +43,8 @@
         "preview_local_version": "Aperçu de la version locale",
         "preview_online_version": "Aperçu de la version en ligne",
         "preview_unavailable": "Aperçu indisponible.",
-        "start_a_conversation_with": "Démarrez une conversation avec vos collaborateurs."
+        "start_a_conversation_with": "Démarrez une conversation avec vos collaborateurs.",
+        "you_dont_have_access": "Vous n'avez pas accès à ce document. Entrez votre email pour demander l'accès au propriétaire."
       }
     },
     "Documents": {
@@ -100,7 +101,7 @@
         "failed_to_publish_form_2": "Échec de la publication du formulaire",
         "manage_who_in_your": "Gérez qui dans votre espace de travail peut ouvrir et modifier ce formulaire.",
         "payment_succeeded_or_failed": "Paiement réussi ou échoué",
-        "payments_can_be_configured": "Payments can be configured between $1 and $100.",
+        "payments_can_be_configured": "Les paiements peuvent être configurés entre 1 $ et 100 $.",
         "provide_a_secure_https": "Fournissez un point de terminaison HTTPS sécurisé et nous enverrons une charge utile signée chaque fois que les événements sélectionnés se produisent. Vous pouvez suspendre la livraison à tout moment.",
         "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
         "send_form_responses_and": "Envoyez les réponses du formulaire et les événements de paiement à vos systèmes en temps réel.",
@@ -155,7 +156,9 @@
         "publish_the_form_to": "Publiquez le formulaire pour obtenir un lien partageable.",
         "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
         "share_link_copied_to": "Lien de partage copié dans le presse-papiers.",
-        "the_form_link_was": "Le lien du formulaire a été copié dans votre presse-papiers."
+        "the_form_link_was": "Le lien du formulaire a été copié dans votre presse-papiers.",
+        "unable_to_copy_link": "Impossible de copier le lien. Essayez de copier manuellement.",
+        "unable_to_generate_share": "Impossible de générer le slug de partage. Veuillez publier manuellement."
       }
     },
     "Home": {
@@ -212,7 +215,8 @@
       },
       "text": {
         "cannot_preview_this_file": "Impossible de prévisualiser ce type de fichier.",
-        "sending": "Sending..."
+        "sending": "Sending...",
+        "this_file_is_private": "Ce fichier est privé. Entrez votre email pour demander l'accès au propriétaire."
       }
     },
     "OauthCallback": {
@@ -226,6 +230,10 @@
       "link": {
         "cookie_ccpa_preferences": "Préférences en matière de cookies et de CCPA",
         "privacy_terms": "Confidentialité et conditions"
+      },
+      "text": {
+        "securely_connecting_to_venmail": "Securely connecting to Venmail services...",
+        "we_re_sorry_an": "Nous sommes désolés, une erreur s'est produite et nous ne pouvons pas vous connecter. Veuillez réessayer."
       }
     },
     "SheetEditor": {
@@ -234,7 +242,9 @@
         "this_spreadsheet_is_large": "Cette feuille de calcul est grande"
       },
       "text": {
-        "sending": "Sending..."
+        "sending": "Sending...",
+        "the_file_is_too": "Le fichier est trop volumineux pour être prévisualisé en ligne. Vous pouvez le télécharger pour le visualiser localement.",
+        "this_sheet_is_private": "Cette feuille est privée. Entrez votre email pour demander l'accès au propriétaire."
       }
     },
     "Sheets": {

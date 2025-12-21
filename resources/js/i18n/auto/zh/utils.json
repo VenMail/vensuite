@@ -2,7 +2,7 @@
   "Utils": {
     "Helpers": {
       "text": {
-        "target_position_is_invalid": "Target position is invalid, you can't move the {type} {originIndex} to {targetIndex}, the target can't be split. You could use tryToFit option."
+        "target_position_is_invalid": "目标位置无效，您无法将 {type} {originIndex} 移动到 {targetIndex}，目标无法被拆分。您可以使用 tryToFit 选项。"
       }
     }
   }

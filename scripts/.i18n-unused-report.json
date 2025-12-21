@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-20T00:26:00.546Z",
+  "generatedAt": "2025-12-20T00:36:27.473Z",
   "baseLocale": "en",
   "autoDir": "resources/js/i18n/auto",
   "unused": [
@@ -2352,6 +2352,10 @@
       "baseFileRel": "en/components.json"
     },
     {
+      "keyPath": "Components.FileUploader.text.conversion_produced_empty_content",
+      "baseFileRel": "en/components.json"
+    },
+    {
       "keyPath": "Components.FileUploader.text.drop_documents_here_html",
       "baseFileRel": "en/components.json"
     },
@@ -2488,6 +2492,10 @@
       "baseFileRel": "en/components.json"
     },
     {
+      "keyPath": "Components.Forms.DocsToolbar.text.unsupported_file_type_for",
+      "baseFileRel": "en/components.json"
+    },
+    {
       "keyPath": "Components.Forms.DocsToolbar.title.comments_chat",
       "baseFileRel": "en/components.json"
     },
@@ -2620,6 +2628,10 @@
       "baseFileRel": "en/components.json"
     },
     {
+      "keyPath": "Components.Forms.IntegrationDialog.text.unable_to_copy_try",
+      "baseFileRel": "en/components.json"
+    },
+    {
       "keyPath": "Components.Forms.Player.FocusPlayer.text.almost_there",
       "baseFileRel": "en/components.json"
     },
@@ -2633,6 +2645,10 @@
     },
     {
       "keyPath": "Components.Forms.Player.FocusPlayer.text.provide_your_answer_and",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.Player.FocusPlayer.text.this_question_is_required",
       "baseFileRel": "en/components.json"
     },
     {
@@ -2665,6 +2681,10 @@
     },
     {
       "keyPath": "Components.Forms.Player.PaymentStep.text.unable_to_initialize_stripe",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.Player.PaymentStep.text.unable_to_render_payment",
       "baseFileRel": "en/components.json"
     },
     {
@@ -2756,6 +2776,10 @@
       "baseFileRel": "en/components.json"
     },
     {
+      "keyPath": "Components.ShareCard.placeholder.write_a_message_to",
+      "baseFileRel": "en/components.json"
+    },
+    {
       "keyPath": "Components.ShareCard.text.people_in_your_organization",
       "baseFileRel": "en/components.json"
     },
@@ -2816,6 +2840,10 @@
       "baseFileRel": "en/components.json"
     },
     {
+      "keyPath": "Composables.UseDocumentConflictResolver.text.a_saved_local_copy",
+      "baseFileRel": "en/composables.json"
+    },
+    {
       "keyPath": "Composables.UseDocumentConflictResolver.text.content_contains_formatting_without",
       "baseFileRel": "en/composables.json"
     },
@@ -2825,6 +2853,10 @@
     },
     {
       "keyPath": "Composables.UseDocumentConflictResolver.text.failed_to_apply_online",
+      "baseFileRel": "en/composables.json"
+    },
+    {
+      "keyPath": "Composables.UseDocumentConflictResolver.text.keeping_local_copy_it",
       "baseFileRel": "en/composables.json"
     },
     {
@@ -2848,6 +2880,10 @@
       "baseFileRel": "en/composables.json"
     },
     {
+      "keyPath": "Composables.UseDocumentConflictResolver.text.we_detected_differences_after",
+      "baseFileRel": "en/composables.json"
+    },
+    {
       "keyPath": "Composables.UseDocumentPersistence.text.document_is_read_only",
       "baseFileRel": "en/composables.json"
     },
@@ -2861,6 +2897,10 @@
     },
     {
       "keyPath": "Composables.UseFormAutosave.text.failed_to_autosave",
+      "baseFileRel": "en/composables.json"
+    },
+    {
+      "keyPath": "Composables.UseFormAutosave.text.this_form_was_updated",
       "baseFileRel": "en/composables.json"
     },
     {
@@ -3244,6 +3284,10 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.DocsEditor.text.access_request_sent_you",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.DocsEditor.text.add_column_after",
       "baseFileRel": "en/views.json"
     },
@@ -3324,6 +3368,14 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.DocsEditor.text.request_sent_if_the",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.DocsEditor.text.request_submitted_please_check",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.DocsEditor.text.reset_row_height",
       "baseFileRel": "en/views.json"
     },
@@ -3337,6 +3389,10 @@
     },
     {
       "keyPath": "Views.DocsEditor.text.upload_new_image",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.DocsEditor.text.your_document_is_still",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3380,6 +3436,10 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.FormBuilder.placeholder.describe_what_questions_you",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.FormBuilder.text.and_set_to_public",
       "baseFileRel": "en/views.json"
     },
@@ -3412,11 +3472,19 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.FormBuilder.text.form_published_share_link",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.FormBuilder.text.form_will_accept_new",
       "baseFileRel": "en/views.json"
     },
     {
       "keyPath": "Views.FormBuilder.text.form_will_not_accept",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.FormBuilder.text.only_people_in_your",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3444,6 +3512,14 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.FormBuilder.text.unable_to_copy_link",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.FormBuilder.text.unable_to_generate_share",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.FormBuilder.text.unable_to_remove_collaborator",
       "baseFileRel": "en/views.json"
     },
@@ -3461,6 +3537,10 @@
     },
     {
       "keyPath": "Views.FormBuilder.title.stop_accepting_responses",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.FormPaymentSuccess.text.something_went_wrong_while",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3485,6 +3565,14 @@
     },
     {
       "keyPath": "Views.FormPlayerHost.text.authentication_required_to_preview",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.FormPlayerHost.text.could_not_create_response",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.FormPlayerHost.text.could_not_start_payment",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3521,6 +3609,10 @@
     },
     {
       "keyPath": "Views.FormPlayerHost.text.thank_you",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.FormPlayerHost.text.this_form_is_not",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3588,6 +3680,10 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.Login.text.session_expired_please_sign",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.Media.heading.enter_a_new_name",
       "baseFileRel": "en/views.json"
     },
@@ -3640,6 +3736,10 @@
       "baseFileRel": "en/views.json"
     },
     {
+      "keyPath": "Views.MediaViewer.text.access_request_sent_you",
+      "baseFileRel": "en/views.json"
+    },
+    {
       "keyPath": "Views.MediaViewer.text.failed_to_download_file",
       "baseFileRel": "en/views.json"
     },
@@ -3653,6 +3753,14 @@
     },
     {
       "keyPath": "Views.MediaViewer.text.file_not_found",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.MediaViewer.text.request_sent_if_the",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.MediaViewer.text.request_submitted_please_check",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3673,6 +3781,10 @@
     },
     {
       "keyPath": "Views.SheetEditor.placeholder.type_a_message",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.SheetEditor.text.access_request_sent_you",
       "baseFileRel": "en/views.json"
     },
     {
@@ -3745,6 +3857,14 @@
     },
     {
       "keyPath": "Views.SheetEditor.text.public_api_enabled",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.SheetEditor.text.request_sent_if_the",
+      "baseFileRel": "en/views.json"
+    },
+    {
+      "keyPath": "Views.SheetEditor.text.request_submitted_please_check",
       "baseFileRel": "en/views.json"
     },
     {

@@ -1384,7 +1384,7 @@ watch(
         <div class="mb-4">
           <h2 class="text-lg font-semibold">{{$t('Views.SheetEditor.heading.request_access_to_this')}}</h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            This sheet is private. Enter your email to request access from the owner.
+            {{$t('Views.SheetEditor.text.this_sheet_is_private')}}
           </p>
         </div>
         <form @submit.prevent="submitAccessRequestSheet" class="space-y-3">
@@ -1433,7 +1433,7 @@ watch(
       <div class="w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow p-6 text-center">
         <h2 class="text-lg font-semibold mb-2">{{$t('Views.SheetEditor.heading.this_spreadsheet_is_large')}}</h2>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          The file is too large to preview online. You can download it to view locally.
+          {{$t('Views.SheetEditor.text.the_file_is_too')}}
         </p>
         <Button variant="default" @click="downloadFile" :disabled="!downloadUrl">{{$t('Commons.button.download_file_2')}}</Button>
       </div>

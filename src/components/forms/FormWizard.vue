@@ -154,7 +154,7 @@
                   {{$t('Forms.FormWizard.text.ai_generated_form_ready')}}
                 </p>
                 <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                  You can edit any field in the form builder after creation. Click "Create Form" to continue.
+                  {{$t('Components.Forms.FormWizard.text.you_can_edit_any')}}
                 </p>
               </div>
             </div>

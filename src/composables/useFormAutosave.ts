@@ -74,7 +74,7 @@ export const useFormAutosave = (options: AutosaveOptions = {}) => {
     } catch (error: any) {
       editorStore.markError(error?.data?.message ?? "Failed to autosave");
       if (error?.status === 409) {
-        toast.error("This form was updated elsewhere. Reload to continue editing.");
+        toast.error(t('Composables.UseFormAutosave.toast.this_form_was_updated'));
         isEnabled.value = false;
       } else {
         toast.error(t('Composables.UseFormAutosave.toast.autosave_failed_retry_or'));

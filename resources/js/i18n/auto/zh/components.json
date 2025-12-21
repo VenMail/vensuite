@@ -28,13 +28,18 @@
       "Editors": {
         "FileEditor": {
           "label": {
-            "max_file_size_mb": "Max File Size (MB):"
+            "max_file_size_mb": "最大文件大小（MB）："
           }
         }
       },
       "FormConfigWizardSimple": {
         "text": {
           "use_device_s_default": "使用设备的默认字体"
+        }
+      },
+      "FormWizard": {
+        "text": {
+          "you_can_edit_any": "您可以在创建后编辑表单构建器中的任何字段。单击“创建表单”以继续。"
         }
       },
       "IntegrationDialog": {
@@ -51,6 +56,7 @@
           "enable_public_api_to": "启用公共API以显示端点",
           "generate_new_api_key": "生成新的API密钥",
           "reveal_api_key": "显示API密钥",
+          "use_field_names_as": "使用字段名称作为键。更易读且可维护。",
           "view_integration_examples": "查看集成示例"
         }
       }

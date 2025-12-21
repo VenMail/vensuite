@@ -28,7 +28,7 @@
       <div class="w-full max-w-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{{$t('Commons.heading.request_access')}}</h2>
         <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
-          You don’t have access to this document. Enter your email to request access from the owner.
+          {{$t('Views.DocsEditor.text.you_dont_have_access')}}
         </p>
         <div class="space-y-3">
           <div>
