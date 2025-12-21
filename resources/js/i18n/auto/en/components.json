@@ -7,16 +7,6 @@
     }
   },
   "Components": {
-    "Buttons": {
-      "AddFieldButton": {
-        "placeholder": {
-          "search_field_types": "Search field types..."
-        },
-        "text": {
-          "yes_no": "yes/no"
-        }
-      }
-    },
     "Editor": {
       "ChartConfigurator": {
         "text": {
@@ -24,92 +14,15 @@
         }
       }
     },
-    "FileUploader": {
-      "text": {
-        "conversion_produced_empty_content": "Conversion produced empty content. The file may be corrupted or in an unsupported format.",
-        "drop_documents_here_html": "Drop documents here (HTML, DOCX, PDF will be auto-converted)",
-        "drop_spreadsheets_here_xlsx": "Drop spreadsheets here (XLSX, CSV will be auto-converted)",
-        "failed_to_create_root": "Failed to create root folder",
-        "failed_to_save_converted": "Failed to save converted document to server"
-      }
-    },
     "Forms": {
-      "Blocks": {
-        "BlockEditor": {
-          "placeholder": {
-            "add_a_description": "Add a description..."
-          }
-        },
-        "BlockItem": {
-          "text": {
-            "choose_one_option": "Choose one option",
-            "rate_from_1_to": "Rate from 1 to 5",
-            "select_a_date": "Select a date",
-            "select_a_time": "Select a time",
-            "select_all_that_apply": "Select all that apply",
-            "select_from_dropdown": "Select from dropdown",
-            "short_answer_text": "Short answer text",
-            "slide_to_select": "Slide to select",
-            "type_your_question": "Type your question...",
-            "type_your_question_here": "Type your question here...",
-            "upload_a_file": "Upload a file",
-            "what_s_your_email": "What's your email address?",
-            "what_s_your_phone": "What's your phone number?",
-            "yes_no": "Yes/No",
-            "yes_or_no": "Yes or No?"
-          },
-          "title": {
-            "add_block_below": "Add block below",
-            "drag_to_reorder": "Drag to reorder"
-          }
-        },
-        "BlockItemNew": {
-          "text": {
-            "short_answer_text": "Short answer text",
-            "type_your_question_here": "Type your question here..."
-          },
-          "title": {
-            "drag_to_reorder": "Drag to reorder"
-          }
-        },
-        "SlashMenu": {
-          "placeholder": {
-            "search_blocks": "Search blocks..."
-          }
-        },
-        "Types": {
-          "text": {
-            "yes_no": "Yes/No"
-          }
-        }
-      },
       "DocsTitleBar": {
         "text": {
-          "click_to_save_now": "Click to save now",
-          "last_saved_time": "Last saved time",
-          "loading_versions": "Loading versions...",
-          "saved_just_now": "Saved just now"
+          "loading_versions": "Loading versions..."
         }
       },
       "DocsToolbar": {
         "text": {
-          "failed_to_convert_file": "Failed to convert file",
-          "failed_to_import_file": "Failed to import file",
-          "failed_to_insert_content": "Failed to insert content into document",
-          "file_imported_successfully": "File imported successfully",
-          "resume_cv": "Resume/CV",
-          "unsupported_file_type_for": "Unsupported file type for import. Only PDF, DOCX, and HTML are supported."
-        },
-        "title": {
-          "comments_chat": "Comments & Chat",
-          "import_file_pdf_docx": "Import File (PDF, DOCX, HTML)",
-          "insert_edit_link": "Insert/Edit Link",
-          "line_paragraph_spacing": "Line & paragraph spacing"
-        }
-      },
-      "Editor": {
-        "placeholder": {
-          "select_jump_to_field": "Select jump to field"
+          "resume_cv": "Resume/CV"
         }
       },
       "Editors": {
@@ -117,51 +30,15 @@
           "label": {
             "max_file_size_mb": "Max File Size (MB):"
           }
-        },
-        "LogicEditor": {
-          "placeholder": {
-            "question_id_to_jump": "Question ID to jump to"
-          }
-        }
-      },
-      "Fields": {
-        "TextQuestion": {
-          "text": {
-            "invalid_email_format": "Invalid email format",
-            "invalid_url_format": "Invalid URL format"
-          }
         }
       },
       "FormConfigWizardSimple": {
         "text": {
-          "add_your_logo": "Add Your Logo?",
-          "choose_your_font": "Choose Your Font",
-          "choose_your_theme": "Choose Your Theme",
-          "connect_to_external_services": "Connect to External Services?",
-          "do_you_need_to": "Do You Need to Collect Payments?",
-          "how_do_you_want": "How Do You Want to View Responses?",
-          "how_should_users_navigate": "How Should Users Navigate?",
-          "no_skip_payments": "No, Skip Payments",
-          "no_skip_webhooks": "No, Skip Webhooks",
-          "use_device_s_default": "Use device's default font",
-          "yes_add_logo": "Yes, Add Logo",
-          "yes_enable_payments": "Yes, Enable Payments",
-          "yes_enable_webhooks": "Yes, Enable Webhooks"
+          "use_device_s_default": "Use device's default font"
         }
       },
       "FormWizard": {
-        "placeholder": {
-          "example_a_customer_feedback": "Example: A customer feedback form with name, email, rating, and comments..."
-        },
         "text": {
-          "a_customer_feedback_survey": "A customer feedback survey with overall rating (1-5 stars), what did you like, what could be improved, and would you recommend us (yes/no)",
-          "get_in_touch": "get in touch",
-          "how_can_we_help": "How can we help you?",
-          "how_would_you_rate": "How would you rate your overall experience?",
-          "what_could_we_improve": "What could we improve?",
-          "what_did_you_like": "What did you like most?",
-          "would_you_recommend_us": "Would you recommend us to others?",
-          "yes_no": "Yes/No",
           "you_can_edit_any": "You can edit any field in the form builder after creation. Click \"Create Form\" to continue."
         }
       },
@@ -170,103 +47,16 @@
           "copy_embed_code": "Copy Embed Code",
           "copy_public_url": "Copy Public URL"
         },
-        "heading": {
-          "share_embed": "Share & Embed"
-        },
         "text": {
-          "allow_external_applications_to": "Allow external applications to submit data to this {{ type }}",
-          "copy_and_paste_this": "Copy and paste this code to integrate with your application.",
-          "embed_as_iframe": "Embed as iframe",
           "enable_api_to_use": "Enable API to use integration examples",
-          "enable_public_api": "Enable Public API",
-          "enable_public_api_to": "Enable Public API to reveal endpoint",
-          "fields_are_submitted_in": "Fields are submitted in the same order as they appear in your {{ type }}.",
-          "generate_new_api_key": "Generate new API key",
-          "keep_this_key_secure": "Keep this key secure. Anyone with this key can submit data to your {{ type }}.",
-          "postman_collection_downloaded": "Postman collection downloaded",
           "response_submitted_successfully": "Response submitted successfully",
-          "reveal_api_key": "Reveal API Key",
-          "sample_message_text": "Sample message text",
-          "submit_a_new_response": "Submit a new response to the form",
-          "unable_to_copy_try": "Unable to copy. Try copying manually.",
-          "use_field_names_as": "Use field names as keys. More readable and maintainable.",
-          "view_integration_examples": "View Integration Examples"
-        }
-      },
-      "Player": {
-        "FocusPlayer": {
-          "text": {
-            "almost_there": "Almost there!",
-            "great_progress": "Great progress!",
-            "lets_get_started": "Let’s get started",
-            "provide_your_answer_and": "Provide your answer and use Next when you are ready.",
-            "this_question_is_required": "This question is required. Provide an answer to continue.",
-            "you_can_skip_this": "You can skip this question or come back later.",
-            "youre_doing_well": "You’re doing well"
-          }
-        },
-        "PaymentStep": {
-          "text": {
-            "failed_to_load_stripe": "Failed to load Stripe.js",
-            "payment_confirmation_failed": "Payment confirmation failed.",
-            "payment_failed_please_try": "Payment failed. Please try again.",
-            "payment_is_not_ready": "Payment is not ready. Please retry.",
-            "payment_successful": "Payment successful.",
-            "unable_to_initialize_stripe": "Unable to initialize Stripe.",
-            "unable_to_render_payment": "Unable to render payment form. Please refresh and try again."
-          }
-        },
-        "QuestionRenderer": {
-          "text": {
-            "enter_a_valid_email": "Enter a valid email address",
-            "enter_a_valid_phone": "Enter a valid phone number",
-            "enter_a_valid_url": "Enter a valid URL",
-            "this_field_is_required": "This field is required",
-            "yes_no": "Yes / No"
-          }
-        }
-      },
-      "QuickView": {
-        "aria_label": {
-          "delete_draft_form": "Delete draft form"
-        },
-        "text": {
-          "delete_this_draft_form": "Delete this draft form? This action cannot be undone."
-        }
-      },
-      "WebhooksPanel": {
-        "text": {
-          "failed_to_load_webhooks": "Failed to load webhooks",
-          "failed_to_send_sample": "Failed to send sample.",
-          "sample_event_sent_successfully": "Sample event sent successfully."
+          "submit_a_new_response": "Submit a new response to the form"
         }
       }
     },
     "ImagePicker": {
-      "placeholder": {
-        "search_images": "Search images..."
-      },
       "text": {
         "loading_images": "Loading images..."
-      }
-    },
-    "Layout": {
-      "SearchBar": {
-        "text": {
-          "search_documents": "Search documents...",
-          "search_files": "Search files...",
-          "search_media_files": "Search media files...",
-          "search_spreadsheets": "Search spreadsheets...",
-          "search_trash": "Search trash..."
-        }
-      },
-      "WorkspaceTopBar": {
-        "aria_label": {
-          "up_one_level": "Up one level"
-        },
-        "title": {
-          "up_one_level": "Up one level"
-        }
       }
     },
     "Loader": {
@@ -281,15 +71,8 @@
           "upload_your_first_media": "Upload your first media files to get started. Supported formats include images, videos, and audio files."
         }
       },
-      "MediaToolbar": {
-        "placeholder": {
-          "search_media_files": "Search media files..."
-        }
-      },
       "MediaViewer": {
         "text": {
-          "failed_to_import_file": "Failed to import file",
-          "imported_to_document": "Imported to document",
           "loading_media": "Loading media..."
         }
       }
@@ -314,59 +97,6 @@
     "ShareCard": {
       "heading": {
         "add_a_note_optional": "Add a note (optional)"
-      },
-      "placeholder": {
-        "enter_email_address": "Enter email address",
-        "write_a_message_to": "Write a message to include with the invitation..."
-      },
-      "text": {
-        "people_in_your_organization": "People in your organization",
-        "share_the_link_with": "Share the link with anyone to give them access.",
-        "this_may_appear_in": "This may appear in search results and be visible to anyone.",
-        "update_permission_settings": "update-permission-settings"
-      }
-    },
-    "Slides": {
-      "SlidesTitleBar": {
-        "text": {
-          "all_changes_saved": "All changes saved",
-          "click_to_save_now": "Click to save now",
-          "last_saved_time": "Last saved time",
-          "saved_just_now": "Saved just now"
-        }
-      },
-      "SlidesToolbar": {
-        "title": {
-          "export_as_pdf": "Export as PDF",
-          "export_as_pptx": "Export as PPTX"
-        }
-      }
-    },
-    "Trash": {
-      "TrashToolbar": {
-        "placeholder": {
-          "search_trash_items": "Search trash items..."
-        }
-      }
-    },
-    "Ui": {
-      "CustomToast": {
-        "text": {
-          "border_border_gray_200": "border border-gray-200 dark:border-gray-700"
-        }
-      },
-      "Toast": {
-        "Index": {
-          "text": {
-            "border_bg_background_text": "border bg-background text-foreground"
-          }
-        }
-      }
-    },
-    "UniverSheet": {
-      "text": {
-        "container_element_is_missing": "Container element is missing",
-        "workbook_is_not_initialized": "Workbook is not initialized"
       }
     }
   },

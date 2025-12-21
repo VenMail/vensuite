@@ -14,27 +14,14 @@
         "welcome_to_venmail_file": "欢迎使用 Venmail 文件管理器"
       },
       "text": {
-        "cannot_download_this_item": "Cannot download this item",
         "deleted_files_will_appear": "已删除的文件将出现在这里，可以恢复或永久删除。",
-        "failed_to_delete_item": "Failed to delete item permanently",
-        "failed_to_download_file": "Failed to download file",
-        "failed_to_empty_bin": "Failed to empty bin",
-        "failed_to_load_trash": "Failed to load trash items",
-        "failed_to_preview_file": "Failed to preview file",
-        "failed_to_restore_item": "Failed to restore item",
         "login_to_access_your": "登录以访问您的垃圾箱并管理已删除的文件。",
-        "no_items_selected": "No items selected",
         "preparing_your_deleted_items": "正在准备您的已删除项目……",
-        "preview_not_available_for": "Preview not available for this item",
         "sort_by_date_newest": "按日期排序（最新）",
         "sort_by_date_oldest": "按日期排序（最旧）",
         "sort_by_name": "按名称排序",
         "sort_by_size": "按大小排序",
         "sort_by_type": "按类型排序",
-        "this_will_permanently_delete": "This will permanently delete all {{ trashItems.length }} items in the trash. This action cannot be undone.",
-        "this_will_permanently_delete_2": "This will permanently delete {{ selectedFiles.size }} item(s). This action cannot be undone.",
-        "trash_file_manager": "Trash - File Manager",
-        "trash_is_already_empty": "Trash is already empty",
         "try_adjusting_your_search": "尝试调整您的搜索或过滤器以查找特定项目。"
       }
     },
@@ -44,56 +31,20 @@
         "keep_online_version": "保留在线版本"
       },
       "heading": {
-        "comments_chat": "Comments & Chat",
         "content_versions_differ": "内容版本不同"
       },
       "link": {
         "open_direct_link": "打开直接链接"
       },
-      "placeholder": {
-        "id_like_to_view": "I’d like to view this document.",
-        "type_a_message": "Type a message..."
-      },
       "text": {
-        "access_request_sent_you": "Access request sent. You will receive an email when approved.",
-        "add_column_after": "Add column after",
         "add_headings_to_see": "添加标题以查看大纲",
-        "add_row_below": "Add row below",
-        "add_some_content_before": "Add some content before saving.",
-        "adjust_font_size": "Adjust font size",
-        "brand_foreground_color": "Brand foreground color",
-        "configure_chart_data": "Configure chart data",
-        "document_created_from_template": "Document created from template",
-        "docx_exported_successfully": "DOCX exported successfully",
-        "edit_chart_title": "Edit chart title",
-        "failed_to_create_document": "Failed to create document",
-        "failed_to_export_docx": "Failed to export DOCX",
-        "failed_to_export_pdf": "Failed to export PDF",
-        "failed_to_load_document": "Failed to load document",
-        "failed_to_load_version": "Failed to load version content",
-        "failed_to_save_document": "Failed to save document",
-        "html_exported_successfully": "HTML exported successfully",
-        "link_copied_to_clipboard": "Link copied to clipboard",
         "no_headings_found": "未找到标题",
         "no_messages_yet": "尚无消息。",
-        "open_link_in_new": "Open link in new tab (⌘+Click)",
-        "open_link_in_new_2": "Open link in new tab (Ctrl+Click)",
-        "pdf_export_started": "PDF export started",
         "preview_local_version": "预览本地版本",
         "preview_online_version": "预览在线版本",
         "preview_unavailable": "预览不可用。",
-        "request_sent_if_the": "Request sent (if the email is valid).",
-        "request_submitted_please_check": "Request submitted. Please check your email later.",
-        "reset_row_height": "Reset row height",
         "start_a_conversation_with": "与您的协作者开始对话。",
-        "tip_hold_and_click": "Tip: Hold ⌘ and click to open the link.",
-        "tip_hold_ctrl_and": "Tip: Hold Ctrl and click to open the link.",
-        "upload_new_image": "Upload new image",
-        "you_dont_have_access": "您没有访问此文档的权限。输入您的电子邮件以请求所有者的访问权限。",
-        "your_document_is_still": "Your document is still empty. Add content before saving."
-      },
-      "title": {
-        "apply_font_size": "Apply font size"
+        "you_dont_have_access": "您没有访问此文档的权限。输入您的电子邮件以请求所有者的访问权限。"
       }
     },
     "Documents": {
@@ -104,24 +55,14 @@
       },
       "text": {
         "choose_a_template_or_start_blank": "选择一个模板或从空白开始",
-        "executive_summary_plan": "Executive summary & plan",
-        "failed_to_create_folder": "Failed to create folder",
-        "failed_to_delete_some": "Failed to delete some documents",
-        "get_started_by_creating": "通过创建新文档或上传现有文档开始。",
-        "localecompare_b_title": ").localeCompare(b.title ||",
-        "modern_cv_layout": "Modern CV layout",
-        "start_from_scratch": "Start from scratch"
+        "get_started_by_creating": "通过创建新文档或上传现有文档开始。"
       }
     },
     "FilePicker": {
       "heading": {
         "no_files_found": "未找到文件"
       },
-      "placeholder": {
-        "search_files": "Search files..."
-      },
       "text": {
-        "localecompare_b_title": ").localeCompare(b.title ||",
         "try_adjusting_your_search": "尝试调整您的搜索或过滤条件。"
       }
     },
@@ -151,85 +92,32 @@
         "stripe_account_id": "Stripe 账户 ID",
         "stripe_publishable_key": "Stripe 可发布密钥"
       },
-      "placeholder": {
-        "add_a_description_to": "Add a description to help people understand your form...",
-        "describe_what_questions_you": "Describe what questions you want to add..."
-      },
       "text": {
         "add_a_question": "添加问题",
         "add_questions_customize_fields": "添加问题，自定义字段，创建满足您需求的完美表单。",
-        "and_set_to_public": "and set to public",
         "any_custom_events_you": "您定义的任何自定义事件",
         "anyone_with_the_link": "任何拥有链接的人都可以回复。",
-        "api_key_updated": "API key updated",
         "collaborators_workspace_access": "协作者和工作区访问",
-        "could_not_delete_form": "Could not delete form.",
-        "delete_this_form_this": "Delete this form? This action cannot be undone.",
-        "editor_link_copied_to": "Editor link copied to clipboard",
         "failed_to_publish_form_2": "发布表单失败",
-        "failed_to_rotate_api": "Failed to rotate API key",
-        "failed_to_update_public": "Failed to update Public API settings",
-        "form_published_but_share": "Form published but share slug is unavailable",
-        "form_published_share_link": "Form published. Share link copied to clipboard.",
-        "form_will_accept_new": "Form will accept new submissions.",
-        "form_will_not_accept": "Form will not accept new submissions.",
         "manage_who_in_your": "管理谁可以在您的工作区打开和编辑此表单。",
-        "only_people_in_your": "Only people in your organization (and invited collaborators) can access this form.",
-        "only_the_form_owner": "Only the form owner can update payment settings when using platform payments.",
         "payment_succeeded_or_failed": "支付成功或失败",
         "payments_can_be_configured": "付款可以在 1 美元到 100 美元之间配置。",
         "provide_a_secure_https": "提供安全的HTTPS端点，我们将在所选事件发生时POST签名有效负载。您可以随时暂停交付。",
-        "public_api_disabled": "Public API disabled",
-        "public_api_enabled": "Public API enabled",
-        "publish_failed_please_try": "Publish failed. Please try again.",
         "publishing_form_to_generate": "正在发布表单以生成分享链接…",
         "send_form_responses_and": "实时将表单响应和支付事件发送到您的下游系统。",
-        "share_link_copied_to": "Share link copied to clipboard",
-        "share_link_unavailable_publish": "Share link unavailable. Publish the form to get a shareable link.",
-        "unable_to_copy_link": "Unable to copy link. Try copying manually.",
-        "unable_to_generate_share": "Unable to generate share slug. Please publish manually.",
-        "unable_to_remove_collaborator": "Unable to remove collaborator",
-        "unable_to_update_access": "Unable to update access level",
-        "unable_to_update_collaborators": "Unable to update collaborators",
-        "unable_to_update_response": "Unable to update response settings.",
         "use_my_own_stripe": "使用我自己的Stripe账户",
         "use_platform_account": "使用平台账户",
         "why_webhooks": "为什么使用Webhook？"
-      },
-      "title": {
-        "stop_accepting_responses": "Stop accepting responses"
       }
     },
     "FormPaymentSuccess": {
       "button": {
         "view_form_again": "再次查看表单"
-      },
-      "text": {
-        "something_went_wrong_while": "Something went wrong while confirming the payment. Please try again.",
-        "success_host_status_pending": "success-host__status--pending",
-        "thank_you_for_your": "Thank you for your payment",
-        "we_are_still_processing": "We are still processing your payment. You will receive an update shortly.",
-        "your_response_has_been": "Your response has been submitted and the payment is confirmed.",
-        "your_response_was_submitted": "Your response was submitted successfully."
       }
     },
     "FormPlayerHost": {
       "text": {
-        "authentication_required_to_preview": "Authentication required to preview this form.",
-        "could_not_create_response": "Could not create response. Please try again.",
-        "could_not_start_payment": "Could not start payment flow. Please retry.",
-        "failed_to_finalize_response": "Failed to finalize response.",
-        "failed_to_load_form": "Failed to load form.",
-        "failed_to_submit_response": "Failed to submit response.",
-        "invalid_response_please_retry": "Invalid response. Please retry submission.",
-        "missing_form_identifier": "Missing form identifier",
-        "missing_response_id": "Missing response ID",
-        "payment_confirmed_thank_you": "Payment confirmed. Thank you!",
-        "response_submitted_successfully": "Response submitted successfully.",
-        "thank_you": "Thank you!",
-        "this_form_is_not": "This form is not publicly accessible yet. Publish to allow submissions.",
-        "we_will_ask_for": "我们将询问您的电子邮件地址，以便发送确认和收据。",
-        "your_response_has_been": "Your response has been recorded."
+        "we_will_ask_for": "我们将询问您的电子邮件地址，以便发送确认和收据。"
       }
     },
     "FormResponses": {
@@ -241,16 +129,10 @@
         "review_submission_metadata_and": "查看提交元数据和答案。"
       },
       "text": {
-        "csv_exported_successfully": "CSV exported successfully",
-        "failed_to_export_csv": "Failed to export CSV",
-        "failed_to_export_to": "Failed to export to sheet",
-        "failed_to_load_response": "Failed to load response detail.",
-        "failed_to_load_responses": "Failed to load responses.",
         "manage_submissions_monitor_payment": "管理提交，监控支付状态，并深入了解个别答案。",
         "monitor_how_respondents_engage": "监控响应者如何与您的表单互动，并发现完成状态的趋势。",
         "no_answers_captured_for": "此响应未捕获任何答案。",
         "no_responses_yet_share": "尚无响应。分享您的表单以开始收集提交。",
-        "sheet_updated_successfully": "Sheet updated successfully",
         "visualize_completion_ratio_at": "一目了然地可视化完成比例"
       }
     },
@@ -265,13 +147,8 @@
         "create_and_manage_forms": "创建和管理表单",
         "share_this_form_with": "使用下面的链接与参与者或协作者分享此表单。"
       },
-      "placeholder": {
-        "search": "Search...",
-        "search_forms": "Search forms..."
-      },
       "text": {
         "anyone_with_this_link": "任何拥有此链接的人都可以根据其发布设置访问表单。",
-        "failed_to_publish_form": "Failed to publish form for sharing",
         "form_is_missing_an": "表单缺少标识符。",
         "loading": "Loading...",
         "loading_more_forms": "加载更多表单...",
@@ -285,9 +162,6 @@
       }
     },
     "Home": {
-      "aria_label": {
-        "up_one_level": "Up one level"
-      },
       "button": {
         "login_with_venmail": "使用 Venmail 登录"
       },
@@ -305,11 +179,8 @@
         "attachment_import_importing": "正在导入附件...",
         "attachment_import_opening_document": "正在打开文档...",
         "attachment_import_preparing_document": "正在准备文档...",
-        "failed_to_delete_some": "Failed to delete some items",
         "get_started_by_creating": "通过创建新文件或上传现有文件开始。",
         "group_by_type": "按类型分组",
-        "home_final_files_with": "Home: Final files with missing file_type:",
-        "home_found_files_with": "Home: Found files with missing file_type:",
         "loading_your_files": "加载您的文件...",
         "login_to_manage_your": "登录以管理您在Venmail上的文件和文件夹。",
         "no_items_available_in": "此类别中没有可用项目。",
@@ -318,9 +189,6 @@
         "sort_by_size": "按大小排序",
         "sort_by_type": "按类型排序",
         "try_adjusting_your_search": "尝试调整您的搜索或筛选条件。"
-      },
-      "title": {
-        "up_one_level": "Up one level"
       }
     },
     "Login": {
@@ -335,28 +203,7 @@
         "privacy_terms": "隐私和条款"
       },
       "text": {
-        "failed_to_authenticate_please": "Failed to authenticate. Please try again.",
-        "login_to_manage_your": "登录以管理您在Venmail上的文件和文件夹。",
-        "session_expired_please_sign": "Session expired. Please sign in again to continue."
-      }
-    },
-    "Media": {
-      "heading": {
-        "enter_a_new_name": "Enter a new name for \"{{ fileToRename?.title }}\""
-      },
-      "placeholder": {
-        "enter_new_file_name": "Enter new file name"
-      },
-      "text": {
-        "browse_all_media_files": "Browse all media files",
-        "failed_to_create_folder": "Failed to create folder",
-        "failed_to_delete_files": "Failed to delete files",
-        "failed_to_download_file": "Failed to download file",
-        "failed_to_load_media": "Failed to load media files",
-        "failed_to_rename_file": "Failed to rename file",
-        "file_renamed_successfully": "File renamed successfully",
-        "localecompare_b_file_type": ").localeCompare(b.file_type ||",
-        "localecompare_b_title": ").localeCompare(b.title ||"
+        "login_to_manage_your": "登录以管理您在Venmail上的文件和文件夹。"
       }
     },
     "MediaViewer": {
@@ -366,19 +213,8 @@
       "link": {
         "download_open_original": "下载/打开原件"
       },
-      "placeholder": {
-        "add_a_note_to": "Add a note to the owner"
-      },
       "text": {
-        "access_request_sent": "Access request sent",
-        "access_request_sent_you": "Access request sent. You will receive an email when approved.",
         "cannot_preview_this_file": "无法预览此文件类型。",
-        "failed_to_download_file": "Failed to download file",
-        "failed_to_import_file": "Failed to import file",
-        "failed_to_load_file": "Failed to load file",
-        "file_not_found": "File not found",
-        "request_sent_if_the": "Request sent (if the email is valid).",
-        "request_submitted_please_check": "Request submitted. Please check your email later.",
         "sending": "Sending...",
         "this_file_is_private": "此文件是私有的。输入您的电子邮件以请求所有者的访问权限。"
       }
@@ -396,9 +232,6 @@
         "privacy_terms": "隐私和条款"
       },
       "text": {
-        "authentication_failed_please_try": "Authentication failed. Please try again.",
-        "failed_to_connect_to": "Failed to connect to authentication service. Please try again.",
-        "no_authentication_code_or": "No authentication code or cookie found. Please try logging in again.",
         "securely_connecting_to_venmail": "Securely connecting to Venmail services...",
         "we_re_sorry_an": "我们很抱歉，发生错误，我们无法登录。请再试一次。"
       }
@@ -408,38 +241,10 @@
         "request_access_to_this": "请求访问此表格",
         "this_spreadsheet_is_large": "此电子表格较大"
       },
-      "placeholder": {
-        "add_a_note_to": "Add a note to the owner",
-        "type_a_message": "Type a message..."
-      },
       "text": {
-        "access_request_sent_you": "Access request sent. You will receive an email when approved.",
-        "all_changes_saved": "All changes saved",
-        "api_key_updated": "API key updated",
-        "cannot_save_missing_document": "Cannot save: Missing document reference or ID",
-        "document_data_appears_to": "Document data appears to be corrupted. Loading with default structure.",
-        "document_saved_and_synced": "Document saved and synced successfully",
-        "document_saved_successfully": "Document saved successfully",
-        "export_is_not_available": "Export is not available yet",
-        "failed_to_capture_spreadsheet": "Failed to capture spreadsheet data",
-        "failed_to_load_spreadsheet": "Failed to load spreadsheet",
-        "failed_to_remove_access": "Failed to remove access",
-        "failed_to_rotate_api": "Failed to rotate API key",
-        "failed_to_save_document": "Failed to save document. Please try again.",
-        "failed_to_share": "Failed to share",
-        "failed_to_update_public": "Failed to update Public API settings",
-        "filter_coming_soon": "Filter: Coming soon",
-        "group_coming_soon": "Group: Coming soon",
-        "public_api_disabled": "Public API disabled",
-        "public_api_enabled": "Public API enabled",
-        "request_sent_if_the": "Request sent (if the email is valid).",
-        "request_submitted_please_check": "Request submitted. Please check your email later.",
         "sending": "Sending...",
         "the_file_is_too": "该文件太大，无法在线预览。您可以下载以本地查看。",
         "this_sheet_is_private": "此表格为私人。请输入您的电子邮件以请求访问权限。"
-      },
-      "title": {
-        "click_to_save_now": "Click to save now"
       }
     },
     "Sheets": {
@@ -449,19 +254,8 @@
         "start_a_new_spreadsheet": "开始新建电子表格"
       },
       "text": {
-        "bill_clients_fast": "Bill clients fast",
-        "campaigns_channels": "Campaigns & channels",
-        "failed_to_create_folder": "Failed to create folder",
-        "failed_to_delete_some": "Failed to delete some spreadsheets",
         "get_started_by_creating": "通过创建开始",
-        "localecompare_b_title": ").localeCompare(b.title ||",
-        "milestones_owners": "Milestones & owners",
-        "objectives_key_results": "Objectives & key results",
-        "pick_a_template_or_start_blank": "选择一个模板或从空白开始",
-        "pipeline_deals": "Pipeline & deals",
-        "receipts_categories": "Receipts & categories",
-        "start_from_scratch": "Start from scratch",
-        "to_dos_owners": "To-dos & owners"
+        "pick_a_template_or_start_blank": "选择一个模板或从空白开始"
       }
     },
     "Sidebar": {
@@ -471,20 +265,7 @@
     },
     "SlidesEditor": {
       "text": {
-        "failed_to_save_deck": "Failed to save deck",
-        "html_import_failed": "HTML import failed",
-        "powerpoint_import_failed": "PowerPoint import failed",
-        "save_the_deck_before": "Save the deck before adjusting visibility",
-        "save_the_deck_before_2": "Save the deck before inviting collaborators",
-        "save_the_deck_before_3": "Save the deck before removing collaborators",
-        "select_or_add_a": "选择或添加幻灯片以开始。",
-        "share_link_copied": "Share link copied",
-        "share_link_not_available": "Share link not available yet",
-        "template_unavailable_starting_with": "Template unavailable, starting with blank deck.",
-        "unable_to_invite_collaborator": "Unable to invite collaborator",
-        "unable_to_load_slide": "Unable to load slide deck",
-        "unable_to_remove_collaborator": "Unable to remove collaborator",
-        "unable_to_update_visibility": "Unable to update visibility"
+        "select_or_add_a": "选择或添加幻灯片以开始。"
       }
     }
   },

@@ -1,41 +1,9 @@
 {
   "Composables": {
-    "UseDocumentConflictResolver": {
-      "text": {
-        "a_saved_local_copy": "A saved local copy is different from the online version. Pick the source you prefer.",
-        "content_contains_formatting_without": "Content contains formatting without text preview.",
-        "failed_to_apply_local": "Failed to apply local version.",
-        "failed_to_apply_online": "Failed to apply online version.",
-        "keeping_local_copy_it": "Keeping local copy. It should sync shortly.",
-        "local_changes_synced_online": "Local changes synced online.",
-        "no_content_available": "No content available.",
-        "online_version_applied": "Online version applied.",
-        "preview_not_available_for": "Preview not available for spreadsheet content.",
-        "preview_unavailable": "Preview unavailable.",
-        "we_detected_differences_after": "We detected differences after reconnecting. Choose which version to keep."
-      }
-    },
-    "UseDocumentPersistence": {
-      "text": {
-        "document_is_read_only": "Document is read-only",
-        "document_not_loaded": "Document not loaded",
-        "save_operation_returned_no": "Save operation returned no document data"
-      }
-    },
     "UseFormAutosave": {
-      "text": {
-        "failed_to_autosave": "Failed to autosave"
-      },
       "toast": {
         "autosave_failed_retry_or": "自动保存失败。请重试或检查连接。",
         "this_form_was_updated": "此表单已在其他地方更新。重新加载以继续编辑。"
-      }
-    },
-    "UsePaymentClient": {
-      "text": {
-        "failed_to_cancel_payment": "Failed to cancel payment.",
-        "failed_to_initialize_payment": "Failed to initialize payment.",
-        "missing_form_slug_for": "Missing form slug for payment intent creation."
       }
     }
   }

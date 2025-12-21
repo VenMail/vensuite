@@ -1,9 +1,1 @@
-{
-  "Layouts": {
-    "AuthenticatedLayout": {
-      "text": {
-        "prefers_color_scheme_dark": "(prefers-color-scheme: dark)"
-      }
-    }
-  }
-}
+{}
