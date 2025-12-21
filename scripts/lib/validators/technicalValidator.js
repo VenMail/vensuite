@@ -622,7 +622,34 @@ function isTechnicalContent(text) {
   
   // Quick reject: obvious prose with no technical markers
   // Use a heuristic approach to detect legitimate English prose
-  const hasTechnicalMarkers = /[<>{}\[\]@#:=\/\\$%^&*|`~]/.test(trimmed);
+  // Be more permissive with template expressions that are part of mixed content
+  let hasTechnicalMarkers = /[<>\[\]@:=\/\\$%^&*|`~]/.test(trimmed);
+  const hasTemplateExpressions = /\{\{[^}]*\}\}|<%[^>]*%>|#\{[^}]*\}/.test(trimmed);
+  
+  // If it has template expressions mixed with substantial text content, don't treat as technical
+  if (hasTemplateExpressions) {
+    // Remove template expressions and check if substantial text remains
+    const withoutTemplates = trimmed
+      .replace(/\{\{[^}]*\}\}/g, '')
+      .replace(/<%[^>]*%>/g, '')
+      .replace(/#\{[^}]*\}/g, '')
+      .trim();
+    
+    // If at least 30% of the content is actual text (not just placeholders), don't treat as technical
+    const totalLength = trimmed.length;
+    const textLength = withoutTemplates.length;
+    
+    if (textLength >= totalLength * 0.3) {
+      // Mixed content with substantial text - proceed to normal validation
+      // But only for non-Vue template expressions (Vue is handled separately)
+      const hasVueExpressions = /\{\{[^}]*\}\}/.test(trimmed);
+      const hasOtherTemplates = /<%[^>]*%>|#\{[^}]*\}/.test(trimmed);
+      
+      if (hasOtherTemplates || (hasVueExpressions && !trimmed.includes('vue'))) {
+        hasTechnicalMarkers = false;
+      }
+    }
+  }
   
   if (!hasTechnicalMarkers && !/-{2,}/.test(trimmed)) {
     // Check if it looks like legitimate English prose

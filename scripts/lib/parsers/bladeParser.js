@@ -15,6 +15,7 @@
 
 const { BaseParser } = require('./baseParser');
 const { shouldTranslate, isTranslatableAttribute, isNonTranslatableAttribute } = require('../validators');
+const { STRING_PATTERNS } = require('../stringPatterns');
 
 class BladeParser extends BaseParser {
   static getExtensions() {
@@ -58,10 +59,60 @@ class BladeParser extends BaseParser {
     // Parse HTML-like content
     this.parseHtmlContent(template, results);
 
+    // Parse plain text content that may contain Blade expressions
+    this.parsePlainTextContent(template, results);
+
     // Parse Blade-specific patterns
     this.parseBladePatterns(template, results);
 
     return results;
+  }
+
+  /**
+   * Parse plain text content that may contain Blade expressions
+   */
+  parsePlainTextContent(template, results) {
+    // Split template by HTML tags and process the text parts
+    const parts = template.split(/<[^>]*>/);
+    
+    for (const part of parts) {
+      const text = part.trim();
+      if (!text) continue;
+      
+      // Skip if already translated
+      if (this.isAlreadyTranslated(text)) continue;
+      
+      // Skip pure Blade directives
+      if (/^@[a-z]/i.test(text)) continue;
+      
+      // Process mixed content with Blade expressions
+      // Replace Blade expressions with placeholders for validation
+      const bladeMatches = [
+        ...text.match(/\{\{\s*[^}]+\s*\}\}/g) || [],  // {{ expression }}
+        ...text.match(/\{!!\s*[^}]+\s*!!\}/g) || []    // {!! expression !!}
+      ];
+      
+      let validationText = text;
+      bladeMatches.forEach((match, index) => {
+        validationText = validationText.replace(match, `{blade_${index}}`);
+      });
+      
+      // Skip if still has Blade directives after processing
+      if (/@[a-z]/i.test(validationText)) continue;
+      
+      const cleanText = text.replace(/\s+/g, ' ').trim();
+      if (!cleanText) continue;
+
+      if (shouldTranslate(validationText, { ignorePatterns: this.ignorePatterns })) {
+        results.items.push({
+          type: 'text',
+          text: cleanText,
+          kind: 'text',
+          parentTag: 'plain',
+        });
+        results.stats.extracted++;
+      }
+    }
   }
 
   /**
@@ -80,17 +131,28 @@ class BladeParser extends BaseParser {
       // Skip if already translated
       if (this.isAlreadyTranslated(rawText)) continue;
 
-      // Skip Blade expressions - but only if they're the primary content
-      // Allow @ in context like "Contact us @ support@example.com"
-      if (rawText.includes('{{') || rawText.includes('{!!')) continue;
+      // Process mixed content with Blade expressions
+      // Extract text while preserving placeholders
+      let processedText = rawText;
       
-      // Check for Blade directives (start with @ followed by a letter)
-      if (/@[a-z]/i.test(rawText)) continue;
-
-      const text = rawText.replace(/\s+/g, ' ').trim();
+      // Replace Blade expressions with placeholders for validation
+      const bladeMatches = [
+        ...rawText.match(/\{\{\s*[^}]+\s*\}\}/g) || [],  // {{ expression }}
+        ...rawText.match(/\{!!\s*[^}]+\s*!!\}/g) || []    // {!! expression !!}
+      ];
+      
+      let validationText = rawText;
+      bladeMatches.forEach((match, index) => {
+        validationText = validationText.replace(match, `{blade_${index}}`);
+      });
+      
+      // Skip if still has Blade directives after processing
+      if (/@[a-z]/i.test(validationText)) continue;
+      
+      const text = processedText.replace(/\s+/g, ' ').trim();
       if (!text) continue;
 
-      if (shouldTranslate(text, { ignorePatterns: this.ignorePatterns })) {
+      if (shouldTranslate(validationText, { ignorePatterns: this.ignorePatterns })) {
         const kind = this.inferKindFromTag(tagName);
         results.items.push({
           type: 'text',
@@ -169,9 +231,36 @@ class BladeParser extends BaseParser {
     if (!value) return;
 
     // Extract string literals from the Alpine.js expression
-    const stringRegex = /(['"])([^'"\\]*(?:\\.[^'"\\]*)*)\1/g;
+    const stringRegex = STRING_PATTERNS.alpineText;
+    const ternaryRegex = STRING_PATTERNS.alpineTernary;
+    
+    // Handle ternary expressions first
     let match;
-
+    while ((match = ternaryRegex.exec(value)) !== null) {
+      const candidate1 = (match[2] || '').trim();
+      const candidate2 = (match[4] || '').trim();
+      
+      // Process both branches of ternary
+      [candidate1, candidate2].forEach(candidate => {
+        if (!candidate) return;
+        
+        // Skip if it looks like a variable or identifier
+        if (/^[a-z_$][a-zA-Z0-9_$]*$/.test(candidate)) return;
+        
+        if (shouldTranslate(candidate, { ignorePatterns: this.ignorePatterns })) {
+          results.items.push({
+            type: 'text',
+            text: candidate,
+            kind: 'text',
+            parentTag: tagName,
+          });
+          results.stats.extracted++;
+        }
+      });
+    }
+    
+    // Reset regex lastIndex and process regular string literals
+    stringRegex.lastIndex = 0;
     while ((match = stringRegex.exec(value)) !== null) {
       const candidate = (match[2] || '').trim();
       if (!candidate) continue;

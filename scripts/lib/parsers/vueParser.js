@@ -56,6 +56,13 @@ class VueParser extends BaseParser {
       return results;
     }
 
+    // Handle code blocks that might break state machine parsing
+    if (content.includes('```') || content.includes('`')) {
+      // Replace code blocks with placeholders to avoid parsing issues
+      content = content.replace(/```[\s\S]*?```/g, '<code-block></code-block>');
+      content = content.replace(/`[^`]+`/g, '<inline-code></inline-code>');
+    }
+
     // Ensure ignore patterns from options are respected by helper methods
     this.ignorePatterns = options.ignorePatterns || this.ignorePatterns || {};
 

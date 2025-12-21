@@ -1,225 +1,199 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4">
     <!-- API Configuration Section -->
-    <div class="space-y-4">
-      <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-        <Key class="w-4 h-4 text-blue-600" />
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.api_configuration')}}</h3>
+    <div class="flex items-center justify-between gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+      <div class="flex-1">
+        <div class="flex items-center gap-2">
+          <Key class="w-4 h-4 text-blue-600" />
+          <span class="text-sm font-medium text-blue-900 dark:text-blue-100">API Configuration</span>
+        </div>
+        <div class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+          Allow external applications to submit data to this {{ type }}
+        </div>
       </div>
-      
-      <div class="space-y-3">
-        <div class="flex items-center justify-between gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <div class="flex-1">
-            <div class="text-sm font-medium text-blue-900 dark:text-blue-100">{{$t('Components.Forms.IntegrationDialog.text.enable_public_api')}}</div>
-            <div class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-              Allow external applications to submit data to this {{ type }}
-            </div>
-          </div>
-          <Switch
-            :checked="apiEnabled"
-            :disabled="isUpdatingApi"
-            @update:checked="handleSetApiEnabled"
-          />
-        </div>
-        
-        <div class="flex items-center justify-between gap-2">
-          <div class="text-xs text-gray-500">{{$t('Components.Forms.IntegrationDialog.text.generate_new_api_key')}}</div>
-          <Button
-            variant="outline"
-            size="sm"
-            :disabled="isUpdatingApi || !id"
-            @click="handleRotateApiKey"
-          >
-            <RefreshCw class="w-3 h-3 mr-1" />
-            {{$t('Commons.button.refresh')}}
-          </Button>
-        </div>
+      <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="isUpdatingApi || !id"
+          @click="handleRotateApiKey"
+        >
+          <RefreshCw class="w-3 h-3 mr-1" />
+          Refresh Key
+        </Button>
+        <Switch
+          :checked="apiEnabled"
+          :disabled="isUpdatingApi"
+          @update:checked="handleSetApiEnabled"
+        />
       </div>
     </div>
 
-    <!-- Sharing & Embedding Section -->
-    <div class="space-y-4">
-      <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-        <Share class="w-4 h-4 text-green-600" />
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Components.Forms.IntegrationDialog.heading.share_embed')}}</h3>
-      </div>
-      
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-2">
-            {{$t('Commons.label.public_url')}}
-          </label>
-          <div class="flex gap-2">
-            <input
-              class="flex-1 border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
-              :value="publicUrl"
-              readonly
-              @focus="(e: FocusEvent) => {
-                const target = e.target as HTMLInputElement;
-                target?.select?.();
-              }"
-            />
-            <Button size="sm" variant="outline" @click="copyToClipboard(publicUrl, 'URL copied')">
-              <Copy class="w-3 h-3" />
-            </Button>
-          </div>
-        </div>
-
-        <Collapsible>
-          <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer">
-            <ChevronRight class="w-3 h-3 transition-transform" :class="{ 'rotate-90': isOpen }" />
-            {{$t('Components.Forms.IntegrationDialog.text.embed_as_iframe')}}
-          </CollapsibleTrigger>
-          <CollapsibleContent class="mt-2">
-            <div class="space-y-2">
-              <textarea
-                class="w-full border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 font-mono"
-                :value="embedSnippet"
-                rows="3"
-                readonly
-                @focus="(e: FocusEvent) => (e?.target as HTMLTextAreaElement)?.select?.()"
-              />
-              <Button size="sm" variant="outline" @click="copyToClipboard(embedSnippet, 'Embed code copied')">
-                <Copy class="w-3 h-3 mr-1" />
-                {{$t('Components.Forms.IntegrationDialog.button.copy_embed_code')}}
-              </Button>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-2 gap-2">
+      <Button size="sm" variant="outline" @click="copyToClipboard(publicUrl, 'URL copied')" class="justify-start">
+        <Share class="w-3 h-3 mr-2" />
+        Copy Public URL
+      </Button>
+      <Button size="sm" variant="outline" @click="copyToClipboard(embedSnippet, 'Embed code copied')" class="justify-start">
+        <Code class="w-3 h-3 mr-2" />
+        Copy Embed Code
+      </Button>
     </div>
 
     <!-- API Integration Section -->
-    <div class="space-y-4">
-      <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-        <Code class="w-4 h-4 text-purple-600" />
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.api_integration')}}</h3>
-      </div>
-      
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-2">
-            {{$t('Commons.label.api_endpoint')}}
-          </label>
-          <div class="flex gap-2">
-            <input
-              class="flex-1 border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 font-mono"
-              :value="endpoint"
-              readonly
-              @focus="(e: FocusEvent) => {
-                const target = e.target as HTMLInputElement;
-                target?.select?.();
-              }"
-            />
-            <Button size="sm" variant="outline" :disabled="!endpoint" @click="copyToClipboard(endpoint, 'Endpoint copied')">
-              <Copy class="w-3 h-3" />
-            </Button>
-          </div>
-          <div v-if="!apiEnabled" class="mt-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
-            <AlertCircle class="w-3 h-3 inline mr-1" />
-            {{$t('Components.Forms.IntegrationDialog.text.enable_public_api_to')}}
-          </div>
+    <div class="space-y-3">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <Code class="w-4 h-4 text-purple-600" />
+          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">API Integration</span>
         </div>
-
-        <!-- Dynamic Field Examples -->
-        <Collapsible>
-          <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer">
-            <ChevronRight class="w-3 h-3 transition-transform" :class="{ 'rotate-90': examplesOpen }" />
-            {{$t('Components.Forms.IntegrationDialog.text.view_integration_examples')}}
-          </CollapsibleTrigger>
-          <CollapsibleContent class="mt-3 space-y-4">
-            <!-- Tab Navigation -->
-            <div class="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <button
-                class="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors"
-                :class="activeTab === 'row' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
-                @click="activeTab = 'row'"
-              >
-                {{$t('Commons.button.row_array')}}
-              </button>
-              <button
-                class="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors"
-                :class="activeTab === 'mapped' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
-                @click="activeTab = 'mapped'"
-              >
-                {{$t('Commons.button.header_mapped')}}
-              </button>
-              <button
-                class="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors"
-                :class="activeTab === 'code' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
-                @click="activeTab = 'code'"
-              >
-                {{$t('Commons.button.code_example')}}
-              </button>
-            </div>
-
-            <!-- Tab Content -->
-            <div class="space-y-3">
-              <!-- Row Array Tab -->
-              <div v-if="activeTab === 'row'" class="space-y-2">
-                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.request_body')}}</div>
-                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ rowArrayExample }}</code></pre>
-                <div class="text-xs text-gray-500">
-                  Fields are submitted in the same order as they appear in your {{ type }}.
-                </div>
-              </div>
-
-              <!-- Header Mapped Tab -->
-              <div v-if="activeTab === 'mapped'" class="space-y-2">
-                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.request_body')}}</div>
-                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ headerMappedExample }}</code></pre>
-                <div class="text-xs text-gray-500">
-                  {{$t('Components.Forms.IntegrationDialog.text.use_field_names_as')}}
-                </div>
-              </div>
-
-              <!-- Code Example Tab -->
-              <div v-if="activeTab === 'code'" class="space-y-2">
-                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.javascript_example')}}</div>
-                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ codeExample }}</code></pre>
-                <div class="text-xs text-gray-500">
-                  {{$t('Components.Forms.IntegrationDialog.text.copy_and_paste_this')}}
-                </div>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
-    </div>
-
-    <!-- API Key Section -->
-    <div class="space-y-4">
-      <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-        <Shield class="w-4 h-4 text-orange-600" />
-        <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.api_key')}}</h3>
+        <div class="text-xs text-gray-500">
+          {{ apiEnabled ? 'API Enabled' : 'API Disabled' }}
+        </div>
       </div>
       
-      <Collapsible>
-        <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer">
-          <Eye class="w-3 h-3" />
-          {{$t('Components.Forms.IntegrationDialog.text.reveal_api_key')}}
+      <div class="flex gap-2">
+        <input
+          class="flex-1 border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 font-mono"
+          :value="endpoint"
+          readonly
+          @focus="(e: FocusEvent) => {
+            const target = e.target as HTMLInputElement;
+            target?.select?.();
+          }"
+        />
+        <Button size="sm" variant="outline" :disabled="!endpoint" @click="copyToClipboard(endpoint, 'Endpoint copied')">
+          <Copy class="w-3 h-3" />
+        </Button>
+      </div>
+      <div v-if="!apiEnabled" class="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
+        <AlertCircle class="w-3 h-3 inline mr-1" />
+        Enable API to use integration examples
+      </div>
+
+      <!-- Integration Examples -->
+      <Collapsible v-model:open="examplesOpen">
+        <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+          <ChevronRight class="w-3 h-3 transition-transform" :class="{ 'rotate-90': examplesOpen }" />
+          Integration Examples
         </CollapsibleTrigger>
         <CollapsibleContent class="mt-2">
-          <div class="flex gap-2">
-            <input
-              class="flex-1 border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 font-mono"
-              :value="apiKey"
-              readonly
-              @focus="(e: FocusEvent) => {
-                const target = e.target as HTMLInputElement;
-                target?.select?.();
-              }"
-            />
-            <Button size="sm" variant="outline" :disabled="!apiKey" @click="copyToClipboard(apiKey, 'API key copied')">
-              <Copy class="w-3 h-3" />
-            </Button>
+          <!-- Integration Type Tabs -->
+          <div class="flex flex-wrap gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg mb-3">
+            <button
+              v-for="tab in integrationTabs"
+              :key="tab.id"
+              class="px-3 py-1.5 text-xs font-medium rounded transition-colors flex items-center gap-1"
+              :class="activeIntegrationTab === tab.id ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'"
+              @click="activeIntegrationTab = tab.id"
+            >
+              <component :is="tab.icon" class="w-3 h-3" />
+              {{ tab.label }}
+            </button>
           </div>
-          <div class="mt-2 text-xs text-amber-600">
-            Keep this key secure. Anyone with this key can submit data to your {{ type }}.
+
+          <!-- Tab Content -->
+          <div class="space-y-3">
+            <!-- JavaScript/TypeScript -->
+            <div v-if="activeIntegrationTab === 'javascript'" class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">JavaScript Example</div>
+                <select v-model="jsFramework" class="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+                  <option value="fetch">Fetch API</option>
+                  <option value="axios">Axios</option>
+                  <option value="node">Node.js</option>
+                </select>
+              </div>
+              <div class="relative">
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ javascriptExample }}</code></pre>
+                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(javascriptExample, 'Code copied')">
+                  <Copy class="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+
+            <!-- Postman Collection -->
+            <div v-if="activeIntegrationTab === 'postman'" class="space-y-2">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Postman Collection</div>
+              <div class="relative">
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ postmanCollection }}</code></pre>
+                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="downloadPostmanCollection">
+                  <Download class="w-3 h-3 mr-1" />
+                  Export
+                </Button>
+              </div>
+            </div>
+
+            <!-- OpenAPI Spec -->
+            <div v-if="activeIntegrationTab === 'openapi'" class="space-y-2">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-300">OpenAPI Specification</div>
+              <div class="relative">
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto max-h-60 overflow-auto"><code>{{ openApiSpec }}</code></pre>
+                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(openApiSpec, 'OpenAPI spec copied')">
+                  <Copy class="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+
+            <!-- cURL -->
+            <div v-if="activeIntegrationTab === 'curl'" class="space-y-2">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-300">cURL Command</div>
+              <div class="relative">
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ curlCommand }}</code></pre>
+                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(curlCommand, 'cURL command copied')">
+                  <Copy class="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+
+            <!-- Python -->
+            <div v-if="activeIntegrationTab === 'python'" class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Python Example</div>
+                <select v-model="pythonLibrary" class="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+                  <option value="requests">Requests</option>
+                  <option value="httpx">HTTPX</option>
+                </select>
+              </div>
+              <div class="relative">
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ pythonExample }}</code></pre>
+                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(pythonExample, 'Python code copied')">
+                  <Copy class="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
           </div>
         </CollapsibleContent>
       </Collapsible>
     </div>
+
+    <!-- API Key Section -->
+    <Collapsible v-model:open="apiKeyOpen">
+      <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
+        <Eye class="w-3 h-3" />
+        API Key
+      </CollapsibleTrigger>
+      <CollapsibleContent class="mt-2">
+        <div class="flex gap-2">
+          <input
+            class="flex-1 border rounded px-3 py-2 text-sm bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700 font-mono"
+            :value="apiKey"
+            readonly
+            @focus="(e: FocusEvent) => {
+              const target = e.target as HTMLInputElement;
+              target?.select?.();
+            }"
+          />
+          <Button size="sm" variant="outline" :disabled="!apiKey" @click="copyToClipboard(apiKey, 'API key copied')">
+            <Copy class="w-3 h-3" />
+          </Button>
+        </div>
+        <div class="mt-2 text-xs text-amber-600">
+          Keep this key secure. Anyone with this key can submit data to your {{ type }}.
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   </div>
 </template>
 
@@ -232,12 +206,15 @@ import {
   Key, 
   Share, 
   Code, 
-  Shield, 
   Copy, 
   RefreshCw, 
   ChevronRight, 
   AlertCircle, 
-  Eye 
+  Eye,
+  Download,
+  Terminal,
+  FileJson,
+  Globe
 } from 'lucide-vue-next'
 import { toast } from '@/composables/useToast'
 
@@ -263,13 +240,23 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const isOpen = ref(false)
 const examplesOpen = ref(false)
-const activeTab = ref<'row' | 'mapped' | 'code'>('row')
+const apiKeyOpen = ref(false)
+const activeIntegrationTab = ref('javascript')
+const jsFramework = ref('fetch')
+const pythonLibrary = ref('requests')
 
-// Generate dynamic examples based on actual fields
-const rowArrayExample = computed(() => {
-  const sampleData = props.fields.map((field, index) => {
+const integrationTabs = [
+  { id: 'javascript', label: 'JavaScript', icon: Code },
+  { id: 'python', label: 'Python', icon: Terminal },
+  { id: 'curl', label: 'cURL', icon: Globe },
+  { id: 'postman', label: 'Postman', icon: FileJson },
+  { id: 'openapi', label: 'OpenAPI', icon: FileJson }
+]
+
+// Generate sample data for examples
+const generateSampleData = () => {
+  return props.fields.map((field, index) => {
     if (field.toLowerCase().includes('email')) return 'john@example.com'
     if (field.toLowerCase().includes('name')) return 'John Doe'
     if (field.toLowerCase().includes('date')) return new Date().toISOString().split('T')[0]
@@ -277,55 +264,294 @@ const rowArrayExample = computed(() => {
     if (field.toLowerCase().includes('message') || field.toLowerCase().includes('comment')) return 'Sample message text'
     return `Sample ${field} ${index + 1}`
   })
+}
+
+const sampleData = computed(() => generateSampleData())
+
+// JavaScript Examples
+const javascriptExample = computed(() => {
+  const data = sampleData.value
   
-  return JSON.stringify({
-    row: sampleData
-  }, null, 2)
-})
-
-const headerMappedExample = computed(() => {
-  const data: Record<string, string> = {}
-  props.fields.forEach((field, index) => {
-    if (field.toLowerCase().includes('email')) data[field] = 'john@example.com'
-    else if (field.toLowerCase().includes('name')) data[field] = 'John Doe'
-    else if (field.toLowerCase().includes('date')) data[field] = new Date().toISOString().split('T')[0]
-    else if (field.toLowerCase().includes('phone')) data[field] = '+1-555-0123'
-    else if (field.toLowerCase().includes('message') || field.toLowerCase().includes('comment')) data[field] = 'Sample message text'
-    else data[field] = `Sample ${field} ${index + 1}`
-  })
-  
-  return JSON.stringify({
-    data
-  }, null, 2)
-})
-
-const codeExample = computed(() => {
-  const sampleData = props.fields.map((field, index) => {
-    if (field.toLowerCase().includes('email')) return 'john@example.com'
-    if (field.toLowerCase().includes('name')) return 'John Doe'
-    if (field.toLowerCase().includes('date')) return new Date().toISOString().split('T')[0]
-    if (field.toLowerCase().includes('phone')) return '+1-555-0123'
-    if (field.toLowerCase().includes('message') || field.toLowerCase().includes('comment')) return 'Sample message text'
-    return `Sample ${field} ${index + 1}`
-  }).join(', ')
-
-  return `// Submit data to ${props.type}
+  if (jsFramework.value === 'fetch') {
+    return `// Submit data using Fetch API
 const response = await fetch('${props.endpoint}', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
+    'Authorization': 'Bearer ${props.apiKey}'
   },
   body: JSON.stringify({
-    row: [${sampleData}]
+    row: [${data.map(d => `'${d}'`).join(', ')}]
     // or use header-mapped format:
     // data: {
-    //   ${props.fields.map((field, i) => `${field}: '${sampleData.split(', ')[i]}'`).join(',\n    //   ')}
+    //   ${props.fields.map((field, i) => `${field}: '${data[i]}'`).join(',\n    //   ')}
     // }
   })
 })
 
 const result = await response.json()
 console.log('Success:', result)`
+  } else if (jsFramework.value === 'axios') {
+    return `// Submit data using Axios
+import axios from 'axios'
+
+const response = await axios.post('${props.endpoint}', {
+  row: [${data.map(d => `'${d}'`).join(', ')}]
+  // or use header-mapped format:
+  // data: {
+  //   ${props.fields.map((field, i) => `${field}: '${data[i]}'`).join(',\n  //   ')}
+  // }
+}, {
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ${props.apiKey}'
+  }
+})
+
+console.log('Success:', response.data)`
+  } else {
+    return `// Submit data using Node.js
+const https = require('https')
+const data = JSON.stringify({
+  row: [${data.map(d => `'${d}'`).join(', ')}]
+})
+
+const options = {
+  hostname: 'your-domain.com',
+  path: '/api/forms/${props.id}/responses',
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Content-Length': data.length,
+    'Authorization': 'Bearer ${props.apiKey}'
+  }
+}
+
+const req = https.request(options, (res) => {
+  console.log('Status:', res.statusCode)
+  res.on('data', (chunk) => console.log('Response:', chunk.toString()))
+})
+
+req.on('error', (error) => console.error('Error:', error))
+req.write(data)
+req.end()`
+  }
+})
+
+// Python Examples
+const pythonExample = computed(() => {
+  const data = sampleData.value
+  
+  if (pythonLibrary.value === 'requests') {
+    return `import requests
+import json
+
+# Submit data using requests
+url = '${props.endpoint}'
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ${props.apiKey}'
+}
+
+payload = {
+    "row": [${data.map(d => `"${d}"`).join(', ')}]
+    # or use header-mapped format:
+    # "data": {
+    #     ${props.fields.map((field, i) => `"${field}": "${data[i]}"`).join(',\n    #     ')}
+    # }
+}
+
+response = requests.post(url, headers=headers, json=payload)
+print(f"Status: {response.status_code}")
+print(f"Response: {response.json()}")`
+  } else {
+    return `import httpx
+import json
+
+# Submit data using HTTPX
+url = '${props.endpoint}'
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ${props.apiKey}'
+}
+
+payload = {
+    "row": [${data.map(d => `"${d}"`).join(', ')}]
+    # or use header-mapped format:
+    # "data": {
+    #     ${props.fields.map((field, i) => `"${field}": "${data[i]}"`).join(',\n    #     ')}
+    # }
+}
+
+async with httpx.AsyncClient() as client:
+    response = await client.post(url, headers=headers, json=payload)
+    print(f"Status: {response.status_code}")
+    print(f"Response: {response.json()}")`
+  }
+})
+
+// cURL Command
+const curlCommand = computed(() => {
+  const data = sampleData.value
+  const rowData = data.map(d => `'${d}'`).join(', ')
+  
+  return `curl -X POST '${props.endpoint}' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer ${props.apiKey}' \
+  -d '{
+    "row": [${rowData}]
+    // or use header-mapped format:
+    // "data": {
+    //   ${props.fields.map((field, i) => `"${field}": "${data[i]}"`).join(',\n    //   ')}
+    // }
+  }'`
+})
+
+// Postman Collection
+const postmanCollection = computed(() => {
+  const data = sampleData.value
+  
+  return JSON.stringify({
+    info: {
+      name: `${props.type.charAt(0).toUpperCase() + props.type.slice(1)} Integration`,
+      description: `Postman collection for ${props.type} submissions`,
+      schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    item: [
+      {
+        name: "Submit Response",
+        request: {
+          method: "POST",
+          header: [
+            {
+              key: "Content-Type",
+              value: "application/json"
+            },
+            {
+              key: "Authorization",
+              value: `Bearer ${props.apiKey}`
+            }
+          ],
+          body: {
+            mode: "raw",
+            raw: JSON.stringify({
+              row: data
+            }, null, 2)
+          },
+          url: {
+            raw: props.endpoint,
+            host: [new URL(props.endpoint).hostname],
+            path: new URL(props.endpoint).pathname.split('/').filter(Boolean)
+          }
+        }
+      }
+    ]
+  }, null, 2)
+})
+
+// OpenAPI Specification
+const openApiSpec = computed(() => {
+  const data = sampleData.value
+  
+  return JSON.stringify({
+    openapi: "3.0.0",
+    info: {
+      title: `${props.type.charAt(0).toUpperCase() + props.type.slice(1)} API`,
+      description: `API for submitting responses to ${props.type}`,
+      version: "1.0.0"
+    },
+    servers: [
+      {
+        url: new URL(props.endpoint).origin,
+        description: "API Server"
+      }
+    ],
+    paths: {
+      [new URL(props.endpoint).pathname]: {
+        post: {
+          summary: "Submit response",
+          description: "Submit a new response to the form",
+          tags: ["responses"],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  oneOf: [
+                    {
+                      type: "object",
+                      properties: {
+                        row: {
+                          type: "array",
+                          items: {
+                            type: "string"
+                          },
+                          example: data
+                        }
+                      }
+                    },
+                    {
+                      type: "object",
+                      properties: {
+                        data: {
+                          type: "object",
+                          properties: props.fields.reduce((acc, field, index) => {
+                            acc[field] = {
+                              type: "string",
+                              example: data[index]
+                            }
+                            return acc
+                          }, {} as Record<string, any>)
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: "Response submitted successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      message: { type: "string" },
+                      id: { type: "string" }
+                    }
+                  }
+                }
+              }
+            },
+            401: {
+              description: "Unauthorized"
+            },
+            400: {
+              description: "Bad Request"
+            }
+          },
+          security: [
+            {
+              bearerAuth: []
+            }
+          ]
+        }
+      }
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT"
+        }
+      }
+    }
+  }, null, 2)
 })
 
 const embedSnippet = computed(() => {
@@ -338,6 +564,20 @@ const handleSetApiEnabled = (enabled: boolean) => {
 
 const handleRotateApiKey = () => {
   emit('rotate-api-key')
+}
+
+const downloadPostmanCollection = () => {
+  const data = postmanCollection.value
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${props.type}-collection.json`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  toast.success('Postman collection downloaded')
 }
 
 const copyToClipboard = async (value: string, successMessage: string) => {

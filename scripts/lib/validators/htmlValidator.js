@@ -226,12 +226,12 @@ function isTemplateExpression(text) {
   const templateLength = templateMatches.reduce((sum, match) => sum + match.length, 0);
   const totalLength = trimmed.length;
   
-  // If template expressions are more than 70% of the content, consider it template-only
-  if (templateLength > totalLength * 0.7) {
+  // If template expressions are more than 85% of the content, consider it template-only
+  if (templateLength > totalLength * 0.85) {
     return true;
   }
   
-  // For mixed content (less than 70% template), check if it's mostly template code
+  // For mixed content (less than 85% template), check if it's mostly template code
   // Remove template expressions and see what's left
   let stripped = trimmed
     .replace(/\{\{[^}]+\}\}/g, '')

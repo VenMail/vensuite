@@ -24,10 +24,10 @@ const path = require('node:path');
 const process = require('node:process');
 
 // Import shared utilities
-const { detectSrcRoot, getProjectLocales } = require('./lib/projectConfig');
+const { detectSrcRoot } = require('./lib/projectConfig');
 const { slugifyForKey, getNamespaceFromFile, getNamespaceFromBladeFile } = require('./lib/stringUtils');
 const { loadIgnorePatterns } = require('./lib/ignorePatterns');
-const { primeTextKeyMap, getTranslation, setTranslation, ensureTranslationForKey, getNamespaceNode } = require('./lib/translationStore');
+const { primeTextKeyMap, getTranslation, setTranslation, getNamespaceNode } = require('./lib/translationStore');
 
 // Import parser system
 const { parseFile, isSupported, getFrameworkInfo } = require('./lib/parsers');
@@ -59,7 +59,7 @@ const groupRootsSeen = new Map();
 
 // Simple mutex for thread-safe registration
 // JavaScript is single-threaded but async operations can interleave
-let registrationLock = Promise.resolve();
+// let registrationLock = Promise.resolve();
 
 // Statistics
 const stats = {
@@ -83,12 +83,12 @@ function isCommonShortText(text) {
 
   if (cleaned.length > 24) return false;
 
-  if (/[\/_]/.test(cleaned)) return false;
+  if (/[/]/.test(cleaned)) return false;
 
   return true;
 }
 
-function cleanupExistingTranslations(existing, silent = false) {
+const cleanupExistingTranslations = (existing, silent = false) => {
   const cleanMode = String(process.env.AI_I18N_CLEAN_EXISTING || 'css').trim().toLowerCase();
   if (!cleanMode || cleanMode === '0' || cleanMode === 'false' || cleanMode === 'off' || cleanMode === 'none') {
     return;
@@ -413,7 +413,7 @@ function countLeavesByTopKey(obj) {
 
     let hadExistingLocaleReadErrors = false;
 
-    async function readJsonSafe(p) {
+    const readJsonSafe = async (p) => {
       try {
         const raw = await readFile(p, 'utf8');
         return JSON.parse(raw);
@@ -423,9 +423,9 @@ function countLeavesByTopKey(obj) {
         console.error(err?.message || err);
         return null;
       }
-    }
+    };
 
-    function deepMerge(target, source) {
+    const deepMerge = (target, source) => {
       if (!source || typeof source !== 'object') return target;
       for (const [k, v] of Object.entries(source)) {
         if (typeof v === 'object' && v && !Array.isArray(v)) {
@@ -436,7 +436,7 @@ function countLeavesByTopKey(obj) {
         }
       }
       return target;
-    }
+    };
 
     if (existsSync(groupedDir)) {
       existingTranslations = {};
@@ -579,16 +579,11 @@ function countLeavesByTopKey(obj) {
       } else {
         rootName = namespaceRoots.get(group) || 'common';
       }
-      const roots = groupRootsSeen.get(group);
-      if (roots && roots.size > 0) {
-        for (const rn of roots) {
-          const rootTree = perRoot[rn] || (perRoot[rn] = {});
-          rootTree[group] = subtree;
-        }
-      } else {
-        const rootTree = perRoot[rootName] || (perRoot[rootName] = {});
-        rootTree[group] = subtree;
-      }
+      
+      // FIX: Only write to the preferred root, not all seen roots
+      // This prevents duplicate keys appearing in multiple files
+      const rootTree = perRoot[rootName] || (perRoot[rootName] = {});
+      rootTree[group] = subtree;
     }
 
     if (!allowDestructive && existingPerRootCounts) {
