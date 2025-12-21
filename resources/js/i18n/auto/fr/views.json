@@ -14,14 +14,27 @@
         "welcome_to_venmail_file": "Bienvenue dans le gestionnaire de fichiers Venmail"
       },
       "text": {
+        "cannot_download_this_item": "Cannot download this item",
         "deleted_files_will_appear": "Les fichiers supprimés apparaîtront ici et peuvent être restaurés ou supprimés définitivement.",
+        "failed_to_delete_item": "Failed to delete item permanently",
+        "failed_to_download_file": "Failed to download file",
+        "failed_to_empty_bin": "Failed to empty bin",
+        "failed_to_load_trash": "Failed to load trash items",
+        "failed_to_preview_file": "Failed to preview file",
+        "failed_to_restore_item": "Failed to restore item",
         "login_to_access_your": "Connectez-vous pour accéder à votre corbeille et gérer les fichiers supprimés.",
+        "no_items_selected": "No items selected",
         "preparing_your_deleted_items": "Préparation de vos éléments supprimés…",
+        "preview_not_available_for": "Preview not available for this item",
         "sort_by_date_newest": "Trier par date (le plus récent)",
         "sort_by_date_oldest": "Trier par date (le plus ancien)",
         "sort_by_name": "Trier par nom",
         "sort_by_size": "Trier par taille",
         "sort_by_type": "Trier par type",
+        "this_will_permanently_delete": "This will permanently delete all {{ trashItems.length }} items in the trash. This action cannot be undone.",
+        "this_will_permanently_delete_2": "This will permanently delete {{ selectedFiles.size }} item(s). This action cannot be undone.",
+        "trash_file_manager": "Trash - File Manager",
+        "trash_is_already_empty": "Trash is already empty",
         "try_adjusting_your_search": "Essayez d'ajuster votre recherche ou vos filtres pour trouver des éléments spécifiques."
       }
     },
@@ -31,20 +44,56 @@
         "keep_online_version": "Garder la version en ligne"
       },
       "heading": {
+        "comments_chat": "Comments & Chat",
         "content_versions_differ": "Les versions du contenu diffèrent"
       },
       "link": {
         "open_direct_link": "Ouvrir le lien direct"
       },
+      "placeholder": {
+        "id_like_to_view": "I’d like to view this document.",
+        "type_a_message": "Type a message..."
+      },
       "text": {
+        "access_request_sent_you": "Access request sent. You will receive an email when approved.",
+        "add_column_after": "Add column after",
         "add_headings_to_see": "Ajoutez des titres pour voir le plan",
+        "add_row_below": "Add row below",
+        "add_some_content_before": "Add some content before saving.",
+        "adjust_font_size": "Adjust font size",
+        "brand_foreground_color": "Brand foreground color",
+        "configure_chart_data": "Configure chart data",
+        "document_created_from_template": "Document created from template",
+        "docx_exported_successfully": "DOCX exported successfully",
+        "edit_chart_title": "Edit chart title",
+        "failed_to_create_document": "Failed to create document",
+        "failed_to_export_docx": "Failed to export DOCX",
+        "failed_to_export_pdf": "Failed to export PDF",
+        "failed_to_load_document": "Failed to load document",
+        "failed_to_load_version": "Failed to load version content",
+        "failed_to_save_document": "Failed to save document",
+        "html_exported_successfully": "HTML exported successfully",
+        "link_copied_to_clipboard": "Link copied to clipboard",
         "no_headings_found": "Aucun titre trouvé",
         "no_messages_yet": "Aucun message pour le moment.",
+        "open_link_in_new": "Open link in new tab (⌘+Click)",
+        "open_link_in_new_2": "Open link in new tab (Ctrl+Click)",
+        "pdf_export_started": "PDF export started",
         "preview_local_version": "Aperçu de la version locale",
         "preview_online_version": "Aperçu de la version en ligne",
         "preview_unavailable": "Aperçu indisponible.",
+        "request_sent_if_the": "Request sent (if the email is valid).",
+        "request_submitted_please_check": "Request submitted. Please check your email later.",
+        "reset_row_height": "Reset row height",
         "start_a_conversation_with": "Démarrez une conversation avec vos collaborateurs.",
-        "you_dont_have_access": "Vous n'avez pas accès à ce document. Entrez votre email pour demander l'accès au propriétaire."
+        "tip_hold_and_click": "Tip: Hold ⌘ and click to open the link.",
+        "tip_hold_ctrl_and": "Tip: Hold Ctrl and click to open the link.",
+        "upload_new_image": "Upload new image",
+        "you_dont_have_access": "Vous n'avez pas accès à ce document. Entrez votre email pour demander l'accès au propriétaire.",
+        "your_document_is_still": "Your document is still empty. Add content before saving."
+      },
+      "title": {
+        "apply_font_size": "Apply font size"
       }
     },
     "Documents": {
@@ -55,14 +104,24 @@
       },
       "text": {
         "choose_a_template_or_start_blank": "Choisissez un modèle ou commencez à partir de zéro",
-        "get_started_by_creating": "Commencez par créer un nouveau document ou en téléchargeant un existant."
+        "executive_summary_plan": "Executive summary & plan",
+        "failed_to_create_folder": "Failed to create folder",
+        "failed_to_delete_some": "Failed to delete some documents",
+        "get_started_by_creating": "Commencez par créer un nouveau document ou en téléchargeant un existant.",
+        "localecompare_b_title": ").localeCompare(b.title ||",
+        "modern_cv_layout": "Modern CV layout",
+        "start_from_scratch": "Start from scratch"
       }
     },
     "FilePicker": {
       "heading": {
         "no_files_found": "Aucun fichier trouvé"
       },
+      "placeholder": {
+        "search_files": "Search files..."
+      },
       "text": {
+        "localecompare_b_title": ").localeCompare(b.title ||",
         "try_adjusting_your_search": "Essayez d'ajuster votre recherche ou vos critères de filtre."
       }
     },
@@ -92,32 +151,85 @@
         "stripe_account_id": "ID de compte Stripe",
         "stripe_publishable_key": "Clef publique Stripe"
       },
+      "placeholder": {
+        "add_a_description_to": "Add a description to help people understand your form...",
+        "describe_what_questions_you": "Describe what questions you want to add..."
+      },
       "text": {
         "add_a_question": "Ajouter une question",
         "add_questions_customize_fields": "Ajoutez des questions, personnalisez les champs et créez le formulaire parfait pour vos besoins.",
+        "and_set_to_public": "and set to public",
         "any_custom_events_you": "Tous les événements personnalisés que vous définissez",
         "anyone_with_the_link": "Quiconque possède le lien peut répondre.",
+        "api_key_updated": "API key updated",
         "collaborators_workspace_access": "Collaborateurs et accès à l'espace de travail",
+        "could_not_delete_form": "Could not delete form.",
+        "delete_this_form_this": "Delete this form? This action cannot be undone.",
+        "editor_link_copied_to": "Editor link copied to clipboard",
         "failed_to_publish_form_2": "Échec de la publication du formulaire",
+        "failed_to_rotate_api": "Failed to rotate API key",
+        "failed_to_update_public": "Failed to update Public API settings",
+        "form_published_but_share": "Form published but share slug is unavailable",
+        "form_published_share_link": "Form published. Share link copied to clipboard.",
+        "form_will_accept_new": "Form will accept new submissions.",
+        "form_will_not_accept": "Form will not accept new submissions.",
         "manage_who_in_your": "Gérez qui dans votre espace de travail peut ouvrir et modifier ce formulaire.",
+        "only_people_in_your": "Only people in your organization (and invited collaborators) can access this form.",
+        "only_the_form_owner": "Only the form owner can update payment settings when using platform payments.",
         "payment_succeeded_or_failed": "Paiement réussi ou échoué",
         "payments_can_be_configured": "Les paiements peuvent être configurés entre 1 $ et 100 $.",
         "provide_a_secure_https": "Fournissez un point de terminaison HTTPS sécurisé et nous enverrons une charge utile signée chaque fois que les événements sélectionnés se produisent. Vous pouvez suspendre la livraison à tout moment.",
+        "public_api_disabled": "Public API disabled",
+        "public_api_enabled": "Public API enabled",
+        "publish_failed_please_try": "Publish failed. Please try again.",
         "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
         "send_form_responses_and": "Envoyez les réponses du formulaire et les événements de paiement à vos systèmes en temps réel.",
+        "share_link_copied_to": "Share link copied to clipboard",
+        "share_link_unavailable_publish": "Share link unavailable. Publish the form to get a shareable link.",
+        "unable_to_copy_link": "Unable to copy link. Try copying manually.",
+        "unable_to_generate_share": "Unable to generate share slug. Please publish manually.",
+        "unable_to_remove_collaborator": "Unable to remove collaborator",
+        "unable_to_update_access": "Unable to update access level",
+        "unable_to_update_collaborators": "Unable to update collaborators",
+        "unable_to_update_response": "Unable to update response settings.",
         "use_my_own_stripe": "Utiliser mon propre compte Stripe",
         "use_platform_account": "Utiliser le compte de la plateforme",
         "why_webhooks": "Pourquoi les webhooks ?"
+      },
+      "title": {
+        "stop_accepting_responses": "Stop accepting responses"
       }
     },
     "FormPaymentSuccess": {
       "button": {
         "view_form_again": "Afficher à nouveau le formulaire"
+      },
+      "text": {
+        "something_went_wrong_while": "Something went wrong while confirming the payment. Please try again.",
+        "success_host_status_pending": "success-host__status--pending",
+        "thank_you_for_your": "Thank you for your payment",
+        "we_are_still_processing": "We are still processing your payment. You will receive an update shortly.",
+        "your_response_has_been": "Your response has been submitted and the payment is confirmed.",
+        "your_response_was_submitted": "Your response was submitted successfully."
       }
     },
     "FormPlayerHost": {
       "text": {
-        "we_will_ask_for": "Nous vous demanderons votre adresse e-mail afin de pouvoir envoyer des confirmations et des reçus."
+        "authentication_required_to_preview": "Authentication required to preview this form.",
+        "could_not_create_response": "Could not create response. Please try again.",
+        "could_not_start_payment": "Could not start payment flow. Please retry.",
+        "failed_to_finalize_response": "Failed to finalize response.",
+        "failed_to_load_form": "Failed to load form.",
+        "failed_to_submit_response": "Failed to submit response.",
+        "invalid_response_please_retry": "Invalid response. Please retry submission.",
+        "missing_form_identifier": "Missing form identifier",
+        "missing_response_id": "Missing response ID",
+        "payment_confirmed_thank_you": "Payment confirmed. Thank you!",
+        "response_submitted_successfully": "Response submitted successfully.",
+        "thank_you": "Thank you!",
+        "this_form_is_not": "This form is not publicly accessible yet. Publish to allow submissions.",
+        "we_will_ask_for": "Nous vous demanderons votre adresse e-mail afin de pouvoir envoyer des confirmations et des reçus.",
+        "your_response_has_been": "Your response has been recorded."
       }
     },
     "FormResponses": {
@@ -129,10 +241,16 @@
         "review_submission_metadata_and": "Examinez les métadonnées de soumission et les réponses."
       },
       "text": {
+        "csv_exported_successfully": "CSV exported successfully",
+        "failed_to_export_csv": "Failed to export CSV",
+        "failed_to_export_to": "Failed to export to sheet",
+        "failed_to_load_response": "Failed to load response detail.",
+        "failed_to_load_responses": "Failed to load responses.",
         "manage_submissions_monitor_payment": "Gérez les soumissions, surveillez l'état des paiements et examinez les réponses individuelles.",
         "monitor_how_respondents_engage": "Surveillez comment les répondants interagissent avec votre formulaire et repérez les tendances à travers les états de complétion.",
         "no_answers_captured_for": "Aucune réponse capturée pour cette réponse.",
         "no_responses_yet_share": "Aucune réponse pour le moment. Partagez votre formulaire pour commencer à collecter des soumissions.",
+        "sheet_updated_successfully": "Sheet updated successfully",
         "visualize_completion_ratio_at": "Vizualisez le ratio de complétion d'un coup d'œil"
       }
     },
@@ -147,8 +265,13 @@
         "create_and_manage_forms": "Créer et gérer des formulaires",
         "share_this_form_with": "Partagez ce formulaire avec des participants ou des collaborateurs en utilisant le lien ci-dessous."
       },
+      "placeholder": {
+        "search": "Search...",
+        "search_forms": "Search forms..."
+      },
       "text": {
         "anyone_with_this_link": "Toute personne disposant de ce lien peut accéder au formulaire en fonction de ses paramètres de publication.",
+        "failed_to_publish_form": "Failed to publish form for sharing",
         "form_is_missing_an": "Le formulaire manque d'un identifiant.",
         "loading": "Loading...",
         "loading_more_forms": "Chargement de plus de formulaires...",
@@ -162,6 +285,9 @@
       }
     },
     "Home": {
+      "aria_label": {
+        "up_one_level": "Up one level"
+      },
       "button": {
         "login_with_venmail": "Se connecter avec Venmail"
       },
@@ -179,8 +305,11 @@
         "attachment_import_importing": "Importation de l'attachement...",
         "attachment_import_opening_document": "Ouverture du document...",
         "attachment_import_preparing_document": "Préparation du document...",
+        "failed_to_delete_some": "Failed to delete some items",
         "get_started_by_creating": "Commencez par créer un nouveau fichier ou en téléchargeant un fichier existant.",
         "group_by_type": "Grouper par type",
+        "home_final_files_with": "Home: Final files with missing file_type:",
+        "home_found_files_with": "Home: Found files with missing file_type:",
         "loading_your_files": "Chargement de vos fichiers...",
         "login_to_manage_your": "Connectez-vous pour gérer vos fichiers et dossiers sur Venmail.",
         "no_items_available_in": "Aucun élément disponible dans cette catégorie.",
@@ -189,6 +318,9 @@
         "sort_by_size": "Trier par taille",
         "sort_by_type": "Trier par type",
         "try_adjusting_your_search": "Essayez d'ajuster votre recherche ou vos filtres."
+      },
+      "title": {
+        "up_one_level": "Up one level"
       }
     },
     "Login": {
@@ -203,7 +335,28 @@
         "privacy_terms": "Confidentialité et conditions"
       },
       "text": {
-        "login_to_manage_your": "Connectez-vous pour gérer vos fichiers et dossiers sur Venmail."
+        "failed_to_authenticate_please": "Failed to authenticate. Please try again.",
+        "login_to_manage_your": "Connectez-vous pour gérer vos fichiers et dossiers sur Venmail.",
+        "session_expired_please_sign": "Session expired. Please sign in again to continue."
+      }
+    },
+    "Media": {
+      "heading": {
+        "enter_a_new_name": "Enter a new name for \"{{ fileToRename?.title }}\""
+      },
+      "placeholder": {
+        "enter_new_file_name": "Enter new file name"
+      },
+      "text": {
+        "browse_all_media_files": "Browse all media files",
+        "failed_to_create_folder": "Failed to create folder",
+        "failed_to_delete_files": "Failed to delete files",
+        "failed_to_download_file": "Failed to download file",
+        "failed_to_load_media": "Failed to load media files",
+        "failed_to_rename_file": "Failed to rename file",
+        "file_renamed_successfully": "File renamed successfully",
+        "localecompare_b_file_type": ").localeCompare(b.file_type ||",
+        "localecompare_b_title": ").localeCompare(b.title ||"
       }
     },
     "MediaViewer": {
@@ -213,8 +366,19 @@
       "link": {
         "download_open_original": "Télécharger / Ouvrir l'original"
       },
+      "placeholder": {
+        "add_a_note_to": "Add a note to the owner"
+      },
       "text": {
+        "access_request_sent": "Access request sent",
+        "access_request_sent_you": "Access request sent. You will receive an email when approved.",
         "cannot_preview_this_file": "Impossible de prévisualiser ce type de fichier.",
+        "failed_to_download_file": "Failed to download file",
+        "failed_to_import_file": "Failed to import file",
+        "failed_to_load_file": "Failed to load file",
+        "file_not_found": "File not found",
+        "request_sent_if_the": "Request sent (if the email is valid).",
+        "request_submitted_please_check": "Request submitted. Please check your email later.",
         "sending": "Sending...",
         "this_file_is_private": "Ce fichier est privé. Entrez votre email pour demander l'accès au propriétaire."
       }
@@ -232,6 +396,9 @@
         "privacy_terms": "Confidentialité et conditions"
       },
       "text": {
+        "authentication_failed_please_try": "Authentication failed. Please try again.",
+        "failed_to_connect_to": "Failed to connect to authentication service. Please try again.",
+        "no_authentication_code_or": "No authentication code or cookie found. Please try logging in again.",
         "securely_connecting_to_venmail": "Securely connecting to Venmail services...",
         "we_re_sorry_an": "Nous sommes désolés, une erreur s'est produite et nous ne pouvons pas vous connecter. Veuillez réessayer."
       }
@@ -241,10 +408,38 @@
         "request_access_to_this": "Demander l'accès à cette feuille",
         "this_spreadsheet_is_large": "Cette feuille de calcul est grande"
       },
+      "placeholder": {
+        "add_a_note_to": "Add a note to the owner",
+        "type_a_message": "Type a message..."
+      },
       "text": {
+        "access_request_sent_you": "Access request sent. You will receive an email when approved.",
+        "all_changes_saved": "All changes saved",
+        "api_key_updated": "API key updated",
+        "cannot_save_missing_document": "Cannot save: Missing document reference or ID",
+        "document_data_appears_to": "Document data appears to be corrupted. Loading with default structure.",
+        "document_saved_and_synced": "Document saved and synced successfully",
+        "document_saved_successfully": "Document saved successfully",
+        "export_is_not_available": "Export is not available yet",
+        "failed_to_capture_spreadsheet": "Failed to capture spreadsheet data",
+        "failed_to_load_spreadsheet": "Failed to load spreadsheet",
+        "failed_to_remove_access": "Failed to remove access",
+        "failed_to_rotate_api": "Failed to rotate API key",
+        "failed_to_save_document": "Failed to save document. Please try again.",
+        "failed_to_share": "Failed to share",
+        "failed_to_update_public": "Failed to update Public API settings",
+        "filter_coming_soon": "Filter: Coming soon",
+        "group_coming_soon": "Group: Coming soon",
+        "public_api_disabled": "Public API disabled",
+        "public_api_enabled": "Public API enabled",
+        "request_sent_if_the": "Request sent (if the email is valid).",
+        "request_submitted_please_check": "Request submitted. Please check your email later.",
         "sending": "Sending...",
         "the_file_is_too": "Le fichier est trop volumineux pour être prévisualisé en ligne. Vous pouvez le télécharger pour le visualiser localement.",
         "this_sheet_is_private": "Cette feuille est privée. Entrez votre email pour demander l'accès au propriétaire."
+      },
+      "title": {
+        "click_to_save_now": "Click to save now"
       }
     },
     "Sheets": {
@@ -254,8 +449,19 @@
         "start_a_new_spreadsheet": "Commencer une nouvelle feuille de calcul"
       },
       "text": {
+        "bill_clients_fast": "Bill clients fast",
+        "campaigns_channels": "Campaigns & channels",
+        "failed_to_create_folder": "Failed to create folder",
+        "failed_to_delete_some": "Failed to delete some spreadsheets",
         "get_started_by_creating": "Commencez par créer",
-        "pick_a_template_or_start_blank": "Choisissez un modèle ou commencez à partir de zéro"
+        "localecompare_b_title": ").localeCompare(b.title ||",
+        "milestones_owners": "Milestones & owners",
+        "objectives_key_results": "Objectives & key results",
+        "pick_a_template_or_start_blank": "Choisissez un modèle ou commencez à partir de zéro",
+        "pipeline_deals": "Pipeline & deals",
+        "receipts_categories": "Receipts & categories",
+        "start_from_scratch": "Start from scratch",
+        "to_dos_owners": "To-dos & owners"
       }
     },
     "Sidebar": {
@@ -265,7 +471,20 @@
     },
     "SlidesEditor": {
       "text": {
-        "select_or_add_a": "Sélectionnez ou ajoutez une diapositive pour commencer."
+        "failed_to_save_deck": "Failed to save deck",
+        "html_import_failed": "HTML import failed",
+        "powerpoint_import_failed": "PowerPoint import failed",
+        "save_the_deck_before": "Save the deck before adjusting visibility",
+        "save_the_deck_before_2": "Save the deck before inviting collaborators",
+        "save_the_deck_before_3": "Save the deck before removing collaborators",
+        "select_or_add_a": "Sélectionnez ou ajoutez une diapositive pour commencer.",
+        "share_link_copied": "Share link copied",
+        "share_link_not_available": "Share link not available yet",
+        "template_unavailable_starting_with": "Template unavailable, starting with blank deck.",
+        "unable_to_invite_collaborator": "Unable to invite collaborator",
+        "unable_to_load_slide": "Unable to load slide deck",
+        "unable_to_remove_collaborator": "Unable to remove collaborator",
+        "unable_to_update_visibility": "Unable to update visibility"
       }
     }
   },

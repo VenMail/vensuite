@@ -5,7 +5,7 @@
       <div class="flex-1">
         <div class="flex items-center gap-2">
           <Key class="w-4 h-4 text-blue-600" />
-          <span class="text-sm font-medium text-blue-900 dark:text-blue-100">API Configuration</span>
+          <span class="text-sm font-medium text-blue-900 dark:text-blue-100">{{$t('Commons.heading.api_configuration')}}</span>
         </div>
         <div class="text-xs text-blue-700 dark:text-blue-300 mt-1">
           Allow external applications to submit data to this {{ type }}
@@ -19,7 +19,7 @@
           @click="handleRotateApiKey"
         >
           <RefreshCw class="w-3 h-3 mr-1" />
-          Refresh Key
+          {{$t('Commons.button.refresh_key')}}
         </Button>
         <Switch
           :checked="apiEnabled"
@@ -33,11 +33,11 @@
     <div class="grid grid-cols-2 gap-2">
       <Button size="sm" variant="outline" @click="copyToClipboard(publicUrl, 'URL copied')" class="justify-start">
         <Share class="w-3 h-3 mr-2" />
-        Copy Public URL
+        {{$t('Components.Forms.IntegrationDialog.button.copy_public_url')}}
       </Button>
       <Button size="sm" variant="outline" @click="copyToClipboard(embedSnippet, 'Embed code copied')" class="justify-start">
         <Code class="w-3 h-3 mr-2" />
-        Copy Embed Code
+        {{$t('Components.Forms.IntegrationDialog.button.copy_embed_code')}}
       </Button>
     </div>
 
@@ -46,10 +46,10 @@
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
           <Code class="w-4 h-4 text-purple-600" />
-          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">API Integration</span>
+          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('Commons.heading.api_integration')}}</span>
         </div>
         <div class="text-xs text-gray-500">
-          {{ apiEnabled ? 'API Enabled' : 'API Disabled' }}
+          {{ apiEnabled ? $t('Commons.text.api_enabled') : $t('Commons.text.api_disabled') }}
         </div>
       </div>
       
@@ -69,14 +69,14 @@
       </div>
       <div v-if="!apiEnabled" class="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
         <AlertCircle class="w-3 h-3 inline mr-1" />
-        Enable API to use integration examples
+        {{$t('Components.Forms.IntegrationDialog.text.enable_api_to_use')}}
       </div>
 
       <!-- Integration Examples -->
       <Collapsible v-model:open="examplesOpen">
         <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
           <ChevronRight class="w-3 h-3 transition-transform" :class="{ 'rotate-90': examplesOpen }" />
-          Integration Examples
+          {{$t('Commons.text.integration_examples')}}
         </CollapsibleTrigger>
         <CollapsibleContent class="mt-2">
           <!-- Integration Type Tabs -->
@@ -98,10 +98,10 @@
             <!-- JavaScript/TypeScript -->
             <div v-if="activeIntegrationTab === 'javascript'" class="space-y-2">
               <div class="flex items-center justify-between">
-                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">JavaScript Example</div>
+                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.javascript_example')}}</div>
                 <select v-model="jsFramework" class="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
-                  <option value="fetch">Fetch API</option>
-                  <option value="axios">Axios</option>
+                  <option value="fetch">{{$t('Commons.text.fetch_api')}}</option>
+                  <option value="axios">{{$t('Commons.text.axios')}}</option>
                   <option value="node">Node.js</option>
                 </select>
               </div>
@@ -115,19 +115,19 @@
 
             <!-- Postman Collection -->
             <div v-if="activeIntegrationTab === 'postman'" class="space-y-2">
-              <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Postman Collection</div>
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.postman_collection')}}</div>
               <div class="relative">
                 <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ postmanCollection }}</code></pre>
                 <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="downloadPostmanCollection">
                   <Download class="w-3 h-3 mr-1" />
-                  Export
+                  {{$t('Commons.button.export')}}
                 </Button>
               </div>
             </div>
 
             <!-- OpenAPI Spec -->
             <div v-if="activeIntegrationTab === 'openapi'" class="space-y-2">
-              <div class="text-xs font-medium text-gray-700 dark:text-gray-300">OpenAPI Specification</div>
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.openapi_specification')}}</div>
               <div class="relative">
                 <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto max-h-60 overflow-auto"><code>{{ openApiSpec }}</code></pre>
                 <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(openApiSpec, 'OpenAPI spec copied')">
@@ -138,7 +138,7 @@
 
             <!-- cURL -->
             <div v-if="activeIntegrationTab === 'curl'" class="space-y-2">
-              <div class="text-xs font-medium text-gray-700 dark:text-gray-300">cURL Command</div>
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.curl_command')}}</div>
               <div class="relative">
                 <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ curlCommand }}</code></pre>
                 <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(curlCommand, 'cURL command copied')">
@@ -150,9 +150,9 @@
             <!-- Python -->
             <div v-if="activeIntegrationTab === 'python'" class="space-y-2">
               <div class="flex items-center justify-between">
-                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Python Example</div>
+                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.python_example')}}</div>
                 <select v-model="pythonLibrary" class="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
-                  <option value="requests">Requests</option>
+                  <option value="requests">{{$t('Commons.text.requests')}}</option>
                   <option value="httpx">HTTPX</option>
                 </select>
               </div>
@@ -172,7 +172,7 @@
     <Collapsible v-model:open="apiKeyOpen">
       <CollapsibleTrigger class="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
         <Eye class="w-3 h-3" />
-        API Key
+        {{$t('Commons.heading.api_key')}}
       </CollapsibleTrigger>
       <CollapsibleContent class="mt-2">
         <div class="flex gap-2">
@@ -217,6 +217,7 @@ import {
   Globe
 } from 'lucide-vue-next'
 import { toast } from '@/composables/useToast'
+import { t } from '@/i18n';
 
 interface Props {
   type: 'sheet' | 'form'
@@ -463,14 +464,14 @@ const openApiSpec = computed(() => {
     servers: [
       {
         url: new URL(props.endpoint).origin,
-        description: "API Server"
+        description: t('Commons.text.api_server')
       }
     ],
     paths: {
       [new URL(props.endpoint).pathname]: {
         post: {
           summary: "Submit response",
-          description: "Submit a new response to the form",
+          description: t('Components.Forms.IntegrationDialog.text.submit_a_new_response'),
           tags: ["responses"],
           requestBody: {
             required: true,
@@ -513,7 +514,7 @@ const openApiSpec = computed(() => {
           },
           responses: {
             200: {
-              description: "Response submitted successfully",
+              description: t('Components.Forms.IntegrationDialog.text.response_submitted_successfully'),
               content: {
                 "application/json": {
                   schema: {
@@ -528,10 +529,10 @@ const openApiSpec = computed(() => {
               }
             },
             401: {
-              description: "Unauthorized"
+              description: t('Commons.text.unauthorized')
             },
             400: {
-              description: "Bad Request"
+              description: t('Commons.text.bad_request')
             }
           },
           security: [

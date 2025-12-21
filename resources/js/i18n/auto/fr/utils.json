@@ -1,8 +1,37 @@
 {
   "Utils": {
+    "FieldExtractor": {
+      "text": {
+        "sample_message_text": "Sample message text"
+      }
+    },
+    "FileConverter": {
+      "text": {
+        "content_conversion_failed": "Content conversion failed",
+        "content_conversion_failed_please": "Content conversion failed. Please try a different format.",
+        "invalid_tiptap_json_structure": "Invalid Tiptap JSON structure",
+        "pdf_extraction_library_failed": "PDF extraction library failed to load",
+        "pdf_name_error_invalid": "PDF: {name} Error: Invalid or corrupted PDF file format. Please verify the file is a valid PDF.",
+        "pdf_name_error_pdf": "PDF: {name} Error: PDF extraction library failed to load. Please refresh the page and try again, or convert PDFs to DOCX before importing.",
+        "pdf_name_error_pdf_2": "PDF: {name} Error: PDF file data is missing or incomplete. Please try uploading again.",
+        "pdf_name_error_pdf_3": "PDF: {name} Error: PDF text extraction failed ({errorMessage}). For best results, convert PDFs to DOCX before importing, or use server-side conversion.",
+        "pdf_name_error_this": "PDF: {name} Error: This PDF is password-protected or encrypted. Please decrypt the PDF before importing.",
+        "pdf_name_note_this": "PDF: {name} Note: This PDF appears to be image-based or contains no extractable text. Text extraction was not possible. For best results, convert PDFs to DOCX before importing, or use OCR tools.",
+        "pdfjs_dist_is_not": "pdfjs-dist is not properly loaded",
+        "tiptap_editor_validation_failed": "Tiptap Editor validation failed",
+        "tiptap_json_round_trip": "Tiptap JSON round-trip validation failed",
+        "tiptap_json_validation_failed": "Tiptap JSON validation failed"
+      }
+    },
     "Helpers": {
       "text": {
         "target_position_is_invalid": "La position cible est invalide, vous ne pouvez pas déplacer le {type} {originIndex} vers {targetIndex}, la cible ne peut pas être divisée. Vous pouvez utiliser l'option tryToFit."
+      }
+    },
+    "Node": {
+      "text": {
+        "invalid_node_parameter": "Invalid \"node\" parameter",
+        "invalid_predicate_parameter": "Invalid \"predicate\" parameter"
       }
     }
   }

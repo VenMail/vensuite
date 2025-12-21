@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-20T00:36:27.473Z",
+  "generatedAt": "2025-12-21T15:10:46.250Z",
   "baseLocale": "en",
   "autoDir": "resources/js/i18n/auto",
   "unused": [
@@ -108,7 +108,19 @@
       "baseFileRel": "en/commons.json"
     },
     {
+      "keyPath": "Commons.button.code_example",
+      "baseFileRel": "en/commons.json"
+    },
+    {
       "keyPath": "Commons.button.file",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.button.header_mapped",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.button.row_array",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -129,6 +141,14 @@
     },
     {
       "keyPath": "Commons.heading.untitled_deck",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.label.api_endpoint",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.label.public_url",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -273,6 +293,18 @@
     },
     {
       "keyPath": "Commons.text.all_spreadsheets",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.text.api_configuration",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.text.api_integration",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.text.api_key",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -497,10 +529,6 @@
     },
     {
       "keyPath": "Commons.text.converted_file",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.copy_failed",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1204,6 +1232,10 @@
       "baseFileRel": "en/commons.json"
     },
     {
+      "keyPath": "Commons.text.openapi",
+      "baseFileRel": "en/commons.json"
+    },
+    {
       "keyPath": "Commons.text.operations",
       "baseFileRel": "en/commons.json"
     },
@@ -1388,10 +1420,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.publish_incomplete",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.published",
       "baseFileRel": "en/commons.json"
     },
@@ -1449,6 +1477,10 @@
     },
     {
       "keyPath": "Commons.text.report",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.text.request_body",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1677,6 +1709,10 @@
     },
     {
       "keyPath": "Commons.text.submission_received",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.text.submit_response",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -2612,7 +2648,27 @@
       "baseFileRel": "en/components.json"
     },
     {
+      "keyPath": "Components.Forms.IntegrationDialog.heading.share_embed",
+      "baseFileRel": "en/components.json"
+    },
+    {
       "keyPath": "Components.Forms.IntegrationDialog.text.allow_external_applications_to",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.IntegrationDialog.text.copy_and_paste_this",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.IntegrationDialog.text.embed_as_iframe",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.IntegrationDialog.text.enable_public_api",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.IntegrationDialog.text.enable_public_api_to",
       "baseFileRel": "en/components.json"
     },
     {
@@ -2620,7 +2676,19 @@
       "baseFileRel": "en/components.json"
     },
     {
+      "keyPath": "Components.Forms.IntegrationDialog.text.generate_new_api_key",
+      "baseFileRel": "en/components.json"
+    },
+    {
       "keyPath": "Components.Forms.IntegrationDialog.text.keep_this_key_secure",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.IntegrationDialog.text.postman_collection_downloaded",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.IntegrationDialog.text.reveal_api_key",
       "baseFileRel": "en/components.json"
     },
     {
@@ -2629,6 +2697,14 @@
     },
     {
       "keyPath": "Components.Forms.IntegrationDialog.text.unable_to_copy_try",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.IntegrationDialog.text.use_field_names_as",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Forms.IntegrationDialog.text.view_integration_examples",
       "baseFileRel": "en/components.json"
     },
     {
@@ -2897,10 +2973,6 @@
     },
     {
       "keyPath": "Composables.UseFormAutosave.text.failed_to_autosave",
-      "baseFileRel": "en/composables.json"
-    },
-    {
-      "keyPath": "Composables.UseFormAutosave.text.this_form_was_updated",
       "baseFileRel": "en/composables.json"
     },
     {
