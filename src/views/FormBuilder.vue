@@ -1218,6 +1218,7 @@
         </DialogHeader>
 
         <IntegrationDialog
+          :key="`integration-${formPublicApiEnabled}-${formPublicApiKey}`"
           type="form"
           :id="formId"
           :api-enabled="formPublicApiEnabled"

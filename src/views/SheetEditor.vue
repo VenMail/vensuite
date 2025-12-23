@@ -1365,6 +1365,7 @@ watch(
         </DialogHeader>
 
         <IntegrationDialog
+          :key="`integration-${sheetPublicApiEnabled}-${sheetPublicApiKey}`"
           type="sheet"
           :id="route.params.id as string"
           :api-enabled="sheetPublicApiEnabled"

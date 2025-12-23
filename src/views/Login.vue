@@ -57,7 +57,7 @@ onMounted(async () => {
      
     <div class="flex items-center justify-between w-full border-b border-[#A9C9D64D] p-6">
       <div class="w-[150px]">
-        <img src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full" />
+        <img src="/logo-black.png" alt="VenMail Logo" class="h-6 object-contain" />
       </div>
       <div class="w-[150px] flex justify-end">
         <div class="inline-flex items-center rounded-full border border-gray-200 text-xs overflow-hidden">

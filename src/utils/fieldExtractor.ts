@@ -4,7 +4,7 @@ import type { IWorkbookData } from '@univerjs/core'
  * Extract field names from sheet data based on first row headers
  */
 export function extractSheetFields(workbookData: IWorkbookData | null | undefined): string[] {
-  if (!workbookData?.sheets || workbookData.sheets.length === 0) {
+  if (!workbookData?.sheets || Object.entries(workbookData.sheets).length === 0) {
     return ['Column A', 'Column B', 'Column C']
   }
 

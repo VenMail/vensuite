@@ -105,45 +105,53 @@
                   <option value="node">Node.js</option>
                 </select>
               </div>
-              <div class="relative">
-                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ javascriptExample }}</code></pre>
-                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(javascriptExample, 'Code copied')">
-                  <Copy class="w-3 h-3" />
-                </Button>
+              <div class="relative group">
+                <div class="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button size="sm" variant="outline" @click="copyToClipboard(javascriptExample, 'Code copied')">
+                    <Copy class="w-3 h-3" />
+                  </Button>
+                </div>
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-x-auto whitespace-pre-wrap break-words max-h-80 overflow-y-auto"><code class="block">{{ javascriptExample }}</code></pre>
               </div>
             </div>
 
             <!-- Postman Collection -->
             <div v-if="activeIntegrationTab === 'postman'" class="space-y-2">
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.postman_collection')}}</div>
-              <div class="relative">
-                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ postmanCollection }}</code></pre>
-                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="downloadPostmanCollection">
-                  <Download class="w-3 h-3 mr-1" />
-                  {{$t('Commons.button.export')}}
-                </Button>
+              <div class="relative group">
+                <div class="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button size="sm" variant="outline" @click="downloadPostmanCollection">
+                    <Download class="w-3 h-3 mr-1" />
+                    {{$t('Commons.button.export')}}
+                  </Button>
+                </div>
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-x-auto whitespace-pre-wrap break-words max-h-80 overflow-y-auto"><code class="block">{{ postmanCollection }}</code></pre>
               </div>
             </div>
 
             <!-- OpenAPI Spec -->
             <div v-if="activeIntegrationTab === 'openapi'" class="space-y-2">
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.openapi_specification')}}</div>
-              <div class="relative">
-                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto max-h-60 overflow-auto"><code>{{ openApiSpec }}</code></pre>
-                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(openApiSpec, 'OpenAPI spec copied')">
-                  <Copy class="w-3 h-3" />
-                </Button>
+              <div class="relative group">
+                <div class="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button size="sm" variant="outline" @click="copyToClipboard(openApiSpec, 'OpenAPI spec copied')">
+                    <Copy class="w-3 h-3" />
+                  </Button>
+                </div>
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-x-auto whitespace-pre-wrap break-words max-h-80 overflow-y-auto"><code class="block">{{ openApiSpec }}</code></pre>
               </div>
             </div>
 
             <!-- cURL -->
             <div v-if="activeIntegrationTab === 'curl'" class="space-y-2">
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.text.curl_command')}}</div>
-              <div class="relative">
-                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ curlCommand }}</code></pre>
-                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(curlCommand, 'cURL command copied')">
-                  <Copy class="w-3 h-3" />
-                </Button>
+              <div class="relative group">
+                <div class="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button size="sm" variant="outline" @click="copyToClipboard(curlCommand, 'cURL command copied')">
+                    <Copy class="w-3 h-3" />
+                  </Button>
+                </div>
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-x-auto whitespace-pre-wrap break-words max-h-80 overflow-y-auto"><code class="block">{{ curlCommand }}</code></pre>
               </div>
             </div>
 
@@ -156,11 +164,13 @@
                   <option value="httpx">HTTPX</option>
                 </select>
               </div>
-              <div class="relative">
-                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-auto"><code>{{ pythonExample }}</code></pre>
-                <Button size="sm" variant="outline" class="absolute top-2 right-2" @click="copyToClipboard(pythonExample, 'Python code copied')">
-                  <Copy class="w-3 h-3" />
-                </Button>
+              <div class="relative group">
+                <div class="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button size="sm" variant="outline" @click="copyToClipboard(pythonExample, 'Python code copied')">
+                    <Copy class="w-3 h-3" />
+                  </Button>
+                </div>
+                <pre class="text-xs rounded border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 p-3 overflow-x-auto whitespace-pre-wrap break-words max-h-80 overflow-y-auto"><code class="block">{{ pythonExample }}</code></pre>
               </div>
             </div>
           </div>
@@ -198,7 +208,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -590,4 +600,23 @@ const copyToClipboard = async (value: string, successMessage: string) => {
     toast.error('Unable to copy. Try copying manually.')
   }
 }
+
+// Watch for prop changes to ensure dialog reflects latest state
+watch(
+  () => props.apiEnabled,
+  (newEnabled) => {
+    // Force reactivity update when apiEnabled prop changes
+    console.log('API enabled changed:', newEnabled)
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.apiKey,
+  (newKey) => {
+    // Force reactivity update when apiKey prop changes
+    console.log('API key changed:', newKey ? '***updated***' : '***empty***')
+  },
+  { immediate: true }
+)
 </script>
