@@ -52,56 +52,47 @@ export default defineConfig(({ mode }) => {
         }
       },
       // Split chunks more intelligently based on app structure
-      rollupOptions: {
-        output: {
-          // Ensure entry chunks are reasonably sized
-          entryFileNames: 'assets/[name]-[hash].js',
-          chunkFileNames: 'assets/[name]-[hash].js',
-          assetFileNames: 'assets/[name]-[hash].[ext]',
-          // Optimize chunking strategy
-          manualChunks: (id) => {
-            // Authentication module - separate chunk for fast startup
-            if (id.includes('src/auth/')) {
-              return 'auth-chunk';
-            }
+      // rollupOptions: {
+      //   output: {
+      //     // Ensure entry chunks are reasonably sized
+      //     entryFileNames: 'assets/[name]-[hash].js',
+      //     chunkFileNames: 'assets/[name]-[hash].js',
+      //     assetFileNames: 'assets/[name]-[hash].[ext]',
+      //     // Optimize chunking strategy
+      //     manualChunks: (id) => {
             
-            // Login and OAuth callback views - separate for auth flow
-            if (id.includes('src/views/Login.vue') || id.includes('src/views/OauthCallback.vue')) {
-              return 'auth-views';
-            }
-            
-            // Node modules
-            if (id.includes('node_modules')) {
-              // Split Univer.js packages by functionality
-              if (id.includes('@univerjs')) {
-                if (id.includes('@univerjs/sheets')) {
-                  return 'vendor-univerjs-sheets';
-                }
-                if (id.includes('@univerjs/docs')) {
-                  return 'vendor-univerjs-docs';
-                }
-                if (id.includes('@univerjs/slides')) {
-                  return 'vendor-univerjs-slides';
-                }
-                if (id.includes('@univerjs/engine')) {
-                  return 'vendor-univerjs-engine';
-                }
-                if (id.includes('@univerjs/ui')) {
-                  return 'vendor-univerjs-ui';
-                }
-                if (id.includes('@univerjs/core')) {
-                  return 'vendor-univerjs-core';
-                }
-                // Other Univer packages
-                return 'vendor-univerjs-other';
-              }
+      //       // Node modules
+      //       if (id.includes('node_modules')) {
+      //         // Split Univer.js packages by functionality
+      //         if (id.includes('@univerjs')) {
+      //           if (id.includes('@univerjs/sheets')) {
+      //             return 'vendor-univerjs-sheets';
+      //           }
+      //           if (id.includes('@univerjs/docs')) {
+      //             return 'vendor-univerjs-docs';
+      //           }
+      //           if (id.includes('@univerjs/slides')) {
+      //             return 'vendor-univerjs-slides';
+      //           }
+      //           if (id.includes('@univerjs/engine')) {
+      //             return 'vendor-univerjs-engine';
+      //           }
+      //           if (id.includes('@univerjs/ui')) {
+      //             return 'vendor-univerjs-ui';
+      //           }
+      //           if (id.includes('@univerjs/core')) {
+      //             return 'vendor-univerjs-core';
+      //           }
+      //           // Other Univer packages
+      //           return 'vendor-univerjs-other';
+      //         }
 
-              // Other dependencies
-              return 'vendor';
-            }
-          }
-        }
-      }
+      //         // Other dependencies
+      //         return 'vendor';
+      //       }
+      //     }
+      //   }
+      // }
     },
     define: {
       'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
