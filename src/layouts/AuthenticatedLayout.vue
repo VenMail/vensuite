@@ -2,7 +2,7 @@
 import { onMounted, watch, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useAuthStore } from '@/store/auth'
+import { useAuthStore } from '@/auth/index'
 import Sidebar from '@/views/Sidebar.vue'
 import { useFileStore } from '@/store/files'
 // import { ToastProvider } from '@/components/ui/toast'

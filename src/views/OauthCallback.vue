@@ -3,7 +3,7 @@ import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
 import { LoaderCircle } from "lucide-vue-next";
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/auth';
+import { useAuthStore } from '@/auth/index';
 
 const authStore = useAuthStore();
 const router = useRouter();

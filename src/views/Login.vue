@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/store/auth'
+import { useAuthStore } from '@/auth/index'
 import { useTranslation } from '@/composables/useTranslation'
 import { Button } from '@/components/ui/button'
 import { LoaderCircle } from 'lucide-vue-next'

@@ -9,7 +9,8 @@ import { createPinia } from 'pinia'
 import mammothUrl from 'mammoth/mammoth.browser.min.js?url'
 import { t } from '@/i18n'
 import App from './App.vue'
-import { useAuthStore } from './store/auth'
+import { useAuthStore } from './auth/index'
+import { createAuthGuard } from './auth/router-guard'
 
 // Routes
 import Home from './views/Home.vue'
@@ -118,35 +119,8 @@ authStore.setupAxiosInterceptor()
 authStore.hydrate()
 
 // Router guard
-router.beforeEach(async (to, _from, next) => {
-  // Allow explicit public routes
-  if (to.meta && (to.meta as any).public === true) {
-    return next()
-  }
-
-  // Allow unauthenticated viewing of public/link docs/sheets by direct link
-  const isPublicViewer = (
-    (to.name === 'docs-edit' && typeof (to.params as any).appFileId === 'string' && (to.params as any).appFileId !== 'new') ||
-    (to.name === 'sheet' && typeof to.params.id === 'string' && to.params.id !== 'new') ||
-    (to.name === 'file' && typeof to.params.id === 'string')
-  )
-
-  if (isPublicViewer) {
-    return next()
-  }
-
-  // Always allow login and oauth callback routes
-  if (to.name === 'login' || to.name === 'oauthCallback') {
-    return next()
-  }
-
-  // For all other routes, require authentication if not already authenticated
-  if (!authStore.isAuthenticated) {
-    return next({ name: 'login', query: { redirect: to.fullPath } })
-  }
-
-  next()
-})
+const authGuard = createAuthGuard(authStore)
+router.beforeEach(authGuard)
 
 // Ensure mammoth is loaded globally before initializing the editor plugin
 function ensureMammoth(): Promise<void> {
