@@ -2839,32 +2839,85 @@ async function exportToPDF() {
   if (!editor.value) return;
   
   try {
-    const { default: jsPDF } = await import('jspdf');
-    const pdf = new jsPDF({
-      orientation: pageOrientation.value === 'landscape' ? 'landscape' : 'portrait',
-      unit: 'mm',
-      format: pageSize.value === 'letter' ? 'letter' : 'a4',
-    });
-    
     const html = editor.value.getHTML();
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    tempDiv.style.padding = '20px';
-    tempDiv.style.fontFamily = 'Arial, sans-serif';
-    tempDiv.style.fontSize = '12pt';
-    tempDiv.style.lineHeight = '1.6';
+    const title = documentTitle.value || 'document';
     
-    pdf.html(tempDiv, {
-      callback: (doc) => {
-        doc.save(`${documentTitle.value || 'document'}.pdf`);
-      },
-      x: 10,
-      y: 10,
-      width: pageOrientation.value === 'landscape' ? 277 : 190,
-      windowWidth: 800,
-    });
+    // Try server-side PDF generation first (higher quality)
+    try {
+      toast.info('Generating PDF using server...');
+      
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/app-files/export-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+        body: JSON.stringify({
+          html: html,
+          title: title,
+          orientation: pageOrientation.value,
+          format: pageSize.value,
+          margin: {
+            top: 20,
+            right: 20,
+            bottom: 20,
+            left: 20
+          }
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success && result.data?.pdf_url) {
+          // Download the PDF from server
+          const link = document.createElement('a');
+          link.href = result.data.pdf_url;
+          link.download = result.data.filename || `${title}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          toast.success('PDF exported successfully');
+          return;
+        }
+      }
+      
+      throw new Error('Server PDF generation failed');
+      
+    } catch (serverError) {
+      console.warn('Server-side PDF export failed, falling back to client-side:', serverError);
+      
+      // Fallback to client-side PDF generation
+      toast.info('Server unavailable, using offline PDF generation...');
+      
+      const { default: jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({
+        orientation: pageOrientation.value === 'landscape' ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: pageSize.value === 'letter' ? 'letter' : 'a4',
+      });
+      
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      tempDiv.style.padding = '20px';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '12pt';
+      tempDiv.style.lineHeight = '1.6';
+      
+      pdf.html(tempDiv, {
+        callback: (doc) => {
+          doc.save(`${title}.pdf`);
+        },
+        x: 10,
+        y: 10,
+        width: pageOrientation.value === 'landscape' ? 277 : 190,
+        windowWidth: 800,
+      });
+      
+      toast.success('PDF exported (offline mode)');
+    }
     
-    toast.success('PDF export started');
   } catch (error) {
     console.error('PDF export error:', error);
     toast.error('Failed to export PDF');
@@ -2876,21 +2929,152 @@ async function exportToDocx() {
   
   try {
     const html = editor.value.getHTML();
+    const title = documentTitle.value || 'document';
+    
+    // Enhanced HTML to DOCX conversion with better formatting
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
     
     const paragraphs: Paragraph[] = [];
+    const children: any[] = [];
     
-    // Simple HTML to DOCX conversion
-    const textContent = tempDiv.textContent || '';
-    const lines = textContent.split('\n').filter(line => line.trim());
+    // Process each node in the HTML
+    const processNode = (node: any) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent?.trim();
+        if (text) {
+          children.push(new TextRun({ text }));
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const tagName = node.tagName?.toLowerCase();
+        const text = node.textContent?.trim() || '';
+        
+        if (!text) return;
+        
+        switch (tagName) {
+          case 'h1':
+            children.push(new TextRun({ 
+              text, 
+              bold: true, 
+              size: 32 
+            }));
+            break;
+          case 'h2':
+            children.push(new TextRun({ 
+              text, 
+              bold: true, 
+              size: 28 
+            }));
+            break;
+          case 'h3':
+            children.push(new TextRun({ 
+              text, 
+              bold: true, 
+              size: 24 
+            }));
+            break;
+          case 'h4':
+          case 'h5':
+          case 'h6':
+            children.push(new TextRun({ 
+              text, 
+              bold: true, 
+              size: 20 
+            }));
+            break;
+          case 'strong':
+          case 'b':
+            children.push(new TextRun({ 
+              text, 
+              bold: true 
+            }));
+            break;
+          case 'em':
+          case 'i':
+            children.push(new TextRun({ 
+              text, 
+              italics: true 
+            }));
+            break;
+          case 'u':
+            children.push(new TextRun({ 
+              text, 
+              underline: {} 
+            }));
+            break;
+          case 'p':
+          case 'div':
+            if (children.length > 0) {
+              paragraphs.push(new Paragraph({
+                children: [...children],
+              }));
+              children.length = 0; // Clear children for next paragraph
+            }
+            // Process child nodes
+            Array.from(node.childNodes).forEach(processNode);
+            break;
+          case 'ul':
+          case 'ol':
+            if (children.length > 0) {
+              paragraphs.push(new Paragraph({
+                children: [...children],
+              }));
+              children.length = 0;
+            }
+            // List items
+            const listItems = node.querySelectorAll('li');
+            listItems.forEach((li: any) => {
+              const liText = li.textContent?.trim();
+              if (liText) {
+                paragraphs.push(new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: tagName === 'ul' ? '• ' : '1. ',
+                      bold: true
+                    }),
+                    new TextRun({ text: liText })
+                  ],
+                }));
+              }
+            });
+            break;
+          case 'br':
+            if (children.length > 0) {
+              paragraphs.push(new Paragraph({
+                children: [...children],
+              }));
+              children.length = 0;
+            }
+            break;
+          case 'table':
+            // Skip tables for now (complex conversion)
+            console.warn('Table export to DOCX not fully supported yet');
+            break;
+          default:
+            // Handle other elements as regular text
+            children.push(new TextRun({ text }));
+        }
+      }
+    };
     
-    for (const line of lines) {
-      paragraphs.push(
-        new Paragraph({
-          children: [new TextRun(line.trim())],
-        })
-      );
+    // Process all nodes
+    Array.from(tempDiv.childNodes).forEach(processNode);
+    
+    // Add any remaining children as a paragraph
+    if (children.length > 0) {
+      paragraphs.push(new Paragraph({
+        children: [...children],
+      }));
+    }
+    
+    // If no paragraphs were created, add a simple text paragraph
+    if (paragraphs.length === 0) {
+      const textContent = tempDiv.textContent || '';
+      if (textContent.trim()) {
+        paragraphs.push(new Paragraph({
+          children: [new TextRun(textContent.trim())],
+        }));
+      }
     }
     
     const doc = new Document({
@@ -2899,6 +3083,15 @@ async function exportToDocx() {
           page: {
             size: {
               orientation: pageOrientation.value === 'landscape' ? 'landscape' as any : 'portrait' as any,
+              // Use A4 size by default
+              width: pageSize.value === 'letter' ? 8.5 * 1440 : 210 * 56.7, // inches to twips
+              height: pageSize.value === 'letter' ? 11 * 1440 : 297 * 56.7,  // inches/cm to twips
+            },
+            margin: {
+              top: 1440,    // 1 inch in twips
+              right: 1440,
+              bottom: 1440,
+              left: 1440,
             },
           },
         },
@@ -2907,7 +3100,7 @@ async function exportToDocx() {
     });
     
     const blob = await Packer.toBlob(doc);
-    saveAs(blob, `${documentTitle.value || 'document'}.docx`);
+    saveAs(blob, `${title}.docx`);
     toast.success('DOCX exported successfully');
   } catch (error) {
     console.error('DOCX export error:', error);
