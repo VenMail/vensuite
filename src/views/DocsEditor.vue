@@ -639,6 +639,23 @@ const router = useRouter();
 const fileStore = useFileStore();
 const authStore = useAuthStore();
 
+function getAuthToken(): string | null {
+  try {
+    return fileStore.getToken?.() || authStore.getToken?.() || localStorage.getItem('venAuthToken') || null;
+  } catch {
+    return null;
+  }
+}
+
+function buildAuthHeaders(extra: Record<string, string> = {}) {
+  const headers: Record<string, string> = { ...extra };
+  const token = getAuthToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 const editor = ref<Editor>();
 const toolbarRef = ref<InstanceType<typeof DocsToolbar> | null>(null);
 const currentDoc = ref<FileData | null>(null);
@@ -776,7 +793,7 @@ async function submitAccessRequestDoc() {
     const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
     const res = await fetch(`${API_BASE_URI}/app-files/${idParam}/request-access`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         email: requestEmail.value,
         access_level: accessLevel.value,
@@ -2848,10 +2865,9 @@ async function exportToPDF() {
       
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/app-files/export-pdf`, {
         method: 'POST',
-        headers: {
+        headers: buildAuthHeaders({
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
+        }),
         body: JSON.stringify({
           html: html,
           title: title,
@@ -3444,9 +3460,8 @@ async function fetchSharingInfo() {
   try {
     const id = route.params.appFileId as string;
     if (!id || id === 'new') return;
-    const token = fileStore.getToken?.();
     const res = await axios.get(`${FILES_ENDPOINT}/${id}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: buildAuthHeaders(),
     });
     const payload = res.data?.data || res.data?.document || {};
     const parsed = parseSharingInfoString(payload.sharing_info);
@@ -3482,7 +3497,9 @@ async function handleInviteMember(payload: ShareCardPayload) {
       { email: payload.email, shareLevel: resolvedLevel },
     ];
     const sharingInfo = serializeSharingInfoString(newMembers);
-    await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
+    await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo }, {
+      headers: buildAuthHeaders({ 'Content-Type': 'application/json' }),
+    });
     await fetchSharingInfo();
     toast.success('Member invited');
   } catch {}
@@ -3498,7 +3515,9 @@ async function handleRemoveMember(payload: { email: string }) {
     if (!id) return;
     const newMembers: ShareMember[] = shareMembers.value.filter(m => m.email !== payload.email);
     const sharingInfo = serializeSharingInfoString(newMembers);
-    await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo });
+    await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo }, {
+      headers: buildAuthHeaders({ 'Content-Type': 'application/json' }),
+    });
     await fetchSharingInfo();
     toast.success('Member removed');
   } catch {}
@@ -3509,7 +3528,9 @@ async function updateVisibility(value: number) {
     const id = route.params.appFileId as string;
     if (!id) return;
     
-    await axios.patch(`${FILES_ENDPOINT}/${id}`, { privacy_type: value });
+    await axios.patch(`${FILES_ENDPOINT}/${id}`, { privacy_type: value }, {
+      headers: buildAuthHeaders({ 'Content-Type': 'application/json' }),
+    });
     await fetchSharingInfo();
     toast.success('Visibility updated');
   } catch {}
