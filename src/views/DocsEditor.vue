@@ -2855,56 +2855,79 @@ function printAsHtml() {
 async function exportToPDF() {
   if (!editor.value) return;
   
+  const html = editor.value.getHTML();
+  const title = documentTitle.value || 'document';
+  const payload = {
+    html,
+    title,
+    orientation: pageOrientation.value,
+    format: pageSize.value,
+    margin: {
+      top: 20,
+      right: 20,
+      bottom: 20,
+      left: 20,
+    },
+  };
+  
+  const STREAM_THRESHOLD_BYTES = 5 * 1024 * 1024; // 5MB - stream smaller files, use URL for larger ones
+  
   try {
-    const html = editor.value.getHTML();
-    const title = documentTitle.value || 'document';
+    toast.info('Generating PDF using server...');
+    const jsonResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/app-files/export-pdf`, {
+      method: 'POST',
+      headers: buildAuthHeaders({
+        'Content-Type': 'application/json',
+      }),
+      body: JSON.stringify(payload),
+    });
     
-    // Try server-side PDF generation first (higher quality)
-    try {
-      toast.info('Generating PDF using server...');
-      
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/app-files/export-pdf`, {
+    if (!jsonResponse.ok) {
+      throw new Error('Server PDF generation failed');
+    }
+    
+    const result = await jsonResponse.json();
+    if (!result.success || !result.data) {
+      throw new Error('Invalid server response');
+    }
+    
+    const { pdf_url, filename, size, stream_token: streamToken } = result.data;
+    const safeFilename = filename || `${title}.pdf`;
+    const shouldStream = !!streamToken && typeof size === 'number' && size <= STREAM_THRESHOLD_BYTES;
+    
+    if (shouldStream) {
+      const streamResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/app-files/export-pdf`, {
         method: 'POST',
         headers: buildAuthHeaders({
           'Content-Type': 'application/json',
+          'Accept': 'application/pdf',
         }),
-        body: JSON.stringify({
-          html: html,
-          title: title,
-          orientation: pageOrientation.value,
-          format: pageSize.value,
-          margin: {
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20
-          }
-        })
+        body: JSON.stringify({ stream_token: streamToken }),
       });
       
-      if (response.ok) {
-        const result = await response.json();
-        
-        if (result.success && result.data?.pdf_url) {
-          // Download the PDF from server
-          const link = document.createElement('a');
-          link.href = result.data.pdf_url;
-          link.download = result.data.filename || `${title}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          toast.success('PDF exported successfully');
-          return;
-        }
+      const contentType = streamResponse.headers.get('content-type') || '';
+      if (streamResponse.ok && contentType.includes('application/pdf')) {
+        const blob = await streamResponse.blob();
+        triggerFileDownload(blob, safeFilename);
+        toast.success('PDF downloaded');
+        return;
       }
       
-      throw new Error('Server PDF generation failed');
-      
-    } catch (serverError) {
-      console.warn('Server-side PDF export failed, falling back to client-side:', serverError);
-      
-      // Fallback to client-side PDF generation
+      console.warn('Stream download failed, falling back to URL');
+    }
+    
+    if (pdf_url) {
+      downloadViaUrl(pdf_url, safeFilename);
+      toast.success('PDF exported successfully');
+      return;
+    }
+    
+    throw new Error('No PDF download available');
+    
+  } catch (serverError) {
+    console.warn('Server-side PDF export failed, falling back to client-side:', serverError);
+    
+    try {
       toast.info('Server unavailable, using offline PDF generation...');
       
       const { default: jsPDF } = await import('jspdf');
@@ -2932,12 +2955,31 @@ async function exportToPDF() {
       });
       
       toast.success('PDF exported (offline mode)');
+    } catch (offlineError) {
+      console.error('PDF export fallback error:', offlineError);
+      toast.error('Failed to export PDF');
     }
-    
-  } catch (error) {
-    console.error('PDF export error:', error);
-    toast.error('Failed to export PDF');
   }
+}
+
+function triggerFileDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function downloadViaUrl(url: string, filename: string) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 async function exportToDocx() {
