@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Version: 0.1.8
-const { readdir, readFile, writeFile, mkdir, rm } = require('node:fs/promises');
+// Version: 0.1.14
+const { readdir, readFile, writeFile, mkdir } = require('node:fs/promises');
 const { existsSync } = require('node:fs');
 const path = require('node:path');
 const process = require('node:process');
@@ -131,43 +131,43 @@ async function writeJson(filePath, data) {
   await writeFile(filePath, payload, 'utf8');
 }
 
+function isJsonFile(name) {
+  return /\.json$/i.test(name);
+}
+
+async function listJsonFiles(dir) {
+  const out = [];
+  const stack = [dir];
+  while (stack.length) {
+    const cur = stack.pop();
+    const entries = await readdir(cur, { withFileTypes: true });
+    for (const e of entries) {
+      const full = path.join(cur, e.name);
+      if (e.isDirectory()) stack.push(full);
+      else if (e.isFile() && isJsonFile(e.name)) out.push(full);
+    }
+  }
+  return out;
+}
+
+function maskPick(source, mask) {
+  if (!isPlainObject(mask)) return {};
+  const out = {};
+  for (const key of Object.keys(mask)) {
+    const mVal = mask[key];
+    const sVal = isPlainObject(source) ? source[key] : undefined;
+    if (isPlainObject(mVal)) {
+      out[key] = maskPick(sVal, mVal);
+    } else {
+      out[key] = sVal !== undefined ? sVal : mVal;
+    }
+  }
+  return out;
+}
+
 (async () => {
   try {
     const baseGroupedDir = path.resolve(autoDir, baseLocale);
-
-    function isJsonFile(name) {
-      return /\.json$/i.test(name);
-    }
-
-    async function listJsonFiles(dir) {
-      const out = [];
-      const stack = [dir];
-      while (stack.length) {
-        const cur = stack.pop();
-        const entries = await readdir(cur, { withFileTypes: true });
-        for (const e of entries) {
-          const full = path.join(cur, e.name);
-          if (e.isDirectory()) stack.push(full);
-          else if (e.isFile() && isJsonFile(e.name)) out.push(full);
-        }
-      }
-      return out;
-    }
-
-    function maskPick(source, mask) {
-      if (!isPlainObject(mask)) return {};
-      const out = {};
-      for (const key of Object.keys(mask)) {
-        const mVal = mask[key];
-        const sVal = isPlainObject(source) ? source[key] : undefined;
-        if (isPlainObject(mVal)) {
-          out[key] = maskPick(sVal, mVal);
-        } else {
-          out[key] = sVal !== undefined ? sVal : mVal;
-        }
-      }
-      return out;
-    }
 
     let updatedCount = 0;
 
@@ -207,6 +207,14 @@ async function writeJson(filePath, data) {
           if (!baseObj || typeof baseObj !== 'object') continue;
 
           const existingFileData = (existsSync(targetPath) ? await readJson(targetPath) : null) || {};
+          
+          // CRITICAL FIX: Skip maskPick for the base locale (en) to preserve English translations
+          // The base locale should never be modified during sync - it's the source of truth
+          if (locale === baseLocale) {
+            console.log(`[i18n-sync] Skipping base locale ${baseLocale}/${rel} (preserving English translations)`);
+            continue;
+          }
+          
           const fromSingle = maskPick(singleLocaleData, baseObj) || {};
           const seededExisting = deepFillFromBase(fromSingle, existingFileData);
           // Use merge mode to preserve existing translations by default.
@@ -257,6 +265,7 @@ async function writeJson(filePath, data) {
           if (!entry.isFile() || !isJsonFile(entry.name)) continue;
           const localeName = entry.name.replace(/\.json$/i, '');
           if (localeName === baseLocale) continue;
+          
           const localePath = path.resolve(autoDir, entry.name);
           const localeData = (await readJson(localePath)) || {};
           // Use merge mode to preserve existing translations by default.

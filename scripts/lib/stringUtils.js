@@ -78,6 +78,9 @@ function simpleHash(str) {
  * Get namespace from file path
  * Preserves full folder hierarchy for fidelity:
  * components/Auth/xxx/yyy -> components.Auth.xxx.yyy
+ * 
+ * IMPORTANT: Excludes component file names from namespace to prevent duplication
+ * when component names appear in both file path and component structure
  */
 function getNamespaceFromFile(filePath, srcRoot) {
   const path = require('node:path');
@@ -85,9 +88,20 @@ function getNamespaceFromFile(filePath, srcRoot) {
   const withoutExt = rel.replace(path.extname(rel), '');
   const rawSegments = withoutExt.split(path.sep).filter(Boolean);
 
+  // CRITICAL FIX: Filter out component file names to prevent duplication
+  // Component files (PascalCase) should not be part of the namespace
+  // since they already appear in the component structure
+  const filteredSegments = rawSegments.filter((segment, index) => {
+    // Keep the segment if it's not a component file name (not PascalCase at the end)
+    // or if it's not the last segment (which would be the component file)
+    const isLastSegment = index === rawSegments.length - 1;
+    const isComponentFile = isLastSegment && /^[A-Z][a-zA-Z0-9]*$/.test(segment);
+    return !isComponentFile;
+  });
+
   // Preserve all path segments to maintain folder hierarchy fidelity
   // Convert each segment to PascalCase while keeping the structure
-  const segments = rawSegments
+  const segments = filteredSegments
     .map((segment) => toPascalCase(segment))
     .filter(Boolean);
 
