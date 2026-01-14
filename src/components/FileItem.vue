@@ -333,7 +333,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useFileStore } from "@/store/files";
 import { FileData } from "@/types";
-import { t } from '@/i18n';
 
 const props = defineProps({
   file: {

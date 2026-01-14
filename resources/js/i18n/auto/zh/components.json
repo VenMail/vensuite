@@ -167,7 +167,8 @@
     },
     "DocsTitleBar": {
       "text": {
-        "no_previous_versions": "没有以前的版本"
+        "no_previous_versions": "没有以前的版本",
+        "loading_versions": "加载版本…"
       }
     },
     "DocsToolbar": {
@@ -186,7 +187,13 @@
       "text": {
         "choose_a_template_to": "选择一个模板以快速开始",
         "professional_correspondence": "专业信函",
-        "start_from_scratch": "从头开始"
+        "start_from_scratch": "从头开始",
+        "pdf_docx_html_supported": "支持 PDF、DOCX 和 HTML 格式。",
+        "unsupported_file_type": "不支持的文件类型。请上传 PDF、DOCX 或 HTML 文件。",
+        "failed_to_convert_file": "文件转换失败。",
+        "file_imported_successfully": "文件导入成功。",
+        "failed_to_insert_content": "无法将内容插入到文档中。",
+        "failed_to_import_file": "文件导入失败。"
       }
     },
     "Editor": {

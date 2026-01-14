@@ -787,7 +787,7 @@
             {{$t('Forms.DocsToolbar.text.select_file_to_import')}}
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-500 mb-4">
-            PDF, DOCX, HTML supported
+            {{$t('Forms.DocsToolbar.text.pdf_docx_html_supported')}}
           </p>
           <input
             ref="importFileInput"
@@ -884,6 +884,7 @@ import { useFileStore } from '@/store/files';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
 import { toast } from 'vue-sonner';
+import { useTranslation } from '@/composables/useTranslation';
 
 const props = defineProps<{
   editor: Editor | null | undefined;
@@ -1383,7 +1384,7 @@ async function handleImportFileSelect(event: Event) {
           ? conversionResult.content
           : JSON.stringify(conversionResult.content);
       } else {
-        toast.error('Unsupported file type for import. Only PDF, DOCX, and HTML are supported.');
+        toast.error(t('Forms.DocsToolbar.text.unsupported_file_type'));
         importingFile.value = false;
         importingFileName.value = '';
         importProgress.value = 0;
@@ -1392,7 +1393,7 @@ async function handleImportFileSelect(event: Event) {
     }
 
     if (!content) {
-      toast.error('Failed to convert file');
+      toast.error(t('Forms.DocsToolbar.text.failed_to_convert_file'));
       return;
     }
 
@@ -1436,7 +1437,7 @@ async function handleImportFileSelect(event: Event) {
       }
 
       importProgress.value = 100;
-      toast.success('File imported successfully');
+      toast.success(t('Forms.DocsToolbar.text.file_imported_successfully'));
       showImportDialog.value = false;
       
       // Reset file input
@@ -1445,12 +1446,12 @@ async function handleImportFileSelect(event: Event) {
       }
     } catch (insertError) {
       console.error('Error inserting content:', insertError);
-      toast.error('Failed to insert content into document');
+      toast.error(t('Forms.DocsToolbar.text.failed_to_insert_content'));
       throw insertError; // Re-throw to be caught by outer catch
     }
   } catch (error) {
     console.error('Import error:', error);
-    toast.error(error instanceof Error ? error.message : 'Failed to import file');
+    toast.error(error instanceof Error ? error.message : t('Forms.DocsToolbar.text.failed_to_import_file'));
   } finally {
     importingFile.value = false;
     importingFileName.value = '';
@@ -1461,6 +1462,7 @@ async function handleImportFileSelect(event: Event) {
 const router = useRouter();
 const fileStore = useFileStore();
 const authStore = useAuthStore();
+const { t } = useTranslation();
 
 // Template cache
 const templateCache = new Map<string, string>();

@@ -186,7 +186,13 @@
       "text": {
         "choose_a_template_to": "Choose a template to get started quickly",
         "professional_correspondence": "Professional correspondence",
-        "start_from_scratch": "Start from scratch"
+        "start_from_scratch": "Start from scratch",
+        "pdf_docx_html_supported": "PDF, DOCX, and HTML are supported.",
+        "unsupported_file_type": "Unsupported file type. Please upload PDF, DOCX, or HTML files.",
+        "failed_to_convert_file": "Failed to convert file.",
+        "file_imported_successfully": "File imported successfully.",
+        "failed_to_insert_content": "Failed to insert content into document.",
+        "failed_to_import_file": "Failed to import file."
       }
     },
     "Editor": {
@@ -453,18 +459,18 @@
         }
       },
       "text": {
-        "description_all": "Faites glisser et déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
-        "description_documents": "Fichiers de documents (PDF, Word, Texte, etc.)",
-        "description_media": "Fichiers multimédias (images, vidéos, audio)",
-        "description_spreadsheets": "Fichiers de tableur (Excel, CSV, etc.)",
-        "files_rejected": "fichier(s) rejeté(s) :",
-        "instructions_all": "Faites glisser et déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
-        "instructions_media": "Faites glisser et déposez des fichiers multimédias ici, ou cliquez pour parcourir"
+        "description_all": "Drag and drop files or folders here, or click to browse",
+        "description_documents": "Documents files (PDF, Word, Text, etc.)",
+        "description_media": "Media files (images, videos, audio)",
+        "description_spreadsheets": "Spreadsheet files (Excel, CSV, etc.)",
+        "files_rejected": "rejected file(s):",
+        "instructions_all": "Drag and drop files or folders here, or click to browse",
+        "instructions_media": "Drag and drop media files here, or click to browse"
       }
     },
     "LanguageSwitcher": {
       "aria_label": {
-        "change_language": "Changer de langue"
+        "change_language": "Change language"
       },
       "text": {
         "francais": "Français"
@@ -473,7 +479,7 @@
     "slides": {
       "commons": {
         "text": {
-          "saving_deck": "Sauvegarde du deck…"
+          "saving_deck": "Saving deck…"
         }
       }
     }

@@ -44,7 +44,9 @@
         "preview_online_version": "预览在线版本",
         "preview_unavailable": "预览不可用。",
         "start_a_conversation_with": "与您的协作者开始对话。",
-        "you_dont_have_access": "您没有访问此文档的权限。输入您的电子邮件以请求所有者的访问权限。"
+        "you_dont_have_access": "您没有访问此文档的权限。输入您的电子邮件以请求所有者的访问权限。",
+        "docx_exported_successfully": "DOCX 导出成功。",
+        "failed_to_export_docx": "DOCX 导出失败。"
       }
     },
     "Documents": {

@@ -61,7 +61,7 @@
     },
     "Loader": {
       "text": {
-        "loading": "Loading..."
+        "loading": "Chargement..."
       }
     },
     "Media": {
@@ -186,7 +186,13 @@
       "text": {
         "choose_a_template_to": "Choisissez un modèle pour commencer rapidement",
         "professional_correspondence": "Correspondance professionnelle",
-        "start_from_scratch": "Commencer à partir de zéro"
+        "start_from_scratch": "Commencer à partir de zéro",
+        "pdf_docx_html_supported": "Les formats PDF, DOCX et HTML sont pris en charge.",
+        "unsupported_file_type": "Type de fichier non pris en charge. Veuillez envoyer des fichiers PDF, DOCX ou HTML.",
+        "failed_to_convert_file": "Échec de la conversion du fichier.",
+        "file_imported_successfully": "Fichier importé avec succès.",
+        "failed_to_insert_content": "Échec de l'insertion du contenu dans le document.",
+        "failed_to_import_file": "Échec de l'importation du fichier."
       }
     },
     "Editor": {
@@ -448,7 +454,7 @@
       "components": {
         "fileuploader": {
           "text": {
-            "status_uploading": "Uploading..."
+            "status_uploading": "Téléchargement..."
           }
         }
       },

@@ -44,7 +44,9 @@
         "preview_online_version": "Aperçu de la version en ligne",
         "preview_unavailable": "Aperçu indisponible.",
         "start_a_conversation_with": "Démarrez une conversation avec vos collaborateurs.",
-        "you_dont_have_access": "Vous n'avez pas accès à ce document. Entrez votre email pour demander l'accès au propriétaire."
+        "you_dont_have_access": "Vous n'avez pas accès à ce document. Entrez votre email pour demander l'accès au propriétaire.",
+        "docx_exported_successfully": "DOCX exporté avec succès.",
+        "failed_to_export_docx": "Échec de l'exportation DOCX."
       }
     },
     "Documents": {

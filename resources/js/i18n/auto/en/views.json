@@ -44,7 +44,9 @@
         "preview_online_version": "Preview online version",
         "preview_unavailable": "Preview unavailable.",
         "start_a_conversation_with": "Start a conversation with your collaborators.",
-        "you_dont_have_access": "You don’t have access to this document. Enter your email to request access from the owner."
+        "you_dont_have_access": "You don’t have access to this document. Enter your email to request access from the owner.",
+        "docx_exported_successfully": "DOCX exported successfully.",
+        "failed_to_export_docx": "Failed to export DOCX."
       }
     },
     "Documents": {
@@ -267,6 +269,13 @@
       "text": {
         "select_or_add_a": "Select or add a slide to begin."
       }
+    }
+  },
+  "commons": {
+    "text": {
+      "loading_form": "Chargement du formulaire…",
+      "loading_response": "Chargement de la réponse…",
+      "loading_responses": "Chargement des réponses…"
     }
   }
 }

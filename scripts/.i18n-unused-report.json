@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-21T15:43:49.355Z",
+  "generatedAt": "2026-01-14T19:53:23.234Z",
   "baseLocale": "en",
   "autoDir": "resources/js/i18n/auto",
   "unused": [
@@ -84,6 +84,10 @@
       "baseFileRel": "en/assets.json"
     },
     {
+      "keyPath": "Auth.Index.text.no_valid_accounts",
+      "baseFileRel": "en/auth.json"
+    },
+    {
       "keyPath": "Commons.alt.slide_thumbnail",
       "baseFileRel": "en/commons.json"
     },
@@ -108,22 +112,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.button.code_example",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.button.file",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.button.header_mapped",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.button.row_array",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.heading.document",
       "baseFileRel": "en/commons.json"
     },
@@ -141,14 +129,6 @@
     },
     {
       "keyPath": "Commons.heading.untitled_deck",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.label.api_endpoint",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.label.public_url",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -209,6 +189,10 @@
     },
     {
       "keyPath": "Commons.text.1_element",
+      "baseFileRel": "en/commons.json"
+    },
+    {
+      "keyPath": "Commons.text.accept",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -293,18 +277,6 @@
     },
     {
       "keyPath": "Commons.text.all_spreadsheets",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.api_configuration",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.api_integration",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.api_key",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -912,10 +884,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.invalid_pdf",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.invalid_token",
       "baseFileRel": "en/commons.json"
     },
@@ -1044,10 +1012,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.missing_pdf",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.monthly_budget",
       "baseFileRel": "en/commons.json"
     },
@@ -1104,10 +1068,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.no_referrer",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.no_workspace",
       "baseFileRel": "en/commons.json"
     },
@@ -1136,10 +1096,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.not_found",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.notes",
       "baseFileRel": "en/commons.json"
     },
@@ -1165,10 +1121,6 @@
     },
     {
       "keyPath": "Commons.text.objective",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.off",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1260,10 +1212,6 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Commons.text.organization",
-      "baseFileRel": "en/commons.json"
-    },
-    {
       "keyPath": "Commons.text.other_2",
       "baseFileRel": "en/commons.json"
     },
@@ -1312,15 +1260,15 @@
       "baseFileRel": "en/commons.json"
     },
     {
+      "keyPath": "Commons.text.pdf_downloaded",
+      "baseFileRel": "en/commons.json"
+    },
+    {
       "keyPath": "Commons.text.pdf_files",
       "baseFileRel": "en/commons.json"
     },
     {
       "keyPath": "Commons.text.pdf_files_2",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.pdf_image",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1477,10 +1425,6 @@
     },
     {
       "keyPath": "Commons.text.report",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.request_body",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -1836,6 +1780,10 @@
       "baseFileRel": "en/commons.json"
     },
     {
+      "keyPath": "Commons.text.unknown_error",
+      "baseFileRel": "en/commons.json"
+    },
+    {
       "keyPath": "Commons.text.unknown_size",
       "baseFileRel": "en/commons.json"
     },
@@ -2069,10 +2017,6 @@
     },
     {
       "keyPath": "Commons.text.your_answer",
-      "baseFileRel": "en/commons.json"
-    },
-    {
-      "keyPath": "Commons.text.your_organization_2",
       "baseFileRel": "en/commons.json"
     },
     {
@@ -2380,119 +2324,11 @@
       "baseFileRel": "en/commons.json"
     },
     {
-      "keyPath": "Components.Buttons.AddFieldButton.placeholder.search_field_types",
+      "keyPath": "Components.Buttons.placeholder.search_field_types",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Buttons.AddFieldButton.text.yes_no",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.FileUploader.text.conversion_produced_empty_content",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.FileUploader.text.drop_documents_here_html",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.FileUploader.text.drop_spreadsheets_here_xlsx",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.FileUploader.text.failed_to_create_root",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.FileUploader.text.failed_to_save_converted",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockEditor.placeholder.add_a_description",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.choose_one_option",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.rate_from_1_to",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.select_a_date",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.select_a_time",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.select_all_that_apply",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.select_from_dropdown",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.short_answer_text",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.slide_to_select",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.type_your_question",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.type_your_question_here",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.upload_a_file",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.what_s_your_email",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.what_s_your_phone",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.yes_no",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.text.yes_or_no",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.title.add_block_below",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItem.title.drag_to_reorder",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItemNew.text.short_answer_text",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItemNew.text.type_your_question_here",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.BlockItemNew.title.drag_to_reorder",
-      "baseFileRel": "en/components.json"
-    },
-    {
-      "keyPath": "Components.Forms.Blocks.SlashMenu.placeholder.search_blocks",
+      "keyPath": "Components.Buttons.text.yes_no",
       "baseFileRel": "en/components.json"
     },
     {
@@ -2500,403 +2336,407 @@
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsTitleBar.text.click_to_save_now",
+      "keyPath": "Components.Forms.Blocks.placeholder.add_a_description",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsTitleBar.text.last_saved_time",
+      "keyPath": "Components.Forms.Blocks.placeholder.search_blocks",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsTitleBar.text.saved_just_now",
+      "keyPath": "Components.Forms.Blocks.text.choose_one_option",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsToolbar.text.failed_to_convert_file",
+      "keyPath": "Components.Forms.Blocks.text.rate_from_1_to",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsToolbar.text.failed_to_import_file",
+      "keyPath": "Components.Forms.Blocks.text.select_a_date",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsToolbar.text.failed_to_insert_content",
+      "keyPath": "Components.Forms.Blocks.text.select_a_time",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsToolbar.text.file_imported_successfully",
+      "keyPath": "Components.Forms.Blocks.text.select_all_that_apply",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsToolbar.text.unsupported_file_type_for",
+      "keyPath": "Components.Forms.Blocks.text.select_from_dropdown",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsToolbar.title.comments_chat",
+      "keyPath": "Components.Forms.Blocks.text.short_answer_text",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsToolbar.title.import_file_pdf_docx",
+      "keyPath": "Components.Forms.Blocks.text.slide_to_select",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsToolbar.title.insert_edit_link",
+      "keyPath": "Components.Forms.Blocks.text.type_your_question",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.DocsToolbar.title.line_paragraph_spacing",
+      "keyPath": "Components.Forms.Blocks.text.type_your_question_here",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Editor.placeholder.select_jump_to_field",
+      "keyPath": "Components.Forms.Blocks.text.upload_a_file",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Editors.LogicEditor.placeholder.question_id_to_jump",
+      "keyPath": "Components.Forms.Blocks.text.what_s_your_email",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Fields.TextQuestion.text.invalid_email_format",
+      "keyPath": "Components.Forms.Blocks.text.what_s_your_phone",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Fields.TextQuestion.text.invalid_url_format",
+      "keyPath": "Components.Forms.Blocks.text.yes_no",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.add_your_logo",
+      "keyPath": "Components.Forms.Blocks.text.yes_or_no",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.choose_your_font",
+      "keyPath": "Components.Forms.Blocks.title.add_block_below",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.choose_your_theme",
+      "keyPath": "Components.Forms.Blocks.title.drag_to_reorder",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.connect_to_external_services",
+      "keyPath": "Components.Forms.Editors.placeholder.question_id_to_jump",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.do_you_need_to",
+      "keyPath": "Components.Forms.Fields.text.invalid_email_format",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.how_do_you_want",
+      "keyPath": "Components.Forms.Fields.text.invalid_url_format",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.how_should_users_navigate",
+      "keyPath": "Components.Forms.Player.text.almost_there",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.no_skip_payments",
+      "keyPath": "Components.Forms.Player.text.enter_a_valid_email",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.no_skip_webhooks",
+      "keyPath": "Components.Forms.Player.text.enter_a_valid_phone",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.yes_add_logo",
+      "keyPath": "Components.Forms.Player.text.enter_a_valid_url",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.yes_enable_payments",
+      "keyPath": "Components.Forms.Player.text.failed_to_load_stripe",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormConfigWizardSimple.text.yes_enable_webhooks",
+      "keyPath": "Components.Forms.Player.text.great_progress",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormWizard.placeholder.example_a_customer_feedback",
+      "keyPath": "Components.Forms.Player.text.lets_get_started",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormWizard.text.a_customer_feedback_survey",
+      "keyPath": "Components.Forms.Player.text.payment_confirmation_failed",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormWizard.text.get_in_touch",
+      "keyPath": "Components.Forms.Player.text.payment_failed_please_try",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormWizard.text.how_can_we_help",
+      "keyPath": "Components.Forms.Player.text.payment_is_not_ready",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormWizard.text.how_would_you_rate",
+      "keyPath": "Components.Forms.Player.text.payment_successful",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormWizard.text.what_could_we_improve",
+      "keyPath": "Components.Forms.Player.text.provide_your_answer_and",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormWizard.text.what_did_you_like",
+      "keyPath": "Components.Forms.Player.text.this_field_is_required",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormWizard.text.would_you_recommend_us",
+      "keyPath": "Components.Forms.Player.text.this_question_is_required",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.FormWizard.text.yes_no",
+      "keyPath": "Components.Forms.Player.text.unable_to_initialize_stripe",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.heading.share_embed",
+      "keyPath": "Components.Forms.Player.text.unable_to_render_payment",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.allow_external_applications_to",
+      "keyPath": "Components.Forms.Player.text.yes_no",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.copy_and_paste_this",
+      "keyPath": "Components.Forms.Player.text.you_can_skip_this",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.embed_as_iframe",
+      "keyPath": "Components.Forms.Player.text.youre_doing_well",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.enable_public_api",
+      "keyPath": "Components.Forms.aria_label.delete_draft_form",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.enable_public_api_to",
+      "keyPath": "Components.Forms.placeholder.example_a_customer_feedback",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.fields_are_submitted_in",
+      "keyPath": "Components.Forms.placeholder.select_jump_to_field",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.generate_new_api_key",
+      "keyPath": "Components.Forms.text.a_customer_feedback_survey",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.keep_this_key_secure",
+      "keyPath": "Components.Forms.text.add_your_logo",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.postman_collection_downloaded",
+      "keyPath": "Components.Forms.text.choose_your_font",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.reveal_api_key",
+      "keyPath": "Components.Forms.text.choose_your_theme",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.sample_message_text",
+      "keyPath": "Components.Forms.text.click_to_save_now",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.unable_to_copy_try",
+      "keyPath": "Components.Forms.text.connect_to_external_services",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.use_field_names_as",
+      "keyPath": "Components.Forms.text.delete_this_draft_form",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.IntegrationDialog.text.view_integration_examples",
+      "keyPath": "Components.Forms.text.do_you_need_to",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.FocusPlayer.text.almost_there",
+      "keyPath": "Components.Forms.text.failed_to_convert_file",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.FocusPlayer.text.great_progress",
+      "keyPath": "Components.Forms.text.failed_to_import_file",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.FocusPlayer.text.lets_get_started",
+      "keyPath": "Components.Forms.text.failed_to_insert_content",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.FocusPlayer.text.provide_your_answer_and",
+      "keyPath": "Components.Forms.text.failed_to_load_webhooks",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.FocusPlayer.text.this_question_is_required",
+      "keyPath": "Components.Forms.text.failed_to_send_sample",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.FocusPlayer.text.you_can_skip_this",
+      "keyPath": "Components.Forms.text.file_imported_successfully",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.FocusPlayer.text.youre_doing_well",
+      "keyPath": "Components.Forms.text.get_in_touch",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.PaymentStep.text.failed_to_load_stripe",
+      "keyPath": "Components.Forms.text.how_can_we_help",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.PaymentStep.text.payment_confirmation_failed",
+      "keyPath": "Components.Forms.text.how_do_you_want",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.PaymentStep.text.payment_failed_please_try",
+      "keyPath": "Components.Forms.text.how_should_users_navigate",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.PaymentStep.text.payment_is_not_ready",
+      "keyPath": "Components.Forms.text.how_would_you_rate",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.PaymentStep.text.payment_successful",
+      "keyPath": "Components.Forms.text.keep_this_key_secure",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.PaymentStep.text.unable_to_initialize_stripe",
+      "keyPath": "Components.Forms.text.last_saved_time",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.PaymentStep.text.unable_to_render_payment",
+      "keyPath": "Components.Forms.text.no_skip_payments",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.QuestionRenderer.text.enter_a_valid_email",
+      "keyPath": "Components.Forms.text.no_skip_webhooks",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.QuestionRenderer.text.enter_a_valid_phone",
+      "keyPath": "Components.Forms.text.postman_collection_downloaded",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.QuestionRenderer.text.enter_a_valid_url",
+      "keyPath": "Components.Forms.text.sample_event_sent_successfully",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.QuestionRenderer.text.this_field_is_required",
+      "keyPath": "Components.Forms.text.sample_message_text",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.Player.QuestionRenderer.text.yes_no",
+      "keyPath": "Components.Forms.text.saved_just_now",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.QuickView.aria_label.delete_draft_form",
+      "keyPath": "Components.Forms.text.unable_to_copy_try",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.QuickView.text.delete_this_draft_form",
+      "keyPath": "Components.Forms.text.unsupported_file_type_for",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.WebhooksPanel.text.failed_to_load_webhooks",
+      "keyPath": "Components.Forms.text.what_could_we_improve",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.WebhooksPanel.text.failed_to_send_sample",
+      "keyPath": "Components.Forms.text.what_did_you_like",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Forms.WebhooksPanel.text.sample_event_sent_successfully",
+      "keyPath": "Components.Forms.text.would_you_recommend_us",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.ImagePicker.placeholder.search_images",
+      "keyPath": "Components.Forms.text.yes_add_logo",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Layout.SearchBar.text.search_documents",
+      "keyPath": "Components.Forms.text.yes_enable_payments",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Layout.SearchBar.text.search_files",
+      "keyPath": "Components.Forms.text.yes_enable_webhooks",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Layout.SearchBar.text.search_media_files",
+      "keyPath": "Components.Forms.text.yes_no",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Layout.SearchBar.text.search_spreadsheets",
+      "keyPath": "Components.Forms.title.comments_chat",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Layout.SearchBar.text.search_trash",
+      "keyPath": "Components.Forms.title.import_file_pdf_docx",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Layout.WorkspaceTopBar.aria_label.up_one_level",
+      "keyPath": "Components.Forms.title.insert_edit_link",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Layout.WorkspaceTopBar.title.up_one_level",
+      "keyPath": "Components.Forms.title.line_paragraph_spacing",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Media.MediaToolbar.placeholder.search_media_files",
+      "keyPath": "Components.Layout.aria_label.up_one_level",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Media.MediaViewer.text.failed_to_import_file",
+      "keyPath": "Components.Layout.text.search_documents",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Media.MediaViewer.text.imported_to_document",
+      "keyPath": "Components.Layout.text.search_files",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.ShareCard.placeholder.enter_email_address",
+      "keyPath": "Components.Layout.text.search_media_files",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.ShareCard.placeholder.write_a_message_to",
+      "keyPath": "Components.Layout.text.search_spreadsheets",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.ShareCard.text.people_in_your_organization",
+      "keyPath": "Components.Layout.text.search_trash",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.ShareCard.text.share_the_link_with",
+      "keyPath": "Components.Layout.title.up_one_level",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.ShareCard.text.this_may_appear_in",
+      "keyPath": "Components.Media.placeholder.search_media_files",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.ShareCard.text.update_permission_settings",
+      "keyPath": "Components.Media.text.failed_to_import_file",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Slides.SlidesTitleBar.text.all_changes_saved",
+      "keyPath": "Components.Media.text.imported_to_document",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Slides.SlidesTitleBar.text.click_to_save_now",
+      "keyPath": "Components.Slides.text.all_changes_saved",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Slides.SlidesTitleBar.text.last_saved_time",
+      "keyPath": "Components.Slides.text.click_to_save_now",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Slides.SlidesTitleBar.text.saved_just_now",
+      "keyPath": "Components.Slides.text.last_saved_time",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Slides.SlidesToolbar.title.export_as_pdf",
+      "keyPath": "Components.Slides.text.saved_just_now",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Slides.SlidesToolbar.title.export_as_pptx",
+      "keyPath": "Components.Slides.title.export_as_pdf",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.Trash.TrashToolbar.placeholder.search_trash_items",
+      "keyPath": "Components.Slides.title.export_as_pptx",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.Trash.placeholder.search_trash_items",
       "baseFileRel": "en/components.json"
     },
     {
@@ -2908,11 +2748,55 @@
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.UniverSheet.text.container_element_is_missing",
+      "keyPath": "Components.placeholder.enter_email_address",
       "baseFileRel": "en/components.json"
     },
     {
-      "keyPath": "Components.UniverSheet.text.workbook_is_not_initialized",
+      "keyPath": "Components.placeholder.search_images",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.placeholder.write_a_message_to",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.container_element_is_missing",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.conversion_produced_empty_content",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.drop_documents_here_html",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.drop_spreadsheets_here_xlsx",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.failed_to_create_root",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.failed_to_save_converted",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.share_the_link_with",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.this_may_appear_in",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.update_permission_settings",
+      "baseFileRel": "en/components.json"
+    },
+    {
+      "keyPath": "Components.text.workbook_is_not_initialized",
       "baseFileRel": "en/components.json"
     },
     {
@@ -2996,7 +2880,7 @@
       "baseFileRel": "en/extensions.json"
     },
     {
-      "keyPath": "Layouts.AuthenticatedLayout.text.prefers_color_scheme_dark",
+      "keyPath": "Layouts.text.prefers_color_scheme_dark",
       "baseFileRel": "en/layouts.json"
     },
     {
@@ -3016,27 +2900,27 @@
       "baseFileRel": "en/main.ts.json"
     },
     {
-      "keyPath": "Plugins.Exporters.PDFExporter.text.background_color_fafafa",
+      "keyPath": "Plugins.Exporters.text.background_color_fafafa",
       "baseFileRel": "en/plugins.json"
     },
     {
-      "keyPath": "Plugins.Exporters.PDFExporter.text.table_row_unit_header",
+      "keyPath": "Plugins.Exporters.text.table_row_unit_header",
       "baseFileRel": "en/plugins.json"
     },
     {
-      "keyPath": "Plugins.Services.ExportService.text.funiver_facade_api_is",
+      "keyPath": "Plugins.Services.text.funiver_facade_api_is",
       "baseFileRel": "en/plugins.json"
     },
     {
-      "keyPath": "Plugins.Services.ExportService.text.no_active_workbook_found",
+      "keyPath": "Plugins.Services.text.no_active_workbook_found",
       "baseFileRel": "en/plugins.json"
     },
     {
-      "keyPath": "Plugins.Services.ExportService.text.no_worksheets_found_in",
+      "keyPath": "Plugins.Services.text.no_worksheets_found_in",
       "baseFileRel": "en/plugins.json"
     },
     {
-      "keyPath": "Providers.ThemeProvider.text.prefers_color_scheme_dark",
+      "keyPath": "Providers.text.prefers_color_scheme_dark",
       "baseFileRel": "en/providers.json"
     },
     {
@@ -3240,38 +3124,6 @@
       "baseFileRel": "en/utils.json"
     },
     {
-      "keyPath": "Utils.FileConverter.text.pdf_extraction_library_failed",
-      "baseFileRel": "en/utils.json"
-    },
-    {
-      "keyPath": "Utils.FileConverter.text.pdf_name_error_invalid",
-      "baseFileRel": "en/utils.json"
-    },
-    {
-      "keyPath": "Utils.FileConverter.text.pdf_name_error_pdf",
-      "baseFileRel": "en/utils.json"
-    },
-    {
-      "keyPath": "Utils.FileConverter.text.pdf_name_error_pdf_2",
-      "baseFileRel": "en/utils.json"
-    },
-    {
-      "keyPath": "Utils.FileConverter.text.pdf_name_error_pdf_3",
-      "baseFileRel": "en/utils.json"
-    },
-    {
-      "keyPath": "Utils.FileConverter.text.pdf_name_error_this",
-      "baseFileRel": "en/utils.json"
-    },
-    {
-      "keyPath": "Utils.FileConverter.text.pdf_name_note_this",
-      "baseFileRel": "en/utils.json"
-    },
-    {
-      "keyPath": "Utils.FileConverter.text.pdfjs_dist_is_not",
-      "baseFileRel": "en/utils.json"
-    },
-    {
       "keyPath": "Utils.FileConverter.text.tiptap_editor_validation_failed",
       "baseFileRel": "en/utils.json"
     },
@@ -3292,751 +3144,679 @@
       "baseFileRel": "en/utils.json"
     },
     {
-      "keyPath": "Views.Bin.text.cannot_download_this_item",
+      "keyPath": "Views.aria_label.up_one_level",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.failed_to_delete_item",
+      "keyPath": "Views.heading.comments_chat",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.failed_to_download_file",
+      "keyPath": "Views.heading.enter_a_new_name",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.failed_to_empty_bin",
+      "keyPath": "Views.placeholder.add_a_description_to",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.failed_to_load_trash",
+      "keyPath": "Views.placeholder.add_a_note_to",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.failed_to_preview_file",
+      "keyPath": "Views.placeholder.describe_what_questions_you",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.failed_to_restore_item",
+      "keyPath": "Views.placeholder.enter_new_file_name",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.no_items_selected",
+      "keyPath": "Views.placeholder.id_like_to_view",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.preview_not_available_for",
+      "keyPath": "Views.placeholder.search",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.this_will_permanently_delete",
+      "keyPath": "Views.placeholder.search_files",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.this_will_permanently_delete_2",
+      "keyPath": "Views.placeholder.search_forms",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.trash_file_manager",
+      "keyPath": "Views.placeholder.type_a_message",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Bin.text.trash_is_already_empty",
+      "keyPath": "Views.text.access_request_sent",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.heading.comments_chat",
+      "keyPath": "Views.text.access_request_sent_you",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.placeholder.id_like_to_view",
+      "keyPath": "Views.text.add_column_after",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.placeholder.type_a_message",
+      "keyPath": "Views.text.add_row_below",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.access_request_sent_you",
+      "keyPath": "Views.text.add_some_content_before",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.add_column_after",
+      "keyPath": "Views.text.adjust_font_size",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.add_row_below",
+      "keyPath": "Views.text.all_changes_saved",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.add_some_content_before",
+      "keyPath": "Views.text.anyone_with_the_link",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.adjust_font_size",
+      "keyPath": "Views.text.api_key_updated",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.brand_foreground_color",
+      "keyPath": "Views.text.authentication_failed_please_try",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.configure_chart_data",
+      "keyPath": "Views.text.authentication_required_to_preview",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.document_created_from_template",
+      "keyPath": "Views.text.bill_clients_fast",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.docx_exported_successfully",
+      "keyPath": "Views.text.brand_foreground_color",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.edit_chart_title",
+      "keyPath": "Views.text.browse_all_media_files",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.failed_to_create_document",
+      "keyPath": "Views.text.campaigns_channels",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.failed_to_export_docx",
+      "keyPath": "Views.text.cannot_download_this_item",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.failed_to_export_pdf",
+      "keyPath": "Views.text.cannot_save_missing_document",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.failed_to_load_document",
+      "keyPath": "Views.text.configure_chart_data",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.failed_to_load_version",
+      "keyPath": "Views.text.could_not_create_response",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.failed_to_save_document",
+      "keyPath": "Views.text.could_not_delete_form",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.html_exported_successfully",
+      "keyPath": "Views.text.could_not_start_payment",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.link_copied_to_clipboard",
+      "keyPath": "Views.text.csv_exported_successfully",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.open_link_in_new",
+      "keyPath": "Views.text.delete_this_form_this",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.open_link_in_new_2",
+      "keyPath": "Views.text.document_created_from_template",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.pdf_export_started",
+      "keyPath": "Views.text.document_data_appears_to",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.request_sent_if_the",
+      "keyPath": "Views.text.document_saved_and_synced",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.request_submitted_please_check",
+      "keyPath": "Views.text.document_saved_successfully",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.reset_row_height",
+      "keyPath": "Views.text.docx_exported_successfully",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.tip_hold_and_click",
+      "keyPath": "Views.text.edit_chart_title",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.tip_hold_ctrl_and",
+      "keyPath": "Views.text.editor_link_copied_to",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.upload_new_image",
+      "keyPath": "Views.text.executive_summary_plan",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.text.your_document_is_still",
+      "keyPath": "Views.text.export_is_not_available",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.DocsEditor.title.apply_font_size",
+      "keyPath": "Views.text.failed_to_authenticate_please",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Documents.text.executive_summary_plan",
+      "keyPath": "Views.text.failed_to_capture_spreadsheet",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Documents.text.failed_to_create_folder",
+      "keyPath": "Views.text.failed_to_connect_to",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Documents.text.failed_to_delete_some",
+      "keyPath": "Views.text.failed_to_create_document",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Documents.text.localecompare_b_title",
+      "keyPath": "Views.text.failed_to_create_folder",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Documents.text.modern_cv_layout",
+      "keyPath": "Views.text.failed_to_delete_files",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Documents.text.start_from_scratch",
+      "keyPath": "Views.text.failed_to_delete_item",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FilePicker.placeholder.search_files",
+      "keyPath": "Views.text.failed_to_delete_some",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FilePicker.text.localecompare_b_title",
+      "keyPath": "Views.text.failed_to_delete_some_2",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.placeholder.add_a_description_to",
+      "keyPath": "Views.text.failed_to_delete_some_3",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.placeholder.describe_what_questions_you",
+      "keyPath": "Views.text.failed_to_download_file",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.and_set_to_public",
+      "keyPath": "Views.text.failed_to_empty_bin",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.api_key_updated",
+      "keyPath": "Views.text.failed_to_export_csv",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.could_not_delete_form",
+      "keyPath": "Views.text.failed_to_export_docx",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.delete_this_form_this",
+      "keyPath": "Views.text.failed_to_export_pdf",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.editor_link_copied_to",
+      "keyPath": "Views.text.failed_to_export_to",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.failed_to_rotate_api",
+      "keyPath": "Views.text.failed_to_finalize_response",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.failed_to_update_public",
+      "keyPath": "Views.text.failed_to_import_file",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.form_published_but_share",
+      "keyPath": "Views.text.failed_to_load_document",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.form_published_share_link",
+      "keyPath": "Views.text.failed_to_load_file",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.form_will_accept_new",
+      "keyPath": "Views.text.failed_to_load_form",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.form_will_not_accept",
+      "keyPath": "Views.text.failed_to_load_media",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.only_people_in_your",
+      "keyPath": "Views.text.failed_to_load_response",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.only_the_form_owner",
+      "keyPath": "Views.text.failed_to_load_responses",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.public_api_disabled",
+      "keyPath": "Views.text.failed_to_load_spreadsheet",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.public_api_enabled",
+      "keyPath": "Views.text.failed_to_load_trash",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.publish_failed_please_try",
+      "keyPath": "Views.text.failed_to_load_version",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.share_link_copied_to",
+      "keyPath": "Views.text.failed_to_preview_file",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.share_link_unavailable_publish",
+      "keyPath": "Views.text.failed_to_publish_form",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.unable_to_copy_link",
+      "keyPath": "Views.text.failed_to_remove_access",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.unable_to_generate_share",
+      "keyPath": "Views.text.failed_to_rename_file",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.unable_to_remove_collaborator",
+      "keyPath": "Views.text.failed_to_restore_item",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.unable_to_update_access",
+      "keyPath": "Views.text.failed_to_rotate_api",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.unable_to_update_collaborators",
+      "keyPath": "Views.text.failed_to_save_deck",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.text.unable_to_update_response",
+      "keyPath": "Views.text.failed_to_save_document",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormBuilder.title.stop_accepting_responses",
+      "keyPath": "Views.text.failed_to_save_document_2",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPaymentSuccess.text.something_went_wrong_while",
+      "keyPath": "Views.text.failed_to_share",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPaymentSuccess.text.success_host_status_pending",
+      "keyPath": "Views.text.failed_to_submit_response",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPaymentSuccess.text.thank_you_for_your",
+      "keyPath": "Views.text.failed_to_update_public",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPaymentSuccess.text.we_are_still_processing",
+      "keyPath": "Views.text.file_not_found",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPaymentSuccess.text.your_response_has_been",
+      "keyPath": "Views.text.file_renamed_successfully",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPaymentSuccess.text.your_response_was_submitted",
+      "keyPath": "Views.text.filter_coming_soon",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.authentication_required_to_preview",
+      "keyPath": "Views.text.form_published_but_share",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.could_not_create_response",
+      "keyPath": "Views.text.form_published_share_link",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.could_not_start_payment",
+      "keyPath": "Views.text.form_will_accept_new",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.failed_to_finalize_response",
+      "keyPath": "Views.text.form_will_not_accept",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.failed_to_load_form",
+      "keyPath": "Views.text.generating_pdf_using_server",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.failed_to_submit_response",
+      "keyPath": "Views.text.group_coming_soon",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.invalid_response_please_retry",
+      "keyPath": "Views.text.home_final_files_with",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.missing_form_identifier",
+      "keyPath": "Views.text.home_found_files_with",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.missing_response_id",
+      "keyPath": "Views.text.html_exported_successfully",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.payment_confirmed_thank_you",
+      "keyPath": "Views.text.html_import_failed",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.response_submitted_successfully",
+      "keyPath": "Views.text.invalid_response_please_retry",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.thank_you",
+      "keyPath": "Views.text.invalid_server_response",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.this_form_is_not",
+      "keyPath": "Views.text.link_copied_to_clipboard",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormPlayerHost.text.your_response_has_been",
+      "keyPath": "Views.text.localecompare_b_file_type",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormResponses.text.csv_exported_successfully",
+      "keyPath": "Views.text.localecompare_b_title",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormResponses.text.failed_to_export_csv",
+      "keyPath": "Views.text.milestones_owners",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormResponses.text.failed_to_export_to",
+      "keyPath": "Views.text.missing_form_identifier",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormResponses.text.failed_to_load_response",
+      "keyPath": "Views.text.missing_response_id",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormResponses.text.failed_to_load_responses",
+      "keyPath": "Views.text.modern_cv_layout",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.FormResponses.text.sheet_updated_successfully",
+      "keyPath": "Views.text.no_authentication_code_or",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Forms.placeholder.search",
+      "keyPath": "Views.text.no_items_selected",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Forms.placeholder.search_forms",
+      "keyPath": "Views.text.no_pdf_download_available",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Forms.text.failed_to_publish_form",
+      "keyPath": "Views.text.objectives_key_results",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Home.aria_label.up_one_level",
+      "keyPath": "Views.text.only_people_in_your",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Home.text.failed_to_delete_some",
+      "keyPath": "Views.text.only_the_form_owner",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Home.text.home_final_files_with",
+      "keyPath": "Views.text.open_link_in_new",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Home.text.home_found_files_with",
+      "keyPath": "Views.text.open_link_in_new_2",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Home.title.up_one_level",
+      "keyPath": "Views.text.payment_confirmed_thank_you",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Login.text.failed_to_authenticate_please",
+      "keyPath": "Views.text.pdf_exported_successfully",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Login.text.session_expired_please_sign",
+      "keyPath": "Views.text.pipeline_deals",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.heading.enter_a_new_name",
+      "keyPath": "Views.text.powerpoint_import_failed",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.placeholder.enter_new_file_name",
+      "keyPath": "Views.text.preview_not_available_for",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.text.browse_all_media_files",
+      "keyPath": "Views.text.public_api_disabled",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.text.failed_to_create_folder",
+      "keyPath": "Views.text.public_api_enabled",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.text.failed_to_delete_files",
+      "keyPath": "Views.text.publish_failed_please_try",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.text.failed_to_download_file",
+      "keyPath": "Views.text.receipts_categories",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.text.failed_to_load_media",
+      "keyPath": "Views.text.request_sent_if_the",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.text.failed_to_rename_file",
+      "keyPath": "Views.text.request_submitted_please_check",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.text.file_renamed_successfully",
+      "keyPath": "Views.text.reset_row_height",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.text.localecompare_b_file_type",
+      "keyPath": "Views.text.response_submitted_successfully",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Media.text.localecompare_b_title",
+      "keyPath": "Views.text.save_the_deck_before",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.MediaViewer.placeholder.add_a_note_to",
+      "keyPath": "Views.text.save_the_deck_before_2",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.MediaViewer.text.access_request_sent",
+      "keyPath": "Views.text.save_the_deck_before_3",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.MediaViewer.text.access_request_sent_you",
+      "keyPath": "Views.text.server_pdf_generation_failed",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.MediaViewer.text.failed_to_download_file",
+      "keyPath": "Views.text.server_unavailable_using_offline",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.MediaViewer.text.failed_to_import_file",
+      "keyPath": "Views.text.session_expired_please_sign",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.MediaViewer.text.failed_to_load_file",
+      "keyPath": "Views.text.share_link_copied",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.MediaViewer.text.file_not_found",
+      "keyPath": "Views.text.share_link_copied_to",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.MediaViewer.text.request_sent_if_the",
+      "keyPath": "Views.text.share_link_not_available",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.MediaViewer.text.request_submitted_please_check",
+      "keyPath": "Views.text.share_link_unavailable_publish",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.OauthCallback.text.authentication_failed_please_try",
+      "keyPath": "Views.text.sheet_updated_successfully",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.OauthCallback.text.failed_to_connect_to",
+      "keyPath": "Views.text.something_went_wrong_while",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.OauthCallback.text.no_authentication_code_or",
+      "keyPath": "Views.text.start_from_scratch",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.placeholder.add_a_note_to",
+      "keyPath": "Views.text.success_host_status_pending",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.placeholder.type_a_message",
+      "keyPath": "Views.text.template_unavailable_starting_with",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.access_request_sent_you",
+      "keyPath": "Views.text.thank_you",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.all_changes_saved",
+      "keyPath": "Views.text.thank_you_for_your",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.api_key_updated",
+      "keyPath": "Views.text.this_form_is_not",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.cannot_save_missing_document",
+      "keyPath": "Views.text.this_will_permanently_delete",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.document_data_appears_to",
+      "keyPath": "Views.text.tip_hold_and_click",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.document_saved_and_synced",
+      "keyPath": "Views.text.tip_hold_ctrl_and",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.document_saved_successfully",
+      "keyPath": "Views.text.to_dos_owners",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.export_is_not_available",
+      "keyPath": "Views.text.trash_file_manager",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.failed_to_capture_spreadsheet",
+      "keyPath": "Views.text.trash_is_already_empty",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.failed_to_load_spreadsheet",
+      "keyPath": "Views.text.unable_to_copy_link",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.failed_to_remove_access",
+      "keyPath": "Views.text.unable_to_generate_share",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.failed_to_rotate_api",
+      "keyPath": "Views.text.unable_to_invite_collaborator",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.failed_to_save_document",
+      "keyPath": "Views.text.unable_to_load_slide",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.failed_to_share",
+      "keyPath": "Views.text.unable_to_remove_collaborator",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.failed_to_update_public",
+      "keyPath": "Views.text.unable_to_update_access",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.filter_coming_soon",
+      "keyPath": "Views.text.unable_to_update_collaborators",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.group_coming_soon",
+      "keyPath": "Views.text.unable_to_update_response",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.public_api_disabled",
+      "keyPath": "Views.text.unable_to_update_visibility",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.public_api_enabled",
+      "keyPath": "Views.text.upload_new_image",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.request_sent_if_the",
+      "keyPath": "Views.text.we_are_still_processing",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.text.request_submitted_please_check",
+      "keyPath": "Views.text.your_document_is_still",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.SheetEditor.title.click_to_save_now",
+      "keyPath": "Views.text.your_response_has_been",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Sheets.text.bill_clients_fast",
+      "keyPath": "Views.text.your_response_has_been_2",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Sheets.text.campaigns_channels",
+      "keyPath": "Views.text.your_response_was_submitted",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Sheets.text.failed_to_create_folder",
+      "keyPath": "Views.title.apply_font_size",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Sheets.text.failed_to_delete_some",
+      "keyPath": "Views.title.click_to_save_now",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Sheets.text.localecompare_b_title",
+      "keyPath": "Views.title.stop_accepting_responses",
       "baseFileRel": "en/views.json"
     },
     {
-      "keyPath": "Views.Sheets.text.milestones_owners",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.Sheets.text.objectives_key_results",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.Sheets.text.pipeline_deals",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.Sheets.text.receipts_categories",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.Sheets.text.start_from_scratch",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.Sheets.text.to_dos_owners",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.failed_to_save_deck",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.html_import_failed",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.powerpoint_import_failed",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.save_the_deck_before",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.save_the_deck_before_2",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.save_the_deck_before_3",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.share_link_copied",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.share_link_not_available",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.template_unavailable_starting_with",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.unable_to_invite_collaborator",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.unable_to_load_slide",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.unable_to_remove_collaborator",
-      "baseFileRel": "en/views.json"
-    },
-    {
-      "keyPath": "Views.SlidesEditor.text.unable_to_update_visibility",
+      "keyPath": "Views.title.up_one_level",
       "baseFileRel": "en/views.json"
     }
   ]

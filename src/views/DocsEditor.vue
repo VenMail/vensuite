@@ -633,9 +633,11 @@ import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
 import { NodeSelection } from '@tiptap/pm/state';
 import { IWebsocketService, Message, useWebSocket } from '@/lib/wsService';
+import { useTranslation } from '@/composables/useTranslation';
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useTranslation();
 const fileStore = useFileStore();
 const authStore = useAuthStore();
 
@@ -3159,10 +3161,10 @@ async function exportToDocx() {
     
     const blob = await Packer.toBlob(doc);
     saveAs(blob, `${title}.docx`);
-    toast.success('DOCX exported successfully');
+    toast.success(t('Views.DocsEditor.text.docx_exported_successfully'));
   } catch (error) {
     console.error('DOCX export error:', error);
-    toast.error('Failed to export DOCX');
+    toast.error(t('Views.DocsEditor.text.failed_to_export_docx'));
   }
 }
 
