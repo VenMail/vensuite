@@ -116,11 +116,6 @@
       }
     }
   },
-  "FileItem": {
-    "text": {
-      "transition_all_duration_200": "过渡所有持续时间-200 光标指针"
-    }
-  },
   "FileUploader": {
     "text": {
       "allowed_file_types": "允许的文件类型：",

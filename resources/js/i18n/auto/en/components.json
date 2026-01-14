@@ -451,6 +451,30 @@
             "status_uploading": "Uploading..."
           }
         }
+      },
+      "text": {
+        "description_all": "Faites glisser et déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
+        "description_documents": "Fichiers de documents (PDF, Word, Texte, etc.)",
+        "description_media": "Fichiers multimédias (images, vidéos, audio)",
+        "description_spreadsheets": "Fichiers de tableur (Excel, CSV, etc.)",
+        "files_rejected": "fichier(s) rejeté(s) :",
+        "instructions_all": "Faites glisser et déposez des fichiers ou des dossiers ici, ou cliquez pour parcourir",
+        "instructions_media": "Faites glisser et déposez des fichiers multimédias ici, ou cliquez pour parcourir"
+      }
+    },
+    "LanguageSwitcher": {
+      "aria_label": {
+        "change_language": "Changer de langue"
+      },
+      "text": {
+        "francais": "Français"
+      }
+    },
+    "slides": {
+      "commons": {
+        "text": {
+          "saving_deck": "Sauvegarde du deck…"
+        }
       }
     }
   }

@@ -422,7 +422,7 @@ const getMediaUrl = computed(() => {
 });
 
 const fileItemClass = computed(() => {
-  const baseClass = t('FileItem.text.transition_all_duration_200');
+  const baseClass = 'transition-all duration-200 cursor-pointer';
   const selectedClass = props.isSelected
     ? "ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/20"
     : "hover:bg-gray-50 dark:hover:bg-gray-700";

@@ -116,11 +116,6 @@
       }
     }
   },
-  "FileItem": {
-    "text": {
-      "transition_all_duration_200": "transition-all durée-200 curseur-pointer"
-    }
-  },
   "FileUploader": {
     "text": {
       "allowed_file_types": "Types de fichiers autorisés :",
