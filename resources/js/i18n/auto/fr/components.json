@@ -167,8 +167,8 @@
     },
     "DocsTitleBar": {
       "text": {
-        "no_previous_versions": "Aucune version précédente",
-        "loading_versions": "Chargement des versions..."
+        "loading_versions": "Chargement des versions...",
+        "no_previous_versions": "Aucune version précédente"
       }
     },
     "DocsToolbar": {
@@ -186,14 +186,14 @@
       },
       "text": {
         "choose_a_template_to": "Choisissez un modèle pour commencer rapidement",
+        "failed_to_convert_file": "Échec de la conversion du fichier.",
+        "failed_to_import_file": "Échec de l'importation du fichier.",
+        "failed_to_insert_content": "Échec de l'insertion du contenu dans le document.",
+        "file_imported_successfully": "Fichier importé avec succès.",
+        "pdf_docx_html_supported": "Les formats PDF, DOCX et HTML sont pris en charge.",
         "professional_correspondence": "Correspondance professionnelle",
         "start_from_scratch": "Commencer à partir de zéro",
-        "pdf_docx_html_supported": "Les formats PDF, DOCX et HTML sont pris en charge.",
-        "unsupported_file_type": "Type de fichier non pris en charge. Veuillez envoyer des fichiers PDF, DOCX ou HTML.",
-        "failed_to_convert_file": "Échec de la conversion du fichier.",
-        "file_imported_successfully": "Fichier importé avec succès.",
-        "failed_to_insert_content": "Échec de l'insertion du contenu dans le document.",
-        "failed_to_import_file": "Échec de l'importation du fichier."
+        "unsupported_file_type": "Type de fichier non pris en charge. Veuillez envoyer des fichiers PDF, DOCX ou HTML."
       }
     },
     "Editor": {
@@ -477,14 +477,15 @@
         "francais": "Français"
       }
     },
-    "slides": {
-      "commons": {
-        "text": {
-          "saving_deck": "Sauvegarde du deck…"
-        }
-      }
-    },
     "forms": {
+      "commons": {
+        "button": {
+          "open_new_tab": "Ouvrir dans un nouvel onglet"
+        },
+        "error": {
+          "failed_to_copy": "Échec de la copie du lien."
+        }
+      },
       "components": {
         "forms": {
           "components": {
@@ -502,14 +503,6 @@
           }
         }
       },
-      "commons": {
-        "button": {
-          "open_new_tab": "Ouvrir dans un nouvel onglet"
-        },
-        "error": {
-          "failed_to_copy": "Échec de la copie du lien."
-        }
-      },
       "views": {
         "forms": {
           "text": {
@@ -517,6 +510,13 @@
             "link_copied_description": "Le lien a été copié avec succès dans votre presse-papiers.",
             "manual_copy_required": "Veuillez copier le lien manuellement."
           }
+        }
+      }
+    },
+    "slides": {
+      "commons": {
+        "text": {
+          "saving_deck": "Sauvegarde du deck…"
         }
       }
     }

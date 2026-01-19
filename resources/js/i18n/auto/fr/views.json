@@ -38,15 +38,15 @@
       },
       "text": {
         "add_headings_to_see": "Ajoutez des titres pour voir le plan",
+        "docx_exported_successfully": "DOCX exporté avec succès.",
+        "failed_to_export_docx": "Échec de l'exportation DOCX.",
         "no_headings_found": "Aucun titre trouvé",
         "no_messages_yet": "Aucun message pour le moment.",
         "preview_local_version": "Aperçu de la version locale",
         "preview_online_version": "Aperçu de la version en ligne",
         "preview_unavailable": "Aperçu indisponible.",
         "start_a_conversation_with": "Démarrez une conversation avec vos collaborateurs.",
-        "you_dont_have_access": "Vous n'avez pas accès à ce document. Entrez votre email pour demander l'accès au propriétaire.",
-        "docx_exported_successfully": "DOCX exporté avec succès.",
-        "failed_to_export_docx": "Échec de l'exportation DOCX."
+        "you_dont_have_access": "Vous n'avez pas accès à ce document. Entrez votre email pour demander l'accès au propriétaire."
       }
     },
     "Documents": {

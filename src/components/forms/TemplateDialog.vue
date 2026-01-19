@@ -14,7 +14,7 @@ interface Emits {
   (e: 'create-blank'): void;
 }
 
-const props = defineProps<Props>();
+const { isOpen, templates } = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const handleTemplateSelect = (template: FormTemplate) => {

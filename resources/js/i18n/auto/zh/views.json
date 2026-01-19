@@ -38,15 +38,15 @@
       },
       "text": {
         "add_headings_to_see": "添加标题以查看大纲",
+        "docx_exported_successfully": "DOCX 导出成功。",
+        "failed_to_export_docx": "DOCX 导出失败。",
         "no_headings_found": "未找到标题",
         "no_messages_yet": "尚无消息。",
         "preview_local_version": "预览本地版本",
         "preview_online_version": "预览在线版本",
         "preview_unavailable": "预览不可用。",
         "start_a_conversation_with": "与您的协作者开始对话。",
-        "you_dont_have_access": "您没有访问此文档的权限。输入您的电子邮件以请求所有者的访问权限。",
-        "docx_exported_successfully": "DOCX 导出成功。",
-        "failed_to_export_docx": "DOCX 导出失败。"
+        "you_dont_have_access": "您没有访问此文档的权限。输入您的电子邮件以请求所有者的访问权限。"
       }
     },
     "Documents": {
