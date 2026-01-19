@@ -31,8 +31,8 @@ Vensuite is a complete productivity suite that you can self-host or use via our 
 - Response analytics
 
 ### 🎨 Slides
-- Presentation editor powered by Excalidraw
-- PPTX import/export
+- Presentation editor powered by Slidev
+- PPTX export
 - PDF rendering
 - Templates library
 - Smart snapping & guides
@@ -74,14 +74,14 @@ vensuite/
 Create a `.env` file:
 
 ```env
-VITE_API_URL=https://api.venmail.io
-VITE_STORAGE_URL=https://storage.venmail.io
-VITE_SLIDES_IMPORT_ENDPOINT=/api/slides/import
+VITE_API_BASE_URL=https://m.venmail.io/api/v1
+VITE_AUTH_URL=https://m.venmail.io/auth/oauth
+SOCKET_BASE_URL=wss://w.venmail.io:8443
 ```
 
 ## 🤝 Integration with Venmail
 
-Vensuite integrates seamlessly with [Venmail](https://venmail.io) enterprise email workspace:
+Vensuite is originally built to work with [Venmail](https://venmail.io) enterprise email workspace:
 
 - **Shared authentication** - Single sign-on across all apps
 - **Unified storage** - Files stored in your Venmail organization
@@ -106,9 +106,8 @@ pnpm preview
 
 ## 🛣️ Roadmap
 
-- [ ] Real-time collaboration (WebSocket)
+- [x] Real-time collaboration (WebSocket)
 - [ ] Offline support (PWA)
-- [ ] Mobile apps (Capacitor)
 - [ ] Plugin system
 - [ ] More templates
 
@@ -116,40 +115,98 @@ pnpm preview
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+## 🙏 Acknowledgments
+
+Vensuite is built upon these essential open-source projects that make our productivity suite possible:
+
+### 🎨 Core Framework
+- **[Vue.js](https://vuejs.org/)** - The progressive JavaScript framework powering our entire application
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe development experience
+- **[Vite](https://vitejs.dev/)** - Lightning-fast build tool and development server
+- **[Pinia](https://pinia.vuejs.org/)** - State management for Vue.js
+
+### 🎨 UI & Styling
+- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
+- **[Headless UI](https://headlessui.com/)** - Accessible UI components
+- **[Iconify](https://iconify.design/)** - Unified icon framework
+
+### 📝 Document Editing
+- **[TipTap](https://tiptap.dev/)** - Rich text editor for documents
+- **[ProseMirror](https://prosemirror.net/)** - Underlying rich text editor framework
+
+### 📊 Spreadsheets
+- **[Univer](https://univer.ai/)** - Spreadsheet engine bringing Excel functionality to web
+
+### 🎨 Slides
+- **[Slidev](https://sli.dev/)** - Modern presentation slides for developers
+
+### 🔄 Real-time Collaboration
+- **[Y.js](https://github.com/yjs/yjs)** - CRDT for real-time collaboration
+- **[uWebSockets.js](https://github.com/uWebSockets/uWebSockets.js)** - High-performance WebSocket server
+
+### 🗃️ Data & Storage
+- **[Axios](https://axios-http.com/)** - HTTP client for API requests
+- **[Memcached](https://www.memcached.org/)** - Memory caching for real-time data
+
+### 🧪 Testing
+- **[Vitest](https://vitest.dev/)** - Testing framework powered by Vite
+- **[Playwright](https://playwright.dev/)** - End-to-end testing
+
+### 📦 Build & Deploy
+- **[Docker](https://www.docker.com/)** - Container platform for deployments
+
+### 🌐 Internationalization
+- **[VenMail Localizer](https://github.com/VenMail/localizer)** - AI-powered localization and translation system
+
+---
+
+**Deep gratitude to the maintainers and contributors of these essential projects.** 🙏
+
 ## 🙏 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 
 ---
 
-## Slide Manager (Excalidraw Slides)
+## 🎨 Slides (Slidev)
 
-The slide manager provides a PowerPoint-like experience powered by headless Excalidraw canvases. Core routes:
+The slide editor provides a modern presentation experience powered by [Slidev](https://sli.dev/). Core routes:
 
 - `slides/new` to create a fresh deck.
 - `slides/:deckId` to open an existing deck.
 - `slides/t/:template` to start from a template file in `src/assets/templates/`.
 
+### Features:
+- **Real-time collaboration** - Edit slides together with Y.js CRDT synchronization
+- **Markdown-based** - Write slides in Markdown with Vue components
+- **PPTX export** - Export presentations to PowerPoint format
+- **PDF rendering** - Generate PDFs for sharing and printing
+- **Templates library** - Professional templates for various use cases
+- **Smart snapping & guides** - Precise element alignment
+- **Theme customization** - Dark/light modes and custom styling
+
 ### Key Components
 
-- `src/views/SlidesEditor.vue` Orchestrates the layout using `SlidesTitleBar`, `SlidesToolbar`, `SlidesOutline`, `SlideCanvas`, and `SlidesInspector`.
-- `src/store/slides.ts` is a Pinia store handling deck state, autosave, import/export, and snapping presets.
-- `src/components/slides/SlideCanvas.vue` wraps Excalidraw, emitting scene updates and thumbnails.
-- `src/components/slides/SlidesToolbar.vue` mirrors the docs toolbar style for slide actions.
-- `src/components/slides/SlidesOutline.vue` renders slide thumbnails and ordering controls.
-- `src/components/slides/SlidesInspector.vue` manages snapping settings and import triggers.
+- `src/views/SlidesEditor.vue` - Main slide editor orchestrating the layout
+- `src/store/slides.ts` - Pinia store handling deck state, autosave, and import/export
+- `src/components/slides/SlidevCanvas.vue` - Slidev canvas wrapper for real-time editing
+- `src/components/slides/SlidesToolbar.vue` - Toolbar with slide actions and formatting
+- `src/components/slides/SlidesOutline.vue` - Slide thumbnails and navigation
+- `src/components/slides/SlidesInspector.vue` - Settings panel for templates and imports
 
 ### Import & Export
 
-- PowerPoint (`.pptx`) files post to `VITE_SLIDES_IMPORT_ENDPOINT` and convert into slide deck JSON.
-- HTML files are parsed client-side into text-based scenes.
-- Exports support `pdf`, `pptx`, and slide thumbnails (`images`) via the `slides/export` endpoint.
+- **PowerPoint Import** - Upload `.pptx` files to convert into Slidev slide decks
+- **HTML Import** - Parse HTML files client-side into slide content
+- **Export Options** - Generate `pdf`, `pptx`, and slide thumbnails via the export service
+- **Template System** - Use JSON templates from `src/assets/templates/` for quick starts
 
 ### Validation Checklist
 
-- **Create**: Visit `slides/new`, add slides, and confirm autosave updates the deck title.
-- **Template**: Open `slides/t/<template>` and ensure default slides load.
-- **Import**: Use toolbar or inspector actions to import HTML/PPTX; confirm scenes populate.
-- **Snapping**: Toggle grid/guides/smart snapping in the inspector and verify canvas behaviour.
-- **Export**: Trigger each export type and verify downloads.
-- **Thumbnail**: Confirm outline shows thumbnails after edits.
+- **Create**: Visit `slides/new`, add slides, and confirm autosave updates the deck title
+- **Templates**: Open `slides/t/<template>` and ensure default slides load correctly
+- **Import**: Use toolbar to import HTML/PPTX files; confirm slide content converts properly
+- **Real-time Collaboration**: Test multi-user editing with WebSocket connections
+- **Export**: Trigger PDF and PPTX exports; verify file downloads
+- **Thumbnails**: Confirm outline shows slide previews after edits
+- **Responsive**: Test slide editor on different screen sizes
