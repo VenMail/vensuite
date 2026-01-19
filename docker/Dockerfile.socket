@@ -1,0 +1,23 @@
+FROM node:22-alpine
+#FROM node:18-alpine
+
+#RUN apk add --no-cache libc6-compat 
+#RUN ln -s /lib/libc.musl-x86_64.so.1 /lib/ld-linux-x86-64.so.2
+RUN apk add --no-cache gcompat certbot openssl
+
+# Create app directory
+WORKDIR /app
+
+# Install app dependencies
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+# where available (npm@5+)
+COPY package*.json ./
+
+RUN yarn
+
+# Bundle app source
+COPY . ./
+COPY env_config .env
+
+EXPOSE 9088
+CMD [ "node", "socket.js" ]
