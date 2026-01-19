@@ -775,16 +775,16 @@
   <Dialog v-model:open="showImportDialog">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>{{$t('Forms.DocsToolbar.heading.import_file')}}</DialogTitle>
+        <DialogTitle>{{$t('components.forms.components.forms.components.forms.docstoolbar.heading.import_file')}}</DialogTitle>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {{$t('Forms.DocsToolbar.text.import_file_description')}}
+          {{$t('components.forms.components.forms.components.forms.docstoolbar.text.import_file_description')}}
         </p>
       </DialogHeader>
       <div class="space-y-4 py-4">
         <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
           <Upload class="h-12 w-12 mx-auto mb-4 text-gray-400" />
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            {{$t('Forms.DocsToolbar.text.select_file_to_import')}}
+            {{$t('components.forms.components.forms.components.forms.docstoolbar.text.select_file_to_import')}}
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-500 mb-4">
             {{$t('Forms.DocsToolbar.text.pdf_docx_html_supported')}}
@@ -797,7 +797,7 @@
             @change="handleImportFileSelect"
           />
           <Button @click="importFileInput?.click()">
-            {{$t('Commons.button.select_file')}}
+            {{$t('Commons.button.select_folder')}}
           </Button>
         </div>
         <div v-if="importingFile" class="text-sm text-gray-600 dark:text-gray-400">

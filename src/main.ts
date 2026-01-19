@@ -23,6 +23,7 @@ import FormBuilder from './views/FormBuilder.vue'
 import Bin from './views/Bin.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
+import Landing from './views/Landing.vue'
 // Import utils as needed
 import FilePicker from './views/FilePicker.vue'
 import DocsEditor from './views/DocsEditor.vue'
@@ -65,6 +66,12 @@ const routes = [
   },
   {
     path: '/',
+    name: 'landing',
+    component: Landing,
+    meta: { public: true }
+  },
+  {
+    path: '/app',
     component: AuthenticatedLayout,
     children: [
       { path: 'sheets', name: 'sheets-view', component: Sheets },

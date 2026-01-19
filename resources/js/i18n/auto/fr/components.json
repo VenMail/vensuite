@@ -167,7 +167,8 @@
     },
     "DocsTitleBar": {
       "text": {
-        "no_previous_versions": "Aucune version précédente"
+        "no_previous_versions": "Aucune version précédente",
+        "loading_versions": "Chargement des versions..."
       }
     },
     "DocsToolbar": {
@@ -480,6 +481,25 @@
       "commons": {
         "text": {
           "saving_deck": "Sauvegarde du deck…"
+        }
+      }
+    },
+    "forms": {
+      "components": {
+        "forms": {
+          "components": {
+            "forms": {
+              "docstoolbar": {
+                "heading": {
+                  "import_file": "Fichier d'importation"
+                },
+                "text": {
+                  "import_file_description": "Importez un fichier PDF/DOCX/HTML pour ajouter du contenu à votre document.",
+                  "select_file_to_import": "Sélectionnez un fichier à importer."
+                }
+              }
+            }
+          }
         }
       }
     }

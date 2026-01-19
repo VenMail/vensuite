@@ -483,6 +483,25 @@
           "saving_deck": "正在保存演示文稿…"
         }
       }
+    },
+    "forms": {
+      "components": {
+        "forms": {
+          "components": {
+            "forms": {
+              "docstoolbar": {
+                "heading": {
+                  "import_file": "导入文件"
+                },
+                "text": {
+                  "import_file_description": "导入 PDF/DOCX/HTML 文件以添加内容到您的文档。",
+                  "select_file_to_import": "选择要导入的文件。"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
