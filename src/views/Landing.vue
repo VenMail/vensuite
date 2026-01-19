@@ -12,7 +12,6 @@ import {
   Check,
   Star,
   Zap,
-  Github
 } from 'lucide-vue-next'
 import { GithubLogoIcon } from '@radix-icons/vue'
 
@@ -78,12 +77,8 @@ const goToGithub = () => {
             </Badge>
           </div>
           <div class="flex items-center space-x-4">
-            <Button variant="outline" @click="goToGithub" class="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">
-              <Github class="w-4 h-4 mr-2" />
-              Self Host
-            </Button>
-            <Button @click="goToLogin" class="bg-primary-600 hover:bg-primary-700">
-              Try it on Venmail
+            <Button @click="goToLogin" class="bg-primary-600 hover:bg-primary-700 px-6">
+              Login
               <ArrowRight class="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -116,12 +111,10 @@ const goToGithub = () => {
           <Button size="lg" @click="goToLogin" class="text-lg px-8 py-4 bg-primary-600 hover:bg-primary-700 shadow-lg hover:shadow-xl transition-all duration-200">
             <Zap class="w-6 h-6 mr-3" />
             Try it on Venmail
-            <span class="ml-2 text-sm opacity-75">Managed Service</span>
           </Button>
           <Button size="lg" variant="outline" @click="goToGithub" class="text-lg px-8 py-4 border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200">
-            <Github class="w-6 h-6 mr-3" />
+            <GithubLogoIcon class="w-6 h-6 mr-3" />
             Self Host
-            <span class="ml-2 text-sm opacity-75">Free Forever</span>
           </Button>
         </div>
 
@@ -206,13 +199,13 @@ const goToGithub = () => {
                   </div>
                   <p class="text-gray-600 dark:text-gray-300 text-sm mb-3 transition-colors">Managed service with automatic updates, support, and enterprise features</p>
                   <Button @click="goToLogin" class="bg-primary-600 hover:bg-primary-700 text-white" size="sm">
-                    Start Free Trial
+                    Get Started
                   </Button>
                 </div>
                 
                 <div class="border-l-4 border-gray-400 pl-6 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-r-lg">
                   <div class="flex items-center mb-2">
-                    <Github class="w-5 h-5 text-gray-600 mr-2" />
+                    <GithubLogoIcon class="w-5 h-5 text-gray-600 mr-2" />
                     <h4 class="font-semibold text-gray-900 dark:text-white text-lg">Self Host</h4>
                   </div>
                   <p class="text-gray-600 dark:text-gray-300 text-sm mb-3 transition-colors">Deploy on your own infrastructure for maximum control and privacy</p>
@@ -243,7 +236,7 @@ const goToGithub = () => {
             <span class="ml-2 text-sm opacity-75">Managed</span>
           </Button>
           <Button size="lg" variant="outline" @click="goToGithub" class="text-lg px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-primary-600 transition-all duration-200">
-            <Github class="w-5 h-5 mr-2" />
+            <GithubLogoIcon class="w-5 h-5 mr-2" />
             Self Host
             <span class="ml-2 text-sm opacity-75">Free</span>
           </Button>

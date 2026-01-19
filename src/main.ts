@@ -23,7 +23,6 @@ import FormBuilder from './views/FormBuilder.vue'
 import Bin from './views/Bin.vue'
 import OauthCallback from './views/OauthCallback.vue'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
-import Landing from './views/Landing.vue'
 // Import utils as needed
 import FilePicker from './views/FilePicker.vue'
 import DocsEditor from './views/DocsEditor.vue'
@@ -32,6 +31,12 @@ import SlidesEditor from './views/SlidesEditor.vue'
 import Media from './views/Media.vue'
 
 const routes = [
+  {
+    path: '/',
+    name: 'root',
+    component: () => import('./views/RootView.vue'),
+    meta: { public: true }
+  },
   {
     path: '/f/:slug/success',
     name: 'form-success',
@@ -63,12 +68,6 @@ const routes = [
     path: '/oauth/callback',
     name: 'oauthCallback',
     component: OauthCallback,
-  },
-  {
-    path: '/home',
-    name: 'landing',
-    component: Landing,
-    meta: { public: true }
   },
   {
     path: '/app',
