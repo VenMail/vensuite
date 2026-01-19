@@ -30,6 +30,7 @@ watch(() => route.name, (newRouteName) => {
   const show = (
     newRouteName === 'home' ||
     newRouteName === 'forms' ||
+    newRouteName === 'slides' ||
     newRouteName === 'media' ||
     newRouteName === 'docs-view' ||
     newRouteName === 'sheets-view' ||
