@@ -11,8 +11,10 @@ import {
   ArrowRight,
   Check,
   Star,
-  Zap
+  Zap,
+  Github
 } from 'lucide-vue-next'
+import { GithubLogoIcon } from '@radix-icons/vue'
 
 const features = [
   {
@@ -50,6 +52,10 @@ const goToApp = () => {
   window.location.href = 'https://venia.cloud'
 }
 
+const goToLogin = () => {
+  window.location.href = '/login'
+}
+
 const goToGithub = () => {
   window.open('https://github.com/venmail/vensuite', '_blank')
 }
@@ -66,15 +72,18 @@ const goToGithub = () => {
               <FileText class="w-5 h-5 text-white" />
             </div>
             <span class="text-xl font-bold text-gray-900 dark:text-white transition-colors">Venmail Drive</span>
-            <Badge variant="secondary" class="text-xs">Open Source</Badge>
+            <Badge variant="secondary" class="text-xs">
+              <GithubLogoIcon class="w-3 h-3 mr-1" />
+              Open Source
+            </Badge>
           </div>
           <div class="flex items-center space-x-4">
-            <Button variant="ghost" @click="goToGithub">
+            <Button variant="outline" @click="goToGithub" class="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">
               <Github class="w-4 h-4 mr-2" />
-              GitHub
+              Self Host
             </Button>
-            <Button @click="goToApp">
-              Get Started
+            <Button @click="goToLogin" class="bg-primary-600 hover:bg-primary-700">
+              Try it on Venmail
               <ArrowRight class="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -103,14 +112,16 @@ const goToGithub = () => {
           Self-hosted or use our managed service. No tracking, no ads, just pure productivity.
         </p>
         
-        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Button size="lg" @click="goToApp" class="text-lg px-8">
-            <Zap class="w-5 h-5 mr-2" />
-            Try Managed Service
+        <div class="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+          <Button size="lg" @click="goToLogin" class="text-lg px-8 py-4 bg-primary-600 hover:bg-primary-700 shadow-lg hover:shadow-xl transition-all duration-200">
+            <Zap class="w-6 h-6 mr-3" />
+            Try it on Venmail
+            <span class="ml-2 text-sm opacity-75">Managed Service</span>
           </Button>
-          <Button size="lg" variant="outline" @click="goToGithub" class="text-lg px-8">
-            <Github class="w-5 h-5 mr-2" />
-            Self-Host Free
+          <Button size="lg" variant="outline" @click="goToGithub" class="text-lg px-8 py-4 border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200">
+            <Github class="w-6 h-6 mr-3" />
+            Self Host
+            <span class="ml-2 text-sm opacity-75">Free Forever</span>
           </Button>
         </div>
 
@@ -185,19 +196,29 @@ const goToGithub = () => {
           
           <div class="bg-gradient-to-br from-primary-50 to-orange-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 transition-colors">
             <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors">
-              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 transition-colors">Two Ways to Use Venmail Drive</h3>
+              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6 transition-colors">Choose Your Path</h3>
               
-              <div class="space-y-4">
-                <div class="border-l-4 border-primary-500 pl-4">
-                  <h4 class="font-semibold text-gray-900 dark:text-white">Managed Service</h4>
-                  <p class="text-gray-600 dark:text-gray-300 text-sm transition-colors">Hosted at https://venia.cloud with automatic updates and support</p>
-                  <Button @click="goToApp" class="mt-2" size="sm">Get Started</Button>
+              <div class="space-y-6">
+                <div class="border-l-4 border-primary-500 pl-6 py-3 bg-primary-50 dark:bg-primary-900/20 rounded-r-lg">
+                  <div class="flex items-center mb-2">
+                    <Zap class="w-5 h-5 text-primary-600 mr-2" />
+                    <h4 class="font-semibold text-gray-900 dark:text-white text-lg">Try it on Venmail</h4>
+                  </div>
+                  <p class="text-gray-600 dark:text-gray-300 text-sm mb-3 transition-colors">Managed service with automatic updates, support, and enterprise features</p>
+                  <Button @click="goToLogin" class="bg-primary-600 hover:bg-primary-700 text-white" size="sm">
+                    Start Free Trial
+                  </Button>
                 </div>
                 
-                <div class="border-l-4 border-orange-500 pl-4">
-                  <h4 class="font-semibold text-gray-900 dark:text-white">Self-Hosted</h4>
-                  <p class="text-gray-600 dark:text-gray-300 text-sm transition-colors">Deploy on your own infrastructure for maximum control</p>
-                  <Button @click="goToGithub" variant="outline" class="mt-2" size="sm">Deploy Now</Button>
+                <div class="border-l-4 border-gray-400 pl-6 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-r-lg">
+                  <div class="flex items-center mb-2">
+                    <Github class="w-5 h-5 text-gray-600 mr-2" />
+                    <h4 class="font-semibold text-gray-900 dark:text-white text-lg">Self Host</h4>
+                  </div>
+                  <p class="text-gray-600 dark:text-gray-300 text-sm mb-3 transition-colors">Deploy on your own infrastructure for maximum control and privacy</p>
+                  <Button @click="goToGithub" variant="outline" class="border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" size="sm">
+                    Deploy Now
+                  </Button>
                 </div>
               </div>
             </div>
@@ -216,12 +237,15 @@ const goToGithub = () => {
           Join thousands of users who've made the switch to privacy-first productivity tools.
         </p>
         
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" variant="secondary" @click="goToApp" class="text-lg px-8">
-            Start Free Trial
+        <div class="flex flex-col sm:flex-row gap-6 justify-center">
+          <Button size="lg" variant="secondary" @click="goToLogin" class="text-lg px-8 py-4 bg-white text-primary-600 hover:bg-gray-50 shadow-lg">
+            Try it on Venmail
+            <span class="ml-2 text-sm opacity-75">Managed</span>
           </Button>
-          <Button size="lg" variant="outline" @click="goToGithub" class="text-lg px-8 border-white text-white hover:bg-white hover:text-primary-600">
-            View on GitHub
+          <Button size="lg" variant="outline" @click="goToGithub" class="text-lg px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-primary-600 transition-all duration-200">
+            <Github class="w-5 h-5 mr-2" />
+            Self Host
+            <span class="ml-2 text-sm opacity-75">Free</span>
           </Button>
         </div>
       </div>
@@ -257,7 +281,7 @@ const goToGithub = () => {
             <ul class="space-y-2 text-gray-400 dark:text-gray-300 text-sm transition-colors">
               <li><a href="#" @click="goToGithub" class="hover:text-white">GitHub</a></li>
               <li><a href="#" @click="goToGithub" class="hover:text-white">Community</a></li>
-              <li><a href="#" @click="goToApp" class="hover:text-white">Support</a></li>
+              <li><a href="#" @click="goToLogin" class="hover:text-white">Support</a></li>
             </ul>
           </div>
           

@@ -106,7 +106,7 @@ import SlidesOutline from '@/components/slides/SlidesOutline.vue';
 import SlidesInspector from '@/components/slides/SlidesInspector.vue';
 import SlidevCanvas from '@/components/slides/SlidevCanvas.vue';
 import { useSlidesStore } from '@/store/slides.ts';
-import type { SlideDeckTemplate, SlideScene, SnapSettings } from '@/types/slides';
+import type { SlideDeckTemplate, SnapSettings } from '@/types/slides';
 import { useFileStore } from '@/store/files';
 import { toast } from 'vue-sonner';
 import axios from 'axios';

@@ -501,6 +501,23 @@
             }
           }
         }
+      },
+      "commons": {
+        "button": {
+          "open_new_tab": "Ouvrir dans un nouvel onglet"
+        },
+        "error": {
+          "failed_to_copy": "Échec de la copie du lien."
+        }
+      },
+      "views": {
+        "forms": {
+          "text": {
+            "link_copied": "Lien copié !",
+            "link_copied_description": "Le lien a été copié avec succès dans votre presse-papiers.",
+            "manual_copy_required": "Veuillez copier le lien manuellement."
+          }
+        }
       }
     }
   }

@@ -501,6 +501,23 @@
             }
           }
         }
+      },
+      "commons": {
+        "button": {
+          "open_new_tab": "在新标签页中打开"
+        },
+        "error": {
+          "failed_to_copy": "复制链接失败。"
+        }
+      },
+      "views": {
+        "forms": {
+          "text": {
+            "link_copied": "链接已复制！",
+            "link_copied_description": "链接已成功复制到您的剪贴板。",
+            "manual_copy_required": "请手动复制链接。"
+          }
+        }
       }
     }
   }

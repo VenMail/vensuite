@@ -501,6 +501,23 @@
             }
           }
         }
+      },
+      "commons": {
+        "button": {
+          "open_new_tab": "Open in new tab"
+        },
+        "error": {
+          "failed_to_copy": "Failed to copy the link."
+        }
+      },
+      "views": {
+        "forms": {
+          "text": {
+            "link_copied": "Link copied!",
+            "link_copied_description": "The link has been successfully copied to your clipboard.",
+            "manual_copy_required": "Please copy the link manually."
+          }
+        }
       }
     }
   }

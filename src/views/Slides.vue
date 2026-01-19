@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import WorkspaceTopBar from "@/components/layout/WorkspaceTopBar.vue";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -64,8 +64,6 @@ interface ViewOption {
 const router = useRouter();
 const viewMode = ref<"grid" | "list">("grid");
 const selectedSlideDeck = ref<string | null>(null);
-const showNewDialog = ref(false);
-
 type SlideTemplate = {
   name: string;
   slug: string;

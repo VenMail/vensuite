@@ -65,7 +65,7 @@ const routes = [
     component: OauthCallback,
   },
   {
-    path: '/',
+    path: '/home',
     name: 'landing',
     component: Landing,
     meta: { public: true }
