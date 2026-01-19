@@ -1,11 +1,14 @@
 # Vensuite - Open Source Productivity Suite
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Stars](https://img.shields.io/github/stars/venmail/vensuite?style=social)](https://github.com/venmail/vensuite)
+[![GitHub Stars](https://img.shields.io/github/stars/VenMail/vensuite?style=social)](https://github.com/VenMail/vensuite)
 
 **Google Docs, Sheets, Forms & Slides alternatives — fully open source.**
 
 Vensuite is a complete productivity suite that you can self-host or use via our managed service at [https://venia.cloud](https://venia.cloud). Part of the [Venmail](https://venmail.io) enterprise email workspace.
+
+> **⚠️ Work in Progress**  
+> Vensuite is currently under active development. Features may be incomplete, APIs may change, and some functionality may be unstable.
 
 ## ✨ Features
 
@@ -41,7 +44,7 @@ Vensuite is a complete productivity suite that you can self-host or use via our 
 
 ```bash
 # Clone the repository
-git clone https://github.com/venmail/vensuite.git
+git clone https://github.com/VenMail/vensuite.git
 cd vensuite
 
 # Install dependencies
