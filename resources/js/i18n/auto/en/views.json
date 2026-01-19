@@ -273,9 +273,9 @@
   },
   "commons": {
     "text": {
-      "loading_form": "Chargement du formulaire…",
-      "loading_response": "Chargement de la réponse…",
-      "loading_responses": "Chargement des réponses…"
+      "loading_form": "Loading form…",
+      "loading_response": "Loading response…",
+      "loading_responses": "Loading responses…"
     }
   }
 }

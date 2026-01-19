@@ -79,6 +79,7 @@ const routes = [
       { path: 'docs/new', name: 'docs-new', component: DocsEditor, meta: { hideLayout: true } },
       { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true, public: true } },
       { path: 'docs/t/:template', name: 'docs-template', component: DocsEditor, meta: { hideLayout: true } },
+      { path: 'slides', name: 'slides', component: () => import('./views/Slides.vue') },
       { path: 'slides/new', name: 'slides-new', component: SlidesEditor, meta: { hideLayout: true } },
       { path: 'slides/:deckId', name: 'slides-edit', component: SlidesEditor, meta: { hideLayout: true } },
       { path: 'slides/t/:template', name: 'slides-template', component: SlidesEditor, meta: { hideLayout: true } },

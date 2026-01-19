@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, X } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, X, Presentation } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useRouter, useRoute } from 'vue-router'
 import {
@@ -30,6 +30,7 @@ const items = [
   { name: 'Home', icon: Home, route: '/' },
   { name: 'Documents', icon: FileText, route: '/docs' },
   { name: 'Forms', icon: FileBoxIcon, route: '/forms' },
+  { name: 'Slides', icon: Presentation, route: '/slides' },
   { name: 'Spreadsheets', icon: Table, route: '/sheets' },
   { name: 'Media', icon: Image, route: '/media' },
   { name: 'Bin', icon: Trash2, route: '/bin' }
@@ -96,6 +97,13 @@ const templates = {
     { name: "Resume", icon: defaultIcons.IconMicrosoftWord },
     { name: "Letter", icon: defaultIcons.IconMicrosoftWord },
   ],
+  Slides: [
+    { name: "Default Theme", icon: Presentation },
+    { name: "Seriph Theme", icon: Presentation },
+    { name: "Academic Theme", icon: Presentation },
+    { name: "Purplin Theme", icon: Presentation },
+    { name: "Neversink Theme", icon: Presentation },
+  ],
   Spreadsheets: [
     { name: "Blank Spreadsheet", icon: defaultIcons.IconMicrosoftExcel },
     { name: "Budget", icon: defaultIcons.IconMicrosoftExcel },
@@ -126,6 +134,14 @@ function createNewFile(type: string, template?: string) {
     } else {
       console.log('Navigating to /docs/t/' + template)
       router.push("/docs/t/" + template)
+    }
+  } else if (type === "Slides") {
+    if (template?.toLowerCase().includes("blank")) {
+      console.log('Navigating directly to /slides/new')
+      router.push("/slides/new")
+    } else if (template) {
+      console.log('Navigating to /slides/t/' + template.toLowerCase().replace(/\s+/g, '-'))
+      router.push("/slides/t/" + template.toLowerCase().replace(/\s+/g, '-'))
     }
   }
 }

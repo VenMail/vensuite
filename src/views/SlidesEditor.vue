@@ -63,19 +63,14 @@
         <div class="flex-1 overflow-auto bg-slate-200 dark:bg-slate-950">
           <div class="mx-auto flex h-full w-full max-w-5xl items-center justify-center px-6 py-8">
             <div class="relative h-full w-full rounded-xl bg-white shadow-xl ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-700">
-              <SlideCanvas
-                v-if="activePage"
-                :scene="activePage.scene"
-                :snap-settings="snapSettings"
+              <!-- Slidev Canvas Integration -->
+              <SlidevCanvas
+                v-if="activePage && slidevSlides.length > 0"
+                :initial-slides="slidevSlides"
                 :disabled="slidesStore.importStatus.isImporting"
-                :text-command="textCommand"
-                :chart-command="chartCommand"
-                :text-advanced-command="textAdvancedCommand"
                 class="h-[720px] w-full"
-                @update:scene="handleSceneUpdate"
+                @update:slides="handleSlidevSlidesUpdate"
                 @thumbnail="handleThumbnailGenerated"
-                @selection="handleSelection"
-                @available-fonts="handleAvailableFonts"
               />
               <div v-else class="flex h-[720px] items-center justify-center text-gray-500 dark:text-gray-400">
                 {{$t('Views.SlidesEditor.text.select_or_add_a')}}
@@ -109,12 +104,13 @@ import SlidesTitleBar from '@/components/slides/SlidesTitleBar.vue';
 import SlidesToolbar from '@/components/slides/SlidesToolbar.vue';
 import SlidesOutline from '@/components/slides/SlidesOutline.vue';
 import SlidesInspector from '@/components/slides/SlidesInspector.vue';
-import SlideCanvas from '@/components/slides/SlideCanvas.vue';
+import SlidevCanvas from '@/components/slides/SlidevCanvas.vue';
 import { useSlidesStore } from '@/store/slides.ts';
 import type { SlideDeckTemplate, SlideScene, SnapSettings } from '@/types/slides';
 import { useFileStore } from '@/store/files';
 import { toast } from 'vue-sonner';
 import axios from 'axios';
+import { slidevService, type SlidevSlide } from '@/services/slidevService';
 
 const route = useRoute();
 const router = useRouter();
@@ -138,6 +134,9 @@ const isOffline = ref(!navigator.onLine);
 
 const pptxInput = ref<HTMLInputElement | null>(null);
 const htmlInput = ref<HTMLInputElement | null>(null);
+
+// Slidev integration state
+const slidevSlides = ref<SlidevSlide[]>([]);
 
 const deckTitle = computed(() => title.value);
 const deckId = computed(() => slidesStore.deckId);
@@ -171,6 +170,172 @@ const slideTemplateLoaders = Object.fromEntries(
   })
 ) as Record<string, () => Promise<SlideDeckTemplate>>;
 
+// Convert slides store pages to Slidev slides
+const convertPagesToSlidevSlides = (pages: any[]): SlidevSlide[] => {
+  return pages.map((page, index) => {
+    // Extract content from the scene elements
+    let content = '';
+    let notes = '';
+    
+    if (page.scene && page.scene.elements) {
+      // Convert Excalidraw elements to HTML content
+      const textElements = page.scene.elements.filter((el: any) => el.type === 'text');
+      content = textElements
+        .map((el: any) => {
+          const fontSize = el.fontSize || 16;
+          const fontWeight = fontSize > 30 ? 'bold' : 'normal';
+          const tag = fontSize > 40 ? 'h1' : fontSize > 30 ? 'h2' : fontSize > 20 ? 'h3' : 'p';
+          return `<${tag} style="font-size: ${fontSize}px; font-weight: ${fontWeight};">${el.text || ''}</${tag}>`;
+        })
+        .join('\n');
+    }
+    
+    return {
+      id: page.id,
+      content: content || `<h1>Slide ${index + 1}</h1><p>Add your content here</p>`,
+      notes: notes || ''
+    };
+  });
+};
+
+// Convert Slidev slides back to pages format
+const convertSlidevSlidesToPages = (slidevSlides: SlidevSlide[]): any[] => {
+  return slidevSlides.map((slide, index) => {
+    // Create a basic page structure from Slidev content
+    const elements: any[] = [];
+    
+    // Parse HTML content to extract text elements
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = slide.content;
+    
+    const processNode = (node: any, x: number = 100, y: number = 100, baseFontSize: number = 32) => {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+        elements.push({
+          id: `text-${Date.now()}-${Math.random()}`,
+          type: 'text',
+          x,
+          y,
+          width: 600,
+          height: 0,
+          angle: 0,
+          strokeColor: '#000000',
+          backgroundColor: 'transparent',
+          fillStyle: 'hachure',
+          strokeWidth: 1,
+          strokeStyle: 'solid',
+          roughness: 0,
+          opacity: 100,
+          groupIds: [],
+          seed: Math.floor(Math.random() * 1_000_000),
+          version: 1,
+          versionNonce: Math.floor(Math.random() * 1_000_000),
+          isDeleted: false,
+          text: node.textContent.trim(),
+          fontSize: baseFontSize,
+          fontFamily: 1,
+          textAlign: 'left',
+          verticalAlign: 'top',
+          baseline: Math.round(baseFontSize * 0.8),
+          lineHeight: 1.25,
+          containerId: null,
+          originalText: node.textContent.trim(),
+        });
+        y += baseFontSize * 1.5;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const tagName = node.tagName.toLowerCase();
+        let fontSize = baseFontSize;
+        
+        if (tagName === 'h1') fontSize = 56;
+        else if (tagName === 'h2') fontSize = 42;
+        else if (tagName === 'h3') fontSize = 32;
+        else if (tagName === 'h4') fontSize = 28;
+        else if (tagName === 'h5') fontSize = 24;
+        else if (tagName === 'h6') fontSize = 20;
+        
+        if (node.textContent && node.textContent.trim()) {
+          elements.push({
+            id: `text-${Date.now()}-${Math.random()}`,
+            type: 'text',
+            x,
+            y,
+            width: 600,
+            height: 0,
+            angle: 0,
+            strokeColor: '#000000',
+            backgroundColor: 'transparent',
+            fillStyle: 'hachure',
+            strokeWidth: 1,
+            strokeStyle: 'solid',
+            roughness: 0,
+            opacity: 100,
+            groupIds: [],
+            seed: Math.floor(Math.random() * 1_000_000),
+            version: 1,
+            versionNonce: Math.floor(Math.random() * 1_000_000),
+            isDeleted: false,
+            text: node.textContent.trim(),
+            fontSize,
+            fontFamily: 1,
+            textAlign: 'left',
+            verticalAlign: 'top',
+            baseline: Math.round(fontSize * 0.8),
+            lineHeight: 1.25,
+            containerId: null,
+            originalText: node.textContent.trim(),
+          });
+          y += fontSize * 1.5;
+        }
+        
+        // Process child nodes
+        Array.from(node.childNodes).forEach(child => {
+          processNode(child, x, y, fontSize * 0.8);
+        });
+      }
+    };
+    
+    Array.from(tempDiv.childNodes).forEach(child => {
+      processNode(child);
+    });
+    
+    // Add page frame
+    elements.unshift({
+      id: `page-frame-${slide.id}`,
+      type: 'rectangle',
+      x: 0,
+      y: 0,
+      width: 1024,
+      height: 768,
+      angle: 0,
+      strokeColor: '#e5e7eb',
+      backgroundColor: '#ffffff',
+      fillStyle: 'solid',
+      strokeWidth: 1,
+      strokeStyle: 'solid',
+      roughness: 0,
+      opacity: 100,
+      groupIds: [],
+      seed: Math.floor(Math.random() * 1_000_000),
+      version: 1,
+      versionNonce: Math.floor(Math.random() * 1_000_000),
+      isDeleted: false,
+      locked: true,
+      custom: { isPageFrame: true },
+    });
+    
+    return {
+      id: slide.id,
+      name: `Slide ${index + 1}`,
+      scene: {
+        elements,
+        appState: {
+          viewBackgroundColor: '#ffffff',
+        },
+        files: {},
+      },
+    };
+  });
+};
+
 function parseSharingInfoString(info?: string | null): ShareMember[] {
   if (!info || typeof info !== 'string') return [];
   return info
@@ -200,12 +365,14 @@ async function bootstrapDeck() {
 
   if (route.name === 'slides-new') {
     await slidesStore.initNewDeck(templateId);
+    updateSlidevSlides();
     return;
   }
 
   if (templateId && route.name === 'slides-template') {
     await slidesStore.initNewDeck(templateId);
     await loadTemplate(templateId);
+    updateSlidevSlides();
     return;
   }
 
@@ -213,13 +380,23 @@ async function bootstrapDeck() {
     try {
       await slidesStore.loadDeckFromFileId(deckId);
       await hydrateSharing(deckId);
+      updateSlidevSlides();
     } catch (error) {
       console.error(error);
       toast.error('Unable to load slide deck');
       await slidesStore.initNewDeck();
+      updateSlidevSlides();
     }
   } else {
     await slidesStore.initNewDeck();
+    updateSlidevSlides();
+  }
+}
+
+// Update Slidev slides when pages change
+function updateSlidevSlides() {
+  if (pages.value && pages.value.length > 0) {
+    slidevSlides.value = convertPagesToSlidevSlides(pages.value);
   }
 }
 
@@ -357,18 +534,21 @@ async function handleRemoveMember(payload: { email: string }) {
 
 function handleAddPage(templateSlug?: string) {
   slidesStore.addPage(templateSlug);
+  updateSlidevSlides();
   slidesStore.scheduleAutosave();
 }
 
 function handleDuplicatePage(pageId?: string | null) {
   if (!pageId) return;
   slidesStore.duplicatePage(pageId);
+  updateSlidevSlides();
   slidesStore.scheduleAutosave();
 }
 
 function handleDeletePage(pageId?: string | null) {
   if (!pageId) return;
   slidesStore.deletePage(pageId);
+  updateSlidevSlides();
   slidesStore.scheduleAutosave();
 }
 
@@ -380,6 +560,7 @@ function handleSelectPage(pageId?: string | null) {
 function handleMovePage(direction: 'up' | 'down', pageId?: string | null) {
   if (!pageId) return;
   slidesStore.movePage(pageId, direction);
+  updateSlidevSlides();
   slidesStore.scheduleAutosave();
 }
 
@@ -387,9 +568,14 @@ function handleChangeTemplate(slug: string) {
   slidesStore.setSelectedTemplate(slug);
 }
 
-function handleSceneUpdate(scene: SlideScene) {
-  if (!activePage.value) return;
-  slidesStore.updatePageScene(activePage.value.id, scene);
+// Handle Slidev slides updates
+function handleSlidevSlidesUpdate(newSlides: SlidevSlide[]) {
+  slidevSlides.value = newSlides;
+  
+  // Convert back to pages format and update store
+  const newPages = convertSlidevSlidesToPages(newSlides);
+  slidesStore.pages = newPages;
+  slidesStore.markDirty();
   slidesStore.scheduleAutosave();
 }
 
@@ -398,16 +584,12 @@ function handleThumbnailGenerated(thumbnail: string | null) {
   slidesStore.setPageThumbnail(activePage.value.id, thumbnail);
 }
 
-// Selection-driven toolbar state and commands
+// Selection-driven toolbar state and commands (kept for compatibility)
 const selectionState = ref<{ hasText: boolean; fontFamily?: number } | undefined>(undefined);
 const textCommand = ref<{ seq: number; fontFamily?: number }>({ seq: 0 });
 const chartCommand = ref<{ seq: number; type: 'bar' | 'line' | 'pie' }>({ seq: 0, type: 'bar' });
 const textAdvancedCommand = ref<{ seq: number; name: string }>({ seq: 0, name: '' });
 const availableFonts = ref<string[]>([]);
-
-function handleSelection(payload: { hasText: boolean; fontFamily?: number }) {
-  selectionState.value = payload;
-}
 
 function handleToolbarChangeFont(fontFamily: number) {
   textCommand.value = { seq: (textCommand.value.seq ?? 0) + 1, fontFamily };
@@ -415,10 +597,6 @@ function handleToolbarChangeFont(fontFamily: number) {
 
 function handleToolbarInsertChart(type: 'bar' | 'line' | 'pie') {
   chartCommand.value = { seq: (chartCommand.value.seq ?? 0) + 1, type } as any;
-}
-
-function handleAvailableFonts(list: string[]) {
-  availableFonts.value = Array.isArray(list) ? Array.from(new Set(list)) : [];
 }
 
 function handleToolbarChangeFontAdvanced(name: string) {
@@ -442,6 +620,7 @@ async function handlePowerPointFile(event: Event) {
     console.error(error);
     toast.error('PowerPoint import failed');
   });
+  updateSlidevSlides();
   input.value = '';
 }
 
@@ -453,6 +632,7 @@ async function handleHtmlFile(event: Event) {
     console.error(error);
     toast.error('HTML import failed');
   });
+  updateSlidevSlides();
   input.value = '';
 }
 
@@ -462,10 +642,23 @@ function handleSnapSettingsUpdate(settings: Partial<SnapSettings>) {
 }
 
 function handleExport(format: 'pdf' | 'pptx' | 'images') {
-  slidesStore.exportDeck(format).catch((err: unknown) => {
-    console.error(err);
-    toast.error('Export failed');
-  });
+  if (format === 'pdf' || format === 'pptx') {
+    // Use Slidev service for PDF/PPTX export
+    slidevService.exportSlides(slidevSlides.value, { 
+      format: format as 'pdf' | 'pptx',
+      title: deckTitle.value,
+      theme: slidesStore.selectedTemplateSlug
+    }).catch((err: unknown) => {
+      console.error(err);
+      toast.error('Export failed');
+    });
+  } else {
+    // Use existing store for images export
+    slidesStore.exportDeck(format).catch((err: unknown) => {
+      console.error(err);
+      toast.error('Export failed');
+    });
+  }
 }
 
 watch(
@@ -482,6 +675,14 @@ watch(
     shareLink.value = buildShareLink(id);
     void hydrateSharing(id);
   }
+);
+
+watch(
+  () => pages.value,
+  () => {
+    updateSlidevSlides();
+  },
+  { deep: true }
 );
 
 onMounted(() => {
