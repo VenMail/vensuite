@@ -16,6 +16,7 @@ import {
 export interface UseSlidesEditorOptions {
   initialSlides?: SlidevSlide[];
   initialTheme?: string;
+  onSlideChange?: () => void;
 }
 
 export interface EditorTool {
@@ -26,6 +27,8 @@ export interface EditorTool {
 }
 
 export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
+  const { onSlideChange } = options;
+  
   // Core state
   const slides = ref<SlidevSlide[]>(options.initialSlides || createDefaultSlides());
   const currentSlideIndex = ref(0);
@@ -143,6 +146,10 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
     };
     slides.value.splice(insertIndex + 1, 0, newSlide);
     currentSlideIndex.value = insertIndex + 1;
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
+    
     return newSlide;
   }
 
@@ -156,6 +163,10 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
     };
     slides.value.splice(index + 1, 0, duplicate);
     currentSlideIndex.value = index + 1;
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
+    
     return duplicate;
   }
 
@@ -165,6 +176,10 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
     if (currentSlideIndex.value >= slides.value.length) {
       currentSlideIndex.value = slides.value.length - 1;
     }
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
+    
     return true;
   }
 
@@ -175,6 +190,10 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
     const [slide] = slides.value.splice(index, 1);
     slides.value.splice(newIndex, 0, slide);
     currentSlideIndex.value = newIndex;
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
+    
     return true;
   }
 
@@ -191,10 +210,16 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
   // Content operations
   function updateSlideContent(content: string) {
     currentSlideContent.value = content;
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
   }
 
   function updateSlideNotes(notes: string) {
     currentSlideNotes.value = notes;
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
   }
 
   function insertAtCursor(editorRef: Ref<HTMLTextAreaElement | null>, template: string) {
@@ -227,6 +252,9 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
         slideBackground.value = theme.colors.primary;
       }
     }
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
   }
 
   // Layout operations
@@ -238,6 +266,9 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
         layout
       };
     }
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
   }
 
   function setBackground(background: string) {
@@ -248,6 +279,9 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
         background
       };
     }
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
   }
 
   function setTransition(transition: string) {
@@ -258,6 +292,9 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
         transition
       };
     }
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
   }
 
   function setSlideClass(className: string) {
@@ -273,6 +310,9 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
   // Theme operations
   function setTheme(theme: string) {
     currentTheme.value = theme;
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
   }
 
   // Preview helpers
@@ -319,6 +359,9 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
     slideBackground.value = '#ffffff';
     slideTransition.value = 'slide-left';
     slideClass.value = '';
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
   }
 
   // Generate Slidev-compatible markdown

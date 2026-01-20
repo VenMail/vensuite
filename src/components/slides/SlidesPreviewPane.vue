@@ -131,6 +131,16 @@ onMounted(async () => {
     await mermaid.renderAllDiagrams(previewRef.value);
     applyAnimations();
     setupScrollObserver();
+    
+    // Listen for element selection events
+    previewRef.value.addEventListener('element-selected', (e: any) => {
+      const event = e as CustomEvent;
+      // Emit to parent
+      const parentEvent = new CustomEvent('preview-element-selected', {
+        detail: event.detail
+      });
+      previewRef.value?.dispatchEvent(parentEvent);
+    });
   }
 });
 
@@ -155,6 +165,20 @@ function applyAnimations() {
         if (handlers.mouseleave) element.removeEventListener('mouseleave', handlers.mouseleave);
         elementHandlers.value.delete(element);
       }
+    }
+    
+    // Add click handler for element selection
+    if (!element.dataset.selectionHandler) {
+      element.style.cursor = 'pointer';
+      element.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Emit selection event to parent
+        const event = new CustomEvent('element-selected', {
+          detail: { element, type: getElementTypeInfo(element) }
+        });
+        previewRef.value?.dispatchEvent(event);
+      });
+      element.dataset.selectionHandler = 'true';
     }
   });
   
@@ -195,6 +219,31 @@ function applyAnimations() {
       applyAnimationToElement(element, animation);
     }
   });
+}
+
+// Helper function to get element type info
+function getElementTypeInfo(element: HTMLElement): string {
+  const tagName = element.tagName.toLowerCase();
+  if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+    return `Heading (${tagName})`;
+  } else if (tagName === 'p') {
+    return 'Paragraph';
+  } else if (tagName === 'img') {
+    return 'Image';
+  } else if (tagName === 'ul' || tagName === 'ol') {
+    return 'List';
+  } else if (tagName === 'li') {
+    return 'List Item';
+  } else if (element.classList.contains('mermaid-diagram')) {
+    return 'Mermaid Diagram';
+  } else if (element.classList.contains('slide-table')) {
+    return 'Table';
+  } else if (element.classList.contains('code-block')) {
+    return 'Code Block';
+  } else if (tagName === 'div' || tagName === 'span') {
+    return 'Container';
+  }
+  return 'Element';
 }
 
 function applyAnimationToElement(element: HTMLElement, animation: ElementAnimation) {
@@ -637,5 +686,17 @@ defineExpose({ zoomIn, zoomOut, resetZoom, zoom, previewRef });
 .slide-preview-content :deep(.col-right h2) {
   margin-top: 0;
   margin-bottom: 1rem;
+}
+
+/* Element selection feedback */
+.slide-preview-content :deep(.element-selected) {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.slide-preview-content :deep(.element-selected:hover) {
+  background-color: rgba(59, 130, 246, 0.1);
 }
 </style>

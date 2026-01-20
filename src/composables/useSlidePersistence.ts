@@ -7,6 +7,7 @@ import { useFileStore } from '@/store/files';
 import { useAuthStore } from '@/store/auth';
 import { toast } from 'vue-sonner';
 import axios from 'axios';
+import type { FileData, DocumentMetadata } from '@/types';
 import { 
   createDefaultSlides, 
   type SlidevSlide 
@@ -42,8 +43,9 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
   const isLoading = ref(false);
   const hasUnsavedChanges = ref(false);
   const lastSavedAt = ref<Date | null>(null);
-  const autosaveTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+  const autosaveDebounce = ref<NodeJS.Timeout | null>(null);
   const hasUserMadeChanges = ref(false); // Track if user has made any changes
+  const saveQueue = ref<((value: boolean) => void)[]>([]);
 
   // Sharing state
   const shareLink = ref('');
@@ -65,10 +67,16 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
   // Network status handlers
   function setOnline() {
     isOffline.value = false;
+    // Trigger save on reconnect if there are unsaved changes
+    if (hasUnsavedChanges.value) {
+      persistDeck().catch(err => console.warn('Reconnect save failed:', err));
+    }
   }
 
   function setOffline() {
     isOffline.value = true;
+    // Stop autosaving when offline
+    cancelAutosave();
   }
 
   // Mark as dirty and schedule autosave
@@ -96,24 +104,34 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
   }
 
   function scheduleAutosave() {
-    if (autosaveTimer.value) {
-      clearTimeout(autosaveTimer.value);
+    // Clear existing timeout
+    if (autosaveDebounce.value) {
+      clearTimeout(autosaveDebounce.value);
     }
-    autosaveTimer.value = setTimeout(() => {
-      persistDeck().catch(err => console.warn('Autosave failed:', err));
-    }, autosaveDelay);
+    
+    // Use debounce with minimum delay to prevent rapid saves
+    autosaveDebounce.value = setTimeout(() => {
+      if (hasUnsavedChanges.value && !isSaving.value) {
+        persistDeck().catch(err => console.warn('Autosave failed:', err));
+      }
+    }, Math.max(autosaveDelay, 1000)); // Minimum 1 second delay
   }
 
   function cancelAutosave() {
-    if (autosaveTimer.value) {
-      clearTimeout(autosaveTimer.value);
-      autosaveTimer.value = null;
+    if (autosaveDebounce.value) {
+      clearTimeout(autosaveDebounce.value);
+      autosaveDebounce.value = null;
     }
   }
 
-  // Save deck
+  // Save deck with improved concurrency handling
   async function persistDeck(): Promise<boolean> {
-    if (isSaving.value) return false;
+    if (isSaving.value) {
+      // Queue the save instead of rejecting to prevent lost saves
+      return new Promise<boolean>((resolve) => {
+        saveQueue.value.push(resolve);
+      });
+    }
 
     try {
       isSaving.value = true;
@@ -133,21 +151,39 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         slidesPreview: editor.slides.value.slice(0, 2).map(s => ({ id: s.id, contentPreview: s.content.substring(0, 50) + '...' }))
       });
 
-      const filePayload = {
-        id: deckId.value || undefined,
+      // Get existing document if we have an ID, otherwise create new
+      let existingDoc: FileData | null = null;
+      if (deckId.value) {
+        existingDoc = await fileStore.loadDocument(deckId.value, 'pptx');
+        console.log('📂 Loaded existing document:', existingDoc ? 'found' : 'not found');
+      }
+
+      // Create/update document using confirmed backend fields with metadata support
+      const filePayload: FileData = existingDoc ? {
+        ...existingDoc,
+        content: JSON.stringify(deckData),
+        metadata: {
+          ...existingDoc.metadata,
+          theme: editor.currentTheme.value,
+          slide_count: editor.slides.value.length
+        } as DocumentMetadata,
+        last_viewed: new Date(),
+      } : {
+        id: deckId.value || undefined, // Use existing ID if we have one
         title: deckTitle.value,
-        file_type: 'slides',
+        file_type: 'pptx', // Use pptx to match what's shown in Home.vue
         content: JSON.stringify(deckData),
         metadata: {
           theme: editor.currentTheme.value,
           slide_count: editor.slides.value.length
-        },
-        is_folder: false
+        } as DocumentMetadata,
+        is_folder: false,
+        last_viewed: new Date(),
       };
 
       console.log('📤 File payload for API:', {
         ...filePayload,
-        content: filePayload.content.substring(0, 200) + '...' // Truncate for logging
+        content: filePayload.content?.substring(0, 200) + '...' // Truncate for logging
       });
 
       const result = await fileStore.saveDocument(filePayload as any);
@@ -159,16 +195,40 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
       });
       
       if (result.document?.id) {
+        // CRITICAL: Always update deckId to the saved document ID
+        const oldDeckId = deckId.value;
         deckId.value = result.document.id;
-        console.log('✅ Deck ID updated to:', deckId.value);
+        console.log('✅ Deck ID updated from', oldDeckId, 'to', deckId.value);
+        
+        // If this was a local document that got a server ID, we might need to handle redirect
+        if (result.shouldRedirect && result.redirectId) {
+          console.log('🔄 Local document saved online, new ID:', result.redirectId);
+          deckId.value = result.redirectId;
+        }
       }
 
       hasUnsavedChanges.value = false;
       lastSavedAt.value = new Date();
+      
+      // Process any queued saves
+      if (saveQueue.value.length > 0) {
+        console.log(`🔄 Processing ${saveQueue.value.length} queued saves`);
+        const queued = saveQueue.value.splice(0);
+        queued.forEach(resolve => resolve(true));
+      }
+      
       return true;
     } catch (error) {
       console.error('Failed to save deck:', error);
       toast.error('Failed to save presentation');
+      
+      // Reject any queued saves on error
+      if (saveQueue.value.length > 0) {
+        console.log(`❌ Rejecting ${saveQueue.value.length} queued saves due to error`);
+        const queued = saveQueue.value.splice(0);
+        queued.forEach(resolve => resolve(false));
+      }
+      
       throw error;
     } finally {
       isSaving.value = false;
@@ -187,6 +247,23 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
 
       deckId.value = file.id || id;
       deckTitle.value = file.title || 'Untitled Presentation';
+
+      // Load metadata if available
+      if (file.metadata) {
+        const metadata: DocumentMetadata = file.metadata;
+        console.log('📋 Loading metadata:', metadata);
+        
+        // Apply theme from metadata if available
+        if (metadata.theme) {
+          editor.setTheme(metadata.theme);
+          console.log('🎨 Applied theme from metadata:', metadata.theme);
+        }
+        
+        // Log slide count from metadata
+        if (metadata.slide_count) {
+          console.log('📊 Slide count from metadata:', metadata.slide_count);
+        }
+      }
 
       // Check if this is a PPTX file that needs importing
       if (file.file_type === 'pptx' && file.file_url) {
@@ -210,7 +287,12 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         try {
           const data: DeckData = JSON.parse(file.content);
           editor.setSlides(data.slides || createDefaultSlides());
-          editor.setTheme(data.theme || 'default');
+          
+          // Use theme from content if metadata doesn't have it
+          if (!file.metadata?.theme && data.theme) {
+            editor.setTheme(data.theme);
+            console.log('🎨 Applied theme from content:', data.theme);
+          }
         } catch {
           editor.setSlides(createDefaultSlides());
         }

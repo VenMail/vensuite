@@ -15,6 +15,9 @@ export interface DocumentMetadata {
     pageBorder?: boolean;
     pageShadow?: boolean;
   };
+  // Slide-specific metadata
+  theme?: string;
+  slide_count?: number;
 }
 
 export interface FileData {

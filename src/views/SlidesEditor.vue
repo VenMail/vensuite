@@ -16,6 +16,16 @@
       :current-layout="editor.currentLayout"
       :duration="presentationDuration"
       :word-count="totalWordCount"
+      :can-undo="editor.canUndo"
+      :can-redo="editor.canRedo"
+      :show-ruler="showRuler"
+      :show-thumbnails="showThumbnails"
+      :show-properties="showProperties"
+      :zoom="editor.zoom"
+      :spell-check-enabled="spellCheckEnabled"
+      :show-file-menu="true"
+      :show-presenter-mode="true"
+      :show-extended-info="true"
       @update:title="handleTitleChange"
       @manual-save="handleManualSave"
       @back="goBack"
@@ -100,6 +110,7 @@
               @clear-selection="handleClearSelection"
               @update-markdown-element="handleMarkdownElementUpdate"
               @clear-markdown-element="handleClearMarkdownElement"
+              @update-animation="handleAnimationUpdate"
             />
             
             <!-- Animation Panel (replaces properties panel when shown) -->
@@ -168,7 +179,7 @@
     </div>
 
     <!-- Enhanced Presenter Mode Overlay -->
-    <SlidesPresenterEnhanced
+    <SlidesPresenter
       :is-presenting="presenter.isPresenting"
       :current-slide-index="editor.currentSlideIndex"
       :total-slides="editor.slides.length"
@@ -229,11 +240,11 @@ import SlidesMarkdownEditor from '@/components/slides/SlidesMarkdownEditor.vue';
 import SlidesPreviewPane from '@/components/slides/SlidesPreviewPane.vue';
 import DynamicPropertiesPanel from '@/components/slides/DynamicPropertiesPanel.vue';
 import SlidesAnimationPane from '@/components/slides/SlidesAnimationPane.vue';
-import SlidesPresenterEnhanced from '@/components/slides/SlidesPresenterEnhanced.vue';
+import SlidesPresenter from '@/components/slides/SlidesPresenter.vue';
 import InfographicsDialog from '@/components/slides/InfographicsDialog.vue';
 
 // Composables
-import { useSlideStoreEnhanced } from '@/store/slidesEnhanced';
+import { useSlidesStore } from '@/store/slides';
 import { useAuthStore } from '@/store/auth';
 import { IWebsocketService, useWebSocket } from '@/lib/wsService';
 
@@ -258,6 +269,12 @@ const showInfographics = ref(false);
 const selectedElement = ref<HTMLElement | null>(null);
 const selectedElementType = ref('');
 const currentMarkdownElement = ref<MarkdownElement | null>(null);
+
+// Title bar state
+const showRuler = ref(false);
+const showThumbnails = ref(true);
+const showProperties = ref(false);
+const spellCheckEnabled = ref(true);
 
 // Animation State
 const showAnimationPanel = ref(false);
@@ -313,7 +330,7 @@ const canJoinRealtime = computed(() => {
 });
 
 // Initialize composables
-const slideStore = useSlideStoreEnhanced();
+const slideStore = useSlidesStore();
 const { editor, persistence, presenter } = slideStore;
 
 // Computed
@@ -344,11 +361,11 @@ watch(() => editor.mode, (newVal) => {
 
 // Event Handlers - Title Bar
 function handleTitleChange(value: string) {
-  persistence.setTitle(value);
+  slideStore.setTitle(value);
 }
 
 function handleManualSave() {
-  persistence.persistDeck().catch(() => toast.error('Failed to save'));
+  slideStore.saveDeck().catch(() => toast.error('Failed to save'));
 }
 
 function goBack() {
@@ -377,25 +394,21 @@ function handleRemoveMember(_payload: any) {
 
 // Event Handlers - Toolbar
 function handleThemeChange(theme: string) {
-  editor.setTheme(theme);
-  persistence.markDirty();
+  slideStore.setTheme(theme);
 }
 
 function handleLayoutChange(layout: string) {
-  editor.setLayout(layout);
-  persistence.markDirty();
+  slideStore.setLayout(layout);
 }
 
 function handleAddSlide() {
-  editor.addSlide();
-  persistence.markDirty();
+  slideStore.addSlide();
   nextTick(() => markdownEditorRef.value?.focus());
 }
 
 function handleAddSlideWithTemplate(template: SlideTemplate) {
-  editor.addSlide();
+  slideStore.addSlide();
   editor.applyTemplate(template);
-  persistence.markDirty();
   nextTick(() => markdownEditorRef.value?.focus());
 }
 
@@ -409,50 +422,45 @@ function handleExport(format: 'pdf' | 'pptx') {
 
 // Event Handlers - Thumbnail Sidebar
 function handleDuplicateSlide(index: number) {
-  editor.duplicateSlide(index);
-  persistence.markDirty();
+  slideStore.duplicateSlide(index);
 }
 
 function handleMoveSlide(index: number, direction: 'up' | 'down') {
-  editor.moveSlide(index, direction);
-  persistence.markDirty();
+  slideStore.moveSlide(index, direction);
 }
 
 function handleDeleteSlide(index: number) {
-  editor.deleteSlide(index);
-  persistence.markDirty();
+  slideStore.deleteSlide(index);
 }
 
 // Event Handlers - Editor
 function handleContentChange(content: string) {
-  editor.updateSlideContent(content);
-  persistence.markDirty();
+  slideStore.updateSlideContent(content);
 }
 
 function handleNotesChange(notes: string) {
-  editor.updateSlideNotes(notes);
-  persistence.markDirty();
+  slideStore.updateSlideNotes(notes);
 }
 
 function handleInsertMarkdown(_template: string) {
+  // Note: insertMarkdown doesn't trigger onSlideChange, so manually mark dirty
   persistence.markDirty();
 }
 
 // Event Handlers - Properties Panel
 function handleBackgroundChange(background: string) {
-  editor.setBackground(background);
-  persistence.markDirty();
+  slideStore.setBackground(background);
 }
 
 function handleTransitionChange(transition: string) {
   editor.setTransition(transition);
-  persistence.markDirty();
+  // Note: Now handled by onSlideChange callback in editor
 }
 
 
 function handleApplyTemplate(template: any) {
   editor.applyTemplate(template);
-  persistence.markDirty();
+  // Note: Now handled by onSlideChange callback in editor
 }
 
 // Event Handlers - Dynamic Properties
@@ -462,7 +470,7 @@ function handleElementStyleUpdate(property: string, value: string) {
   // Apply style to the selected element
   selectedElement.value.style[property as any] = value;
   
-  // Mark as dirty to trigger save
+  // Note: Direct DOM manipulation doesn't trigger onSlideChange, so manually mark dirty
   persistence.markDirty();
 }
 
@@ -481,6 +489,7 @@ function handleComponentScale(scale: number) {
     selectedElement.value.style.alignItems = 'center';
   }
   
+  // Note: Direct DOM manipulation doesn't trigger onSlideChange, so manually mark dirty
   persistence.markDirty();
 }
 
@@ -497,7 +506,24 @@ function handleClearSelection() {
 function handleAnimationUpdate(animation: ElementAnimation) {
   const elementId = selectedElement.value?.id || (currentMarkdownElement.value ? `markdown-${currentMarkdownElement.value.startLine}` : 'unknown');
   elementAnimations.value.set(elementId, animation);
+  // Note: Animation state doesn't trigger onSlideChange, so manually mark dirty
   persistence.markDirty();
+}
+
+// Element selection handler
+function handleElementSelection(element: HTMLElement, elementType: string) {
+  selectedElement.value = element;
+  selectedElementType.value = elementType;
+  currentMarkdownElement.value = null;
+  
+  // Add visual feedback for selected element
+  // Remove previous selection
+  document.querySelectorAll('.element-selected')?.forEach(el => {
+    el.classList.remove('element-selected');
+  });
+  
+  // Add selection to current element
+  element.classList.add('element-selected');
 }
 
 // Event Handlers - Markdown Cursor Tracking
@@ -534,6 +560,7 @@ function handleMarkdownElementUpdate(updatedElement: any) {
   
   const newContent = newLines.join('\n');
   editor.updateSlideContent(newContent);
+  // Note: updateSlideContent already triggers onSlideChange, but this is explicit
   persistence.markDirty();
   
   // Update the current element reference
@@ -553,6 +580,7 @@ function handlePrint() {
 function handleInsertInfographic(markdown: string) {
   const currentContent = editor.currentSlideContent;
   editor.updateSlideContent(currentContent + '\n\n' + markdown);
+  // Note: updateSlideContent already triggers onSlideChange, but this is explicit
   persistence.markDirty();
   toast.success('Infographic inserted');
 }
@@ -636,6 +664,7 @@ async function applyTemplateSlides(template: any) {
   
   // Go back to first slide
   editor.selectSlide(0);
+  // Note: selectSlide doesn't trigger onSlideChange, so manually mark dirty
   persistence.markDirty();
 }
 
@@ -802,6 +831,18 @@ onMounted(async () => {
 
   // Initialize WebSocket collaboration after document is loaded
   initializeWebSocketAndJoinDoc();
+  
+  // Set up element selection listener after DOM is ready
+  await nextTick();
+  setTimeout(() => {
+    const previewPane = document.querySelector('.slide-preview-content');
+    if (previewPane) {
+      previewPane.addEventListener('preview-element-selected', (e: any) => {
+        const event = e as CustomEvent;
+        handleElementSelection(event.detail.element, event.detail.type);
+      });
+    }
+  }, 100);
 });
 
 onUnmounted(() => {
