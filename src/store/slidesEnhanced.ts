@@ -5,9 +5,9 @@
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { useSlidesEditor, type SlidesEditorReturn } from '@/composables/useSlidesEditor';
-import { useSlidePersistence, type SlidePersistenceReturn } from '@/composables/useSlidePersistence';
-import { usePresenter, type PresenterReturn } from '@/composables/usePresenter';
+import { useSlidesEditor } from '@/composables/useSlidesEditor';
+import { useSlidePersistence } from '@/composables/useSlidePersistence';
+import { usePresenter } from '@/composables/usePresenter';
 import { useSlideExport, type ExportOptions } from '@/composables/useSlideExportPipeline';
 
 export const useSlideStoreEnhanced = defineStore('slidesEnhanced', () => {

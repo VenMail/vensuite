@@ -3,7 +3,7 @@
  * Provides intelligent font sizing and layout optimization for slide content
  */
 
-import { ref, computed, watch, nextTick, type Ref } from 'vue';
+import { ref, computed, nextTick, type Ref } from 'vue';
 import { debounce } from 'lodash-es';
 
 export interface FontSizingConstraints {
@@ -253,7 +253,7 @@ export function useSmartFontSizing(
   }
 
   // Generate font sizing recommendations
-  function generateRecommendations(content: string, container: HTMLElement): Record<string, string> {
+  function generateRecommendations(content: string, _container: HTMLElement): Record<string, string> {
     const recommendations: Record<string, string> = {};
     const profile = templateProfile.value;
     const layout = layoutConstraints.value;

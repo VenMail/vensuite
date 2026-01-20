@@ -42,7 +42,7 @@ class UniversJSXLSXExporter {
         console.warn("Workbook protection is not supported in this implementation");
       }
 
-      return await this.workbook.xlsx.writeBuffer() as Uint8Array;
+      return await this.workbook.xlsx.writeBuffer() as unknown as Uint8Array;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Export failed:', errorMessage);

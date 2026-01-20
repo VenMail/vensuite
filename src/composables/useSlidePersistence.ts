@@ -8,7 +8,6 @@ import { toast } from 'vue-sonner';
 import axios from 'axios';
 import { 
   createDefaultSlides, 
-  parseMarkdownToHtml,
   type SlidevSlide 
 } from '@/utils/slidevMarkdown';
 import type { SlidesEditorReturn } from './useSlidesEditor';
@@ -273,56 +272,6 @@ download: true
     }).join('\n\n');
 
     return frontmatter + slideContent;
-  }
-
-  function exportPdfClientSide() {
-    const htmlContent = editor.slides.value.map(slide => `
-      <div style="page-break-after: always; width: 1024px; height: 768px; padding: 40px; box-sizing: border-box; background: white;">
-        ${parseMarkdownToHtml(slide.content)}
-      </div>
-    `).join('\n');
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>${deckTitle.value}</title>
-          <style>
-            @page { size: 1024px 768px; margin: 0; }
-            body { margin: 0; font-family: 'Inter', sans-serif; }
-            h1 { font-size: 48px; margin-bottom: 16px; }
-            h2 { font-size: 36px; margin-bottom: 12px; }
-            p { font-size: 24px; line-height: 1.5; }
-            ul, ol { font-size: 24px; margin-left: 32px; }
-            code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
-            pre { background: #1f2937; color: #f3f4f6; padding: 16px; border-radius: 8px; }
-          </style>
-        </head>
-        <body>${htmlContent}</body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-    }
-  }
-
-  function downloadBlob(data: Blob, filename: string, mimeType: string) {
-    const blob = new Blob([data], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   }
 
   // Import functions

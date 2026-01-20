@@ -17,12 +17,12 @@ export function useSmartBlockEditing() {
   const selectedElement = ref<HTMLElement | null>(null);
 
   // Create debounced markdown update
-  const debouncedMarkdownUpdate = debounce((markdownContent: string, emit: Function) => {
-    emit('update-content', markdownContent);
+  const debouncedMarkdownUpdate = debounce((markdownContent: string, emitFn: Function) => {
+    emitFn('update-content', markdownContent);
   }, 150);
 
   // Double-click handler
-  function handleDoubleClick(event: MouseEvent, previewRef: HTMLElement | null, emit: Function) {
+  function handleDoubleClick(event: MouseEvent, previewRef: HTMLElement | null, _emit: Function) {
     event.preventDefault();
     event.stopPropagation();
     
