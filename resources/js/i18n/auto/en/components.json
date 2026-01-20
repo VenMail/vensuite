@@ -98,6 +98,29 @@
       "heading": {
         "add_a_note_optional": "Add a note (optional)"
       }
+    },
+    "SlidevMarkdownEditor": {
+      "button": {
+        "add_slide": "Add Slide",
+        "insert_heading": "Insert Heading",
+        "insert_list": "Insert List",
+        "insert_code": "Insert Code",
+        "insert_image": "Insert Image",
+        "move_up": "Move Up",
+        "move_down": "Move Down",
+        "duplicate": "Duplicate",
+        "delete": "Delete"
+      },
+      "text": {
+        "markdown": "Markdown",
+        "presenter_notes": "Presenter Notes",
+        "preview": "Preview",
+        "slide_count": "Slide {current} of {total}"
+      },
+      "placeholder": {
+        "write_markdown": "Write your markdown here...",
+        "add_presenter_notes": "Add presenter notes..."
+      }
     }
   },
   "Editor": {

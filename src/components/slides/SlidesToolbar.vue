@@ -1,329 +1,133 @@
 <template>
-  <div class="slides-toolbar bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-800 dark:via-gray-850 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm" :class="{ 'opacity-90': !isExpanded }">
-    <div class="flex flex-wrap items-center gap-3 px-5 py-3">
-      <button
-        class="slides-toolbar__toggle bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white rounded-full p-2 shadow-md hover:shadow-lg transition-transform"
-        :class="{ 'rotate-180': !isExpanded }"
-        :title="isExpanded ? 'Collapse toolbar' : 'Expand toolbar'"
-        @click="toggleExpanded"
-      >
-        <ChevronDown class="h-4 w-4" />
-      </button>
+  <div class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <!-- Left: Mode Toggle & Slide Navigation -->
+    <div class="flex items-center gap-4">
+      <!-- Mode Toggle -->
+      <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <button
+          v-for="m in modes"
+          :key="m.value"
+          class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
+          :class="{
+            'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100': mode === m.value,
+            'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100': mode !== m.value
+          }"
+          @click="emit('update:mode', m.value as 'edit' | 'preview')"
+        >
+          <component :is="m.icon" class="h-4 w-4 inline-block mr-1.5" />
+          {{ m.label }}
+        </button>
+      </div>
 
-      <div class="h-8 w-px bg-gray-200 dark:bg-gray-700" />
-
+      <!-- Slide Navigation -->
       <div class="flex items-center gap-2">
         <button
-          :class="buttonClass"
-          title="New slide"
-          @click="emitAdd()"
+          class="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
+          :disabled="currentSlideIndex <= 0"
+          @click="emit('previous-slide')"
         >
-          <Plus class="h-4 w-4" />
+          <ChevronLeft class="h-5 w-5 text-gray-600 dark:text-gray-400" />
         </button>
-        <DropdownMenu v-if="templates.length > 1">
-          <DropdownMenuTrigger as-child>
-            <button
-              :class="buttonClass"
-              title="Choose template"
-            >
-              <ChevronDown class="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" class="min-w-[220px]">
-            <DropdownMenuItem
-              v-for="template in templates"
-              :key="template.slug"
-              @click="selectTemplate(template.slug)"
-            >
-              <Check class="mr-2 h-4 w-4" :class="template.slug === selectedTemplateSlug ? 'opacity-100' : 'opacity-0'" />
-              <div class="flex flex-col">
-                <span class="text-sm font-medium">{{ template.title }}</span>
-                <span v-if="template.description" class="text-xs text-gray-500 dark:text-gray-400">{{ template.description }}</span>
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[60px] text-center">
+          {{ currentSlideIndex + 1 }} / {{ totalSlides }}
+        </span>
         <button
-          :class="buttonClass"
-          :disabled="!activePageId"
-          title="Duplicate slide"
-          @click="emitDuplicate"
+          class="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
+          :disabled="currentSlideIndex >= totalSlides - 1"
+          @click="emit('next-slide')"
         >
-          <Copy class="h-4 w-4" />
+          <ChevronRight class="h-5 w-5 text-gray-600 dark:text-gray-400" />
         </button>
-        <button
-          :class="[buttonClass, 'text-red-500 hover:text-red-600']"
-          :disabled="pages.length <= 1 || !activePageId"
-          title="Delete slide"
-          @click="emitDelete"
-        >
-          <Trash2 class="h-4 w-4" />
-        </button>
-      </div>
-
-      <div class="h-8 w-px bg-gray-200 dark:bg-gray-700" />
-
-      <div class="flex items-center gap-2">
-        <button
-          :class="buttonClass"
-          :disabled="activeIndex <= 0"
-          title="Move up"
-          @click="emitMove('up')"
-        >
-          <ArrowUp class="h-4 w-4" />
-        </button>
-        <button
-          :class="buttonClass"
-          :disabled="activeIndex === pages.length - 1 || activeIndex === -1"
-          title="Move down"
-          @click="emitMove('down')"
-        >
-          <ArrowDown class="h-4 w-4" />
-        </button>
-        <div class="text-sm font-medium text-gray-600 dark:text-gray-300" v-if="activeIndex !== -1">
-          Slide {{ activeIndex + 1 }} of {{ pages.length }}
-        </div>
-      </div>
-
-      <div class="h-8 w-px bg-gray-200 dark:bg-gray-700" />
-
-      <!-- Fonts: only when text is selected (appears before grid) -->
-      <div class="flex items-center gap-2" v-if="isExpanded && selection?.hasText">
-        <label class="text-xs text-gray-600 dark:text-gray-300">{{$t('Commons.label.font')}}</label>
-        <select :class="numberInputClass" :disabled="disabled" :value="`id:${selection?.fontFamily ?? 2}`" @change="onFontChange">
-          <option value="id:1">Hand (Virgil)</option>
-          <option value="id:2">Sans (Inter)</option>
-          <option value="id:3">Mono (Monospace)</option>
-          <option v-if="availableFonts?.length" disabled>──────────</option>
-          <option v-for="name in availableFonts" :key="name" :value="`name:${name}`">{{ name }}</option>
-        </select>
-      </div>
-
-      <div class="flex items-center gap-2" v-if="isExpanded">
-        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-          <span>{{$t('Commons.text.grid')}}</span>
-          <input
-            :class="numberInputClass"
-            type="number"
-            min="5"
-            max="200"
-            step="1"
-            :value="localGridSize"
-            @input="onGridInput"
-          />
-        </label>
-        <label :class="switchLabelClass">
-          <input class="h-4 w-4 accent-purple-600" type="checkbox" :checked="snapSettings.showGrid" @change="toggleSnap('showGrid', $event)" />
-          <span>{{$t('Commons.text.show_grid')}}</span>
-        </label>
-        <label :class="switchLabelClass">
-          <input class="h-4 w-4 accent-purple-600" type="checkbox" :checked="snapSettings.showGuides" @change="toggleSnap('showGuides', $event)" />
-          <span>{{$t('Commons.text.guides')}}</span>
-        </label>
-        <label :class="switchLabelClass">
-          <input class="h-4 w-4 accent-purple-600" type="checkbox" :checked="snapSettings.smartSnapping" @change="toggleSnap('smartSnapping', $event)" />
-          <span>{{$t('Commons.text.smart_snap')}}</span>
-        </label>
-      </div>
-
-      <div class="h-8 w-px bg-gray-200 dark:bg-gray-700" v-if="isExpanded" />
-
-      <div class="flex items-center gap-2" v-if="isExpanded">
-        <button :class="buttonClass" title="Import PowerPoint" @click="emitImportPptx">
-          <FileInput class="h-4 w-4" />
-        </button>
-        <button :class="buttonClass" title="Import HTML" @click="emitImportHtml">
-          <FileUp class="h-4 w-4" />
-        </button>
-        <div class="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-        <button :class="buttonClass" title="Export as PDF" :disabled="isSaving" @click="emitExport('pdf')">
-          <FileDown class="h-4 w-4" />
-        </button>
-        <button :class="buttonClass" title="Export as PPTX" :disabled="isSaving" @click="emitExport('pptx')">
-          <Presentation class="h-4 w-4" />
-        </button>
-        <button :class="buttonClass" title="Export thumbnails" :disabled="isSaving" @click="emitExport('images')">
-          <ImageDown class="h-4 w-4" />
-        </button>
-        <div class="h-6 w-px bg-gray-200 dark:bg-gray-700" />
-        <!-- Charts menu -->
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <button :class="buttonClass" :disabled="disabled" title="Insert chart">
-              <Sparkles class="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" class="min-w-[200px]">
-            <DropdownMenuItem @click="emitInsertChart('bar')">{{$t('Commons.text.bar_chart')}}</DropdownMenuItem>
-            <DropdownMenuItem @click="emitInsertChart('line')">{{$t('Commons.text.line_chart')}}</DropdownMenuItem>
-            <DropdownMenuItem @click="emitInsertChart('pie')">{{$t('Commons.text.pie_chart')}}</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </div>
 
-    <div v-if="isExpanded" class="w-full border-t border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 px-5 py-2">
-      <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-        <span v-if="isSaving" class="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-          <Loader2 class="h-3 w-3 animate-spin" />
-          {{$t('components.slides.commons.text.saving_deck')}}
-        </span>
-        <span v-else class="flex items-center gap-1">
-          <Sparkles class="h-3 w-3 text-purple-500" />
-          {{$t('Slides.SlidesToolbar.text.use_smart_snapping_to')}}
-        </span>
-      </div>
+    <!-- Center: Theme & Layout -->
+    <div class="flex items-center gap-3">
+      <select
+        :value="currentTheme"
+        class="text-sm px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
+        @change="emit('update:theme', ($event.target as HTMLSelectElement).value)"
+      >
+        <option v-for="theme in themes" :key="theme.value" :value="theme.value">
+          {{ theme.label }}
+        </option>
+      </select>
+
+      <select
+        :value="currentLayout"
+        class="text-sm px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
+        @change="emit('update:layout', ($event.target as HTMLSelectElement).value)"
+      >
+        <option v-for="layout in layouts" :key="layout.value" :value="layout.value">
+          {{ layout.label }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Right: Actions -->
+    <div class="flex items-center gap-2">
+      <Button variant="outline" size="sm" @click="emit('add-slide')">
+        <Plus class="h-4 w-4 mr-1" />
+        Add Slide
+      </Button>
+      
+      <!-- Infographics Button -->
+      <Button variant="outline" size="sm" @click="emit('open-infographics')">
+        <BarChart3 class="h-4 w-4 mr-1" />
+        Infographics
+      </Button>
+      
+      <Button variant="outline" size="sm" @click="emit('export', 'pdf')">
+        <Download class="h-4 w-4 mr-1" />
+        PDF
+      </Button>
+      <Button variant="outline" size="sm" @click="emit('export', 'pptx')">
+        <FileText class="h-4 w-4 mr-1" />
+        PPTX
+      </Button>
+      <Button variant="default" size="sm" @click="emit('present')">
+        <Play class="h-4 w-4 mr-1" />
+        Present
+      </Button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import {
-  ArrowDown,
-  ArrowUp,
-  Check,
-  ChevronDown,
-  Copy,
-  FileDown,
-  FileInput,
-  FileUp,
-  ImageDown,
-  Loader2,
-  Plus,
-  Presentation,
-  Sparkles,
-  Trash2,
+import { 
+  ChevronLeft, ChevronRight, Plus, Download, FileText, Play,
+  Edit, Eye, BarChart3
 } from 'lucide-vue-next';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import type { SlidePage, SlideTemplateSummary, SnapSettings } from '@/types/slides';
+import { Button } from '@/components/ui/button';
+import { SLIDEV_LAYOUTS, SLIDEV_THEMES } from '@/utils/slidevMarkdown';
 
-const props = defineProps<{
-  pages: SlidePage[];
-  activePageId: string | null;
-  snapSettings: SnapSettings;
-  isSaving?: boolean;
-  disabled?: boolean;
-  templates: SlideTemplateSummary[];
-  selectedTemplateSlug: string;
-  selection?: { hasText: boolean; fontFamily?: number };
-  availableFonts?: string[];
-}>();
+interface Props {
+  mode: 'edit' | 'preview';
+  currentSlideIndex: number;
+  totalSlides: number;
+  currentTheme: string;
+  currentLayout: string;
+}
+
+defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'add-page', templateSlug?: string): void;
-  (e: 'duplicate-page', pageId?: string): void;
-  (e: 'delete-page', pageId?: string): void;
-  (e: 'move-page', direction: 'up' | 'down', pageId?: string): void;
-  (e: 'select-page', pageId: string): void;
-  (e: 'update-snap-settings', settings: Partial<SnapSettings>): void;
-  (e: 'import-powerpoint'): void;
-  (e: 'import-html'): void;
-  (e: 'export', format: 'pdf' | 'pptx' | 'images'): void;
-  (e: 'change-template', slug: string): void;
-  (e: 'change-font', fontFamily: number): void;
-  (e: 'change-font-advanced', name: string): void;
-  (e: 'insert-chart', type: 'bar' | 'line' | 'pie'): void;
+  (e: 'update:mode', value: 'edit' | 'preview'): void;
+  (e: 'update:theme', value: string): void;
+  (e: 'update:layout', value: string): void;
+  (e: 'previous-slide'): void;
+  (e: 'next-slide'): void;
+  (e: 'add-slide'): void;
+  (e: 'open-infographics'): void;
+  (e: 'export', format: 'pdf' | 'pptx'): void;
+  (e: 'present'): void;
 }>();
 
-const isExpanded = ref(true);
-const localGridSize = ref(props.snapSettings.gridSize ?? 20);
+const modes = [
+  { value: 'edit', label: 'Edit', icon: Edit },
+  { value: 'preview', label: 'Preview', icon: Eye }
+];
 
-const buttonClass = 'inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 hover:text-purple-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-purple-300';
-const switchLabelClass = 'inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
-const numberInputClass = 'w-20 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 focus:border-purple-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-purple-400';
-
-watch(
-  () => props.snapSettings.gridSize,
-  (value) => {
-    if (typeof value === 'number' && value !== localGridSize.value) {
-      localGridSize.value = value;
-    }
-  }
-);
-
-const activeIndex = computed(() => {
-  if (!props.activePageId) return -1;
-  return props.pages.findIndex((page) => page.id === props.activePageId);
-});
-
-function toggleExpanded() {
-  isExpanded.value = !isExpanded.value;
-}
-
-function emitAdd(templateSlug?: string) {
-  if (props.disabled) return;
-  const slug = templateSlug || props.selectedTemplateSlug;
-  emit('add-page', slug);
-}
-
-function selectTemplate(slug: string) {
-  emit('change-template', slug);
-}
-
-function emitDuplicate() {
-  if (props.disabled) return;
-  emit('duplicate-page', props.activePageId ?? undefined);
-}
-
-function emitDelete() {
-  if (props.disabled) return;
-  emit('delete-page', props.activePageId ?? undefined);
-}
-
-function emitMove(direction: 'up' | 'down') {
-  if (props.disabled) return;
-  emit('move-page', direction, props.activePageId ?? undefined);
-}
-
-function emitImportPptx() {
-  emit('import-powerpoint');
-}
-
-function emitImportHtml() {
-  emit('import-html');
-}
-
-function emitExport(format: 'pdf' | 'pptx' | 'images') {
-  emit('export', format);
-}
-
-function toggleSnap(key: keyof SnapSettings, event: Event) {
-  const target = event.target as HTMLInputElement;
-  emit('update-snap-settings', { [key]: target.checked });
-}
-
-function onGridInput(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const value = Number(target.value);
-  if (Number.isFinite(value)) {
-    localGridSize.value = value;
-    emit('update-snap-settings', { gridSize: value });
-  }
-}
-
-function onFontChange(event: Event) {
-  const target = event.target as HTMLSelectElement;
-  const value = String(target.value || '');
-  if (value.startsWith('id:')) {
-    const id = Number(value.slice(3));
-    if (Number.isFinite(id)) emit('change-font', id);
-    return;
-  }
-  if (value.startsWith('name:')) {
-    const name = value.slice(5);
-    if (name) emit('change-font-advanced', name);
-  }
-}
-
-function emitInsertChart(type: 'bar' | 'line' | 'pie') {
-  emit('insert-chart', type);
-}
-
-// advanced font handler is merged into onFontChange via 'name:' values
+const layouts = SLIDEV_LAYOUTS;
+const themes = SLIDEV_THEMES;
 </script>

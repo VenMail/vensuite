@@ -266,7 +266,27 @@
       }
     },
     "SlidesEditor": {
+      "button": {
+        "add_slide": "Add Slide",
+        "duplicate": "Duplicate",
+        "delete": "Delete",
+        "create_first_slide": "Create First Slide",
+        "export_pdf": "Export PDF",
+        "export_pptx": "Export PPTX",
+        "copy_markdown": "Copy Markdown",
+        "import_pptx": "Import PPTX",
+        "present": "Present"
+      },
+      "label": {
+        "theme": "Theme",
+        "aspect_ratio": "Aspect Ratio"
+      },
       "text": {
+        "slides": "Slides",
+        "no_slide_selected": "No slide selected",
+        "presentation_settings": "Presentation Settings",
+        "export": "Export",
+        "import": "Import",
         "select_or_add_a": "Select or add a slide to begin."
       }
     }

@@ -98,6 +98,29 @@
       "heading": {
         "add_a_note_optional": "Ajouter une note (facultatif)"
       }
+    },
+    "SlidevMarkdownEditor": {
+      "button": {
+        "add_slide": "Ajouter une diapositive",
+        "insert_heading": "Insérer un titre",
+        "insert_list": "Insérer une liste",
+        "insert_code": "Insérer du code",
+        "insert_image": "Insérer une image",
+        "move_up": "Monter",
+        "move_down": "Descendre",
+        "duplicate": "Dupliquer",
+        "delete": "Supprimer"
+      },
+      "text": {
+        "markdown": "Markdown",
+        "presenter_notes": "Notes du présentateur",
+        "preview": "Aperçu",
+        "slide_count": "Diapositive {current} sur {total}"
+      },
+      "placeholder": {
+        "write_markdown": "Écrivez votre markdown ici...",
+        "add_presenter_notes": "Ajoutez des notes du présentateur..."
+      }
     }
   },
   "Editor": {

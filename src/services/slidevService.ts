@@ -1,17 +1,26 @@
 // Slidev Export Service
 import { toast } from '@/composables/useToast';
+import type { SlidevSlide } from '@/utils/slidevMarkdown';
 
-export interface SlidevSlide {
-  id: string;
-  content: string;
-  notes: string;
-}
+export type { SlidevSlide };
 
 export interface SlidevExportOptions {
   format: 'pdf' | 'pptx' | 'png';
   theme?: string;
   title?: string;
   author?: string;
+}
+
+export interface SlidevPresentationConfig {
+  theme: string;
+  title: string;
+  author?: string;
+  download?: boolean;
+  highlighter?: string;
+  lineNumbers?: boolean;
+  drawings?: {
+    persist?: boolean;
+  };
 }
 
 export class SlidevService {
@@ -27,30 +36,127 @@ export class SlidevService {
   /**
    * Convert slides to Slidev markdown format
    */
-  private convertSlidesToMarkdown(slides: SlidevSlide[], options: SlidevExportOptions): string {
+  convertSlidesToMarkdown(slides: SlidevSlide[], options: SlidevExportOptions): string {
     const frontmatter = [
       '---',
       `theme: ${options.theme || 'default'}`,
       `title: "${options.title || 'Presentation'}"`,
       options.author ? `author: "${options.author}"` : '',
       'download: true',
-      'export-filename: presentation',
+      'highlighter: shiki',
+      'drawings:',
+      '  persist: false',
       '---'
     ].filter(Boolean).join('\n');
 
-    const slideContent = slides.map((slide) => {
-      const slideNumber = slides.indexOf(slide) + 1;
-      const content = slide.content || '';
-      const notes = slide.notes ? `\n\n<!--\nPresenter Notes:\n${slide.notes}\n-->` : '';
+    const slideContent = slides.map((slide, index) => {
+      let content = '';
       
-      return [
-        `<!-- Slide ${slideNumber} -->`,
-        content,
-        notes
-      ].filter(Boolean).join('\n');
+      // Add frontmatter for slides with layout or other properties
+      if (slide.frontmatter && Object.keys(slide.frontmatter).length > 0) {
+        content += '---\n';
+        Object.entries(slide.frontmatter).forEach(([key, value]) => {
+          if (typeof value === 'string') {
+            content += `${key}: "${value}"\n`;
+          } else {
+            content += `${key}: ${value}\n`;
+          }
+        });
+        content += '---\n\n';
+      } else if (index > 0) {
+        // Just add separator for subsequent slides without frontmatter
+        content = '';
+      }
+      
+      content += slide.content || '';
+      
+      // Add presenter notes as HTML comments
+      if (slide.notes) {
+        content += `\n\n<!--\n${slide.notes}\n-->`;
+      }
+      
+      return content;
     }).join('\n\n---\n\n');
 
     return frontmatter + '\n\n' + slideContent;
+  }
+
+  /**
+   * Parse Slidev markdown back to slides array
+   */
+  parseMarkdownToSlides(markdown: string): { slides: SlidevSlide[]; config: Partial<SlidevPresentationConfig> } {
+    const slides: SlidevSlide[] = [];
+    let config: Partial<SlidevPresentationConfig> = {};
+
+    // Split by slide separator
+    const parts = markdown.split(/\n---\n/);
+
+    parts.forEach((part, index) => {
+      const trimmed = part.trim();
+      if (!trimmed) return;
+
+      let content = trimmed;
+      let frontmatter: Record<string, any> | undefined;
+      let notes = '';
+
+      // Check for frontmatter at start
+      if (trimmed.startsWith('---')) {
+        const endIndex = trimmed.indexOf('---', 3);
+        if (endIndex > 0) {
+          const yamlContent = trimmed.substring(3, endIndex).trim();
+          frontmatter = this.parseYaml(yamlContent);
+          content = trimmed.substring(endIndex + 3).trim();
+
+          // First frontmatter is the headmatter/config
+          if (index === 0) {
+            config = frontmatter as Partial<SlidevPresentationConfig>;
+          }
+        }
+      }
+
+      // Extract notes from HTML comments at end
+      const notesMatch = content.match(/<!--\s*([\s\S]*?)\s*-->$/);
+      if (notesMatch) {
+        notes = notesMatch[1].trim();
+        content = content.substring(0, content.lastIndexOf('<!--')).trim();
+      }
+
+      slides.push({
+        id: `slide-${index + 1}-${Date.now()}`,
+        content,
+        notes,
+        frontmatter: index > 0 ? frontmatter : undefined
+      });
+    });
+
+    return { slides, config };
+  }
+
+  private parseYaml(yaml: string): Record<string, any> {
+    const result: Record<string, any> = {};
+    const lines = yaml.split('\n');
+
+    for (const line of lines) {
+      const colonIndex = line.indexOf(':');
+      if (colonIndex > 0) {
+        const key = line.substring(0, colonIndex).trim();
+        let value: any = line.substring(colonIndex + 1).trim();
+
+        if (value === 'true') value = true;
+        else if (value === 'false') value = false;
+        else if (/^\d+$/.test(value)) value = parseInt(value, 10);
+        else if (/^\d+\.\d+$/.test(value)) value = parseFloat(value);
+        else if (value.startsWith('"') && value.endsWith('"')) {
+          value = value.slice(1, -1);
+        } else if (value.startsWith("'") && value.endsWith("'")) {
+          value = value.slice(1, -1);
+        }
+
+        result[key] = value;
+      }
+    }
+
+    return result;
   }
 
   /**

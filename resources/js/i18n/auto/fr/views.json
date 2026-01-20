@@ -266,7 +266,27 @@
       }
     },
     "SlidesEditor": {
+      "button": {
+        "add_slide": "Ajouter une diapositive",
+        "duplicate": "Dupliquer",
+        "delete": "Supprimer",
+        "create_first_slide": "Créer la première diapositive",
+        "export_pdf": "Exporter PDF",
+        "export_pptx": "Exporter PPTX",
+        "copy_markdown": "Copier Markdown",
+        "import_pptx": "Importer PPTX",
+        "present": "Présenter"
+      },
+      "label": {
+        "theme": "Thème",
+        "aspect_ratio": "Ratio d'aspect"
+      },
       "text": {
+        "slides": "Diapositives",
+        "no_slide_selected": "Aucune diapositive sélectionnée",
+        "presentation_settings": "Paramètres de présentation",
+        "export": "Exporter",
+        "import": "Importer",
         "select_or_add_a": "Sélectionnez ou ajoutez une diapositive pour commencer."
       }
     }

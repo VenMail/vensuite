@@ -266,7 +266,27 @@
       }
     },
     "SlidesEditor": {
+      "button": {
+        "add_slide": "添加幻灯片",
+        "duplicate": "复制",
+        "delete": "删除",
+        "create_first_slide": "创建第一张幻灯片",
+        "export_pdf": "导出 PDF",
+        "export_pptx": "导出 PPTX",
+        "copy_markdown": "复制 Markdown",
+        "import_pptx": "导入 PPTX",
+        "present": "演示"
+      },
+      "label": {
+        "theme": "主题",
+        "aspect_ratio": "宽高比"
+      },
       "text": {
+        "slides": "幻灯片",
+        "no_slide_selected": "未选择幻灯片",
+        "presentation_settings": "演示设置",
+        "export": "导出",
+        "import": "导入",
         "select_or_add_a": "选择或添加幻灯片以开始。"
       }
     }

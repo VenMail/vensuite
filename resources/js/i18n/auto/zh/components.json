@@ -98,6 +98,29 @@
       "heading": {
         "add_a_note_optional": "添加备注（可选）"
       }
+    },
+    "SlidevMarkdownEditor": {
+      "button": {
+        "add_slide": "添加幻灯片",
+        "insert_heading": "插入标题",
+        "insert_list": "插入列表",
+        "insert_code": "插入代码",
+        "insert_image": "插入图片",
+        "move_up": "上移",
+        "move_down": "下移",
+        "duplicate": "复制",
+        "delete": "删除"
+      },
+      "text": {
+        "markdown": "Markdown",
+        "presenter_notes": "演讲者备注",
+        "preview": "预览",
+        "slide_count": "第 {current} 张，共 {total} 张"
+      },
+      "placeholder": {
+        "write_markdown": "在此编写您的 Markdown...",
+        "add_presenter_notes": "添加演讲者备注..."
+      }
     }
   },
   "Editor": {
