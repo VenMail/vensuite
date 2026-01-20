@@ -64,6 +64,7 @@
               @update:content="handleContentChange"
               @update:notes="handleNotesChange"
               @insert-markdown="handleInsertMarkdown"
+              @cursor-change="handleCursorChange"
             />
 
             <!-- Live Preview -->
@@ -74,8 +75,6 @@
               :theme-background="editor.currentThemeObj?.colors.background"
               :theme-text="editor.currentThemeObj?.colors.text"
               :theme-style="editor.themeStyleObject as Record<string, string>"
-              @update-content="handlePreviewContentUpdate"
-              @select-element="handleElementSelect"
             />
           </div>
         </template>
@@ -92,26 +91,46 @@
             :base-width="960"
             :base-height="720"
             fullscreen
-            @update-content="handlePreviewContentUpdate"
-            @select-element="handleElementSelect"
           />
         </template>
       </div>
 
-      <!-- Right Panel: Properties -->
-      <SlidesPropertiesPanel
+      <!-- Right Panel: Dynamic Properties -->
+      <DynamicPropertiesPanel
         :layout="editor.currentLayout"
         :background="editor.slideBackground"
         :transition="editor.slideTransition"
-        :slide-class="editor.slideClass"
-        :theme-colors="editor.currentThemeObj?.colors"
-        :theme-description="editor.currentThemeObj?.description"
+        :selected-element="null"
+        :element-type="''"
+        :markdown-element="currentMarkdownElement"
         @update:layout="handleLayoutChange"
         @update:background="handleBackgroundChange"
         @update:transition="handleTransitionChange"
-        @update:class="handleClassChange"
         @apply-template="handleApplyTemplate"
+        @update-markdown-element="handleMarkdownElementUpdate"
+        @clear-markdown-element="handleClearMarkdownElement"
+        @apply-smart-sizing="handleApplySmartSizing"
       />
+    </div>
+
+    <!-- Collaborator List -->
+    <div v-if="collaboratorList.length" class="px-6 py-1 flex flex-wrap gap-2 items-center justify-end bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 text-xs">
+      <span class="text-gray-500 dark:text-gray-400">Also editing:</span>
+      <button
+        v-for="c in collaboratorList"
+        :key="c.id"
+        type="button"
+        class="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 px-2 py-0.5 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+        :title="`${c.name} is editing`"
+      >
+        <span
+          class="w-4 h-4 rounded-full text-[10px] flex items-center justify-center text-white"
+          :style="{ backgroundColor: colorForUser(c.id) }"
+        >
+          {{ (c.name || '?').charAt(0).toUpperCase() }}
+        </span>
+        <span class="max-w-[120px] truncate text-gray-700 dark:text-gray-200" :title="c.name">{{ c.name }}</span>
+      </button>
     </div>
 
     <!-- Presenter Mode Overlay -->
@@ -172,19 +191,20 @@ import SlidesToolbar from '@/components/slides/SlidesToolbar.vue';
 import SlidesThumbnailSidebar from '@/components/slides/SlidesThumbnailSidebar.vue';
 import SlidesMarkdownEditor from '@/components/slides/SlidesMarkdownEditor.vue';
 import SlidesPreviewPane from '@/components/slides/SlidesPreviewPane.vue';
-import SlidesPropertiesPanel from '@/components/slides/SlidesPropertiesPanel.vue';
+import DynamicPropertiesPanel from '@/components/slides/DynamicPropertiesPanel.vue';
 import SlidesPresenterOverlay from '@/components/slides/SlidesPresenterOverlay.vue';
 import InfographicsDialog from '@/components/slides/InfographicsDialog.vue';
 
 // Composables
 import { useSlideStoreEnhanced } from '@/store/slidesEnhanced';
+import { useAuthStore } from '@/store/auth';
 
 // Types
-import type { SlideTemplate } from '@/utils/slidevMarkdown';
-import { getMarkdownFromPath } from '@/utils/slidevMarkdown';
+import type { MarkdownElement } from '@/utils/markdownElementDetector';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 
 // Refs
 const markdownEditorRef = ref<InstanceType<typeof SlidesMarkdownEditor> | null>(null);
@@ -196,6 +216,44 @@ defineExpose({ pptxInput, htmlInput });
 
 // UI State
 const showInfographics = ref(false);
+const currentMarkdownElement = ref<MarkdownElement | null>(null);
+
+// Collaboration state
+const collaborators = ref<Record<string, { name: string; ts: number }>>({});
+const collaboratorList = computed(() =>
+  Object.entries(collaborators.value)
+    .filter(([id]) => id !== userId.value)
+    .map(([id, info]) => ({ id, name: info.name, ts: info.ts })),
+);
+
+// WebSocket collaboration state
+const { initializeWebSocket } = useWebSocket();
+const wsService = ref<IWebsocketService | null>(null);
+const randomUserToken = Math.random().toString(36).substr(2, 9);
+const userId = ref(
+  authStore.isAuthenticated && authStore.userId
+    ? authStore.userId
+    : `guest-${randomUserToken}`,
+);
+const userName = ref(
+  authStore.isAuthenticated && (authStore as any).user?.name
+    ? (authStore as any).user.name
+    : `Guest ${randomUserToken.substr(0, 3)}`,
+);
+const isJoined = ref(false);
+const changesPending = ref(false);
+const isJustLoaded = ref(false);
+
+const SOCKET_URI = import.meta.env.VITE_SOCKET_URI || 'ws://localhost:6001';
+
+// Privacy types that allow real-time collaboration
+const guestAccessiblePrivacyTypes = new Set<number>([1, 2, 3, 4]);
+const canJoinRealtime = computed(() => {
+  const deckId = route.params.deckId as string;
+  if (!deckId || deckId === 'new') return false;
+  if (authStore.isAuthenticated) return true;
+  return guestAccessiblePrivacyTypes.has(persistence.privacyType.valueOf());
+});
 
 // Initialize composables
 const slideStore = useSlideStoreEnhanced();
@@ -297,29 +355,6 @@ function handleInsertMarkdown(_template: string) {
   persistence.markDirty();
 }
 
-// Event Handlers - Preview Pane
-function handlePreviewContentUpdate(markdownContent: string) {
-  // Update the markdown editor with the new content from inline editing
-  editor.updateSlideContent(markdownContent);
-  persistence.markDirty();
-  
-  // Don't show toast for real-time updates to avoid spam
-  // Only show toast for explicit save actions
-}
-
-function handleElementSelect(path: { section?: string; elementType?: string; index?: number }) {
-  // Map the selected element back to markdown position
-  const currentContent = editor.currentSlideContent;
-  const markdownLocation = getMarkdownFromPath(currentContent, path);
-  
-  if (markdownLocation && markdownEditorRef.value?.editorRef) {
-    // Highlight the corresponding text in the markdown editor
-    const textarea = markdownEditorRef.value.editorRef;
-    textarea.focus();
-    textarea.setSelectionRange(markdownLocation.start, markdownLocation.end);
-    textarea.scrollTop = Math.max(0, (markdownLocation.start / currentContent.length) * textarea.scrollHeight - 100);
-  }
-}
 
 // Event Handlers - Properties Panel
 function handleBackgroundChange(background: string) {
@@ -332,13 +367,57 @@ function handleTransitionChange(transition: string) {
   persistence.markDirty();
 }
 
-function handleClassChange(className: string) {
-  editor.setSlideClass(className);
-  persistence.markDirty();
-}
 
 function handleApplyTemplate(template: SlideTemplate) {
   editor.applyTemplate(template);
+  persistence.markDirty();
+}
+
+// Event Handlers - Dynamic Properties
+
+// Event Handlers - Markdown Cursor Tracking
+function handleCursorChange(element: MarkdownElement | null) {
+  // Update the current markdown element
+  currentMarkdownElement.value = element;
+  
+  // Log for debugging
+  if (element) {
+    console.log('Cursor detected element:', element.type, 'at line', element.startLine);
+  }
+}
+
+function handleMarkdownElementUpdate(updatedElement: any) {
+  if (!currentMarkdownElement.value) return;
+  
+  const lines = editor.currentSlideContent.split('\n');
+  
+  // Replace the lines that contain the element
+  const startLine = currentMarkdownElement.value.startLine;
+  const endLine = currentMarkdownElement.value.endLine;
+  
+  // Remove old lines and insert new content
+  const newLines = [
+    ...lines.slice(0, startLine),
+    ...updatedElement.content.split('\n'),
+    ...lines.slice(endLine + 1)
+  ];
+  
+  const newContent = newLines.join('\n');
+  editor.updateSlideContent(newContent);
+  persistence.markDirty();
+  
+  // Update the current element reference
+  currentMarkdownElement.value = updatedElement;
+}
+
+function handleClearMarkdownElement() {
+  currentMarkdownElement.value = null;
+}
+
+function handleApplySmartSizing(sizes: Record<string, string>) {
+  // Apply smart font sizing recommendations to the slide
+  console.log('Applying smart sizing:', sizes);
+  // This would typically update the slide's CSS or markdown
   persistence.markDirty();
 }
 
@@ -369,29 +448,197 @@ async function handleHtmlFile(event: Event) {
   input.value = '';
 }
 
+// Initialize WebSocket and set up message handler
+function initializeWebSocketAndJoinDoc() {
+  if (!canJoinRealtime.value) return;
+  const deckId = route.params.deckId as string;
+  if (deckId && deckId !== 'new' && !wsService.value) {
+    wsService.value = initializeWebSocket(`${SOCKET_URI}?sheetId=${deckId}&userName=${userName.value}&userId=${userId.value}`);
+    
+    // Set up message handler through joinSheet
+    const messageHandler = (message: any) => {
+      if (message.type === 'chat' && message.user?.id !== userId.value) {
+        // Handle remote content updates with conflict resolution
+        handleRemoteContentUpdate(message);
+      } else if (message.user?.id !== userId.value) {
+        // Handle user presence
+        if (message.type === 'join') {
+          const uid = message.user?.id;
+          const name = message.user?.name;
+          if (uid && name) {
+            collaborators.value[uid] = {
+              name,
+              ts: Date.now(),
+            };
+          }
+        } else if (message.type === 'leave') {
+          const uid = message.user?.id;
+          if (uid) {
+            delete collaborators.value[uid];
+          }
+        }
+      }
+    };
+    
+    // Join the sheet with the message handler
+    wsService.value.joinSheet(deckId, messageHandler);
+    isJoined.value = true;
+  }
+}
+
+function leaveDoc() {
+  if (!isJoined.value) return;
+  const deckId = route.params.deckId as string;
+  if (wsService.value && deckId && deckId !== 'new') {
+    wsService.value.leaveSheet(deckId);
+    isJoined.value = false;
+  }
+}
+
+function broadcastChange() {
+  if (!wsService.value || !isJoined.value || changesPending.value) return;
+  const deckId = route.params.deckId as string;
+  if (deckId && deckId !== 'new') {
+    try {
+      changesPending.value = true;
+      lastLocalVersion.value = Date.now();
+      
+      wsService.value.sendMessage(deckId, 'chat', {
+        content: JSON.stringify(editor.slides.values),
+        current_slide: editor.currentSlideIndex.valueOf(),
+        last_version: Date.now(),
+      }, userId.value, userName.value);
+      
+      // Reset pending flag after a delay
+      setTimeout(() => {
+        changesPending.value = false;
+      }, 1000);
+    } catch (error) {
+      console.error('Failed to broadcast change:', error);
+      changesPending.value = false;
+    }
+  }
+}
+
+// Helper function to generate consistent colors for users
+function colorForUser(userId: string): string {
+  const colors = [
+    '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
+    '#EC4899', '#14B8A6', '#F97316', '#06B6D4', '#84CC16'
+  ];
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+// Conflict resolution state
+const lastRemoteVersion = ref(0);
+const lastLocalVersion = ref(0);
+
+// Enhanced conflict resolution
+function handleRemoteContentUpdate(message: any) {
+  if (message.user?.id === userId.value) return;
+  
+  const remoteVersion = message.timestamp || 0;
+  
+  // If remote version is newer, accept it
+  if (remoteVersion > lastRemoteVersion.value) {
+    lastRemoteVersion.value = remoteVersion;
+    
+    if (message.content) {
+      try {
+        const remoteSlides = JSON.parse(message.content);
+        
+        // Simple conflict resolution: if user hasn't made changes recently, accept remote
+        const timeSinceLastLocalEdit = Date.now() - lastLocalVersion.value;
+        if (timeSinceLastLocalEdit > 5000) { // 5 seconds
+          isJustLoaded.value = true;
+          editor.setSlides(remoteSlides);
+          setTimeout(() => {
+            isJustLoaded.value = false;
+          }, 100);
+          toast.info('Presentation updated by collaborator');
+        } else {
+          // User is actively editing, show a notification
+          toast.info('Collaborator made changes - refresh to see them');
+        }
+      } catch (error) {
+        console.warn('Failed to parse remote content:', error);
+      }
+    }
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   persistence.setupNetworkListeners();
   
   const deckIdParam = route.params.deckId as string | undefined;
   if (deckIdParam) {
-    await persistence.loadDeck(deckIdParam);
+    if (deckIdParam === 'new') {
+      // Initialize new deck with title guessing
+      persistence.initializeNewDeck();
+    } else {
+      await persistence.loadDeck(deckIdParam);
+    }
   }
+
+  // Initialize WebSocket collaboration after document is loaded
+  initializeWebSocketAndJoinDoc();
 });
 
 onUnmounted(() => {
   persistence.cleanupNetworkListeners();
   persistence.cancelAutosave();
+  
+  // Cleanup WebSocket
+  const deckId = route.params.deckId as string;
+  if (wsService.value && deckId && deckId !== 'new') {
+    wsService.value.leaveSheet(deckId);
+  }
 });
 
 // Watch route changes
 watch(() => route.params.deckId, async (newId) => {
   if (newId && typeof newId === 'string') {
-    await persistence.loadDeck(newId);
+    if (newId === 'new') {
+      // Initialize new deck with title guessing
+      persistence.initializeNewDeck();
+    } else {
+      await persistence.loadDeck(newId);
+    }
   }
 });
-</script>
 
-<style scoped>
-/* Minimal styles - most styling is in child components */
-</style>
+// Watch for collaboration changes
+watch(canJoinRealtime, canJoin => {
+  if (canJoin) {
+    initializeWebSocketAndJoinDoc();
+  } else {
+    leaveDoc();
+  }
+});
+
+// Watch for content changes and broadcast
+watch(() => editor.slides.values, () => {
+  if (!isJustLoaded.value) {
+    broadcastChange();
+  }
+}, { deep: true });
+
+// Clean up collaborators
+watch(
+  collaborators,
+  () => {
+    const now = Date.now();
+    for (const [id, info] of Object.entries(collaborators.value)) {
+      if (now - info.ts > 8000) {
+        delete collaborators.value[id];
+      }
+    }
+  },
+  { deep: true }
+);
+</script>

@@ -87,54 +87,63 @@
             aria-label="Font size selector"
             :aria-expanded="showFontSizePicker"
             aria-haspopup="true"
-            @click="showFontSizePicker = !showFontSizePicker"
+            @click="toggleFontSizePicker"
           >
             <Type class="h-3 w-3" />
-            <span v-if="currentFormat.fontSize">{{ parseInt(currentFormat.fontSize) }}</span>
-            <span v-else>16</span>
+            <ChevronDown 
+              class="h-3 w-3 transition-transform" 
+              :class="{ 'rotate-180': showFontSizePicker }"
+            />
+            <span v-if="currentFormat.fontSize" class="text-xs font-medium">{{ parseInt(currentFormat.fontSize) }}</span>
+            <span v-else class="text-xs font-medium">16</span>
           </button>
           
           <!-- Font Size Dropdown -->
           <div
             v-if="showFontSizePicker"
-            class="font-size-picker absolute top-full mt-2 left-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl shadow-2xl p-3 z-[60] w-[180px]"
+            class="font-size-picker absolute top-full mt-1 left-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-2 z-[60] min-w-[160px]"
             @click.stop
             role="menu"
             aria-label="Font size options"
           >
-            <div class="space-y-1 mb-3">
+            <div class="space-y-1">
               <button
                 v-for="size in [12, 14, 16, 18, 20, 24, 32, 48]"
                 :key="size"
-                class="w-full px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left flex items-center justify-between"
-                :class="{ 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300': currentFormat.fontSize === `${size}px` }"
+                class="w-full px-2 py-1.5 text-xs rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left flex items-center justify-between group"
+                :class="{ 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': currentFormat.fontSize === `${size}px` }"
                 :title="`Set font size to ${size}px`"
                 role="menuitem"
-                @click.stop="applyFormat('fontSize', `${size}px`); showFontSizePicker = false;"
+                @click.stop="applyFormat('fontSize', `${size}px`); closeFontSizePicker();"
               >
-                <span>{{ size }}px</span>
-                <span v-if="currentFormat.fontSize === `${size}px`" class="text-blue-600 dark:text-blue-300">✓</span>
+                <span class="font-medium">{{ size }}px</span>
+                <Check 
+                  v-if="currentFormat.fontSize === `${size}px`" 
+                  class="h-3 w-3 text-blue-600 dark:text-blue-400"
+                />
               </button>
             </div>
-            <div class="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-              <input
-                v-model="customFontSize"
-                type="number"
-                min="8"
-                max="200"
-                class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Custom"
-                aria-label="Custom font size"
-                @keydown.enter="applyCustomFontSize"
-                @click.stop
-              />
-              <button
-                class="px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors min-h-[32px]"
-                title="Apply custom font size"
-                @click="applyCustomFontSize"
-              >
-                Apply
-              </button>
+            <div class="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+              <div class="flex items-center gap-1">
+                <input
+                  v-model="customFontSize"
+                  type="number"
+                  min="8"
+                  max="200"
+                  class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Custom"
+                  aria-label="Custom font size"
+                  @keydown.enter="applyCustomFontSize"
+                  @click.stop
+                />
+                <button
+                  class="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  title="Apply custom font size"
+                  @click="applyCustomFontSize"
+                >
+                  Set
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -220,6 +229,13 @@
         <div class="flex items-center gap-2">
           <button
             class="p-0.5 rounded hover:bg-blue-600"
+            title="Cancel"
+            @click="cancelEditing"
+          >
+            <X class="h-3 w-3" />
+          </button>
+          <button
+            class="p-0.5 rounded hover:bg-blue-600"
             title="Reset"
             @click="resetContent"
           >
@@ -260,8 +276,9 @@ import {
   AlignCenter, 
   AlignRight, 
   Type,
-  X,
+  ChevronDown,
   Check,
+  X,
   RotateCcw
 } from 'lucide-vue-next';
 
@@ -474,7 +491,14 @@ function handleContentChange(event: Event) {
   if (isUpdatingContent.value) return;
   
   const target = event.target as HTMLElement;
-  const newContent = target.innerHTML;
+  let newContent = target.innerHTML;
+  
+  // Prevent content from being completely wiped
+  if (!newContent || newContent.trim() === '') {
+    newContent = props.initialContent || '<span>&nbsp;</span>';
+    target.innerHTML = newContent;
+    return;
+  }
   
   if (editingContent.value !== newContent) {
     editingContent.value = newContent;
@@ -535,12 +559,28 @@ function resetContent() {
   }
 }
 
+function cancelEditing() {
+  // Restore original content and close without saving
+  if (editorRef.value) {
+    editorRef.value.innerHTML = props.initialContent;
+  }
+  closeEditor();
+}
+
 function applyCustomFontSize() {
   if (customFontSize.value) {
     applyFormat('fontSize', `${customFontSize.value}px`);
     customFontSize.value = '';
     showFontSizePicker.value = false;
   }
+}
+
+function toggleFontSizePicker() {
+  showFontSizePicker.value = !showFontSizePicker.value;
+}
+
+function closeFontSizePicker() {
+  showFontSizePicker.value = false;
 }
 
 function updateFormatFromElement(element: HTMLElement) {
@@ -619,8 +659,20 @@ function handleSelectionChange() {
 }
 
 function saveChanges() {
+  // Validate content before saving
+  let contentToSave = editingContent.value;
+  
+  // Prevent saving empty or whitespace-only content
+  if (!contentToSave || contentToSave.trim() === '') {
+    contentToSave = props.initialContent || '<span>&nbsp;</span>';
+    editingContent.value = contentToSave;
+    if (editorRef.value) {
+      editorRef.value.innerHTML = contentToSave;
+    }
+  }
+  
   const styles = { ...currentFormat.value };
-  emit('save', editingContent.value, styles);
+  emit('save', contentToSave, styles);
   closeEditor();
 }
 
@@ -718,9 +770,9 @@ input[type="color"]::-webkit-color-swatch {
 /* Dropdown animations and fixed sizing */
 .font-size-picker {
   animation: dropdownFadeIn 0.2s ease;
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
+  min-width: 160px !important;
+  max-width: 200px !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .color-picker {
@@ -730,12 +782,20 @@ input[type="color"]::-webkit-color-swatch {
 @keyframes dropdownFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
+}
+
+/* Ensure proper dropdown positioning */
+.font-size-picker {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  z-index: 60 !important;
 }
 
 /* High contrast mode support */
