@@ -34,7 +34,7 @@ Vensuite is a complete productivity suite that you can self-host or use via our 
 - Response analytics
 
 ### 🎨 Slides
-- Presentation editor powered by Slidev
+- Slidev compatible
 - PPTX export
 - PDF rendering
 - Templates library

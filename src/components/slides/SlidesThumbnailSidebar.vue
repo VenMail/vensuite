@@ -1,9 +1,24 @@
 <template>
-  <div class="w-56 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-    <div class="p-3 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Slides</h3>
+  <div 
+    class="bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-200"
+    :class="isMinimized ? 'w-12' : 'w-56'"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
+  >
+    <!-- Header -->
+    <div class="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <h3 v-if="!isMinimized" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Slides</h3>
+      <button
+        @click="toggleMinimize"
+        class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+        :title="isMinimized ? 'Expand slides' : 'Minimize slides'"
+      >
+        <ChevronLeft :class="['h-4 w-4 text-gray-500 transition-transform', isMinimized ? 'rotate-180' : '']" />
+      </button>
     </div>
-    <div class="flex-1 overflow-y-auto p-2 space-y-2">
+    
+    <!-- Thumbnails -->
+    <div v-if="!isMinimized" class="flex-1 overflow-y-auto p-2 space-y-2">
       <div
         v-for="(slide, index) in slides"
         :key="slide.id"
@@ -75,7 +90,8 @@
 </template>
 
 <script setup lang="ts">
-import { Copy, ChevronUp, ChevronDown, Trash2, Plus } from 'lucide-vue-next';
+import { ref } from 'vue';
+import { Copy, ChevronUp, ChevronDown, Trash2, Plus, ChevronLeft } from 'lucide-vue-next';
 import { parseMarkdownToHtml, type SlidevSlide } from '@/utils/slidevMarkdown';
 
 interface Props {
@@ -92,6 +108,38 @@ defineEmits<{
   'delete-slide': [index: number];
   'add-slide': [];
 }>();
+
+// Collapsible state
+const isMinimized = ref(false);
+const hoverTimeout = ref<NodeJS.Timeout | null>(null);
+
+function toggleMinimize() {
+  isMinimized.value = !isMinimized.value;
+}
+
+function handleMouseEnter() {
+  if (hoverTimeout.value) {
+    clearTimeout(hoverTimeout.value);
+  }
+  if (isMinimized.value) {
+    // Delay expansion to avoid accidental triggers
+    hoverTimeout.value = setTimeout(() => {
+      isMinimized.value = false;
+    }, 300);
+  }
+}
+
+function handleMouseLeave() {
+  if (hoverTimeout.value) {
+    clearTimeout(hoverTimeout.value);
+  }
+  // Only minimize if it was originally minimized
+  if (!isMinimized.value) {
+    hoverTimeout.value = setTimeout(() => {
+      isMinimized.value = true;
+    }, 500);
+  }
+}
 
 function getSlidePreview(slide: SlidevSlide): string {
   const html = parseMarkdownToHtml(slide.content);

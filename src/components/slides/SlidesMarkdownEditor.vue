@@ -1,7 +1,7 @@
 <template>
-  <div class="flex-1 flex flex-col border-r border-gray-200 dark:border-gray-700">
+  <div class="h-full flex flex-col border-r border-gray-200 dark:border-gray-700 min-h-0">
     <!-- Toolbar -->
-    <div class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <div class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Markdown</span>
       <div class="flex items-center gap-1">
         <!-- Formatting Tools -->
@@ -29,20 +29,21 @@
     </div>
     
     <!-- Editor Area -->
-    <textarea
-      ref="editorRef"
-      :value="content"
-      class="flex-1 w-full p-4 font-mono text-sm bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 resize-none focus:outline-none"
-      :placeholder="placeholder"
-      @input="handleInput"
-      @keydown="handleKeydown"
-      @select="handleSelection"
-      @mouseup="handleSelection"
-      @click="emitCursorPositionChange"
-    />
-    
-    <!-- Notes Section -->
-    <div class="border-t border-gray-200 dark:border-gray-700">
+    <div class="flex-1 flex flex-col min-h-0">
+      <textarea
+        ref="editorRef"
+        :value="content"
+        class="flex-1 w-full p-4 font-mono text-sm bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 resize-none focus:outline-none min-h-0"
+        :placeholder="placeholder"
+        @input="handleInput"
+        @keydown="handleKeydown"
+        @select="handleSelection"
+        @mouseup="handleSelection"
+        @click="emitCursorPositionChange"
+      />
+      
+      <!-- Notes Section -->
+      <div class="border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
       <button
         class="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
         @click="showNotes = !showNotes"
@@ -60,6 +61,7 @@
         placeholder="Add notes for presenter view..."
         @input="handleNotesInput"
       />
+      </div>
     </div>
     
     <!-- Emoji Picker Dialog -->
@@ -217,11 +219,16 @@ function focus() {
 
 function emitCursorPositionChange() {
   const textarea = editorRef.value;
-  if (!textarea) return;
+  if (!textarea) {
+    console.log('📝 emitCursorPositionChange: No textarea ref');
+    return;
+  }
   
   try {
     const position = getCursorPosition(textarea);
     const element = getElementAtCursor(textarea.value, position.line, position.column);
+    
+    console.log('📝 Emitting cursor-change:', element ? `${element.type} at line ${element.startLine}` : 'null');
     
     // Always emit, even if null, to clear selection when cursor is in empty space
     emit('cursor-change', element);

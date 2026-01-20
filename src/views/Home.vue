@@ -507,6 +507,12 @@ async function openFile(id: string) {
     case "xlsx":
       router.push(`/sheets/${id}`);
       break;
+    case "pptx":
+      router.push(`/slides/${id}`);
+      break;
+    case "slides":
+      router.push(`/slides/${id}`);
+      break;
     default:
       router.push(`/files/${id}`);
       break;

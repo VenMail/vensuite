@@ -25,6 +25,7 @@
     "@fluentui-vue/file-type-icons": "^2.1.0",
     "@hocuspocus/provider": "^2.15.2",
     "@iconify-prerendered/vue-file-icons": "^0.25.1721244157",
+    "@jvmr/pptx-to-html": "^1.0.0",
     "@manuscripts/prosemirror-recreate-steps": "^0.1.4",
     "@mertdeveci55/univer-import-export": "^0.1.51",
     "@radix-icons/vue": "^1.0.0",

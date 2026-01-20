@@ -29,6 +29,9 @@ importers:
       '@iconify-prerendered/vue-file-icons':
         specifier: ^0.25.1721244157
         version: 0.25.1721244157(vue@3.5.13(typescript@5.8.3))
+      '@jvmr/pptx-to-html':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@manuscripts/prosemirror-recreate-steps':
         specifier: ^0.1.4
         version: 0.1.4
@@ -1712,6 +1715,9 @@ packages:
 
   '@js-sdsl/ordered-map@4.4.2':
     resolution: {integrity: sha512-iUKgm52T8HOE/makSxjqoWhe95ZJA1/G1sYsGev2JDKUSS14KAgg1LHb+Ba+IPow0xflbnSkOsZcO08C7w1gYw==}
+
+  '@jvmr/pptx-to-html@1.0.0':
+    resolution: {integrity: sha512-08XVODrexXWT2JpDaywHMe6ucP+JK4FeXT+QbduMSi6J/175c3AynXCb89ed24w/Sx5YiPCTUlGJjCiTfYtd3g==}
 
   '@kurkle/color@0.3.4':
     resolution: {integrity: sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==}
@@ -12180,6 +12186,10 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.5
 
   '@js-sdsl/ordered-map@4.4.2': {}
+
+  '@jvmr/pptx-to-html@1.0.0':
+    dependencies:
+      jszip: 3.10.1
 
   '@kurkle/color@0.3.4': {}
 

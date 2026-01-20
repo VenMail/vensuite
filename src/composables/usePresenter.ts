@@ -111,6 +111,13 @@ export function usePresenter(options: UsePresenterOptions) {
     enterFullscreen();
   }
 
+  function startPresenterMode() {
+    // Start presenter mode with dual screen setup
+    isPresenting.value = true;
+    startTimer();
+    // Don't enter fullscreen for presenter mode (user controls their own layout)
+  }
+
   function exitPresentation() {
     isPresenting.value = false;
     stopTimer();
@@ -386,6 +393,7 @@ export function usePresenter(options: UsePresenterOptions) {
 
     // Presentation control
     startPresentation,
+    startPresenterMode,
     exitPresentation,
     togglePresentation,
 

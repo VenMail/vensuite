@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
     <!-- Left: Mode Toggle & Slide Navigation -->
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3">
       <!-- Mode Toggle -->
       <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
         <button
@@ -39,10 +39,8 @@
           <ChevronRight class="h-5 w-5 text-gray-600 dark:text-gray-400" />
         </button>
       </div>
-    </div>
 
-    <!-- Center: Theme & Layout -->
-    <div class="flex items-center gap-3">
+      <!-- Theme & Layout Controls -->
       <select
         :value="currentTheme"
         class="text-sm px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
@@ -64,42 +62,66 @@
       </select>
     </div>
 
-    <!-- Right: Actions -->
+    <!-- Right: Slide Actions -->
     <div class="flex items-center gap-2">
-      <Button variant="outline" size="sm" @click="emit('add-slide')">
-        <Plus class="h-4 w-4 mr-1" />
-        Add Slide
-      </Button>
+      <AddSlideSplitButton 
+        @add-slide="emit('add-slide')"
+        @add-slide-with-template="emit('add-slide-with-template', $event)"
+      />
       
       <!-- Infographics Button -->
       <Button variant="outline" size="sm" @click="emit('open-infographics')">
         <BarChart3 class="h-4 w-4 mr-1" />
         Infographics
       </Button>
-      
-      <Button variant="outline" size="sm" @click="emit('export', 'pdf')">
-        <Download class="h-4 w-4 mr-1" />
-        PDF
-      </Button>
-      <Button variant="outline" size="sm" @click="emit('export', 'pptx')">
-        <FileText class="h-4 w-4 mr-1" />
-        PPTX
-      </Button>
-      <Button variant="default" size="sm" @click="emit('present')">
-        <Play class="h-4 w-4 mr-1" />
-        Present
-      </Button>
+
+      <!-- More Actions Menu -->
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <MoreHorizontal class="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="dark:bg-gray-900 dark:border-gray-700">
+          <DropdownMenuItem @click="emit('start-presenter-mode')">
+            <MonitorSpeaker class="h-4 w-4 mr-2" />
+            Presenter Mode
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem @click="emit('export', 'pdf')">
+            <Download class="h-4 w-4 mr-2" />
+            Export as PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem @click="emit('export', 'pptx')">
+            <FileText class="h-4 w-4 mr-2" />
+            Export as PPTX
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem @click="emit('print')">
+            <Printer class="h-4 w-4 mr-2" />
+            Print
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { 
-  ChevronLeft, ChevronRight, Plus, Download, FileText, Play,
-  Edit, Eye, BarChart3
+  ChevronLeft, ChevronRight, Edit, Eye, BarChart3, MoreHorizontal, MonitorSpeaker, Download, FileText, Printer
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { SLIDEV_LAYOUTS, SLIDEV_THEMES } from '@/utils/slidevMarkdown';
+import AddSlideSplitButton from './AddSlideSplitButton.vue';
+import type { SlideTemplate } from '@/utils/slidevMarkdown';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Props {
   mode: 'edit' | 'preview';
@@ -118,9 +140,11 @@ const emit = defineEmits<{
   (e: 'previous-slide'): void;
   (e: 'next-slide'): void;
   (e: 'add-slide'): void;
+  (e: 'add-slide-with-template', template: SlideTemplate): void;
   (e: 'open-infographics'): void;
+  (e: 'start-presenter-mode'): void;
   (e: 'export', format: 'pdf' | 'pptx'): void;
-  (e: 'present'): void;
+  (e: 'print'): void;
 }>();
 
 const modes = [

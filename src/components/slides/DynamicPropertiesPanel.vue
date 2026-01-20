@@ -1,9 +1,28 @@
 <template>
-  <div class="w-96 max-w-96 min-w-0 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+  <div class="w-80 max-w-80 min-w-0 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
     <div class="p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-      <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">
-        {{ markdownElement ? 'Markdown Element' : (selectedElement ? 'Element Properties' : 'Slide Properties') }}
-      </h3>
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">
+          {{ markdownElement ? 'Markdown Element' : (selectedElement ? 'Element Properties' : 'Slide Properties') }}
+        </h3>
+        <div class="flex items-center gap-1">
+          <button
+            v-if="markdownElement || selectedElement"
+            @click="emit('show-animation-panel')"
+            class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+            title="Animate Element"
+          >
+            <Zap class="h-4 w-4 text-gray-500" />
+          </button>
+          <button
+            @click="emit('toggle-panel')"
+            class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+            title="Toggle Properties Panel"
+          >
+            <Settings class="h-4 w-4 text-gray-500" />
+          </button>
+        </div>
+      </div>
     </div>
     
     <div class="flex-1 overflow-y-auto p-3 space-y-4 min-h-0">
@@ -750,6 +769,17 @@
           </div>
         </div>
 
+        <!-- Animations Button -->
+        <div>
+          <button
+            class="w-full px-3 py-2 text-sm bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+            @click="openAnimationPane"
+          >
+            <Play class="h-4 w-4" />
+            Animations
+          </button>
+        </div>
+
         <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
           <button
             class="w-full px-3 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
@@ -851,11 +881,22 @@
         </div>
       </template>
     </div>
+
+    <!-- Animation Pane Overlay -->
+    <SlidesAnimationPane
+      v-if="showAnimationPane"
+      :selected-element="selectedElement"
+      :markdown-element="markdownElement"
+      @back="backToProperties"
+      @close="closeAnimationPane"
+      @update-animation="updateElementAnimation"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { Settings, Zap } from 'lucide-vue-next';
 import { 
   SLIDEV_LAYOUTS, 
   SLIDE_TEMPLATES,
@@ -864,6 +905,7 @@ import {
 import type { MarkdownElement } from '@/utils/markdownElementDetector';
 import { useSmartFontSizing } from '@/composables/useSmartFontSizing';
 import { useMermaidScaling } from '@/composables/useMermaidScaling';
+import SlidesAnimationPane from './SlidesAnimationPane.vue';
 
 interface Props {
   layout: string;
@@ -877,6 +919,8 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
+  (e: 'toggle-panel'): void;
+  (e: 'show-animation-panel'): void;
   (e: 'update:layout', value: string): void;
   (e: 'update:background', value: string): void;
   (e: 'update:transition', value: string): void;
@@ -966,6 +1010,63 @@ const isMermaidOrComponent = computed(() => {
          props.selectedElement.classList.contains('code-block') ||
          props.selectedElement.tagName.toLowerCase() === 'img';
 });
+
+// Animation state
+const showAnimationPane = ref(false);
+const elementAnimations = ref<Map<string, ElementAnimation>>(new Map());
+
+interface ElementAnimation {
+  enabled: boolean;
+  type: string;
+  duration: number;
+  delay: number;
+  easing: string;
+  trigger: 'onLoad' | 'onClick' | 'onHover' | 'onScroll';
+  repeat: boolean;
+  repeatCount: number | 'infinite';
+}
+
+// Animation helpers
+
+function openAnimationPane() {
+  showAnimationPane.value = true;
+}
+
+function closeAnimationPane() {
+  showAnimationPane.value = false;
+}
+
+function backToProperties() {
+  showAnimationPane.value = false;
+}
+
+function updateElementAnimation(animation: ElementAnimation) {
+  const elementId = props.selectedElement?.id || (props.markdownElement ? `markdown-${props.markdownElement.startLine}` : 'unknown');
+  elementAnimations.value.set(elementId, animation);
+  
+  // Apply animation to the element
+  if (props.selectedElement) {
+    applyAnimationToElement(props.selectedElement, animation);
+  }
+}
+
+function applyAnimationToElement(element: HTMLElement, animation: ElementAnimation) {
+  if (!animation.enabled) {
+    element.style.animation = '';
+    return;
+  }
+  
+  const repeatValue = animation.repeat 
+    ? animation.repeatCount === 'infinite' 
+      ? 'infinite' 
+      : animation.repeatCount
+    : '1';
+  
+  element.style.animation = `${animation.type} ${animation.duration}ms ${animation.easing} ${animation.delay}ms ${repeatValue}`;
+  
+  // Store animation data for later use
+  element.dataset.animation = JSON.stringify(animation);
+}
 
 // Watch selected element and extract styles
 watch(() => props.selectedElement, (element) => {

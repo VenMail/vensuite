@@ -14,6 +14,7 @@ import {
 import type { SlidesEditorReturn } from './useSlidesEditor';
 import type { ShareMember, ShareLevel } from '@/utils/sharing';
 import { parseSharingInfoString, serializeSharingInfoString } from '@/utils/sharing';
+import { convertPptxSlidesToSlidev, type SlidevSlideOptions } from '@/utils/pptxToSlidev';
 
 export interface UseSlidePersistenceOptions {
   editor: SlidesEditorReturn;
@@ -124,17 +125,42 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         version: 1
       };
 
+      console.log('💾 persistDeck called with:', {
+        deckId: deckId.value,
+        title: deckTitle.value,
+        theme: editor.currentTheme.value,
+        slideCount: editor.slides.value.length,
+        slidesPreview: editor.slides.value.slice(0, 2).map(s => ({ id: s.id, contentPreview: s.content.substring(0, 50) + '...' }))
+      });
+
       const filePayload = {
         id: deckId.value || undefined,
         title: deckTitle.value,
-        file_type: 'pptx',
+        file_type: 'slides',
         content: JSON.stringify(deckData),
+        metadata: {
+          theme: editor.currentTheme.value,
+          slide_count: editor.slides.value.length
+        },
         is_folder: false
       };
 
+      console.log('📤 File payload for API:', {
+        ...filePayload,
+        content: filePayload.content.substring(0, 200) + '...' // Truncate for logging
+      });
+
       const result = await fileStore.saveDocument(filePayload as any);
+      console.log('📋 Save result:', {
+        success: !!result.document,
+        documentId: result.document?.id,
+        shouldRedirect: result.shouldRedirect,
+        redirectId: result.redirectId
+      });
+      
       if (result.document?.id) {
         deckId.value = result.document.id;
+        console.log('✅ Deck ID updated to:', deckId.value);
       }
 
       hasUnsavedChanges.value = false;
@@ -154,7 +180,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
     try {
       isLoading.value = true;
 
-      const file = await fileStore.loadDocument(id, 'pptx');
+      const file = await fileStore.loadDocument(id, 'slides');
       if (!file) {
         throw new Error('Presentation not found');
       }
@@ -162,7 +188,25 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
       deckId.value = file.id || id;
       deckTitle.value = file.title || 'Untitled Presentation';
 
-      if (file.content) {
+      // Check if this is a PPTX file that needs importing
+      if (file.file_type === 'pptx' && file.file_url) {
+        try {
+          // Download and import the PPTX file
+          const response = await fetch(file.file_url);
+          const blob = await response.blob();
+          const pptxFile = new File([blob], file.title || 'presentation.pptx', { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
+          
+          const importSuccess = await importFromPowerPoint(pptxFile);
+          if (!importSuccess) {
+            throw new Error('Failed to import PowerPoint file');
+          }
+        } catch (importError) {
+          console.error('PPTX import failed:', importError);
+          toast.error('Failed to import PowerPoint file');
+          editor.setSlides(createDefaultSlides());
+          return false;
+        }
+      } else if (file.content) {
         try {
           const data: DeckData = JSON.parse(file.content);
           editor.setSlides(data.slides || createDefaultSlides());
@@ -170,6 +214,9 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         } catch {
           editor.setSlides(createDefaultSlides());
         }
+      } else {
+        // No content and not PPTX, create default slides
+        editor.setSlides(createDefaultSlides());
       }
 
       hasUnsavedChanges.value = false;
@@ -191,7 +238,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
   // Hydrate sharing info
   async function hydrateSharing(id: string) {
     try {
-      const file = await fileStore.loadDocument(id, 'pptx') as any;
+      const file = await fileStore.loadDocument(id, 'slides') as any;
       if (file) {
         shareLink.value = file.file_public_url || shareLinkDoc.value;
         privacyType.value = Number(file.privacy_type ?? 7);
@@ -377,27 +424,47 @@ download: true
     try {
       toast.info('Importing PowerPoint...');
       
-      // Use the slides store import functionality
-      const slidesStoreModule = await import('@/store/slides');
-      const slidesStore = (slidesStoreModule as any).useSlidesStore();
+      // Import the pptx-to-html library
+      const { pptxToHtml } = await import('@jvmr/pptx-to-html');
       
-      await slidesStore.importPowerPoint(file);
+      // Convert PPTX to HTML
+      const arrayBuffer = await file.arrayBuffer();
+      const slidesHtml = await pptxToHtml(arrayBuffer, {
+        width: 960,
+        height: 540,
+        scaleToFit: true,
+        letterbox: true
+      });
       
-      // Convert slides store data to our format
-      const importedSlides = slidesStore.pages.map((page: any, index: number) => ({
-        id: page.id,
-        content: `# ${page.name}\n\nSlide content ${index + 1}`,
-        notes: '',
-        frontmatter: {}
-      }));
+      // Configure Slidev conversion options
+      const slidevOptions: SlidevSlideOptions = {
+        theme: 'default',
+        defaultLayout: 'default',
+        preserveImages: true,
+        detectMermaid: true,
+        detectCodeBlocks: true
+      };
       
-      // Initialize with imported slides and title guessing
+      // Convert HTML slides to Slidev-compatible markdown
+      const slidevMarkdowns = convertPptxSlidesToSlidev(slidesHtml, slidevOptions);
+      
+      // Create SlidevSlide objects
+      const importedSlides: SlidevSlide[] = slidevMarkdowns.map((markdownContent, index) => {
+        return {
+          id: `slide-${index + 1}-${Date.now()}`,
+          content: markdownContent,
+          notes: '',
+          frontmatter: {}
+        };
+      });
+      
+      // Initialize with imported slides
       initializeNewDeck(importedSlides);
-      toast.success('PowerPoint imported successfully');
+      toast.success(`PowerPoint imported successfully (${importedSlides.length} slides)`);
       return true;
     } catch (error) {
       console.error('Import failed:', error);
-      toast.error('Failed to import PowerPoint');
+      toast.error('Failed to import PowerPoint file');
       return false;
     }
   }

@@ -221,29 +221,29 @@ const templates: InfographicTemplate[] = [
     tags: ['history', 'milestones', 'roadmap'],
     previewBg: '#f8fafc',
     preview: `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px;">
-        <div style="text-align: center;">
-          <div style="width: 24px; height: 24px; background: #3b82f6; border-radius: 50%; margin: 0 auto 4px;"></div>
-          <div style="font-weight: bold; color: #1e293b;">2021</div>
-          <div style="color: #64748b; font-size: 6px;">Founded</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 3vw;">
+        <div style="text-align: center; flex: 1;">
+          <div style="width: 4vw; height: 4vw; background: #3b82f6; border-radius: 50%; margin: 0 auto 1vw;" class="timeline-node"></div>
+          <div style="font-weight: bold; color: #1e293b; font-size: clamp(14px, 2vw, 24px);">2021</div>
+          <div style="color: #64748b; font-size: clamp(10px, 1.2vw, 16px);">Founded</div>
         </div>
-        <div style="flex: 1; height: 2px; background: #3b82f6; margin: 0 8px;"></div>
-        <div style="text-align: center;">
-          <div style="width: 24px; height: 24px; background: #10b981; border-radius: 50%; margin: 0 auto 4px;"></div>
-          <div style="font-weight: bold; color: #1e293b;">2022</div>
-          <div style="color: #64748b; font-size: 6px;">Growth</div>
+        <div style="flex: 2; height: 0.3vw; background: linear-gradient(90deg, #3b82f6, #10b981); margin: 0 2vw;" class="timeline-connector"></div>
+        <div style="text-align: center; flex: 1;">
+          <div style="width: 4vw; height: 4vw; background: #10b981; border-radius: 50%; margin: 0 auto 1vw;" class="timeline-node"></div>
+          <div style="font-weight: bold; color: #1e293b; font-size: clamp(14px, 2vw, 24px);">2022</div>
+          <div style="color: #64748b; font-size: clamp(10px, 1.2vw, 16px);">Growth</div>
         </div>
-        <div style="flex: 1; height: 2px; background: #10b981; margin: 0 8px;"></div>
-        <div style="text-align: center;">
-          <div style="width: 24px; height: 24px; background: #f59e0b; border-radius: 50%; margin: 0 auto 4px;"></div>
-          <div style="font-weight: bold; color: #1e293b;">2023</div>
-          <div style="color: #64748b; font-size: 6px;">Expansion</div>
+        <div style="flex: 2; height: 0.3vw; background: linear-gradient(90deg, #10b981, #f59e0b); margin: 0 2vw;" class="timeline-connector"></div>
+        <div style="text-align: center; flex: 1;">
+          <div style="width: 4vw; height: 4vw; background: #f59e0b; border-radius: 50%; margin: 0 auto 1vw;" class="timeline-node"></div>
+          <div style="font-weight: bold; color: #1e293b; font-size: clamp(14px, 2vw, 24px);">2023</div>
+          <div style="color: #64748b; font-size: clamp(10px, 1.2vw, 16px);">Expansion</div>
         </div>
-        <div style="flex: 1; height: 2px; background: #f59e0b; margin: 0 8px;"></div>
-        <div style="text-align: center;">
-          <div style="width: 24px; height: 24px; background: #8b5cf6; border-radius: 50%; margin: 0 auto 4px;"></div>
-          <div style="font-weight: bold; color: #1e293b;">2024</div>
-          <div style="color: #64748b; font-size: 6px;">Scale</div>
+        <div style="flex: 2; height: 0.3vw; background: linear-gradient(90deg, #f59e0b, #8b5cf6); margin: 0 2vw;" class="timeline-connector"></div>
+        <div style="text-align: center; flex: 1;">
+          <div style="width: 4vw; height: 4vw; background: #8b5cf6; border-radius: 50%; margin: 0 auto 1vw;" class="timeline-node"></div>
+          <div style="font-weight: bold; color: #1e293b; font-size: clamp(14px, 2vw, 24px);">2024</div>
+          <div style="color: #64748b; font-size: clamp(10px, 1.2vw, 16px);">Scale</div>
         </div>
       </div>
     `,
@@ -427,32 +427,39 @@ flowchart TD
     tags: ['features', 'products', 'options'],
     previewBg: '#ffffff',
     preview: `
-      <table style="width: 100%; font-size: 6px; border-collapse: collapse;">
-        <tr style="background: #3b82f6; color: white;">
-          <th style="padding: 4px;">Feature</th>
-          <th style="padding: 4px;">Basic</th>
-          <th style="padding: 4px;">Pro</th>
-          <th style="padding: 4px;">Enterprise</th>
-        </tr>
-        <tr>
-          <td style="padding: 4px; border-bottom: 1px solid #e2e8f0;">Users</td>
-          <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; text-align: center;">5</td>
-          <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; text-align: center;">25</td>
-          <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; text-align: center;">∞</td>
-        </tr>
-        <tr>
-          <td style="padding: 4px; border-bottom: 1px solid #e2e8f0;">Storage</td>
-          <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; text-align: center;">10GB</td>
-          <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; text-align: center;">100GB</td>
-          <td style="padding: 4px; border-bottom: 1px solid #e2e8f0; text-align: center;">1TB</td>
-        </tr>
-        <tr>
-          <td style="padding: 4px;">Support</td>
-          <td style="padding: 4px; text-align: center;">Email</td>
-          <td style="padding: 4px; text-align: center;">Priority</td>
-          <td style="padding: 4px; text-align: center;">24/7</td>
-        </tr>
-      </table>
+      <div style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius: 1vw; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.1); margin: 2vw;">
+        <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 1.5vw; font-size: clamp(14px, 2vw, 20px); font-weight: 700; text-align: center;" class="table-header">Feature Comparison</div>
+        <table style="width: 100%; font-size: clamp(10px, 1.5vw, 16px); border-collapse: collapse;">
+          <thead>
+            <tr style="background: linear-gradient(90deg, #3b82f6, #2563eb); color: white;">
+              <th style="padding: 1vw; text-align: left; font-weight: 600;">Feature</th>
+              <th style="padding: 1vw; text-align: center; font-weight: 600;">Basic</th>
+              <th style="padding: 1vw; text-align: center; font-weight: 600; background: rgba(255,255,255,0.1);">Pro</th>
+              <th style="padding: 1vw; text-align: center; font-weight: 600;">Enterprise</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid #e2e8f0; transition: all 0.3s ease;" class="table-row">
+              <td style="padding: 1vw; font-weight: 500; color: #1e293b;">Users</td>
+              <td style="padding: 1vw; text-align: center; color: #64748b;">5</td>
+              <td style="padding: 1vw; text-align: center; background: rgba(59, 130, 246, 0.05); color: #3b82f6; font-weight: 600;">25</td>
+              <td style="padding: 1vw; text-align: center; color: #10b981; font-weight: 700;">∞</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0; transition: all 0.3s ease;" class="table-row">
+              <td style="padding: 1vw; font-weight: 500; color: #1e293b;">Storage</td>
+              <td style="padding: 1vw; text-align: center; color: #64748b;">10GB</td>
+              <td style="padding: 1vw; text-align: center; background: rgba(59, 130, 246, 0.05); color: #3b82f6; font-weight: 600;">100GB</td>
+              <td style="padding: 1vw; text-align: center; color: #10b981; font-weight: 700;">1TB</td>
+            </tr>
+            <tr style="transition: all 0.3s ease;" class="table-row">
+              <td style="padding: 1vw; font-weight: 500; color: #1e293b;">Support</td>
+              <td style="padding: 1vw; text-align: center; color: #64748b;">Email</td>
+              <td style="padding: 1vw; text-align: center; background: rgba(59, 130, 246, 0.05); color: #3b82f6; font-weight: 600;">Priority</td>
+              <td style="padding: 1vw; text-align: center; color: #10b981; font-weight: 700;">24/7</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     `,
     markdown: `## Plan Comparison
 
@@ -522,18 +529,21 @@ flowchart TD
     tags: ['metrics', 'KPIs', 'numbers'],
     previewBg: '#f8fafc',
     preview: `
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 8px;">
-        <div style="background: white; padding: 8px; border-radius: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <div style="font-size: 16px; font-weight: bold; color: #3b82f6;">98%</div>
-          <div style="font-size: 6px; color: #64748b;">Satisfaction</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 2vw; padding: 3vw;">
+        <div style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); padding: 2vw; border-radius: 1vw; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);" class="stat-card">
+          <div style="font-size: clamp(24px, 4vw, 48px); font-weight: 800; color: #3b82f6; margin-bottom: 0.5vw;" class="stat-number">98%</div>
+          <div style="font-size: clamp(12px, 1.5vw, 18px); color: #64748b; font-weight: 500;" class="stat-label">Satisfaction</div>
+          <div style="font-size: clamp(10px, 1vw, 14px); color: #94a3b8; margin-top: 0.3vw;">↑ 12% from last year</div>
         </div>
-        <div style="background: white; padding: 8px; border-radius: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <div style="font-size: 16px; font-weight: bold; color: #10b981;">2.5M</div>
-          <div style="font-size: 6px; color: #64748b;">Users</div>
+        <div style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); padding: 2vw; border-radius: 1vw; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);" class="stat-card">
+          <div style="font-size: clamp(24px, 4vw, 48px); font-weight: 800; color: #10b981; margin-bottom: 0.5vw;" class="stat-number">2.5M</div>
+          <div style="font-size: clamp(12px, 1.5vw, 18px); color: #64748b; font-weight: 500;" class="stat-label">Users</div>
+          <div style="font-size: clamp(10px, 1vw, 14px); color: #94a3b8; margin-top: 0.3vw;">↑ 300% growth</div>
         </div>
-        <div style="background: white; padding: 8px; border-radius: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <div style="font-size: 16px; font-weight: bold; color: #f59e0b;">150+</div>
-          <div style="font-size: 6px; color: #64748b;">Countries</div>
+        <div style="background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%); padding: 2vw; border-radius: 1vw; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);" class="stat-card">
+          <div style="font-size: clamp(24px, 4vw, 48px); font-weight: 800; color: #f59e0b; margin-bottom: 0.5vw;" class="stat-number">150+</div>
+          <div style="font-size: clamp(12px, 1.5vw, 18px); color: #64748b; font-weight: 500;" class="stat-label">Countries</div>
+          <div style="font-size: clamp(10px, 1vw, 14px); color: #94a3b8; margin-top: 0.3vw;">Global reach</div>
         </div>
       </div>
     `,
@@ -858,7 +868,170 @@ gantt
 - **Q4**: Enterprise & AI features`
   },
 
-  // Lists Templates
+  // Modern 2026 Templates
+  {
+    id: 'modern-metrics-donut',
+    name: 'Interactive Donut Chart',
+    description: 'Modern animated donut chart with hover effects',
+    category: 'charts',
+    tags: ['interactive', 'animated', 'dashboard'],
+    previewBg: '#0f172a',
+    preview: `
+      <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 3vw; border-radius: 1.5vw; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 30% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);" class="bg-glow"></div>
+        <div style="position: relative; z-index: 1;">
+          <div style="font-size: clamp(16px, 2.5vw, 28px); font-weight: 700; color: #f8fafc; margin-bottom: 2vw; text-align: center;" class="chart-title">Revenue Distribution</div>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 3vw;">
+            <div style="position: relative;" class="donut-container">
+              <div style="width: 20vw; height: 20vw; border-radius: 50%; background: conic-gradient(#3b82f6 0% 35%, #10b981 35% 60%, #f59e0b 60% 85%, #ef4444 85% 100%); position: relative; box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);" class="donut-chart">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 12vw; height: 12vw; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column;" class="donut-center">
+                  <div style="font-size: clamp(18px, 3vw, 36px); font-weight: 800; color: #f8fafc;">$2.4M</div>
+                  <div style="font-size: clamp(10px, 1.2vw, 14px); color: #94a3b8;">Total</div>
+                </div>
+              </div>
+            </div>
+            <div style="flex: 1; max-width: 25vw;" class="legend">
+              <div style="margin-bottom: 1.5vw; display: flex; align-items: center; gap: 1vw;" class="legend-item">
+                <div style="width: 1.5vw; height: 1.5vw; background: #3b82f6; border-radius: 0.3vw;" class="legend-color"></div>
+                <div style="flex: 1;">
+                  <div style="font-size: clamp(12px, 1.5vw, 16px); font-weight: 600; color: #f8fafc;">Products</div>
+                  <div style="font-size: clamp(10px, 1.2vw, 14px); color: #94a3b8;">35% • $840K</div>
+                </div>
+              </div>
+              <div style="margin-bottom: 1.5vw; display: flex; align-items: center; gap: 1vw;" class="legend-item">
+                <div style="width: 1.5vw; height: 1.5vw; background: #10b981; border-radius: 0.3vw;" class="legend-color"></div>
+                <div style="flex: 1;">
+                  <div style="font-size: clamp(12px, 1.5vw, 16px); font-weight: 600; color: #f8fafc;">Services</div>
+                  <div style="font-size: clamp(10px, 1.2vw, 14px); color: #94a3b8;">25% • $600K</div>
+                </div>
+              </div>
+              <div style="margin-bottom: 1.5vw; display: flex; align-items: center; gap: 1vw;" class="legend-item">
+                <div style="width: 1.5vw; height: 1.5vw; background: #f59e0b; border-radius: 0.3vw;" class="legend-color"></div>
+                <div style="flex: 1;">
+                  <div style="font-size: clamp(12px, 1.5vw, 16px); font-weight: 600; color: #f8fafc;">Licensing</div>
+                  <div style="font-size: clamp(10px, 1.2vw, 14px); color: #94a3b8;">25% • $600K</div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 1vw;" class="legend-item">
+                <div style="width: 1.5vw; height: 1.5vw; background: #ef4444; border-radius: 0.3vw;" class="legend-color"></div>
+                <div style="flex: 1;">
+                  <div style="font-size: clamp(12px, 1.5vw, 16px); font-weight: 600; color: #f8fafc;">Other</div>
+                  <div style="font-size: clamp(10px, 1.2vw, 14px); color: #94a3b8;">15% • $360K</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `,
+    markdown: `## Revenue Distribution
+
+<div class="modern-donut-chart">
+
+\`\`\`mermaid
+pie title Revenue Distribution 2024
+    "Products" : 35
+    "Services" : 25
+    "Licensing" : 25
+    "Other" : 15
+\`\`\`
+
+### Breakdown by Category:
+
+| Category | Revenue | Growth |
+|----------|---------|--------|
+| 💼 **Products** | $840K | ↑ 45% |
+| 🔧 **Services** | $600K | ↑ 30% |
+| 📜 **Licensing** | $600K | ↑ 15% |
+| 📦 **Other** | $360K | ↑ 10% |
+
+**Total Revenue: $2.4M** (+32% YoY)
+
+</div>
+`,
+    colorVariants: [
+      { name: 'default', primary: '#3b82f6', secondary: '#10b981', accent: '#f59e0b' },
+      { name: 'purple', primary: '#8b5cf6', secondary: '#ec4899', accent: '#06b6d4' },
+      { name: 'green', primary: '#10b981', secondary: '#84cc16', accent: '#14b8a6' },
+    ]
+  },
+  {
+    id: 'modern-progress-ring',
+    name: 'Circular Progress Rings',
+    description: 'Animated circular progress indicators with metrics',
+    category: 'statistics',
+    tags: ['progress', 'circular', 'animated', 'KPI'],
+    previewBg: '#ffffff',
+    preview: `
+      <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 3vw; border-radius: 1.5vw;">
+        <div style="font-size: clamp(16px, 2.5vw, 28px); font-weight: 700; color: #1e293b; margin-bottom: 2vw; text-align: center;" class="section-title">Q4 Performance Metrics</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 2vw;">
+          <div style="text-align: center;" class="progress-item">
+            <div style="position: relative; width: 15vw; height: 15vw; margin: 0 auto 1vw;" class="progress-ring">
+              <svg style="width: 100%; height: 100%; transform: rotate(-90deg);" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" stroke="#e2e8f0" stroke-width="8" fill="none"/>
+                <circle cx="50" cy="50" r="40" stroke="#3b82f6" stroke-width="8" fill="none" stroke-dasharray="251.2" stroke-dashoffset="50.24" stroke-linecap="round"/>
+              </svg>
+              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" class="progress-text">
+                <div style="font-size: clamp(16px, 2.5vw, 32px); font-weight: 800; color: #3b82f6;">85%</div>
+                <div style="font-size: clamp(8px, 1vw, 12px); color: #64748b;">Sales</div>
+              </div>
+            </div>
+            <div style="font-size: clamp(10px, 1.2vw, 14px); color: #64748b; margin-top: 0.5vw;">Target: $2.5M</div>
+          </div>
+          <div style="text-align: center;" class="progress-item">
+            <div style="position: relative; width: 15vw; height: 15vw; margin: 0 auto 1vw;" class="progress-ring">
+              <svg style="width: 100%; height: 100%; transform: rotate(-90deg);" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" stroke="#e2e8f0" stroke-width="8" fill="none"/>
+                <circle cx="50" cy="50" r="40" stroke="#10b981" stroke-width="8" fill="none" stroke-dasharray="251.2" stroke-dashoffset="25.12" stroke-linecap="round"/>
+              </svg>
+              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" class="progress-text">
+                <div style="font-size: clamp(16px, 2.5vw, 32px); font-weight: 800; color: #10b981;">92%</div>
+                <div style="font-size: clamp(8px, 1vw, 12px); color: #64748b;">Support</div>
+              </div>
+            </div>
+            <div style="font-size: clamp(10px, 1.2vw, 14px); color: #64748b; margin-top: 0.5vw;">Target: 95% CSAT</div>
+          </div>
+          <div style="text-align: center;" class="progress-item">
+            <div style="position: relative; width: 15vw; height: 15vw; margin: 0 auto 1vw;" class="progress-ring">
+              <svg style="width: 100%; height: 100%; transform: rotate(-90deg);" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" stroke="#e2e8f0" stroke-width="8" fill="none"/>
+                <circle cx="50" cy="50" r="40" stroke="#f59e0b" stroke-width="8" fill="none" stroke-dasharray="251.2" stroke-dashoffset="87.92" stroke-linecap="round"/>
+              </svg>
+              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" class="progress-text">
+                <div style="font-size: clamp(16px, 2.5vw, 32px); font-weight: 800; color: #f59e0b;">65%</div>
+                <div style="font-size: clamp(8px, 1vw, 12px); color: #64748b;">Growth</div>
+              </div>
+            </div>
+            <div style="font-size: clamp(10px, 1.2vw, 14px); color: #64748b; margin-top: 0.5vw;">Target: 75% YoY</div>
+          </div>
+        </div>
+      </div>
+    `,
+    markdown: `## Q4 Performance Metrics
+
+<div class="progress-rings">
+
+### 📊 Sales Performance: 85%
+- **Achieved**: $2.125M
+- **Target**: $2.5M
+- **Gap**: $375K
+
+### 😊 Customer Satisfaction: 92%
+- **Current**: 92% CSAT
+- **Target**: 95% CSAT
+- **Status**: On Track
+
+### 📈 Growth Rate: 65%
+- **Current**: 48% YoY
+- **Target**: 75% YoY
+- **Status**: Needs Focus
+
+</div>
+
+### Summary:
+Overall performance is strong with sales and support metrics exceeding expectations. Growth requires additional focus in Q1.`
+  },
   {
     id: 'list-checklist',
     name: 'Checklist',

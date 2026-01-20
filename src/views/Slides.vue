@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import WorkspaceTopBar from "@/components/layout/WorkspaceTopBar.vue";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,6 +24,9 @@ import {
   Settings,
   X,
 } from "lucide-vue-next";
+import { fetchSlideDecks, slideDecks, getDeckThumbnail, createSlideDeck } from "@/services/slideDecks";
+import SlideThumbnailRenderer from "@/components/slides/SlideThumbnailRenderer.vue";
+import { vIntersection } from "@/directives/intersection";
 
 // Define types locally since they're not exported from WorkspaceTopBar
 interface BreadcrumbItem {
@@ -213,24 +216,9 @@ const slideTemplates: SlideTemplate[] = [
 ];
 
 // Mock slide decks data - in real app this would come from a store
-const slideDecks = ref([
-  {
-    id: "1",
-    title: "Q4 Business Review",
-    thumbnail: "/api/placeholder/400/225",
-    slideCount: 12,
-    lastModified: "2024-01-15",
-    shared: true,
-  },
-  {
-    id: "2", 
-    title: "Product Launch Presentation",
-    thumbnail: "/api/placeholder/400/225",
-    slideCount: 8,
-    lastModified: "2024-01-14",
-    shared: false,
-  },
-]);
+// Now using the slideDecks service
+const thumbnailUrls = ref<Record<string, string>>({});
+const loadingThumbnails = ref<Set<string>>(new Set());
 
 const filteredSlideDecks = computed(() => {
   return slideDecks.value;
@@ -317,11 +305,52 @@ const handleViewChange = (mode: "grid" | "list") => {
   viewMode.value = mode;
 };
 
-function createNewPresentation(template?: SlideTemplate) {
-  if (template?.slug && template.slug !== 'blank') {
-    router.push(`/slides/t/${template.slug}`);
+// Load slide decks on mount
+onMounted(async () => {
+  await fetchSlideDecks();
+  // Preload thumbnails for first few decks
+  const decksToPreload = slideDecks.value.slice(0, 5);
+  await Promise.allSettled(
+    decksToPreload.map(deck => loadThumbnail(deck.id))
+  );
+});
+
+// Load thumbnail for a specific deck
+async function loadThumbnail(deckId: string) {
+  if (thumbnailUrls.value[deckId] || loadingThumbnails.value.has(deckId)) {
+    return thumbnailUrls.value[deckId];
+  }
+
+  loadingThumbnails.value.add(deckId);
+  
+  try {
+    const deck = slideDecks.value.find(d => d.id === deckId);
+    if (deck) {
+      const thumbnail = await getDeckThumbnail(deck);
+      thumbnailUrls.value[deckId] = thumbnail;
+    }
+  } catch (error) {
+    console.warn('Failed to load thumbnail for deck:', deckId, error);
+  } finally {
+    loadingThumbnails.value.delete(deckId);
+  }
+}
+
+// Create new presentation with template
+async function createNewPresentation(template?: SlideTemplate) {
+  const title = template ? `${template.name} Presentation` : 'New Presentation';
+  const theme = template?.slug || 'default';
+  
+  const newDeck = await createSlideDeck(title, theme);
+  if (newDeck) {
+    router.push(`/slides/${newDeck.id}`);
   } else {
-    router.push('/slides/new');
+    // Fallback to router navigation
+    if (template?.slug && template.slug !== 'blank') {
+      router.push(`/slides/t/${template.slug}`);
+    } else {
+      router.push('/slides/new');
+    }
   }
 }
 
@@ -419,7 +448,7 @@ function selectSlideDeck(deckId: string) {
             <p class="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">
               Start a New Presentation
             </p>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Powered by Slidev - Modern slide decks</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Modern slide decks</p>
           </div>
           <Button variant="ghost" size="sm" class="text-primary-600" @click="createNewPresentation()">
             <Plus class="h-4 w-4 mr-1" /> Blank
@@ -542,11 +571,27 @@ function selectSlideDeck(deckId: string) {
                 <template v-if="viewMode === 'grid'">
                   <div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 relative overflow-hidden">
                     <img 
-                      :src="deck.thumbnail" 
+                      v-if="thumbnailUrls[deck.id]"
+                      :src="thumbnailUrls[deck.id]" 
                       :alt="deck.title"
                       class="w-full h-full object-cover"
                       loading="lazy"
                     />
+                    <SlideThumbnailRenderer
+                      v-else-if="deck.slides.length > 0"
+                      :slide="deck.slides[0]"
+                      :width="400"
+                      :height="225"
+                      :scale="0.6"
+                      class="w-full h-full"
+                      v-intersection="() => loadThumbnail(deck.id)"
+                    />
+                    <div 
+                      v-else
+                      class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center"
+                    >
+                      <Presentation class="w-12 h-12 text-gray-400" />
+                    </div>
                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
                     <div class="absolute top-2 right-2">
                       <input
@@ -568,11 +613,18 @@ function selectSlideDeck(deckId: string) {
                 <template v-else>
                   <div class="flex-shrink-0 w-20 h-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded overflow-hidden">
                     <img 
-                      :src="deck.thumbnail" 
+                      v-if="thumbnailUrls[deck.id]"
+                      :src="thumbnailUrls[deck.id]" 
                       :alt="deck.title"
                       class="w-full h-full object-cover"
                       loading="lazy"
                     />
+                    <div 
+                      v-else
+                      class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center"
+                    >
+                      <Presentation class="w-6 h-6 text-gray-400" />
+                    </div>
                   </div>
                   <div class="flex-1 min-w-0">
                     <h3 class="font-semibold text-gray-900 dark:text-gray-100 truncate">{{ deck.title }}</h3>

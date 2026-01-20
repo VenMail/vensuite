@@ -16,6 +16,30 @@ export interface SlidevPresentation {
 }
 
 /**
+ * Extract presenter notes (HTML comments at the end)
+ * Also processes click markers for synchronization
+ */
+function extractPresenterNotes(markdown: string): { notes: string; content: string } {
+  let content = markdown;
+  let notes = '';
+
+  // Extract notes from HTML comments at the end
+  const notesMatch = content.match(/<!--[\s\S]*?-->$/);
+  if (notesMatch) {
+    notes = notesMatch[0].replace(/<!--[\s\S]*?-->/, (match) => {
+      // Process click markers in notes
+      return match
+        .replace(/\[click\]/g, '<span class="click-marker">[click]</span>')
+        .replace(/<!--\s*/g, '')
+        .replace(/\s*-->/g, '');
+    });
+    content = content.substring(0, content.lastIndexOf('<!--')).trim();
+  }
+
+  return { notes: notes.trim(), content };
+}
+
+/**
  * Parse a complete Slidev markdown file into structured slides
  */
 export function parseSlidevMarkdown(markdown: string): SlidevPresentation {
@@ -30,37 +54,32 @@ export function parseSlidevMarkdown(markdown: string): SlidevPresentation {
     if (!trimmed) return;
 
     // Check for frontmatter at the start
-    let content = trimmed;
-    let frontmatter: Record<string, any> | undefined;
-    let notes = '';
+    let slideContent = trimmed;
+    let slideFrontmatter: Record<string, any> | undefined;
 
     // Parse frontmatter (YAML between --- markers)
     if (trimmed.startsWith('---')) {
       const endIndex = trimmed.indexOf('---', 3);
       if (endIndex > 0) {
         const yamlContent = trimmed.substring(3, endIndex).trim();
-        frontmatter = parseYamlFrontmatter(yamlContent);
-        content = trimmed.substring(endIndex + 3).trim();
+        slideFrontmatter = parseYamlFrontmatter(yamlContent);
+        slideContent = trimmed.substring(endIndex + 3).trim();
 
         // First slide's frontmatter is the headmatter
         if (index === 0) {
-          headmatter = frontmatter || {};
+          headmatter = slideFrontmatter || {};
         }
       }
     }
 
-    // Extract presenter notes (HTML comments at the end)
-    const notesMatch = content.match(/<!--\s*([\s\S]*?)\s*-->$/);
-    if (notesMatch) {
-      notes = notesMatch[1].trim();
-      content = content.substring(0, content.lastIndexOf('<!--')).trim();
-    }
+    // Extract presenter notes and process click markers
+    const { notes, content } = extractPresenterNotes(slideContent);
 
     slides.push({
       id: `slide-${index + 1}-${Date.now()}`,
       content,
       notes,
-      frontmatter
+      frontmatter: slideFrontmatter
     });
   });
 
@@ -204,28 +223,66 @@ export function parseMarkdownToHtml(markdown: string, layout?: string): string {
 function processMarkdownContent(markdown: string): string {
   let html = markdown;
 
+  // Handle LaTeX blocks (must be before regular code blocks)
+  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (_, latex) => {
+    return `<div class="latex-block">${latex}</div>`;
+  });
+  
+  // Handle inline LaTeX
+  html = html.replace(/\$([^$\n]+)\$/g, (_, latex) => {
+    return `<span class="latex-inline">${latex}</span>`;
+  });
+
   // Handle Mermaid diagrams
   html = html.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) => {
     return `<div class="mermaid-diagram" data-mermaid="${encodeURIComponent(code.trim())}">${renderMermaidPlaceholder(code.trim())}</div>`;
   });
 
-  // Handle other code blocks (must be before inline code)
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+  // Handle PlantUML diagrams
+  html = html.replace(/```plantuml\n([\s\S]*?)```/g, (_, code) => {
+    return `<div class="plantuml-diagram" data-plantuml="${encodeURIComponent(code.trim())}">${renderPlantumlPlaceholder(code.trim())}</div>`;
+  });
+
+  // Handle code blocks with line numbers and highlighting
+  html = html.replace(/```(\w+)?(\{[^}]*\})?\n([\s\S]*?)```/g, (_, lang, attrs, code) => {
     const escapedCode = code
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    return `<pre class="code-block"><code class="language-${lang || 'text'}">${escapedCode}</code></pre>`;
+    
+    // Parse attributes for line numbers, highlighting, etc.
+    const attributes = attrs ? attrs.slice(1, -1) : ''; // Remove { }
+    const hasLineNumbers = attributes.includes('line-numbers');
+    const highlightMatch = attributes.match(/lines="([^"]+)"/);
+    const highlightedLines = highlightMatch ? highlightMatch[1] : '';
+    
+    let codeClass = `language-${lang || 'text'}`;
+    if (hasLineNumbers) codeClass += ' line-numbers';
+    if (highlightedLines) codeClass += ` highlight-lines="${highlightedLines}"`;
+    
+    return `<pre class="code-block"><code class="${codeClass}">${escapedCode}</code></pre>`;
   });
 
-  // MDC Syntax: [text]{style="..."} or [text]{.class}
+  // Enhanced MDC Syntax: [text]{style="..."} or [text]{.class}
   html = html.replace(/\[([^\]]+)\]\{([^}]+)\}/g, (_, text, attrs) => {
     const styleMatch = attrs.match(/style="([^"]+)"/);
     const classMatch = attrs.match(/\.([a-zA-Z0-9_-]+)/g);
+    const idMatch = attrs.match(/#([a-zA-Z0-9_-]+)/);
     
     let style = styleMatch ? ` style="${styleMatch[1]}"` : '';
     let className = classMatch ? ` class="${classMatch.map((c: string) => c.slice(1)).join(' ')}"` : '';
+    let id = idMatch ? ` id="${idMatch[1]}"` : '';
     
-    return `<span${className}${style}>${text}</span>`;
+    return `<span${id}${className}${style}>${text}</span>`;
+  });
+
+  // Handle Vue components: :component-name{prop="value"}
+  html = html.replace(/:([a-zA-Z0-9-]+)\{([^}]+)\}/g, (_, componentName, props) => {
+    return `<component is="${componentName}" ${parseProps(props)} />`;
+  });
+
+  // Handle block components: ::component-name{prop="value"}
+  html = html.replace(/::([a-zA-Z0-9-]+)\{([^}]+)\}/g, (_, componentName, props) => {
+    return `<component is="${componentName}" ${parseProps(props)} />`;
   });
 
   // Inline code
@@ -253,20 +310,24 @@ function processMarkdownContent(markdown: string): string {
   // Links
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
-  // Images with optional attributes (MDC style)
+  // Images with enhanced attributes (MDC style)
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)\{([^}]+)\}/g, (_, alt, src, attrs) => {
     const widthMatch = attrs.match(/width=(\d+)/);
     const heightMatch = attrs.match(/height=(\d+)/);
     const classMatch = attrs.match(/\.([a-zA-Z0-9_-]+)/g);
+    const idMatch = attrs.match(/#([a-zA-Z0-9_-]+)/);
+    const isLazy = attrs.includes('lazy');
     
     let style = '';
     if (widthMatch) style += `width: ${widthMatch[1]}px; `;
     if (heightMatch) style += `height: ${heightMatch[1]}px; `;
     
     let className = classMatch ? ` class="${classMatch.map((c: string) => c.slice(1)).join(' ')}"` : '';
+    let id = idMatch ? ` id="${idMatch[1]}"` : '';
+    let loading = isLazy ? ' loading="lazy"' : '';
     let styleAttr = style ? ` style="${style.trim()}"` : '';
     
-    return `<img src="${src}" alt="${alt}"${className}${styleAttr} />`;
+    return `<img src="${src}" alt="${alt}"${className}${id}${styleAttr}${loading} />`;
   });
   
   // Regular images
@@ -410,9 +471,9 @@ function parseTwoColsLayout(markdown: string): { type: 'two-cols' | 'two-cols-he
   
   // Check for ::right:: slot (two-cols layout)
   if (markdown.includes('::right::')) {
-    const parts = markdown.split('::right::');
-    const leftContent = parts[0].trim();
-    const rightContent = parts[1]?.trim() || '';
+    const rightIndex = markdown.indexOf('::right::');
+    const leftContent = markdown.substring(0, rightIndex).trim();
+    const rightContent = markdown.substring(rightIndex + 9).trim(); // 9 = length of '::right::'
     
     return {
       type: 'two-cols',
@@ -454,6 +515,40 @@ function parseMarkdownTables(html: string): string {
     table += '\n</tbody>\n</table>';
     return table;
   });
+}
+
+/**
+ * Render a placeholder for PlantUML diagrams (actual rendering happens client-side)
+ */
+function renderPlantumlPlaceholder(_code: string): string {
+  return `<div class="plantuml-placeholder">
+    <svg class="plantuml-icon" viewBox="0 0 24 24" width="48" height="48">
+      <path fill="currentColor" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+    <span class="plantuml-label">PlantUML Diagram</span>
+  </div>`;
+}
+
+/**
+ * Parse props string for Vue components
+ */
+function parseProps(propsString: string): string {
+  return propsString
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(prop => {
+      const [key, ...valueParts] = prop.split('=');
+      const value = valueParts.join('=');
+      if (value) {
+        // Handle quoted values
+        if (value.startsWith('"') && value.endsWith('"')) {
+          return `${key}=${value}`;
+        }
+        return `${key}="${value}"`;
+      }
+      return key;
+    })
+    .join(' ');
 }
 
 /**

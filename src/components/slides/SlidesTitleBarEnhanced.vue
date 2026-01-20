@@ -1,52 +1,59 @@
 <template>
-  <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-3 transition-colors">
-    <!-- Main Title Bar -->
-    <div class="flex items-center justify-between">
-      <!-- Left: Navigation & Title -->
-      <div class="flex items-center gap-4">
+  <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <!-- Top Menu Bar -->
+    <div class="px-4 py-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+      <!-- Left: Back & Logo -->
+      <div class="flex items-center gap-3">
         <button @click="$emit('back')" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-          <ArrowLeft class="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <ArrowLeft class="w-4 h-4 text-gray-600 dark:text-gray-400" />
         </button>
 
-        <router-link to="/">
-          <component :is="iconComponent" class="w-[1.5rem] h-[3rem] text-purple-600 dark:text-purple-400" />
+        <router-link to="/" class="flex items-center">
+          <component :is="iconComponent" class="w-[1.2rem] h-[2.4rem] text-purple-600 dark:text-purple-400" />
         </router-link>
 
-        <div class="flex items-center gap-3">
-          <div
-            ref="titleRef"
-            :contenteditable="isTitleEdit"
-            class="font-bold text-lg border-b border-dotted border-gray-300 dark:border-gray-600 min-w-[120px] px-2 py-1 relative text-gray-900 dark:text-gray-100"
-            :class="{
-              'cursor-text': isTitleEdit,
-              'hover:bg-gray-100 dark:hover:bg-gray-800': !isTitleEdit,
-            }"
-            @click="startEditing"
-            @input="handleInput"
-            @blur="handleBlur"
-            @keydown.enter.prevent="handleEnter"
-          >
-            {{ title }}
-          </div>
-
-          <PencilIcon
-            v-if="!isTitleEdit"
-            @click="startEditing"
-            class="h-3 w-3 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
-          />
-
-          <!-- Slide Info -->
-          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <span>{{ (currentSlideIndex || 0) + 1 }} / {{ totalSlides || 0 }}</span>
-            <div class="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-            <span>{{ formatDuration(duration || 0) }}</span>
-          </div>
-        </div>
+        <!-- File Menu -->
+        <SlidesFileMenu
+          :can-undo="canUndo"
+          :can-redo="canRedo"
+          :total-slides="totalSlides"
+          :show-ruler="showRuler"
+          :show-thumbnails="showThumbnails"
+          :show-properties="showProperties"
+          :zoom="zoom"
+          :spell-check-enabled="spellCheckEnabled"
+          @new-deck="$emit('new-deck')"
+          @import-powerpoint="$emit('import-powerpoint')"
+          @import-html="$emit('import-html')"
+          @export="$emit('export', $event)"
+          @print="$emit('print')"
+          @undo="$emit('undo')"
+          @redo="$emit('redo')"
+          @duplicate-slide="$emit('duplicate-slide')"
+          @delete-slide="$emit('delete-slide')"
+          @toggle-fullscreen="$emit('toggle-fullscreen')"
+          @toggle-ruler="$emit('toggle-ruler')"
+          @zoom-in="$emit('zoom-in')"
+          @zoom-out="$emit('zoom-out')"
+          @reset-zoom="$emit('reset-zoom')"
+          @add-slide="$emit('add-slide')"
+          @show-infographics="$emit('show-infographics')"
+          @toggle-thumbnails="$emit('toggle-thumbnails')"
+          @toggle-properties="$emit('toggle-properties')"
+          @start-presentation="$emit('start-presentation')"
+          @start-presenter-mode="$emit('start-presenter-mode')"
+          @start-overview="$emit('start-overview')"
+          @export-for-presentation="$emit('export-for-presentation')"
+          @toggle-spell-check="$emit('toggle-spell-check')"
+          @show-emoji-picker="$emit('show-emoji-picker')"
+          @show-keyboard-shortcuts="$emit('show-keyboard-shortcuts')"
+          @show-help="$emit('show-help')"
+        />
       </div>
 
       <!-- Right: Status & Actions -->
       <div class="flex items-center gap-3">
-        <!-- Status -->
+        <!-- Status Indicator -->
         <div class="flex items-center gap-2 text-sm">
           <span :class="statusClasses">
             {{ statusText }}
@@ -64,7 +71,7 @@
 
         <!-- Quick Actions -->
         <div class="flex items-center gap-1">
-          <!-- Present Button (Primary Action) -->
+          <!-- Presentation Quick Start -->
           <Button
             variant="default"
             size="sm"
@@ -73,6 +80,16 @@
           >
             <Play class="h-4 w-4 mr-1" />
             Present
+          </Button>
+
+          <!-- Presenter Mode -->
+          <Button
+            variant="outline"
+            size="sm"
+            @click="$emit('start-presenter-mode')"
+          >
+            <MonitorSpeaker class="h-4 w-4 mr-1" />
+            Presenter
           </Button>
 
           <!-- Dark Mode Toggle -->
@@ -123,14 +140,67 @@
         </div>
       </div>
     </div>
+
+    <!-- Title Bar -->
+    <div class="px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div
+          ref="titleRef"
+          :contenteditable="isTitleEdit"
+          class="font-bold text-lg border-b border-dotted border-gray-300 dark:border-gray-600 min-w-[120px] px-2 py-1 relative text-gray-900 dark:text-gray-100"
+          :class="{
+            'cursor-text': isTitleEdit,
+            'hover:bg-gray-100 dark:hover:bg-gray-800': !isTitleEdit,
+          }"
+          @click="startEditing"
+          @input="handleInput"
+          @blur="handleBlur"
+          @keydown.enter.prevent="handleEnter"
+        >
+          {{ title }}
+        </div>
+
+        <PencilIcon
+          v-if="!isTitleEdit"
+          @click="startEditing"
+          class="h-3 w-3 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+        />
+
+        <!-- Slide Counter -->
+        <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <span>{{ (currentSlideIndex || 0) + 1 }} / {{ totalSlides }} slides</span>
+          <div class="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
+          <span>{{ formatDuration(duration) }}</span>
+        </div>
+      </div>
+
+      <!-- Quick Info -->
+      <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+        <!-- Theme Info -->
+        <div class="flex items-center gap-2">
+          <Palette class="h-4 w-4" />
+          <span>{{ currentTheme }}</span>
+        </div>
+
+        <!-- Layout Info -->
+        <div class="flex items-center gap-2">
+          <Layout class="h-4 w-4" />
+          <span>{{ currentLayout }}</span>
+        </div>
+
+        <!-- Word Count -->
+        <div class="flex items-center gap-2">
+          <FileText class="h-4 w-4" />
+          <span>{{ wordCount }} words</span>
+        </div>
+      </div>
+    </div>
   </header>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { 
-  ArrowLeft, PencilIcon, Share2, Wifi, WifiOff, Sun, Moon, Play
-} from 'lucide-vue-next';
+import { ArrowLeft, PencilIcon, Share2, Wifi, WifiOff, Sun, Moon, Play, MonitorSpeaker, Palette, Layout, FileText } from 'lucide-vue-next';
 import * as defaultIcons from '@iconify-prerendered/vue-file-icons';
 import Button from '@/components/ui/button/Button.vue';
 import ShareCard from '@/components/ShareCard.vue';
@@ -141,6 +211,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import SlidesFileMenu from './SlidesFileMenu.vue';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -155,7 +226,17 @@ const props = defineProps<{
   shareMembers?: any[];
   currentSlideIndex?: number;
   totalSlides?: number;
+  currentTheme?: string;
+  currentLayout?: string;
   duration?: number; // in seconds
+  wordCount?: number;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  showRuler?: boolean;
+  showThumbnails?: boolean;
+  showProperties?: boolean;
+  zoom?: number;
+  spellCheckEnabled?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -167,7 +248,32 @@ const emit = defineEmits<{
   (e: 'invite', payload: any): void;
   (e: 'update-member', payload: any): void;
   (e: 'remove-member', payload: any): void;
+  (e: 'new-deck'): void;
+  (e: 'import-powerpoint'): void;
+  (e: 'import-html'): void;
+  (e: 'export', format: 'pdf' | 'pptx'): void;
+  (e: 'print'): void;
+  (e: 'undo'): void;
+  (e: 'redo'): void;
+  (e: 'duplicate-slide'): void;
+  (e: 'delete-slide'): void;
+  (e: 'toggle-fullscreen'): void;
+  (e: 'toggle-ruler'): void;
+  (e: 'zoom-in'): void;
+  (e: 'zoom-out'): void;
+  (e: 'reset-zoom'): void;
+  (e: 'add-slide'): void;
+  (e: 'show-infographics'): void;
+  (e: 'toggle-thumbnails'): void;
+  (e: 'toggle-properties'): void;
   (e: 'start-presentation'): void;
+  (e: 'start-presenter-mode'): void;
+  (e: 'start-overview'): void;
+  (e: 'export-for-presentation'): void;
+  (e: 'toggle-spell-check'): void;
+  (e: 'show-emoji-picker'): void;
+  (e: 'show-keyboard-shortcuts'): void;
+  (e: 'show-help'): void;
 }>();
 
 const THEME_STORAGE_KEY = 'theme';

@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col h-screen bg-gray-50 dark:bg-gray-950">
-    <!-- Title Bar -->
+    <!-- Unified Title Bar -->
     <SlidesTitleBar
       :title="persistence.deckTitle"
       :is-saving="persistence.isSaving"
@@ -10,6 +10,12 @@
       :share-link="persistence.shareLink"
       :privacy-type="persistence.privacyType"
       :share-members="persistence.shareMembers"
+      :current-slide-index="editor.currentSlideIndex"
+      :total-slides="editor.slides.length"
+      :current-theme="editor.currentTheme"
+      :current-layout="editor.currentLayout"
+      :duration="presentationDuration"
+      :word-count="totalWordCount"
       @update:title="handleTitleChange"
       @manual-save="handleManualSave"
       @back="goBack"
@@ -18,6 +24,10 @@
       @invite="handleInviteMember"
       @update-member="handleUpdateMember"
       @remove-member="handleRemoveMember"
+      @start-presentation="presenter.startPresentation"
+      @start-presenter-mode="presenter.startPresenterMode"
+      @export="handleExport"
+      @print="handlePrint"
     />
 
     <!-- Main Toolbar -->
@@ -33,6 +43,7 @@
       @previous-slide="editor.previousSlide"
       @next-slide="editor.nextSlide"
       @add-slide="handleAddSlide"
+      @add-slide-with-template="handleAddSlideWithTemplate"
       @open-infographics="showInfographics = true"
       @export="handleExport"
       @present="presenter.startPresentation"
@@ -52,22 +63,90 @@
       />
 
       <!-- Main Editor/Preview Area -->
-      <div class="flex-1 flex flex-col bg-gray-100 dark:bg-gray-950">
+      <div class="flex-1 flex flex-col bg-gray-100 dark:bg-gray-950 min-h-0">
         <!-- Edit Mode -->
         <template v-if="editor.mode === 'edit'">
-          <div class="flex-1 flex overflow-hidden">
-            <!-- Markdown Editor -->
-            <SlidesMarkdownEditor
-              ref="markdownEditorRef"
-              :content="editor.currentSlideContent"
-              :notes="editor.currentSlideNotes"
-              @update:content="handleContentChange"
-              @update:notes="handleNotesChange"
-              @insert-markdown="handleInsertMarkdown"
-              @cursor-change="handleCursorChange"
+          <div class="flex-1 flex overflow-hidden min-h-0">
+            <!-- Markdown Editor (Full Height) -->
+            <div class="flex-1 min-w-0 h-full">
+              <SlidesMarkdownEditor
+                ref="markdownEditorRef"
+                :content="editor.currentSlideContent"
+                :notes="editor.currentSlideNotes"
+                @update:content="handleContentChange"
+                @update:notes="handleNotesChange"
+                @insert-markdown="handleInsertMarkdown"
+                @cursor-change="handleCursorChange"
+              />
+            </div>
+
+            <!-- Properties Panel (Center, Fixed Width) -->
+            <DynamicPropertiesPanel
+              v-if="!showAnimationPanel"
+              :layout="editor.currentLayout"
+              :background="editor.slideBackground"
+              :transition="editor.slideTransition"
+              :selected-element="selectedElement"
+              :element-type="selectedElementType"
+              :markdown-element="currentMarkdownElement"
+              @toggle-panel="() => {}"
+              @show-animation-panel="showAnimationPanel = true"
+              @update:layout="handleLayoutChange"
+              @update:background="handleBackgroundChange"
+              @update:transition="handleTransitionChange"
+              @apply-template="handleApplyTemplate"
+              @update-element-style="handleElementStyleUpdate"
+              @update-component-scale="handleComponentScale"
+              @clear-selection="handleClearSelection"
+              @update-markdown-element="handleMarkdownElementUpdate"
+              @clear-markdown-element="handleClearMarkdownElement"
+            />
+            
+            <!-- Animation Panel (replaces properties panel when shown) -->
+            <SlidesAnimationPane
+              v-if="showAnimationPanel"
+              :selected-element="selectedElement"
+              :markdown-element="currentMarkdownElement"
+              :animation-enabled="animationEnabled"
+              :animation-type="animationType"
+              :animation-duration="animationDuration"
+              :animation-delay="animationDelay"
+              :animation-easing="animationEasing"
+              :animation-repeat="animationRepeat"
+              :animation-repeat-count="animationRepeatCount"
+              :auto-advance-time="autoAdvanceTime"
+              :skip-in-presentation="skipInPresentation"
+              @back="showAnimationPanel = false"
+              @close="showAnimationPanel = false"
+              @update-animation="handleAnimationUpdate"
+              @toggle-animation="toggleAnimation"
+              @update-animation-type="updateAnimationType"
+              @update-animation-duration="updateAnimationDuration"
+              @update-animation-delay="updateAnimationDelay"
+              @update-animation-easing="updateAnimationEasing"
+              @update-animation-repeat="updateAnimationRepeat"
+              @update-animation-repeat-count="updateAnimationRepeatCount"
+              @update-auto-advance="updateAutoAdvanceTime"
+              @update-skip-in-presentation="updateSkipInPresentation"
             />
 
-            <!-- Live Preview (Read-Only) -->
+            <!-- Live Preview (Right, Flexible Width) -->
+            <div class="flex-1 min-w-0 max-w-[600px]">
+              <SlidesPreviewPane
+                :rendered-content="editor.renderedContent"
+                :layout-class="editor.getLayoutClass(editor.currentLayout)"
+                :background="editor.slideBackground"
+                :theme-background="editor.currentThemeObj?.colors.background"
+                :theme-text="editor.currentThemeObj?.colors.text"
+                :theme-style="editor.themeStyleObject as Record<string, string>"
+              />
+            </div>
+          </div>
+        </template>
+
+        <!-- Preview Mode (Read-Only) - Full Width -->
+        <template v-else-if="editor.mode === 'preview'">
+          <div class="flex-1 flex items-center justify-center p-6">
             <SlidesPreviewPane
               :rendered-content="editor.renderedContent"
               :layout-class="editor.getLayoutClass(editor.currentLayout)"
@@ -75,45 +154,13 @@
               :theme-background="editor.currentThemeObj?.colors.background"
               :theme-text="editor.currentThemeObj?.colors.text"
               :theme-style="editor.themeStyleObject as Record<string, string>"
+              :base-width="1200"
+              :base-height="900"
+              fullscreen
             />
           </div>
         </template>
-
-        <!-- Preview Mode (Read-Only) -->
-        <template v-else-if="editor.mode === 'preview'">
-          <SlidesPreviewPane
-            :rendered-content="editor.renderedContent"
-            :layout-class="editor.getLayoutClass(editor.currentLayout)"
-            :background="editor.slideBackground"
-            :theme-background="editor.currentThemeObj?.colors.background"
-            :theme-text="editor.currentThemeObj?.colors.text"
-            :theme-style="editor.themeStyleObject as Record<string, string>"
-            :base-width="960"
-            :base-height="720"
-            fullscreen
-          />
-        </template>
       </div>
-
-      <!-- Right Panel: Dynamic Properties -->
-      <DynamicPropertiesPanel
-        :layout="editor.currentLayout"
-        :background="editor.slideBackground"
-        :transition="editor.slideTransition"
-        :selected-element="selectedElement"
-        :element-type="selectedElementType"
-        :markdown-element="currentMarkdownElement"
-        @update:layout="handleLayoutChange"
-        @update:background="handleBackgroundChange"
-        @update:transition="handleTransitionChange"
-        @apply-template="handleApplyTemplate"
-        @update-element-style="handleElementStyleUpdate"
-        @update-component-scale="handleComponentScale"
-        @clear-selection="handleClearSelection"
-        @update-markdown-element="handleMarkdownElementUpdate"
-        @clear-markdown-element="handleClearMarkdownElement"
-        @apply-smart-sizing="handleApplySmartSizing"
-      />
     </div>
 
     <!-- Collaborator List -->
@@ -136,8 +183,8 @@
       </button>
     </div>
 
-    <!-- Presenter Mode Overlay -->
-    <SlidesPresenterOverlay
+    <!-- Enhanced Presenter Mode Overlay -->
+    <SlidesPresenterEnhanced
       :is-presenting="presenter.isPresenting"
       :current-slide-index="editor.currentSlideIndex"
       :total-slides="editor.slides.length"
@@ -154,6 +201,8 @@
       :is-camera-enabled="presenter.isCameraEnabled"
       :camera-stream="presenter.cameraStream"
       :show-overview="presenter.showOverview"
+      :slide-width="1200"
+      :slide-height="900"
       @exit="presenter.exitPresentation"
       @previous-slide="editor.previousSlide"
       @next-slide="editor.nextSlide"
@@ -195,7 +244,8 @@ import SlidesThumbnailSidebar from '@/components/slides/SlidesThumbnailSidebar.v
 import SlidesMarkdownEditor from '@/components/slides/SlidesMarkdownEditor.vue';
 import SlidesPreviewPane from '@/components/slides/SlidesPreviewPane.vue';
 import DynamicPropertiesPanel from '@/components/slides/DynamicPropertiesPanel.vue';
-import SlidesPresenterOverlay from '@/components/slides/SlidesPresenterOverlay.vue';
+import SlidesAnimationPane from '@/components/slides/SlidesAnimationPane.vue';
+import SlidesPresenterEnhanced from '@/components/slides/SlidesPresenterEnhanced.vue';
 import InfographicsDialog from '@/components/slides/InfographicsDialog.vue';
 
 // Composables
@@ -224,6 +274,19 @@ const showInfographics = ref(false);
 const selectedElement = ref<HTMLElement | null>(null);
 const selectedElementType = ref('');
 const currentMarkdownElement = ref<MarkdownElement | null>(null);
+
+// Animation State
+const showAnimationPanel = ref(false);
+const animationEnabled = ref(false);
+const animationType = ref('fadeIn');
+const animationDuration = ref(500);
+const animationDelay = ref(0);
+const animationEasing = ref('ease');
+const animationRepeat = ref(false);
+const animationRepeatCount = ref(1);
+const autoAdvanceTime = ref(0);
+const skipInPresentation = ref(false);
+
 
 // Collaboration state
 const collaborators = ref<Record<string, { name: string; ts: number }>>({});
@@ -273,6 +336,25 @@ const nextSlidePreviewHtml = computed(() => {
   return editor.getSlidePreview(nextSlide);
 });
 
+// Enhanced computed properties
+const totalWordCount = computed(() => {
+  return editor.slides.reduce((total: number, slide: any) => {
+    return total + slide.content.split(/\s+/).filter((word: string) => word.length > 0).length;
+  }, 0);
+});
+
+const presentationDuration = computed(() => {
+  // Estimate duration based on word count (200 words per minute)
+  const wordsPerMinute = 200;
+  const totalWords = totalWordCount.value;
+  return Math.ceil(totalWords / wordsPerMinute * 60); // in seconds
+});
+
+// Debug editor mode (after editor is initialized)
+watch(() => editor.mode, (newVal) => {
+  console.log('🎛️ editor.mode changed:', newVal);
+});
+
 // Event Handlers - Title Bar
 function handleTitleChange(value: string) {
   persistence.setTitle(value);
@@ -319,6 +401,13 @@ function handleLayoutChange(layout: string) {
 
 function handleAddSlide() {
   editor.addSlide();
+  persistence.markDirty();
+  nextTick(() => markdownEditorRef.value?.focus());
+}
+
+function handleAddSlideWithTemplate(template: SlideTemplate) {
+  editor.addSlide();
+  editor.applyTemplate(template);
   persistence.markDirty();
   nextTick(() => markdownEditorRef.value?.focus());
 }
@@ -374,7 +463,7 @@ function handleTransitionChange(transition: string) {
 }
 
 
-function handleApplyTemplate(template: SlideTemplate) {
+function handleApplyTemplate(template: any) {
   editor.applyTemplate(template);
   persistence.markDirty();
 }
@@ -389,6 +478,7 @@ function handleElementStyleUpdate(property: string, value: string) {
   // Mark as dirty to trigger save
   persistence.markDirty();
 }
+
 
 function handleComponentScale(scale: number) {
   if (!selectedElement.value) return;
@@ -415,19 +505,85 @@ function handleClearSelection() {
   }
 }
 
+// Animation Handlers
+function handleAnimationUpdate(animation: any) {
+  // Store animation data for the current element
+  if (selectedElement.value) {
+    selectedElement.value.dataset.animation = JSON.stringify(animation);
+    // Apply animation styles
+    if (animation.enabled) {
+      const repeatValue = animation.repeat 
+        ? animation.repeatCount === 'infinite' 
+          ? 'infinite' 
+          : animation.repeatCount
+        : '1';
+      selectedElement.value.style.animation = `${animation.type} ${animation.duration}ms ${animation.easing} ${animation.delay}ms ${repeatValue}`;
+    } else {
+      selectedElement.value.style.animation = '';
+    }
+  }
+  
+  persistence.markDirty();
+}
+
+function toggleAnimation() {
+  animationEnabled.value = !animationEnabled.value;
+  persistence.markDirty();
+}
+
+function updateAnimationType(type: string) {
+  animationType.value = type;
+  persistence.markDirty();
+}
+
+function updateAnimationDuration(duration: number) {
+  animationDuration.value = duration;
+  persistence.markDirty();
+}
+
+function updateAnimationDelay(delay: number) {
+  animationDelay.value = delay;
+  persistence.markDirty();
+}
+
+function updateAnimationEasing(easing: string) {
+  animationEasing.value = easing;
+  persistence.markDirty();
+}
+
+function updateAnimationRepeat(repeat: boolean) {
+  animationRepeat.value = repeat;
+  persistence.markDirty();
+}
+
+function updateAnimationRepeatCount(count: number | string) {
+  animationRepeatCount.value = Number(count);
+  persistence.markDirty();
+}
+
+function updateAutoAdvanceTime(time: number) {
+  autoAdvanceTime.value = time;
+  persistence.markDirty();
+}
+
+function updateSkipInPresentation(skip: boolean) {
+  skipInPresentation.value = skip;
+  persistence.markDirty();
+}
+
 // Event Handlers - Markdown Cursor Tracking
 function handleCursorChange(element: MarkdownElement | null) {
+  console.log('🔍 handleCursorChange called:', {
+    element: element ? `${element.type} at line ${element.startLine}` : 'null',
+    mode: editor.mode
+  });
+  
   // Update the current markdown element
   currentMarkdownElement.value = element;
   
   // Clear preview element selection when cursor moves in markdown
   if (selectedElement.value) {
     handleClearSelection();
-  }
-  
-  // Log for debugging
-  if (element) {
-    console.log('Cursor detected element:', element.type, 'at line', element.startLine);
   }
 }
 
@@ -459,11 +615,9 @@ function handleClearMarkdownElement() {
   currentMarkdownElement.value = null;
 }
 
-function handleApplySmartSizing(sizes: Record<string, string>) {
-  // Apply smart font sizing recommendations to the slide
-  console.log('Applying smart sizing:', sizes);
-  // This would typically update the slide's CSS or markdown
-  persistence.markDirty();
+// Enhanced UI Handlers
+function handlePrint() {
+  window.print();
 }
 
 // Event Handlers - Infographics
@@ -472,6 +626,88 @@ function handleInsertInfographic(markdown: string) {
   editor.updateSlideContent(currentContent + '\n\n' + markdown);
   persistence.markDirty();
   toast.success('Infographic inserted');
+}
+
+// Event Handlers - Templates
+async function handleTemplateRoute(templateSlug: string) {
+  // Initialize new deck first
+  persistence.initializeNewDeck();
+  
+  // Apply template based on slug
+  const template = getTemplateBySlug(templateSlug);
+  if (template) {
+    // Apply template settings and content
+    editor.setTheme(template.slug);
+    persistence.deckTitle = `${template.name} Presentation`;
+    
+    // Add template-specific slides
+    if (template.slug !== 'blank') {
+      await applyTemplateSlides(template);
+    }
+    
+    toast.success(`Created ${template.name} presentation`);
+  } else {
+    toast.error('Template not found, created blank presentation');
+  }
+}
+
+function getTemplateBySlug(slug: string) {
+  const templates = [
+    {
+      name: "Default Theme",
+      slug: "default",
+      slides: [
+        { content: "# Welcome\n\nStart creating your presentation", notes: "" },
+        { content: "## About\n\nAdd your content here", notes: "" }
+      ]
+    },
+    {
+      name: "Seriph Theme", 
+      slug: "seriph",
+      slides: [
+        { content: "# Professional Presentation\n\nUsing serif fonts", notes: "" },
+        { content: "## Key Points\n\n- First point\n- Second point\n- Third point", notes: "" }
+      ]
+    },
+    {
+      name: "Apple Basic",
+      slug: "apple-basic", 
+      slides: [
+        { content: "# Clean Design\n\nMinimalist approach", notes: "" },
+        { content: "## Simple & Elegant\n\nFocus on content", notes: "" }
+      ]
+    },
+    {
+      name: "Blank Canvas",
+      slug: "blank",
+      slides: [
+        { content: "# Start Here\n\nBegin your presentation", notes: "" }
+      ]
+    }
+  ];
+  
+  return templates.find(t => t.slug === slug);
+}
+
+async function applyTemplateSlides(template: any) {
+  // Clear existing slides by setting empty array
+  editor.setSlides([]);
+  
+  for (const slideData of template.slides) {
+    editor.addSlide();
+    editor.updateSlideContent(slideData.content);
+    if (slideData.notes) {
+      editor.updateSlideNotes(slideData.notes);
+    }
+    // Move to next slide for content
+    if (slideData !== template.slides[template.slides.length - 1]) {
+      editor.nextSlide();
+    }
+  }
+  
+  // Go back to first slide
+  editor.selectSlide(0);
+  persistence.markDirty();
 }
 
 // Event Handlers - Import
@@ -621,7 +857,12 @@ onMounted(async () => {
   persistence.setupNetworkListeners();
   
   const deckIdParam = route.params.deckId as string | undefined;
-  if (deckIdParam) {
+  const templateParam = route.params.template as string | undefined;
+  
+  if (templateParam) {
+    // Handle template route: /slides/t/:template
+    await handleTemplateRoute(templateParam);
+  } else if (deckIdParam) {
     if (deckIdParam === 'new') {
       // Initialize new deck with title guessing
       persistence.initializeNewDeck();

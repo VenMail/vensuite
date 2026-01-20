@@ -23,14 +23,16 @@
     </div>
     
     <!-- Preview Content: Read-Only -->
-    <div class="flex-1 flex items-center justify-center p-6 overflow-auto bg-gray-100 dark:bg-gray-950">
-      <div
-        ref="previewRef"
-        class="slide-preview-content"
-        :class="layoutClass"
-        :style="previewStyle"
-        v-html="renderedContent"
-      />
+    <div class="flex-1 overflow-auto bg-gray-100 dark:bg-gray-950 p-4">
+      <div class="flex items-center justify-center min-h-full">
+        <div
+          ref="previewRef"
+          class="slide-preview-content flex-shrink-0"
+          :class="layoutClass"
+          :style="previewStyle"
+          v-html="renderedContent"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -68,20 +70,30 @@ const previewRef = ref<HTMLElement | null>(null);
 // Composables
 const mermaid = useMermaid();
 
-// Computed style for preview
-const previewStyle = computed(() => ({
-  width: `${props.baseWidth}px`,
-  height: `${props.baseHeight}px`,
-  transform: `scale(${zoom.value})`,
-  transformOrigin: 'center center',
-  background: props.background || props.themeBackground || '#ffffff',
-  color: props.themeText || '#1e293b',
-  padding: '32px',
-  overflow: 'auto',
-  borderRadius: '8px',
-  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-  ...props.themeStyle
-}));
+// Computed style for preview with flexible dimensions
+const previewStyle = computed(() => {
+  const isFullscreen = props.fullscreen;
+  
+  return {
+    width: isFullscreen ? '90vw' : '800px',
+    height: isFullscreen ? '85vh' : '600px',
+    maxWidth: '100%',
+    maxHeight: '100%',
+    minWidth: '400px',
+    minHeight: '300px',
+    transform: `scale(${zoom.value})`,
+    transformOrigin: 'center center',
+    background: props.background || props.themeBackground || '#ffffff',
+    color: props.themeText || '#1e293b',
+    padding: isFullscreen ? '48px' : '32px',
+    overflow: 'hidden',
+    borderRadius: isFullscreen ? '16px' : '8px',
+    boxShadow: isFullscreen 
+      ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+      : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    ...props.themeStyle
+  };
+});
 
 // Watch for content changes and render mermaid diagrams
 watch(() => props.renderedContent, async () => {
@@ -354,16 +366,22 @@ defineExpose({ zoomIn, zoomOut, resetZoom, zoom, previewRef });
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  align-items: start; /* Align columns to top */
 }
 
 .slide-preview-content :deep(.two-cols-header-container) {
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .slide-preview-content :deep(.two-cols-header-container .header-content) {
   margin-bottom: 2rem;
+  flex-shrink: 0;
 }
 
 .slide-preview-content :deep(.two-cols-header-container .cols-container) {
@@ -371,10 +389,47 @@ defineExpose({ zoomIn, zoomOut, resetZoom, zoom, previewRef });
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  align-items: start; /* Align columns to top */
 }
 
 .slide-preview-content :deep(.col-left),
 .slide-preview-content :deep(.col-right) {
   min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.5rem; /* Scrollbar padding */
+  /* Ensure proper text alignment */
+  text-align: left;
+  /* Align content to top */
+  align-self: start;
+}
+
+/* Ensure content fits within column */
+.slide-preview-content :deep(.col-left) *,
+.slide-preview-content :deep(.col-right) * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Better list spacing in columns */
+.slide-preview-content :deep(.col-left ul),
+.slide-preview-content :deep(.col-right ul) {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.slide-preview-content :deep(.col-left li),
+.slide-preview-content :deep(.col-right li) {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+/* Header spacing in columns */
+.slide-preview-content :deep(.col-left h2),
+.slide-preview-content :deep(.col-right h2) {
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 </style>

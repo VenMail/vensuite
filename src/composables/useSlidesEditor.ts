@@ -36,6 +36,11 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
   const slideClass = ref('');
   const mode = ref<'edit' | 'preview'>('edit');
 
+  // Undo/Redo state
+  const history = ref<SlidevSlide[][]>([]);
+  const historyIndex = ref(-1);
+  const maxHistorySize = 50;
+
   // Computed
   const currentSlide = computed(() => slides.value[currentSlideIndex.value]);
   const nextSlidePreview = computed(() => slides.value[currentSlideIndex.value + 1]);
@@ -351,6 +356,41 @@ download: true
     return frontmatter + slideContent;
   }
 
+  // Undo/Redo functionality
+  function saveToHistory() {
+    const currentState = JSON.parse(JSON.stringify(slides.value));
+    
+    // Remove any states after current index
+    history.value = history.value.slice(0, historyIndex.value + 1);
+    
+    // Add new state
+    history.value.push(currentState);
+    historyIndex.value++;
+    
+    // Limit history size
+    if (history.value.length > maxHistorySize) {
+      history.value.shift();
+      historyIndex.value--;
+    }
+  }
+
+  function undo() {
+    if (canUndo.value) {
+      historyIndex.value--;
+      slides.value = JSON.parse(JSON.stringify(history.value[historyIndex.value]));
+    }
+  }
+
+  function redo() {
+    if (canRedo.value) {
+      historyIndex.value++;
+      slides.value = JSON.parse(JSON.stringify(history.value[historyIndex.value]));
+    }
+  }
+
+  const canUndo = computed(() => historyIndex.value > 0);
+  const canRedo = computed(() => historyIndex.value < history.value.length - 1);
+
   return {
     // State
     slides,
@@ -411,6 +451,13 @@ download: true
     // Bulk operations
     setSlides,
     reset,
+    
+    // Undo/Redo
+    canUndo,
+    canRedo,
+    undo,
+    redo,
+    saveToHistory,
     
     // Constants
     layouts: SLIDEV_LAYOUTS,
