@@ -44,25 +44,100 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
   isLoadingList.value = true;
   
   try {
-    console.log('🔍 Fetching slide decks with params:', {
-      type: 'slides',
-      sort: 'updated_at',
-      order: 'desc'
-    });
+    console.log('🔍 Fetching slide decks - trying multiple approaches...');
     
-    const response = await apiClient.get('/app-files', {
-      params: {
-        file_type: 'slides',
-        sort: 'updated_at',
-        order: 'desc'
+    // Try multiple approaches to find slide decks
+    let allItems: any[] = [];
+    let fetchMethods: string[] = [];
+    
+    // Method 1: Try file_type: 'slides'
+    try {
+      console.log('🔄 Trying file_type: slides');
+      const response1 = await apiClient.get('/app-files', {
+        params: {
+          file_type: 'slides',
+          sort: 'updated_at',
+          order: 'desc'
+        }
+      });
+      if (response1.data.data?.length > 0) {
+        allItems.push(...response1.data.data);
+        fetchMethods.push('file_type: slides');
       }
-    });
+    } catch (error) {
+      console.log('❌ file_type: slides failed');
+    }
+    
+    // Method 2: Try file_type: 'pptx' (since slides are being saved as pptx)
+    try {
+      console.log('🔄 Trying file_type: pptx');
+      const response2 = await apiClient.get('/app-files', {
+        params: {
+          file_type: 'pptx',
+          sort: 'updated_at',
+          order: 'desc'
+        }
+      });
+      if (response2.data.data?.length > 0) {
+        allItems.push(...response2.data.data);
+        fetchMethods.push('file_type: pptx');
+      }
+    } catch (error) {
+      console.log('❌ file_type: pptx failed');
+    }
+    
+    // Method 3: Try type: 'slides'
+    try {
+      console.log('🔄 Trying type: slides');
+      const response3 = await apiClient.get('/app-files', {
+        params: {
+          type: 'slides',
+          sort: 'updated_at',
+          order: 'desc'
+        }
+      });
+      if (response3.data.data?.length > 0) {
+        allItems.push(...response3.data.data);
+        fetchMethods.push('type: slides');
+      }
+    } catch (error) {
+      console.log('❌ type: slides failed');
+    }
+    
+    // Method 4: Try type: 'pptx'
+    try {
+      console.log('🔄 Trying type: pptx');
+      const response4 = await apiClient.get('/app-files', {
+        params: {
+          type: 'pptx',
+          sort: 'updated_at',
+          order: 'desc'
+        }
+      });
+      if (response4.data.data?.length > 0) {
+        allItems.push(...response4.data.data);
+        fetchMethods.push('type: pptx');
+      }
+    } catch (error) {
+      console.log('❌ type: pptx failed');
+    }
 
-    console.log('📄 API response:', response.data);
-    console.log('📄 Response data array:', response.data.data);
-    console.log('📄 Number of items returned:', response.data.data?.length || 0);
+    // Remove duplicates by ID
+    const uniqueItems = allItems.filter((item, index, self) => 
+      index === self.findIndex((t) => t.id === item.id)
+    );
 
-    const decks: SlideDeck[] = response.data.data.map((item: any) => {
+    console.log('📄 Combined results from methods:', fetchMethods.join(', '));
+    console.log('📄 Total unique items found:', uniqueItems.length);
+    console.log('📄 Items:', uniqueItems.map(item => ({
+      id: item.id,
+      title: item.title,
+      file_type: item.file_type,
+      hasContent: !!item.content,
+      hasMetadata: !!item.metadata
+    })));
+
+    const decks: SlideDeck[] = uniqueItems.map((item: any) => {
       console.log('🔍 Processing item:', {
         id: item.id,
         title: item.title,
@@ -91,10 +166,12 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
     console.log('🎯 Final decks array:', decks);
     console.log('🎯 Number of decks processed:', decks.length);
 
-    // Update cache
+    // Clear cache and update with fresh data
+    slideDecksCache.value.clear();
     decks.forEach(deck => {
       slideDecksCache.value.set(deck.id, deck);
     });
+    console.log('🗑️ Cache cleared and updated with', decks.length, 'decks');
 
     return decks;
   } catch (error) {
@@ -217,9 +294,37 @@ function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[]
     }
   }
   
+  // For PPTX files, check if content contains slide data in different format
+  if (content) {
+    try {
+      const data: any = JSON.parse(content);
+      // Check if it's a slide deck structure (from persistence)
+      if (data.title && data.theme && data.slides) {
+        console.log('✅ Found slide deck structure in content:', data.slides.length);
+        return data.slides;
+      }
+    } catch (error) {
+      console.warn('Content is not JSON, checking for other formats...');
+    }
+  }
+  
   // Fallback to metadata.slides
   if (!metadata || !metadata.slides) {
-    console.log('❌ No metadata.slides found, returning empty array');
+    console.log('❌ No metadata.slides found, checking for PPTX indicators...');
+    
+    // For PPTX files, create a default slide if we can't find any
+    if (content && (content.includes('pptx') || content.includes('presentation'))) {
+      console.log('🔄 PPTX file detected but no slides found, creating default slide');
+      return [{
+        id: 'slide-1-default',
+        content: '# Untitled Presentation\n\nYour presentation content here',
+        notes: '',
+        frontmatter: {
+          layout: 'default'
+        }
+      }];
+    }
+    
     return [];
   }
 

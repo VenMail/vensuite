@@ -23,6 +23,7 @@ import {
   Users,
   Settings,
   X,
+  RefreshCw,
 } from "lucide-vue-next";
 import { fetchSlideDecks, slideDecks, getDeckThumbnail, createSlideDeck } from "@/services/slideDecks";
 import SlideThumbnailRenderer from "@/components/slides/SlideThumbnailRenderer.vue";
@@ -221,6 +222,8 @@ const thumbnailUrls = ref<Record<string, string>>({});
 const loadingThumbnails = ref<Set<string>>(new Set());
 
 const filteredSlideDecks = computed(() => {
+  console.log('🔄 filteredSlideDecks computed, slideDecks.value:', slideDecks.value);
+  console.log('🔄 slideDecks.value length:', slideDecks.value.length);
   return slideDecks.value;
 });
 
@@ -271,6 +274,13 @@ const topBarActions = computed<ActionItem[]>(() => {
       component: "div",
       slot: "new-presentation",
     },
+    {
+      key: "refresh",
+      icon: RefreshCw,
+      component: Button,
+      props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+      onClick: () => refreshSlideDecks(),
+    },
   ];
 
   if (selectedSlideDeck.value) {
@@ -307,9 +317,14 @@ const handleViewChange = (mode: "grid" | "list") => {
 
 // Load slide decks on mount
 onMounted(async () => {
-  await fetchSlideDecks();
+  console.log('🚀 Slides.vue mounted, calling fetchSlideDecks()');
+  const fetchedDecks = await fetchSlideDecks();
+  console.log('📊 fetchSlideDecks returned:', fetchedDecks.length, 'decks');
+  console.log('📊 slideDecks.value after fetch:', slideDecks.value.length);
+  
   // Preload thumbnails for first few decks
   const decksToPreload = slideDecks.value.slice(0, 5);
+  console.log('🖼️ Preloading thumbnails for', decksToPreload.length, 'decks');
   await Promise.allSettled(
     decksToPreload.map(deck => loadThumbnail(deck.id))
   );
@@ -364,6 +379,13 @@ function editSlideDeck(deckId: string) {
 
 function selectSlideDeck(deckId: string) {
   selectedSlideDeck.value = selectedSlideDeck.value === deckId ? null : deckId;
+}
+
+// Manual refresh function for debugging
+async function refreshSlideDecks() {
+  console.log('🔄 Manual refresh triggered');
+  const fetchedDecks = await fetchSlideDecks();
+  console.log('📊 Manual refresh result:', fetchedDecks.length, 'decks');
 }
 </script>
 

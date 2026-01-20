@@ -928,8 +928,9 @@ const emit = defineEmits<{
   (e: 'update-element-style', property: string, value: string): void;
   (e: 'update-component-scale', scale: number): void;
   (e: 'clear-selection'): void;
-  (e: 'update-markdown-element', element: MarkdownElement): void;
+  (e: 'update-markdown-element', element: any): void;
   (e: 'clear-markdown-element'): void;
+  (e: 'update-animation', animation: ElementAnimation): void;
   (e: 'apply-smart-sizing', sizes: Record<string, string>): void;
 }>();
 
@@ -1048,6 +1049,9 @@ function updateElementAnimation(animation: ElementAnimation) {
   if (props.selectedElement) {
     applyAnimationToElement(props.selectedElement, animation);
   }
+  
+  // Emit to parent for preview pane
+  emit('update-animation', animation);
 }
 
 function applyAnimationToElement(element: HTMLElement, animation: ElementAnimation) {

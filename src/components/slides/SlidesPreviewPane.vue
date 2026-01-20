@@ -52,6 +52,7 @@ interface Props {
   baseWidth?: number;
   baseHeight?: number;
   fullscreen?: boolean;
+  animations?: Map<string, ElementAnimation>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -60,12 +61,27 @@ const props = withDefaults(defineProps<Props>(), {
   themeStyle: () => ({}),
   baseWidth: 560,
   baseHeight: 420,
-  fullscreen: false
+  fullscreen: false,
+  animations: () => new Map()
 });
 
 // Refs
 const zoom = ref(1);
 const previewRef = ref<HTMLElement | null>(null);
+const animationObserver = ref<IntersectionObserver | null>(null);
+const elementHandlers = ref<Map<HTMLElement, { click?: EventListener; mouseenter?: EventListener; mouseleave?: EventListener }>>(new Map());
+
+// Animation interface
+interface ElementAnimation {
+  enabled: boolean;
+  type: string;
+  duration: number;
+  delay: number;
+  easing: string;
+  trigger: 'onLoad' | 'onClick' | 'onHover' | 'onScroll';
+  repeat: boolean;
+  repeatCount: number | 'infinite';
+}
 
 // Composables
 const mermaid = useMermaid();
@@ -100,15 +116,205 @@ watch(() => props.renderedContent, async () => {
   await nextTick();
   if (previewRef.value) {
     await mermaid.renderAllDiagrams(previewRef.value);
+    applyAnimations();
   }
 }, { immediate: true });
+
+// Watch for animations changes
+watch(() => props.animations, () => {
+  applyAnimations();
+}, { deep: true });
 
 onMounted(async () => {
   await nextTick();
   if (previewRef.value) {
     await mermaid.renderAllDiagrams(previewRef.value);
+    applyAnimations();
+    setupScrollObserver();
   }
 });
+
+// Apply animations to elements
+function applyAnimations() {
+  if (!previewRef.value || !props.animations) return;
+  
+  // Clear existing animations and handlers
+  const elements = previewRef.value.querySelectorAll('*');
+  elements.forEach(el => {
+    const element = el as HTMLElement;
+    if (element.dataset.animation) {
+      element.style.animation = '';
+      element.classList.remove('animated-element', 'animation-on-load', 'animation-on-click', 'animation-on-hover', 'animation-on-scroll');
+      delete element.dataset.animation;
+      
+      // Clean up handlers
+      const handlers = elementHandlers.value.get(element);
+      if (handlers) {
+        if (handlers.click) element.removeEventListener('click', handlers.click);
+        if (handlers.mouseenter) element.removeEventListener('mouseenter', handlers.mouseenter);
+        if (handlers.mouseleave) element.removeEventListener('mouseleave', handlers.mouseleave);
+        elementHandlers.value.delete(element);
+      }
+    }
+  });
+  
+  // Apply new animations
+  props.animations.forEach((animation, elementId) => {
+    if (!animation.enabled) return;
+    
+    let element: HTMLElement | null = null;
+    
+    // Try to find element by ID
+    element = previewRef.value?.querySelector(`#${elementId}`) as HTMLElement;
+    
+    // If not found by ID, try other selectors
+    if (!element) {
+      // Try by data-id attribute
+      element = previewRef.value?.querySelector(`[data-id="${elementId}"]`) as HTMLElement;
+    }
+    
+    if (!element) {
+      // Try to find by text content (for markdown elements)
+      const allElements = previewRef.value?.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, span, div');
+      if (allElements) {
+        for (const el of allElements) {
+          const htmlElement = el as HTMLElement;
+          if (htmlElement.textContent?.trim() && elementId.includes('markdown')) {
+            // For markdown elements, use a heuristic based on position
+            const index = parseInt(elementId.split('-')[1]) || 0;
+            if (Array.from(allElements).indexOf(htmlElement) === index) {
+              element = htmlElement;
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    if (element) {
+      applyAnimationToElement(element, animation);
+    }
+  });
+}
+
+function applyAnimationToElement(element: HTMLElement, animation: ElementAnimation) {
+  if (!animation.enabled) {
+    element.style.animation = '';
+    element.classList.remove('animated-element', 'animation-on-load', 'animation-on-click', 'animation-on-hover', 'animation-on-scroll');
+    return;
+  }
+  
+  const repeatValue = animation.repeat 
+    ? animation.repeatCount === 'infinite' 
+      ? 'infinite' 
+      : animation.repeatCount
+    : '1';
+  
+  // Store animation data
+  element.dataset.animation = JSON.stringify(animation);
+  
+  // Add animation classes
+  element.classList.add('animated-element', `animation-${animation.trigger}`);
+  
+  // Apply animation style
+  element.style.animation = `${animation.type} ${animation.duration}ms ${animation.easing} ${animation.delay}ms ${repeatValue}`;
+  element.style.animationFillMode = 'both';
+  
+  // Setup event listeners for triggers
+  setupAnimationTriggers(element, animation);
+}
+
+function setupAnimationTriggers(element: HTMLElement, animation: ElementAnimation) {
+  // Get existing handlers
+  const handlers = elementHandlers.value.get(element) || {};
+  
+  // Remove existing listeners
+  if (handlers.click) {
+    element.removeEventListener('click', handlers.click);
+  }
+  if (handlers.mouseenter) {
+    element.removeEventListener('mouseenter', handlers.mouseenter);
+  }
+  if (handlers.mouseleave) {
+    element.removeEventListener('mouseleave', handlers.mouseleave);
+  }
+  
+  if (animation.trigger === 'onClick') {
+    handlers.click = () => {
+      element.classList.add('clicked');
+      // Restart animation
+      element.style.animation = 'none';
+      element.offsetHeight; // Trigger reflow
+      const repeatValue = animation.repeat 
+        ? animation.repeatCount === 'infinite' 
+          ? 'infinite' 
+          : animation.repeatCount
+        : '1';
+      element.style.animation = `${animation.type} ${animation.duration}ms ${animation.easing} ${animation.delay}ms ${repeatValue}`;
+      element.style.animationFillMode = 'both';
+      
+      setTimeout(() => {
+        element.classList.remove('clicked');
+      }, animation.duration + animation.delay);
+    };
+    element.addEventListener('click', handlers.click);
+  } else if (animation.trigger === 'onHover') {
+    handlers.mouseenter = () => {
+      element.classList.add('hovered');
+      // Restart animation
+      element.style.animation = 'none';
+      element.offsetHeight; // Trigger reflow
+      const repeatValue = animation.repeat 
+        ? animation.repeatCount === 'infinite' 
+          ? 'infinite' 
+          : animation.repeatCount
+        : '1';
+      element.style.animation = `${animation.type} ${animation.duration}ms ${animation.easing} ${animation.delay}ms ${repeatValue}`;
+      element.style.animationFillMode = 'both';
+    };
+    handlers.mouseleave = () => {
+      element.classList.remove('hovered');
+    };
+    element.addEventListener('mouseenter', handlers.mouseenter);
+    element.addEventListener('mouseleave', handlers.mouseleave);
+  }
+  
+  // Store handlers
+  elementHandlers.value.set(element, handlers);
+}
+
+function setupScrollObserver() {
+  if (!previewRef.value) return;
+  
+  // Clean up existing observer
+  if (animationObserver.value) {
+    animationObserver.value.disconnect();
+  }
+  
+  // Create new intersection observer for scroll-triggered animations
+  animationObserver.value = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        const element = entry.target as HTMLElement;
+        if (entry.isIntersecting) {
+          element.classList.add('scrolled-into-view');
+        } else {
+          element.classList.remove('scrolled-into-view');
+        }
+      });
+    },
+    {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    }
+  );
+  
+  // Observe all elements with scroll-triggered animations
+  const scrollElements = previewRef.value.querySelectorAll('.animation-on-scroll');
+  scrollElements.forEach(el => {
+    animationObserver.value?.observe(el);
+  });
+}
 
 // Zoom controls
 function zoomIn() {

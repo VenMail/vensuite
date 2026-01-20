@@ -107,27 +107,9 @@
               v-if="showAnimationPanel"
               :selected-element="selectedElement"
               :markdown-element="currentMarkdownElement"
-              :animation-enabled="animationEnabled"
-              :animation-type="animationType"
-              :animation-duration="animationDuration"
-              :animation-delay="animationDelay"
-              :animation-easing="animationEasing"
-              :animation-repeat="animationRepeat"
-              :animation-repeat-count="animationRepeatCount"
-              :auto-advance-time="autoAdvanceTime"
-              :skip-in-presentation="skipInPresentation"
               @back="showAnimationPanel = false"
               @close="showAnimationPanel = false"
               @update-animation="handleAnimationUpdate"
-              @toggle-animation="toggleAnimation"
-              @update-animation-type="updateAnimationType"
-              @update-animation-duration="updateAnimationDuration"
-              @update-animation-delay="updateAnimationDelay"
-              @update-animation-easing="updateAnimationEasing"
-              @update-animation-repeat="updateAnimationRepeat"
-              @update-animation-repeat-count="updateAnimationRepeatCount"
-              @update-auto-advance="updateAutoAdvanceTime"
-              @update-skip-in-presentation="updateSkipInPresentation"
             />
 
             <!-- Live Preview (Right, Flexible Width) -->
@@ -139,6 +121,7 @@
                 :theme-background="editor.currentThemeObj?.colors.background"
                 :theme-text="editor.currentThemeObj?.colors.text"
                 :theme-style="editor.themeStyleObject as Record<string, string>"
+                :animations="elementAnimations"
               />
             </div>
           </div>
@@ -156,6 +139,7 @@
               :theme-style="editor.themeStyleObject as Record<string, string>"
               :base-width="1200"
               :base-height="900"
+              :animations="elementAnimations"
               fullscreen
             />
           </div>
@@ -277,15 +261,18 @@ const currentMarkdownElement = ref<MarkdownElement | null>(null);
 
 // Animation State
 const showAnimationPanel = ref(false);
-const animationEnabled = ref(false);
-const animationType = ref('fadeIn');
-const animationDuration = ref(500);
-const animationDelay = ref(0);
-const animationEasing = ref('ease');
-const animationRepeat = ref(false);
-const animationRepeatCount = ref(1);
-const autoAdvanceTime = ref(0);
-const skipInPresentation = ref(false);
+const elementAnimations = ref<Map<string, ElementAnimation>>(new Map());
+
+interface ElementAnimation {
+  enabled: boolean;
+  type: string;
+  duration: number;
+  delay: number;
+  easing: string;
+  trigger: 'onLoad' | 'onClick' | 'onHover' | 'onScroll';
+  repeat: boolean;
+  repeatCount: number | 'infinite';
+}
 
 
 // Collaboration state
@@ -505,69 +492,11 @@ function handleClearSelection() {
   }
 }
 
-// Animation Handlers
-function handleAnimationUpdate(animation: any) {
-  // Store animation data for the current element
-  if (selectedElement.value) {
-    selectedElement.value.dataset.animation = JSON.stringify(animation);
-    // Apply animation styles
-    if (animation.enabled) {
-      const repeatValue = animation.repeat 
-        ? animation.repeatCount === 'infinite' 
-          ? 'infinite' 
-          : animation.repeatCount
-        : '1';
-      selectedElement.value.style.animation = `${animation.type} ${animation.duration}ms ${animation.easing} ${animation.delay}ms ${repeatValue}`;
-    } else {
-      selectedElement.value.style.animation = '';
-    }
-  }
-  
-  persistence.markDirty();
-}
 
-function toggleAnimation() {
-  animationEnabled.value = !animationEnabled.value;
-  persistence.markDirty();
-}
-
-function updateAnimationType(type: string) {
-  animationType.value = type;
-  persistence.markDirty();
-}
-
-function updateAnimationDuration(duration: number) {
-  animationDuration.value = duration;
-  persistence.markDirty();
-}
-
-function updateAnimationDelay(delay: number) {
-  animationDelay.value = delay;
-  persistence.markDirty();
-}
-
-function updateAnimationEasing(easing: string) {
-  animationEasing.value = easing;
-  persistence.markDirty();
-}
-
-function updateAnimationRepeat(repeat: boolean) {
-  animationRepeat.value = repeat;
-  persistence.markDirty();
-}
-
-function updateAnimationRepeatCount(count: number | string) {
-  animationRepeatCount.value = Number(count);
-  persistence.markDirty();
-}
-
-function updateAutoAdvanceTime(time: number) {
-  autoAdvanceTime.value = time;
-  persistence.markDirty();
-}
-
-function updateSkipInPresentation(skip: boolean) {
-  skipInPresentation.value = skip;
+// Animation handlers
+function handleAnimationUpdate(animation: ElementAnimation) {
+  const elementId = selectedElement.value?.id || (currentMarkdownElement.value ? `markdown-${currentMarkdownElement.value.startLine}` : 'unknown');
+  elementAnimations.value.set(elementId, animation);
   persistence.markDirty();
 }
 
