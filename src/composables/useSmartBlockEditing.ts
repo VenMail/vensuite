@@ -1,5 +1,4 @@
 import { ref, computed } from 'vue';
-import { debounce } from '@univerjs/core';
 
 export interface EditingState {
   element: HTMLElement | null;
@@ -15,11 +14,10 @@ export function useSmartBlockEditing() {
   const editingContent = ref('');
   const editingStyles = ref<Record<string, string>>({});
   const selectedElement = ref<HTMLElement | null>(null);
-
-  // Create debounced markdown update
-  const debouncedMarkdownUpdate = debounce((markdownContent: string, emitFn: Function) => {
-    emitFn('update-content', markdownContent);
-  }, 150);
+  
+  // Backup state for recovery
+  const originalContentBackup = ref('');
+  const originalStylesBackup = ref<Record<string, string>>({});
 
   // Double-click handler
   function handleDoubleClick(event: MouseEvent, previewRef: HTMLElement | null, _emit: Function) {
@@ -78,7 +76,7 @@ export function useSmartBlockEditing() {
       
       editableElement.dataset.originalMarkdown = originalMarkdown;
       
-      // Extract element information
+      // Get element information first
       const elementType = editableElement.dataset.elementType || 'text';
       const elementContent = editableElement.innerHTML || editableElement.textContent || '';
       
@@ -92,6 +90,10 @@ export function useSmartBlockEditing() {
         textAlign: computedStyle.textAlign || 'left',
         color: computedStyle.color
       };
+      
+      // Create backups for recovery
+      originalContentBackup.value = editableElement.innerHTML;
+      originalStylesBackup.value = { ...styles };
       
       // Set up editing state
       editingElement.value = editableElement;
@@ -112,51 +114,81 @@ export function useSmartBlockEditing() {
   }
 
   // Real-time update handler
-  function handleRealtimeUpdate(content: string, styles: Record<string, string>, emit: Function) {
+  function handleRealtimeUpdate(content: string, styles: Record<string, string>) {
     if (!editingElement.value) return;
     
     const element = editingElement.value;
     
-    // Try to get the original markdown from the element's data
-    let originalMarkdown = '';
-    if (element.dataset.originalMarkdown) {
-      originalMarkdown = element.dataset.originalMarkdown;
-    } else {
-      // Fallback to generating from current content
-      originalMarkdown = generateStyledMarkdown(content, styles, element);
-    }
-    
-    // Use debounced update
-    debouncedMarkdownUpdate(originalMarkdown, emit);
-    
-    // Update text content for immediate visual feedback
-    const plainText = content.replace(/<[^>]*>/g, '').trim();
-    if (element.textContent !== plainText) {
-      element.textContent = plainText;
+    // Update HTML content to preserve formatting during real-time updates
+    if (element.innerHTML !== content) {
+      element.innerHTML = content;
     }
     
     // Apply styles directly to the element
     applyStylesToElement(element, styles);
+    
+    // Don't emit during real-time updates to avoid constant re-renders
+    // Only emit on save
   }
 
-  // Save handler
-  function handleInlineSave(content: string, styles: Record<string, string>, emit: Function) {
+  // Save handler - receives full slide markdown from parent
+  function handleInlineSave(content: string, styles: Record<string, string>, emit: Function, fullSlideMarkdown?: string) {
     if (!editingElement.value) return;
     
     const element = editingElement.value;
-    const markdownContent = generateStyledMarkdown(content, styles, element);
+    const newElementMarkdown = generateStyledMarkdown(content, styles, element);
     
-    // Immediately emit for final save
-    emit('update-content', markdownContent);
-    
-    // Update text content
-    const plainText = content.replace(/<[^>]*>/g, '').trim();
-    if (element.textContent !== plainText) {
-      element.textContent = plainText;
+    // Update HTML content to preserve formatting
+    if (element.innerHTML !== content) {
+      element.innerHTML = content;
     }
     
     // Apply styles
     applyStylesToElement(element, styles);
+    
+    // Create a unique identifier for this element to avoid replacing wrong content
+    const elementId = element.dataset.elementIndex || Date.now().toString();
+    const uniqueMarker = `__EDIT_MARKER_${elementId}__`;
+    
+    // If we have full slide markdown, use safer replacement method
+    if (fullSlideMarkdown && element.dataset.originalMarkdown) {
+      const originalMarkdown = element.dataset.originalMarkdown;
+      
+      // First, try exact replacement
+      let updatedSlideMarkdown = fullSlideMarkdown.replace(originalMarkdown, newElementMarkdown);
+      
+      // If exact replacement didn't work (content might have changed), try with unique marker
+      if (updatedSlideMarkdown === fullSlideMarkdown) {
+        // Temporarily mark the element in the markdown
+        const tempMarkdown = fullSlideMarkdown.replace(originalMarkdown, uniqueMarker);
+        
+        // Then replace the marker with new content
+        updatedSlideMarkdown = tempMarkdown.replace(uniqueMarker, newElementMarkdown);
+      }
+      
+      // If still no change, fallback to appending or use more sophisticated method
+      if (updatedSlideMarkdown === fullSlideMarkdown) {
+        console.warn('Could not safely replace content, using fallback method');
+        // For headings, try to replace by heading level
+        const elementTag = element.tagName.toLowerCase();
+        if (elementTag.match(/^h[1-6]$/)) {
+          const headingLevel = elementTag.charAt(1);
+          const headingRegex = new RegExp(`^#{${headingLevel}}\s+.*$`, 'gm');
+          updatedSlideMarkdown = fullSlideMarkdown.replace(headingRegex, newElementMarkdown);
+        } else {
+          // For other elements, append at the end as last resort
+          updatedSlideMarkdown = fullSlideMarkdown + '\n\n' + newElementMarkdown;
+        }
+      }
+      
+      emit('update-content', updatedSlideMarkdown);
+    } else {
+      // Fallback: just emit the new element markdown (old behavior)
+      emit('update-content', newElementMarkdown);
+    }
+    
+    // Update the stored original markdown for future edits
+    element.dataset.originalMarkdown = newElementMarkdown;
     
     // Clear editing state
     clearEditingState();
@@ -312,6 +344,16 @@ export function useSmartBlockEditing() {
     editingElementType.value = '';
     editingContent.value = '';
     editingStyles.value = {};
+    originalContentBackup.value = '';
+    originalStylesBackup.value = {};
+  }
+  
+  // Recovery function
+  function restoreOriginalContent() {
+    if (editingElement.value && originalContentBackup.value) {
+      editingElement.value.innerHTML = originalContentBackup.value;
+      applyStylesToElement(editingElement.value, originalStylesBackup.value);
+    }
   }
 
   // Cleanup
@@ -341,6 +383,7 @@ export function useSmartBlockEditing() {
     setupInteractiveElements,
     cleanup,
     clearEditingState,
+    restoreOriginalContent,
     
     // Computed
     editingState: computed<EditingState>(() => ({

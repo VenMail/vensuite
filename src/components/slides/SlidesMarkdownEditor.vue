@@ -25,79 +25,6 @@
         >
           <Smile class="h-4 w-4 text-gray-500 dark:text-gray-400" />
         </button>
-        
-        <!-- Font Size Dropdown -->
-        <div class="relative" ref="fontSizeDropdownRef">
-          <button
-            class="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-gray-600 dark:text-gray-400"
-            title="Font Size"
-            @click="showFontSizeDropdown = !showFontSizeDropdown"
-          >
-            <Type class="h-3.5 w-3.5" />
-            <ChevronDown class="h-3 w-3" />
-          </button>
-          <div
-            v-if="showFontSizeDropdown"
-            class="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 py-1"
-          >
-            <button
-              v-for="size in fontSizes"
-              :key="size.value"
-              class="w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
-              @click="insertFontSize(size.value); showFontSizeDropdown = false"
-            >
-              <span>{{ size.label }}</span>
-              <code class="text-xs text-gray-400">{{ size.syntax }}</code>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Spacing Dropdown -->
-        <div class="relative" ref="spacingDropdownRef">
-          <button
-            class="flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-xs text-gray-600 dark:text-gray-400"
-            title="Spacing & Margins"
-            @click="showSpacingDropdown = !showSpacingDropdown"
-          >
-            <Space class="h-3.5 w-3.5" />
-            <ChevronDown class="h-3 w-3" />
-          </button>
-          <div
-            v-if="showSpacingDropdown"
-            class="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 py-1"
-          >
-            <div class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Padding</div>
-            <button
-              v-for="spacing in paddingOptions"
-              :key="spacing.value"
-              class="w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
-              @click="insertSpacing('p', spacing.value); showSpacingDropdown = false"
-            >
-              <span>{{ spacing.label }}</span>
-              <code class="text-xs text-gray-400">{{ spacing.class }}</code>
-            </button>
-            <div class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-t border-gray-200 dark:border-gray-700 mt-1">Margin</div>
-            <button
-              v-for="spacing in marginOptions"
-              :key="spacing.value"
-              class="w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
-              @click="insertSpacing('m', spacing.value); showSpacingDropdown = false"
-            >
-              <span>{{ spacing.label }}</span>
-              <code class="text-xs text-gray-400">{{ spacing.class }}</code>
-            </button>
-            <div class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-t border-gray-200 dark:border-gray-700 mt-1">Gap (for grids)</div>
-            <button
-              v-for="spacing in gapOptions"
-              :key="spacing.value"
-              class="w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
-              @click="insertSpacing('gap', spacing.value); showSpacingDropdown = false"
-            >
-              <span>{{ spacing.label }}</span>
-              <code class="text-xs text-gray-400">{{ spacing.class }}</code>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
     
@@ -111,6 +38,7 @@
       @keydown="handleKeydown"
       @select="handleSelection"
       @mouseup="handleSelection"
+      @click="emitCursorPositionChange"
     />
     
     <!-- Notes Section -->
@@ -145,13 +73,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, nextTick } from 'vue';
 import { 
   Heading, List, Code, Image, Quote, Table,
   GitBranch, LayoutGrid, Link, Palette, StickyNote, ChevronDown,
-  Smile, Type, Space
+  Smile
 } from 'lucide-vue-next';
 import EmojiPickerDialog from './EmojiPickerDialog.vue';
+import { getElementAtCursor, getCursorPosition, type MarkdownElement } from '@/utils/markdownElementDetector';
 
 interface Props {
   content: string;
@@ -173,15 +102,12 @@ const emit = defineEmits<{
   'update:content': [value: string];
   'update:notes': [value: string];
   'insert-markdown': [template: string];
+  'cursor-change': [element: MarkdownElement | null];
 }>();
 
 const editorRef = ref<HTMLTextAreaElement | null>(null);
 const showNotes = ref(false);
 const showEmojiPicker = ref(false);
-const showFontSizeDropdown = ref(false);
-const showSpacingDropdown = ref(false);
-const fontSizeDropdownRef = ref<HTMLElement | null>(null);
-const spacingDropdownRef = ref<HTMLElement | null>(null);
 const selectedText = ref('');
 const selectionStart = ref(0);
 const selectionEnd = ref(0);
@@ -199,49 +125,14 @@ const editorTools = [
   { name: 'styled', title: 'Styled Text', icon: Palette, template: '\n[Colored text]{style="color: #3b82f6; font-weight: bold"}\n' }
 ];
 
-// Font size options (Slidev/UnoCSS compatible)
-const fontSizes = [
-  { label: 'Extra Small', value: 'xs', syntax: 'text-xs' },
-  { label: 'Small', value: 'sm', syntax: 'text-sm' },
-  { label: 'Base', value: 'base', syntax: 'text-base' },
-  { label: 'Large', value: 'lg', syntax: 'text-lg' },
-  { label: 'Extra Large', value: 'xl', syntax: 'text-xl' },
-  { label: '2XL', value: '2xl', syntax: 'text-2xl' },
-  { label: '3XL', value: '3xl', syntax: 'text-3xl' },
-  { label: '4XL', value: '4xl', syntax: 'text-4xl' },
-  { label: '5XL', value: '5xl', syntax: 'text-5xl' },
-  { label: '6XL', value: '6xl', syntax: 'text-6xl' },
-];
-
-// Padding options
-const paddingOptions = [
-  { label: 'None', value: '0', class: 'p-0' },
-  { label: 'Small', value: '2', class: 'p-2' },
-  { label: 'Medium', value: '4', class: 'p-4' },
-  { label: 'Large', value: '8', class: 'p-8' },
-  { label: 'Extra Large', value: '12', class: 'p-12' },
-];
-
-// Margin options
-const marginOptions = [
-  { label: 'None', value: '0', class: 'm-0' },
-  { label: 'Small', value: '2', class: 'm-2' },
-  { label: 'Medium', value: '4', class: 'm-4' },
-  { label: 'Large', value: '8', class: 'm-8' },
-  { label: 'Auto (center)', value: 'auto', class: 'mx-auto' },
-];
-
-// Gap options
-const gapOptions = [
-  { label: 'Small', value: '2', class: 'gap-2' },
-  { label: 'Medium', value: '4', class: 'gap-4' },
-  { label: 'Large', value: '8', class: 'gap-8' },
-  { label: 'Extra Large', value: '12', class: 'gap-12' },
-];
 
 function handleInput(event: Event) {
   const target = event.target as HTMLTextAreaElement;
   emit('update:content', target.value);
+  // Emit cursor position change on input with delay to ensure content is updated
+  nextTick(() => {
+    emitCursorPositionChange();
+  });
 }
 
 function handleNotesInput(event: Event) {
@@ -253,7 +144,13 @@ function handleKeydown(event: KeyboardEvent) {
   if (event.key === 'Tab') {
     event.preventDefault();
     insertMarkdown('  ');
+    return;
   }
+  
+  // Emit cursor position change after key is processed
+  setTimeout(() => {
+    emitCursorPositionChange();
+  }, 10);
 }
 
 function handleSelection() {
@@ -263,6 +160,9 @@ function handleSelection() {
   selectionStart.value = textarea.selectionStart;
   selectionEnd.value = textarea.selectionEnd;
   selectedText.value = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+  
+  // Emit cursor position change event
+  emitCursorPositionChange();
 }
 
 function handleEmojiClick() {
@@ -293,66 +193,6 @@ function handleEmojiSelect(emoji: string) {
   });
 }
 
-function insertFontSize(size: string) {
-  const textarea = editorRef.value;
-  if (!textarea) return;
-  
-  handleSelection();
-  const value = textarea.value;
-  
-  if (selectedText.value) {
-    // Wrap selected text with styled span using Slidev/UnoCSS syntax
-    const styledText = `<span class="text-${size}">${selectedText.value}</span>`;
-    const newValue = value.substring(0, selectionStart.value) + styledText + value.substring(selectionEnd.value);
-    emit('update:content', newValue);
-  } else {
-    // Insert a placeholder with the class
-    const template = `\n<div class="text-${size}">\n\nYour content here\n\n</div>\n`;
-    insertMarkdown(template);
-  }
-}
-
-function insertSpacing(type: string, value: string) {
-  const textarea = editorRef.value;
-  if (!textarea) return;
-  
-  handleSelection();
-  const content = textarea.value;
-  
-  let className = '';
-  if (type === 'p') className = `p-${value}`;
-  else if (type === 'm') className = value === 'auto' ? 'mx-auto' : `m-${value}`;
-  else if (type === 'gap') className = `gap-${value}`;
-  
-  if (selectedText.value) {
-    // Wrap selected text
-    const styledText = `<div class="${className}">\n${selectedText.value}\n</div>`;
-    const newValue = content.substring(0, selectionStart.value) + styledText + content.substring(selectionEnd.value);
-    emit('update:content', newValue);
-  } else {
-    // Insert a block with the class
-    const template = `\n<div class="${className}">\n\nYour content here\n\n</div>\n`;
-    insertMarkdown(template);
-  }
-}
-
-// Close dropdowns when clicking outside
-function handleClickOutside(event: MouseEvent) {
-  if (fontSizeDropdownRef.value && !fontSizeDropdownRef.value.contains(event.target as Node)) {
-    showFontSizeDropdown.value = false;
-  }
-  if (spacingDropdownRef.value && !spacingDropdownRef.value.contains(event.target as Node)) {
-    showSpacingDropdown.value = false;
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
 
 function insertMarkdown(template: string) {
   const textarea = editorRef.value;
@@ -375,5 +215,21 @@ function focus() {
   editorRef.value?.focus();
 }
 
-defineExpose({ focus, editorRef, insertMarkdown, insertFontSize, insertSpacing });
+function emitCursorPositionChange() {
+  const textarea = editorRef.value;
+  if (!textarea) return;
+  
+  try {
+    const position = getCursorPosition(textarea);
+    const element = getElementAtCursor(textarea.value, position.line, position.column);
+    
+    // Always emit, even if null, to clear selection when cursor is in empty space
+    emit('cursor-change', element);
+  } catch (error) {
+    console.warn('Error detecting cursor position:', error);
+    emit('cursor-change', null);
+  }
+}
+
+defineExpose({ focus, editorRef, insertMarkdown });
 </script>

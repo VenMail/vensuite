@@ -4,7 +4,7 @@
  */
 
 import { ref, computed, nextTick, type Ref } from 'vue';
-import { debounce } from 'lodash-es';
+import { debounce } from '@univerjs/core';
 
 export interface FontSizingConstraints {
   minFontSize: number;

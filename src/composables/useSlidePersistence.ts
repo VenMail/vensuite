@@ -2,8 +2,9 @@
  * Slide persistence composable
  * Handles save, load, autosave, and export operations
  */
-import { ref, onUnmounted } from 'vue';
+import { ref, onUnmounted, computed } from 'vue';
 import { useFileStore } from '@/store/files';
+import { useAuthStore } from '@/store/auth';
 import { toast } from 'vue-sonner';
 import axios from 'axios';
 import { 
@@ -11,6 +12,8 @@ import {
   type SlidevSlide 
 } from '@/utils/slidevMarkdown';
 import type { SlidesEditorReturn } from './useSlidesEditor';
+import type { ShareMember, ShareLevel } from '@/utils/sharing';
+import { parseSharingInfoString, serializeSharingInfoString } from '@/utils/sharing';
 
 export interface UseSlidePersistenceOptions {
   editor: SlidesEditorReturn;
@@ -39,12 +42,24 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
   const hasUnsavedChanges = ref(false);
   const lastSavedAt = ref<Date | null>(null);
   const autosaveTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+  const hasUserMadeChanges = ref(false); // Track if user has made any changes
 
   // Sharing state
   const shareLink = ref('');
   const privacyType = ref(7);
-  const shareMembers = ref<any[]>([]);
+  const shareMembers = ref<ShareMember[]>([]);
   const isOffline = ref(!navigator.onLine);
+  
+  // Auth store for user info
+  const authStore = useAuthStore();
+  
+  // Computed properties
+  const canShare = computed(() => authStore.isAuthenticated && deckId.value);
+  const shareLinkDoc = computed(() => {
+    if (!deckId.value) return '';
+    const baseUrl = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin;
+    return `${baseUrl}/slides/${deckId.value}`;
+  });
 
   // Network status handlers
   function setOnline() {
@@ -58,6 +73,24 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
   // Mark as dirty and schedule autosave
   function markDirty() {
     hasUnsavedChanges.value = true;
+    
+    // Track first user change
+    if (!hasUserMadeChanges.value) {
+      hasUserMadeChanges.value = true;
+      // Auto-guess title from first slide if still untitled
+      if (deckTitle.value === 'Untitled Presentation') {
+        const guessedTitle = guessTitleFromSlides();
+        if (guessedTitle && guessedTitle !== 'Untitled Presentation') {
+          deckTitle.value = guessedTitle;
+          toast.info(`Auto-detected title: "${guessedTitle}"`);
+        }
+      }
+      // Trigger immediate auto-save on first change
+      setTimeout(() => {
+        persistDeck().catch(err => console.warn('First change auto-save failed:', err));
+      }, 1000);
+    }
+    
     scheduleAutosave();
   }
 
@@ -141,6 +174,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
 
       hasUnsavedChanges.value = false;
       lastSavedAt.value = new Date();
+      hasUserMadeChanges.value = false; // Reset user changes flag
 
       await hydrateSharing(id);
       return true;
@@ -159,8 +193,14 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
     try {
       const file = await fileStore.loadDocument(id, 'pptx') as any;
       if (file) {
-        shareLink.value = file.file_url || `${window.location.origin}/slides/${id}`;
+        shareLink.value = file.file_public_url || shareLinkDoc.value;
         privacyType.value = Number(file.privacy_type ?? 7);
+        
+        // Parse sharing members if available
+        if (file.sharing_info) {
+          const sharing = parseSharingInfoString(file.sharing_info);
+          shareMembers.value = (sharing as any).members || [];
+        }
       }
     } catch (error) {
       console.warn('Failed to hydrate sharing:', error);
@@ -174,11 +214,22 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
       return false;
     }
     try {
-      await axios.patch(`${FILES_ENDPOINT}/${deckId.value}`, { privacy_type: value });
+      const payload: any = { privacy_type: value };
+      if (shareMembers.value.length > 0) {
+        payload.sharing_info = serializeSharingInfoString({
+          members: shareMembers.value,
+          level: value as unknown as ShareLevel
+        } as any);
+      }
+      
+      await axios.patch(`${FILES_ENDPOINT}/${deckId.value}`, payload, {
+        headers: { Authorization: `Bearer ${fileStore.getToken()}` }
+      });
       privacyType.value = value;
       toast.success('Visibility updated');
       return true;
-    } catch {
+    } catch (error) {
+      console.error('Failed to update visibility:', error);
       toast.error('Failed to update visibility');
       return false;
     }
@@ -188,6 +239,53 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
   function setTitle(title: string) {
     deckTitle.value = title;
     markDirty();
+  }
+
+  // Auto-guess title from first slide content
+  function guessTitleFromSlides(): string {
+    const slides = editor.slides.value;
+    if (!slides || slides.length === 0) {
+      return 'Untitled Presentation';
+    }
+
+    const firstSlide = slides[0];
+    const content = firstSlide.content || '';
+
+    // Try to extract title from markdown content
+    // Look for # Title (h1)
+    const h1Match = content.match(/^#\s+(.+)$/m);
+    if (h1Match && h1Match[1]) {
+      return h1Match[1].trim();
+    }
+
+    // Look for ## Title (h2) if no h1 found
+    const h2Match = content.match(/^##\s+(.+)$/m);
+    if (h2Match && h2Match[1]) {
+      return h2Match[1].trim();
+    }
+
+    // Look for first line if it's not empty and doesn't contain markdown
+    const lines = content.split('\n').filter(line => line.trim().length > 0);
+    if (lines.length > 0) {
+      const firstLine = lines[0].trim();
+      // Skip if it looks like markdown syntax
+      if (!firstLine.startsWith('#') && !firstLine.startsWith('!') && !firstLine.startsWith('[') && firstLine.length < 50) {
+        return firstLine;
+      }
+    }
+
+    // Look for text content that might be a title
+    const textContent = content.replace(/[#*`\[\]{}()]/g, ' ').replace(/\s+/g, ' ').trim();
+    const words = textContent.split(' ').filter(word => word.length > 0);
+    if (words.length >= 2 && words.length <= 6) {
+      // If it's a short phrase, it might be a title
+      const candidate = words.slice(0, 5).join(' ');
+      if (candidate.length < 50) {
+        return candidate.charAt(0).toUpperCase() + candidate.slice(1);
+      }
+    }
+
+    return 'Untitled Presentation';
   }
 
   // Export functions
@@ -275,13 +373,28 @@ download: true
   }
 
   // Import functions
-  async function importFromPowerPoint(_file: File): Promise<boolean> {
+  async function importFromPowerPoint(file: File): Promise<boolean> {
     try {
       toast.info('Importing PowerPoint...');
-      // This would need the slidesStore import functionality
-      // For now, return false as placeholder
-      toast.error('PowerPoint import not yet implemented');
-      return false;
+      
+      // Use the slides store import functionality
+      const slidesStoreModule = await import('@/store/slides');
+      const slidesStore = (slidesStoreModule as any).useSlidesStore();
+      
+      await slidesStore.importPowerPoint(file);
+      
+      // Convert slides store data to our format
+      const importedSlides = slidesStore.pages.map((page: any, index: number) => ({
+        id: page.id,
+        content: `# ${page.name}\n\nSlide content ${index + 1}`,
+        notes: '',
+        frontmatter: {}
+      }));
+      
+      // Initialize with imported slides and title guessing
+      initializeNewDeck(importedSlides);
+      toast.success('PowerPoint imported successfully');
+      return true;
     } catch (error) {
       console.error('Import failed:', error);
       toast.error('Failed to import PowerPoint');
@@ -300,8 +413,8 @@ download: true
         notes: ''
       }));
 
-      editor.setSlides(newSlides);
-      markDirty();
+      // Initialize with imported slides and title guessing
+      initializeNewDeck(newSlides);
       toast.success('HTML imported successfully');
       return true;
     } catch (error) {
@@ -345,6 +458,25 @@ download: true
     cleanupNetworkListeners();
   });
 
+  // Initialize new deck with title guessing
+  function initializeNewDeck(initialSlides?: any[]) {
+    // Set default slides if none provided
+    if (initialSlides && initialSlides.length > 0) {
+      editor.setSlides(initialSlides);
+    }
+    
+    // Auto-guess title from first slide
+    const guessedTitle = guessTitleFromSlides();
+    if (guessedTitle && guessedTitle !== 'Untitled Presentation') {
+      deckTitle.value = guessedTitle;
+      toast.info(`Auto-detected title: "${guessedTitle}"`);
+    }
+    
+    // Reset state for new deck
+    hasUserMadeChanges.value = false;
+    hasUnsavedChanges.value = false;
+  }
+
   return {
     // State
     deckId,
@@ -359,6 +491,9 @@ download: true
     shareLink,
     privacyType,
     shareMembers,
+    canShare,
+    shareLinkDoc,
+    hasUserMadeChanges,
 
     // Core operations
     markDirty,
@@ -379,7 +514,16 @@ download: true
     // Lifecycle
     setupNetworkListeners,
     cleanupNetworkListeners,
-    cancelAutosave
+    cancelAutosave,
+    
+    // Sharing operations
+    hydrateSharing,
+    
+    // Title guessing
+    guessTitleFromSlides,
+    
+    // Initialize new deck
+    initializeNewDeck
   };
 }
 
