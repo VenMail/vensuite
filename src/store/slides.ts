@@ -5,10 +5,10 @@
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { useSlidesEditor } from '@/composables/useSlidesEditor';
-import { useSlidePersistence } from '@/composables/useSlidePersistence';
-import { usePresenter } from '@/composables/usePresenter';
-import { useSlideExport, type ExportOptions } from '@/composables/useSlideExportPipeline';
+import { useSlidesEditor } from '../composables/useSlidesEditor';
+import { useSlidePersistence } from '../composables/useSlidePersistence';
+import { usePresenter } from '../composables/usePresenter';
+import { useSlideExport, type ExportOptions } from '../composables/useSlideExportPipeline';
 
 export const useSlidesStore = defineStore('slides', () => {
   // Create a callback ref to avoid circular dependency

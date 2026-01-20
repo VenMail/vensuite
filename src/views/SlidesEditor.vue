@@ -38,6 +38,9 @@
       @start-presenter-mode="presenter.startPresenterMode"
       @export="handleExport"
       @print="handlePrint"
+      @zoom-in="handleZoomIn"
+      @zoom-out="handleZoomOut"
+      @reset-zoom="handleResetZoom"
     />
 
     <!-- Main Toolbar -->
@@ -244,7 +247,7 @@ import SlidesPresenter from '@/components/slides/SlidesPresenter.vue';
 import InfographicsDialog from '@/components/slides/InfographicsDialog.vue';
 
 // Composables
-import { useSlidesStore } from '@/store/slides';
+import { useSlidesStore } from '../store/slides';
 import { useAuthStore } from '@/store/auth';
 import { IWebsocketService, useWebSocket } from '@/lib/wsService';
 
@@ -574,6 +577,19 @@ function handleClearMarkdownElement() {
 // Enhanced UI Handlers
 function handlePrint() {
   window.print();
+}
+
+// Zoom handlers
+function handleZoomIn() {
+  editor.zoomIn();
+}
+
+function handleZoomOut() {
+  editor.zoomOut();
+}
+
+function handleResetZoom() {
+  editor.resetZoom();
 }
 
 // Event Handlers - Infographics

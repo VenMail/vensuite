@@ -49,6 +49,9 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
   const nextSlidePreview = computed(() => slides.value[currentSlideIndex.value + 1]);
   const currentThemeObj = computed(() => getThemeByValue(currentTheme.value));
 
+  // Zoom state
+  const zoom = ref(100);
+
   const currentSlideContent = computed({
     get: () => currentSlide.value?.content || '',
     set: (value: string) => {
@@ -434,6 +437,23 @@ download: true
   const canUndo = computed(() => historyIndex.value > 0);
   const canRedo = computed(() => historyIndex.value < history.value.length - 1);
 
+  // Zoom functions
+  function zoomIn() {
+    if (zoom.value < 200) {
+      zoom.value += 10;
+    }
+  }
+
+  function zoomOut() {
+    if (zoom.value > 50) {
+      zoom.value -= 10;
+    }
+  }
+
+  function resetZoom() {
+    zoom.value = 100;
+  }
+
   return {
     // State
     slides,
@@ -501,6 +521,12 @@ download: true
     undo,
     redo,
     saveToHistory,
+    
+    // Zoom
+    zoom,
+    zoomIn,
+    zoomOut,
+    resetZoom,
     
     // Constants
     layouts: SLIDEV_LAYOUTS,
