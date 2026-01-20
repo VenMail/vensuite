@@ -67,7 +67,7 @@
               @cursor-change="handleCursorChange"
             />
 
-            <!-- Live Preview -->
+            <!-- Live Preview (Read-Only) -->
             <SlidesPreviewPane
               :rendered-content="editor.renderedContent"
               :layout-class="editor.getLayoutClass(editor.currentLayout)"
@@ -79,7 +79,7 @@
           </div>
         </template>
 
-        <!-- Preview Mode -->
+        <!-- Preview Mode (Read-Only) -->
         <template v-else-if="editor.mode === 'preview'">
           <SlidesPreviewPane
             :rendered-content="editor.renderedContent"
@@ -100,13 +100,16 @@
         :layout="editor.currentLayout"
         :background="editor.slideBackground"
         :transition="editor.slideTransition"
-        :selected-element="null"
-        :element-type="''"
+        :selected-element="selectedElement"
+        :element-type="selectedElementType"
         :markdown-element="currentMarkdownElement"
         @update:layout="handleLayoutChange"
         @update:background="handleBackgroundChange"
         @update:transition="handleTransitionChange"
         @apply-template="handleApplyTemplate"
+        @update-element-style="handleElementStyleUpdate"
+        @update-component-scale="handleComponentScale"
+        @clear-selection="handleClearSelection"
         @update-markdown-element="handleMarkdownElementUpdate"
         @clear-markdown-element="handleClearMarkdownElement"
         @apply-smart-sizing="handleApplySmartSizing"
@@ -198,8 +201,10 @@ import InfographicsDialog from '@/components/slides/InfographicsDialog.vue';
 // Composables
 import { useSlideStoreEnhanced } from '@/store/slidesEnhanced';
 import { useAuthStore } from '@/store/auth';
+import { IWebsocketService, useWebSocket } from '@/lib/wsService';
 
 // Types
+import type { SlideTemplate } from '@/utils/slidevMarkdown';
 import type { MarkdownElement } from '@/utils/markdownElementDetector';
 
 const route = useRoute();
@@ -216,6 +221,8 @@ defineExpose({ pptxInput, htmlInput });
 
 // UI State
 const showInfographics = ref(false);
+const selectedElement = ref<HTMLElement | null>(null);
+const selectedElementType = ref('');
 const currentMarkdownElement = ref<MarkdownElement | null>(null);
 
 // Collaboration state
@@ -355,7 +362,6 @@ function handleInsertMarkdown(_template: string) {
   persistence.markDirty();
 }
 
-
 // Event Handlers - Properties Panel
 function handleBackgroundChange(background: string) {
   editor.setBackground(background);
@@ -374,11 +380,50 @@ function handleApplyTemplate(template: SlideTemplate) {
 }
 
 // Event Handlers - Dynamic Properties
+function handleElementStyleUpdate(property: string, value: string) {
+  if (!selectedElement.value) return;
+  
+  // Apply style to the selected element
+  selectedElement.value.style[property as any] = value;
+  
+  // Mark as dirty to trigger save
+  persistence.markDirty();
+}
+
+function handleComponentScale(scale: number) {
+  if (!selectedElement.value) return;
+  
+  // Apply scale transform
+  selectedElement.value.style.transform = `scale(${scale})`;
+  selectedElement.value.style.transformOrigin = 'center';
+  
+  // For mermaid diagrams, also adjust container
+  if (selectedElement.value.classList.contains('mermaid-diagram')) {
+    selectedElement.value.style.display = 'flex';
+    selectedElement.value.style.justifyContent = 'center';
+    selectedElement.value.style.alignItems = 'center';
+  }
+  
+  persistence.markDirty();
+}
+
+function handleClearSelection() {
+  if (selectedElement.value) {
+    selectedElement.value.classList.remove('selected-element');
+    selectedElement.value = null;
+    selectedElementType.value = '';
+  }
+}
 
 // Event Handlers - Markdown Cursor Tracking
 function handleCursorChange(element: MarkdownElement | null) {
   // Update the current markdown element
   currentMarkdownElement.value = element;
+  
+  // Clear preview element selection when cursor moves in markdown
+  if (selectedElement.value) {
+    handleClearSelection();
+  }
   
   // Log for debugging
   if (element) {
