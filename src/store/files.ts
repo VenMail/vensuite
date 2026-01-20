@@ -967,6 +967,25 @@ export const useFileStore = defineStore("files", {
       return uuidRegex.test(id);
     },
 
+    /** Check if a document ID is valid (either UUID or proper server ID) */
+    isValidDocumentId(id: string): boolean {
+      if (!id || typeof id !== 'string' || id.trim() === '') {
+        return false;
+      }
+      
+      // Check if it's a valid UUID
+      if (this.isLocalDocument(id)) {
+        return true;
+      }
+      
+      // Server IDs should be numeric or alphanumeric without special patterns like "1-251209-2255-177110-247"
+      // Valid server IDs are typically just numbers or simple alphanumeric strings
+      const validServerIdRegex = /^[a-zA-Z0-9_-]+$/;
+      const invalidPatternRegex = /^\d+-\d+-\d+-\d+-\d+$/; // Matches malformed IDs like "1-251209-2255-177110-247"
+      
+      return validServerIdRegex.test(id) && !invalidPatternRegex.test(id);
+    },
+
     /** Delete a local document from storage */
     deleteLocalDocument(id: string) {
       // Remove from localStorage
@@ -1309,6 +1328,13 @@ export const useFileStore = defineStore("files", {
           try {
             const item = JSON.parse(localStorage.getItem(key) || "{}");
             if (item && item.id) {
+              // Validate document ID - skip and clean up corrupted documents
+              if (!this.isValidDocumentId(item.id)) {
+                console.warn(`Found corrupted document in localStorage (${key}) with invalid ID: ${item.id}, removing...`);
+                localStorage.removeItem(key);
+                continue;
+              }
+
               // Ensure file_type is properly set based on storage key prefix if missing
               if (!item.file_type) {
                 if (key.startsWith("document_")) {
@@ -1327,6 +1353,8 @@ export const useFileStore = defineStore("files", {
             }
           } catch (error) {
             console.error(`Error parsing offline document ${key}:`, error);
+            // Remove corrupted localStorage entry
+            localStorage.removeItem(key);
           }
         }
       }
@@ -1397,20 +1425,38 @@ export const useFileStore = defineStore("files", {
         const auth = useAuthStore();
         const currentEmployee = auth?.employeeId || '';
         for (const doc of offlineDocs) {
+          // Validate document ID - skip and clean up corrupted documents
+          if (!this.isValidDocumentId(doc.id!)) {
+            console.warn('Found corrupted document with invalid ID, cleaning up:', doc.id);
+            if (doc.id) {
+              this.deleteLocalDocument(doc.id);
+            }
+            continue;
+          }
+
           // If this is a purely local document (UUID) or missing on server, try to push it
           const isLocal = this.isLocalDocument(doc.id!);
           const missingOnServer = !serverIdSet.has(doc.id!);
           const ownedByUser = !doc.employee_id || doc.employee_id === currentEmployee;
+          
+          // Only reconcile valid local UUIDs, skip malformed IDs
           if ((isLocal || missingOnServer) && ownedByUser) {
             // Ensure employee_id ownership when pushing
             if (!doc.employee_id && currentEmployee) {
               doc.employee_id = currentEmployee as any;
             }
-            const saved = await this.saveToAPI(doc);
-            if (saved && saved.id !== doc.id) {
-              // Clean up the old local id cache and state
-              this.deleteLocalDocument(doc.id!);
-              // New saved doc already persisted by saveToAPI via saveToLocalCache/updateFiles
+            
+            try {
+              const saved = await this.saveToAPI(doc);
+              if (saved && saved.id !== doc.id) {
+                // Clean up the old local id cache and state
+                this.deleteLocalDocument(doc.id!);
+                // New saved doc already persisted by saveToAPI via saveToLocalCache/updateFiles
+              }
+            } catch (saveError) {
+              console.warn(`Failed to reconcile document ${doc.id}:`, saveError);
+              // Continue with other documents instead of failing entire reconciliation
+              continue;
             }
           }
         }

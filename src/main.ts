@@ -31,10 +31,17 @@ import SlidesEditor from './views/SlidesEditor.vue'
 import Media from './views/Media.vue'
 
 const routes = [
+  // Public routes
   {
-    path: '/',
-    name: 'root',
-    component: () => import('./views/RootView.vue'),
+    path: '/login',
+    name: 'login',
+    component: Login,
+    meta: { public: true }
+  },
+  {
+    path: '/oauth/callback',
+    name: 'oauthCallback',
+    component: OauthCallback,
     meta: { public: true }
   },
   {
@@ -47,6 +54,7 @@ const routes = [
     path: '/f/by-id/:id/success',
     name: 'form-success-by-id',
     component: () => import('./views/FormPaymentSuccess.vue'),
+    meta: { public: true },
   },
   {
     path: '/f/:slug(.*)',
@@ -58,31 +66,27 @@ const routes = [
     path: '/f/by-id/:id',
     name: 'form-player-by-id',
     component: () => import('./views/FormPlayerHost.vue'),
+    meta: { public: true },
   },
+  
+  // Authenticated routes with layout
   {
-    path: '/login',
-    name: 'login',
-    component: Login,
-  },
-  {
-    path: '/oauth/callback',
-    name: 'oauthCallback',
-    component: OauthCallback,
-  },
-  {
-    path: '/app',
+    path: '/',
     component: AuthenticatedLayout,
     children: [
-      { path: 'sheets', name: 'sheets-view', component: Sheets },
-      { path: 'bin', name: 'bin-view', component: Bin },
+      { path: '', name: 'home', component: Home },
+      { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'docs/new', name: 'docs-new', component: DocsEditor, meta: { hideLayout: true } },
       { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true, public: true } },
       { path: 'docs/t/:template', name: 'docs-template', component: DocsEditor, meta: { hideLayout: true } },
+      { path: 'sheets', name: 'sheets-view', component: Sheets },
+      { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
+      { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true, public: true } },
+      { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },
       { path: 'slides', name: 'slides', component: () => import('./views/Slides.vue') },
       { path: 'slides/new', name: 'slides-new', component: SlidesEditor, meta: { hideLayout: true } },
       { path: 'slides/:deckId', name: 'slides-edit', component: SlidesEditor, meta: { hideLayout: true } },
       { path: 'slides/t/:template', name: 'slides-template', component: SlidesEditor, meta: { hideLayout: true } },
-      { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/t/:template', name: 'form-template', component: () => import('./views/FormTemplateHandler.vue'), meta: { hideLayout: true } },
       {
@@ -94,14 +98,11 @@ const routes = [
       },
       { path: 'forms/:id/settings', name: 'form-settings', component: FormBuilder, meta: { hideLayout: true } },
       { path: 'forms/:id/responses', name: 'form-responses', component: () => import('./views/FormResponses.vue'), meta: { hideLayout: true } },
+      { path: 'media', name: 'media', component: Media },
+      { path: 'bin', name: 'bin-view', component: Bin },
       { path: 'picker', name: 'file-picker', component: FilePicker, meta: { hideLayout: true } },
       { path: 'import/:id', name: 'import', component: Home },
-      { path: 'media', name: 'media', component: Media },
       { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true, public: true } },
-      { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true } },
-      { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true, public: true } },
-      { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true } },
-      { path: '', name: 'home', component: Home },
     ],
   },
 ]
@@ -110,6 +111,9 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
+
+// Store app instance for HMR cleanup
+let appInstance: ReturnType<typeof createApp> | null = null
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -128,6 +132,16 @@ authStore.hydrate()
 // Router guard
 const authGuard = createAuthGuard(authStore)
 router.beforeEach(authGuard)
+
+// HMR cleanup
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    if (appInstance) {
+      appInstance.unmount()
+      appInstance = null
+    }
+  })
+}
 
 // Ensure mammoth is loaded globally before initializing the editor plugin
 function ensureMammoth(): Promise<void> {
@@ -159,6 +173,18 @@ async function bootstrap() {
     },
   }))
 
+  // Ensure clean mount - unmount any existing instance first
+  const container = document.querySelector('#app')
+  if (container && appInstance) {
+    try {
+      appInstance.unmount()
+    } catch (e) {
+      console.warn('Failed to unmount previous app instance:', e)
+    }
+  }
+
+  // Mount and store the instance
+  appInstance = app
   app.mount('#app')
 }
 
