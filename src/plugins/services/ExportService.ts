@@ -54,7 +54,7 @@ export class ExportService implements IExportService {
       } else {
         // Primary path for XLSX: use LuckyExcel for 1:1 parity, fallback to registered exporter on error
         if (options.format === 'xlsx') {
-          const workbook = facadeAPI.getActiveWorkbook()
+          const workbook = (facadeAPI as any).getActiveWorkbook()
           if (!workbook) {
             throw new Error('No active workbook found')
           }
@@ -98,7 +98,7 @@ export class ExportService implements IExportService {
         throw new Error(`Unsupported export format: ${options.format}`)
       }
 
-      const workbook = facadeAPI.getActiveWorkbook()
+      const workbook = (facadeAPI as any).getActiveWorkbook()
       if (!workbook) {
         throw new Error('No active workbook found')
       }

@@ -199,6 +199,22 @@ export const useSlidesStore = defineStore('slides', () => {
     persistence.setTitle(title);
   }
 
+  function updateVisibility(value: number) {
+    return persistence.updateVisibility(value);
+  }
+
+  function initializeNewDeck() {
+    persistence.initializeNewDeck();
+  }
+
+  function importFromPowerPoint(file: File) {
+    return persistence.importFromPowerPoint(file);
+  }
+
+  function importFromHtml(file: File) {
+    return persistence.importFromHtml(file);
+  }
+
   function markDirty() {
     persistence.markDirty();
   }
@@ -258,6 +274,8 @@ export const useSlidesStore = defineStore('slides', () => {
     isSaving: persistence.isSaving,
     lastSavedAt: persistence.lastSavedAt,
     shareLink: persistence.shareLink,
+    privacyType: persistence.privacyType,
+    shareMembers: persistence.shareMembers,
     
     // Slide operations
     selectSlide,
@@ -298,6 +316,10 @@ export const useSlidesStore = defineStore('slides', () => {
     saveDeck,
     loadDeck,
     setTitle,
+    updateVisibility,
+    initializeNewDeck,
+    importFromPowerPoint,
+    importFromHtml,
     markDirty,
     startAutosave,
     stopAutosave,

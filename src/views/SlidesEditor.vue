@@ -2,14 +2,14 @@
   <div class="flex flex-col h-screen bg-gray-50 dark:bg-gray-950">
     <!-- Unified Title Bar -->
     <SlidesTitleBar
-      :title="persistence.deckTitle"
-      :is-saving="persistence.isSaving"
-      :has-unsaved-changes="persistence.hasUnsavedChanges"
+      :title="slideStore.deckTitle"
+      :is-saving="slideStore.isSaving"
+      :has-unsaved-changes="slideStore.hasUnsavedChanges"
       :is-offline="persistence.isOffline"
-      :last-saved-at="persistence.lastSavedAt"
-      :share-link="persistence.shareLink"
-      :privacy-type="persistence.privacyType"
-      :share-members="persistence.shareMembers"
+      :last-saved-at="slideStore.lastSavedAt"
+      :share-link="slideStore.shareLink"
+      :privacy-type="slideStore.privacyType"
+      :share-members="slideStore.shareMembers"
       :current-slide-index="editor.currentSlideIndex"
       :total-slides="editor.slides.length"
       :current-theme="editor.currentTheme"
@@ -30,7 +30,7 @@
       @manual-save="handleManualSave"
       @back="goBack"
       @copy-link="copyShareLink"
-      @change-privacy="persistence.updateVisibility"
+      @change-privacy="slideStore.updateVisibility"
       @invite="handleInviteMember"
       @update-member="handleUpdateMember"
       @remove-member="handleRemoveMember"
@@ -136,6 +136,7 @@
                 :theme-text="editor.currentThemeObj?.colors.text"
                 :theme-style="editor.themeStyleObject as Record<string, string>"
                 :animations="elementAnimations"
+                :zoom="editor.zoom"
               />
             </div>
           </div>
@@ -154,6 +155,7 @@
               :base-width="1200"
               :base-height="900"
               :animations="elementAnimations"
+              :zoom="editor.zoom"
               fullscreen
             />
           </div>
@@ -329,7 +331,7 @@ const canJoinRealtime = computed(() => {
   const deckId = route.params.deckId as string;
   if (!deckId || deckId === 'new') return false;
   if (authStore.isAuthenticated) return true;
-  return guestAccessiblePrivacyTypes.has(persistence.privacyType.valueOf());
+  return guestAccessiblePrivacyTypes.has(slideStore.privacyType.valueOf());
 });
 
 // Initialize composables
@@ -376,11 +378,11 @@ function goBack() {
 }
 
 function copyShareLink() {
-  if (!persistence.shareLink) {
+  if (!slideStore.shareLink) {
     toast.info('Share link not available yet');
     return;
   }
-  navigator.clipboard.writeText(persistence.shareLink).then(() => toast.success('Link copied'));
+  navigator.clipboard.writeText(slideStore.shareLink).then(() => toast.success('Link copied'));
 }
 
 function handleInviteMember(_payload: any) {
@@ -417,9 +419,9 @@ function handleAddSlideWithTemplate(template: SlideTemplate) {
 
 function handleExport(format: 'pdf' | 'pptx') {
   if (format === 'pdf') {
-    persistence.exportToPdf();
+    slideStore.exportToPdf();
   } else {
-    persistence.exportToPptx();
+    slideStore.exportToPptx();
   }
 }
 
@@ -447,7 +449,7 @@ function handleNotesChange(notes: string) {
 
 function handleInsertMarkdown(_template: string) {
   // Note: insertMarkdown doesn't trigger onSlideChange, so manually mark dirty
-  persistence.markDirty();
+  slideStore.markDirty();
 }
 
 // Event Handlers - Properties Panel
@@ -474,7 +476,7 @@ function handleElementStyleUpdate(property: string, value: string) {
   selectedElement.value.style[property as any] = value;
   
   // Note: Direct DOM manipulation doesn't trigger onSlideChange, so manually mark dirty
-  persistence.markDirty();
+  slideStore.markDirty();
 }
 
 
@@ -493,7 +495,7 @@ function handleComponentScale(scale: number) {
   }
   
   // Note: Direct DOM manipulation doesn't trigger onSlideChange, so manually mark dirty
-  persistence.markDirty();
+  slideStore.markDirty();
 }
 
 function handleClearSelection() {
@@ -510,7 +512,7 @@ function handleAnimationUpdate(animation: ElementAnimation) {
   const elementId = selectedElement.value?.id || (currentMarkdownElement.value ? `markdown-${currentMarkdownElement.value.startLine}` : 'unknown');
   elementAnimations.value.set(elementId, animation);
   // Note: Animation state doesn't trigger onSlideChange, so manually mark dirty
-  persistence.markDirty();
+  slideStore.markDirty();
 }
 
 // Element selection handler
@@ -564,7 +566,7 @@ function handleMarkdownElementUpdate(updatedElement: any) {
   const newContent = newLines.join('\n');
   editor.updateSlideContent(newContent);
   // Note: updateSlideContent already triggers onSlideChange, but this is explicit
-  persistence.markDirty();
+  slideStore.markDirty();
   
   // Update the current element reference
   currentMarkdownElement.value = updatedElement;
@@ -597,14 +599,14 @@ function handleInsertInfographic(markdown: string) {
   const currentContent = editor.currentSlideContent;
   editor.updateSlideContent(currentContent + '\n\n' + markdown);
   // Note: updateSlideContent already triggers onSlideChange, but this is explicit
-  persistence.markDirty();
+  slideStore.markDirty();
   toast.success('Infographic inserted');
 }
 
 // Event Handlers - Templates
 async function handleTemplateRoute(templateSlug: string) {
   // Initialize new deck first
-  persistence.initializeNewDeck();
+  slideStore.initializeNewDeck();
   
   // Apply template based on slug
   const template = getTemplateBySlug(templateSlug);
@@ -681,7 +683,7 @@ async function applyTemplateSlides(template: any) {
   // Go back to first slide
   editor.selectSlide(0);
   // Note: selectSlide doesn't trigger onSlideChange, so manually mark dirty
-  persistence.markDirty();
+  slideStore.markDirty();
 }
 
 // Event Handlers - Import
@@ -690,7 +692,7 @@ async function handlePowerPointFile(event: Event) {
   const file = input?.files?.[0];
   if (!file) return;
   
-  await persistence.importFromPowerPoint(file);
+  await slideStore.importFromPowerPoint(file);
   input.value = '';
 }
 
@@ -699,7 +701,7 @@ async function handleHtmlFile(event: Event) {
   const file = input?.files?.[0];
   if (!file) return;
   
-  await persistence.importFromHtml(file);
+  await slideStore.importFromHtml(file);
   input.value = '';
 }
 
@@ -834,14 +836,13 @@ onMounted(async () => {
   const templateParam = route.params.template as string | undefined;
   
   if (templateParam) {
-    // Handle template route: /slides/t/:template
     await handleTemplateRoute(templateParam);
   } else if (deckIdParam) {
     if (deckIdParam === 'new') {
       // Initialize new deck with title guessing
-      persistence.initializeNewDeck();
+      slideStore.initializeNewDeck();
     } else {
-      await persistence.loadDeck(deckIdParam);
+      await slideStore.loadDeck(deckIdParam);
     }
   }
 
@@ -877,9 +878,9 @@ watch(() => route.params.deckId, async (newId) => {
   if (newId && typeof newId === 'string') {
     if (newId === 'new') {
       // Initialize new deck with title guessing
-      persistence.initializeNewDeck();
+      slideStore.initializeNewDeck();
     } else {
-      await persistence.loadDeck(newId);
+      await slideStore.loadDeck(newId);
     }
   }
 });

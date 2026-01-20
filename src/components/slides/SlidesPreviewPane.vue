@@ -1,24 +1,10 @@
 <template>
   <div class="flex-1 flex flex-col relative">
-    <!-- Toolbar: Zoom Only -->
+    <!-- Toolbar: Preview Only -->
     <div class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Preview</span>
       <div class="flex items-center gap-2">
-        <button
-          class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-          title="Zoom Out"
-          @click="zoomOut"
-        >
-          <ZoomOut class="h-4 w-4 text-gray-500" />
-        </button>
-        <span class="text-xs text-gray-500 min-w-[40px] text-center">{{ Math.round(zoom * 100) }}%</span>
-        <button
-          class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-          title="Zoom In"
-          @click="zoomIn"
-        >
-          <ZoomIn class="h-4 w-4 text-gray-500" />
-        </button>
+        <span class="text-xs text-gray-500 min-w-[40px] text-center">{{ zoom }}%</span>
       </div>
     </div>
     
@@ -39,7 +25,6 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, nextTick, computed } from 'vue';
-import { ZoomIn, ZoomOut } from 'lucide-vue-next';
 import { useMermaid } from '@/composables/useMermaid';
 
 interface Props {
@@ -53,6 +38,7 @@ interface Props {
   baseHeight?: number;
   fullscreen?: boolean;
   animations?: Map<string, ElementAnimation>;
+  zoom?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -62,14 +48,17 @@ const props = withDefaults(defineProps<Props>(), {
   baseWidth: 560,
   baseHeight: 420,
   fullscreen: false,
-  animations: () => new Map()
+  animations: () => new Map(),
+  zoom: 100
 });
 
 // Refs
-const zoom = ref(1);
 const previewRef = ref<HTMLElement | null>(null);
 const animationObserver = ref<IntersectionObserver | null>(null);
 const elementHandlers = ref<Map<HTMLElement, { click?: EventListener; mouseenter?: EventListener; mouseleave?: EventListener }>>(new Map());
+
+// Sync zoom with prop
+const zoom = computed(() => props.zoom || 100);
 
 // Animation interface
 interface ElementAnimation {
@@ -97,7 +86,7 @@ const previewStyle = computed(() => {
     maxHeight: '100%',
     minWidth: '400px',
     minHeight: '300px',
-    transform: `scale(${zoom.value})`,
+    transform: `scale(${zoom.value / 100})`,
     transformOrigin: 'center center',
     background: props.background || props.themeBackground || '#ffffff',
     color: props.themeText || '#1e293b',
@@ -365,21 +354,8 @@ function setupScrollObserver() {
   });
 }
 
-// Zoom controls
-function zoomIn() {
-  zoom.value = Math.min(zoom.value + 0.1, 2);
-}
-
-function zoomOut() {
-  zoom.value = Math.max(zoom.value - 0.1, 0.5);
-}
-
-function resetZoom() {
-  zoom.value = 1;
-}
-
 // Expose functions for external use
-defineExpose({ zoomIn, zoomOut, resetZoom, zoom, previewRef });
+defineExpose({ previewRef });
 </script>
 
 <style scoped>
