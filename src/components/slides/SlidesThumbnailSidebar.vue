@@ -7,7 +7,7 @@
   >
     <!-- Header -->
     <div class="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-      <h3 v-if="!isMinimized" class="text-sm font-semibold text-gray-700 dark:text-gray-300">Slides</h3>
+      <h3 v-if="!isMinimized" class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{$t('Commons.heading.slides')}}</h3>
       <button
         @click="toggleMinimize"
         class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"

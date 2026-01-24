@@ -5,7 +5,7 @@
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" class="h-8 px-3">
           <FileText class="h-4 w-4 mr-2" />
-          File
+          {{$t('Commons.text.file')}}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent class="w-56">
@@ -19,7 +19,7 @@
         </DropdownMenuItem>
         <DropdownMenuItem @click="handleImportHtml">
           <Code class="h-4 w-4 mr-2" />
-          Import HTML
+          {{$t('Commons.button.import_html')}}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="handleExport('pdf')">
@@ -33,7 +33,7 @@
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="handlePrint">
           <Printer class="h-4 w-4 mr-2" />
-          Print
+          {{$t('Commons.text.print')}}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -43,7 +43,7 @@
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" class="h-8 px-3">
           <Edit class="h-4 w-4 mr-2" />
-          Edit
+          {{$t('Commons.heading.edit')}}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent class="w-56">
@@ -74,7 +74,7 @@
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" class="h-8 px-3">
           <Eye class="h-4 w-4 mr-2" />
-          View
+          {{$t('Commons.text.view')}}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent class="w-56">
@@ -90,17 +90,17 @@
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="zoomIn" :disabled="zoom >= 2">
           <ZoomIn class="h-4 w-4 mr-2" />
-          Zoom In
+          {{$t('Commons.text.zoom_in')}}
           <KeyboardShortcut class="ml-auto text-xs text-gray-500">Ctrl+</KeyboardShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem @click="zoomOut" :disabled="zoom <= 0.5">
           <ZoomOut class="h-4 w-4 mr-2" />
-          Zoom Out
+          {{$t('Commons.text.zoom_out')}}
           <KeyboardShortcut class="ml-auto text-xs text-gray-500">Ctrl-</KeyboardShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem @click="resetZoom">
           <Monitor class="h-4 w-4 mr-2" />
-          Reset Zoom
+          {{$t('Commons.text.reset_zoom')}}
           <KeyboardShortcut class="ml-auto text-xs text-gray-500">Ctrl+0</KeyboardShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -111,7 +111,7 @@
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" class="h-8 px-3">
           <Layout class="h-4 w-4 mr-2" />
-          Slides
+          {{$t('Commons.heading.slides')}}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent class="w-56">
@@ -173,7 +173,7 @@
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" class="h-8 px-3">
           <Wrench class="h-4 w-4 mr-2" />
-          Tools
+          {{$t('Commons.text.tools')}}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent class="w-56">
@@ -256,7 +256,7 @@ interface Props {
   spellCheckEnabled?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   canUndo: false,
   canRedo: false,
   totalSlides: 1,

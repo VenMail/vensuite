@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import Sidebar from './Sidebar.vue'
-import { Menu, Search, Filter, Moon, Sun, Plus } from 'lucide-vue-next'
+import { Search, Filter, Moon, Sun, Plus } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
+import { useMobileDetection } from '@/composables/useMobileDetection'
 
 defineProps({
   title: {
@@ -11,7 +12,7 @@ defineProps({
   }
 })
 
-const isMobile = ref(false)
+const { isMobile } = useMobileDetection({ breakpoint: 1024 })
 const isDark = ref(false)
 const sidebarVisible = ref(true)
 const sidebarCollapsed = ref(false)
@@ -60,27 +61,12 @@ const handleExternalTheme = (event: Event) => {
   }
 }
 
-const handleResize = () => {
-  isMobile.value = window.innerWidth < 768
-  if (isMobile.value) {
-    sidebarVisible.value = false
-    sidebarCollapsed.value = true
-  } else {
-    sidebarVisible.value = true
-    sidebarCollapsed.value = false
-  }
-}
-
 onMounted(() => {
-  handleResize()
-  window.addEventListener('resize', handleResize)
-
   syncThemeFromStorage()
   window.addEventListener(THEME_EVENT, handleExternalTheme as EventListener)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
   window.removeEventListener(THEME_EVENT, handleExternalTheme as EventListener)
 })
 </script>
@@ -107,26 +93,12 @@ onUnmounted(() => {
           'flex items-center',
           isMobile ? 'space-x-2' : 'space-x-6'
         )">
-          <button 
-            v-if="isMobile" 
-            @click="toggleSidebar"
-            :class="cn(
-              'inline-flex items-center justify-center p-2 rounded-sm',
-              'text-gray-600 dark:text-gray-300',
-              'hover:text-gray-800 dark:hover:text-gray-100',
-              'hover:bg-gray-100 dark:hover:bg-gray-800',
-              'focus:outline-none focus:ring-1 focus:ring-primary-500 dark:focus:ring-primary-400',
-              'transition duration-150 ease-in-out'
-            )"
-          >
-            <Menu class="h-5 w-5" />
-          </button>
-
           <div :class="cn(
             'flex items-center',
             isMobile ? '!ml-[-4px] scale-90' : 'mr-20'
           )">
-            <img src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full" />
+            <img v-if="isMobile" src="/manifest-icon-512.maskable.png" alt="VenMail Logo" class="h-6 w-6 rounded-sm" />
+            <img v-else src="/logo-black.png" alt="VenMail Logo" class="h-6 w-full" />
           </div>
 
           <!-- Search Bar -->

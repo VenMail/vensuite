@@ -119,7 +119,7 @@
         <template v-if="markdownElement.type === 'image'">
           <!-- Image Preview -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Preview</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.alt.preview')}}</label>
             <div class="border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-gray-50 dark:bg-gray-800 min-h-[100px] flex items-center justify-center">
               <img 
                 v-if="markdownElement.attributes?.url"
@@ -175,7 +175,7 @@
           
           <!-- Advanced Image Controls -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Advanced</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.button.advanced')}}</label>
             <div class="space-y-2">
               <!-- Image Position -->
               <div>
@@ -380,7 +380,7 @@
 
           <!-- Advanced Table Operations -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Advanced</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.button.advanced')}}</label>
             <div class="grid grid-cols-2 gap-1">
               <button
                 class="px-2 py-1.5 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
@@ -420,7 +420,7 @@
                   class="rounded"
                   @change="updateTableStyle('striped', ($event.target as HTMLInputElement).checked)"
                 />
-                Striped Rows
+                {{$t('Commons.text.striped_rows')}}
               </label>
               <label class="flex items-center gap-2 text-xs">
                 <input
@@ -460,9 +460,9 @@
               class="w-full text-sm px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded"
               @change="updateTableAlignment(($event.target as HTMLSelectElement).value)"
             >
-              <option value="left">Left</option>
+              <option value="left">{{$t('Commons.label.left')}}</option>
               <option value="center">Center</option>
-              <option value="right">Right</option>
+              <option value="right">{{$t('Commons.label.right')}}</option>
               <option value="justify">Justify</option>
             </select>
           </div>
@@ -515,7 +515,7 @@
                   <span v-if="isFontAnalyzing" class="text-blue-600 dark:text-blue-400 text-[10px]">Analyzing...</span>
                 </div>
                 <div class="text-sm font-mono text-blue-900 dark:text-blue-100">
-                  {{ markdownElement.type === 'heading' ? sizingRecommendations.title || 'Auto' : sizingRecommendations.body || 'Auto' }}
+                  {{ markdownElement.type === 'heading' ? sizingRecommendations.title || $t('Commons.text.auto') : sizingRecommendations.body || $t('Commons.text.auto') }}
                 </div>
               </div>
               
@@ -574,7 +574,7 @@
                   : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
                 @click="toggleTextFormatting('underline')"
               >
-                <u>Underline</u>
+                <u>{{$t('Commons.text.underline')}}</u>
               </button>
               <button
                 class="px-2 py-1 text-xs border rounded transition-colors"

@@ -1,6 +1,8 @@
 <template>
   <div ref="root" class="relative inline-flex items-center">
+    <!-- Desktop version -->
     <button
+      v-if="!props.isMobile"
       type="button"
       :aria-label="t('components.LanguageSwitcher.aria_label.change_language')"
       :aria-expanded="open"
@@ -8,13 +10,13 @@
       class="
         relative inline-flex items-center justify-center
         h-10 w-10 rounded-lg
-        bg-slate-50 hover:bg-slate-100
-        border border-slate-200 hover:border-slate-300
+        bg-slate-50 hover:bg-slate-100 dark:bg-gray-800 dark:hover:bg-gray-700
+        border border-slate-200 hover:border-slate-300 dark:border-gray-600 dark:hover:border-gray-500
         transition-all duration-200
         "
-      :class="open ? 'bg-slate-100 border-slate-300 shadow-sm' : ''"
+      :class="open ? 'bg-slate-100 border-slate-300 shadow-sm dark:bg-gray-700 dark:border-gray-500' : ''"
     >
-      <svg class="w-5 h-5 text-slate-600 transition-colors" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <svg class="w-5 h-5 text-slate-600 dark:text-gray-300 transition-colors" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
         <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8" />
         <ellipse cx="12" cy="12" rx="4" ry="9" fill="none" stroke="currentColor" stroke-width="1.4" />
         <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="1.4" />
@@ -28,8 +30,8 @@
           min-w-[22px] h-[18px]
           flex items-center justify-center
           px-1.5 rounded-md
-          bg-slate-700 text-white
-          border border-slate-600
+          bg-slate-700 text-white dark:bg-gray-100 dark:text-gray-900
+          border border-slate-600 dark:border-gray-300
           font-medium tracking-wide
           shadow-sm
           transition-all duration-200
@@ -42,13 +44,30 @@
       </span>
     </button>
 
+    <!-- Mobile version - compact cycling -->
+    <button
+      v-else
+      type="button"
+      :aria-label="t('components.LanguageSwitcher.aria_label.change_language')"
+      @click="cycleLanguage"
+      class="
+        relative inline-flex items-center justify-center
+        h-8 w-8 rounded-md
+        bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700
+        transition-all duration-200
+        "
+    >
+      <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ currentLanguageShort }}</span>
+    </button>
+
+    <!-- Desktop dropdown -->
     <div
-      v-if="open"
+      v-if="!props.isMobile && open"
       class="
         absolute top-12 min-w-[220px]
-        bg-white rounded-lg
-        border border-slate-200
-        shadow-xl
+        bg-white dark:bg-gray-800 rounded-lg
+        border border-slate-200 dark:border-gray-600
+        shadow-xl dark:shadow-gray-900/50
         overflow-hidden
         z-50
         animate-in fade-in slide-in-from-top-2 duration-200
@@ -56,8 +75,8 @@
       "
       @click.stop
     >
-      <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
-        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      <div class="px-4 py-2.5 bg-slate-50 dark:bg-gray-700 border-b border-slate-200 dark:border-gray-600">
+        <p class="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
           {{ t('LanguageSwitcher.text.select_language') }}
         </p>
       </div>
@@ -72,14 +91,14 @@
             flex w-full items-center gap-3 px-4 py-2.5
             transition-colors duration-150
           "
-          :class="locale === lang.code ? 'bg-slate-50 text-slate-900' : 'text-slate-700 hover:bg-slate-50'"
+          :class="locale === lang.code ? 'bg-slate-50 dark:bg-gray-700 text-slate-900 dark:text-gray-100' : 'text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700'"
         >
           <span class="text-lg leading-none">{{ lang.flag }}</span>
           <div class="flex-1 text-left">
             <div class="font-medium">{{ lang.nativeLabel }}</div>
-            <div class="text-xs text-slate-500">{{ lang.label }}</div>
+            <div class="text-xs text-slate-500 dark:text-gray-400">{{ lang.label }}</div>
           </div>
-          <svg v-if="locale === lang.code" class="w-4 h-4 text-slate-600" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <svg v-if="locale === lang.code" class="w-4 h-4 text-slate-600 dark:text-gray-300" viewBox="0 0 24 24" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
             <path d="M5 13.5l4 4 10-10" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
@@ -92,6 +111,13 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { setLocale } from '@/i18n';
 import { useTranslation } from '@/composables/useTranslation';
+
+const props = defineProps({
+  isMobile: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const root = ref(null);
 const open = ref(false);
@@ -107,10 +133,20 @@ function set(lng) {
   setLocale(lng);
 }
 
+function cycleLanguage() {
+  const currentIndex = languages.findIndex(lang => lang.code === locale.value);
+  const nextIndex = (currentIndex + 1) % languages.length;
+  setLocale(languages[nextIndex].code);
+}
+
 const badgeText = computed(() => {
   const key = `LanguageSwitcher.text.${locale.value}`;
   const val = t(key);
   return val === key ? String(locale.value || '').toUpperCase() : val;
+});
+
+const currentLanguageShort = computed(() => {
+  return String(locale.value || '').toUpperCase();
 });
 
 const languages = [

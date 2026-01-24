@@ -115,6 +115,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { useMobileDetection } from '@/composables/useMobileDetection'
 
 import AddFieldButton from "@/components/buttons/AddFieldButton.vue";
 // Import field editor components
@@ -171,13 +172,13 @@ const showFieldTypeSelector = ref(false);
 const recentlyUsedTypes = ref<FormQuestionType[]>([]);
 const formStore = useFormStore();
 const isExpanded = ref(false);
-const isDropdown = ref(false);
+const { isMobile } = useMobileDetection({ breakpoint: 1024 });
 
 const route = useRoute();
 const formID = route.params.id as string;
 
 const resizeListener = () => {
-  isDropdown.value = window.innerWidth <= 768;
+  isExpanded.value = isMobile.value;
 };
 
 onMounted(() => {

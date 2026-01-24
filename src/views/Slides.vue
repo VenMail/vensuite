@@ -473,7 +473,7 @@ async function refreshSlideDecks() {
             <p class="text-sm text-gray-600 dark:text-gray-300">Modern slide decks</p>
           </div>
           <Button variant="ghost" size="sm" class="text-primary-600" @click="createNewPresentation()">
-            <Plus class="h-4 w-4 mr-1" /> Blank
+            <Plus class="h-4 w-4 mr-1" /> {{$t('Commons.button.blank')}}
           </Button>
         </div>
         <div class="relative">
@@ -531,7 +531,7 @@ async function refreshSlideDecks() {
             <span
               class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              {{ selectedSlideDeck ? 'Selected Presentation' : 'Select All' }}
+              {{ selectedSlideDeck ? 'Selected Presentation' : $t('Commons.label.select_all') }}
             </span>
           </div>
 
@@ -560,7 +560,7 @@ async function refreshSlideDecks() {
                   'text-sm font-medium text-gray-700 dark:text-gray-300',
                 ]"
               >
-                {{ selectedSlideDeck ? 'Selected Presentation' : 'Select All' }}
+                {{ selectedSlideDeck ? 'Selected Presentation' : $t('Commons.label.select_all') }}
               </span>
             </Button>
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { Home, FileText, Table, Image, Menu, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, X, Presentation } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
+import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useRouter, useRoute } from 'vue-router'
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import * as defaultIcons from '@iconify-prerendered/vue-file-icons'
+import { useMobileDetection } from '@/composables/useMobileDetection'
 
 const props = defineProps({
   isVisible: {
@@ -23,6 +24,8 @@ const props = defineProps({
     required: true
   }
 })
+
+console.log('Sidebar props:', { isVisible: props.isVisible, isCollapsed: props.isCollapsed })
 
 const emit = defineEmits(['toggle', 'collapse'])
 
@@ -39,8 +42,12 @@ const items = [
 const router = useRouter()
 const route = useRoute()
 const activeItem = ref('Home')
-const isMobile = ref(false)
+const { isMobile } = useMobileDetection({ breakpoint: 1024 })
 const isDialogOpen = ref(false)
+
+function goToVenmail() {
+  window.open('https://m.venmail.io', '_blank')
+}
 
 watch(() => route.path, (path) => {
   console.log('Route path changed:', path)
@@ -71,23 +78,13 @@ const setActiveItem = (item: string, route: string) => {
   }
 }
 
-onMounted(() => {
-  console.log('Sidebar mounted, initial route path:', route.path)
-  const handleResize = () => {
-    isMobile.value = window.innerWidth < 768
-  }
-  handleResize()
-  window.addEventListener('resize', handleResize)
-})
-
 const sidebarClasses = computed(() =>
   cn(
-    'h-full border-r transition-all duration-200',
-    'bg-white dark:bg-gray-900',
-    'border-gray-200 dark:border-gray-800',
+    'h-full transition-all duration-200',
+    props.isVisible ? 'border-r bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800' : '',
     props.isVisible ? 'translate-x-0' : '-translate-x-full',
-    props.isCollapsed ? 'w-16' : 'w-64',
-    isMobile.value ? 'fixed top-0 left-0 z-40' : ''
+    props.isVisible ? (props.isCollapsed ? 'w-16' : 'w-64') : 'w-0',
+    // Remove fixed positioning on mobile to integrate with layout
   )
 )
 
@@ -150,8 +147,34 @@ function createNewFile(type: string, template?: string) {
 <template>
   <div>
     <!-- Sidebar -->
-    <div :class="sidebarClasses">
+    <div v-if="props.isVisible" :class="sidebarClasses">
       <div class="flex flex-col h-full">
+        <!-- back nav -->
+        <div class="px-4 pt-4">
+          <!-- Mobile: Icon-only button -->
+          <button
+            v-if="isMobile"
+            class="relative inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+            @click="goToVenmail"
+            :aria-label="$t('Views.Home.link.back_to_venmail')"
+          >
+            <img src="/manifest-icon-512.maskable.png" alt="VenMail" class="w-6 h-6 rounded-sm" />
+            <div class="absolute -top-1 -left-1 w-4 h-4 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-sm">
+              <ArrowLeft class="w-3 h-3 text-gray-600 dark:text-gray-300" />
+            </div>
+          </button>
+
+          <!-- Desktop: Text button -->
+          <button
+            v-else
+            class="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-500"
+            @click="goToVenmail"
+          >
+            <ArrowLeft class="h-4 w-4" />
+            {{$t('Views.Home.link.back_to_venmail')}}
+          </button>
+        </div>
+
         <!-- Top Section with New Button and Controls -->
         <div class="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800 gap-2">
           <Dialog v-model:open="isDialogOpen" ref="dialogRef">
@@ -197,10 +220,7 @@ function createNewFile(type: string, template?: string) {
             <ChevronRight v-else class="h-5 w-5 text-gray-500 dark:text-gray-400" />
           </button>
 
-          <!-- Mobile: Close Button -->
-          <button v-else @click="closeSidebar" class="p-1 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0">
-            <X class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-          </button>
+          <!-- Mobile: Close Button - Hidden on mobile per design -->
         </div>
 
         <!-- File Navigation -->
@@ -227,9 +247,6 @@ function createNewFile(type: string, template?: string) {
       </div>
     </div>
 
-    <!-- Mobile Hamburger Icon -->
-    <button v-if="isMobile && !props.isVisible" @click="emit('toggle')" class="fixed top-4 left-4 z-50 p-2 rounded-sm bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-lg">
-      <Menu class="h-5 w-5 text-gray-900 dark:text-gray-100" />
-    </button>
+    <!-- Mobile hamburger removed per design: keep + button only -->
   </div>
 </template>

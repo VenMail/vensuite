@@ -9,6 +9,7 @@ import { useFileStore } from '@/store/files'
 import TopNav from '@/components/layout/TopNav.vue'
 import { cn } from '@/lib/utils'
 import { useSidebarStore } from '@/store/sidebar'
+import { useMobileDetection } from '@/composables/useMobileDetection'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,7 +17,7 @@ const authStore = useAuthStore()
 const fileStore = useFileStore()
 const { isAuthenticated } = storeToRefs(authStore)
 
-const isMobile = ref(false)
+const { isMobile } = useMobileDetection({ breakpoint: 1024 })
 const isDark = ref(false)
 const sidebarStore = useSidebarStore()
 const { isVisible, isCollapsed } = storeToRefs(sidebarStore)
@@ -78,13 +79,6 @@ onMounted(async () => {
       query: { redirect: router.currentRoute.value.fullPath }
     })
   }
-  
-  // Handle responsive design
-  const handleResize = () => {
-    isMobile.value = window.innerWidth < 768
-  }
-  handleResize()
-  window.addEventListener('resize', handleResize)
   
   // Check system preference for dark mode
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {

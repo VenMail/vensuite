@@ -62,6 +62,20 @@ export const useFileStore = defineStore("files", {
       return ft
     },
 
+    /** Normalize boolean-like payloads coming from API/local cache */
+    normalizeBooleanFlag(value: unknown, defaultValue = false): boolean {
+      if (typeof value === 'boolean') return value
+      if (typeof value === 'number') return value !== 0
+      if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase()
+        if (!normalized.length) return defaultValue
+        if (['1', 'true', 'yes', 'on'].includes(normalized)) return true
+        if (['0', 'false', 'no', 'off'].includes(normalized)) return false
+        return defaultValue
+      }
+      return defaultValue
+    },
+
     async ensureDocument(options: LoadDocumentOptions = {}): Promise<LoadDocumentResult<FileData>> {
       const {
         id,
@@ -131,7 +145,7 @@ export const useFileStore = defineStore("files", {
     /** Ensure is_folder is a boolean and file_type is normalized */
     normalizeDocumentShape(doc: any): FileData {
       const normalizedType = this.normalizeFileType(doc?.file_type, doc?.file_name)
-      const isFolder = !!doc?.is_folder
+      const isFolder = this.normalizeBooleanFlag(doc?.is_folder, false)
       const normalizedContent = this.normalizeContentPayload(doc?.content ?? doc?.contents, normalizedType)
       const publicUrlRaw = doc?.file_public_url || (doc as any)?.public_url
       const fileUrl = doc?.file_url ? this.constructFullUrl(doc.file_url) : undefined
@@ -286,7 +300,7 @@ export const useFileStore = defineStore("files", {
         file_public_url: publicUrlRaw ? this.constructFullUrl(publicUrlRaw) : undefined,
         download_url: responseData.id ? `${FILES_ENDPOINT}/${responseData.id}/download` : undefined,
         folder_id: responseData.folder_id,
-        is_folder: !!responseData.is_folder,
+        is_folder: this.normalizeBooleanFlag(responseData.is_folder, false),
         is_template: responseData.is_template || false,
         employee_id: responseData.employee_id,
         content: responseData.content || responseData.contents || '',
@@ -1107,7 +1121,7 @@ export const useFileStore = defineStore("files", {
           const savedDoc: FileData = this.normalizeDocumentShape({
             ...serverData,
             file_type: document.file_type || serverData.file_type,
-            is_folder: document.is_folder ?? serverData.is_folder ?? false,
+            is_folder: this.normalizeBooleanFlag(document.is_folder ?? serverData.is_folder, false),
           });
           savedDoc.isNew = false;
           savedDoc.isDirty = false;
@@ -1345,9 +1359,7 @@ export const useFileStore = defineStore("files", {
               }
 
               // Ensure is_folder is properly set if missing
-              if (item.is_folder === undefined) {
-                item.is_folder = false;
-              }
+              item.is_folder = this.normalizeBooleanFlag(item.is_folder, false);
 
               offlineDocs.push(item);
             }

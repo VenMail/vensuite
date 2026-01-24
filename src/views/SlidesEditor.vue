@@ -165,7 +165,7 @@
 
     <!-- Collaborator List -->
     <div v-if="collaboratorList.length" class="px-6 py-1 flex flex-wrap gap-2 items-center justify-end bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 text-xs">
-      <span class="text-gray-500 dark:text-gray-400">Also editing:</span>
+      <span class="text-gray-500 dark:text-gray-400">{{$t('Commons.text.also_editing')}}</span>
       <button
         v-for="c in collaboratorList"
         :key="c.id"

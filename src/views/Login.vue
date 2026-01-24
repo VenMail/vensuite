@@ -35,8 +35,15 @@ onMounted(async () => {
     toast.info('Session expired. Please sign in again to continue.')
   }
 
+  const existingToken = authStore.getToken()
+  const action = (route.query.action as string | undefined)?.toLowerCase()
+  if (!existingToken && action === 'login') {
+    loginWithVenmail()
+    return
+  }
+
   try {
-    const token = authStore.getToken() || route.query.token as string
+    const token = existingToken || (route.query.token as string)
     if (!token) return
 
     await authStore.login(token)

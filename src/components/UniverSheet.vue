@@ -4,18 +4,21 @@
 
 <script setup lang="ts">
 import '@univerjs/preset-sheets-core/lib/index.css'
-import { createUniver, LocaleType, mergeLocales, type FUniver, type Univer } from '@univerjs/presets'
+import { createUniver, LocaleType, mergeLocales, type Univer } from '@univerjs/presets'
 import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core'
 import sheetsCoreEnUs from '@univerjs/preset-sheets-core/locales/en-US'
 import { UserManagerService, type IWorkbookData } from '@univerjs/core'
-import { onBeforeUnmount, ref, toRaw, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue'
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data'
 import type { IWebsocketService } from '@/lib/wsService'
 
+type UniverAPI = any
+
 const univerRef = ref<Univer | null>(null)
-const fUniver = ref<FUniver | null>(null)
+const fUniver = ref<UniverAPI | null>(null)
 const container = ref<HTMLElement | null>(null)
 const collaborationDisposers: Array<() => void> = []
+const isMounted = ref(false)
 
 const props = defineProps({
   data: {
@@ -48,7 +51,7 @@ const props = defineProps({
 
 const emit = defineEmits(['univerRefChange'])
 
-const activeWorkbook = ref<ReturnType<FUniver['getActiveWorkbook']> | null>(null)
+const activeWorkbook = ref<any>(null)
 
 function setupUniver(data: IWorkbookData) {
   try {
@@ -64,7 +67,7 @@ function setupUniver(data: IWorkbookData) {
       presets: [
         UniverSheetsCorePreset({
           container: container.value,
-        }),
+        }) as any,
       ],
     })
 
@@ -101,7 +104,7 @@ function scheduleCollaboration() {
     return
   }
 
-  const commandDisposer = fUniver.value.onCommandExecuted(command => {
+  const commandDisposer = fUniver.value.onCommandExecuted((command: any) => {
     if (!props.ws) return
     if (props.changesPending) {
       return
@@ -172,6 +175,8 @@ function cleanupCollaboration() {
 watch(
   () => props.data,
   async next => {
+    if (!isMounted.value) return
+    
     if (!next) {
       if (!fUniver.value) {
         init(DEFAULT_WORKBOOK_DATA)
@@ -198,6 +203,16 @@ watch(
   },
   { immediate: false },
 )
+
+onMounted(() => {
+  isMounted.value = true
+  // Trigger initialization with current data
+  if (props.data) {
+    init(props.data)
+  } else {
+    init(DEFAULT_WORKBOOK_DATA)
+  }
+})
 
 onBeforeUnmount(() => {
   destroyUniver()

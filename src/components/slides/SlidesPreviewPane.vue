@@ -2,7 +2,7 @@
   <div class="flex-1 flex flex-col relative">
     <!-- Toolbar: Preview Only -->
     <div class="flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Preview</span>
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{$t('Commons.alt.preview')}}</span>
       <div class="flex items-center gap-2">
         <span class="text-xs text-gray-500 min-w-[40px] text-center">{{ zoom }}%</span>
       </div>

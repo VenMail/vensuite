@@ -167,6 +167,9 @@
       "button": {
         "login_with_venmail": "使用 Venmail 登录"
       },
+      "link": {
+        "back_to_venmail": "返回 Venmail"
+      },
       "heading": {
         "attachment_import_failed": "附件导入失败",
         "attachment_import_in_progress": "正在导入附件",

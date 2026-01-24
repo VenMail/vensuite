@@ -75,7 +75,7 @@
                   <option value="slideInRight">Slide In Right</option>
                   <option value="slideInUp">Slide In Up</option>
                   <option value="slideInDown">Slide In Down</option>
-                  <option value="zoomIn">Zoom In</option>
+                  <option value="zoomIn">{{$t('Commons.text.zoom_in')}}</option>
                   <option value="rotateIn">Rotate In</option>
                   <option value="bounceIn">Bounce In</option>
                   <option value="flipIn">Flip In</option>
@@ -95,7 +95,7 @@
                   <option value="slideOutRight">Slide Out Right</option>
                   <option value="slideOutUp">Slide Out Up</option>
                   <option value="slideOutDown">Slide Out Down</option>
-                  <option value="zoomOut">Zoom Out</option>
+                  <option value="zoomOut">{{$t('Commons.text.zoom_out')}}</option>
                   <option value="rotateOut">Rotate Out</option>
                   <option value="bounceOut">Bounce Out</option>
                   <option value="flipOut">Flip Out</option>

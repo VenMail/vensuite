@@ -8,9 +8,9 @@
   import {
     cn
   } from '@/lib/utils'
-  import { useTranslation } from '@/composables/useTranslation'
   import SearchBar from './SearchBar.vue'
   import UserProfile from './UserProfile.vue'
+  import LanguageSwitcher from '../LanguageSwitcher.vue'
 
   const props = defineProps < {
     isMobile: boolean
@@ -25,8 +25,6 @@
       value: boolean
     }
   }
-
-  const { locale, setLocale } = useTranslation()
 </script>
 
 <template>
@@ -47,22 +45,24 @@
         'flex items-center',
         props.isMobile ? 'space-x-2' : 'space-x-6'
       )">
+        <!-- Hamburger menu button (mobile only) -->
         <button v-if="props.isMobile" @click="emit('toggleSidebar')" :class="cn(
-            'inline-flex items-center justify-center p-2 rounded-sm',
-            'text-gray-600 dark:text-gray-300',
-            'hover:text-gray-800 dark:hover:text-gray-100',
-            'hover:bg-gray-100 dark:hover:bg-gray-800',
-            'focus:outline-none focus:ring-1 focus:ring-primary-500 dark:focus:ring-primary-400',
-            'transition duration-150 ease-in-out'
-          )">
-          <Menu class="h-5 w-5"></Menu>
+          'inline-flex items-center justify-center py-2 px-3 rounded-sm',
+          'text-gray-600 dark:text-gray-300',
+          'hover:text-gray-800 dark:hover:text-gray-100',
+          'hover:bg-gray-100 dark:hover:bg-gray-800',
+          'focus:outline-none focus:ring-1 focus:ring-primary-500 dark:focus:ring-primary-400',
+          'transition duration-150 ease-in-out'
+        )">
+          <Menu class="h-5 w-5" />
         </button>
 
         <div :class="cn(
           'flex items-center',
           props.isMobile ? '!ml-[-4px] scale-90' : 'mr-[158px]'
         )">
-          <img :src="theme.isDark.value ? '/logo-white.png' : '/logo-black.png'" alt="VenMail Logo"
+          <img v-if="props.isMobile" src="/manifest-icon-512.maskable.png" alt="VenMail Logo" class="h-6 w-6 rounded-sm ml-3" />
+          <img v-else :src="theme.isDark.value ? '/logo-white.png' : '/logo-black.png'" alt="VenMail Logo"
             class="h-6 w-full" />
         </div>
 
@@ -71,35 +71,7 @@
 
       <!-- Right section: Language switcher + User Profile -->
       <div class="flex items-center space-x-3">
-        <div class="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 text-xs overflow-hidden">
-          <button
-            class="px-2 py-1 transition-colors"
-            :class="locale === 'en'
-              ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-              : 'bg-transparent text-gray-600 dark:text-gray-300'"
-            @click="setLocale('en')"
-          >
-            EN
-          </button>
-          <button
-            class="px-2 py-1 transition-colors"
-            :class="locale === 'fr'
-              ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-              : 'bg-transparent text-gray-600 dark:text-gray-300'"
-            @click="setLocale('fr')"
-          >
-            FR
-          </button>
-          <button
-            class="px-2 py-1 transition-colors"
-            :class="locale === 'zh'
-              ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-              : 'bg-transparent text-gray-600 dark:text-gray-300'"
-            @click="setLocale('zh')"
-          >
-            中
-          </button>
-        </div>
+        <LanguageSwitcher :isMobile="props.isMobile" />
 
         <UserProfile :isMobile="props.isMobile" />
       </div>

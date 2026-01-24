@@ -133,7 +133,7 @@
                     'hover:bg-gray-50 hover:border-primary-400',
                     'dark:hover:bg-gray-700 dark:hover:border-primary-400'
                   ]"
-                  @click="createNewSpreadsheet(template.name)"
+                  @click="createNewSpreadsheet(template.slug)"
                 >
                   <component :is="template.icon" class="w-8 h-8 text-primary-600" />
                   <span class="mt-2 text-sm font-medium">{{ template.name }}</span>

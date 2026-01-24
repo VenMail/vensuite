@@ -14,6 +14,7 @@ import {
   Zap,
 } from 'lucide-vue-next'
 import { GithubLogoIcon } from '@radix-icons/vue'
+import { t } from '@/i18n';
 
 const features = [
   {
@@ -33,7 +34,7 @@ const features = [
   },
   {
     icon: Users,
-    title: 'Slides',
+    title: t('Commons.heading.slides'),
     description: 'Create presentations with templates and real-time collaboration'
   }
 ]

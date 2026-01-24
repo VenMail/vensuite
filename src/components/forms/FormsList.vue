@@ -81,7 +81,7 @@ const handleCreateTemplate = () => {
         <span
           class="text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          {{ selectedForm ? 'Selected Form' : 'Select All' }}
+          {{ selectedForm ? 'Selected Form' : $t('Commons.label.select_all') }}
         </span>
       </div>
 
@@ -110,7 +110,7 @@ const handleCreateTemplate = () => {
               'text-sm font-medium text-gray-700 dark:text-gray-300',
             ]"
           >
-            {{ selectedForm ? 'Selected Form' : 'Select All' }}
+            {{ selectedForm ? 'Selected Form' : $t('Commons.label.select_all') }}
           </span>
         </Button>
 

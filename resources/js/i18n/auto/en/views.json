@@ -38,15 +38,15 @@
       },
       "text": {
         "add_headings_to_see": "Add headings to see outline",
+        "docx_exported_successfully": "DOCX exported successfully.",
+        "failed_to_export_docx": "Failed to export DOCX.",
         "no_headings_found": "No headings found",
         "no_messages_yet": "No messages yet.",
         "preview_local_version": "Preview local version",
         "preview_online_version": "Preview online version",
         "preview_unavailable": "Preview unavailable.",
         "start_a_conversation_with": "Start a conversation with your collaborators.",
-        "you_dont_have_access": "You don’t have access to this document. Enter your email to request access from the owner.",
-        "docx_exported_successfully": "DOCX exported successfully.",
-        "failed_to_export_docx": "Failed to export DOCX."
+        "you_dont_have_access": "You don’t have access to this document. Enter your email to request access from the owner."
       }
     },
     "Documents": {
@@ -175,6 +175,9 @@
         "no_matching_files_found": "No matching files found",
         "welcome_to_venmail_file": "Welcome to Venmail File Manager"
       },
+      "link": {
+        "back_to_venmail": "Back to Venmail"
+      },
       "text": {
         "attachment_import_default_message": "Please wait while we import your file.",
         "attachment_import_failed": "Failed to import attachment",
@@ -268,26 +271,26 @@
     "SlidesEditor": {
       "button": {
         "add_slide": "Add Slide",
-        "duplicate": "Duplicate",
-        "delete": "Delete",
+        "copy_markdown": "Copy Markdown",
         "create_first_slide": "Create First Slide",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
         "export_pdf": "Export PDF",
         "export_pptx": "Export PPTX",
-        "copy_markdown": "Copy Markdown",
         "import_pptx": "Import PPTX",
         "present": "Present"
       },
       "label": {
-        "theme": "Theme",
-        "aspect_ratio": "Aspect Ratio"
+        "aspect_ratio": "Aspect Ratio",
+        "theme": "Theme"
       },
       "text": {
-        "slides": "Slides",
-        "no_slide_selected": "No slide selected",
-        "presentation_settings": "Presentation Settings",
         "export": "Export",
         "import": "Import",
-        "select_or_add_a": "Select or add a slide to begin."
+        "no_slide_selected": "No slide selected",
+        "presentation_settings": "Presentation Settings",
+        "select_or_add_a": "Select or add a slide to begin.",
+        "slides": "Slides"
       }
     }
   },

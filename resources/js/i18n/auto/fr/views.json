@@ -167,6 +167,9 @@
       "button": {
         "login_with_venmail": "Se connecter avec Venmail"
       },
+      "link": {
+        "back_to_venmail": "Retour à Venmail"
+      },
       "heading": {
         "attachment_import_failed": "Échec de l'importation de l'attachement",
         "attachment_import_in_progress": "Importation de l'attachement",

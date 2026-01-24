@@ -118,7 +118,7 @@
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <Share2 class="h-4 w-4 mr-2" />
-                Share
+                {{$t('Commons.button.share')}}
               </Button>
             </DialogTrigger>
             <DialogContent class="dark:bg-gray-900 dark:border-gray-700">

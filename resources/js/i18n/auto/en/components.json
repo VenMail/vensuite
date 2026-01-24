@@ -102,24 +102,24 @@
     "SlidevMarkdownEditor": {
       "button": {
         "add_slide": "Add Slide",
-        "insert_heading": "Insert Heading",
-        "insert_list": "Insert List",
-        "insert_code": "Insert Code",
-        "insert_image": "Insert Image",
-        "move_up": "Move Up",
-        "move_down": "Move Down",
+        "delete": "Delete",
         "duplicate": "Duplicate",
-        "delete": "Delete"
+        "insert_code": "Insert Code",
+        "insert_heading": "Insert Heading",
+        "insert_image": "Insert Image",
+        "insert_list": "Insert List",
+        "move_down": "Move Down",
+        "move_up": "Move Up"
+      },
+      "placeholder": {
+        "add_presenter_notes": "Add presenter notes...",
+        "write_markdown": "Write your markdown here..."
       },
       "text": {
         "markdown": "Markdown",
         "presenter_notes": "Presenter Notes",
         "preview": "Preview",
         "slide_count": "Slide {current} of {total}"
-      },
-      "placeholder": {
-        "write_markdown": "Write your markdown here...",
-        "add_presenter_notes": "Add presenter notes..."
       }
     }
   },
@@ -190,8 +190,8 @@
     },
     "DocsTitleBar": {
       "text": {
-        "no_previous_versions": "No previous versions",
-        "loading_versions": "Loading versions..."
+        "loading_versions": "Loading versions...",
+        "no_previous_versions": "No previous versions"
       }
     },
     "DocsToolbar": {
@@ -209,14 +209,14 @@
       },
       "text": {
         "choose_a_template_to": "Choose a template to get started quickly",
+        "failed_to_convert_file": "Failed to convert file.",
+        "failed_to_import_file": "Failed to import file.",
+        "failed_to_insert_content": "Failed to insert content into document.",
+        "file_imported_successfully": "File imported successfully.",
+        "pdf_docx_html_supported": "PDF, DOCX, and HTML are supported.",
         "professional_correspondence": "Professional correspondence",
         "start_from_scratch": "Start from scratch",
-        "pdf_docx_html_supported": "PDF, DOCX, and HTML are supported.",
-        "unsupported_file_type": "Unsupported file type. Please upload PDF, DOCX, or HTML files.",
-        "failed_to_convert_file": "Failed to convert file.",
-        "file_imported_successfully": "File imported successfully.",
-        "failed_to_insert_content": "Failed to insert content into document.",
-        "failed_to_import_file": "Failed to import file."
+        "unsupported_file_type": "Unsupported file type. Please upload PDF, DOCX, or HTML files."
       }
     },
     "Editor": {
@@ -500,14 +500,15 @@
         "francais": "Français"
       }
     },
-    "slides": {
-      "commons": {
-        "text": {
-          "saving_deck": "Saving deck…"
-        }
-      }
-    },
     "forms": {
+      "commons": {
+        "button": {
+          "open_new_tab": "Open in new tab"
+        },
+        "error": {
+          "failed_to_copy": "Failed to copy the link."
+        }
+      },
       "components": {
         "forms": {
           "components": {
@@ -525,14 +526,6 @@
           }
         }
       },
-      "commons": {
-        "button": {
-          "open_new_tab": "Open in new tab"
-        },
-        "error": {
-          "failed_to_copy": "Failed to copy the link."
-        }
-      },
       "views": {
         "forms": {
           "text": {
@@ -540,6 +533,13 @@
             "link_copied_description": "The link has been successfully copied to your clipboard.",
             "manual_copy_required": "Please copy the link manually."
           }
+        }
+      }
+    },
+    "slides": {
+      "commons": {
+        "text": {
+          "saving_deck": "Saving deck…"
         }
       }
     }

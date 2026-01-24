@@ -1,5 +1,21 @@
 <template>
+  <!-- Render MobileFileItem on mobile devices -->
+  <MobileFileItem
+    v-if="isTouchDevice"
+    :file="file"
+    :view-mode="viewMode"
+    :is-selected="isSelected"
+    :is-touch-device="isTouchDevice"
+    @select-file="$emit('select-file', $event)"
+    @open-file="$emit('open-file', $event)"
+    @update-file="$emit('update-file', $event)"
+    @delete-file="$emit('delete-file', $event)"
+    @contextmenu-file="$emit('contextmenu-file', $event)"
+  />
+  
+  <!-- Render desktop FileItem on non-mobile devices -->
   <div
+    v-else
     :id="`fileItem-${file.id}`"
     :class="['file-item', fileItemClass, { 'drop-target': isDropTarget }]"
     @click="handleClick"
@@ -324,6 +340,7 @@ import { ref, computed, nextTick, PropType, onMounted } from "vue";
 import { Settings, Loader, CheckIcon } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import FileIcon from "./FileIcon.vue";
+import MobileFileItem from "./home/MobileFileItem.vue";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -420,6 +437,13 @@ const getMediaUrl = computed(() => {
   return (props.file as any).url || null;
 });
 
+// Mobile detection - check for touch capability
+const isTouchDevice = computed(() => {
+  const touchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  console.log('FileItem isTouchDevice:', touchDevice, 'file:', props.file.title);
+  return touchDevice;
+});
+
 const fileItemClass = computed(() => {
   const baseClass = 'transition-all duration-200 cursor-pointer';
   const selectedClass = props.isSelected
@@ -475,19 +499,20 @@ const handleClick = (event: MouseEvent) => {
 };
 
 const handleContextMenu = (event: MouseEvent) => {
+  console.log('FileItem handleContextMenu called for file:', props.file.title)
   // Emit context menu event with file ID and position
   emit('contextmenu-file', {
     id: props.file.id,
     x: event.clientX,
     y: event.clientY,
-  });
+  })
   
   // Also select the file if it's not already selected
   if (!props.isSelected) {
-    emit('select-file', props.file.id, event);
+    emit('select-file', props.file.id, event)
   }
   
-  event.preventDefault();
+  event.preventDefault()
 };
 
 const openFile = () => {

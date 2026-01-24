@@ -8,6 +8,19 @@ export function createAuthGuard(authStore: ReturnType<typeof useAuthStore>) {
       return next()
     }
 
+    const allowGuest = Boolean(to.meta && (to.meta as any).allowGuest === true)
+    const actionParam = typeof to.query?.action === 'string' ? to.query.action.toLowerCase() : null
+    if (!authStore.isAuthenticated && to.name === 'home' && actionParam === 'login') {
+      return next({
+        name: 'login',
+        query: {
+          ...to.query,
+          action: 'login',
+          redirect: typeof to.query?.redirect === 'string' ? to.query.redirect : '/',
+        },
+      })
+    }
+
     // Allow unauthenticated viewing of public/link docs/sheets by direct link
     const isPublicViewer = (
       (to.name === 'docs-edit' && typeof (to.params as any).appFileId === 'string' && (to.params as any).appFileId !== 'new') ||
@@ -16,6 +29,10 @@ export function createAuthGuard(authStore: ReturnType<typeof useAuthStore>) {
     )
 
     if (isPublicViewer) {
+      return next()
+    }
+
+    if (!authStore.isAuthenticated && allowGuest) {
       return next()
     }
 

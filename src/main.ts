@@ -74,7 +74,7 @@ const routes = [
     path: '/',
     component: AuthenticatedLayout,
     children: [
-      { path: '', name: 'home', component: Home },
+      { path: '', name: 'home', component: Home, meta: { allowGuest: true } },
       { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'docs/new', name: 'docs-new', component: DocsEditor, meta: { hideLayout: true } },
       { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true, public: true } },

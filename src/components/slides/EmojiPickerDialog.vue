@@ -69,7 +69,7 @@
       </div>
 
       <DialogFooter>
-        <Button variant="outline" @click="emit('update:open', false)">Cancel</Button>
+        <Button variant="outline" @click="emit('update:open', false)">{{$t('Commons.button.cancel')}}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

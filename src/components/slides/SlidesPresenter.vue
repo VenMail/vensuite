@@ -273,14 +273,14 @@
             @click="previousSlide"
           >
             <ChevronLeft class="h-5 w-5" />
-            <span class="text-sm">Previous</span>
+            <span class="text-sm">{{$t('Commons.button.previous')}}</span>
           </button>
           <button
             class="px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg disabled:opacity-50 flex items-center gap-2"
             :disabled="currentSlideIndex >= totalSlides - 1"
             @click="nextSlide"
           >
-            <span class="text-sm">Next</span>
+            <span class="text-sm">{{$t('Commons.button.next')}}</span>
             <ChevronRight class="h-5 w-5" />
           </button>
         </div>

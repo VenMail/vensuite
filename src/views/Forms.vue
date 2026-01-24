@@ -16,13 +16,14 @@ import TemplatePreview from "@/components/forms/TemplatePreview.vue";
 import FormsList from "@/components/forms/FormsList.vue";
 import type { AppForm } from "@/types";
 import type { FormTemplate } from "@/composables/useFormTemplates";
+import { useMobileDetection } from '@/composables/useMobileDetection'
 
 const viewMode = ref<"grid" | "list">("grid");
 const selectedForm = ref<string | null>(null);
 const showShareModal = ref(false);
 const shareTarget = ref<AppForm | null>(null);
 const showTemplateDialog = ref(false);
-const isMobile = ref(false);
+const { isMobile } = useMobileDetection({ breakpoint: 1024 });
 
 const formStore = useFormStore();
 const { formTemplates } = useFormTemplates();
@@ -72,10 +73,6 @@ const handleScroll = () => {
   }
 };
 
-const handleResize = () => {
-  isMobile.value = window.innerWidth < 768;
-};
-
 const createNewForm = (preset?: string) => {
   openWizard(preset);
 };
@@ -109,15 +106,12 @@ const actionIconClass = computed(
 );
 
 onMounted(() => {
-  handleResize();
-  window.addEventListener('resize', handleResize);
   formStore.fetchForms(true);
   window.addEventListener("scroll", handleScroll);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("scroll", handleScroll);
-  window.removeEventListener('resize', handleResize);
 });
 </script>
 

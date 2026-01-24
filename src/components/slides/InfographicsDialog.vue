@@ -74,7 +74,7 @@
 
         <!-- Preview Panel -->
         <div v-if="selectedTemplate" class="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-4 flex flex-col">
-          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Preview</h3>
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">{{$t('Commons.alt.preview')}}</h3>
           
           <!-- Large Preview -->
           <div 
@@ -90,7 +90,7 @@
           <!-- Template Details -->
           <div class="space-y-3 flex-1 overflow-y-auto">
             <div>
-              <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400">Name</h4>
+              <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400">{{$t('Commons.button.name')}}</h4>
               <p class="text-sm text-gray-900 dark:text-gray-100">{{ selectedTemplate.name }}</p>
             </div>
             <div>
@@ -140,7 +140,7 @@
           Tip: After inserting, you can edit the text directly in the markdown editor
         </p>
         <Button variant="outline" @click="emit('update:open', false)">
-          Cancel
+          {{$t('Commons.button.cancel')}}
         </Button>
       </DialogFooter>
     </DialogContent>
