@@ -47,6 +47,10 @@ overrides:
   diff@<4.0.4: '>=4.0.4'
   diff@>=5.0.0 <5.2.2: '>=5.2.2'
   diff@>=6.0.0 <8.0.3: '>=8.0.3'
+  minimatch@9.0.5: npm:minimatch@10.1.1
+  brace-expansion@4.0.1: npm:brace-expansion@2.0.2
+
+packageExtensionsChecksum: e768046b12d071024ef8b7b068fe3cec
 
 importers:
 
@@ -8128,10 +8132,6 @@ packages:
     resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
     engines: {node: '>=10'}
 
-  minimatch@9.0.5:
-    resolution: {integrity: sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==}
-    engines: {node: '>=16 || 14 >=14.17'}
-
   minimist-options@3.0.2:
     resolution: {integrity: sha512-FyBrT/d0d4+uiZRbqznPXqw3IpZZG3gl3wKWiX784FycUKVwBt0uLBFkQrtE4tZOrgo78nZp2jnKz3L65T5LdQ==}
     engines: {node: '>= 4'}
@@ -14168,7 +14168,7 @@ snapshots:
 
   '@ts-morph/common@0.25.0':
     dependencies:
-      minimatch: 9.0.5
+      minimatch: 10.1.1
       path-browserify: 1.0.1
       tinyglobby: 0.2.13
 
@@ -16784,7 +16784,7 @@ snapshots:
       '@vue/compiler-vue2': 2.7.16
       '@vue/shared': 3.5.13
       alien-signals: 0.4.14
-      minimatch: 9.0.5
+      minimatch: 10.1.1
       muggle-string: 0.4.1
       path-browserify: 1.0.1
     optionalDependencies:
@@ -16797,7 +16797,7 @@ snapshots:
       '@vue/compiler-vue2': 2.7.16
       '@vue/shared': 3.5.13
       alien-signals: 1.0.13
-      minimatch: 9.0.5
+      minimatch: 10.1.1
       muggle-string: 0.4.1
       path-browserify: 1.0.1
     optionalDependencies:
@@ -18808,7 +18808,7 @@ snapshots:
       etag: 1.8.1
       finalhandler: 1.3.1
       fresh: 0.5.2
-      http-errors: 2.0.0
+      http-errors: 2.0.1
       merge-descriptors: 1.0.3
       methods: 1.1.2
       on-finished: 2.4.1
@@ -18821,7 +18821,7 @@ snapshots:
       send: 0.19.0
       serve-static: 1.16.2
       setprototypeof: 1.2.0
-      statuses: 2.0.1
+      statuses: 2.0.2
       type-is: 1.6.18
       utils-merge: 1.0.1
       vary: 1.1.2
@@ -20371,10 +20371,6 @@ snapshots:
       brace-expansion: 4.0.1
 
   minimatch@5.1.6:
-    dependencies:
-      brace-expansion: 4.0.1
-
-  minimatch@9.0.5:
     dependencies:
       brace-expansion: 4.0.1
 

@@ -23,7 +23,7 @@ const selectedForm = ref<string | null>(null);
 const showShareModal = ref(false);
 const shareTarget = ref<AppForm | null>(null);
 const showTemplateDialog = ref(false);
-const { isMobile } = useMobileDetection({ breakpoint: 1024 });
+const { } = useMobileDetection({ breakpoint: 1024 });
 
 const formStore = useFormStore();
 const { formTemplates } = useFormTemplates();

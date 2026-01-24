@@ -634,7 +634,6 @@ import axios from 'axios';
 import { NodeSelection } from '@tiptap/pm/state';
 import { IWebsocketService, Message, useWebSocket } from '@/lib/wsService';
 import { useTranslation } from '@/composables/useTranslation';
-import { t } from '@/i18n';
 
 const route = useRoute();
 const router = useRouter();
