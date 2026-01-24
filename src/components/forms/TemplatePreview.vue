@@ -32,9 +32,9 @@ const handleCreateBlank = () => {
     <div class="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200/70 dark:border-gray-700/70">
       <div>
         <p class="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">
-          Start a New Form
+          {{$t('Components.Forms.text.start_a_new_form')}}
         </p>
-        <p class="text-sm text-gray-600 dark:text-gray-300">Pick a template or start blank</p>
+        <p class="text-sm text-gray-600 dark:text-gray-300">{{$t('Components.Forms.text.pick_a_template_or')}}</p>
       </div>
       <Button variant="ghost" size="sm" class="text-primary-600" @click="handleCreateBlank">
         <Plus class="h-4 w-4 mr-1" /> {{ t('Commons.button.blank') }}

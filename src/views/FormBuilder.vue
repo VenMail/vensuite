@@ -1555,7 +1555,7 @@ const handleChangeFormPrivacy = async (next: number) => {
     });
     const payload = response.data?.data || response.data?.form || response.data || {};
     privacyType.value = Number(payload.privacy_type ?? next);
-    toast.success("Visibility updated");
+    toast.success(t('Commons.toast.visibility_updated'));
   } catch (error) {
     console.error("Failed to update form privacy_type", error);
     toast.error("Unable to update access level");
@@ -1799,7 +1799,7 @@ const ensurePagesInitialized = (description: string) => {
     pagesState.value = [
       {
         id: crypto.randomUUID(),
-        title: "Page 1",
+        title: t('Commons.heading.page_1'),
         description,
         position: 1,
         question_order: [],

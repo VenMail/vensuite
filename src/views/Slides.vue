@@ -28,6 +28,7 @@ import {
 import { fetchSlideDecks, slideDecks, getDeckThumbnail, createSlideDeck } from "@/services/slideDecks";
 import SlideThumbnailRenderer from "@/components/slides/SlideThumbnailRenderer.vue";
 import { vIntersection } from "@/directives/intersection";
+import { t } from '@/i18n';
 
 // Define types locally since they're not exported from WorkspaceTopBar
 interface BreadcrumbItem {
@@ -95,7 +96,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Serif",
     icon: FileText,
     previewStyle: "background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);",
-    description: "An official theme using serif fonts for professional presentations"
+    description: t('Views.text.an_official_theme_using')
   },
   {
     name: "Apple Basic",
@@ -104,7 +105,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Apple",
     icon: Image,
     previewStyle: "background: linear-gradient(135deg, #10b981 0%, #34d399 100%);",
-    description: "Inspired by the Basic Black/White theme on Apple Keynote"
+    description: t('Views.text.inspired_by_the_basic')
   },
   {
     name: "Bricks Theme",
@@ -113,7 +114,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Bricks",
     icon: BarChart,
     previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);",
-    description: "Modern theme with brick-based design elements"
+    description: t('Views.text.modern_theme_with_brick')
   },
   {
     name: "Shibainu Theme",
@@ -122,7 +123,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Shibainu",
     icon: Users,
     previewStyle: "background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);",
-    description: "Playful theme inspired by the Shiba Inu dog breed"
+    description: t('Views.text.playful_theme_inspired_by')
   },
   {
     name: "Academic Theme",
@@ -131,7 +132,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Academic",
     icon: TrendingUp,
     previewStyle: "background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);",
-    description: "Simplifies creating academic presentations with necessary components and layouts"
+    description: t('Views.text.simplifies_creating_academic_presentations')
   },
   {
     name: "Purplin Theme",
@@ -140,7 +141,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Purplin",
     icon: PieChart,
     previewStyle: "background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);",
-    description: "A modern theme with purple gradients and clean design"
+    description: t('Views.text.a_modern_theme_with')
   },
   {
     name: "Neversink Theme",
@@ -149,7 +150,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Neversink",
     icon: Settings,
     previewStyle: "background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);",
-    description: "An education/academia oriented Slidev theme with whimsical elements"
+    description: t('Views.text.an_education_academia_oriented')
   },
   {
     name: "Vuetiful Theme",
@@ -158,7 +159,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Vue",
     icon: Presentation,
     previewStyle: "background: linear-gradient(135deg, #10b981 0%, #34d399 100%);",
-    description: "A modern theme inspired by Vue.js design principles"
+    description: t('Views.text.a_modern_theme_inspired')
   },
   {
     name: "Envek Theme",
@@ -167,7 +168,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Personal",
     icon: FileText,
     previewStyle: "background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);",
-    description: "A personal theme for Slidev with unique styling"
+    description: t('Views.text.a_personal_theme_for')
   },
   {
     name: "Vuestorefront Theme",
@@ -176,7 +177,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Commerce",
     icon: BarChart,
     previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);",
-    description: "Theme designed for e-commerce and business presentations"
+    description: t('Views.text.theme_designed_for_e')
   },
   {
     name: "Nearform Theme",
@@ -185,7 +186,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Nearform",
     icon: TrendingUp,
     previewStyle: "background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);",
-    description: "Professional theme for Nearform presentations and workshops"
+    description: t('Views.text.professional_theme_for_nearform')
   },
   {
     name: "IODigital Theme",
@@ -194,7 +195,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Digital",
     icon: PieChart,
     previewStyle: "background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);",
-    description: "Modern theme for digital agencies and tech presentations"
+    description: t('Views.text.modern_theme_for_digital')
   },
   {
     name: "Foamscience Theme",
@@ -203,7 +204,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Science",
     icon: Settings,
     previewStyle: "background: linear-gradient(135deg, #10b981 0%, #34d399 100%);",
-    description: "Theme designed for scientific and research presentations"
+    description: t('Views.text.theme_designed_for_scientific')
   },
   {
     name: "Blank Canvas",
@@ -212,7 +213,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Blank",
     icon: FileText,
     previewStyle: "background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);",
-    description: "A blank canvas to create your presentation from scratch"
+    description: t('Views.text.a_blank_canvas_to')
   }
 ];
 
@@ -435,7 +436,7 @@ async function refreshSlideDecks() {
                   'text-gray-800 dark:text-gray-100'
                 ]"
               >
-                Create New Presentation
+                {{$t('Views.heading.create_new_presentation')}}
               </DialogTitle>
             </DialogHeader>
             <div class="grid grid-cols-2 gap-4 p-2">
@@ -468,9 +469,9 @@ async function refreshSlideDecks() {
         <div class="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200/70 dark:border-gray-700/70">
           <div>
             <p class="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">
-              Start a New Presentation
+              {{$t('Views.text.start_a_new_presentation')}}
             </p>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Modern slide decks</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">{{$t('Views.text.modern_slide_decks')}}</p>
           </div>
           <Button variant="ghost" size="sm" class="text-primary-600" @click="createNewPresentation()">
             <Plus class="h-4 w-4 mr-1" /> {{$t('Commons.button.blank')}}
@@ -494,7 +495,7 @@ async function refreshSlideDecks() {
                   {{ template.badge }}
                 </div>
                 <div class="absolute top-3 right-3 text-xs text-white/90 font-semibold bg-primary-600/80 px-2 py-1 rounded">
-                  Slidev
+                  {{$t('Commons.text.slidev')}}
                 </div>
               </div>
               <div class="px-3 py-3 space-y-1">
@@ -531,7 +532,7 @@ async function refreshSlideDecks() {
             <span
               class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              {{ selectedSlideDeck ? 'Selected Presentation' : $t('Commons.label.select_all') }}
+              {{ selectedSlideDeck ? $t('Commons.text.selected_presentation') : $t('Commons.label.select_all') }}
             </span>
           </div>
 
@@ -560,7 +561,7 @@ async function refreshSlideDecks() {
                   'text-sm font-medium text-gray-700 dark:text-gray-300',
                 ]"
               >
-                {{ selectedSlideDeck ? 'Selected Presentation' : $t('Commons.label.select_all') }}
+                {{ selectedSlideDeck ? $t('Commons.text.selected_presentation') : $t('Commons.label.select_all') }}
               </span>
             </Button>
 
@@ -671,9 +672,9 @@ async function refreshSlideDecks() {
           <div class="empty-icon-wrapper">
             <Presentation class="empty-icon" />
           </div>
-          <h3 class="empty-title">No Presentations Found</h3>
+          <h3 class="empty-title">{{$t('Views.heading.no_presentations_found')}}</h3>
           <p class="empty-description">
-            Get started by creating your first presentation
+            {{$t('Views.text.get_started_by_creating')}}
           </p>
           <div class="empty-actions">
             <Button
@@ -681,7 +682,7 @@ async function refreshSlideDecks() {
               class="bg-primary-600 hover:bg-primary-700"
             >
               <Plus class="mr-2 h-4 w-4" />
-              New Presentation
+              {{$t('Commons.button.new_presentation')}}
             </Button>
             <Button
               variant="outline"
@@ -689,7 +690,7 @@ async function refreshSlideDecks() {
               @click="createNewPresentationFromTemplate(slideTemplates[1])"
             >
               <FileText class="mr-2 h-4 w-4" />
-              Serif Theme
+              {{$t('Commons.button.serif_theme')}}
             </Button>
           </div>
         </div>

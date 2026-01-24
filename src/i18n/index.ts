@@ -13,10 +13,18 @@ export function initI18n(initialLocale: string, messagesByLocale: MessagesByLoca
   }
 }
 
-export function t(key: string): string {
+export function t(key: string, params?: Record<string, string | number>): string {
   const messages = store[currentLocale.value] || {};
-  const value = messages[key];
-  if (typeof value === 'string') return value;
+  let value = messages[key];
+  if (typeof value === 'string') {
+    // Simple interpolation for {param} syntax
+    if (params) {
+      return value.replace(/\{(\w+)\}/g, (match, param) => {
+        return String(params[param] || match);
+      });
+    }
+    return value;
+  }
   return key;
 }
 

@@ -1,9 +1,70 @@
 {
   "Composables": {
+    "UseFileManager": {
+      "toast": {
+        "failed_to_create_folder": "Failed to create folder",
+        "failed_to_create_type": "Failed to create {type}",
+        "failed_to_delete_file": "Failed to delete file",
+        "failed_to_delete_some": "Failed to delete some files",
+        "failed_to_download_files": "Failed to download files",
+        "failed_to_rename_file": "Failed to rename file",
+        "file_moved_to_trash": "File moved to trash",
+        "file_renamed_successfully": "File renamed successfully",
+        "folder_created_successfully": "Folder created successfully",
+        "type_created_successfully": "{type} created successfully"
+      }
+    },
+    "UseFileOperations": {
+      "toast": {
+        "cannot_open_this_file": "Cannot open this file type",
+        "failed_to_open_file": "Failed to open file",
+        "file_not_found": "File not found",
+        "file_renamed_successfully": "File renamed successfully",
+        "link_copied_to_clipboard": "Link copied to clipboard",
+        "links_copied_to_clipboard": "Links copied to clipboard",
+        "opening_file_in_appropriate": "Opening file in appropriate editor...",
+        "select_a_file_to": "Select a file to rename",
+        "select_a_file_to_2": "Select a file to share",
+        "select_files_to_share": "Select files to share",
+        "selected_files_do_not": "Selected files do not have shareable links",
+        "share_sheet_opened": "Share sheet opened",
+        "this_file_does_not": "This file does not have a shareable link yet"
+      }
+    },
     "UseFormAutosave": {
       "toast": {
         "autosave_failed_retry_or": "Autosave failed. Retry or check connection.",
         "this_form_was_updated": "This form was updated elsewhere. Reload to continue editing."
+      }
+    },
+    "UseMobileFileManager": {
+      "toast": {
+        "failed_to_load_more": "Failed to load more files",
+        "failed_to_refresh_files": "Failed to refresh files",
+        "failed_to_share_file": "Failed to share file",
+        "file_not_found": "File not found",
+        "file_shared_successfully": "File shared successfully",
+        "link_copied_to_clipboard": "Link copied to clipboard",
+        "settings_coming_soon": "Settings coming soon",
+        "this_file_does_not": "This file does not have a shareable link yet"
+      }
+    },
+    "UseSlidePersistence": {
+      "toast": {
+        "exporting_pdf": "Exporting PDF...",
+        "exporting_pptx": "Exporting PPTX...",
+        "failed_to_import_html": "Failed to import HTML",
+        "failed_to_import_powerpoint": "Failed to import PowerPoint file",
+        "failed_to_load_presentation": "Failed to load presentation",
+        "failed_to_save_presentation": "Failed to save presentation",
+        "failed_to_update_visibility": "Failed to update visibility",
+        "html_imported_successfully": "HTML imported successfully",
+        "importing_powerpoint": "Importing PowerPoint...",
+        "pdf_export_failed_please": "PDF export failed. Please try again.",
+        "pdf_exported_successfully": "PDF exported successfully",
+        "pptx_export_failed_please": "PPTX export failed. Please try again.",
+        "pptx_exported_successfully": "PPTX exported successfully",
+        "save_the_presentation_first": "Save the presentation first"
       }
     }
   }

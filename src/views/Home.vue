@@ -203,7 +203,7 @@ onUnmounted(() => {
                   </Button>
                   <Button @click="fileManager.isUploadDialogOpen.value = true" variant="outline" class="w-full">
                     <Upload class="h-4 w-4 mr-2" />
-                    Upload Files
+                    {{$t('Commons.button.upload_files')}}
                   </Button>
                 </div>
               </div>
@@ -292,7 +292,7 @@ onUnmounted(() => {
                 @click="fileManager.isUploadDialogOpen.value = true"
               >
                 <Upload class="h-4 w-4 mr-2" />
-                Upload
+                {{$t('Commons.button.upload_2')}}
               </Button>
               <Dialog>
                 <DialogTrigger asChild>

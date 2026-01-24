@@ -72,7 +72,7 @@
       <!-- Infographics Button -->
       <Button variant="outline" size="sm" @click="emit('open-infographics')">
         <BarChart3 class="h-4 w-4 mr-1" />
-        Infographics
+        {{$t('Commons.button.infographics')}}
       </Button>
 
       <!-- More Actions Menu -->
@@ -85,16 +85,16 @@
         <DropdownMenuContent align="end" class="dark:bg-gray-900 dark:border-gray-700">
           <DropdownMenuItem @click="emit('start-presenter-mode')">
             <MonitorSpeaker class="h-4 w-4 mr-2" />
-            Presenter Mode
+            {{$t('Commons.text.presenter_mode')}}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem @click="emit('export', 'pdf')">
             <Download class="h-4 w-4 mr-2" />
-            Export as PDF
+            {{$t('Components.Slides.text.export_as_pdf')}}
           </DropdownMenuItem>
           <DropdownMenuItem @click="emit('export', 'pptx')">
             <FileText class="h-4 w-4 mr-2" />
-            Export as PPTX
+            {{$t('Components.Slides.text.export_as_pptx')}}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem @click="emit('print')">

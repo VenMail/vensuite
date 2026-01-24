@@ -209,15 +209,15 @@
           <!-- Presentation Stats -->
           <div class="grid grid-cols-3 gap-2 text-xs">
             <div class="text-center">
-              <div class="text-gray-400">Current</div>
+              <div class="text-gray-400">{{$t('Commons.text.current')}}</div>
               <div class="font-semibold">{{ currentSlideIndex + 1 }}</div>
             </div>
             <div class="text-center">
-              <div class="text-gray-400">Total</div>
+              <div class="text-gray-400">{{$t('Commons.text.total')}}</div>
               <div class="font-semibold">{{ totalSlides }}</div>
             </div>
             <div class="text-center">
-              <div class="text-gray-400">Progress</div>
+              <div class="text-gray-400">{{$t('Commons.text.progress')}}</div>
               <div class="font-semibold">{{ Math.round((currentSlideIndex + 1) / totalSlides * 100) }}%</div>
             </div>
           </div>
@@ -239,7 +239,7 @@
         <div class="flex-1 overflow-y-auto p-4">
           <h4 class="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
             <StickyNote class="h-4 w-4" />
-            Notes
+            {{$t('Commons.heading.notes')}}
           </h4>
           <div 
             class="text-sm text-gray-300 whitespace-pre-wrap"
@@ -249,7 +249,7 @@
 
         <!-- Next Slide Preview -->
         <div class="p-4 border-t border-gray-700">
-          <h4 class="text-sm font-semibold text-gray-400 mb-2">Next Slide</h4>
+          <h4 class="text-sm font-semibold text-gray-400 mb-2">{{$t('Commons.heading.next_slide')}}</h4>
           <div 
             v-if="nextSlideContent"
             class="aspect-[4/3] bg-white rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500"
@@ -261,7 +261,7 @@
             />
           </div>
           <div v-else class="text-sm text-gray-500 italic">
-            End of presentation
+            {{$t('Components.Slides.text.end_of_presentation')}}
           </div>
         </div>
 
@@ -294,7 +294,7 @@
       >
         <div class="max-w-7xl w-full max-h-full overflow-auto">
           <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-2xl font-bold text-white">Slide Overview</h2>
+            <h2 class="text-2xl font-bold text-white">{{$t('Commons.heading.slide_overview')}}</h2>
             <button
               @click="toggleOverview"
               class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg"

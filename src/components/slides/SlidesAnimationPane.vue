@@ -12,7 +12,7 @@
             <ArrowLeft class="h-4 w-4 text-gray-600 dark:text-gray-400" />
           </button>
           <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Animation Settings
+            {{$t('Commons.heading.animation_settings')}}
           </h3>
         </div>
         <button
@@ -32,7 +32,7 @@
           <Sparkles class="h-12 w-12 mx-auto mb-2" />
         </div>
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          Select an element in the slide to configure animations
+          {{$t('Components.Slides.text.select_an_element_in')}}
         </p>
         <p class="text-xs text-gray-500 dark:text-gray-500 mt-2">
           Click on text, images, or other elements in the preview
@@ -50,10 +50,10 @@
               class="rounded border-gray-300 dark:border-gray-600"
               @change="toggleAnimation(($event.target as HTMLInputElement).checked)"
             />
-            Enable Animation
+            {{$t('Commons.label.enable_animation')}}
           </label>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Add entrance, emphasis, or exit animations to this element
+            {{$t('Components.Slides.text.add_entrance_emphasis_or')}}
           </p>
         </div>
 
@@ -61,7 +61,7 @@
           <!-- Animation Type -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Animation Type
+              {{$t('Commons.label.animation_type')}}
             </label>
             <div class="space-y-2">
               <select
@@ -70,35 +70,35 @@
                 @change="updateAnimationType(($event.target as HTMLSelectElement).value)"
               >
                 <optgroup label="Entrance Animations">
-                  <option value="fadeIn">Fade In</option>
-                  <option value="slideInLeft">Slide In Left</option>
-                  <option value="slideInRight">Slide In Right</option>
-                  <option value="slideInUp">Slide In Up</option>
-                  <option value="slideInDown">Slide In Down</option>
+                  <option value="fadeIn">{{$t('Commons.text.fade_in')}}</option>
+                  <option value="slideInLeft">{{$t('Components.Slides.text.slide_in_left')}}</option>
+                  <option value="slideInRight">{{$t('Components.Slides.text.slide_in_right')}}</option>
+                  <option value="slideInUp">{{$t('Components.Slides.text.slide_in_up')}}</option>
+                  <option value="slideInDown">{{$t('Components.Slides.text.slide_in_down')}}</option>
                   <option value="zoomIn">{{$t('Commons.text.zoom_in')}}</option>
-                  <option value="rotateIn">Rotate In</option>
-                  <option value="bounceIn">Bounce In</option>
-                  <option value="flipIn">Flip In</option>
+                  <option value="rotateIn">{{$t('Commons.text.rotate_in')}}</option>
+                  <option value="bounceIn">{{$t('Commons.text.bounce_in')}}</option>
+                  <option value="flipIn">{{$t('Commons.text.flip_in')}}</option>
                 </optgroup>
                 <optgroup label="Emphasis Animations">
-                  <option value="pulse">Pulse</option>
-                  <option value="shake">Shake</option>
-                  <option value="swing">Swing</option>
-                  <option value="tada">Tada</option>
-                  <option value="wobble">Wobble</option>
-                  <option value="jello">Jello</option>
-                  <option value="heartBeat">Heart Beat</option>
+                  <option value="pulse">{{$t('Commons.text.pulse')}}</option>
+                  <option value="shake">{{$t('Commons.text.shake')}}</option>
+                  <option value="swing">{{$t('Commons.text.swing')}}</option>
+                  <option value="tada">{{$t('Commons.text.tada')}}</option>
+                  <option value="wobble">{{$t('Commons.text.wobble')}}</option>
+                  <option value="jello">{{$t('Commons.text.jello')}}</option>
+                  <option value="heartBeat">{{$t('Commons.text.heart_beat')}}</option>
                 </optgroup>
                 <optgroup label="Exit Animations">
-                  <option value="fadeOut">Fade Out</option>
-                  <option value="slideOutLeft">Slide Out Left</option>
-                  <option value="slideOutRight">Slide Out Right</option>
-                  <option value="slideOutUp">Slide Out Up</option>
-                  <option value="slideOutDown">Slide Out Down</option>
+                  <option value="fadeOut">{{$t('Commons.text.fade_out')}}</option>
+                  <option value="slideOutLeft">{{$t('Components.Slides.text.slide_out_left')}}</option>
+                  <option value="slideOutRight">{{$t('Components.Slides.text.slide_out_right')}}</option>
+                  <option value="slideOutUp">{{$t('Components.Slides.text.slide_out_up')}}</option>
+                  <option value="slideOutDown">{{$t('Components.Slides.text.slide_out_down')}}</option>
                   <option value="zoomOut">{{$t('Commons.text.zoom_out')}}</option>
-                  <option value="rotateOut">Rotate Out</option>
-                  <option value="bounceOut">Bounce Out</option>
-                  <option value="flipOut">Flip Out</option>
+                  <option value="rotateOut">{{$t('Commons.text.rotate_out')}}</option>
+                  <option value="bounceOut">{{$t('Commons.text.bounce_out')}}</option>
+                  <option value="flipOut">{{$t('Commons.text.flip_out')}}</option>
                 </optgroup>
               </select>
             </div>
@@ -107,7 +107,7 @@
           <!-- Animation Duration -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Duration
+              {{$t('Commons.label.duration')}}
             </label>
             <div class="space-y-2">
               <div class="flex items-center gap-2">
@@ -141,7 +141,7 @@
           <!-- Animation Delay -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Delay
+              {{$t('Commons.label.delay')}}
             </label>
             <div class="space-y-2">
               <div class="flex items-center gap-2">
@@ -175,27 +175,27 @@
           <!-- Easing Function -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Easing
+              {{$t('Commons.label.easing')}}
             </label>
             <select
               :value="animationEasing"
               class="w-full text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
               @change="updateAnimationEasing(($event.target as HTMLSelectElement).value)"
             >
-              <option value="linear">Linear</option>
-              <option value="ease">Ease</option>
-              <option value="ease-in">Ease In</option>
-              <option value="ease-out">Ease Out</option>
-              <option value="ease-in-out">Ease In Out</option>
+              <option value="linear">{{$t('Commons.text.linear')}}</option>
+              <option value="ease">{{$t('Commons.text.ease')}}</option>
+              <option value="ease-in">{{$t('Commons.text.ease_in')}}</option>
+              <option value="ease-out">{{$t('Commons.text.ease_out')}}</option>
+              <option value="ease-in-out">{{$t('Components.Slides.text.ease_in_out')}}</option>
               <optgroup label="Bounce">
-                <option value="ease-bounce">Bounce</option>
-                <option value="ease-bounce-in">Bounce In</option>
-                <option value="ease-bounce-out">Bounce Out</option>
+                <option value="ease-bounce">{{$t('Commons.label.bounce')}}</option>
+                <option value="ease-bounce-in">{{$t('Commons.text.bounce_in')}}</option>
+                <option value="ease-bounce-out">{{$t('Commons.text.bounce_out')}}</option>
               </optgroup>
               <optgroup label="Elastic">
-                <option value="ease-elastic">Elastic</option>
-                <option value="ease-elastic-in">Elastic In</option>
-                <option value="ease-elastic-out">Elastic Out</option>
+                <option value="ease-elastic">{{$t('Commons.label.elastic')}}</option>
+                <option value="ease-elastic-in">{{$t('Commons.text.elastic_in')}}</option>
+                <option value="ease-elastic-out">{{$t('Commons.text.elastic_out')}}</option>
               </optgroup>
             </select>
           </div>
@@ -203,7 +203,7 @@
           <!-- Animation Trigger -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Trigger
+              {{$t('Commons.label.trigger')}}
             </label>
             <div class="space-y-2">
               <label class="flex items-center gap-2">
@@ -214,7 +214,7 @@
                   class="border-gray-300 dark:border-gray-600"
                   @change="updateAnimationTrigger('onLoad')"
                 />
-                <span class="text-sm">On Load</span>
+                <span class="text-sm">{{$t('Commons.text.on_load')}}</span>
               </label>
               <label class="flex items-center gap-2">
                 <input
@@ -224,7 +224,7 @@
                   class="border-gray-300 dark:border-gray-600"
                   @change="updateAnimationTrigger('onClick')"
                 />
-                <span class="text-sm">On Click</span>
+                <span class="text-sm">{{$t('Commons.text.on_click')}}</span>
               </label>
               <label class="flex items-center gap-2">
                 <input
@@ -234,7 +234,7 @@
                   class="border-gray-300 dark:border-gray-600"
                   @change="updateAnimationTrigger('onHover')"
                 />
-                <span class="text-sm">On Hover</span>
+                <span class="text-sm">{{$t('Commons.text.on_hover')}}</span>
               </label>
               <label class="flex items-center gap-2">
                 <input
@@ -244,7 +244,7 @@
                   class="border-gray-300 dark:border-gray-600"
                   @change="updateAnimationTrigger('onScroll')"
                 />
-                <span class="text-sm">On Scroll</span>
+                <span class="text-sm">{{$t('Commons.text.on_scroll')}}</span>
               </label>
             </div>
           </div>
@@ -258,7 +258,7 @@
                 class="rounded border-gray-300 dark:border-gray-600"
                 @change="updateAnimationRepeat(($event.target as HTMLInputElement).checked)"
               />
-              Repeat Animation
+              {{$t('Commons.label.repeat_animation')}}
             </label>
             <template v-if="animationRepeat">
               <div class="mt-2 space-y-2">
@@ -270,7 +270,7 @@
                     class="border-gray-300 dark:border-gray-600"
                     @change="updateAnimationRepeatCount('infinite')"
                   />
-                  <span class="text-sm">Infinite</span>
+                  <span class="text-sm">{{$t('Commons.text.infinite')}}</span>
                 </label>
                 <div class="flex items-center gap-2">
                   <input
@@ -301,14 +301,14 @@
               class="w-full px-4 py-2 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
             >
               <Play class="h-4 w-4" />
-              Preview Animation
+              {{$t('Commons.button.preview_animation')}}
             </button>
           </div>
 
           <!-- CSS Code Preview -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              CSS Code
+              {{$t('Commons.label.css_code')}}
             </label>
             <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
               <pre class="text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto"><code>{{ cssCode }}</code></pre>
@@ -317,7 +317,7 @@
               @click="copyCssCode"
               class="mt-2 px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
-              Copy CSS
+              {{$t('Commons.button.copy_css')}}
             </button>
           </div>
         </template>

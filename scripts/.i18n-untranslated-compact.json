@@ -1,5 +1,102 @@
 {
   "issueType": "untranslated",
-  "generatedAt": "2026-01-14T19:53:39.853Z",
-  "files": []
+  "generatedAt": "2026-01-24T00:53:57.202Z",
+  "files": [
+    {
+      "locale": "fr",
+      "localeFile": "fr\\composables.json",
+      "issues": [
+        {
+          "file": "src\\composables\\useFileManager.ts",
+          "lineStart": 188,
+          "lineEnd": 304
+        },
+        {
+          "file": "src\\composables\\useFileOperations.ts",
+          "lineStart": 154,
+          "lineEnd": 405
+        },
+        {
+          "file": "src\\composables\\useMobileFileManager.ts",
+          "lineStart": 24,
+          "lineEnd": 138
+        },
+        {
+          "file": "src\\composables\\useSlidePersistence.ts",
+          "lineStart": 224,
+          "lineEnd": 572
+        }
+      ]
+    },
+    {
+      "locale": "fr",
+      "localeFile": "fr\\services.json",
+      "issues": [
+        {
+          "file": "src\\services\\slidevService.ts",
+          "lineStart": 281,
+          "lineEnd": 336
+        }
+      ]
+    },
+    {
+      "locale": "fr",
+      "localeFile": "fr\\utils.json",
+      "issues": [
+        {
+          "file": "src\\utils\\slidevMarkdown.ts",
+          "lineStart": 671,
+          "lineEnd": 1225
+        }
+      ]
+    },
+    {
+      "locale": "zh",
+      "localeFile": "zh\\composables.json",
+      "issues": [
+        {
+          "file": "src\\composables\\useFileManager.ts",
+          "lineStart": 188,
+          "lineEnd": 304
+        },
+        {
+          "file": "src\\composables\\useFileOperations.ts",
+          "lineStart": 154,
+          "lineEnd": 405
+        },
+        {
+          "file": "src\\composables\\useMobileFileManager.ts",
+          "lineStart": 24,
+          "lineEnd": 138
+        },
+        {
+          "file": "src\\composables\\useSlidePersistence.ts",
+          "lineStart": 224,
+          "lineEnd": 572
+        }
+      ]
+    },
+    {
+      "locale": "zh",
+      "localeFile": "zh\\services.json",
+      "issues": [
+        {
+          "file": "src\\services\\slidevService.ts",
+          "lineStart": 281,
+          "lineEnd": 336
+        }
+      ]
+    },
+    {
+      "locale": "zh",
+      "localeFile": "zh\\utils.json",
+      "issues": [
+        {
+          "file": "src\\utils\\slidevMarkdown.ts",
+          "lineStart": 671,
+          "lineEnd": 1225
+        }
+      ]
+    }
+  ]
 }

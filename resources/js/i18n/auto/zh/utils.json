@@ -4,6 +4,35 @@
       "text": {
         "target_position_is_invalid": "目标位置无效，您无法将 {type} {originIndex} 移动到 {targetIndex}，目标无法被拆分。您可以使用 tryToFit 选项。"
       }
+    },
+    "SlidevMarkdown": {
+      "text": {
+        "bold_and_structured": "粗体和结构化",
+        "bold_statement_or_quote": "粗体声明或引用",
+        "centered_content_for_emphasis": "居中内容以示强调",
+        "clean_and_minimal": "简洁和极简",
+        "closing_with_next_steps": "包含下一步的结束",
+        "dark_blue_developer_theme": "深蓝色开发者主题",
+        "dark_purple_theme": "深紫色主题",
+        "elegant_serif_typography": "优雅的衬线字体",
+        "embedded_video_content": "嵌入式视频内容",
+        "four_equal_sections": "四个相等部分",
+        "header_spanning_both_columns": "跨越两列的标题",
+        "highlight_a_key_number": "突出显示关键数字或事实",
+        "image_as_main_content": "图像作为主要内容",
+        "introduction_slide_with_speaker": "包含演讲者信息的介绍幻灯片",
+        "mermaid_flowchart_diagram": "Mermaid流程图",
+        "mermaid_pie_chart": "Mermaid饼图",
+        "mermaid_sequence_diagram": "Mermaid序列图",
+        "mermaid_timeline_diagram": "Mermaid时间线图",
+        "opening_slide_with_title": "包含标题和副标题的开场幻灯片",
+        "quotation_with_attribution": "带归属的引用",
+        "section_break_with_large": "带大标题的章节分隔",
+        "soft_and_elegant_dark": "柔和优雅的深色主题",
+        "standard_content_slide_with": "带项目符号的标准内容幻灯片",
+        "syntax_highlighted_code": "语法高亮代码",
+        "warm_and_friendly": "温暖和友好"
+      }
     }
   }
 }

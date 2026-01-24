@@ -2,7 +2,7 @@
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent class="max-w-md">
       <DialogHeader>
-        <DialogTitle>Replace with Emoji</DialogTitle>
+        <DialogTitle>{{$t('Components.Slides.heading.replace_with_emoji')}}</DialogTitle>
         <DialogDescription>
           Select an emoji to replace "{{ selectedText }}"
         </DialogDescription>
@@ -49,13 +49,13 @@
           </button>
         </div>
         <p v-if="filteredEmojis.length === 0" class="text-center text-gray-500 py-8">
-          No emojis found
+          {{$t('Components.Slides.text.no_emojis_found')}}
         </p>
       </div>
 
       <!-- Recent -->
       <div v-if="recentEmojis.length > 0" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <p class="text-xs text-gray-500 mb-2">Recently Used</p>
+        <p class="text-xs text-gray-500 mb-2">{{$t('Commons.text.recently_used')}}</p>
         <div class="flex gap-1 flex-wrap">
           <button
             v-for="emoji in recentEmojis"

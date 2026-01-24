@@ -80,7 +80,7 @@
             @click="$emit('start-presentation')"
           >
             <Play class="h-4 w-4 mr-1" />
-            Present
+            {{$t('Commons.button.present')}}
           </Button>
 
           <!-- Presenter Mode -->
@@ -91,7 +91,7 @@
             @click="$emit('start-presenter-mode')"
           >
             <MonitorSpeaker class="h-4 w-4 mr-1" />
-            Presenter
+            {{$t('Commons.button.presenter')}}
           </Button>
 
           <!-- Dark Mode Toggle -->
@@ -123,7 +123,7 @@
             </DialogTrigger>
             <DialogContent class="dark:bg-gray-900 dark:border-gray-700">
               <DialogHeader>
-                <DialogTitle class="dark:text-gray-100">Share Presentation</DialogTitle>
+                <DialogTitle class="dark:text-gray-100">{{$t('Commons.heading.share_presentation')}}</DialogTitle>
               </DialogHeader>
               <ShareCard
                 @close="shareDialogOpen = false"

@@ -1,6 +1,7 @@
 // Slidev Export Service
 import { toast } from '@/composables/useToast';
 import type { SlidevSlide } from '@/utils/slidevMarkdown';
+import { t } from '@/i18n';
 
 export type { SlidevSlide };
 
@@ -277,7 +278,7 @@ export class SlidevService {
         blob = await this.exportClientSide(slides, options.format);
         
         if (options.format === 'pdf') {
-          toast.info('Opening print dialog for PDF export...');
+          toast.info(t('Services.SlidevService.toast.opening_print_dialog_for'));
           return; // Print dialog handles download
         }
         
@@ -321,18 +322,18 @@ export class SlidevService {
 
     // Fallback themes
     return [
-      { name: 'default', description: 'Default Slidev theme' },
-      { name: 'seriph', description: 'Serif typography theme' },
-      { name: 'shades-of-purple', description: 'Purple gradient theme' },
+      { name: 'default', description: t('Services.SlidevService.text.default_slidev_theme') },
+      { name: 'seriph', description: t('Services.SlidevService.text.serif_typography_theme') },
+      { name: 'shades-of-purple', description: t('Services.SlidevService.text.purple_gradient_theme') },
       { name: 'apple-basic', description: 'Apple-style presentation' },
-      { name: 'bricks', description: 'Brick wall background theme' },
-      { name: 'carbon', description: 'Dark carbon fiber theme' },
-      { name: 'circuit-board', description: 'Tech circuit board theme' },
-      { name: 'gradient', description: 'Gradient background theme' },
-      { name: 'mini', description: 'Compact presentation theme' },
-      { name: 'penguin', description: 'Linux penguin theme' },
-      { name: 'science', description: 'Scientific presentation theme' },
-      { name: 'vibrant', description: 'Vibrant colors theme' },
+      { name: 'bricks', description: t('Services.SlidevService.text.brick_wall_background_theme') },
+      { name: 'carbon', description: t('Services.SlidevService.text.dark_carbon_fiber_theme') },
+      { name: 'circuit-board', description: t('Services.SlidevService.text.tech_circuit_board_theme') },
+      { name: 'gradient', description: t('Services.SlidevService.text.gradient_background_theme') },
+      { name: 'mini', description: t('Services.SlidevService.text.compact_presentation_theme') },
+      { name: 'penguin', description: t('Services.SlidevService.text.linux_penguin_theme') },
+      { name: 'science', description: t('Services.SlidevService.text.scientific_presentation_theme') },
+      { name: 'vibrant', description: t('Services.SlidevService.text.vibrant_colors_theme') },
     ];
   }
 

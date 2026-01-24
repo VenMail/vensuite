@@ -11,7 +11,7 @@
     >
       <div v-if="isRefreshing" class="pull-refresh-indicator">
         <Loader class="animate-spin h-5 w-5 mr-2" />
-        <span class="text-sm">Refreshing...</span>
+        <span class="text-sm">{{$t('Components.Home.text.refreshing')}}</span>
       </div>
     </Transition>
 
@@ -41,7 +41,7 @@
             </Button>
             <Button @click="$emit('upload-file')" variant="outline" class="w-full">
               <Upload class="h-4 w-4 mr-2" />
-              Upload Files
+              {{$t('Commons.button.upload_files')}}
             </Button>
           </div>
         </div>
@@ -94,7 +94,7 @@
       >
         <div class="load-more-indicator">
           <Loader class="animate-spin h-4 w-4 mr-2" />
-          <span class="text-sm text-muted-foreground">Loading more...</span>
+          <span class="text-sm text-muted-foreground">{{$t('Components.Home.text.loading_more')}}</span>
         </div>
       </div>
     </div>
@@ -147,6 +147,7 @@ import { Button } from '@/components/ui/button'
 import { FileData } from '@/types'
 import MobileFileItem from './MobileFileItem.vue'
 import { useMobileFirst } from '@/composables/useMobileFirst'
+import { t } from '@/i18n';
 
 interface Props {
   items: FileData[]
@@ -250,7 +251,7 @@ const groupedItems = computed(() => {
       } else if (['pptx', 'ppt'].includes(fileType || '')) {
         groupName = 'presentations'
       } else {
-        groupName = 'other'
+        groupName = t('Commons.text.other_2')
       }
     }
     

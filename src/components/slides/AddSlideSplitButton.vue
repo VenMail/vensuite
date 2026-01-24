@@ -8,7 +8,7 @@
       @click="handleAddSlide"
     >
       <Plus class="h-4 w-4 mr-1" />
-      Add Slide
+      {{$t('Commons.button.add_slide')}}
     </Button>
     
     <!-- Dropdown arrow -->
@@ -33,7 +33,7 @@
       <div class="py-1">
         <!-- Most Used Templates -->
         <div class="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          Most Used
+          {{$t('Commons.text.most_used')}}
         </div>
         <button
           v-for="templateId in mostUsedTemplates"

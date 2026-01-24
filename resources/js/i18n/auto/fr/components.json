@@ -52,6 +52,21 @@
           "response_submitted_successfully": "Réponse soumise avec succès",
           "submit_a_new_response": "Soumettre une nouvelle réponse au formulaire"
         }
+      },
+      "heading": {
+        "create_new_form": "Créer un nouveau formulaire",
+        "no_forms_found": "Aucun formulaire trouvé"
+      },
+      "text": {
+        "get_started_by_creating": "Commencez par créer votre premier formulaire",
+        "pick_a_template_or": "Choisissez un modèle ou commencez à partir de zéro",
+        "start_a_new_form": "Démarrer un nouveau formulaire"
+      }
+    },
+    "Home": {
+      "text": {
+        "loading_more": "Chargement de plus...",
+        "refreshing": "Actualisation..."
       }
     },
     "ImagePicker": {
@@ -99,27 +114,49 @@
         "add_a_note_optional": "Ajouter une note (facultatif)"
       }
     },
-    "SlidevMarkdownEditor": {
+    "Slides": {
       "button": {
-        "add_slide": "Ajouter une diapositive",
-        "insert_heading": "Insérer un titre",
-        "insert_list": "Insérer une liste",
-        "insert_code": "Insérer du code",
-        "insert_image": "Insérer une image",
-        "move_up": "Monter",
-        "move_down": "Descendre",
-        "duplicate": "Dupliquer",
-        "delete": "Supprimer"
+        "add_footer": "📝 Ajouter",
+        "add_header": "📋 Ajouter",
+        "remove_column": "➖ Supprimer",
+        "remove_row": "➖ Supprimer",
+        "row_above": "➕ Ligne au-dessus",
+        "row_below": "➕ Ligne en dessous",
+        "sort_column": "📊 Trier la colonne"
+      },
+      "heading": {
+        "choose_from_professionally_designed": "Choisissez parmi des modèles d'infographie professionnellement conçus. Cliquez pour prévisualiser, puis insérez dans votre diapositive.",
+        "replace_with_emoji": "Remplacer par un emoji"
+      },
+      "label": {
+        "shape_style": "Forme et style",
+        "smart_font_sizing": "Dimensionnement intelligent des polices"
       },
       "text": {
-        "markdown": "Markdown",
-        "presenter_notes": "Notes du présentateur",
-        "preview": "Aperçu",
-        "slide_count": "Diapositive {current} sur {total}"
-      },
-      "placeholder": {
-        "write_markdown": "Écrivez votre markdown ici...",
-        "add_presenter_notes": "Ajoutez des notes du présentateur..."
+        "add_entrance_emphasis_or": "Ajouter des animations d'entrée, de mise en évidence ou de sortie à cet élément",
+        "decision_based_process_flow": "Flux de processus basé sur des décisions avec branches",
+        "detailed_timeline_with_descriptions": "Chronologie détaillée avec descriptions alternées",
+        "ease_in_out": "Entrée/Sortie douce",
+        "end_of_presentation": "Fin de la présentation",
+        "export_as_pdf": "Exporter en PDF",
+        "export_as_powerpoint": "Exporter en PowerPoint",
+        "export_as_pptx": "Exporter en PPTX",
+        "export_for_web": "Exporter pour le web",
+        "help_documentation": "Aide et documentation",
+        "no_emojis_found": "Aucun emoji trouvé",
+        "no_image_loaded": "Aucune image chargée",
+        "select_an_element_in": "Sélectionnez un élément dans la diapositive pour configurer les animations",
+        "show_a_linear_process": "Afficher un processus linéaire avec des étapes numérotées",
+        "show_events_or_milestones": "Afficher des événements ou des jalons dans l'ordre chronologique",
+        "slide_in_down": "Glisser vers le bas",
+        "slide_in_left": "Glisser à gauche",
+        "slide_in_right": "Glisser à droite",
+        "slide_in_up": "Glisser vers le haut",
+        "slide_out_down": "Glisser vers le bas (sortie)",
+        "slide_out_left": "Glisser à gauche (sortie)",
+        "slide_out_right": "Glisser à droite (sortie)",
+        "slide_out_up": "Glisser vers le haut (sortie)",
+        "tip_after_inserting_you": "Astuce : Après insertion, vous pouvez éditer le texte directement dans l'éditeur markdown"
       }
     }
   },
@@ -190,7 +227,6 @@
     },
     "DocsTitleBar": {
       "text": {
-        "loading_versions": "Chargement des versions...",
         "no_previous_versions": "Aucune version précédente"
       }
     },
@@ -454,25 +490,6 @@
       "public_on_the_web": "Public sur le web"
     }
   },
-  "Slides": {
-    "SlidesInspector": {
-      "text": {
-        "bring_existing_content_into": "Intégrez le contenu existant dans votre présentation.",
-        "combine_smart_snapping_with": "Combinez l'accrochage intelligent avec des superpositions de grille pour des mises en page parfaites.",
-        "control_alignment_helpers_for": "Contrôlez les aides à l'alignement pour des mises en page précises.",
-        "processing_your_file": "Traitement de votre fichier…",
-        "ready_for_new_imports": "Prêt pour de nouvelles importations.",
-        "use_a_smaller_grid": "Utilisez une grille plus petite pour des mises en page denses ou augmentez l'espacement pour des guides plus larges.",
-        "use_alignment_guides_to": "Utilisez des guides d'alignement pour répartir uniformément les formes.",
-        "while_dragging_to_constrain": "pendant le glissement pour contraindre l'axe."
-      }
-    },
-    "SlidesToolbar": {
-      "text": {
-        "use_smart_snapping_to": "Utilisez l'accrochage intelligent pour aligner les formes au centre et à espacement égal."
-      }
-    }
-  },
   "components": {
     "FileUploader": {
       "components": {
@@ -533,13 +550,6 @@
             "link_copied_description": "Le lien a été copié avec succès dans votre presse-papiers.",
             "manual_copy_required": "Veuillez copier le lien manuellement."
           }
-        }
-      }
-    },
-    "slides": {
-      "commons": {
-        "text": {
-          "saving_deck": "Sauvegarde du deck…"
         }
       }
     }

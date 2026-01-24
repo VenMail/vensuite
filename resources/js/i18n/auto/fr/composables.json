@@ -1,9 +1,70 @@
 {
   "Composables": {
+    "UseFileManager": {
+      "toast": {
+        "failed_to_create_folder": "Échec de la création du dossier",
+        "failed_to_create_type": "Échec de la création de {type}",
+        "failed_to_delete_file": "Échec de la suppression du fichier",
+        "failed_to_delete_some": "Échec de la suppression de certains fichiers",
+        "failed_to_download_files": "Échec du téléchargement des fichiers",
+        "failed_to_rename_file": "Échec du renommage du fichier",
+        "file_moved_to_trash": "Fichier déplacé vers la corbeille",
+        "file_renamed_successfully": "Fichier renommé avec succès",
+        "folder_created_successfully": "Dossier créé avec succès",
+        "type_created_successfully": "{type} créé avec succès"
+      }
+    },
+    "UseFileOperations": {
+      "toast": {
+        "cannot_open_this_file": "Impossible d'ouvrir ce type de fichier",
+        "failed_to_open_file": "Échec de l'ouverture du fichier",
+        "file_not_found": "Fichier non trouvé",
+        "file_renamed_successfully": "Fichier renommé avec succès",
+        "link_copied_to_clipboard": "Lien copié dans le presse-papiers",
+        "links_copied_to_clipboard": "Liens copiés dans le presse-papiers",
+        "opening_file_in_appropriate": "Ouverture du fichier dans l'éditeur approprié...",
+        "select_a_file_to": "Sélectionnez un fichier à renommer",
+        "select_a_file_to_2": "Sélectionnez un fichier à partager",
+        "select_files_to_share": "Sélectionnez des fichiers à partager",
+        "selected_files_do_not": "Les fichiers sélectionnés n'ont pas de liens partageables",
+        "share_sheet_opened": "Fenêtre de partage ouverte",
+        "this_file_does_not": "Ce fichier n'a pas encore de lien partageable"
+      }
+    },
     "UseFormAutosave": {
       "toast": {
         "autosave_failed_retry_or": "Échec de l'enregistrement automatique. Réessayez ou vérifiez la connexion.",
         "this_form_was_updated": "Ce formulaire a été mis à jour ailleurs. Rechargez pour continuer à éditer."
+      }
+    },
+    "UseMobileFileManager": {
+      "toast": {
+        "failed_to_load_more": "Échec du chargement de plus de fichiers",
+        "failed_to_refresh_files": "Échec de l'actualisation des fichiers",
+        "failed_to_share_file": "Échec du partage du fichier",
+        "file_not_found": "Fichier non trouvé",
+        "file_shared_successfully": "Fichier partagé avec succès",
+        "link_copied_to_clipboard": "Lien copié dans le presse-papiers",
+        "settings_coming_soon": "Paramètres bientôt disponibles",
+        "this_file_does_not": "Ce fichier n'a pas encore de lien partageable"
+      }
+    },
+    "UseSlidePersistence": {
+      "toast": {
+        "exporting_pdf": "Exportation du PDF...",
+        "exporting_pptx": "Exportation du PPTX...",
+        "failed_to_import_html": "Échec de l'importation HTML",
+        "failed_to_import_powerpoint": "Échec de l'importation du fichier PowerPoint",
+        "failed_to_load_presentation": "Échec du chargement de la présentation",
+        "failed_to_save_presentation": "Échec de l'enregistrement de la présentation",
+        "failed_to_update_visibility": "Échec de la mise à jour de la visibilité",
+        "html_imported_successfully": "HTML importé avec succès",
+        "importing_powerpoint": "Importation de PowerPoint...",
+        "pdf_export_failed_please": "Échec de l'exportation PDF. Veuillez réessayer.",
+        "pdf_exported_successfully": "PDF exporté avec succès",
+        "pptx_export_failed_please": "Échec de l'exportation PPTX. Veuillez réessayer.",
+        "pptx_exported_successfully": "PPTX exporté avec succès",
+        "save_the_presentation_first": "Enregistrez d'abord la présentation"
       }
     }
   }

@@ -12,6 +12,7 @@ import {
   Share2, 
   Trash2 
 } from 'lucide-vue-next'
+import { t } from '@/i18n';
 
 export function useFileOperations() {
   // Vue Router - must be called at composable top level
@@ -150,30 +151,30 @@ export function useFileOperations() {
         } else if (['pdf'].includes(fileType || '')) {
           router.push(`/media/${file.id}`)
         } else {
-          toast.info('Opening file in appropriate editor...')
+          toast.info(t('Composables.UseFileOperations.toast.opening_file_in_appropriate'))
           // Fallback - try to determine editor based on file properties
           if (file.file_url) {
             window.open(file.file_url, '_blank')
           } else {
-            toast.error('Cannot open this file type')
+            toast.error(t('Composables.UseFileOperations.toast.cannot_open_this_file'))
           }
         }
       }
     } catch (error) {
-      toast.error('Failed to open file')
+      toast.error(t('Composables.UseFileOperations.toast.failed_to_open_file'))
     }
   }
 
   function startRename(fileId?: string) {
     const targetId = fileId ?? Array.from(fileManager.selectedFiles.value)[0]
     if (!targetId) {
-      toast.info('Select a file to rename')
+      toast.info(t('Composables.UseFileOperations.toast.select_a_file_to'))
       return
     }
 
     const file = fileManager.sortedItems.value.find(item => item.id === targetId)
     if (!file) {
-      toast.error('File not found')
+      toast.error(t('Composables.UseFileOperations.toast.file_not_found'))
       return
     }
 
@@ -203,7 +204,7 @@ export function useFileOperations() {
         handleFileUpdated(updatedFile)
       }
       renameDialog.value.isOpen = false
-      toast.success('File renamed successfully')
+      toast.success(t('Composables.UseFileOperations.toast.file_renamed_successfully'))
     } catch (error) {
       dialog.error = 'Failed to rename file'
       console.error(error)
@@ -304,26 +305,26 @@ export function useFileOperations() {
   async function handleShare(fileId?: string) {
     const targetId = fileId ?? Array.from(fileManager.selectedFiles.value)[0]
     if (!targetId) {
-      toast.info('Select a file to share')
+      toast.info(t('Composables.UseFileOperations.toast.select_a_file_to_2'))
       return
     }
 
     const file = fileManager.sortedItems.value.find(item => item.id === targetId)
     if (!file) {
-      toast.error('File not found')
+      toast.error(t('Composables.UseFileOperations.toast.file_not_found'))
       return
     }
 
     const shareUrl = file.file_public_url || file.download_url || file.file_url
     if (!shareUrl) {
-      toast.info('This file does not have a shareable link yet')
+      toast.info(t('Composables.UseFileOperations.toast.this_file_does_not'))
       return
     }
 
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({ title: file.title, url: shareUrl })
-        toast.success('Share sheet opened')
+        toast.success(t('Composables.UseFileOperations.toast.share_sheet_opened'))
         return
       }
     } catch (error) {
@@ -333,7 +334,7 @@ export function useFileOperations() {
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(shareUrl)
-        toast.success('Link copied to clipboard')
+        toast.success(t('Composables.UseFileOperations.toast.link_copied_to_clipboard'))
         return
       }
     } catch (error) {
@@ -350,13 +351,13 @@ export function useFileOperations() {
     textarea.select()
     document.execCommand('copy')
     document.body.removeChild(textarea)
-    toast.success('Link copied to clipboard')
+    toast.success(t('Composables.UseFileOperations.toast.link_copied_to_clipboard'))
   }
 
   async function handleBulkShare() {
     const ids = Array.from(fileManager.selectedFiles.value)
     if (ids.length === 0) {
-      toast.info('Select files to share')
+      toast.info(t('Composables.UseFileOperations.toast.select_files_to_share'))
       return
     }
 
@@ -376,7 +377,7 @@ export function useFileOperations() {
       .filter(Boolean) as string[]
 
     if (links.length === 0) {
-      toast.info('Selected files do not have shareable links')
+      toast.info(t('Composables.UseFileOperations.toast.selected_files_do_not'))
       return
     }
 
@@ -385,7 +386,7 @@ export function useFileOperations() {
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(text)
-        toast.success('Links copied to clipboard')
+        toast.success(t('Composables.UseFileOperations.toast.links_copied_to_clipboard'))
         return
       }
     } catch (error) {
@@ -401,7 +402,7 @@ export function useFileOperations() {
     textarea.select()
     document.execCommand('copy')
     document.body.removeChild(textarea)
-    toast.success('Links copied to clipboard')
+    toast.success(t('Composables.UseFileOperations.toast.links_copied_to_clipboard'))
   }
 
   // Event handlers

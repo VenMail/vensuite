@@ -1,0 +1,22 @@
+{
+  "Services": {
+    "SlidevService": {
+      "text": {
+        "brick_wall_background_theme": "Brick wall background theme",
+        "compact_presentation_theme": "Compact presentation theme",
+        "dark_carbon_fiber_theme": "Dark carbon fiber theme",
+        "default_slidev_theme": "Default Slidev theme",
+        "gradient_background_theme": "Gradient background theme",
+        "linux_penguin_theme": "Linux penguin theme",
+        "purple_gradient_theme": "Purple gradient theme",
+        "scientific_presentation_theme": "Scientific presentation theme",
+        "serif_typography_theme": "Serif typography theme",
+        "tech_circuit_board_theme": "Tech circuit board theme",
+        "vibrant_colors_theme": "Vibrant colors theme"
+      },
+      "toast": {
+        "opening_print_dialog_for": "Opening print dialog for PDF export..."
+      }
+    }
+  }
+}

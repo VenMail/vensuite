@@ -3,7 +3,7 @@
     <div class="p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">
-          {{ markdownElement ? 'Markdown Element' : (selectedElement ? 'Element Properties' : 'Slide Properties') }}
+          {{ markdownElement ? $t('Commons.heading.markdown_element') : (selectedElement ? $t('Commons.heading.element_properties') : $t('Commons.heading.slide_properties')) }}
         </h3>
         <div class="flex items-center gap-1">
           <button
@@ -29,7 +29,7 @@
       <!-- Markdown Element Properties -->
       <template v-if="markdownElement">
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Element Type</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.element_type')}}</label>
           <div class="text-sm px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-md capitalize">
             {{ markdownElement.type }}
             <span v-if="markdownElement.level" class="text-xs text-gray-500 ml-1">({{ markdownElement.level }})</span>
@@ -39,7 +39,7 @@
 
         <!-- Content Preview -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Content</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.content')}}</label>
           <div class="text-sm px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-md max-h-32 overflow-y-auto font-mono text-xs">
             {{ markdownElement.content.substring(0, 200) }}{{ markdownElement.content.length > 200 ? '...' : '' }}
           </div>
@@ -47,7 +47,7 @@
 
         <!-- Position Info -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Position</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.position')}}</label>
           <div class="text-sm px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-md">
             Line: {{ markdownElement.startLine + 1 }}{{ markdownElement.endLine > markdownElement.startLine ? `-${markdownElement.endLine + 1}` : '' }}
           </div>
@@ -56,7 +56,7 @@
         <!-- Mermaid/Code Specific Controls -->
         <template v-if="markdownElement.type === 'mermaid' || markdownElement.type === 'code'">
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Scale</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.scale')}}</label>
             <div class="space-y-2">
               <input
                 :value="componentScale"
@@ -77,7 +77,7 @@
           
           <!-- Mermaid-specific intelligent scaling -->
           <div v-if="markdownElement.type === 'mermaid' && diagramMetrics.elementCount > 0">
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Diagram Info</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.diagram_info')}}</label>
             <div class="text-xs px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600 space-y-1">
               <div class="flex justify-between">
                 <span class="text-gray-500">Type:</span>
@@ -98,7 +98,7 @@
         <!-- Heading Specific Controls -->
         <template v-if="markdownElement.type === 'heading'">
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Heading Level</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.heading_level')}}</label>
             <div class="flex gap-1">
               <button
                 v-for="level in 6"
@@ -136,12 +136,12 @@
                   height: imageSize.height !== 'auto' ? imageSize.height : undefined
                 }"
               />
-              <div v-else class="text-gray-400 text-xs">No image loaded</div>
+              <div v-else class="text-gray-400 text-xs">{{$t('Components.Slides.text.no_image_loaded')}}</div>
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Image Source</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.image_source')}}</label>
             <div class="space-y-2">
               <input
                 :value="markdownElement.attributes?.url || ''"
@@ -155,19 +155,19 @@
                   class="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                   @click="handleImageUpload"
                 >
-                  📁 Upload
+                  {{$t('Commons.button.upload')}}
                 </button>
                 <button
                   class="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                   @click="handleImageReplace"
                 >
-                  🔄 Replace
+                  {{$t('Commons.button.replace')}}
                 </button>
                 <button
                   class="px-2 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
                   @click="handleImageFromUrl"
                 >
-                  🔗 URL
+                  {{$t('Commons.button.url')}}
                 </button>
               </div>
             </div>
@@ -179,22 +179,22 @@
             <div class="space-y-2">
               <!-- Image Position -->
               <div>
-                <label class="text-[10px] text-gray-500">Position</label>
+                <label class="text-[10px] text-gray-500">{{$t('Commons.label.position')}}</label>
                 <select
                   :value="imagePosition"
                   class="w-full text-sm px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded"
                   @change="updateImagePosition(($event.target as HTMLSelectElement).value)"
                 >
-                  <option value="inline">Inline</option>
+                  <option value="inline">{{$t('Commons.text.inline')}}</option>
                   <option value="left">Float Left</option>
                   <option value="right">Float Right</option>
-                  <option value="center">Center</option>
+                  <option value="center">{{$t('Commons.text.center')}}</option>
                 </select>
               </div>
               
               <!-- Image Quality/Compression -->
               <div>
-                <label class="text-[10px] text-gray-500">Quality</label>
+                <label class="text-[10px] text-gray-500">{{$t('Commons.label.quality')}}</label>
                 <div class="flex items-center gap-2">
                   <input
                     :value="imageQuality"
@@ -212,7 +212,7 @@
           </div>
           
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Alt Text</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.alt_text')}}</label>
             <textarea
               :value="String(markdownElement.attributes?.alt || '')"
               class="w-full text-sm px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md resize-none"
@@ -224,7 +224,7 @@
 
           <!-- Shape Masks -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Shape & Style</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Components.Slides.label.shape_style')}}</label>
             <div class="grid grid-cols-4 gap-1">
               <button
                 class="p-2 text-xs border rounded transition-colors"
@@ -233,7 +233,7 @@
                   : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
                 @click="updateImageShape('none')"
               >
-                ◻️ None
+                {{$t('Commons.button.none')}}
               </button>
               <button
                 class="p-2 text-xs border rounded transition-colors"
@@ -242,7 +242,7 @@
                   : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
                 @click="updateImageShape('circle')"
               >
-                ⭕ Circle
+                {{$t('Commons.button.circle')}}
               </button>
               <button
                 class="p-2 text-xs border rounded transition-colors"
@@ -251,7 +251,7 @@
                   : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
                 @click="updateImageShape('rounded')"
               >
-                ▫️ Rounded
+                {{$t('Commons.button.rounded')}}
               </button>
               <button
                 class="p-2 text-xs border rounded transition-colors"
@@ -260,18 +260,18 @@
                   : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
                 @click="updateImageShape('hexagon')"
               >
-                ⬡ Hex
+                {{$t('Commons.button.hex')}}
               </button>
             </div>
           </div>
 
           <!-- Precise Size Control -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Dimensions</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.dimensions')}}</label>
             <div class="space-y-2">
               <div class="flex gap-2">
                 <div class="flex-1">
-                  <label class="text-[10px] text-gray-500">Width</label>
+                  <label class="text-[10px] text-gray-500">{{$t('Commons.label.width')}}</label>
                   <div class="flex gap-1">
                     <input
                       :value="imageSize.width"
@@ -292,7 +292,7 @@
                   </div>
                 </div>
                 <div class="flex-1">
-                  <label class="text-[10px] text-gray-500">Height</label>
+                  <label class="text-[10px] text-gray-500">{{$t('Commons.label.height')}}</label>
                   <div class="flex gap-1">
                     <input
                       :value="imageSize.height"
@@ -330,26 +330,26 @@
         <template v-if="markdownElement.type === 'table'">
           <!-- Table Structure Preview -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Table Structure</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.table_structure')}}</label>
             <div class="text-xs px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600">
               {{ getTableInfo().rows }} rows × {{ getTableInfo().columns }} columns
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Table Actions</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.table_actions')}}</label>
             <div class="grid grid-cols-2 gap-1">
               <button
                 class="px-2 py-1.5 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                 @click="addTableRow('above')"
               >
-                ➕ Row Above
+                {{$t('Components.Slides.button.row_above')}}
               </button>
               <button
                 class="px-2 py-1.5 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                 @click="addTableRow('below')"
               >
-                ➕ Row Below
+                {{$t('Components.Slides.button.row_below')}}
               </button>
               <button
                 class="px-2 py-1.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
@@ -367,13 +367,13 @@
                 class="px-2 py-1.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                 @click="removeTableRow"
               >
-                ➖ Remove Row
+                {{$t('Components.Slides.button.remove_row')}}
               </button>
               <button
                 class="px-2 py-1.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                 @click="removeTableColumn"
               >
-                ➖ Remove Column
+                {{$t('Components.Slides.button.remove_column')}}
               </button>
             </div>
           </div>
@@ -386,32 +386,32 @@
                 class="px-2 py-1.5 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
                 @click="sortTableColumn"
               >
-                📊 Sort Column
+                {{$t('Components.Slides.button.sort_column')}}
               </button>
               <button
                 class="px-2 py-1.5 text-xs bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors"
                 @click="transposeTable"
               >
-                🔄 Transpose
+                {{$t('Commons.button.transpose')}}
               </button>
               <button
                 class="px-2 py-1.5 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
                 @click="addTableHeader"
               >
-                📋 Add Header
+                {{$t('Components.Slides.button.add_header')}}
               </button>
               <button
                 class="px-2 py-1.5 text-xs bg-pink-500 text-white rounded hover:bg-pink-600 transition-colors"
                 @click="addTableFooter"
               >
-                📝 Add Footer
+                {{$t('Components.Slides.button.add_footer')}}
               </button>
             </div>
           </div>
 
           <!-- Table Style -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Table Style</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.table_style')}}</label>
             <div class="space-y-2">
               <label class="flex items-center gap-2 text-xs">
                 <input
@@ -447,29 +447,29 @@
                   class="rounded"
                   @change="updateTableStyle('hoverable', ($event.target as HTMLInputElement).checked)"
                 />
-                Hoverable Rows
+                {{$t('Commons.label.hoverable_rows')}}
               </label>
             </div>
           </div>
 
           <!-- Cell Alignment -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Cell Alignment</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.cell_alignment')}}</label>
             <select
               :value="tableAlignment"
               class="w-full text-sm px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded"
               @change="updateTableAlignment(($event.target as HTMLSelectElement).value)"
             >
               <option value="left">{{$t('Commons.label.left')}}</option>
-              <option value="center">Center</option>
+              <option value="center">{{$t('Commons.text.center')}}</option>
               <option value="right">{{$t('Commons.label.right')}}</option>
-              <option value="justify">Justify</option>
+              <option value="justify">{{$t('Commons.text.justify')}}</option>
             </select>
           </div>
 
           <!-- Table Width -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Table Width</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.table_width')}}</label>
             <div class="flex gap-2">
               <input
                 :value="tableWidth"
@@ -495,7 +495,7 @@
         <template v-if="markdownElement.type === 'heading' || markdownElement.type === 'paragraph'">
           <!-- Text Content Editor -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Text Content</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.text_content')}}</label>
             <textarea
               :value="getTextContent()"
               class="w-full text-sm px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md resize-none"
@@ -507,11 +507,11 @@
           
           <!-- Smart Font Sizing -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Smart Font Sizing</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Components.Slides.label.smart_font_sizing')}}</label>
             <div class="space-y-2">
               <div class="text-xs px-2 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
                 <div class="flex items-center justify-between mb-1">
-                  <span class="text-blue-700 dark:text-blue-300 font-medium">Recommended Size</span>
+                  <span class="text-blue-700 dark:text-blue-300 font-medium">{{$t('Commons.text.recommended_size')}}</span>
                   <span v-if="isFontAnalyzing" class="text-blue-600 dark:text-blue-400 text-[10px]">Analyzing...</span>
                 </div>
                 <div class="text-sm font-mono text-blue-900 dark:text-blue-100">
@@ -521,7 +521,7 @@
               
               <!-- Font Size Presets -->
               <div>
-                <label class="text-[10px] text-gray-500 mb-1 block">Quick Presets</label>
+                <label class="text-[10px] text-gray-500 mb-1 block">{{$t('Commons.label.quick_presets')}}</label>
                 <div class="grid grid-cols-3 gap-1">
                   <button
                     v-for="size in ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl']" 
@@ -547,7 +547,7 @@
 
           <!-- Text Formatting -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Text Formatting</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.text_formatting')}}</label>
             <div class="flex gap-1 flex-wrap">
               <button
                 class="px-2 py-1 text-xs border rounded transition-colors"
@@ -590,7 +590,7 @@
 
           <!-- Text Alignment -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Text Alignment</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.text_alignment')}}</label>
             <div class="flex gap-1">
               <button
                 class="flex-1 px-2 py-1.5 text-xs rounded border transition-colors"
@@ -599,7 +599,7 @@
                   : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
                 @click="updateStyle('textAlign', 'left')"
               >
-                ⬅️ Left
+                {{$t('Commons.button.left')}}
               </button>
               <button
                 class="flex-1 px-2 py-1.5 text-xs rounded border transition-colors"
@@ -608,7 +608,7 @@
                   : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
                 @click="updateStyle('textAlign', 'center')"
               >
-                ⬜️ Center
+                {{$t('Commons.button.center')}}
               </button>
               <button
                 class="flex-1 px-2 py-1.5 text-xs rounded border transition-colors"
@@ -617,14 +617,14 @@
                   : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
                 @click="updateStyle('textAlign', 'right')"
               >
-                ➡️ Right
+                {{$t('Commons.button.right')}}
               </button>
             </div>
           </div>
 
           <!-- Text Color -->
           <div>
-            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Text Color</label>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.text_color')}}</label>
             <div class="flex gap-2">
               <input
                 :value="elementStyles.color"
@@ -648,7 +648,7 @@
             class="w-full px-3 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
             @click="clearMarkdownElement"
           >
-            Clear Selection
+            {{$t('Commons.button.clear_selection_2')}}
           </button>
         </div>
       </template>
@@ -656,7 +656,7 @@
       <!-- Selected Element Properties -->
       <template v-else-if="selectedElement">
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Element Type</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.element_type')}}</label>
           <div class="text-sm px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-md">
             {{ elementType }}
           </div>
@@ -664,7 +664,7 @@
 
         <!-- Font Size -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Font Size</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.font_size')}}</label>
           <div class="flex gap-2">
             <input
               :value="elementStyles.fontSize"
@@ -677,7 +677,7 @@
               class="text-sm px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
               @change="applyPresetSize(($event.target as HTMLSelectElement).value)"
             >
-              <option value="">Preset</option>
+              <option value="">{{$t('Commons.text.preset')}}</option>
               <option value="text-xs">XS (12px)</option>
               <option value="text-sm">SM (14px)</option>
               <option value="text-base">Base (16px)</option>
@@ -694,7 +694,7 @@
 
         <!-- Text Alignment -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Text Align</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.text_align')}}</label>
           <div class="flex gap-1">
             <button
               v-for="align in ['left', 'center', 'right']"
@@ -712,7 +712,7 @@
 
         <!-- Font Weight -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Font Weight</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.font_weight')}}</label>
           <div class="flex gap-1">
             <button
               v-for="weight in [{ label: 'Normal', value: 'normal' }, { label: 'Bold', value: 'bold' }]"
@@ -730,7 +730,7 @@
 
         <!-- Color -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Text Color</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.text_color')}}</label>
           <div class="flex gap-2">
             <input
               :value="elementStyles.color"
@@ -750,7 +750,7 @@
 
         <!-- Mermaid/Component Scaling (if applicable) -->
         <div v-if="isMermaidOrComponent">
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Scale</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.scale')}}</label>
           <div class="space-y-2">
             <input
               :value="componentScale"
@@ -785,7 +785,7 @@
             class="w-full px-3 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
             @click="clearSelection"
           >
-            Clear Selection
+            {{$t('Commons.button.clear_selection_2')}}
           </button>
         </div>
       </template>
@@ -794,7 +794,7 @@
       <template v-else>
         <!-- Layout -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Layout</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.layout')}}</label>
           <select
             :value="layout"
             class="w-full text-sm px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
@@ -808,7 +808,7 @@
 
         <!-- Background -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Background</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.background')}}</label>
           <div class="flex gap-2">
             <input
               :value="background"
@@ -828,28 +828,28 @@
 
         <!-- Transition -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Transition</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{$t('Commons.label.transition')}}</label>
           <select
             :value="transition"
             class="w-full text-sm px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
             @change="emit('update:transition', ($event.target as HTMLSelectElement).value)"
           >
-            <option value="slide-left">Slide Left</option>
-            <option value="slide-right">Slide Right</option>
-            <option value="slide-up">Slide Up</option>
-            <option value="fade">Fade</option>
-            <option value="fade-out">Fade Out</option>
-            <option value="none">None</option>
+            <option value="slide-left">{{$t('Commons.text.slide_left')}}</option>
+            <option value="slide-right">{{$t('Commons.text.slide_right')}}</option>
+            <option value="slide-up">{{$t('Commons.text.slide_up')}}</option>
+            <option value="fade">{{$t('Commons.text.fade')}}</option>
+            <option value="fade-out">{{$t('Commons.text.fade_out')}}</option>
+            <option value="none">{{$t('Commons.text.none_2')}}</option>
           </select>
         </div>
 
         <!-- Quick Templates -->
         <div>
-          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Quick Templates</label>
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{{$t('Commons.label.quick_templates')}}</label>
           
           <div class="space-y-3">
             <div>
-              <span class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-500">Title</span>
+              <span class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-500">{{$t('Commons.text.title')}}</span>
               <div class="grid grid-cols-2 gap-1 mt-1">
                 <button
                   v-for="template in titleTemplates"
@@ -864,7 +864,7 @@
             </div>
             
             <div>
-              <span class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-500">Content</span>
+              <span class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-500">{{$t('Commons.label.content')}}</span>
               <div class="grid grid-cols-2 gap-1 mt-1">
                 <button
                   v-for="template in contentTemplates"

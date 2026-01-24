@@ -1,1 +1,22 @@
-{}
+{
+  "Services": {
+    "SlidevService": {
+      "text": {
+        "brick_wall_background_theme": "Thème de fond en briques",
+        "compact_presentation_theme": "Thème de présentation compact",
+        "dark_carbon_fiber_theme": "Thème fibre de carbone sombre",
+        "default_slidev_theme": "Thème Slidev par défaut",
+        "gradient_background_theme": "Thème de fond dégradé",
+        "linux_penguin_theme": "Thème pingouin Linux",
+        "purple_gradient_theme": "Thème dégradé violet",
+        "scientific_presentation_theme": "Thème de présentation scientifique",
+        "serif_typography_theme": "Thème typographie serif",
+        "tech_circuit_board_theme": "Thème circuit imprimé tech",
+        "vibrant_colors_theme": "Thème couleurs vibrantes"
+      },
+      "toast": {
+        "opening_print_dialog_for": "Ouverture de la boîte de dialogue d'impression pour l'exportation PDF..."
+      }
+    }
+  }
+}

@@ -33,21 +33,21 @@
                 @click="$emit('expand-all')"
               >
                 <Expand class="h-4 w-4 mr-2" />
-                Expand All
+                {{$t('Commons.button.expand_all')}}
               </Button>
               <DropdownMenuSeparator />
             </div>
             <DropdownMenuItem @click="$emit('create-document')">
               <FileText class="h-4 w-4 mr-2" />
-              Document
+              {{$t('Commons.heading.document')}}
             </DropdownMenuItem>
             <DropdownMenuItem @click="$emit('create-spreadsheet')">
               <Grid3x3 class="h-4 w-4 mr-2" />
-              Spreadsheet
+              {{$t('Commons.text.spreadsheet')}}
             </DropdownMenuItem>
             <DropdownMenuItem @click="$emit('create-presentation')">
               <Presentation class="h-4 w-4 mr-2" />
-              Presentation
+              {{$t('Commons.button.presentation')}}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem @click="$emit('create-folder')">
@@ -56,7 +56,7 @@
             </DropdownMenuItem>
             <DropdownMenuItem @click="$emit('upload-file')">
               <Upload class="h-4 w-4 mr-2" />
-              Upload Files
+              {{$t('Commons.button.upload_files')}}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -96,7 +96,7 @@
           @click="$emit('navigate', 'search')"
         >
           <Search class="h-5 w-5" />
-          <span class="nav-label">Search</span>
+          <span class="nav-label">{{$t('Commons.text.search')}}</span>
         </Button>
 
         <!-- Settings -->

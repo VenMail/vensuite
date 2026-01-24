@@ -146,53 +146,32 @@
     },
     "Forms": {
       "heading": {
-        "create_and_manage_forms": "Créer et gérer des formulaires",
         "share_this_form_with": "Partagez ce formulaire avec des participants ou des collaborateurs en utilisant le lien ci-dessous."
       },
       "text": {
         "anyone_with_this_link": "Toute personne disposant de ce lien peut accéder au formulaire en fonction de ses paramètres de publication.",
-        "form_is_missing_an": "Le formulaire manque d'un identifiant.",
         "loading": "Loading...",
         "loading_more_forms": "Chargement de plus de formulaires...",
-        "no_more_forms_to": "Aucun autre formulaire à charger.",
-        "publish_the_form_to": "Publiquez le formulaire pour obtenir un lien partageable.",
-        "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…",
-        "share_link_copied_to": "Lien de partage copié dans le presse-papiers.",
-        "the_form_link_was": "Le lien du formulaire a été copié dans votre presse-papiers.",
-        "unable_to_copy_link": "Impossible de copier le lien. Essayez de copier manuellement.",
-        "unable_to_generate_share": "Impossible de générer le slug de partage. Veuillez publier manuellement."
+        "publishing_form_to_generate": "Publication du formulaire pour générer le lien de partage…"
       }
     },
     "Home": {
-      "button": {
-        "login_with_venmail": "Se connecter avec Venmail"
+      "heading": {
+        "choose_a_template": "Choisissez un modèle",
+        "no_files_found": "Aucun fichier trouvé",
+        "no_matching_files_found": "Aucun fichier correspondant trouvé"
       },
       "link": {
         "back_to_venmail": "Retour à Venmail"
       },
-      "heading": {
-        "attachment_import_failed": "Échec de l'importation de l'attachement",
-        "attachment_import_in_progress": "Importation de l'attachement",
-        "choose_a_template": "Choisissez un modèle",
-        "no_files_found": "Aucun fichier trouvé",
-        "no_matching_files_found": "Aucun fichier correspondant trouvé",
-        "welcome_to_venmail_file": "Bienvenue dans le gestionnaire de fichiers Venmail"
-      },
       "text": {
-        "attachment_import_default_message": "Veuillez patienter pendant que nous importons votre fichier.",
         "attachment_import_failed": "Échec de l'importation de l'attachement",
         "attachment_import_importing": "Importation de l'attachement...",
         "attachment_import_opening_document": "Ouverture du document...",
         "attachment_import_preparing_document": "Préparation du document...",
         "get_started_by_creating": "Commencez par créer un nouveau fichier ou en téléchargeant un fichier existant.",
-        "group_by_type": "Grouper par type",
         "loading_your_files": "Chargement de vos fichiers...",
-        "login_to_manage_your": "Connectez-vous pour gérer vos fichiers et dossiers sur Venmail.",
         "no_items_available_in": "Aucun élément disponible dans cette catégorie.",
-        "sort_by_date": "Trier par date",
-        "sort_by_name": "Trier par nom",
-        "sort_by_size": "Trier par taille",
-        "sort_by_type": "Trier par type",
         "try_adjusting_your_search": "Essayez d'ajuster votre recherche ou vos filtres."
       }
     },
@@ -268,30 +247,45 @@
         "choose_a_template": "Choisissez un modèle"
       }
     },
-    "SlidesEditor": {
-      "button": {
-        "add_slide": "Ajouter une diapositive",
-        "duplicate": "Dupliquer",
-        "delete": "Supprimer",
-        "create_first_slide": "Créer la première diapositive",
-        "export_pdf": "Exporter PDF",
-        "export_pptx": "Exporter PPTX",
-        "copy_markdown": "Copier Markdown",
-        "import_pptx": "Importer PPTX",
-        "present": "Présenter"
-      },
-      "label": {
-        "theme": "Thème",
-        "aspect_ratio": "Ratio d'aspect"
-      },
-      "text": {
-        "slides": "Diapositives",
-        "no_slide_selected": "Aucune diapositive sélectionnée",
-        "presentation_settings": "Paramètres de présentation",
-        "export": "Exporter",
-        "import": "Importer",
-        "select_or_add_a": "Sélectionnez ou ajoutez une diapositive pour commencer."
-      }
+    "button": {
+      "try_it_on_venmail": "Essayez sur Venmail"
+    },
+    "heading": {
+      "choose_your_path": "Choisissez votre chemin",
+      "create_new_presentation": "Créer une nouvelle présentation",
+      "everything_you_need_to": "Tout ce dont vous avez besoin pour travailler",
+      "no_presentations_found": "Aucune présentation trouvée",
+      "ready_to_take_control": "Prêt à prendre le contrôle de votre productivité ?",
+      "try_it_on_venmail": "Essayez sur Venmail",
+      "why_choose_venmail_drive": "Pourquoi choisir Venmail Drive ?"
+    },
+    "text": {
+      "100_open_source": "100% open source",
+      "a_blank_canvas_to": "Une toile vierge pour créer votre présentation à partir de zéro",
+      "a_modern_theme_inspired": "Un thème moderne inspiré des principes de design Vue.js",
+      "a_modern_theme_with": "Un thème moderne avec des dégradés violets et un design épuré",
+      "a_personal_theme_for": "Un thème personnel pour Slidev avec un style unique",
+      "an_education_academia_oriented": "Un thème Slidev orienté éducation/académique avec des éléments fantaisistes",
+      "an_official_theme_using": "Un thème officiel utilisant des polices serif pour les présentations professionnelles",
+      "build_surveys_and_collect": "Créez des sondages et collectez des données avec intégration des paiements",
+      "create_presentations_with_templates": "Créez des présentations avec des modèles et une collaboration en temps réel",
+      "deploy_on_your_own": "Déployez sur votre propre infrastructure pour un contrôle maximal et la confidentialité",
+      "get_started_by_creating": "Commencez en créant votre première présentation",
+      "inspired_by_the_basic": "Inspiré du thème Basic Noir/Blanc d'Apple Keynote",
+      "join_thousands_of_users": "Rejoignez des milliers d'utilisateurs qui ont fait le passage vers des outils de productivité respectueux de la confidentialité.",
+      "modern_slide_decks": "Présentations modernes",
+      "modern_theme_for_digital": "Thème moderne pour les agences digitales et les présentations tech",
+      "modern_theme_with_brick": "Thème moderne avec des éléments de design basés sur des briques",
+      "open_source_productivity_suite": "Suite de productivité open source pour les équipes modernes.",
+      "playful_theme_inspired_by": "Thème ludique inspiré de la race de chien Shiba Inu",
+      "privacy_first_productivity_suite": "Suite de productivité respectueuse de la confidentialité",
+      "professional_theme_for_nearform": "Thème professionnel pour les présentations et ateliers Nearform",
+      "rich_text_editor_with": "Éditeur de texte riche avec collaboration en temps réel et assistance IA",
+      "simplifies_creating_academic_presentations": "Simplifie la création de présentations académiques avec les composants et mises en page nécessaires",
+      "start_a_new_presentation": "Commencer une nouvelle présentation",
+      "take_control_of_your": "Prenez le contrôle de vos données et de votre flux de travail avec une alternative open source qui respecte votre confidentialité.",
+      "theme_designed_for_e": "Thème conçu pour les présentations e-commerce et commerciales",
+      "theme_designed_for_scientific": "Thème conçu pour les présentations scientifiques et de recherche"
     }
   },
   "commons": {

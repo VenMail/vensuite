@@ -52,6 +52,21 @@
           "response_submitted_successfully": "Response submitted successfully",
           "submit_a_new_response": "Submit a new response to the form"
         }
+      },
+      "heading": {
+        "create_new_form": "Create New Form",
+        "no_forms_found": "No forms found"
+      },
+      "text": {
+        "get_started_by_creating": "Get started by creating your first form",
+        "pick_a_template_or": "Pick a template or start blank",
+        "start_a_new_form": "Start a New Form"
+      }
+    },
+    "Home": {
+      "text": {
+        "loading_more": "Loading more...",
+        "refreshing": "Refreshing..."
       }
     },
     "ImagePicker": {
@@ -99,27 +114,49 @@
         "add_a_note_optional": "Add a note (optional)"
       }
     },
-    "SlidevMarkdownEditor": {
+    "Slides": {
       "button": {
-        "add_slide": "Add Slide",
-        "delete": "Delete",
-        "duplicate": "Duplicate",
-        "insert_code": "Insert Code",
-        "insert_heading": "Insert Heading",
-        "insert_image": "Insert Image",
-        "insert_list": "Insert List",
-        "move_down": "Move Down",
-        "move_up": "Move Up"
+        "add_footer": "📝 Add Footer",
+        "add_header": "📋 Add Header",
+        "remove_column": "➖ Remove Column",
+        "remove_row": "➖ Remove Row",
+        "row_above": "➕ Row Above",
+        "row_below": "➕ Row Below",
+        "sort_column": "📊 Sort Column"
       },
-      "placeholder": {
-        "add_presenter_notes": "Add presenter notes...",
-        "write_markdown": "Write your markdown here..."
+      "heading": {
+        "choose_from_professionally_designed": "Choose from professionally designed infographic templates. Click to preview, then insert into your slide.",
+        "replace_with_emoji": "Replace with Emoji"
+      },
+      "label": {
+        "shape_style": "Shape & Style",
+        "smart_font_sizing": "Smart Font Sizing"
       },
       "text": {
-        "markdown": "Markdown",
-        "presenter_notes": "Presenter Notes",
-        "preview": "Preview",
-        "slide_count": "Slide {current} of {total}"
+        "add_entrance_emphasis_or": "Add entrance, emphasis, or exit animations to this element",
+        "decision_based_process_flow": "Decision-based process flow with branches",
+        "detailed_timeline_with_descriptions": "Detailed timeline with descriptions on alternating sides",
+        "ease_in_out": "Ease In Out",
+        "end_of_presentation": "End of presentation",
+        "export_as_pdf": "Export as PDF",
+        "export_as_powerpoint": "Export as PowerPoint",
+        "export_as_pptx": "Export as PPTX",
+        "export_for_web": "Export for Web",
+        "help_documentation": "Help & Documentation",
+        "no_emojis_found": "No emojis found",
+        "no_image_loaded": "No image loaded",
+        "select_an_element_in": "Select an element in the slide to configure animations",
+        "show_a_linear_process": "Show a linear process with numbered steps",
+        "show_events_or_milestones": "Show events or milestones in chronological order",
+        "slide_in_down": "Slide In Down",
+        "slide_in_left": "Slide In Left",
+        "slide_in_right": "Slide In Right",
+        "slide_in_up": "Slide In Up",
+        "slide_out_down": "Slide Out Down",
+        "slide_out_left": "Slide Out Left",
+        "slide_out_right": "Slide Out Right",
+        "slide_out_up": "Slide Out Up",
+        "tip_after_inserting_you": "Tip: After inserting, you can edit the text directly in the markdown editor"
       }
     }
   },
@@ -190,7 +227,6 @@
     },
     "DocsTitleBar": {
       "text": {
-        "loading_versions": "Loading versions...",
         "no_previous_versions": "No previous versions"
       }
     },
@@ -454,25 +490,6 @@
       "public_on_the_web": "Public on the web"
     }
   },
-  "Slides": {
-    "SlidesInspector": {
-      "text": {
-        "bring_existing_content_into": "Bring existing content into your slide deck.",
-        "combine_smart_snapping_with": "Combine smart snapping with grid overlays for pixel-perfect layouts.",
-        "control_alignment_helpers_for": "Control alignment helpers for precise layouts.",
-        "processing_your_file": "Processing your file…",
-        "ready_for_new_imports": "Ready for new imports.",
-        "use_a_smaller_grid": "Use a smaller grid for dense layouts or increase spacing for broader guides.",
-        "use_alignment_guides_to": "Use alignment guides to evenly distribute shapes.",
-        "while_dragging_to_constrain": "while dragging to constrain axis."
-      }
-    },
-    "SlidesToolbar": {
-      "text": {
-        "use_smart_snapping_to": "Use smart snapping to align shapes to center and equal spacing."
-      }
-    }
-  },
   "components": {
     "FileUploader": {
       "components": {
@@ -533,13 +550,6 @@
             "link_copied_description": "The link has been successfully copied to your clipboard.",
             "manual_copy_required": "Please copy the link manually."
           }
-        }
-      }
-    },
-    "slides": {
-      "commons": {
-        "text": {
-          "saving_deck": "Saving deck…"
         }
       }
     }

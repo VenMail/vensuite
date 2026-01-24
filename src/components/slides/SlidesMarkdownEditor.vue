@@ -50,7 +50,7 @@
       >
         <span class="flex items-center gap-2">
           <StickyNote class="h-4 w-4" />
-          Presenter Notes
+          {{$t('Commons.text.presenter_notes')}}
         </span>
         <ChevronDown class="h-4 w-4 transition-transform" :class="{ 'rotate-180': showNotes }" />
       </button>

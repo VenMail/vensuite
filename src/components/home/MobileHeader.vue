@@ -113,7 +113,7 @@
           @click="$emit('navigate-to-breadcrumb', 0)"
         >
           <Home class="h-3 w-3 mr-1" />
-          Root
+          {{$t('Commons.button.root')}}
         </Button>
         <ChevronRight class="h-3 w-3 flex-shrink-0 text-muted-foreground" />
         

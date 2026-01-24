@@ -16,6 +16,7 @@ import type { SlidesEditorReturn } from './useSlidesEditor';
 import type { ShareMember, ShareLevel } from '@/utils/sharing';
 import { parseSharingInfoString, serializeSharingInfoString } from '@/utils/sharing';
 import { convertPptxSlidesToSlidev, type SlidevSlideOptions } from '@/utils/pptxToSlidev';
+import { t } from '@/i18n';
 
 export interface UseSlidePersistenceOptions {
   editor: SlidesEditorReturn;
@@ -220,7 +221,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
       return true;
     } catch (error) {
       console.error('Failed to save deck:', error);
-      toast.error('Failed to save presentation');
+      toast.error(t('Composables.UseSlidePersistence.toast.failed_to_save_presentation'));
       
       // Reject any queued saves on error
       if (saveQueue.value.length > 0) {
@@ -279,7 +280,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
           }
         } catch (importError) {
           console.error('PPTX import failed:', importError);
-          toast.error('Failed to import PowerPoint file');
+          toast.error(t('Composables.UseSlidePersistence.toast.failed_to_import_powerpoint'));
           editor.setSlides(createDefaultSlides());
           return false;
         }
@@ -309,7 +310,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
       return true;
     } catch (error) {
       console.error('Failed to load deck:', error);
-      toast.error('Failed to load presentation');
+      toast.error(t('Composables.UseSlidePersistence.toast.failed_to_load_presentation'));
       editor.setSlides(createDefaultSlides());
       return false;
     } finally {
@@ -339,7 +340,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
   // Update visibility
   async function updateVisibility(value: number): Promise<boolean> {
     if (!deckId.value) {
-      toast.info('Save the presentation first');
+      toast.info(t('Composables.UseSlidePersistence.toast.save_the_presentation_first'));
       return false;
     }
     try {
@@ -359,7 +360,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
       return true;
     } catch (error) {
       console.error('Failed to update visibility:', error);
-      toast.error('Failed to update visibility');
+      toast.error(t('Composables.UseSlidePersistence.toast.failed_to_update_visibility'));
       return false;
     }
   }
@@ -420,7 +421,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
   // Export functions
   async function exportToPdf(): Promise<boolean> {
     try {
-      toast.info('Exporting PDF...');
+      toast.info(t('Composables.UseSlidePersistence.toast.exporting_pdf'));
 
       // Use the new unified export pipeline
       const { useSlideExport } = await import('@/composables/useSlideExportPipeline');
@@ -434,18 +435,18 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         optimizeForPrint: true
       });
       
-      toast.success('PDF exported successfully');
+      toast.success(t('Composables.UseSlidePersistence.toast.pdf_exported_successfully'));
       return true;
     } catch (error) {
       console.error('PDF export failed:', error);
-      toast.error('PDF export failed. Please try again.');
+      toast.error(t('Composables.UseSlidePersistence.toast.pdf_export_failed_please'));
       return false;
     }
   }
 
   async function exportToPptx(): Promise<boolean> {
     try {
-      toast.info('Exporting PPTX...');
+      toast.info(t('Composables.UseSlidePersistence.toast.exporting_pptx'));
 
       // Use the new unified export pipeline
       const { useSlideExport } = await import('@/composables/useSlideExportPipeline');
@@ -458,11 +459,11 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         includeNotes: true
       });
       
-      toast.success('PPTX exported successfully');
+      toast.success(t('Composables.UseSlidePersistence.toast.pptx_exported_successfully'));
       return true;
     } catch (error) {
       console.error('PPTX export failed:', error);
-      toast.error('PPTX export failed. Please try again.');
+      toast.error(t('Composables.UseSlidePersistence.toast.pptx_export_failed_please'));
       return false;
     }
   }
@@ -504,7 +505,7 @@ download: true
   // Import functions
   async function importFromPowerPoint(file: File): Promise<boolean> {
     try {
-      toast.info('Importing PowerPoint...');
+      toast.info(t('Composables.UseSlidePersistence.toast.importing_powerpoint'));
       
       // Import the pptx-to-html library
       const { pptxToHtml } = await import('@jvmr/pptx-to-html');
@@ -546,7 +547,7 @@ download: true
       return true;
     } catch (error) {
       console.error('Import failed:', error);
-      toast.error('Failed to import PowerPoint file');
+      toast.error(t('Composables.UseSlidePersistence.toast.failed_to_import_powerpoint'));
       return false;
     }
   }
@@ -564,11 +565,11 @@ download: true
 
       // Initialize with imported slides and title guessing
       initializeNewDeck(newSlides);
-      toast.success('HTML imported successfully');
+      toast.success(t('Composables.UseSlidePersistence.toast.html_imported_successfully'));
       return true;
     } catch (error) {
       console.error('Import failed:', error);
-      toast.error('Failed to import HTML');
+      toast.error(t('Composables.UseSlidePersistence.toast.failed_to_import_html'));
       return false;
     }
   }

@@ -146,53 +146,32 @@
     },
     "Forms": {
       "heading": {
-        "create_and_manage_forms": "创建和管理表单",
         "share_this_form_with": "使用下面的链接与参与者或协作者分享此表单。"
       },
       "text": {
         "anyone_with_this_link": "任何拥有此链接的人都可以根据其发布设置访问表单。",
-        "form_is_missing_an": "表单缺少标识符。",
         "loading": "Loading...",
         "loading_more_forms": "加载更多表单...",
-        "no_more_forms_to": "没有更多表单可加载。",
-        "publish_the_form_to": "发布表单以获取可分享链接。",
-        "publishing_form_to_generate": "正在发布表单以生成分享链接…",
-        "share_link_copied_to": "分享链接已复制到剪贴板。",
-        "the_form_link_was": "表单链接已复制到您的剪贴板。",
-        "unable_to_copy_link": "无法复制链接。请手动复制。",
-        "unable_to_generate_share": "无法生成分享 slug。请手动发布。"
+        "publishing_form_to_generate": "正在发布表单以生成分享链接…"
       }
     },
     "Home": {
-      "button": {
-        "login_with_venmail": "使用 Venmail 登录"
+      "heading": {
+        "choose_a_template": "选择一个模板",
+        "no_files_found": "未找到文件",
+        "no_matching_files_found": "未找到匹配的文件"
       },
       "link": {
         "back_to_venmail": "返回 Venmail"
       },
-      "heading": {
-        "attachment_import_failed": "附件导入失败",
-        "attachment_import_in_progress": "正在导入附件",
-        "choose_a_template": "选择一个模板",
-        "no_files_found": "未找到文件",
-        "no_matching_files_found": "未找到匹配的文件",
-        "welcome_to_venmail_file": "欢迎使用 Venmail 文件管理器"
-      },
       "text": {
-        "attachment_import_default_message": "请稍候，我们正在导入您的文件。",
         "attachment_import_failed": "导入附件失败",
         "attachment_import_importing": "正在导入附件...",
         "attachment_import_opening_document": "正在打开文档...",
         "attachment_import_preparing_document": "正在准备文档...",
         "get_started_by_creating": "通过创建新文件或上传现有文件开始。",
-        "group_by_type": "按类型分组",
         "loading_your_files": "加载您的文件...",
-        "login_to_manage_your": "登录以管理您在Venmail上的文件和文件夹。",
         "no_items_available_in": "此类别中没有可用项目。",
-        "sort_by_date": "按日期排序",
-        "sort_by_name": "按名称排序",
-        "sort_by_size": "按大小排序",
-        "sort_by_type": "按类型排序",
         "try_adjusting_your_search": "尝试调整您的搜索或筛选条件。"
       }
     },
@@ -268,30 +247,45 @@
         "choose_a_template": "选择一个模板"
       }
     },
-    "SlidesEditor": {
-      "button": {
-        "add_slide": "添加幻灯片",
-        "duplicate": "复制",
-        "delete": "删除",
-        "create_first_slide": "创建第一张幻灯片",
-        "export_pdf": "导出 PDF",
-        "export_pptx": "导出 PPTX",
-        "copy_markdown": "复制 Markdown",
-        "import_pptx": "导入 PPTX",
-        "present": "演示"
-      },
-      "label": {
-        "theme": "主题",
-        "aspect_ratio": "宽高比"
-      },
-      "text": {
-        "slides": "幻灯片",
-        "no_slide_selected": "未选择幻灯片",
-        "presentation_settings": "演示设置",
-        "export": "导出",
-        "import": "导入",
-        "select_or_add_a": "选择或添加幻灯片以开始。"
-      }
+    "button": {
+      "try_it_on_venmail": "在 Venmail 上试用"
+    },
+    "heading": {
+      "choose_your_path": "选择您的道路",
+      "create_new_presentation": "创建新演示文稿",
+      "everything_you_need_to": "完成工作所需的一切",
+      "no_presentations_found": "未找到演示文稿",
+      "ready_to_take_control": "准备好掌控您的生产力了吗？",
+      "try_it_on_venmail": "在 Venmail 上试用",
+      "why_choose_venmail_drive": "为什么选择 Venmail Drive？"
+    },
+    "text": {
+      "100_open_source": "100% 开源",
+      "a_blank_canvas_to": "一个空白画布，从头开始创建您的演示文稿",
+      "a_modern_theme_inspired": "受 Vue.js 设计原则启发的现代主题",
+      "a_modern_theme_with": "带有紫色渐变和简洁设计的现代主题",
+      "a_personal_theme_for": "为 Slidev 设计的个人主题，具有独特风格",
+      "an_education_academia_oriented": "面向教育/学术的 Slidev 主题，带有奇思妙想的元素",
+      "an_official_theme_using": "使用 serif 字体的官方主题，用于专业演示文稿",
+      "build_surveys_and_collect": "构建调查并收集数据，支持支付集成",
+      "create_presentations_with_templates": "使用模板和实时协作创建演示文稿",
+      "deploy_on_your_own": "部署在您自己的基础设施上，实现最大控制和隐私保护",
+      "get_started_by_creating": "通过创建您的第一个演示文稿开始",
+      "inspired_by_the_basic": "受 Apple Keynote 的基本黑白主题启发",
+      "join_thousands_of_users": "加入数千名用户，他们已经转向尊重隐私的生产力工具。",
+      "modern_slide_decks": "现代演示文稿",
+      "modern_theme_for_digital": "面向数字机构和科技演示的现代主题",
+      "modern_theme_with_brick": "基于砖块设计元素的现代主题",
+      "open_source_productivity_suite": "面向现代团队的开源生产力套件。",
+      "playful_theme_inspired_by": "受柴犬犬种启发的俏皮主题",
+      "privacy_first_productivity_suite": "隐私优先的生产力套件",
+      "professional_theme_for_nearform": "面向 Nearform 演示和工作坊的专业主题",
+      "rich_text_editor_with": "具有实时协作和 AI 辅助功能的富文本编辑器",
+      "simplifies_creating_academic_presentations": "简化学术演示文稿的创建，包含必要的组件和布局",
+      "start_a_new_presentation": "开始新演示文稿",
+      "take_control_of_your": "使用尊重您隐私的开源替代方案，掌控您的数据和工作流程。",
+      "theme_designed_for_e": "为电子商务和商务演示设计的主题",
+      "theme_designed_for_scientific": "为科学和研究演示设计的主题"
     }
   },
   "commons": {

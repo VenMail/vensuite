@@ -81,7 +81,7 @@ const handleCreateTemplate = () => {
         <span
           class="text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          {{ selectedForm ? 'Selected Form' : $t('Commons.label.select_all') }}
+          {{ selectedForm ? $t('Commons.text.selected_form') : $t('Commons.label.select_all') }}
         </span>
       </div>
 
@@ -110,7 +110,7 @@ const handleCreateTemplate = () => {
               'text-sm font-medium text-gray-700 dark:text-gray-300',
             ]"
           >
-            {{ selectedForm ? 'Selected Form' : $t('Commons.label.select_all') }}
+            {{ selectedForm ? $t('Commons.text.selected_form') : $t('Commons.label.select_all') }}
           </span>
         </Button>
 
@@ -145,9 +145,9 @@ const handleCreateTemplate = () => {
       <div class="empty-icon-wrapper">
         <FileText class="empty-icon" />
       </div>
-      <h3 class="empty-title">No forms found</h3>
+      <h3 class="empty-title">{{$t('Components.Forms.heading.no_forms_found')}}</h3>
       <p class="empty-description">
-        Get started by creating your first form
+        {{$t('Components.Forms.text.get_started_by_creating')}}
       </p>
       <div class="empty-actions">
         <Button
@@ -163,7 +163,7 @@ const handleCreateTemplate = () => {
           @click="handleCreateTemplate"
         >
           <MessageSquare class="mr-2 h-4 w-4" />
-          Contact Form
+          {{$t('Commons.button.contact_form')}}
         </Button>
       </div>
     </div>

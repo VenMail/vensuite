@@ -4,10 +4,10 @@
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">
           <BarChart3 class="h-5 w-5 text-blue-500" />
-          Insert Infographic
+          {{$t('Commons.button.insert_infographic')}}
         </DialogTitle>
         <DialogDescription>
-          Choose from professionally designed infographic templates. Click to preview, then insert into your slide.
+          {{$t('Components.Slides.heading.choose_from_professionally_designed')}}
         </DialogDescription>
       </DialogHeader>
 
@@ -94,11 +94,11 @@
               <p class="text-sm text-gray-900 dark:text-gray-100">{{ selectedTemplate.name }}</p>
             </div>
             <div>
-              <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400">Description</h4>
+              <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400">{{$t('Commons.heading.description')}}</h4>
               <p class="text-sm text-gray-700 dark:text-gray-300">{{ selectedTemplate.description }}</p>
             </div>
             <div>
-              <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400">Best For</h4>
+              <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400">{{$t('Commons.heading.best_for')}}</h4>
               <div class="flex flex-wrap gap-1 mt-1">
                 <span 
                   v-for="tag in selectedTemplate.tags" 
@@ -112,7 +112,7 @@
 
             <!-- Color Variants -->
             <div v-if="selectedTemplate.colorVariants">
-              <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Color Scheme</h4>
+              <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{{$t('Commons.heading.color_scheme')}}</h4>
               <div class="flex gap-2">
                 <button
                   v-for="variant in selectedTemplate.colorVariants"
@@ -130,14 +130,14 @@
           <!-- Insert Button -->
           <Button class="w-full mt-4" @click="insertTemplate">
             <Plus class="h-4 w-4 mr-2" />
-            Insert Infographic
+            {{$t('Commons.button.insert_infographic')}}
           </Button>
         </div>
       </div>
 
       <DialogFooter class="border-t border-gray-200 dark:border-gray-700 pt-4">
         <p class="text-xs text-gray-500 dark:text-gray-400 flex-1">
-          Tip: After inserting, you can edit the text directly in the markdown editor
+          {{$t('Components.Slides.text.tip_after_inserting_you')}}
         </p>
         <Button variant="outline" @click="emit('update:open', false)">
           {{$t('Commons.button.cancel')}}
@@ -163,6 +163,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { t } from '@/i18n';
 
 interface ColorVariant {
   name: string;
@@ -216,7 +217,7 @@ const templates: InfographicTemplate[] = [
   {
     id: 'timeline-horizontal',
     name: 'Horizontal Timeline',
-    description: 'Show events or milestones in chronological order',
+    description: t('Components.Slides.text.show_events_or_milestones'),
     category: 'timeline',
     tags: ['history', 'milestones', 'roadmap'],
     previewBg: '#f8fafc',
@@ -274,7 +275,7 @@ const templates: InfographicTemplate[] = [
   {
     id: 'timeline-vertical',
     name: 'Vertical Timeline',
-    description: 'Detailed timeline with descriptions on alternating sides',
+    description: t('Components.Slides.text.detailed_timeline_with_descriptions'),
     category: 'timeline',
     tags: ['history', 'story', 'journey'],
     previewBg: '#ffffff',
@@ -327,7 +328,7 @@ const templates: InfographicTemplate[] = [
   {
     id: 'process-steps',
     name: 'Step-by-Step Process',
-    description: 'Show a linear process with numbered steps',
+    description: t('Components.Slides.text.show_a_linear_process'),
     category: 'process',
     tags: ['workflow', 'how-to', 'guide'],
     previewBg: '#f0fdf4',
@@ -376,7 +377,7 @@ const templates: InfographicTemplate[] = [
   {
     id: 'process-flowchart',
     name: 'Flowchart Diagram',
-    description: 'Decision-based process flow with branches',
+    description: t('Components.Slides.text.decision_based_process_flow'),
     category: 'process',
     tags: ['decision', 'logic', 'workflow'],
     previewBg: '#faf5ff',

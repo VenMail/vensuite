@@ -1,1 +1,22 @@
-{}
+{
+  "Services": {
+    "SlidevService": {
+      "text": {
+        "brick_wall_background_theme": "砖墙背景主题",
+        "compact_presentation_theme": "紧凑演示文稿主题",
+        "dark_carbon_fiber_theme": "深色碳纤维主题",
+        "default_slidev_theme": "默认 Slidev 主题",
+        "gradient_background_theme": "渐变背景主题",
+        "linux_penguin_theme": "Linux 企鹅主题",
+        "purple_gradient_theme": "紫色渐变主题",
+        "scientific_presentation_theme": "科学演示文稿主题",
+        "serif_typography_theme": "衬线字体主题",
+        "tech_circuit_board_theme": "科技电路板主题",
+        "vibrant_colors_theme": "鲜艳色彩主题"
+      },
+      "toast": {
+        "opening_print_dialog_for": "正在打开 PDF 导出的打印对话框..."
+      }
+    }
+  }
+}

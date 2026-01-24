@@ -1,4 +1,5157 @@
 {
-  "generatedAt": "2026-01-14T19:53:39.853Z",
-  "issues": []
+  "generatedAt": "2026-01-24T00:53:57.202Z",
+  "issues": [
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.add_slide",
+      "english": "Add Slide",
+      "current": "Add Slide",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.center",
+      "english": "⬜️ Center",
+      "current": "⬜️ Center",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.circle",
+      "english": "⭕ Circle",
+      "current": "⭕ Circle",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.clear_selection_2",
+      "english": "Clear Selection",
+      "current": "Clear Selection",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.contact_form",
+      "english": "Contact Form",
+      "current": "Contact Form",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.copy_css",
+      "english": "Copy CSS",
+      "current": "Copy CSS",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.date",
+      "english": "Date",
+      "current": "Date",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.deploy_now",
+      "english": "Deploy Now",
+      "current": "Deploy Now",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.expand_all",
+      "english": "Expand All",
+      "current": "Expand All",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.get_started",
+      "english": "Get Started",
+      "current": "Get Started",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.hex",
+      "english": "⬡ Hex",
+      "current": "⬡ Hex",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.infographics",
+      "english": "Infographics",
+      "current": "Infographics",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.insert_infographic",
+      "english": "Insert Infographic",
+      "current": "Insert Infographic",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.left",
+      "english": "⬅️ Left",
+      "current": "⬅️ Left",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.login",
+      "english": "Login",
+      "current": "Login",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.new_presentation",
+      "english": "New Presentation",
+      "current": "New Presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.none",
+      "english": "◻️ None",
+      "current": "◻️ None",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.present",
+      "english": "Present",
+      "current": "Present",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.presentation",
+      "english": "Presentation",
+      "current": "Presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.presenter",
+      "english": "Presenter",
+      "current": "Presenter",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.preview_animation",
+      "english": "Preview Animation",
+      "current": "Preview Animation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.public",
+      "english": "Public",
+      "current": "Public",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.replace",
+      "english": "🔄 Replace",
+      "current": "🔄 Replace",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.right",
+      "english": "➡️ Right",
+      "current": "➡️ Right",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.root",
+      "english": "Root",
+      "current": "Root",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.rounded",
+      "english": "▫️ Rounded",
+      "current": "▫️ Rounded",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.self_host",
+      "english": "Self Host",
+      "current": "Self Host",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.serif_theme",
+      "english": "Serif Theme",
+      "current": "Serif Theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.transpose",
+      "english": "🔄 Transpose",
+      "current": "🔄 Transpose",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.upload",
+      "english": "📁 Upload",
+      "current": "📁 Upload",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.upload_2",
+      "english": "Upload",
+      "current": "Upload",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.upload_files",
+      "english": "Upload Files",
+      "current": "Upload Files",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.button.webhooks",
+      "english": "Webhooks",
+      "current": "Webhooks",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.animation_settings",
+      "english": "Animation Settings",
+      "current": "Animation Settings",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.best_for",
+      "english": "Best For",
+      "current": "Best For",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.blank_form",
+      "english": "Blank Form",
+      "current": "Blank Form",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.color_scheme",
+      "english": "Color Scheme",
+      "current": "Color Scheme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.description",
+      "english": "Description",
+      "current": "Description",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.document",
+      "english": "Document",
+      "current": "Document",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.element_properties",
+      "english": "Element Properties",
+      "current": "Element Properties",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.markdown_element",
+      "english": "Markdown Element",
+      "current": "Markdown Element",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.next_slide",
+      "english": "Next Slide",
+      "current": "Next Slide",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.notes",
+      "english": "Notes",
+      "current": "Notes",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.options",
+      "english": "Options",
+      "current": "Options",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.page_1",
+      "english": "Page 1",
+      "current": "Page 1",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.permissions",
+      "english": "Permissions",
+      "current": "Permissions",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.product",
+      "english": "Product",
+      "current": "Product",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.self_host",
+      "english": "Self Host",
+      "current": "Self Host",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.share_presentation",
+      "english": "Share Presentation",
+      "current": "Share Presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.slide_overview",
+      "english": "Slide Overview",
+      "current": "Slide Overview",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.slide_properties",
+      "english": "Slide Properties",
+      "current": "Slide Properties",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.source",
+      "english": "Source",
+      "current": "Source",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.webhooks",
+      "english": "Webhooks",
+      "current": "Webhooks",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.heading.your_workspace",
+      "english": "Your Workspace,",
+      "current": "Your Workspace,",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.alt_text",
+      "english": "Alt Text",
+      "current": "Alt Text",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.animation_type",
+      "english": "Animation Type",
+      "current": "Animation Type",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.background",
+      "english": "Background",
+      "current": "Background",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.bounce",
+      "english": "Bounce",
+      "current": "Bounce",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.cell_alignment",
+      "english": "Cell Alignment",
+      "current": "Cell Alignment",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.content",
+      "english": "Content",
+      "current": "Content",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.css_code",
+      "english": "CSS Code",
+      "current": "CSS Code",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.delay",
+      "english": "Delay",
+      "current": "Delay",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.diagram_info",
+      "english": "Diagram Info",
+      "current": "Diagram Info",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.dimensions",
+      "english": "Dimensions",
+      "current": "Dimensions",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.duration",
+      "english": "Duration",
+      "current": "Duration",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.easing",
+      "english": "Easing",
+      "current": "Easing",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.elastic",
+      "english": "Elastic",
+      "current": "Elastic",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.element_type",
+      "english": "Element Type",
+      "current": "Element Type",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.enable_animation",
+      "english": "Enable Animation",
+      "current": "Enable Animation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.font_size",
+      "english": "Font Size",
+      "current": "Font Size",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.font_weight",
+      "english": "Font Weight",
+      "current": "Font Weight",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.heading_level",
+      "english": "Heading Level",
+      "current": "Heading Level",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.hoverable_rows",
+      "english": "Hoverable Rows",
+      "current": "Hoverable Rows",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.image_source",
+      "english": "Image Source",
+      "current": "Image Source",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.layout",
+      "english": "Layout",
+      "current": "Layout",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.orientation",
+      "english": "Orientation",
+      "current": "Orientation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.position",
+      "english": "Position",
+      "current": "Position",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.quality",
+      "english": "Quality",
+      "current": "Quality",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.quick_presets",
+      "english": "Quick Presets",
+      "current": "Quick Presets",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.quick_templates",
+      "english": "Quick Templates",
+      "current": "Quick Templates",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.repeat_animation",
+      "english": "Repeat Animation",
+      "current": "Repeat Animation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.scale",
+      "english": "Scale",
+      "current": "Scale",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.table_actions",
+      "english": "Table Actions",
+      "current": "Table Actions",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.table_structure",
+      "english": "Table Structure",
+      "current": "Table Structure",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.table_style",
+      "english": "Table Style",
+      "current": "Table Style",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.table_width",
+      "english": "Table Width",
+      "current": "Table Width",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.text_align",
+      "english": "Text Align",
+      "current": "Text Align",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.text_alignment",
+      "english": "Text Alignment",
+      "current": "Text Alignment",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.text_color",
+      "english": "Text Color",
+      "current": "Text Color",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.text_content",
+      "english": "Text Content",
+      "current": "Text Content",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.text_formatting",
+      "english": "Text Formatting",
+      "current": "Text Formatting",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.transition",
+      "english": "Transition",
+      "current": "Transition",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.label.trigger",
+      "english": "Trigger",
+      "current": "Trigger",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.link.about",
+      "english": "About",
+      "current": "About",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.link.blog",
+      "english": "Blog",
+      "current": "Blog",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.link.community",
+      "english": "Community",
+      "current": "Community",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.link.contact",
+      "english": "Contact",
+      "current": "Contact",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.link.documentation",
+      "english": "Documentation",
+      "current": "Documentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.link.managed_service",
+      "english": "Managed Service",
+      "current": "Managed Service",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.link.support",
+      "english": "Support",
+      "current": "Support",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.actions",
+      "english": "Actions",
+      "current": "Actions",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.add_infographic",
+      "english": "Add Infographic",
+      "current": "Add Infographic",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.axios",
+      "english": "Axios",
+      "current": "Axios",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.bounce_in",
+      "english": "Bounce In",
+      "current": "Bounce In",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.bounce_out",
+      "english": "Bounce Out",
+      "current": "Bounce Out",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.center",
+      "english": "Center",
+      "current": "Center",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.collaboration",
+      "english": "Collaboration",
+      "current": "Collaboration",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.contacts",
+      "english": "Contacts",
+      "current": "Contacts",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.current",
+      "english": "Current",
+      "current": "Current",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.date",
+      "english": "Date",
+      "current": "Date",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.delete_slide",
+      "english": "Delete Slide",
+      "current": "Delete Slide",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.disable",
+      "english": "Disable",
+      "current": "Disable",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.documents",
+      "english": "Documents",
+      "current": "Documents",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.duplicate_slide",
+      "english": "Duplicate Slide",
+      "current": "Duplicate Slide",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.ease",
+      "english": "Ease",
+      "current": "Ease",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.ease_in",
+      "english": "Ease In",
+      "current": "Ease In",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.ease_out",
+      "english": "Ease Out",
+      "current": "Ease Out",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.elastic_in",
+      "english": "Elastic In",
+      "current": "Elastic In",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.elastic_out",
+      "english": "Elastic Out",
+      "current": "Elastic Out",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.emoji_picker",
+      "english": "Emoji Picker",
+      "current": "Emoji Picker",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.enable",
+      "english": "Enable",
+      "current": "Enable",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.fade",
+      "english": "Fade",
+      "current": "Fade",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.fade_in",
+      "english": "Fade In",
+      "current": "Fade In",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.fade_out",
+      "english": "Fade Out",
+      "current": "Fade Out",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.flip_in",
+      "english": "Flip In",
+      "current": "Flip In",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.flip_out",
+      "english": "Flip Out",
+      "current": "Flip Out",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.free",
+      "english": "Free",
+      "current": "Free",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.heart_beat",
+      "english": "Heart Beat",
+      "current": "Heart Beat",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.hide",
+      "english": "Hide",
+      "current": "Hide",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.import_powerpoint",
+      "english": "Import PowerPoint",
+      "current": "Import PowerPoint",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.infinite",
+      "english": "Infinite",
+      "current": "Infinite",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.inline",
+      "english": "Inline",
+      "current": "Inline",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.jello",
+      "english": "Jello",
+      "current": "Jello",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.justify",
+      "english": "Justify",
+      "current": "Justify",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.keyboard_shortcuts",
+      "english": "Keyboard Shortcuts",
+      "current": "Keyboard Shortcuts",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.linear",
+      "english": "Linear",
+      "current": "Linear",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.most_used",
+      "english": "Most Used",
+      "current": "Most Used",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.new_deck",
+      "english": "New Deck",
+      "current": "New Deck",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.new_slide",
+      "english": "New Slide",
+      "current": "New Slide",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.none_2",
+      "english": "None",
+      "current": "None",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.on_click",
+      "english": "On Click",
+      "current": "On Click",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.on_hover",
+      "english": "On Hover",
+      "current": "On Hover",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.on_load",
+      "english": "On Load",
+      "current": "On Load",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.on_scroll",
+      "english": "On Scroll",
+      "current": "On Scroll",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.open_source",
+      "english": "Open Source",
+      "current": "Open Source",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.other_2",
+      "english": "other",
+      "current": "other",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.portrait",
+      "english": "Portrait",
+      "current": "Portrait",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.presenter_mode",
+      "english": "Presenter Mode",
+      "current": "Presenter Mode",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.presenter_notes",
+      "english": "Presenter Notes",
+      "current": "Presenter Notes",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.preset",
+      "english": "Preset",
+      "current": "Preset",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.progress",
+      "english": "Progress",
+      "current": "Progress",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.pulse",
+      "english": "Pulse",
+      "current": "Pulse",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.recently_used",
+      "english": "Recently Used",
+      "current": "Recently Used",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.recommended_size",
+      "english": "Recommended Size",
+      "current": "Recommended Size",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.redo_2",
+      "english": "Redo",
+      "current": "Redo",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.regex",
+      "english": "Regex",
+      "current": "Regex",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.rotate_in",
+      "english": "Rotate In",
+      "current": "Rotate In",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.rotate_out",
+      "english": "Rotate Out",
+      "current": "Rotate Out",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.selected_form",
+      "english": "Selected Form",
+      "current": "Selected Form",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.selected_presentation",
+      "english": "Selected Presentation",
+      "current": "Selected Presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.shake",
+      "english": "Shake",
+      "current": "Shake",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.show",
+      "english": "Show",
+      "current": "Show",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.slide_left",
+      "english": "Slide Left",
+      "current": "Slide Left",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.slide_right",
+      "english": "Slide Right",
+      "current": "Slide Right",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.slide_up",
+      "english": "Slide Up",
+      "current": "Slide Up",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.slidev",
+      "english": "Slidev",
+      "current": "Slidev",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.spreadsheet",
+      "english": "Spreadsheet",
+      "current": "Spreadsheet",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.start_presentation",
+      "english": "Start Presentation",
+      "current": "Start Presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.swing",
+      "english": "Swing",
+      "current": "Swing",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.tada",
+      "english": "Tada",
+      "current": "Tada",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.title",
+      "english": "Title",
+      "current": "Title",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.total",
+      "english": "Total",
+      "current": "Total",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.undo_2",
+      "english": "Undo",
+      "current": "Undo",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.text.your_rules",
+      "english": "Your Rules",
+      "current": "Your Rules",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Commons.toast.visibility_updated",
+      "english": "Visibility updated",
+      "current": "Visibility updated",
+      "issueType": "untranslated",
+      "localeFile": "fr\\commons.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Forms.heading.create_new_form",
+      "english": "Create New Form",
+      "current": "Create New Form",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Forms.heading.no_forms_found",
+      "english": "No forms found",
+      "current": "No forms found",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Forms.text.get_started_by_creating",
+      "english": "Get started by creating your first form",
+      "current": "Get started by creating your first form",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Forms.text.pick_a_template_or",
+      "english": "Pick a template or start blank",
+      "current": "Pick a template or start blank",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Forms.text.start_a_new_form",
+      "english": "Start a New Form",
+      "current": "Start a New Form",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Home.text.loading_more",
+      "english": "Loading more...",
+      "current": "Loading more...",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.button.add_footer",
+      "english": "📝 Add Footer",
+      "current": "📝 Add Footer",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.button.add_header",
+      "english": "📋 Add Header",
+      "current": "📋 Add Header",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.button.remove_column",
+      "english": "➖ Remove Column",
+      "current": "➖ Remove Column",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.button.remove_row",
+      "english": "➖ Remove Row",
+      "current": "➖ Remove Row",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.button.row_above",
+      "english": "➕ Row Above",
+      "current": "➕ Row Above",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.button.row_below",
+      "english": "➕ Row Below",
+      "current": "➕ Row Below",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.button.sort_column",
+      "english": "📊 Sort Column",
+      "current": "📊 Sort Column",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.heading.choose_from_professionally_designed",
+      "english": "Choose from professionally designed infographic templates. Click to preview, then insert into your slide.",
+      "current": "Choose from professionally designed infographic templates. Click to preview, then insert into your slide.",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.heading.replace_with_emoji",
+      "english": "Replace with Emoji",
+      "current": "Replace with Emoji",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.label.shape_style",
+      "english": "Shape & Style",
+      "current": "Shape & Style",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.label.smart_font_sizing",
+      "english": "Smart Font Sizing",
+      "current": "Smart Font Sizing",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.add_entrance_emphasis_or",
+      "english": "Add entrance, emphasis, or exit animations to this element",
+      "current": "Add entrance, emphasis, or exit animations to this element",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.decision_based_process_flow",
+      "english": "Decision-based process flow with branches",
+      "current": "Decision-based process flow with branches",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.detailed_timeline_with_descriptions",
+      "english": "Detailed timeline with descriptions on alternating sides",
+      "current": "Detailed timeline with descriptions on alternating sides",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.ease_in_out",
+      "english": "Ease In Out",
+      "current": "Ease In Out",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.end_of_presentation",
+      "english": "End of presentation",
+      "current": "End of presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.export_as_pdf",
+      "english": "Export as PDF",
+      "current": "Export as PDF",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.export_as_powerpoint",
+      "english": "Export as PowerPoint",
+      "current": "Export as PowerPoint",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.export_as_pptx",
+      "english": "Export as PPTX",
+      "current": "Export as PPTX",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.export_for_web",
+      "english": "Export for Web",
+      "current": "Export for Web",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.help_documentation",
+      "english": "Help & Documentation",
+      "current": "Help & Documentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.no_emojis_found",
+      "english": "No emojis found",
+      "current": "No emojis found",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.no_image_loaded",
+      "english": "No image loaded",
+      "current": "No image loaded",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.select_an_element_in",
+      "english": "Select an element in the slide to configure animations",
+      "current": "Select an element in the slide to configure animations",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.show_a_linear_process",
+      "english": "Show a linear process with numbered steps",
+      "current": "Show a linear process with numbered steps",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.show_events_or_milestones",
+      "english": "Show events or milestones in chronological order",
+      "current": "Show events or milestones in chronological order",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.slide_in_down",
+      "english": "Slide In Down",
+      "current": "Slide In Down",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.slide_in_left",
+      "english": "Slide In Left",
+      "current": "Slide In Left",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.slide_in_right",
+      "english": "Slide In Right",
+      "current": "Slide In Right",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.slide_in_up",
+      "english": "Slide In Up",
+      "current": "Slide In Up",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.slide_out_down",
+      "english": "Slide Out Down",
+      "current": "Slide Out Down",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.slide_out_left",
+      "english": "Slide Out Left",
+      "current": "Slide Out Left",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.slide_out_right",
+      "english": "Slide Out Right",
+      "current": "Slide Out Right",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.slide_out_up",
+      "english": "Slide Out Up",
+      "current": "Slide Out Up",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Components.Slides.text.tip_after_inserting_you",
+      "english": "Tip: After inserting, you can edit the text directly in the markdown editor",
+      "current": "Tip: After inserting, you can edit the text directly in the markdown editor",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "components.LanguageSwitcher.text.francais",
+      "english": "Français",
+      "current": "Français",
+      "issueType": "untranslated",
+      "localeFile": "fr\\components.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_create_folder",
+      "english": "Failed to create folder",
+      "current": "Failed to create folder",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_create_type",
+      "english": "Failed to create {type}",
+      "current": "Failed to create {type}",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_delete_file",
+      "english": "Failed to delete file",
+      "current": "Failed to delete file",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_delete_some",
+      "english": "Failed to delete some files",
+      "current": "Failed to delete some files",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_download_files",
+      "english": "Failed to download files",
+      "current": "Failed to download files",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_rename_file",
+      "english": "Failed to rename file",
+      "current": "Failed to rename file",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.file_moved_to_trash",
+      "english": "File moved to trash",
+      "current": "File moved to trash",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.file_renamed_successfully",
+      "english": "File renamed successfully",
+      "current": "File renamed successfully",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.folder_created_successfully",
+      "english": "Folder created successfully",
+      "current": "Folder created successfully",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileManager.toast.type_created_successfully",
+      "english": "{type} created successfully",
+      "current": "{type} created successfully",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.cannot_open_this_file",
+      "english": "Cannot open this file type",
+      "current": "Cannot open this file type",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.failed_to_open_file",
+      "english": "Failed to open file",
+      "current": "Failed to open file",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.file_not_found",
+      "english": "File not found",
+      "current": "File not found",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.file_renamed_successfully",
+      "english": "File renamed successfully",
+      "current": "File renamed successfully",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.link_copied_to_clipboard",
+      "english": "Link copied to clipboard",
+      "current": "Link copied to clipboard",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.links_copied_to_clipboard",
+      "english": "Links copied to clipboard",
+      "current": "Links copied to clipboard",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.opening_file_in_appropriate",
+      "english": "Opening file in appropriate editor...",
+      "current": "Opening file in appropriate editor...",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.select_a_file_to",
+      "english": "Select a file to rename",
+      "current": "Select a file to rename",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.select_a_file_to_2",
+      "english": "Select a file to share",
+      "current": "Select a file to share",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.select_files_to_share",
+      "english": "Select files to share",
+      "current": "Select files to share",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.selected_files_do_not",
+      "english": "Selected files do not have shareable links",
+      "current": "Selected files do not have shareable links",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.share_sheet_opened",
+      "english": "Share sheet opened",
+      "current": "Share sheet opened",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseFileOperations.toast.this_file_does_not",
+      "english": "This file does not have a shareable link yet",
+      "current": "This file does not have a shareable link yet",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseMobileFileManager.toast.failed_to_load_more",
+      "english": "Failed to load more files",
+      "current": "Failed to load more files",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseMobileFileManager.toast.failed_to_refresh_files",
+      "english": "Failed to refresh files",
+      "current": "Failed to refresh files",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseMobileFileManager.toast.failed_to_share_file",
+      "english": "Failed to share file",
+      "current": "Failed to share file",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseMobileFileManager.toast.file_not_found",
+      "english": "File not found",
+      "current": "File not found",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseMobileFileManager.toast.file_shared_successfully",
+      "english": "File shared successfully",
+      "current": "File shared successfully",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseMobileFileManager.toast.link_copied_to_clipboard",
+      "english": "Link copied to clipboard",
+      "current": "Link copied to clipboard",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseMobileFileManager.toast.settings_coming_soon",
+      "english": "Settings coming soon",
+      "current": "Settings coming soon",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseMobileFileManager.toast.this_file_does_not",
+      "english": "This file does not have a shareable link yet",
+      "current": "This file does not have a shareable link yet",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.exporting_pdf",
+      "english": "Exporting PDF...",
+      "current": "Exporting PDF...",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.exporting_pptx",
+      "english": "Exporting PPTX...",
+      "current": "Exporting PPTX...",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_import_html",
+      "english": "Failed to import HTML",
+      "current": "Failed to import HTML",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_import_powerpoint",
+      "english": "Failed to import PowerPoint file",
+      "current": "Failed to import PowerPoint file",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_load_presentation",
+      "english": "Failed to load presentation",
+      "current": "Failed to load presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_save_presentation",
+      "english": "Failed to save presentation",
+      "current": "Failed to save presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_update_visibility",
+      "english": "Failed to update visibility",
+      "current": "Failed to update visibility",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.html_imported_successfully",
+      "english": "HTML imported successfully",
+      "current": "HTML imported successfully",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.importing_powerpoint",
+      "english": "Importing PowerPoint...",
+      "current": "Importing PowerPoint...",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.pdf_export_failed_please",
+      "english": "PDF export failed. Please try again.",
+      "current": "PDF export failed. Please try again.",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.pdf_exported_successfully",
+      "english": "PDF exported successfully",
+      "current": "PDF exported successfully",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.pptx_export_failed_please",
+      "english": "PPTX export failed. Please try again.",
+      "current": "PPTX export failed. Please try again.",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.pptx_exported_successfully",
+      "english": "PPTX exported successfully",
+      "current": "PPTX exported successfully",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Composables.UseSlidePersistence.toast.save_the_presentation_first",
+      "english": "Save the presentation first",
+      "current": "Save the presentation first",
+      "issueType": "untranslated",
+      "localeFile": "fr\\composables.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.brick_wall_background_theme",
+      "english": "Brick wall background theme",
+      "current": "Brick wall background theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.compact_presentation_theme",
+      "english": "Compact presentation theme",
+      "current": "Compact presentation theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.dark_carbon_fiber_theme",
+      "english": "Dark carbon fiber theme",
+      "current": "Dark carbon fiber theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.default_slidev_theme",
+      "english": "Default Slidev theme",
+      "current": "Default Slidev theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.gradient_background_theme",
+      "english": "Gradient background theme",
+      "current": "Gradient background theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.linux_penguin_theme",
+      "english": "Linux penguin theme",
+      "current": "Linux penguin theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.purple_gradient_theme",
+      "english": "Purple gradient theme",
+      "current": "Purple gradient theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.scientific_presentation_theme",
+      "english": "Scientific presentation theme",
+      "current": "Scientific presentation theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.serif_typography_theme",
+      "english": "Serif typography theme",
+      "current": "Serif typography theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.tech_circuit_board_theme",
+      "english": "Tech circuit board theme",
+      "current": "Tech circuit board theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.text.vibrant_colors_theme",
+      "english": "Vibrant colors theme",
+      "current": "Vibrant colors theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Services.SlidevService.toast.opening_print_dialog_for",
+      "english": "Opening print dialog for PDF export...",
+      "current": "Opening print dialog for PDF export...",
+      "issueType": "untranslated",
+      "localeFile": "fr\\services.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.bold_and_structured",
+      "english": "Bold and structured",
+      "current": "Bold and structured",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.bold_statement_or_quote",
+      "english": "Bold statement or quote",
+      "current": "Bold statement or quote",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.centered_content_for_emphasis",
+      "english": "Centered content for emphasis",
+      "current": "Centered content for emphasis",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.clean_and_minimal",
+      "english": "Clean and minimal",
+      "current": "Clean and minimal",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.closing_with_next_steps",
+      "english": "Closing with next steps",
+      "current": "Closing with next steps",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.dark_blue_developer_theme",
+      "english": "Dark blue developer theme",
+      "current": "Dark blue developer theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.dark_purple_theme",
+      "english": "Dark purple theme",
+      "current": "Dark purple theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.elegant_serif_typography",
+      "english": "Elegant serif typography",
+      "current": "Elegant serif typography",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.embedded_video_content",
+      "english": "Embedded video content",
+      "current": "Embedded video content",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.four_equal_sections",
+      "english": "Four equal sections",
+      "current": "Four equal sections",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.header_spanning_both_columns",
+      "english": "Header spanning both columns",
+      "current": "Header spanning both columns",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.highlight_a_key_number",
+      "english": "Highlight a key number or fact",
+      "current": "Highlight a key number or fact",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.image_as_main_content",
+      "english": "Image as main content",
+      "current": "Image as main content",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.introduction_slide_with_speaker",
+      "english": "Introduction slide with speaker info",
+      "current": "Introduction slide with speaker info",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.mermaid_flowchart_diagram",
+      "english": "Mermaid flowchart diagram",
+      "current": "Mermaid flowchart diagram",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.mermaid_pie_chart",
+      "english": "Mermaid pie chart",
+      "current": "Mermaid pie chart",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.mermaid_sequence_diagram",
+      "english": "Mermaid sequence diagram",
+      "current": "Mermaid sequence diagram",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.mermaid_timeline_diagram",
+      "english": "Mermaid timeline diagram",
+      "current": "Mermaid timeline diagram",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.opening_slide_with_title",
+      "english": "Opening slide with title and subtitle",
+      "current": "Opening slide with title and subtitle",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.quotation_with_attribution",
+      "english": "Quotation with attribution",
+      "current": "Quotation with attribution",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.section_break_with_large",
+      "english": "Section break with large title",
+      "current": "Section break with large title",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.soft_and_elegant_dark",
+      "english": "Soft and elegant dark theme",
+      "current": "Soft and elegant dark theme",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.standard_content_slide_with",
+      "english": "Standard content slide with bullets",
+      "current": "Standard content slide with bullets",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.syntax_highlighted_code",
+      "english": "Syntax highlighted code",
+      "current": "Syntax highlighted code",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Utils.SlidevMarkdown.text.warm_and_friendly",
+      "english": "Warm and friendly",
+      "current": "Warm and friendly",
+      "issueType": "untranslated",
+      "localeFile": "fr\\utils.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.heading.choose_your_path",
+      "english": "Choose Your Path",
+      "current": "Choose Your Path",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.heading.create_new_presentation",
+      "english": "Create New Presentation",
+      "current": "Create New Presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.heading.everything_you_need_to",
+      "english": "Everything You Need to Get Work Done",
+      "current": "Everything You Need to Get Work Done",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.heading.no_presentations_found",
+      "english": "No Presentations Found",
+      "current": "No Presentations Found",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.heading.ready_to_take_control",
+      "english": "Ready to Take Control of Your Productivity?",
+      "current": "Ready to Take Control of Your Productivity?",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.100_open_source",
+      "english": "100% open source",
+      "current": "100% open source",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.a_blank_canvas_to",
+      "english": "A blank canvas to create your presentation from scratch",
+      "current": "A blank canvas to create your presentation from scratch",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.a_modern_theme_inspired",
+      "english": "A modern theme inspired by Vue.js design principles",
+      "current": "A modern theme inspired by Vue.js design principles",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.a_modern_theme_with",
+      "english": "A modern theme with purple gradients and clean design",
+      "current": "A modern theme with purple gradients and clean design",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.a_personal_theme_for",
+      "english": "A personal theme for Slidev with unique styling",
+      "current": "A personal theme for Slidev with unique styling",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.an_education_academia_oriented",
+      "english": "An education/academia oriented Slidev theme with whimsical elements",
+      "current": "An education/academia oriented Slidev theme with whimsical elements",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.an_official_theme_using",
+      "english": "An official theme using serif fonts for professional presentations",
+      "current": "An official theme using serif fonts for professional presentations",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.build_surveys_and_collect",
+      "english": "Build surveys and collect data with payment integration",
+      "current": "Build surveys and collect data with payment integration",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.create_presentations_with_templates",
+      "english": "Create presentations with templates and real-time collaboration",
+      "current": "Create presentations with templates and real-time collaboration",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.deploy_on_your_own",
+      "english": "Deploy on your own infrastructure for maximum control and privacy",
+      "current": "Deploy on your own infrastructure for maximum control and privacy",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.get_started_by_creating",
+      "english": "Get started by creating your first presentation",
+      "current": "Get started by creating your first presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.inspired_by_the_basic",
+      "english": "Inspired by the Basic Black/White theme on Apple Keynote",
+      "current": "Inspired by the Basic Black/White theme on Apple Keynote",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.join_thousands_of_users",
+      "english": "Join thousands of users who've made the switch to privacy-first productivity tools.",
+      "current": "Join thousands of users who've made the switch to privacy-first productivity tools.",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.modern_slide_decks",
+      "english": "Modern slide decks",
+      "current": "Modern slide decks",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.modern_theme_for_digital",
+      "english": "Modern theme for digital agencies and tech presentations",
+      "current": "Modern theme for digital agencies and tech presentations",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.modern_theme_with_brick",
+      "english": "Modern theme with brick-based design elements",
+      "current": "Modern theme with brick-based design elements",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.open_source_productivity_suite",
+      "english": "Open-source productivity suite for modern teams.",
+      "current": "Open-source productivity suite for modern teams.",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.playful_theme_inspired_by",
+      "english": "Playful theme inspired by the Shiba Inu dog breed",
+      "current": "Playful theme inspired by the Shiba Inu dog breed",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.privacy_first_productivity_suite",
+      "english": "Privacy-First Productivity Suite",
+      "current": "Privacy-First Productivity Suite",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.professional_theme_for_nearform",
+      "english": "Professional theme for Nearform presentations and workshops",
+      "current": "Professional theme for Nearform presentations and workshops",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.rich_text_editor_with",
+      "english": "Rich text editor with real-time collaboration and AI assistance",
+      "current": "Rich text editor with real-time collaboration and AI assistance",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.simplifies_creating_academic_presentations",
+      "english": "Simplifies creating academic presentations with necessary components and layouts",
+      "current": "Simplifies creating academic presentations with necessary components and layouts",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.start_a_new_presentation",
+      "english": "Start a New Presentation",
+      "current": "Start a New Presentation",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.take_control_of_your",
+      "english": "Take control of your data and workflow with an open-source alternative that respects your privacy.",
+      "current": "Take control of your data and workflow with an open-source alternative that respects your privacy.",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.theme_designed_for_e",
+      "english": "Theme designed for e-commerce and business presentations",
+      "current": "Theme designed for e-commerce and business presentations",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "fr",
+      "keyPath": "Views.text.theme_designed_for_scientific",
+      "english": "Theme designed for scientific and research presentations",
+      "current": "Theme designed for scientific and research presentations",
+      "issueType": "untranslated",
+      "localeFile": "fr\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.add_slide",
+      "english": "Add Slide",
+      "current": "Add Slide",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.center",
+      "english": "⬜️ Center",
+      "current": "⬜️ Center",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.circle",
+      "english": "⭕ Circle",
+      "current": "⭕ Circle",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.clear_selection_2",
+      "english": "Clear Selection",
+      "current": "Clear Selection",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.contact_form",
+      "english": "Contact Form",
+      "current": "Contact Form",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.copy_css",
+      "english": "Copy CSS",
+      "current": "Copy CSS",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.deploy_now",
+      "english": "Deploy Now",
+      "current": "Deploy Now",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.expand_all",
+      "english": "Expand All",
+      "current": "Expand All",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.get_started",
+      "english": "Get Started",
+      "current": "Get Started",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.hex",
+      "english": "⬡ Hex",
+      "current": "⬡ Hex",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.infographics",
+      "english": "Infographics",
+      "current": "Infographics",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.insert_infographic",
+      "english": "Insert Infographic",
+      "current": "Insert Infographic",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.left",
+      "english": "⬅️ Left",
+      "current": "⬅️ Left",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.login",
+      "english": "Login",
+      "current": "Login",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.new_presentation",
+      "english": "New Presentation",
+      "current": "New Presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.none",
+      "english": "◻️ None",
+      "current": "◻️ None",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.present",
+      "english": "Present",
+      "current": "Present",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.presentation",
+      "english": "Presentation",
+      "current": "Presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.presenter",
+      "english": "Presenter",
+      "current": "Presenter",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.preview_animation",
+      "english": "Preview Animation",
+      "current": "Preview Animation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.replace",
+      "english": "🔄 Replace",
+      "current": "🔄 Replace",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.right",
+      "english": "➡️ Right",
+      "current": "➡️ Right",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.root",
+      "english": "Root",
+      "current": "Root",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.rounded",
+      "english": "▫️ Rounded",
+      "current": "▫️ Rounded",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.self_host",
+      "english": "Self Host",
+      "current": "Self Host",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.serif_theme",
+      "english": "Serif Theme",
+      "current": "Serif Theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.transpose",
+      "english": "🔄 Transpose",
+      "current": "🔄 Transpose",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.upload",
+      "english": "📁 Upload",
+      "current": "📁 Upload",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.upload_2",
+      "english": "Upload",
+      "current": "Upload",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.button.upload_files",
+      "english": "Upload Files",
+      "current": "Upload Files",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.animation_settings",
+      "english": "Animation Settings",
+      "current": "Animation Settings",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.best_for",
+      "english": "Best For",
+      "current": "Best For",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.blank_form",
+      "english": "Blank Form",
+      "current": "Blank Form",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.color_scheme",
+      "english": "Color Scheme",
+      "current": "Color Scheme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.description",
+      "english": "Description",
+      "current": "Description",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.document",
+      "english": "Document",
+      "current": "Document",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.element_properties",
+      "english": "Element Properties",
+      "current": "Element Properties",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.markdown_element",
+      "english": "Markdown Element",
+      "current": "Markdown Element",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.next_slide",
+      "english": "Next Slide",
+      "current": "Next Slide",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.notes",
+      "english": "Notes",
+      "current": "Notes",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.page_1",
+      "english": "Page 1",
+      "current": "Page 1",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.product",
+      "english": "Product",
+      "current": "Product",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.self_host",
+      "english": "Self Host",
+      "current": "Self Host",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.share_presentation",
+      "english": "Share Presentation",
+      "current": "Share Presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.slide_overview",
+      "english": "Slide Overview",
+      "current": "Slide Overview",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.slide_properties",
+      "english": "Slide Properties",
+      "current": "Slide Properties",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.heading.your_workspace",
+      "english": "Your Workspace,",
+      "current": "Your Workspace,",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.alt_text",
+      "english": "Alt Text",
+      "current": "Alt Text",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.animation_type",
+      "english": "Animation Type",
+      "current": "Animation Type",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.background",
+      "english": "Background",
+      "current": "Background",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.bounce",
+      "english": "Bounce",
+      "current": "Bounce",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.cell_alignment",
+      "english": "Cell Alignment",
+      "current": "Cell Alignment",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.content",
+      "english": "Content",
+      "current": "Content",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.css_code",
+      "english": "CSS Code",
+      "current": "CSS Code",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.delay",
+      "english": "Delay",
+      "current": "Delay",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.diagram_info",
+      "english": "Diagram Info",
+      "current": "Diagram Info",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.dimensions",
+      "english": "Dimensions",
+      "current": "Dimensions",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.duration",
+      "english": "Duration",
+      "current": "Duration",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.easing",
+      "english": "Easing",
+      "current": "Easing",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.elastic",
+      "english": "Elastic",
+      "current": "Elastic",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.element_type",
+      "english": "Element Type",
+      "current": "Element Type",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.enable_animation",
+      "english": "Enable Animation",
+      "current": "Enable Animation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.font_size",
+      "english": "Font Size",
+      "current": "Font Size",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.font_weight",
+      "english": "Font Weight",
+      "current": "Font Weight",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.heading_level",
+      "english": "Heading Level",
+      "current": "Heading Level",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.hoverable_rows",
+      "english": "Hoverable Rows",
+      "current": "Hoverable Rows",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.image_source",
+      "english": "Image Source",
+      "current": "Image Source",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.layout",
+      "english": "Layout",
+      "current": "Layout",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.position",
+      "english": "Position",
+      "current": "Position",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.quality",
+      "english": "Quality",
+      "current": "Quality",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.quick_presets",
+      "english": "Quick Presets",
+      "current": "Quick Presets",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.quick_templates",
+      "english": "Quick Templates",
+      "current": "Quick Templates",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.repeat_animation",
+      "english": "Repeat Animation",
+      "current": "Repeat Animation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.scale",
+      "english": "Scale",
+      "current": "Scale",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.table_actions",
+      "english": "Table Actions",
+      "current": "Table Actions",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.table_structure",
+      "english": "Table Structure",
+      "current": "Table Structure",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.table_style",
+      "english": "Table Style",
+      "current": "Table Style",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.table_width",
+      "english": "Table Width",
+      "current": "Table Width",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.text_align",
+      "english": "Text Align",
+      "current": "Text Align",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.text_alignment",
+      "english": "Text Alignment",
+      "current": "Text Alignment",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.text_color",
+      "english": "Text Color",
+      "current": "Text Color",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.text_content",
+      "english": "Text Content",
+      "current": "Text Content",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.text_formatting",
+      "english": "Text Formatting",
+      "current": "Text Formatting",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.transition",
+      "english": "Transition",
+      "current": "Transition",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.label.trigger",
+      "english": "Trigger",
+      "current": "Trigger",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.link.about",
+      "english": "About",
+      "current": "About",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.link.blog",
+      "english": "Blog",
+      "current": "Blog",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.link.community",
+      "english": "Community",
+      "current": "Community",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.link.contact",
+      "english": "Contact",
+      "current": "Contact",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.link.documentation",
+      "english": "Documentation",
+      "current": "Documentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.link.managed_service",
+      "english": "Managed Service",
+      "current": "Managed Service",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.link.support",
+      "english": "Support",
+      "current": "Support",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.add_infographic",
+      "english": "Add Infographic",
+      "current": "Add Infographic",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.axios",
+      "english": "Axios",
+      "current": "Axios",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.bounce_in",
+      "english": "Bounce In",
+      "current": "Bounce In",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.bounce_out",
+      "english": "Bounce Out",
+      "current": "Bounce Out",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.center",
+      "english": "Center",
+      "current": "Center",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.current",
+      "english": "Current",
+      "current": "Current",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.delete_slide",
+      "english": "Delete Slide",
+      "current": "Delete Slide",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.disable",
+      "english": "Disable",
+      "current": "Disable",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.duplicate_slide",
+      "english": "Duplicate Slide",
+      "current": "Duplicate Slide",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.ease",
+      "english": "Ease",
+      "current": "Ease",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.ease_in",
+      "english": "Ease In",
+      "current": "Ease In",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.ease_out",
+      "english": "Ease Out",
+      "current": "Ease Out",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.elastic_in",
+      "english": "Elastic In",
+      "current": "Elastic In",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.elastic_out",
+      "english": "Elastic Out",
+      "current": "Elastic Out",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.emoji_picker",
+      "english": "Emoji Picker",
+      "current": "Emoji Picker",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.enable",
+      "english": "Enable",
+      "current": "Enable",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.fade",
+      "english": "Fade",
+      "current": "Fade",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.fade_in",
+      "english": "Fade In",
+      "current": "Fade In",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.fade_out",
+      "english": "Fade Out",
+      "current": "Fade Out",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.flip_in",
+      "english": "Flip In",
+      "current": "Flip In",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.flip_out",
+      "english": "Flip Out",
+      "current": "Flip Out",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.free",
+      "english": "Free",
+      "current": "Free",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.heart_beat",
+      "english": "Heart Beat",
+      "current": "Heart Beat",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.hide",
+      "english": "Hide",
+      "current": "Hide",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.import_powerpoint",
+      "english": "Import PowerPoint",
+      "current": "Import PowerPoint",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.infinite",
+      "english": "Infinite",
+      "current": "Infinite",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.inline",
+      "english": "Inline",
+      "current": "Inline",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.jello",
+      "english": "Jello",
+      "current": "Jello",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.justify",
+      "english": "Justify",
+      "current": "Justify",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.keyboard_shortcuts",
+      "english": "Keyboard Shortcuts",
+      "current": "Keyboard Shortcuts",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.linear",
+      "english": "Linear",
+      "current": "Linear",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.most_used",
+      "english": "Most Used",
+      "current": "Most Used",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.new_deck",
+      "english": "New Deck",
+      "current": "New Deck",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.new_slide",
+      "english": "New Slide",
+      "current": "New Slide",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.none_2",
+      "english": "None",
+      "current": "None",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.on_click",
+      "english": "On Click",
+      "current": "On Click",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.on_hover",
+      "english": "On Hover",
+      "current": "On Hover",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.on_load",
+      "english": "On Load",
+      "current": "On Load",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.on_scroll",
+      "english": "On Scroll",
+      "current": "On Scroll",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.open_source",
+      "english": "Open Source",
+      "current": "Open Source",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.other_2",
+      "english": "other",
+      "current": "other",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.presenter_mode",
+      "english": "Presenter Mode",
+      "current": "Presenter Mode",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.presenter_notes",
+      "english": "Presenter Notes",
+      "current": "Presenter Notes",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.preset",
+      "english": "Preset",
+      "current": "Preset",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.progress",
+      "english": "Progress",
+      "current": "Progress",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.pulse",
+      "english": "Pulse",
+      "current": "Pulse",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.recently_used",
+      "english": "Recently Used",
+      "current": "Recently Used",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.recommended_size",
+      "english": "Recommended Size",
+      "current": "Recommended Size",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.redo_2",
+      "english": "Redo",
+      "current": "Redo",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.rotate_in",
+      "english": "Rotate In",
+      "current": "Rotate In",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.rotate_out",
+      "english": "Rotate Out",
+      "current": "Rotate Out",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.selected_form",
+      "english": "Selected Form",
+      "current": "Selected Form",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.selected_presentation",
+      "english": "Selected Presentation",
+      "current": "Selected Presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.shake",
+      "english": "Shake",
+      "current": "Shake",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.show",
+      "english": "Show",
+      "current": "Show",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.slide_left",
+      "english": "Slide Left",
+      "current": "Slide Left",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.slide_right",
+      "english": "Slide Right",
+      "current": "Slide Right",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.slide_up",
+      "english": "Slide Up",
+      "current": "Slide Up",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.slidev",
+      "english": "Slidev",
+      "current": "Slidev",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.spreadsheet",
+      "english": "Spreadsheet",
+      "current": "Spreadsheet",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.start_presentation",
+      "english": "Start Presentation",
+      "current": "Start Presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.swing",
+      "english": "Swing",
+      "current": "Swing",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.tada",
+      "english": "Tada",
+      "current": "Tada",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.title",
+      "english": "Title",
+      "current": "Title",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.total",
+      "english": "Total",
+      "current": "Total",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.undo_2",
+      "english": "Undo",
+      "current": "Undo",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.text.your_rules",
+      "english": "Your Rules",
+      "current": "Your Rules",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Commons.toast.visibility_updated",
+      "english": "Visibility updated",
+      "current": "Visibility updated",
+      "issueType": "untranslated",
+      "localeFile": "zh\\commons.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Forms.heading.create_new_form",
+      "english": "Create New Form",
+      "current": "Create New Form",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Forms.heading.no_forms_found",
+      "english": "No forms found",
+      "current": "No forms found",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Forms.text.get_started_by_creating",
+      "english": "Get started by creating your first form",
+      "current": "Get started by creating your first form",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Forms.text.pick_a_template_or",
+      "english": "Pick a template or start blank",
+      "current": "Pick a template or start blank",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Forms.text.start_a_new_form",
+      "english": "Start a New Form",
+      "current": "Start a New Form",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Home.text.loading_more",
+      "english": "Loading more...",
+      "current": "Loading more...",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.button.add_footer",
+      "english": "📝 Add Footer",
+      "current": "📝 Add Footer",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.button.add_header",
+      "english": "📋 Add Header",
+      "current": "📋 Add Header",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.button.remove_column",
+      "english": "➖ Remove Column",
+      "current": "➖ Remove Column",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.button.remove_row",
+      "english": "➖ Remove Row",
+      "current": "➖ Remove Row",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.button.row_above",
+      "english": "➕ Row Above",
+      "current": "➕ Row Above",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.button.row_below",
+      "english": "➕ Row Below",
+      "current": "➕ Row Below",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.button.sort_column",
+      "english": "📊 Sort Column",
+      "current": "📊 Sort Column",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.heading.choose_from_professionally_designed",
+      "english": "Choose from professionally designed infographic templates. Click to preview, then insert into your slide.",
+      "current": "Choose from professionally designed infographic templates. Click to preview, then insert into your slide.",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.heading.replace_with_emoji",
+      "english": "Replace with Emoji",
+      "current": "Replace with Emoji",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.label.shape_style",
+      "english": "Shape & Style",
+      "current": "Shape & Style",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.label.smart_font_sizing",
+      "english": "Smart Font Sizing",
+      "current": "Smart Font Sizing",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.add_entrance_emphasis_or",
+      "english": "Add entrance, emphasis, or exit animations to this element",
+      "current": "Add entrance, emphasis, or exit animations to this element",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.decision_based_process_flow",
+      "english": "Decision-based process flow with branches",
+      "current": "Decision-based process flow with branches",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.detailed_timeline_with_descriptions",
+      "english": "Detailed timeline with descriptions on alternating sides",
+      "current": "Detailed timeline with descriptions on alternating sides",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.ease_in_out",
+      "english": "Ease In Out",
+      "current": "Ease In Out",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.end_of_presentation",
+      "english": "End of presentation",
+      "current": "End of presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.export_as_pdf",
+      "english": "Export as PDF",
+      "current": "Export as PDF",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.export_as_powerpoint",
+      "english": "Export as PowerPoint",
+      "current": "Export as PowerPoint",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.export_as_pptx",
+      "english": "Export as PPTX",
+      "current": "Export as PPTX",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.export_for_web",
+      "english": "Export for Web",
+      "current": "Export for Web",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.help_documentation",
+      "english": "Help & Documentation",
+      "current": "Help & Documentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.no_emojis_found",
+      "english": "No emojis found",
+      "current": "No emojis found",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.no_image_loaded",
+      "english": "No image loaded",
+      "current": "No image loaded",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.select_an_element_in",
+      "english": "Select an element in the slide to configure animations",
+      "current": "Select an element in the slide to configure animations",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.show_a_linear_process",
+      "english": "Show a linear process with numbered steps",
+      "current": "Show a linear process with numbered steps",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.show_events_or_milestones",
+      "english": "Show events or milestones in chronological order",
+      "current": "Show events or milestones in chronological order",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.slide_in_down",
+      "english": "Slide In Down",
+      "current": "Slide In Down",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.slide_in_left",
+      "english": "Slide In Left",
+      "current": "Slide In Left",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.slide_in_right",
+      "english": "Slide In Right",
+      "current": "Slide In Right",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.slide_in_up",
+      "english": "Slide In Up",
+      "current": "Slide In Up",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.slide_out_down",
+      "english": "Slide Out Down",
+      "current": "Slide Out Down",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.slide_out_left",
+      "english": "Slide Out Left",
+      "current": "Slide Out Left",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.slide_out_right",
+      "english": "Slide Out Right",
+      "current": "Slide Out Right",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.slide_out_up",
+      "english": "Slide Out Up",
+      "current": "Slide Out Up",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Components.Slides.text.tip_after_inserting_you",
+      "english": "Tip: After inserting, you can edit the text directly in the markdown editor",
+      "current": "Tip: After inserting, you can edit the text directly in the markdown editor",
+      "issueType": "untranslated",
+      "localeFile": "zh\\components.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_create_folder",
+      "english": "Failed to create folder",
+      "current": "Failed to create folder",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_create_type",
+      "english": "Failed to create {type}",
+      "current": "Failed to create {type}",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_delete_file",
+      "english": "Failed to delete file",
+      "current": "Failed to delete file",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_delete_some",
+      "english": "Failed to delete some files",
+      "current": "Failed to delete some files",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_download_files",
+      "english": "Failed to download files",
+      "current": "Failed to download files",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.failed_to_rename_file",
+      "english": "Failed to rename file",
+      "current": "Failed to rename file",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.file_moved_to_trash",
+      "english": "File moved to trash",
+      "current": "File moved to trash",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.file_renamed_successfully",
+      "english": "File renamed successfully",
+      "current": "File renamed successfully",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.folder_created_successfully",
+      "english": "Folder created successfully",
+      "current": "Folder created successfully",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileManager.toast.type_created_successfully",
+      "english": "{type} created successfully",
+      "current": "{type} created successfully",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.cannot_open_this_file",
+      "english": "Cannot open this file type",
+      "current": "Cannot open this file type",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.failed_to_open_file",
+      "english": "Failed to open file",
+      "current": "Failed to open file",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.file_not_found",
+      "english": "File not found",
+      "current": "File not found",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.file_renamed_successfully",
+      "english": "File renamed successfully",
+      "current": "File renamed successfully",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.link_copied_to_clipboard",
+      "english": "Link copied to clipboard",
+      "current": "Link copied to clipboard",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.links_copied_to_clipboard",
+      "english": "Links copied to clipboard",
+      "current": "Links copied to clipboard",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.opening_file_in_appropriate",
+      "english": "Opening file in appropriate editor...",
+      "current": "Opening file in appropriate editor...",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.select_a_file_to",
+      "english": "Select a file to rename",
+      "current": "Select a file to rename",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.select_a_file_to_2",
+      "english": "Select a file to share",
+      "current": "Select a file to share",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.select_files_to_share",
+      "english": "Select files to share",
+      "current": "Select files to share",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.selected_files_do_not",
+      "english": "Selected files do not have shareable links",
+      "current": "Selected files do not have shareable links",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.share_sheet_opened",
+      "english": "Share sheet opened",
+      "current": "Share sheet opened",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseFileOperations.toast.this_file_does_not",
+      "english": "This file does not have a shareable link yet",
+      "current": "This file does not have a shareable link yet",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseMobileFileManager.toast.failed_to_load_more",
+      "english": "Failed to load more files",
+      "current": "Failed to load more files",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseMobileFileManager.toast.failed_to_refresh_files",
+      "english": "Failed to refresh files",
+      "current": "Failed to refresh files",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseMobileFileManager.toast.failed_to_share_file",
+      "english": "Failed to share file",
+      "current": "Failed to share file",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseMobileFileManager.toast.file_not_found",
+      "english": "File not found",
+      "current": "File not found",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseMobileFileManager.toast.file_shared_successfully",
+      "english": "File shared successfully",
+      "current": "File shared successfully",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseMobileFileManager.toast.link_copied_to_clipboard",
+      "english": "Link copied to clipboard",
+      "current": "Link copied to clipboard",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseMobileFileManager.toast.settings_coming_soon",
+      "english": "Settings coming soon",
+      "current": "Settings coming soon",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseMobileFileManager.toast.this_file_does_not",
+      "english": "This file does not have a shareable link yet",
+      "current": "This file does not have a shareable link yet",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.exporting_pdf",
+      "english": "Exporting PDF...",
+      "current": "Exporting PDF...",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.exporting_pptx",
+      "english": "Exporting PPTX...",
+      "current": "Exporting PPTX...",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_import_html",
+      "english": "Failed to import HTML",
+      "current": "Failed to import HTML",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_import_powerpoint",
+      "english": "Failed to import PowerPoint file",
+      "current": "Failed to import PowerPoint file",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_load_presentation",
+      "english": "Failed to load presentation",
+      "current": "Failed to load presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_save_presentation",
+      "english": "Failed to save presentation",
+      "current": "Failed to save presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.failed_to_update_visibility",
+      "english": "Failed to update visibility",
+      "current": "Failed to update visibility",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.html_imported_successfully",
+      "english": "HTML imported successfully",
+      "current": "HTML imported successfully",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.importing_powerpoint",
+      "english": "Importing PowerPoint...",
+      "current": "Importing PowerPoint...",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.pdf_export_failed_please",
+      "english": "PDF export failed. Please try again.",
+      "current": "PDF export failed. Please try again.",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.pdf_exported_successfully",
+      "english": "PDF exported successfully",
+      "current": "PDF exported successfully",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.pptx_export_failed_please",
+      "english": "PPTX export failed. Please try again.",
+      "current": "PPTX export failed. Please try again.",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.pptx_exported_successfully",
+      "english": "PPTX exported successfully",
+      "current": "PPTX exported successfully",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Composables.UseSlidePersistence.toast.save_the_presentation_first",
+      "english": "Save the presentation first",
+      "current": "Save the presentation first",
+      "issueType": "untranslated",
+      "localeFile": "zh\\composables.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.brick_wall_background_theme",
+      "english": "Brick wall background theme",
+      "current": "Brick wall background theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.compact_presentation_theme",
+      "english": "Compact presentation theme",
+      "current": "Compact presentation theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.dark_carbon_fiber_theme",
+      "english": "Dark carbon fiber theme",
+      "current": "Dark carbon fiber theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.default_slidev_theme",
+      "english": "Default Slidev theme",
+      "current": "Default Slidev theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.gradient_background_theme",
+      "english": "Gradient background theme",
+      "current": "Gradient background theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.linux_penguin_theme",
+      "english": "Linux penguin theme",
+      "current": "Linux penguin theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.purple_gradient_theme",
+      "english": "Purple gradient theme",
+      "current": "Purple gradient theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.scientific_presentation_theme",
+      "english": "Scientific presentation theme",
+      "current": "Scientific presentation theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.serif_typography_theme",
+      "english": "Serif typography theme",
+      "current": "Serif typography theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.tech_circuit_board_theme",
+      "english": "Tech circuit board theme",
+      "current": "Tech circuit board theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.text.vibrant_colors_theme",
+      "english": "Vibrant colors theme",
+      "current": "Vibrant colors theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Services.SlidevService.toast.opening_print_dialog_for",
+      "english": "Opening print dialog for PDF export...",
+      "current": "Opening print dialog for PDF export...",
+      "issueType": "untranslated",
+      "localeFile": "zh\\services.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.bold_and_structured",
+      "english": "Bold and structured",
+      "current": "Bold and structured",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.bold_statement_or_quote",
+      "english": "Bold statement or quote",
+      "current": "Bold statement or quote",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.centered_content_for_emphasis",
+      "english": "Centered content for emphasis",
+      "current": "Centered content for emphasis",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.clean_and_minimal",
+      "english": "Clean and minimal",
+      "current": "Clean and minimal",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.closing_with_next_steps",
+      "english": "Closing with next steps",
+      "current": "Closing with next steps",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.dark_blue_developer_theme",
+      "english": "Dark blue developer theme",
+      "current": "Dark blue developer theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.dark_purple_theme",
+      "english": "Dark purple theme",
+      "current": "Dark purple theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.elegant_serif_typography",
+      "english": "Elegant serif typography",
+      "current": "Elegant serif typography",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.embedded_video_content",
+      "english": "Embedded video content",
+      "current": "Embedded video content",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.four_equal_sections",
+      "english": "Four equal sections",
+      "current": "Four equal sections",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.header_spanning_both_columns",
+      "english": "Header spanning both columns",
+      "current": "Header spanning both columns",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.highlight_a_key_number",
+      "english": "Highlight a key number or fact",
+      "current": "Highlight a key number or fact",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.image_as_main_content",
+      "english": "Image as main content",
+      "current": "Image as main content",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.introduction_slide_with_speaker",
+      "english": "Introduction slide with speaker info",
+      "current": "Introduction slide with speaker info",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.mermaid_flowchart_diagram",
+      "english": "Mermaid flowchart diagram",
+      "current": "Mermaid flowchart diagram",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.mermaid_pie_chart",
+      "english": "Mermaid pie chart",
+      "current": "Mermaid pie chart",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.mermaid_sequence_diagram",
+      "english": "Mermaid sequence diagram",
+      "current": "Mermaid sequence diagram",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.mermaid_timeline_diagram",
+      "english": "Mermaid timeline diagram",
+      "current": "Mermaid timeline diagram",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.opening_slide_with_title",
+      "english": "Opening slide with title and subtitle",
+      "current": "Opening slide with title and subtitle",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.quotation_with_attribution",
+      "english": "Quotation with attribution",
+      "current": "Quotation with attribution",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.section_break_with_large",
+      "english": "Section break with large title",
+      "current": "Section break with large title",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.soft_and_elegant_dark",
+      "english": "Soft and elegant dark theme",
+      "current": "Soft and elegant dark theme",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.standard_content_slide_with",
+      "english": "Standard content slide with bullets",
+      "current": "Standard content slide with bullets",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.syntax_highlighted_code",
+      "english": "Syntax highlighted code",
+      "current": "Syntax highlighted code",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Utils.SlidevMarkdown.text.warm_and_friendly",
+      "english": "Warm and friendly",
+      "current": "Warm and friendly",
+      "issueType": "untranslated",
+      "localeFile": "zh\\utils.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.heading.choose_your_path",
+      "english": "Choose Your Path",
+      "current": "Choose Your Path",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.heading.create_new_presentation",
+      "english": "Create New Presentation",
+      "current": "Create New Presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.heading.everything_you_need_to",
+      "english": "Everything You Need to Get Work Done",
+      "current": "Everything You Need to Get Work Done",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.heading.no_presentations_found",
+      "english": "No Presentations Found",
+      "current": "No Presentations Found",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.heading.ready_to_take_control",
+      "english": "Ready to Take Control of Your Productivity?",
+      "current": "Ready to Take Control of Your Productivity?",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.100_open_source",
+      "english": "100% open source",
+      "current": "100% open source",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.a_blank_canvas_to",
+      "english": "A blank canvas to create your presentation from scratch",
+      "current": "A blank canvas to create your presentation from scratch",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.a_modern_theme_inspired",
+      "english": "A modern theme inspired by Vue.js design principles",
+      "current": "A modern theme inspired by Vue.js design principles",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.a_modern_theme_with",
+      "english": "A modern theme with purple gradients and clean design",
+      "current": "A modern theme with purple gradients and clean design",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.a_personal_theme_for",
+      "english": "A personal theme for Slidev with unique styling",
+      "current": "A personal theme for Slidev with unique styling",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.an_education_academia_oriented",
+      "english": "An education/academia oriented Slidev theme with whimsical elements",
+      "current": "An education/academia oriented Slidev theme with whimsical elements",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.an_official_theme_using",
+      "english": "An official theme using serif fonts for professional presentations",
+      "current": "An official theme using serif fonts for professional presentations",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.build_surveys_and_collect",
+      "english": "Build surveys and collect data with payment integration",
+      "current": "Build surveys and collect data with payment integration",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.create_presentations_with_templates",
+      "english": "Create presentations with templates and real-time collaboration",
+      "current": "Create presentations with templates and real-time collaboration",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.deploy_on_your_own",
+      "english": "Deploy on your own infrastructure for maximum control and privacy",
+      "current": "Deploy on your own infrastructure for maximum control and privacy",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.get_started_by_creating",
+      "english": "Get started by creating your first presentation",
+      "current": "Get started by creating your first presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.inspired_by_the_basic",
+      "english": "Inspired by the Basic Black/White theme on Apple Keynote",
+      "current": "Inspired by the Basic Black/White theme on Apple Keynote",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.join_thousands_of_users",
+      "english": "Join thousands of users who've made the switch to privacy-first productivity tools.",
+      "current": "Join thousands of users who've made the switch to privacy-first productivity tools.",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.modern_slide_decks",
+      "english": "Modern slide decks",
+      "current": "Modern slide decks",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.modern_theme_for_digital",
+      "english": "Modern theme for digital agencies and tech presentations",
+      "current": "Modern theme for digital agencies and tech presentations",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.modern_theme_with_brick",
+      "english": "Modern theme with brick-based design elements",
+      "current": "Modern theme with brick-based design elements",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.open_source_productivity_suite",
+      "english": "Open-source productivity suite for modern teams.",
+      "current": "Open-source productivity suite for modern teams.",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.playful_theme_inspired_by",
+      "english": "Playful theme inspired by the Shiba Inu dog breed",
+      "current": "Playful theme inspired by the Shiba Inu dog breed",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.privacy_first_productivity_suite",
+      "english": "Privacy-First Productivity Suite",
+      "current": "Privacy-First Productivity Suite",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.professional_theme_for_nearform",
+      "english": "Professional theme for Nearform presentations and workshops",
+      "current": "Professional theme for Nearform presentations and workshops",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.rich_text_editor_with",
+      "english": "Rich text editor with real-time collaboration and AI assistance",
+      "current": "Rich text editor with real-time collaboration and AI assistance",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.simplifies_creating_academic_presentations",
+      "english": "Simplifies creating academic presentations with necessary components and layouts",
+      "current": "Simplifies creating academic presentations with necessary components and layouts",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.start_a_new_presentation",
+      "english": "Start a New Presentation",
+      "current": "Start a New Presentation",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.take_control_of_your",
+      "english": "Take control of your data and workflow with an open-source alternative that respects your privacy.",
+      "current": "Take control of your data and workflow with an open-source alternative that respects your privacy.",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.theme_designed_for_e",
+      "english": "Theme designed for e-commerce and business presentations",
+      "current": "Theme designed for e-commerce and business presentations",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    },
+    {
+      "locale": "zh",
+      "keyPath": "Views.text.theme_designed_for_scientific",
+      "english": "Theme designed for scientific and research presentations",
+      "current": "Theme designed for scientific and research presentations",
+      "issueType": "untranslated",
+      "localeFile": "zh\\views.json"
+    }
+  ]
 }

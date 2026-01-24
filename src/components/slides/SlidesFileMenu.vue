@@ -11,11 +11,11 @@
       <DropdownMenuContent class="w-56">
         <DropdownMenuItem @click="handleNewDeck">
           <Plus class="h-4 w-4 mr-2" />
-          New Deck
+          {{$t('Commons.text.new_deck')}}
         </DropdownMenuItem>
         <DropdownMenuItem @click="handleImport">
           <Upload class="h-4 w-4 mr-2" />
-          Import PowerPoint
+          {{$t('Commons.text.import_powerpoint')}}
         </DropdownMenuItem>
         <DropdownMenuItem @click="handleImportHtml">
           <Code class="h-4 w-4 mr-2" />
@@ -24,11 +24,11 @@
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="handleExport('pdf')">
           <Download class="h-4 w-4 mr-2" />
-          Export as PDF
+          {{$t('Components.Slides.text.export_as_pdf')}}
         </DropdownMenuItem>
         <DropdownMenuItem @click="handleExport('pptx')">
           <FileText class="h-4 w-4 mr-2" />
-          Export as PowerPoint
+          {{$t('Components.Slides.text.export_as_powerpoint')}}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="handlePrint">
@@ -49,22 +49,22 @@
       <DropdownMenuContent class="w-56">
         <DropdownMenuItem @click="handleUndo" :disabled="!canUndo">
           <RotateCcw class="h-4 w-4 mr-2" />
-          Undo
+          {{$t('Commons.text.undo_2')}}
           <KeyboardShortcut class="ml-auto text-xs text-gray-500">Ctrl+Z</KeyboardShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem @click="handleRedo" :disabled="!canRedo">
           <RotateCw class="h-4 w-4 mr-2" />
-          Redo
+          {{$t('Commons.text.redo_2')}}
           <KeyboardShortcut class="ml-auto text-xs text-gray-500">Ctrl+Y</KeyboardShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="handleDuplicateSlide">
           <Copy class="h-4 w-4 mr-2" />
-          Duplicate Slide
+          {{$t('Commons.text.duplicate_slide')}}
         </DropdownMenuItem>
         <DropdownMenuItem @click="handleDeleteSlide" :disabled="totalSlides <= 1">
           <Trash2 class="h-4 w-4 mr-2" />
-          Delete Slide
+          {{$t('Commons.text.delete_slide')}}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -85,7 +85,7 @@
         </DropdownMenuItem>
         <DropdownMenuItem @click="toggleRuler">
           <Ruler class="h-4 w-4 mr-2" />
-          {{ showRuler ? 'Hide' : 'Show' }} Ruler
+          {{ showRuler ? $t('Commons.text.hide') : $t('Commons.text.show') }} Ruler
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="zoomIn" :disabled="zoom >= 2">
@@ -117,21 +117,21 @@
       <DropdownMenuContent class="w-56">
         <DropdownMenuItem @click="handleAddSlide">
           <Plus class="h-4 w-4 mr-2" />
-          New Slide
+          {{$t('Commons.text.new_slide')}}
           <KeyboardShortcut class="ml-auto text-xs text-gray-500">Ctrl+M</KeyboardShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem @click="showInfographics">
           <BarChart3 class="h-4 w-4 mr-2" />
-          Add Infographic
+          {{$t('Commons.text.add_infographic')}}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="toggleThumbnails">
           <LayoutGrid class="h-4 w-4 mr-2" />
-          {{ showThumbnails ? 'Hide' : 'Show' }} Thumbnails
+          {{ showThumbnails ? $t('Commons.text.hide') : $t('Commons.text.show') }} Thumbnails
         </DropdownMenuItem>
         <DropdownMenuItem @click="toggleProperties">
           <Settings class="h-4 w-4 mr-2" />
-          {{ showProperties ? 'Hide' : 'Show' }} Properties
+          {{ showProperties ? $t('Commons.text.hide') : $t('Commons.text.show') }} {{$t('Commons.heading.properties')}}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -141,29 +141,29 @@
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" class="h-8 px-3">
           <Play class="h-4 w-4 mr-2" />
-          Presentation
+          {{$t('Commons.button.presentation')}}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent class="w-56">
         <DropdownMenuItem @click="startPresentation" class="text-green-600 dark:text-green-400">
           <Play class="h-4 w-4 mr-2" />
-          Start Presentation
+          {{$t('Commons.text.start_presentation')}}
           <KeyboardShortcut class="ml-auto text-xs text-gray-500">F5</KeyboardShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem @click="startPresenterMode" class="text-blue-600 dark:text-blue-400">
           <MonitorSpeaker class="h-4 w-4 mr-2" />
-          Presenter Mode
+          {{$t('Commons.text.presenter_mode')}}
           <KeyboardShortcut class="ml-auto text-xs text-gray-500">Ctrl+F5</KeyboardShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="startOverview">
           <LayoutGrid class="h-4 w-4 mr-2" />
-          Slide Overview
+          {{$t('Commons.heading.slide_overview')}}
           <KeyboardShortcut class="ml-auto text-xs text-gray-500">O</KeyboardShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem @click="exportForPresentation">
           <ExternalLink class="h-4 w-4 mr-2" />
-          Export for Web
+          {{$t('Components.Slides.text.export_for_web')}}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -179,20 +179,20 @@
       <DropdownMenuContent class="w-56">
         <DropdownMenuItem @click="toggleSpellCheck">
           <CheckCircle class="h-4 w-4 mr-2" />
-          {{ spellCheckEnabled ? 'Disable' : 'Enable' }} Spell Check
+          {{ spellCheckEnabled ? $t('Commons.text.disable') : $t('Commons.text.enable') }} {{$t('Commons.text.spell_check')}}
         </DropdownMenuItem>
         <DropdownMenuItem @click="showEmojiPicker">
           <Smile class="h-4 w-4 mr-2" />
-          Emoji Picker
+          {{$t('Commons.text.emoji_picker')}}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem @click="showKeyboardShortcuts">
           <Keyboard class="h-4 w-4 mr-2" />
-          Keyboard Shortcuts
+          {{$t('Commons.text.keyboard_shortcuts')}}
         </DropdownMenuItem>
         <DropdownMenuItem @click="showHelp">
           <HelpCircle class="h-4 w-4 mr-2" />
-          Help & Documentation
+          {{$t('Components.Slides.text.help_documentation')}}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

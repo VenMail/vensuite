@@ -1,9 +1,70 @@
 {
   "Composables": {
+    "UseFileManager": {
+      "toast": {
+        "failed_to_create_folder": "创建文件夹失败",
+        "failed_to_create_type": "创建{type}失败",
+        "failed_to_delete_file": "删除文件失败",
+        "failed_to_delete_some": "删除部分文件失败",
+        "failed_to_download_files": "下载文件失败",
+        "failed_to_rename_file": "重命名文件失败",
+        "file_moved_to_trash": "文件已移至回收站",
+        "file_renamed_successfully": "文件重命名成功",
+        "folder_created_successfully": "文件夹创建成功",
+        "type_created_successfully": "{type}创建成功"
+      }
+    },
+    "UseFileOperations": {
+      "toast": {
+        "cannot_open_this_file": "无法打开此文件类型",
+        "failed_to_open_file": "打开文件失败",
+        "file_not_found": "未找到文件",
+        "file_renamed_successfully": "文件重命名成功",
+        "link_copied_to_clipboard": "链接已复制到剪贴板",
+        "links_copied_to_clipboard": "链接已复制到剪贴板",
+        "opening_file_in_appropriate": "在适当的编辑器中打开文件...",
+        "select_a_file_to": "选择要重命名的文件",
+        "select_a_file_to_2": "选择要分享的文件",
+        "select_files_to_share": "选择要分享的文件",
+        "selected_files_do_not": "所选文件没有可分享的链接",
+        "share_sheet_opened": "分享面板已打开",
+        "this_file_does_not": "此文件还没有可分享的链接"
+      }
+    },
     "UseFormAutosave": {
       "toast": {
         "autosave_failed_retry_or": "自动保存失败。请重试或检查连接。",
         "this_form_was_updated": "此表单已在其他地方更新。重新加载以继续编辑。"
+      }
+    },
+    "UseMobileFileManager": {
+      "toast": {
+        "failed_to_load_more": "加载更多文件失败",
+        "failed_to_refresh_files": "刷新文件失败",
+        "failed_to_share_file": "分享文件失败",
+        "file_not_found": "未找到文件",
+        "file_shared_successfully": "文件分享成功",
+        "link_copied_to_clipboard": "链接已复制到剪贴板",
+        "settings_coming_soon": "设置即将推出",
+        "this_file_does_not": "此文件还没有可分享的链接"
+      }
+    },
+    "UseSlidePersistence": {
+      "toast": {
+        "exporting_pdf": "正在导出PDF...",
+        "exporting_pptx": "正在导出PPTX...",
+        "failed_to_import_html": "导入HTML失败",
+        "failed_to_import_powerpoint": "导入PowerPoint文件失败",
+        "failed_to_load_presentation": "加载演示文稿失败",
+        "failed_to_save_presentation": "保存演示文稿失败",
+        "failed_to_update_visibility": "更新可见性失败",
+        "html_imported_successfully": "HTML导入成功",
+        "importing_powerpoint": "正在导入PowerPoint...",
+        "pdf_export_failed_please": "PDF导出失败。请重试。",
+        "pdf_exported_successfully": "PDF导出成功",
+        "pptx_export_failed_please": "PPTX导出失败。请重试。",
+        "pptx_exported_successfully": "PPTX导出成功",
+        "save_the_presentation_first": "请先保存演示文稿"
       }
     }
   }

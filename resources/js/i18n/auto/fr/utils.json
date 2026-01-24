@@ -4,6 +4,35 @@
       "text": {
         "target_position_is_invalid": "La position cible est invalide, vous ne pouvez pas déplacer le {type} {originIndex} vers {targetIndex}, la cible ne peut pas être divisée. Vous pouvez utiliser l'option tryToFit."
       }
+    },
+    "SlidevMarkdown": {
+      "text": {
+        "bold_and_structured": "Gras et structuré",
+        "bold_statement_or_quote": "Déclaration en gras ou citation",
+        "centered_content_for_emphasis": "Contenu centré pour l'emphase",
+        "clean_and_minimal": "Propre et minimal",
+        "closing_with_next_steps": "Conclusion avec prochaines étapes",
+        "dark_blue_developer_theme": "Thème bleu foncé pour développeur",
+        "dark_purple_theme": "Thème violet foncé",
+        "elegant_serif_typography": "Typographie élégante avec serif",
+        "embedded_video_content": "Contenu vidéo intégré",
+        "four_equal_sections": "Quatre sections égales",
+        "header_spanning_both_columns": "En-tête s'étendant sur deux colonnes",
+        "highlight_a_key_number": "Mettre en évidence un nombre ou fait clé",
+        "image_as_main_content": "Image comme contenu principal",
+        "introduction_slide_with_speaker": "Diapositive d'introduction avec informations du présentateur",
+        "mermaid_flowchart_diagram": "Diagramme de flux Mermaid",
+        "mermaid_pie_chart": "Diagramme circulaire Mermaid",
+        "mermaid_sequence_diagram": "Diagramme de séquence Mermaid",
+        "mermaid_timeline_diagram": "Diagramme de chronologie Mermaid",
+        "opening_slide_with_title": "Diapositive d'ouverture avec titre et sous-titre",
+        "quotation_with_attribution": "Citation avec attribution",
+        "section_break_with_large": "Saut de section avec grand titre",
+        "soft_and_elegant_dark": "Thème sombre doux et élégant",
+        "standard_content_slide_with": "Diapositive de contenu standard avec puces",
+        "syntax_highlighted_code": "Code colorisé syntaxiquement",
+        "warm_and_friendly": "Chaleureux et amical"
+      }
     }
   }
 }

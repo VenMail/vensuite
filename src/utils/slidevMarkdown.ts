@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 /**
  * Slidev Markdown Utilities
  * Handles parsing and conversion of Slidev-flavored markdown
@@ -667,7 +668,7 @@ export const SLIDEV_THEMES: SlidevTheme[] = [
   { 
     value: 'default', 
     label: 'Default', 
-    description: 'Clean and minimal',
+    description: t('Utils.SlidevMarkdown.text.clean_and_minimal'),
     colors: {
       primary: '#3b82f6',
       secondary: '#64748b',
@@ -681,7 +682,7 @@ export const SLIDEV_THEMES: SlidevTheme[] = [
   { 
     value: 'seriph', 
     label: 'Seriph', 
-    description: 'Elegant serif typography',
+    description: t('Utils.SlidevMarkdown.text.elegant_serif_typography'),
     colors: {
       primary: '#2c3e50',
       secondary: '#7f8c8d',
@@ -711,7 +712,7 @@ export const SLIDEV_THEMES: SlidevTheme[] = [
   { 
     value: 'dracula', 
     label: 'Dracula', 
-    description: 'Dark purple theme',
+    description: t('Utils.SlidevMarkdown.text.dark_purple_theme'),
     colors: {
       primary: '#bd93f9',
       secondary: '#6272a4',
@@ -756,7 +757,7 @@ export const SLIDEV_THEMES: SlidevTheme[] = [
   { 
     value: 'shibainu', 
     label: 'Shibainu', 
-    description: 'Warm and friendly',
+    description: t('Utils.SlidevMarkdown.text.warm_and_friendly'),
     colors: {
       primary: '#f59e0b',
       secondary: '#78716c',
@@ -770,7 +771,7 @@ export const SLIDEV_THEMES: SlidevTheme[] = [
   { 
     value: 'bricks', 
     label: 'Bricks', 
-    description: 'Bold and structured',
+    description: t('Utils.SlidevMarkdown.text.bold_and_structured'),
     colors: {
       primary: '#dc2626',
       secondary: '#78716c',
@@ -784,7 +785,7 @@ export const SLIDEV_THEMES: SlidevTheme[] = [
   {
     value: 'night-owl',
     label: 'Night Owl',
-    description: 'Dark blue developer theme',
+    description: t('Utils.SlidevMarkdown.text.dark_blue_developer_theme'),
     colors: {
       primary: '#82aaff',
       secondary: '#637777',
@@ -799,7 +800,7 @@ export const SLIDEV_THEMES: SlidevTheme[] = [
   {
     value: 'rose-pine',
     label: 'Rosé Pine',
-    description: 'Soft and elegant dark theme',
+    description: t('Utils.SlidevMarkdown.text.soft_and_elegant_dark'),
     colors: {
       primary: '#ebbcba',
       secondary: '#908caa',
@@ -860,7 +861,7 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
   {
     id: 'cover',
     name: 'Cover',
-    description: 'Opening slide with title and subtitle',
+    description: t('Utils.SlidevMarkdown.text.opening_slide_with_title'),
     category: 'title',
     layout: 'cover',
     content: `# Presentation Title
@@ -873,7 +874,7 @@ Your subtitle or tagline here
   {
     id: 'intro',
     name: 'Introduction',
-    description: 'Introduction slide with speaker info',
+    description: t('Utils.SlidevMarkdown.text.introduction_slide_with_speaker'),
     category: 'title',
     layout: 'intro',
     content: `# About Me
@@ -888,7 +889,7 @@ Your subtitle or tagline here
   {
     id: 'section',
     name: 'Section Divider',
-    description: 'Section break with large title',
+    description: t('Utils.SlidevMarkdown.text.section_break_with_large'),
     category: 'title',
     layout: 'section',
     content: `# Section Title`,
@@ -899,7 +900,7 @@ Your subtitle or tagline here
   {
     id: 'default',
     name: 'Content',
-    description: 'Standard content slide with bullets',
+    description: t('Utils.SlidevMarkdown.text.standard_content_slide_with'),
     category: 'content',
     layout: 'default',
     content: `# Slide Title
@@ -913,7 +914,7 @@ Your subtitle or tagline here
   {
     id: 'center',
     name: 'Centered',
-    description: 'Centered content for emphasis',
+    description: t('Utils.SlidevMarkdown.text.centered_content_for_emphasis'),
     category: 'content',
     layout: 'center',
     content: `# Key Message
@@ -924,7 +925,7 @@ This is the main point you want to emphasize`,
   {
     id: 'statement',
     name: 'Statement',
-    description: 'Bold statement or quote',
+    description: t('Utils.SlidevMarkdown.text.bold_statement_or_quote'),
     category: 'content',
     layout: 'statement',
     content: `# "Your powerful statement goes here"`,
@@ -933,7 +934,7 @@ This is the main point you want to emphasize`,
   {
     id: 'quote',
     name: 'Quote',
-    description: 'Quotation with attribution',
+    description: t('Utils.SlidevMarkdown.text.quotation_with_attribution'),
     category: 'content',
     layout: 'quote',
     content: `> "The only way to do great work is to love what you do."
@@ -944,7 +945,7 @@ This is the main point you want to emphasize`,
   {
     id: 'fact',
     name: 'Fact / Statistic',
-    description: 'Highlight a key number or fact',
+    description: t('Utils.SlidevMarkdown.text.highlight_a_key_number'),
     category: 'content',
     layout: 'fact',
     content: `# 95%
@@ -982,7 +983,7 @@ of users prefer this approach
   {
     id: 'two-cols-header',
     name: 'Two Columns with Header',
-    description: 'Header spanning both columns',
+    description: t('Utils.SlidevMarkdown.text.header_spanning_both_columns'),
     category: 'layout',
     layout: 'two-cols-header',
     content: `# Main Title
@@ -1005,7 +1006,7 @@ Content for the right side`,
   {
     id: 'grid-2x2',
     name: '2x2 Grid',
-    description: 'Four equal sections',
+    description: t('Utils.SlidevMarkdown.text.four_equal_sections'),
     category: 'layout',
     layout: 'default',
     content: `# Four Key Points
@@ -1043,7 +1044,7 @@ Description here
   {
     id: 'image',
     name: 'Full Image',
-    description: 'Image as main content',
+    description: t('Utils.SlidevMarkdown.text.image_as_main_content'),
     category: 'media',
     layout: 'image',
     content: `# Image Title
@@ -1080,7 +1081,7 @@ Description here
   {
     id: 'video',
     name: 'Video Embed',
-    description: 'Embedded video content',
+    description: t('Utils.SlidevMarkdown.text.embedded_video_content'),
     category: 'media',
     layout: 'default',
     content: `# Video Title
@@ -1097,7 +1098,7 @@ Description here
   {
     id: 'code',
     name: 'Code Block',
-    description: 'Syntax highlighted code',
+    description: t('Utils.SlidevMarkdown.text.syntax_highlighted_code'),
     category: 'data',
     layout: 'default',
     content: `# Code Example
@@ -1130,7 +1131,7 @@ console.log(message);
   {
     id: 'mermaid-flowchart',
     name: 'Flowchart',
-    description: 'Mermaid flowchart diagram',
+    description: t('Utils.SlidevMarkdown.text.mermaid_flowchart_diagram'),
     category: 'data',
     layout: 'default',
     content: `# Process Flow
@@ -1148,7 +1149,7 @@ flowchart LR
   {
     id: 'mermaid-sequence',
     name: 'Sequence Diagram',
-    description: 'Mermaid sequence diagram',
+    description: t('Utils.SlidevMarkdown.text.mermaid_sequence_diagram'),
     category: 'data',
     layout: 'default',
     content: `# Interaction Flow
@@ -1168,7 +1169,7 @@ sequenceDiagram
   {
     id: 'mermaid-pie',
     name: 'Pie Chart',
-    description: 'Mermaid pie chart',
+    description: t('Utils.SlidevMarkdown.text.mermaid_pie_chart'),
     category: 'data',
     layout: 'default',
     content: `# Distribution
@@ -1185,7 +1186,7 @@ pie title Market Share
   {
     id: 'mermaid-timeline',
     name: 'Timeline',
-    description: 'Mermaid timeline diagram',
+    description: t('Utils.SlidevMarkdown.text.mermaid_timeline_diagram'),
     category: 'data',
     layout: 'default',
     content: `# Project Timeline
@@ -1221,7 +1222,7 @@ Questions?
   {
     id: 'cta',
     name: 'Call to Action',
-    description: 'Closing with next steps',
+    description: t('Utils.SlidevMarkdown.text.closing_with_next_steps'),
     category: 'end',
     layout: 'center',
     content: `# Next Steps

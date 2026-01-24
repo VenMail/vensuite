@@ -146,53 +146,32 @@
     },
     "Forms": {
       "heading": {
-        "create_and_manage_forms": "Create and Manage Forms",
         "share_this_form_with": "Share this form with participants or collaborators using the link below."
       },
       "text": {
         "anyone_with_this_link": "Anyone with this link can access the form based on its publish settings.",
-        "form_is_missing_an": "Form is missing an identifier.",
         "loading": "Loading...",
         "loading_more_forms": "Loading more forms...",
-        "no_more_forms_to": "No more forms to load.",
-        "publish_the_form_to": "Publish the form to get a shareable link.",
-        "publishing_form_to_generate": "Publishing form to generate share link…",
-        "share_link_copied_to": "Share link copied to clipboard.",
-        "the_form_link_was": "The form link was copied to your clipboard.",
-        "unable_to_copy_link": "Unable to copy link. Try copying manually.",
-        "unable_to_generate_share": "Unable to generate share slug. Please publish manually."
+        "publishing_form_to_generate": "Publishing form to generate share link…"
       }
     },
     "Home": {
-      "button": {
-        "login_with_venmail": "Login with Venmail"
-      },
       "heading": {
-        "attachment_import_failed": "Attachment import failed",
-        "attachment_import_in_progress": "Importing attachment",
         "choose_a_template": "Choose a Template",
         "no_files_found": "No files found",
-        "no_matching_files_found": "No matching files found",
-        "welcome_to_venmail_file": "Welcome to Venmail File Manager"
+        "no_matching_files_found": "No matching files found"
       },
       "link": {
         "back_to_venmail": "Back to Venmail"
       },
       "text": {
-        "attachment_import_default_message": "Please wait while we import your file.",
         "attachment_import_failed": "Failed to import attachment",
         "attachment_import_importing": "Importing attachment...",
         "attachment_import_opening_document": "Opening document...",
         "attachment_import_preparing_document": "Preparing document...",
         "get_started_by_creating": "Get started by creating a new file or uploading an existing one.",
-        "group_by_type": "Group by Type",
         "loading_your_files": "Loading your files...",
-        "login_to_manage_your": "Login to manage your files and folders on Venmail.",
         "no_items_available_in": "No items available in this category.",
-        "sort_by_date": "Sort by Date",
-        "sort_by_name": "Sort by Name",
-        "sort_by_size": "Sort by Size",
-        "sort_by_type": "Sort by Type",
         "try_adjusting_your_search": "Try adjusting your search or filters."
       }
     },
@@ -268,30 +247,45 @@
         "choose_a_template": "Choose a Template"
       }
     },
-    "SlidesEditor": {
-      "button": {
-        "add_slide": "Add Slide",
-        "copy_markdown": "Copy Markdown",
-        "create_first_slide": "Create First Slide",
-        "delete": "Delete",
-        "duplicate": "Duplicate",
-        "export_pdf": "Export PDF",
-        "export_pptx": "Export PPTX",
-        "import_pptx": "Import PPTX",
-        "present": "Present"
-      },
-      "label": {
-        "aspect_ratio": "Aspect Ratio",
-        "theme": "Theme"
-      },
-      "text": {
-        "export": "Export",
-        "import": "Import",
-        "no_slide_selected": "No slide selected",
-        "presentation_settings": "Presentation Settings",
-        "select_or_add_a": "Select or add a slide to begin.",
-        "slides": "Slides"
-      }
+    "button": {
+      "try_it_on_venmail": "Try it on Venmail"
+    },
+    "heading": {
+      "choose_your_path": "Choose Your Path",
+      "create_new_presentation": "Create New Presentation",
+      "everything_you_need_to": "Everything You Need to Get Work Done",
+      "no_presentations_found": "No Presentations Found",
+      "ready_to_take_control": "Ready to Take Control of Your Productivity?",
+      "try_it_on_venmail": "Try it on Venmail",
+      "why_choose_venmail_drive": "Why Choose Venmail Drive?"
+    },
+    "text": {
+      "100_open_source": "100% open source",
+      "a_blank_canvas_to": "A blank canvas to create your presentation from scratch",
+      "a_modern_theme_inspired": "A modern theme inspired by Vue.js design principles",
+      "a_modern_theme_with": "A modern theme with purple gradients and clean design",
+      "a_personal_theme_for": "A personal theme for Slidev with unique styling",
+      "an_education_academia_oriented": "An education/academia oriented Slidev theme with whimsical elements",
+      "an_official_theme_using": "An official theme using serif fonts for professional presentations",
+      "build_surveys_and_collect": "Build surveys and collect data with payment integration",
+      "create_presentations_with_templates": "Create presentations with templates and real-time collaboration",
+      "deploy_on_your_own": "Deploy on your own infrastructure for maximum control and privacy",
+      "get_started_by_creating": "Get started by creating your first presentation",
+      "inspired_by_the_basic": "Inspired by the Basic Black/White theme on Apple Keynote",
+      "join_thousands_of_users": "Join thousands of users who've made the switch to privacy-first productivity tools.",
+      "modern_slide_decks": "Modern slide decks",
+      "modern_theme_for_digital": "Modern theme for digital agencies and tech presentations",
+      "modern_theme_with_brick": "Modern theme with brick-based design elements",
+      "open_source_productivity_suite": "Open-source productivity suite for modern teams.",
+      "playful_theme_inspired_by": "Playful theme inspired by the Shiba Inu dog breed",
+      "privacy_first_productivity_suite": "Privacy-First Productivity Suite",
+      "professional_theme_for_nearform": "Professional theme for Nearform presentations and workshops",
+      "rich_text_editor_with": "Rich text editor with real-time collaboration and AI assistance",
+      "simplifies_creating_academic_presentations": "Simplifies creating academic presentations with necessary components and layouts",
+      "start_a_new_presentation": "Start a New Presentation",
+      "take_control_of_your": "Take control of your data and workflow with an open-source alternative that respects your privacy.",
+      "theme_designed_for_e": "Theme designed for e-commerce and business presentations",
+      "theme_designed_for_scientific": "Theme designed for scientific and research presentations"
     }
   },
   "commons": {

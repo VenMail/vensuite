@@ -43,7 +43,7 @@ const handleClose = () => {
             'text-gray-800 dark:text-gray-100'
           ]"
         >
-          Create New Form
+          {{$t('Components.Forms.heading.create_new_form')}}
         </DialogTitle>
       </DialogHeader>
       <div class="grid grid-cols-2 gap-4 p-2">

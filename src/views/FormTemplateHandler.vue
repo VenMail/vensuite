@@ -25,7 +25,7 @@ async function createFromTemplate() {
   let payload: Record<string, unknown> = { title: 'New Form' }
 
   if (key.includes('blank')) {
-    payload = { title: 'Blank Form' }
+    payload = { title: t('Commons.heading.blank_form') }
   } else if (key.includes('signup')) {
     payload = {
       title: 'Signup Form',

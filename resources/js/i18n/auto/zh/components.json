@@ -52,6 +52,21 @@
           "response_submitted_successfully": "响应提交成功",
           "submit_a_new_response": "提交新响应"
         }
+      },
+      "heading": {
+        "create_new_form": "创建新表单",
+        "no_forms_found": "未找到表单"
+      },
+      "text": {
+        "get_started_by_creating": "通过创建您的第一个表单开始使用",
+        "pick_a_template_or": "选择模板或从空白开始",
+        "start_a_new_form": "开始一个新表单"
+      }
+    },
+    "Home": {
+      "text": {
+        "loading_more": "加载更多...",
+        "refreshing": "刷新中..."
       }
     },
     "ImagePicker": {
@@ -99,27 +114,49 @@
         "add_a_note_optional": "添加备注（可选）"
       }
     },
-    "SlidevMarkdownEditor": {
+    "Slides": {
       "button": {
-        "add_slide": "添加幻灯片",
-        "insert_heading": "插入标题",
-        "insert_list": "插入列表",
-        "insert_code": "插入代码",
-        "insert_image": "插入图片",
-        "move_up": "上移",
-        "move_down": "下移",
-        "duplicate": "复制",
-        "delete": "删除"
+        "add_footer": "📝 添加页脚",
+        "add_header": "📋 添加页眉",
+        "remove_column": "➖ 删除列",
+        "remove_row": "➖ 删除行",
+        "row_above": "➕ 在上方添加行",
+        "row_below": "➕ 在下方添加行",
+        "sort_column": "📊 排序列"
+      },
+      "heading": {
+        "choose_from_professionally_designed": "从专业设计的信息图表模板中选择。点击预览，然后插入到您的幻灯片中。",
+        "replace_with_emoji": "替换为表情符号"
+      },
+      "label": {
+        "shape_style": "形状和样式",
+        "smart_font_sizing": "智能字体大小"
       },
       "text": {
-        "markdown": "Markdown",
-        "presenter_notes": "演讲者备注",
-        "preview": "预览",
-        "slide_count": "第 {current} 张，共 {total} 张"
-      },
-      "placeholder": {
-        "write_markdown": "在此编写您的 Markdown...",
-        "add_presenter_notes": "添加演讲者备注..."
+        "add_entrance_emphasis_or": "为此元素添加进入、强调或退出动画",
+        "decision_based_process_flow": "基于决策的流程，包含分支",
+        "detailed_timeline_with_descriptions": "详细时间线，两侧交替显示描述",
+        "ease_in_out": "缓入缓出",
+        "end_of_presentation": "演示文稿结束",
+        "export_as_pdf": "导出为PDF",
+        "export_as_powerpoint": "导出为PowerPoint",
+        "export_as_pptx": "导出为PPTX",
+        "export_for_web": "导出为网页",
+        "help_documentation": "帮助和文档",
+        "no_emojis_found": "未找到表情符号",
+        "no_image_loaded": "未加载图像",
+        "select_an_element_in": "在幻灯片中选择一个元素以配置动画",
+        "show_a_linear_process": "显示带编号步骤的线性流程",
+        "show_events_or_milestones": "按时间顺序显示事件或里程碑",
+        "slide_in_down": "从上方滑入",
+        "slide_in_left": "从左侧滑入",
+        "slide_in_right": "从右侧滑入",
+        "slide_in_up": "从下方滑入",
+        "slide_out_down": "向下方滑出",
+        "slide_out_left": "向左侧滑出",
+        "slide_out_right": "向右侧滑出",
+        "slide_out_up": "向上方滑出",
+        "tip_after_inserting_you": "提示：插入后，您可以直接在markdown编辑器中编辑文本"
       }
     }
   },
@@ -190,7 +227,6 @@
     },
     "DocsTitleBar": {
       "text": {
-        "loading_versions": "加载版本…",
         "no_previous_versions": "没有以前的版本"
       }
     },
@@ -454,25 +490,6 @@
       "public_on_the_web": "在网上公开"
     }
   },
-  "Slides": {
-    "SlidesInspector": {
-      "text": {
-        "bring_existing_content_into": "将现有内容带入您的幻灯片。",
-        "combine_smart_snapping_with": "将智能对齐与网格叠加结合，以实现像素完美的布局。",
-        "control_alignment_helpers_for": "控制对齐助手以实现精确布局。",
-        "processing_your_file": "正在处理您的文件…",
-        "ready_for_new_imports": "准备好进行新导入。",
-        "use_a_smaller_grid": "使用较小的网格以实现紧凑布局，或增加间距以获得更宽的指导。",
-        "use_alignment_guides_to": "使用对齐指南均匀分布形状。",
-        "while_dragging_to_constrain": "在拖动时约束轴。"
-      }
-    },
-    "SlidesToolbar": {
-      "text": {
-        "use_smart_snapping_to": "使用智能对齐将形状对齐到中心并保持间距相等。"
-      }
-    }
-  },
   "components": {
     "FileUploader": {
       "components": {
@@ -533,13 +550,6 @@
             "link_copied_description": "链接已成功复制到您的剪贴板。",
             "manual_copy_required": "请手动复制链接。"
           }
-        }
-      }
-    },
-    "slides": {
-      "commons": {
-        "text": {
-          "saving_deck": "正在保存演示文稿…"
         }
       }
     }

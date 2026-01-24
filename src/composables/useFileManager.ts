@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { useFileStore } from '@/store/files'
 import { FileData } from '@/types'
 import { toast } from '@/composables/useToast'
+import { t } from '@/i18n';
 
 export function useFileManager() {
   const fileStore = useFileStore()
@@ -184,10 +185,10 @@ export function useFileManager() {
   async function createNewFile(type: string, template?: string) {
     try {
       const newFile = await fileStore.createNewDocument(type, template)
-      toast.success(`${type} created successfully`)
+      toast.success(t('Composables.UseFileManager.toast.type_created_successfully', { type }))
       return newFile
     } catch (error) {
-      toast.error(`Failed to create ${type}`)
+      toast.error(t('Composables.UseFileManager.toast.failed_to_create_type', { type }))
       throw error
     }
   }
@@ -206,14 +207,14 @@ export function useFileManager() {
       } as FileData)
 
       if (newFolder?.id) {
-        toast.success('Folder created successfully')
+        toast.success(t('Composables.UseFileManager.toast.folder_created_successfully'))
       } else {
-        toast.error('Failed to create folder')
+        toast.error(t('Composables.UseFileManager.toast.failed_to_create_folder'))
       }
 
       return newFolder
     } catch (error) {
-      toast.error('Failed to create folder')
+      toast.error(t('Composables.UseFileManager.toast.failed_to_create_folder'))
       throw error
     }
   }
@@ -222,9 +223,9 @@ export function useFileManager() {
     try {
       await fileStore.moveToTrash(fileId)
       selectedFiles.value.delete(fileId)
-      toast.success('File moved to trash')
+      toast.success(t('Composables.UseFileManager.toast.file_moved_to_trash'))
     } catch (error) {
-      toast.error('Failed to delete file')
+      toast.error(t('Composables.UseFileManager.toast.failed_to_delete_file'))
       throw error
     }
   }
@@ -232,10 +233,10 @@ export function useFileManager() {
   async function renameFile(fileId: string, newName: string) {
     try {
       const updatedFile = await fileStore.renameItem(fileId, newName)
-      toast.success('File renamed successfully')
+      toast.success(t('Composables.UseFileManager.toast.file_renamed_successfully'))
       return updatedFile
     } catch (error) {
-      toast.error('Failed to rename file')
+      toast.error(t('Composables.UseFileManager.toast.failed_to_rename_file'))
       throw error
     }
   }
@@ -256,7 +257,7 @@ export function useFileManager() {
       })
       toast.success(`Downloading ${fileIds.length} file(s)`)
     } catch (error) {
-      toast.error('Failed to download files')
+      toast.error(t('Composables.UseFileManager.toast.failed_to_download_files'))
       throw error
     }
   }
@@ -300,7 +301,7 @@ export function useFileManager() {
       toast.success(`${selectedFiles.value.size} files moved to trash`)
       clearSelection()
     } catch (error) {
-      toast.error('Failed to delete some files')
+      toast.error(t('Composables.UseFileManager.toast.failed_to_delete_some'))
       throw error
     }
   }

@@ -34,6 +34,7 @@ import { useAuthStore } from '@/store/auth'
 import ShareCard from '@/components/ShareCard.vue'
 import axios from 'axios'
 import { extractSheetFields } from '@/utils/fieldExtractor'
+import { t } from '@/i18n';
 
 const route = useRoute()
 const router = useRouter()
@@ -1077,7 +1078,7 @@ async function updateVisibility(newVis: number) {
     thumbnail_url: undefined,
   }
   const result = await fileStore.saveDocument(doc)
-  if (result?.document) toast.success('Visibility updated')
+  if (result?.document) toast.success(t('Commons.toast.visibility_updated'))
 }
 
 function adjustTextareaHeight() {
