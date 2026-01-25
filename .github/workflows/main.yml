@@ -23,8 +23,6 @@ jobs:
       # 3. Set up pnpm
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9.10.0
 
       # 4. Install dependencies
       - name: Install dependencies
