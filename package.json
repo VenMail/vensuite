@@ -152,7 +152,7 @@
     "tippy.js": "^6.3.7",
     "tiptap-image-plus": "^1.0.5",
     "tiptap-pagination-plus": "^1.1.8",
-    "tiptap-table-plus": "github:xwiz/tiptap-table-plus#5ac695d",
+    "tiptap-table-plus": "https://github.com/xwiz/tiptap-table-plus.git#5ac695d",
     "tiptap-utility": "^1.0.20",
     "ts-lint": "^4.5.1",
     "ts-loader": "^9.5.2",
