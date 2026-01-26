@@ -1307,7 +1307,7 @@ const activeHighlightColor = computed(() => editor.value?.getAttributes('highlig
 
 const docsTemplateCache = new Map<string, string>();
 const docsTemplateLoaders = Object.fromEntries(
-  Object.entries(import.meta.glob('../assets/docs/templates/*.html', { as: 'raw' }))
+  Object.entries(import.meta.glob('../assets/docs/templates/*.html', { query: '?raw', import: 'default' }))
     .map(([path, loader]) => {
       const fileName = path.split('/').pop() ?? '';
       const templateKey = fileName.replace(/\.html$/, '');

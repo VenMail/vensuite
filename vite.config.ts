@@ -38,8 +38,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      // Increase chunk size warning limit
-      chunkSizeWarningLimit: 2000,
+      // Increase chunk size warning limit (CI is stricter than local)
+      chunkSizeWarningLimit: 5000,
       // Use a more modern target that supports BigInt
       target: 'es2020',
       // Optimize memory usage during build

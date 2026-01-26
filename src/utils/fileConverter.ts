@@ -38,7 +38,7 @@ import { preprocessHtmlEmbeds } from '@/utils/html-preprocess';
  * Converts various file formats to editor-compatible formats
  */
 
-// Destructure PaginationTable to get table extensions
+// Use PaginationTable extensions for table pagination support
 const { TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus } = PaginationTable;
 
 // ============================================
