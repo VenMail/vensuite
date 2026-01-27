@@ -46,7 +46,7 @@ const { isMobile } = useMobileDetection({ breakpoint: 1024 })
 const isDialogOpen = ref(false)
 
 function goToVenmail() {
-  window.open('https://m.venmail.io', '_blank')
+  window.location.href='https://m.venmail.io'
 }
 
 watch(() => route.path, (path) => {

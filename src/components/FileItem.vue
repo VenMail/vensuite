@@ -431,10 +431,10 @@ const isVideoFile = computed(() => {
   return videoTypes.includes(fileExt || '');
 });
 
-// Get the media URL - only use known properties
+// Get the media URL - use available URL properties in order of preference
 const getMediaUrl = computed(() => {
-  // Only use properties that exist on FileData type
-  return (props.file as any).url || null;
+  // Use public URL first, then file URL, then download URL
+  return props.file.file_public_url || props.file.file_url || props.file.download_url || null;
 });
 
 // Mobile detection - check for touch capability

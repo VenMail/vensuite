@@ -19,6 +19,8 @@
         :breadcrumbs="breadcrumbs"
         :can-navigate-up="canNavigateUp"
         :actions="topBarActions"
+        :has-selection="selectedFiles.size > 0"
+        :selected-count="selectedFiles.size"
         @navigate-up="handleNavigateUp"
         @navigate-breadcrumb="handleBreadcrumbNavigate"
       >
@@ -332,6 +334,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useExplorerNavigation } from "@/composables/useExplorerNavigation";
+import axios from "axios";
 import {
   ArrowUpDown,
   Grid,
@@ -718,6 +721,7 @@ const topBarActions = computed(() => {
       component: Button,
       props: { variant: "ghost", size: "icon", class: actionIconClass.value },
       onClick: createNewFolder,
+      requiresSelection: false,
     },
     {
       key: "upload",
@@ -725,11 +729,13 @@ const topBarActions = computed(() => {
       component: Button,
       props: { variant: "ghost", size: "icon", class: actionIconClass.value },
       onClick: openUploadDialog,
+      requiresSelection: false,
     },
     {
       key: "new-document",
       component: "div",
       slot: "new-document",
+      requiresSelection: false,
     },
   ];
 
@@ -741,6 +747,7 @@ const topBarActions = computed(() => {
         component: Button,
         props: { variant: "ghost", size: "icon", class: actionIconClass.value },
         onClick: () => openFile(firstSelectedId.value as string),
+        requiresSelection: true,
       });
 
       actions.push({
@@ -749,6 +756,7 @@ const topBarActions = computed(() => {
         component: Button,
         props: { variant: "ghost", size: "icon", class: actionIconClass.value },
         onClick: handleRename,
+        requiresSelection: true,
       });
     }
 
@@ -759,6 +767,7 @@ const topBarActions = computed(() => {
         component: Button,
         props: { variant: "ghost", size: "icon", class: actionIconClass.value },
         onClick: handleBulkDownload,
+        requiresSelection: true,
       },
       {
         key: "delete",
@@ -766,6 +775,7 @@ const topBarActions = computed(() => {
         component: Button,
         props: { variant: "ghost", size: "icon", class: actionIconClass.value },
         onClick: handleBulkDelete,
+        requiresSelection: true,
       },
       {
         key: "clear",
@@ -773,7 +783,8 @@ const topBarActions = computed(() => {
         component: Button,
         props: { variant: "ghost", size: "icon", class: actionIconClass.value },
         onClick: () => clearSelection(),
-      },
+        requiresSelection: true,
+      }
     );
   }
 
@@ -884,7 +895,51 @@ async function handleBulkDelete() {
 }
 
 function handleBulkDownload() {
-  console.log("Download documents:", Array.from(selectedFiles.value));
+  const files = Array.from(selectedFiles.value)
+    .map(id => sortedDocuments.value.find(f => f.id === id))
+    .filter((file): file is FileData => Boolean(file && !file.is_folder))
+
+  files.forEach(file => {
+    const url = file.download_url || file.file_public_url || file.file_url
+    if (!url) return
+
+    const token = fileStore.getToken()
+    const isApiDownload = typeof url === 'string' && url.includes('/app-files/') && url.includes('/download')
+
+    if (token && isApiDownload) {
+      axios
+        .get(url, {
+          responseType: 'blob',
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          const blob = res.data as Blob
+          const blobUrl = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = blobUrl
+          link.download = file.file_name || file.title
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(blobUrl)
+        })
+        .catch(() => {
+          toast.error(`Failed to download ${file.title}`)
+        })
+      return
+    }
+
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.file_name || file.title
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  })
+  
+  if (files.length > 0) {
+    toast.success(`Downloading ${files.length} file(s)`)
+  }
 }
 
 function handleRename() {

@@ -11,6 +11,8 @@
         :breadcrumbs="breadcrumbs"
         :can-navigate-up="canNavigateUp"
         :actions="topBarActions"
+        :has-selection="selectedFiles.size > 0"
+        :selected-count="selectedFiles.size"
         @navigate-up="handleNavigateUp"
         @navigate-breadcrumb="handleBreadcrumbNavigate"
       >
@@ -205,6 +207,17 @@
       :state="contextMenuState"
       :actions="contextMenuActions"
     />
+
+    <!-- Media Viewer -->
+    <MediaViewer
+      :is-open="isMediaViewerOpen"
+      :current-file="currentMediaFile"
+      :files="viewableMediaFiles"
+      :current-index="currentMediaIndex"
+      @close="closeMediaViewer"
+      @download="handleMediaDownload"
+      @navigate="handleMediaViewerNavigate"
+    />
   </div>
 
   <Landing v-else />
@@ -223,6 +236,7 @@ import {
   type ContextMenuBuilderContext
 } from '@/composables/useFileExplorer'
 import { toast } from '@/composables/useToast'
+import axios from 'axios'
 import {
   Plus,
   FolderOpen,
@@ -261,13 +275,16 @@ import FileItem from '@/components/FileItem.vue'
 import FileContextMenu from '@/components/FileContextMenu.vue'
 import FileUploader from '@/components/FileUploader.vue'
 import WorkspaceTopBar from '@/components/layout/WorkspaceTopBar.vue'
+import MediaViewer from '@/components/media/MediaViewer.vue'
 import Landing from './Landing.vue'
 import type { FileData } from '@/types'
+import { useMediaTypes } from '@/composables/useMediaTypes'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const fileStore = useFileStore()
 const { isAuthenticated } = storeToRefs(authStore)
+const { isMediaFile, isViewable } = useMediaTypes()
 
 type HomeViewMode = 'grid' | 'list' | 'thumbnail'
 type HomeSort = 'name' | 'date'
@@ -278,6 +295,11 @@ type ViewModeOption = { value: HomeViewMode; icon?: unknown; label: string; acti
 const viewMode = ref<HomeViewMode>('grid')
 const sortBy = ref<HomeSort>('date')
 const isUploadDialogOpen = ref(false)
+
+// Media viewer state
+const isMediaViewerOpen = ref(false)
+const currentMediaFile = ref<FileData | null>(null)
+const currentMediaIndex = ref(0)
 
 const {
   currentFolderId,
@@ -300,6 +322,13 @@ const itemsInCurrentFolder = computed(() => {
   const folderId = currentFolderId.value
   return fileStore.allFiles.filter((f: FileData) =>
     folderId ? f.folder_id === folderId : !f.folder_id
+  )
+})
+
+// Filter media files that can be viewed in the media viewer
+const viewableMediaFiles = computed(() => {
+  return itemsInCurrentFolder.value.filter(file => 
+    !file.is_folder && isMediaFile(file.file_type) && isViewable(file.file_type)
   )
 })
 
@@ -420,19 +449,22 @@ const topBarActions = computed(() => {
       icon: FolderPlusIcon,
       component: Button,
       props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
-      onClick: createNewFolder
+      onClick: createNewFolder,
+      requiresSelection: false
     },
     {
       key: 'upload',
       icon: Upload,
       component: Button,
       props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
-      onClick: openUploadDialog
+      onClick: openUploadDialog,
+      requiresSelection: false
     },
     {
       key: 'new',
       component: 'div',
-      slot: 'new'
+      slot: 'new',
+      requiresSelection: false
     }
   ]
 
@@ -444,14 +476,16 @@ const topBarActions = computed(() => {
           icon: FolderOpen,
           component: Button,
           props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
-          onClick: () => openFile(firstSelectedId.value as string)
+          onClick: () => openFile(firstSelectedId.value as string),
+          requiresSelection: true
         },
         {
           key: 'rename',
           icon: Edit,
           component: Button,
           props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
-          onClick: handleRename
+          onClick: handleRename,
+          requiresSelection: true
         }
       )
     }
@@ -461,21 +495,24 @@ const topBarActions = computed(() => {
         icon: Download,
         component: Button,
         props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
-        onClick: handleBulkDownload
+        onClick: handleBulkDownload,
+        requiresSelection: true
       },
       {
         key: 'delete',
         icon: Trash2,
         component: Button,
         props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
-        onClick: handleBulkDelete
+        onClick: handleBulkDelete,
+        requiresSelection: true
       },
       {
         key: 'clear',
         icon: X,
         component: Button,
         props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
-        onClick: () => clearSelection()
+        onClick: () => clearSelection(),
+        requiresSelection: true
       }
     )
   }
@@ -548,6 +585,18 @@ async function openFile(id: string) {
     await openFolder(id, file.title)
     return
   }
+  
+  // Check if it's a viewable media file
+  if (isMediaFile(file.file_type) && isViewable(file.file_type)) {
+    const index = viewableMediaFiles.value.findIndex(f => f.id === id)
+    if (index !== -1) {
+      currentMediaFile.value = file
+      currentMediaIndex.value = index
+      isMediaViewerOpen.value = true
+      return
+    }
+  }
+  
   const ext = file.file_type?.toLowerCase()
   if (['doc', 'docx', 'txt', 'rtf'].includes(ext || '')) {
     router.push(`/docs/${id}`)
@@ -574,7 +623,51 @@ async function handleBulkDelete() {
 }
 
 function handleBulkDownload() {
-  // Placeholder: wire to download when implemented
+  const files = Array.from(selectedFiles.value)
+    .map(id => sortedItems.value.find(f => f.id === id))
+    .filter((file): file is FileData => Boolean(file && !file.is_folder))
+
+  files.forEach(file => {
+    const url = file.download_url || file.file_public_url || file.file_url
+    if (!url) return
+
+    const token = fileStore.getToken()
+    const isApiDownload = typeof url === 'string' && url.includes('/app-files/') && url.includes('/download')
+
+    if (token && isApiDownload) {
+      axios
+        .get(url, {
+          responseType: 'blob',
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          const blob = res.data as Blob
+          const blobUrl = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = blobUrl
+          link.download = file.file_name || file.title
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(blobUrl)
+        })
+        .catch(() => {
+          toast.error(`Failed to download ${file.title}`)
+        })
+      return
+    }
+
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.file_name || file.title
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  })
+  
+  if (files.length > 0) {
+    toast.success(`Downloading ${files.length} file(s)`)
+  }
 }
 
 function handleRename() {
@@ -585,6 +678,60 @@ function handleRename() {
       el.dispatchEvent(new CustomEvent('start-rename'))
     }
   }
+}
+
+// Media viewer handlers
+function closeMediaViewer() {
+  isMediaViewerOpen.value = false
+  currentMediaFile.value = null
+  currentMediaIndex.value = 0
+}
+
+function handleMediaViewerNavigate(index: number) {
+  if (index >= 0 && index < viewableMediaFiles.value.length) {
+    currentMediaIndex.value = index
+    currentMediaFile.value = viewableMediaFiles.value[index]
+  }
+}
+
+function handleMediaDownload(file: FileData) {
+  const url = file.download_url || file.file_public_url || file.file_url
+  if (!url) return
+
+  const token = fileStore.getToken()
+  const isApiDownload = typeof url === 'string' && url.includes('/app-files/') && url.includes('/download')
+
+  if (token && isApiDownload) {
+    axios
+      .get(url, {
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const blob = res.data as Blob
+        const blobUrl = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = file.file_name || file.title
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(blobUrl)
+        toast.success(`Downloaded ${file.title}`)
+      })
+      .catch(() => {
+        toast.error('Failed to download file')
+      })
+    return
+  }
+
+  const link = document.createElement('a')
+  link.href = url
+  link.download = file.file_name || file.title
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  toast.success(`Downloaded ${file.title}`)
 }
 
 function handleOutsideClick(event: MouseEvent) {
