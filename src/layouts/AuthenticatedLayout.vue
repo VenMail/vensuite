@@ -138,7 +138,8 @@ const mainContentClasses = computed(() =>
       />
       
       <main :class="mainContentClasses">
-        <router-view />
+        <slot />
+        <router-view v-if="$slots.default === undefined" />
       </main>
     </div>
   </div>

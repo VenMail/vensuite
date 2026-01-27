@@ -13,6 +13,7 @@ import { useAuthStore } from './auth/index'
 import { createAuthGuard } from './auth/router-guard'
 
 // Routes
+import RootView from './views/RootView.vue'
 import Home from './views/Home.vue'
 import RunSheet from './views/RunSheet.vue'
 import MediaViewer from './views/MediaViewer.vue'
@@ -31,6 +32,14 @@ import SlidesEditor from './views/SlidesEditor.vue'
 import Media from './views/Media.vue'
 
 const routes = [
+  // Root route with authentication handling
+  {
+    path: '/',
+    name: 'root',
+    component: RootView,
+    meta: { public: true }
+  },
+  
   // Public routes
   {
     path: '/login',
@@ -66,7 +75,7 @@ const routes = [
     path: '/f/by-id/:id',
     name: 'form-player-by-id',
     component: () => import('./views/FormPlayerHost.vue'),
-    meta: { public: true },
+    meta: { public: true, allowGuest: true },
   },
   
   // Authenticated routes with layout
@@ -74,7 +83,7 @@ const routes = [
     path: '/',
     component: AuthenticatedLayout,
     children: [
-      { path: '', name: 'home', component: Home, meta: { allowGuest: true } },
+      { path: 'home', name: 'home', component: Home, meta: { allowGuest: true } },
       { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'docs/new', name: 'docs-new', component: DocsEditor, meta: { hideLayout: true } },
       { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true, public: true } },

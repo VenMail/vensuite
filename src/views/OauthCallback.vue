@@ -18,6 +18,26 @@ function getCookie(name: string): string | undefined {
   if (parts.length === 2) return parts.pop()?.split(";").shift();
 }
 
+// Function to get the intended redirect path
+function getIntendedRedirect(): string {
+  // Check localStorage first (set by Login.vue)
+  const savedRedirect = localStorage.getItem('loginRedirect');
+  if (savedRedirect) {
+    localStorage.removeItem('loginRedirect'); // Clean up
+    return savedRedirect;
+  }
+  
+  // Check URL params for redirect
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectParam = urlParams.get('redirect');
+  if (redirectParam) {
+    return redirectParam;
+  }
+  
+  // Default to home
+  return '/';
+}
+
 // Function to authenticate using a cookie
 function authenticateWithCookie(authCookie: string) {
   fetch(`${API_BASE_URI}/login`, {
@@ -32,7 +52,8 @@ function authenticateWithCookie(authCookie: string) {
         console.log("setting token", data);
         authStore.login(data.token);
         authStore.setUserInfo(data.user);
-        router.push("/");
+        const redirectPath = getIntendedRedirect();
+        router.push(redirectPath);
       } else {
         console.log("Auth failed with cookie:", data);
         errorMessage.value = data.message || "Authentication failed. Please try again.";
@@ -64,7 +85,8 @@ function authenticateWithCode(code: string) {
         document.cookie = `venAuthToken=${data.token}; path=/`;
         authStore.login(data.token);
         authStore.setUserInfo(data.user);
-        router.push("/");
+        const redirectPath = getIntendedRedirect();
+        router.push(redirectPath);
       } else {
         console.log("Auth failed with code:", data);
         errorMessage.value = data.message || "Authentication failed. Please try again.";
@@ -75,6 +97,7 @@ function authenticateWithCode(code: string) {
     .catch((error) => {
       console.error("Error during authentication with code:", error);
       errorMessage.value = "Failed to connect to authentication service. Please try again.";
+      console.log("Error value set to:", errorMessage.value);
       isLoading.value = false;
     });
 }

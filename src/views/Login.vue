@@ -25,7 +25,12 @@ function loginWithVenmail() {
   // Don't redirect back to login page
   const redirectPath = currentPath === '/login' ? '/' : currentPath
   localStorage.setItem('loginRedirect', redirectPath)
-  window.location.href = authUrl.value
+  
+  // Build OAuth URL with redirect parameter
+  const oauthUrl = new URL(authUrl.value)
+  oauthUrl.searchParams.set('redirect', redirectPath)
+  
+  window.location.href = oauthUrl.toString()
 }
 
 onMounted(async () => {
@@ -37,7 +42,10 @@ onMounted(async () => {
 
   const existingToken = authStore.getToken()
   const action = (route.query.action as string | undefined)?.toLowerCase()
-  if (!existingToken && action === 'login') {
+  const instant = route.query.instant === 'true'
+  
+  // Handle instant login or action=login
+  if (!existingToken && (action === 'login' || instant)) {
     loginWithVenmail()
     return
   }

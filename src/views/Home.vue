@@ -1,641 +1,752 @@
+<template>
+  <div v-if="isAuthenticated" :class="homeContainerClass">
+    <div v-if="fileStore.isSyncing" class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+
+    <div class="flex-1 flex flex-col gap-6 p-4 sm:p-6 overflow-hidden">
+      <WorkspaceTopBar
+        :title="currentTitle"
+        :subtitle="homeSubtitle"
+        :breadcrumbs="breadcrumbs"
+        :can-navigate-up="canNavigateUp"
+        :actions="topBarActions"
+        @navigate-up="handleNavigateUp"
+        @navigate-breadcrumb="handleBreadcrumbNavigate"
+      >
+        <template #stats>
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-200">
+            <span>{{ sortedItems.length }} items</span>
+            <span v-if="selectedFiles.size > 0">• {{ selectedFiles.size }} selected</span>
+          </div>
+        </template>
+
+        <template #extra>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" class="border-gray-300 dark:border-gray-600 dark:text-gray-100">
+                  <ArrowUpDown class="h-4 w-4 mr-2" />
+                  Sort: {{ sortLabel }}
+                  <ChevronDown class="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  v-for="option in sortOptions"
+                  :key="option.value"
+                  @click="handleSort(option.value)"
+                >
+                  <Check v-if="sortBy === option.value" class="mr-2 h-4 w-4" />
+                  <span>{{ option.label }}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+              <Button
+                v-for="option in viewControls"
+                :key="option.value"
+                variant="ghost"
+                size="sm"
+                :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+                @click="handleViewChange(option.value)"
+              >
+                <component v-if="option.icon" :is="option.icon" class="h-4 w-4" />
+                <span v-else>{{ option.label }}</span>
+              </Button>
+            </div>
+          </div>
+        </template>
+
+        <template #action-new>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" :class="actionIconClass">
+                <Plus class="h-5 w-5 text-primary-600" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent
+              :class="['rounded-lg shadow-2xl border', 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700']"
+            >
+              <DialogHeader>
+                <DialogTitle class="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                  {{ $t('Views.Home.heading.choose_a_template') }}
+                </DialogTitle>
+              </DialogHeader>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2">
+                <Button
+                  variant="outline"
+                  :class="['h-24 flex flex-col items-center justify-center', 'hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400']"
+                  @click="createNewDocument"
+                >
+                  <FileText class="w-8 h-8 text-primary-600" />
+                  <span class="mt-2 text-sm font-medium">{{ $t('Commons.button.new_document') }}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  :class="['h-24 flex flex-col items-center justify-center', 'hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400']"
+                  @click="createNewSpreadsheet"
+                >
+                  <TableIcon class="w-8 h-8 text-primary-600" />
+                  <span class="mt-2 text-sm font-medium">{{ $t('Commons.button.new_spreadsheet') }}</span>
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </template>
+      </WorkspaceTopBar>
+
+      <ScrollArea
+        :class="[
+          'flex-1 min-h-0 rounded-lg shadow-sm border',
+          'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
+        ]"
+      >
+        <div v-if="sortedItems.length > 0">
+          <div
+            v-if="viewMode === 'list'"
+            :class="['flex items-center gap-3 px-4 py-3 border-b', 'border-gray-200 dark:border-gray-700']"
+          >
+            <input
+              type="checkbox"
+              :checked="isAllSelected"
+              :indeterminate="isSomeSelected"
+              @change="toggleSelectAll"
+              class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ isAllSelected ? $t('Commons.text.select_file') : $t('Commons.label.select_all') }}
+            </span>
+          </div>
+
+          <div
+            v-else
+            :class="['flex items-center justify-between px-4 py-3 border-b', 'border-gray-200 dark:border-gray-700']"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              @click="toggleSelectAll"
+              class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <input
+                type="checkbox"
+                :checked="isAllSelected"
+                :indeterminate="isSomeSelected"
+                @click.stop
+                class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
+              />
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ isAllSelected ? $t('Commons.text.select_file') : $t('Commons.label.select_all') }}
+              </span>
+            </Button>
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+              {{ sortedItems.length }} {{ sortedItems.length === 1 ? 'item' : 'items' }}
+            </span>
+          </div>
+
+          <div class="p-2 sm:p-4">
+            <div
+              :class="{
+                'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4': viewMode === 'grid',
+                'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2': viewMode === 'thumbnail',
+                'space-y-1': viewMode === 'list'
+              }"
+            >
+              <FileItem
+                v-for="item in sortedItems"
+                :key="item.id"
+                :file="item"
+                :view-mode="viewMode"
+                :is-selected="selectedFiles.has(item.id || '')"
+                @select-file="handleSelect"
+                @open-file="openFile"
+                @contextmenu-file="(e) => openContextMenu(e)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="empty-state">
+          <div class="empty-icon-wrapper">
+            <FolderOpen class="empty-icon" />
+          </div>
+          <h3 class="empty-title">{{ $t('Views.Home.heading.no_files_found') }}</h3>
+          <p class="empty-description">{{ $t('Views.Home.text.get_started_by_creating') }}</p>
+          <div class="empty-actions">
+            <Button class="bg-primary-600 hover:bg-primary-700" @click="createNewDocument">
+              <Plus class="mr-2 h-4 w-4" />
+              {{ $t('Commons.button.new_document') }}
+            </Button>
+            <Button class="bg-green-600 hover:bg-green-700" @click="createNewSpreadsheet">
+              <Plus class="mr-2 h-4 w-4" />
+              {{ $t('Commons.button.new_spreadsheet') }}
+            </Button>
+            <Button variant="outline" class="border-gray-300 hover:border-gray-400" @click="openUploadDialog">
+              <Upload class="mr-2 h-4 w-4" />
+              {{ $t('Commons.button.upload_files') }}
+            </Button>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+
+    <FileUploader
+      v-if="isUploadDialogOpen"
+      @close="isUploadDialogOpen = false"
+      @upload="handleUploadComplete"
+      :folder-id="currentFolderId"
+      :file-type-filter="'all'"
+    />
+
+    <FileContextMenu
+      v-if="contextMenuState.visible"
+      :state="contextMenuState"
+      :actions="contextMenuActions"
+    />
+  </div>
+
+  <Landing v-else />
+</template>
+
 <script setup lang="ts">
-import { onMounted, onUnmounted, watchEffect, watch } from "vue"
-import { useExplorerNavigation } from "@/composables/useExplorerNavigation"
-import { useMobileFirst } from "@/composables/useMobileFirst"
-import { useFileManager } from "@/composables/useFileManager"
-import { useMobileFileManager } from "@/composables/useMobileFileManager"
-import { useHomeUIState } from "@/composables/useHomeUIState"
-import { useFileOperations } from "@/composables/useFileOperations"
-import { toast } from "@/composables/useToast"
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/store/auth'
+import { useFileStore } from '@/store/files'
+import { useExplorerNavigation } from '@/composables/useExplorerNavigation'
+import {
+  useFileExplorer,
+  type ContextMenuAction,
+  type ContextMenuBuilderContext
+} from '@/composables/useFileExplorer'
+import { toast } from '@/composables/useToast'
 import {
   Plus,
   FolderOpen,
   Upload,
   FolderPlus as FolderPlusIcon,
   FileText,
-  Loader,
-} from "lucide-vue-next"
-import { storeToRefs } from "pinia"
-import { useAuthStore } from "@/store/auth"
-import { useFileStore } from "@/store/files"
-import Button from "@/components/ui/button/Button.vue"
+  ChevronDown,
+  ArrowUpDown,
+  Grid,
+  List,
+  LayoutGrid,
+  Check,
+  Edit,
+  Download,
+  Share2,
+  Trash2,
+  X,
+  TableIcon
+} from 'lucide-vue-next'
+import Button from '@/components/ui/button/Button.vue'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileData } from "@/types"
-import MediaViewer from "@/components/media/MediaViewer.vue"
-import FileContextMenu from "@/components/FileContextMenu.vue"
-import FileUploader from "@/components/FileUploader.vue"
-import FileItem from "@/components/FileItem.vue"
-import Landing from "./Landing.vue"
+  DialogTrigger
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import FileItem from '@/components/FileItem.vue'
+import FileContextMenu from '@/components/FileContextMenu.vue'
+import FileUploader from '@/components/FileUploader.vue'
+import WorkspaceTopBar from '@/components/layout/WorkspaceTopBar.vue'
+import Landing from './Landing.vue'
+import type { FileData } from '@/types'
 
-// Mobile components
-import MobileHeader from "@/components/home/MobileHeader.vue"
-import MobileBottomNav from "@/components/home/MobileBottomNav.vue"
-
+const router = useRouter()
 const authStore = useAuthStore()
 const fileStore = useFileStore()
 const { isAuthenticated } = storeToRefs(authStore)
 
-// Initialize composables
-const { isMobile } = useMobileFirst()
-const fileManager = useFileManager()
-const mobileFileManager = useMobileFileManager()
-const uiState = useHomeUIState()
-const fileOperations = useFileOperations()
-const explorer = useExplorerNavigation({
-  rootTitle: 'All Files',
-  onNavigate: () => fileManager.clearSelection(),
-})
+type HomeViewMode = 'grid' | 'list' | 'thumbnail'
+type HomeSort = 'name' | 'date'
 
-// Initialize explorer navigation
+type SortOption = { value: HomeSort; label: string }
+type ViewModeOption = { value: HomeViewMode; icon?: unknown; label: string; active: boolean }
+
+const viewMode = ref<HomeViewMode>('grid')
+const sortBy = ref<HomeSort>('date')
+const isUploadDialogOpen = ref(false)
+
 const {
   currentFolderId,
   breadcrumbs,
   currentTitle,
   canNavigateUp,
+  openFolder,
   navigateToBreadcrumb,
   navigateUp,
   refresh,
-  initialize,
-  isLoading: explorerLoading,
-} = explorer
-
-// File upload handler
-const handleUploadComplete = (_files: FileData[]) => {
-  fileManager.isUploadDialogOpen.value = false
-  refresh()
-}
-
-// Mobile handlers
-const handleMobileTabNavigation = (tab: 'files' | 'recent' | 'search' | 'settings') => {
-  mobileFileManager.handleMobileTabNavigation(tab, (show: boolean) => {
-    fileManager.showRecentFiles.value = show
-  })
-}
-
-// Sync mobile search with file manager
-watch(() => mobileFileManager.mobileSearchQuery.value, (query: string) => {
-  fileManager.searchValue.value = query
+  initialize
+} = useExplorerNavigation({
+  rootTitle: 'All Files',
+  onNavigate: () => clearSelection()
 })
 
-const handleExpandAll = () => {
-  // Expand all folders in the current view
-  fileManager.sortedItems.value.forEach(item => {
-    if (item.is_folder) {
-      // Logic to expand folder - this would depend on your folder expansion implementation
-      console.log('Expanding folder:', item.title)
+const homeSubtitle = computed(() => 'All files')
+
+const itemsInCurrentFolder = computed(() => {
+  const folderId = currentFolderId.value
+  return fileStore.allFiles.filter((f: FileData) =>
+    folderId ? f.folder_id === folderId : !f.folder_id
+  )
+})
+
+const sortedItems = computed(() => {
+  const list = [...itemsInCurrentFolder.value]
+  if (sortBy.value === 'date') {
+    return list.sort((a, b) => {
+      const aTime = new Date(a.last_viewed || a.updated_at || a.created_at || 0).getTime()
+      const bTime = new Date(b.last_viewed || b.updated_at || b.created_at || 0).getTime()
+      return bTime - aTime
+    })
+  }
+  return list.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+})
+
+function buildContextMenuActions({
+  selectedIds,
+  selectedFiles: selectedFileItems,
+  close
+}: ContextMenuBuilderContext): ContextMenuAction[] {
+  if (selectedIds.length === 0) return []
+  const hasFiles = selectedFileItems.some((f) => f && !f.is_folder)
+  const actions: ContextMenuAction[] = []
+
+  if (selectedIds.length === 1) {
+    actions.push(
+      {
+        label: 'Open',
+        icon: FolderOpen,
+        action: () => {
+          if (selectedIds[0]) openFile(selectedIds[0])
+          close()
+        }
+      },
+      {
+        label: 'Rename',
+        icon: Edit,
+        action: () => {
+          handleRename()
+          close()
+        }
+      }
+    )
+  }
+
+  if (hasFiles) {
+    actions.push({
+      label: `Download ${selectedIds.length > 1 ? `(${selectedIds.length})` : ''}`.trim(),
+      icon: Download,
+      action: () => {
+        handleBulkDownload()
+        close()
+      }
+    })
+  }
+
+  actions.push({
+    label: `Delete ${selectedIds.length > 1 ? `(${selectedIds.length})` : ''}`.trim(),
+    icon: Trash2,
+    action: () => {
+      handleBulkDelete()
+      close()
     }
   })
-  toast.info('Expanding all folders...')
+
+  if (selectedIds.length === 1) {
+    actions.push({
+      label: 'Share',
+      icon: Share2,
+      action: () => {
+        close()
+      }
+    })
+  }
+
+  return actions
 }
 
-// Lifecycle hooks
-onMounted(async () => {
-  window.addEventListener("resize", () => {}) // Handled by useMobileFirst
-  window.addEventListener("click", fileOperations.handleOutsideClick)
-  window.addEventListener("keydown", fileOperations.handleEscapeKey)
+const {
+  selectedFiles,
+  isAllSelected,
+  isSomeSelected,
+  handleSelect,
+  toggleSelectAll,
+  clearSelection,
+  handleContextMenu: openContextMenu,
+  contextMenuState,
+  contextMenuActions,
+  closeContextMenu
+} = useFileExplorer({
+  getFiles: () => sortedItems.value,
+  buildContextMenuActions
+})
 
-  watchEffect(async () => {
-    await uiState.handleAttachmentImport(refresh, fileOperations.openFile)
-  })
+const sortOptions: SortOption[] = [
+  { value: 'name', label: 'Name' },
+  { value: 'date', label: 'Date' }
+]
+const sortLabel = computed(() => (sortBy.value === 'date' ? 'Date' : 'Name'))
 
-  if (authStore.getToken()) {
-    const offlineDocs = fileStore.loadOfflineDocuments()
-    if (!fileStore.isOnline) {
-      fileStore.allFiles = offlineDocs
+const viewControls = computed<ViewModeOption[]>(() => [
+  { value: 'grid', icon: Grid, label: 'Grid', active: viewMode.value === 'grid' },
+  { value: 'list', icon: List, label: 'List', active: viewMode.value === 'list' },
+  { value: 'thumbnail', icon: LayoutGrid, label: 'Thumbnail', active: viewMode.value === 'thumbnail' }
+])
+
+const actionIconClass =
+  'relative group rounded-full transition-all duration-200 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700'
+
+const firstSelectedId = computed(() =>
+  selectedFiles.value.size > 0 ? Array.from(selectedFiles.value)[0] : null
+)
+
+const topBarActions = computed(() => {
+  const actions = [
+    {
+      key: 'create-folder',
+      icon: FolderPlusIcon,
+      component: Button,
+      props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+      onClick: createNewFolder
+    },
+    {
+      key: 'upload',
+      icon: Upload,
+      component: Button,
+      props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+      onClick: openUploadDialog
+    },
+    {
+      key: 'new',
+      component: 'div',
+      slot: 'new'
     }
+  ]
 
-    if (import.meta.env.DEV) {
-      const filesWithMissingTypes = offlineDocs.filter(
-        (doc) => !doc.file_type && !doc.is_folder
+  if (selectedFiles.value.size > 0) {
+    if (selectedFiles.value.size === 1 && firstSelectedId.value) {
+      actions.push(
+        {
+          key: 'open',
+          icon: FolderOpen,
+          component: Button,
+          props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+          onClick: () => openFile(firstSelectedId.value as string)
+        },
+        {
+          key: 'rename',
+          icon: Edit,
+          component: Button,
+          props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+          onClick: handleRename
+        }
       )
-      if (filesWithMissingTypes.length > 0) {
-        console.warn(
-          "Home: Found files with missing file_type:",
-          filesWithMissingTypes.map((doc) => ({
-            id: doc.id,
-            title: doc.title,
-          }))
-        )
+    }
+    actions.push(
+      {
+        key: 'download',
+        icon: Download,
+        component: Button,
+        props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+        onClick: handleBulkDownload
+      },
+      {
+        key: 'delete',
+        icon: Trash2,
+        component: Button,
+        props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+        onClick: handleBulkDelete
+      },
+      {
+        key: 'clear',
+        icon: X,
+        component: Button,
+        props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+        onClick: () => clearSelection()
       }
-    }
-
-    if (fileStore.isOnline) {
-      const onlineDocs = await fileStore.loadDocuments(true)
-      const mergedFiles = new Map<string, FileData>()
-
-      offlineDocs.forEach((doc) => {
-        if (doc.id) {
-          mergedFiles.set(doc.id, doc)
-        }
-      })
-
-      onlineDocs.forEach((doc) => {
-        if (doc.id) {
-          mergedFiles.set(doc.id, doc)
-        }
-      })
-
-      fileStore.allFiles = Array.from(mergedFiles.values())
-    }
-
-    await initialize()
+    )
   }
+
+  return actions
+})
+
+const homeContainerClass = computed(() => [
+  'h-screen text-gray-900 transition-colors duration-200',
+  'bg-gradient-to-br from-gray-50 to-gray-100',
+  'dark:bg-gradient-to-br dark:from-gray-900 to-gray-800',
+  'flex flex-col'
+])
+
+function handleSort(sort: HomeSort) {
+  sortBy.value = sort
+  clearSelection()
+}
+
+function handleViewChange(mode: HomeViewMode) {
+  viewMode.value = mode
+}
+
+async function handleNavigateUp() {
+  await navigateUp()
+}
+
+async function handleBreadcrumbNavigate(index: number) {
+  await navigateToBreadcrumb(index)
+}
+
+function createNewDocument() {
+  router.push('/docs/new')
+}
+
+function createNewSpreadsheet() {
+  router.push('/sheets/new')
+}
+
+async function createNewFolder() {
+  try {
+    const result = await fileStore.makeFolder({
+      title: 'New Folder',
+      is_folder: true,
+      folder_id: currentFolderId.value,
+      file_type: 'folder'
+    } as FileData)
+    if (result?.id) {
+      toast.success('Folder created')
+      await refresh()
+    }
+  } catch {
+    toast.error('Failed to create folder')
+  }
+}
+
+function openUploadDialog() {
+  isUploadDialogOpen.value = true
+}
+
+async function handleUploadComplete() {
+  isUploadDialogOpen.value = false
+  await refresh()
+}
+
+async function openFile(id: string) {
+  const file = fileStore.allFiles.find((f) => f.id === id)
+  if (!file) return
+  if (file.is_folder) {
+    await openFolder(id, file.title)
+    return
+  }
+  const ext = file.file_type?.toLowerCase()
+  if (['doc', 'docx', 'txt', 'rtf'].includes(ext || '')) {
+    router.push(`/docs/${id}`)
+  } else if (['xls', 'xlsx', 'csv', 'ods'].includes(ext || '')) {
+    router.push(`/sheets/${id}`)
+  } else if (['ppt', 'pptx'].includes(ext || '')) {
+    router.push(`/slides/${id}`)
+  } else if (ext === 'pdf' && (file.file_public_url || file.file_url)) {
+    window.open(file.file_public_url || file.file_url || '', '_blank', 'noopener,noreferrer')
+  } else {
+    router.push(`/docs/${id}`)
+  }
+}
+
+async function handleBulkDelete() {
+  try {
+    await Promise.all(Array.from(selectedFiles.value).map((id) => fileStore.moveToTrash(id)))
+    clearSelection()
+    await refresh()
+    toast.success('Items moved to trash')
+  } catch {
+    toast.error('Failed to delete some items')
+  }
+}
+
+function handleBulkDownload() {
+  // Placeholder: wire to download when implemented
+}
+
+function handleRename() {
+  if (selectedFiles.value.size === 1) {
+    const id = Array.from(selectedFiles.value)[0]
+    const el = document.getElementById(`fileItem-${id}`)
+    if (el) {
+      el.dispatchEvent(new CustomEvent('start-rename'))
+    }
+  }
+}
+
+function handleOutsideClick(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (!target.closest('.file-item') && !target.closest('.context-menu')) {
+    clearSelection()
+  }
+  if (!target.closest('#context-menu')) {
+    closeContextMenu()
+  }
+}
+
+onMounted(async () => {
+  document.title = currentTitle.value
+  document.addEventListener('click', handleOutsideClick)
+  
+  const offline = fileStore.loadOfflineDocuments()
+  if (!fileStore.isOnline) {
+    fileStore.allFiles = offline
+  }
+  if (fileStore.isOnline) {
+    const online = await fileStore.loadDocuments(true)
+    const merged = new Map<string, FileData>()
+    offline.forEach((d) => d.id && merged.set(d.id, d))
+    online.forEach((d) => d.id && merged.set(d.id, d))
+    fileStore.allFiles = Array.from(merged.values())
+  }
+  await initialize()
+})
+
+watch(currentTitle, (t) => {
+  document.title = t
 })
 
 onUnmounted(() => {
-  window.removeEventListener("resize", () => {})
-  window.removeEventListener("click", fileOperations.handleOutsideClick)
-  window.removeEventListener("keydown", fileOperations.handleEscapeKey)
+  document.removeEventListener('click', handleOutsideClick)
 })
 </script>
 
-<template>
-  <template v-if="isAuthenticated">
-    <div class="home-container">
-      <!-- Mobile Layout -->
-      <template v-if="isMobile">
-        <div class="mobile-layout">
-          <!-- Mobile Header -->
-          <MobileHeader
-            :title="fileManager.showRecentFiles.value ? $t('Commons.heading.recent_files') : currentTitle"
-            :subtitle="fileManager.selectedFiles.value.size > 0 ? `${fileManager.selectedFiles.value.size} selected` : undefined"
-            :show-back-button="canNavigateUp"
-            :show-search="mobileFileManager.showMobileSearch.value"
-            :search-query="mobileFileManager.mobileSearchQuery.value"
-            :breadcrumbs="breadcrumbs.map(b => ({ id: b.id || undefined, title: b.title }))"
-            :current-folder="currentTitle"
-            :selected-count="fileManager.selectedFiles.value.size"
-            @navigate-back="navigateUp"
-            @toggle-search="mobileFileManager.toggleMobileSearch"
-            @update:search-query="mobileFileManager.mobileSearchQuery.value = $event"
-            @clear-search="mobileFileManager.clearMobileSearch"
-            @create-folder="() => fileManager.createNewFolder(currentFolderId)"
-            @upload-file="fileManager.isUploadDialogOpen.value = true"
-            @create-document="fileManager.createNewFile('documents')"
-            @toggle-view-mode="fileManager.toggleViewMode"
-            @navigate-to-breadcrumb="navigateToBreadcrumb"
-            @clear-selection="fileManager.clearSelection"
-          />
-
-          <!-- Mobile Content -->
-          <div class="mobile-content">
-            <!-- Empty State -->
-            <div v-if="fileManager.sortedItems.value.length === 0 && !explorerLoading && !uiState.isLoading.value" class="empty-state">
-              <div class="empty-state-content">
-                <div class="empty-icon">
-                  <FolderOpen class="h-16 w-16" />
-                </div>
-                <h3 class="empty-title">{{ $t('Views.Home.heading.no_files_found') }}</h3>
-                <p class="empty-description">{{ $t('Views.Home.text.get_started_by_creating') }}</p>
-                
-                <div class="empty-actions">
-                  <Button @click="async () => { await fileManager.createNewFile('documents') }" class="w-full mb-2">
-                    <FileText class="h-4 w-4 mr-2" />
-                    {{$t('Commons.button.new_document')}}
-                  </Button>
-                  <Button @click="fileManager.isUploadDialogOpen.value = true" variant="outline" class="w-full">
-                    <Upload class="h-4 w-4 mr-2" />
-                    {{$t('Commons.button.upload_files')}}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <!-- File Items -->
-            <div v-else class="mobile-file-items">
-              <FileItem
-                v-for="item in fileManager.sortedItems.value"
-                :key="item.id"
-                :file="item"
-                :view-mode="'grid'"
-                :is-selected="!!(item.id && fileManager.selectedFiles.value.has(item.id))"
-                :is-touch-device="true"
-                @select-file="fileOperations.handleSelect"
-                @open-file="fileOperations.openFile"
-                @update-file="fileOperations.handleFileUpdated"
-                @delete-file="fileOperations.handleFileDeleted"
-                @contextmenu-file="fileOperations.handleFileContextMenu"
-              />
-            </div>
-
-            <!-- Loading State -->
-            <div v-if="explorerLoading || uiState.isLoading.value" class="loading-state">
-              <div class="loading-content">
-                <Loader class="animate-spin h-8 w-8 mb-4" />
-                <p class="loading-text">{{ $t('Views.Home.text.loading_your_files') }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Mobile Bottom Navigation -->
-          <MobileBottomNav
-            :show-fab="mobileFileManager.showFab.value"
-            :active-tab="mobileFileManager.activeMobileTab.value"
-            :selected-count="fileManager.selectedFiles.value.size"
-            @fab-click="async () => { await fileManager.createNewFile('documents') }"
-            @create-document="async () => { await fileManager.createNewFile('documents') }"
-            @create-spreadsheet="async () => { await fileManager.createNewFile('spreadsheets') }"
-            @create-presentation="async () => { await fileManager.createNewFile('presentations') }"
-            @create-folder="async () => { await fileManager.createNewFolder(currentFolderId) }"
-            @upload-file="fileManager.isUploadDialogOpen.value = true"
-            @expand-all="handleExpandAll"
-            @navigate="handleMobileTabNavigation"
-            @clear-selection="fileManager.clearSelection"
-            @open-selected="fileOperations.handleBulkOpen"
-            @share-selected="fileOperations.handleBulkShare"
-            @download-selected="fileManager.bulkDownload"
-            @delete-selected="fileManager.bulkDelete"
-          />
-        </div>
-      </template>
-
-      <!-- Desktop Layout -->
-      <template v-else>
-        <!-- File browser -->
-        <div class="flex-1 flex flex-col p-4 sm:p-6 overflow-hidden">
-          <!-- Clean Desktop Header -->
-          <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-4">
-              <!-- Breadcrumbs -->
-              <nav aria-label="Breadcrumb" class="flex items-center text-sm">
-                <template v-for="(crumb, idx) in breadcrumbs.slice(0, -1)" :key="crumb.id ?? 'root'">
-                  <button class="text-primary-600 hover:underline" @click="navigateToBreadcrumb(idx)">
-                    {{ crumb.title }}
-                  </button>
-                  <span v-if="idx < breadcrumbs.slice(0, -1).length - 1" class="mx-2 text-gray-400">/</span>
-                </template>
-                <span class="text-gray-600">{{ currentTitle }}</span>
-              </nav>
-            </div>
-
-            <!-- Action buttons -->
-            <div class="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                @click="async () => { await fileManager.createNewFolder(currentFolderId) }"
-              >
-                <FolderPlusIcon class="h-4 w-4 mr-2" />
-                {{$t('Commons.text.folder')}}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                @click="fileManager.isUploadDialogOpen.value = true"
-              >
-                <Upload class="h-4 w-4 mr-2" />
-                {{$t('Commons.button.upload_2')}}
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Plus class="h-4 w-4 mr-2" />
-                    {{$t('Commons.button.new')}}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent class="rounded-lg shadow-2xl border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 w-[calc(100vw-2rem)] sm:w-full max-w-lg sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle class="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                      {{$t('Views.Home.heading.choose_a_template')}}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <Tabs default-value="Documents">
-                    <TabsList class="bg-gray-100 dark:bg-gray-700">
-                      <TabsTrigger
-                        v-for="category in Object.keys(uiState.templates)"
-                        :key="category"
-                        :value="category"
-                        class="data-[state=active]:text-primary-600 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">
-                        {{ category }}
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent v-for="(items, category) in uiState.templates" :key="category" :value="category" class="p-2">
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <Button
-                          v-for="template in items"
-                          :key="template.name"
-                          variant="outline"
-                          class="h-24 flex flex-col items-center justify-center transition-all hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400"
-                          @click="async () => { await fileManager.createNewFile(category?.toLowerCase(), template.name) }">
-                          <component :is="template.icon" class="w-8 h-8 text-primary-600" />
-                          <span class="mt-2 text-sm font-medium">
-                            {{ template.name }}
-                          </span>
-                        </Button>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-
-          <!-- Content area -->
-          <ScrollArea class="flex-1 min-h-0 rounded-lg shadow-sm border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <div v-if="Object.keys(fileManager.groupedItems.value).length > 0 && fileManager.sortedItems.value.length > 0">
-              <template v-for="(items, groupName) in fileManager.groupedItems.value" :key="groupName">
-                <div class="p-2 sm:p-4">
-                  <!-- Group header with Select All -->
-                  <div class="flex items-center justify-between mb-3 px-2">
-                    <h3 v-if="fileManager.groupByFileType.value" class="text-base font-semibold text-gray-700 dark:text-gray-100">
-                      {{ uiState.formatGroupName(groupName) }}
-                    </h3>
-
-                    <!-- Select All controls -->
-                    <div v-if="fileManager.sortedItems.value.length > 0" class="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        :id="`select-all-${groupName}`"
-                        :checked="fileManager.isAllSelected.value"
-                        :indeterminate="fileManager.isSomeSelected.value"
-                        @change="fileManager.toggleSelectAll"
-                        class="rounded border text-primary-600 focus:ring-primary-500 focus:ring-offset-0 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-offset-white dark:focus:ring-offset-gray-800" />
-                      <label
-                        :for="`select-all-${groupName}`"
-                        class="text-sm font-medium cursor-pointer select-none text-gray-700 dark:text-gray-300">
-                        {{$t('Commons.label.select_all')}}
-                      </label>
-                    </div>
-                  </div>
-
-                  <!-- Items -->
-                  <div v-if="items.length === 0" class="text-center text-sm py-4 text-gray-500 dark:text-gray-400">
-                    {{$t('Views.Home.text.no_items_available_in')}}
-                  </div>
-                  <div
-                    v-else
-                    :class="{
-                      'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4': fileManager.viewMode.value === 'grid',
-                      'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2': fileManager.viewMode.value === 'thumbnail',
-                      'space-y-1': fileManager.viewMode.value === 'list',
-                    }">
-                    <FileItem
-                      v-for="item in items"
-                      :key="item.id"
-                      :file="item"
-                      :view-mode="fileManager.viewMode.value"
-                      :is-selected="!!(item.id && fileManager.selectedFiles.value.has(item.id))"
-                      @select-file="fileOperations.handleSelect"
-                      @open-file="fileOperations.openFile"
-                      @update-file="fileOperations.handleFileUpdated"
-                      @delete-file="fileOperations.handleFileDeleted"
-                      @contextmenu-file="fileOperations.handleFileContextMenu"
-                    />
-                  </div>
-                </div>
-              </template>
-            </div>
-            <template v-else-if="explorerLoading || uiState.isLoading.value">
-              <div class="loading-state">
-                <div class="flex flex-col items-center justify-center py-16 px-6">
-                  <div class="loading-spinner"></div>
-                  <p class="loading-text">{{$t('Views.Home.text.loading_your_files')}}</p>
-                </div>
-              </div>
-            </template>
-            <template v-else>
-              <!-- Empty state -->
-              <div class="flex flex-col items-center justify-center py-16 px-6">
-                <div class="flex items-center justify-center w-16 h-16 rounded-full mb-6 bg-gray-100 dark:bg-gray-700">
-                  <FolderOpen class="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                </div>
-                <h3 class="text-xl font-semibold mb-2 text-center text-gray-800 dark:text-gray-100">
-                  {{ fileManager.searchValue.value ? $t('Views.Home.heading.no_matching_files_found') : $t('Views.Home.heading.no_files_found') }}
-                </h3>
-                <p class="text-center mb-8 max-w-md text-gray-600 dark:text-gray-400">
-                  {{ fileManager.searchValue.value ? $t('Views.Home.text.try_adjusting_your_search') : $t('Views.Home.text.get_started_by_creating') }}
-                </p>
-                <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                  <Button @click="async () => { await fileManager.createNewFile('documents') }" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2">
-                    <Plus class="mr-2 h-4 w-4" />
-                    {{$t('Commons.button.new_document')}}
-                  </Button>
-                  <Button @click="async () => { await fileManager.createNewFile('spreadsheets') }" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
-                    <Plus class="mr-2 h-4 w-4" />
-                    {{$t('Commons.button.new_spreadsheet')}}
-                  </Button>
-                  <Button variant="outline" class="px-6 py-2 border-gray-300 dark:border-gray-600 dark:text-gray-100 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700" @click="fileManager.isUploadDialogOpen.value = true">
-                    <Upload class="mr-2 h-4 w-4" />
-                    {{$t('Commons.button.upload_file')}}
-                  </Button>
-                </div>
-              </div>
-            </template>
-          </ScrollArea>
-        </div>
-      </template>
-    </div>
-
-    <!-- Context Menu and Dialogs (Common) -->
-    <FileContextMenu
-      v-if="fileOperations.contextMenuState.value.visible"
-      :state="{
-        visible: fileOperations.contextMenuState.value.visible,
-        x: fileOperations.contextMenuState.value.x,
-        y: fileOperations.contextMenuState.value.y,
-        targetId: fileOperations.contextMenuState.value.fileId
-      }"
-      :actions="fileOperations.contextMenuActions.value" />
-
-    <MediaViewer
-      :is-open="fileManager.isViewerOpen.value"
-      :current-file="fileManager.currentViewFile.value"
-      :files="fileManager.viewableFiles.value"
-      :current-index="fileManager.currentViewIndex.value"
-      @close="fileManager.closeViewer"
-      @download="() => fileManager.downloadFiles([fileManager.currentViewFile.value?.id!])"
-      @navigate="(index: number) => {
-        if (index > fileManager.currentViewIndex.value) {
-          fileManager.navigateViewer('next')
-        } else {
-          fileManager.navigateViewer('prev')
-        }
-      }" />
-
-    <FileUploader
-      v-if="fileManager.isUploadDialogOpen.value"
-      @close="fileManager.isUploadDialogOpen.value = false"
-      @upload="handleUploadComplete"
-      :folderId="currentFolderId"
-      :fileTypeFilter="'all'" />
-  </template>
-
-  <!-- Landing for guests -->
-  <template v-else>
-    <Landing />
-  </template>
-</template>
-
 <style scoped>
-/* Mobile-first layout styles */
-.home-container {
-  height: 100vh;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-
-.mobile-layout {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  /* Safe area support for iPhone X+ */
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.mobile-content {
-  flex: 1;
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.25rem;
+  z-index: 50;
   overflow: hidden;
-  /* Safe area support for iPhone X+ */
-  padding-top: env(safe-area-inset-top);
+  background-color: rgb(229 231 235);
+}
+.dark .loading-bar {
+  background-color: rgb(55 65 81);
+}
+.loading-progress {
+  height: 100%;
+  background-color: rgb(37 99 235);
+  width: 30%;
+  animation: loading 2s infinite ease-in-out;
+}
+.dark .loading-progress {
+  background-color: rgb(59 130 246);
 }
 
-.mobile-file-items {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  padding: 1rem;
-}
-
-/* Empty state styles */
 .empty-state {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  padding: 0 1.5rem;
-}
-
-.empty-state-content {
+  padding: 2rem;
   text-align: center;
-  max-width: 24rem;
 }
-
-.empty-icon {
+@media (min-width: 640px) {
+  .empty-state {
+    padding: 4rem;
+  }
+}
+.empty-icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 5rem;
-  height: 5rem;
-  margin: 0 auto 1rem;
+  width: 4rem;
+  height: 4rem;
   border-radius: 9999px;
-  background-color: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
+  margin-bottom: 1.5rem;
+  background-color: rgb(243 244 246);
 }
-
+@media (min-width: 640px) {
+  .empty-icon-wrapper {
+    width: 5rem;
+    height: 5rem;
+  }
+}
+.dark .empty-icon-wrapper {
+  background-color: rgb(55 65 81);
+}
+.empty-icon {
+  width: 2rem;
+  height: 2rem;
+  color: rgb(37 99 235);
+}
+@media (min-width: 640px) {
+  .empty-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+.dark .empty-icon {
+  color: rgb(59 130 246);
+}
 .empty-title {
   font-size: 1.125rem;
-  line-height: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 0.5rem;
+  color: rgb(17 24 39);
 }
-
+@media (min-width: 640px) {
+  .empty-title {
+    font-size: 1.25rem;
+  }
+}
+.dark .empty-title {
+  color: rgb(243 244 246);
+}
 .empty-description {
   font-size: 0.875rem;
-  line-height: 1.25rem;
-  color: hsl(var(--muted-foreground));
   margin-bottom: 1.5rem;
+  max-width: 28rem;
+  color: rgb(107 114 128);
 }
-
+@media (min-width: 640px) {
+  .empty-description {
+    margin-bottom: 2rem;
+  }
+}
+.dark .empty-description {
+  color: rgb(156 163 175);
+}
 .empty-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* Desktop layout styles (original) */
-@media (min-width: 768px) {
-  .home-container {
-    display: flex;
-    color: rgb(17 24 39);
-    background: linear-gradient(to bottom right, rgb(243 244 246), rgb(229 231 235));
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  @media (min-width: 768px) {
-    .home-container {
-      background: linear-gradient(to bottom right, rgb(17 24 39), rgb(31 41 55));
-      color: rgb(243 244 246);
-    }
-  }
-}
-
-/* Loading state */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  gap: 0.75rem;
   justify-content: center;
-  padding: 4rem;
-  text-align: center;
+  width: 100%;
+}
+@media (min-width: 640px) {
+  .empty-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: auto;
+  }
 }
 
-.loading-spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 2px solid #e5e7eb;
-  border-top: 2px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-.dark .loading-spinner {
-  border-color: #374151;
-  border-top-color: #60a5fa;
-}
-
-.loading-text {
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.dark .loading-text {
-  color: #9ca3af;
-}
-
-@keyframes spin {
+@keyframes loading {
   0% {
-    transform: rotate(0deg);
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
   }
   100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 767px) {
-  .mobile-layout {
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
-}
-
-/* Touch-friendly interactions */
-@media (hover: none) and (pointer: coarse) {
-  .mobile-layout * {
-    -webkit-tap-highlight-color: transparent;
-  }
-}
-
-/* Performance optimizations for mobile */
-@media (max-width: 767px) {
-  * {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-  
-  .mobile-layout {
-    will-change: transform;
+    transform: translateX(300%);
   }
 }
 </style>

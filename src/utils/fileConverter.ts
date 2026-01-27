@@ -18,7 +18,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
 import { PaginationPlus } from 'tiptap-pagination-plus';
-import { PaginationTable } from 'tiptap-table-plus';
+import { AdvancedTable, AdvancedTableRow, AdvancedTableCell, AdvancedTableHeader } from '@/extensions/advanced-table';
 import { FontSize } from '@/extensions/font-size';
 import { LineHeight } from '@/extensions/line-height';
 import { ParagraphSpacing } from '@/extensions/paragraph-spacing';
@@ -38,8 +38,8 @@ import { preprocessHtmlEmbeds } from '@/utils/html-preprocess';
  * Converts various file formats to editor-compatible formats
  */
 
-// Use PaginationTable extensions for table pagination support
-const { TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus } = PaginationTable;
+// Use AdvancedTable extensions for enhanced table support
+const TableExtensions = { AdvancedTable, AdvancedTableRow, AdvancedTableCell, AdvancedTableHeader };
 
 // ============================================
 // DOCUMENT CONVERSIONS (for Tiptap Editor)
@@ -79,10 +79,10 @@ function getTiptapExtensions() {
     ChartExtension,
     FormExtension,
     FormControlExtension,
-    TablePlus,
-    TableRowPlus,
-    TableCellPlus,
-    TableHeaderPlus,
+    TableExtensions.AdvancedTable,
+    TableExtensions.AdvancedTableRow,
+    TableExtensions.AdvancedTableCell,
+    TableExtensions.AdvancedTableHeader,
     ImagePlus.configure({ allowBase64: true }),
     PaginationPlus.configure({
       pageSize: { width: 210, height: 297 },

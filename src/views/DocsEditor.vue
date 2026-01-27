@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col h-screen bg-gray-50">
-     
     <DocsTitleBar
       :title="documentTitle"
       :isSaving="isSaving"
@@ -23,7 +22,6 @@
       @select-version="handleVersionSelect"
     />
 
-     
     <div v-if="accessDenied" class="flex-1 flex items-center justify-center p-8">
       <div class="w-full max-w-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{{$t('Commons.heading.request_access')}}</h2>
@@ -590,7 +588,7 @@ import Link from '@tiptap/extension-link';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { ImagePlus } from 'tiptap-image-plus';
-import { PaginationTable } from 'tiptap-table-plus';
+import { AdvancedTable, AdvancedTableRow, AdvancedTableCell, AdvancedTableHeader } from '@/extensions/advanced-table';
 import { Pagination, PageBreak, PAGE_SIZES as PAGINATION_SIZES } from '@/extensions/pagination';
 import '@/extensions/pagination/pagination.css';
 import { FontSize } from '@/extensions/font-size';
@@ -611,8 +609,8 @@ import { maybeConvertHtmlToAnnotatedAbsoluteHtml } from '@/utils/html-to-tiptap'
 // Use page sizes from our pagination extension
 const PAGE_SIZES = PAGINATION_SIZES;
 
-// Use PaginationTable extensions for table pagination support
-const { TablePlus, TableRowPlus, TableCellPlus, TableHeaderPlus } = PaginationTable;
+// Use AdvancedTable extensions for enhanced table support
+const TableExtensions = { AdvancedTable, AdvancedTableRow, AdvancedTableCell, AdvancedTableHeader };
 
 // Type augmentation is now provided by the Pagination extension
 import { useFileStore } from '@/store/files';
@@ -3675,11 +3673,11 @@ function initializeEditor(contentOverride?: any) {
       AbsShape,
       AbsLayer,
       AbsPage,
-      // Use PaginationTable extensions for table pagination support
-      TablePlus,
-      TableRowPlus,
-      TableCellPlus,
-      TableHeaderPlus,
+      // Use AdvancedTable extensions for enhanced table support
+      TableExtensions.AdvancedTable.configure({ resizable: true }),
+      TableExtensions.AdvancedTableRow,
+      TableExtensions.AdvancedTableCell,
+      TableExtensions.AdvancedTableHeader,
       ImagePlus.configure({ allowBase64: true }),
       ChartExtension,
       FormExtension,
