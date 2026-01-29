@@ -152,14 +152,17 @@
               </div>
               <SlidesPreviewPane
                 :rendered-content="editor.renderedContent"
+                :layout-class="editor.getLayoutClass(editor.currentLayout)"
                 :layout="editor.currentLayout"
                 :background="editor.slideBackground"
                 :theme-background="editor.currentThemeObj?.colors.background"
                 :theme-text="editor.currentThemeObj?.colors.text"
                 :theme-style="editor.themeStyleObject as Record<string, string>"
+                :animations="animationConfig"
                 :arrange-mode="arrangeMode"
                 :focus-line-range="focusLineRange"
                 :selected-line-range="currentMarkdownElement ? { start: currentMarkdownElement.startLine, end: currentMarkdownElement.endLine } : null"
+                :enable-debug-mode="false"
                 @update-element-position="handleUpdateElementPosition"
                 @update-element-size="handleUpdateElementSize"
                 @preview-element-selected="handlePreviewElementSelection"
@@ -173,12 +176,15 @@
           <div class="flex-1 flex items-center justify-center p-6">
             <SlidesPreviewPane
               :rendered-content="editor.renderedContent"
+              :layout-class="editor.getLayoutClass(editor.currentLayout)"
               :layout="editor.currentLayout"
               :background="editor.slideBackground"
               :theme-background="editor.currentThemeObj?.colors.background"
               :theme-text="editor.currentThemeObj?.colors.text"
               :theme-style="editor.themeStyleObject as Record<string, string>"
+              :animations="animationConfig"
               :is-fullscreen="true"
+              :enable-debug-mode="false"
             />
           </div>
         </template>
@@ -282,9 +288,10 @@ import { useAuthStore } from '@/store/auth';
 import { IWebsocketService, useWebSocket } from '@/lib/wsService';
 
 // Types
-import { parseBlockAttributesFromLine, type SlideTemplate } from '@/utils/slidevMarkdown';
+import { type SlideTemplate } from '@/utils/slidevMarkdown';
 import { getElementByLineRange, type MarkdownElement } from '@/utils/markdownElementDetector';
 import { toast } from '@/composables/useToast';
+import { updateElementPosition, updateElementSize } from '@/utils/markdownPositionSync';
 
 const route = useRoute();
 const router = useRouter();
@@ -316,6 +323,24 @@ const spellCheckEnabled = ref(true);
 // Animation State
 const showAnimationPanel = ref(false);
 const elementAnimations = ref<Map<string, ElementAnimation>>(new Map());
+
+// Convert elementAnimations to AnimationConfig format
+const animationConfig = computed(() => {
+  const config = new Map<string, ElementAnimation>();
+  elementAnimations.value.forEach((animation, elementId) => {
+    config.set(elementId, {
+      enabled: animation.enabled,
+      type: animation.trigger.toLowerCase() as 'onLoad' | 'onClick' | 'onHover' | 'onScroll',
+      duration: animation.duration,
+      delay: animation.delay,
+      easing: animation.easing || 'ease',
+      trigger: animation.trigger as 'onLoad' | 'onClick' | 'onHover' | 'onScroll',
+      repeat: animation.repeat || false,
+      repeatCount: animation.repeatCount || 1
+    });
+  });
+  return config;
+});
 
 interface ElementAnimation {
   enabled: boolean;
@@ -370,12 +395,26 @@ const canJoinRealtime = computed(() => {
 const slideStore = useSlidesStore();
 const { editor, persistence, presenter } = slideStore;
 
-// Computed
-const nextSlidePreviewHtml = computed(() => {
-  const nextSlide = editor.nextSlidePreview;
-  if (!nextSlide) return '';
-  return editor.getSlidePreview(nextSlide);
-});
+// Computed / Derived state
+const nextSlidePreviewHtml = ref('');
+
+watch(
+  () => editor.nextSlidePreview,
+  async (nextSlide, _prevSlide) => {
+    if (!nextSlide) {
+      nextSlidePreviewHtml.value = '';
+      return;
+    }
+
+    try {
+      nextSlidePreviewHtml.value = await editor.getSlidePreview(nextSlide);
+    } catch (error) {
+      console.error('Failed to render next slide preview', error);
+      nextSlidePreviewHtml.value = '';
+    }
+  },
+  { immediate: true }
+);
 
 // Enhanced computed properties
 const totalWordCount = computed(() => {
@@ -651,81 +690,31 @@ function handleUpdateElementPosition(payload: {
   position: { top?: string; left?: string };
 }) {
   const { markdownLineStart, markdownLineEnd, position } = payload;
-  const el = getElementByLineRange(editor.currentSlideContent, markdownLineStart, markdownLineEnd);
-  if (!el) return;
   
-  console.log('🎯 Updating element position in markdown:', payload);
+  console.log('🎯 SYNC: Updating position for lines', markdownLineStart, '-', markdownLineEnd, 'to', position);
   
-  const lines = editor.currentSlideContent.split('\n');
-  const blockLines = lines.slice(markdownLineStart, markdownLineEnd + 1);
-  const firstLine = blockLines[0] || '';
-  const { rest, class: existingClass, style: existingStyle } = parseBlockAttributesFromLine(firstLine.trim());
-  const existing = (existingClass || '').trim().split(/\s+/).filter(Boolean);
+  // Get current content IMMEDIATELY
+  const currentContent = editor.currentSlideContent;
   
-  // Drop position-related classes but keep arbitrary values
-  const drop = new Set(['static', 'relative', 'absolute', 'top-0', 'top-4', 'top-8', 'top-1/2', '-translate-y-1/2', 'left-0', 'left-4', 'left-8', 'left-1/2', '-translate-x-1/2']);
-  const filtered = existing.filter((c) => {
-    // Keep classes that don't start with top- or left- (except the specific ones in drop)
-    if (drop.has(c)) return false;
-    if (c.startsWith('top-[') || c.startsWith('left-[')) return false; // Drop arbitrary position classes
-    if (c.startsWith('top-') || c.startsWith('left-')) return false; // Drop standard position classes
-    return true;
-  });
+  console.log('🎯 SYNC: Current markdown length:', currentContent.length);
   
-  const add: string[] = ['absolute'];
-  if (position.top) {
-    // Ensure the top value is in the correct format
-    const topValue = position.top.includes('%') ? `top-[${position.top}]` : position.top;
-    add.push(topValue);
-  }
-  if (position.left) {
-    // Ensure the left value is in the correct format
-    const leftValue = position.left.includes('%') ? `left-[${position.left}]` : position.left;
-    add.push(leftValue);
-  }
+  // Use the sync utility
+  const updatedMarkdown = updateElementPosition(
+    currentContent,
+    markdownLineStart,
+    markdownLineEnd,
+    position.top || '0%',
+    position.left || '0%'
+  );
   
-  const merged = [...filtered, ...add].filter(Boolean).join(' ');
-  const blockAttrParts: string[] = [];
-  if (merged) blockAttrParts.push('.' + merged.replace(/\s+/g, ' .'));
-  if (existingStyle) blockAttrParts.push(`style="${existingStyle}"`);
-  const blockAttr = blockAttrParts.length ? ' {' + blockAttrParts.join(' ') + '}' : '';
+  console.log('🎯 SYNC: Updated markdown length:', updatedMarkdown.length);
+  console.log('🎯 SYNC: Markdown changed:', currentContent !== updatedMarkdown);
   
-  let newFirstLine: string;
-  if (el.type === 'heading' && el.level) {
-    const headingText = rest.replace(/^#+\s+/, '').trim();
-    newFirstLine = '#'.repeat(el.level) + ' ' + headingText + blockAttr;
-  } else if (el.type === 'image') {
-    const alt = String(el.attributes?.alt ?? '');
-    const url = String(el.attributes?.url ?? '');
-    newFirstLine = `![${alt}](${url})${blockAttr}`;
-  } else {
-    newFirstLine = rest + blockAttr;
-  }
-  
-  const newBlockLines = [newFirstLine, ...blockLines.slice(1)];
-  const newLines = [
-    ...lines.slice(0, markdownLineStart),
-    ...newBlockLines,
-    ...lines.slice(markdownLineEnd + 1)
-  ];
-  
-  const newContent = newLines.join('\n');
-  console.log('🎯 New markdown content:', newContent);
-  
-  editor.updateSlideContent(newContent);
+  // Update content SYNCHRONOUSLY
+  editor.updateSlideContent(updatedMarkdown);
   slideStore.markDirty();
   
-  // Update the current markdown element to reflect the changes
-  if (currentMarkdownElement.value && 
-      currentMarkdownElement.value.startLine === markdownLineStart && 
-      currentMarkdownElement.value.endLine === markdownLineEnd) {
-    // Re-parse the element to get updated blockClass
-    const updatedElement = getElementByLineRange(newContent, markdownLineStart, markdownLineEnd);
-    if (updatedElement) {
-      currentMarkdownElement.value = updatedElement;
-      console.log('🎯 Updated currentMarkdownElement with new blockClass:', updatedElement.blockClass);
-    }
-  }
+  console.log('🎯 SYNC: Update complete');
 }
 
 function handleUpdateElementSize(payload: {
@@ -735,39 +724,23 @@ function handleUpdateElementSize(payload: {
   height: number;
 }) {
   const { markdownLineStart, markdownLineEnd, width, height } = payload;
-  const el = getElementByLineRange(editor.currentSlideContent, markdownLineStart, markdownLineEnd);
-  if (!el || el.type !== 'image') return;
-  const lines = editor.currentSlideContent.split('\n');
-  const blockLines = lines.slice(markdownLineStart, markdownLineEnd + 1);
-  const firstLine = blockLines[0] || '';
-  const { style: existingStyle } = parseBlockAttributesFromLine(firstLine.trim());
-  const braceMatch = firstLine.trim().match(/\s*\{([^}]+)\}\s*$/);
-  const styleParts: string[] = (existingStyle || '').split(';').map(s => s.trim()).filter(Boolean);
-  const styleMap = new Map<string, string>();
-  for (const part of styleParts) {
-    const colon = part.indexOf(':');
-    if (colon > 0) styleMap.set(part.slice(0, colon).trim().toLowerCase(), part.slice(colon + 1).trim());
-  }
-  styleMap.set('width', `${width}px`);
-  styleMap.set('height', `${height}px`);
-  const newStyleStr = Array.from(styleMap.entries()).map(([k, v]) => `${k}: ${v}`).join('; ');
-  let blockAttr: string;
-  if (braceMatch) {
-    const inner = braceMatch[1].replace(/\s*style\s*=\s*"[^"]*"/g, '').trim();
-    blockAttr = ' {' + (inner ? inner + ' ' : '') + `style="${newStyleStr}"` + '}';
-  } else {
-    blockAttr = ' {style="' + newStyleStr + '"}';
-  }
-  const alt = String(el.attributes?.alt ?? '');
-  const url = String(el.attributes?.url ?? '');
-  const newFirstLine = `![${alt}](${url})${blockAttr}`;
-  const newBlockLines = [newFirstLine, ...blockLines.slice(1)];
-  const newLines = [
-    ...lines.slice(0, markdownLineStart),
-    ...newBlockLines,
-    ...lines.slice(markdownLineEnd + 1)
-  ];
-  editor.updateSlideContent(newLines.join('\n'));
+  
+  console.log('🎯 SYNC: Updating size for lines', markdownLineStart, '-', markdownLineEnd);
+  
+  const currentContent = editor.currentSlideContent;
+  
+  const updatedMarkdown = updateElementSize(
+    currentContent,
+    markdownLineStart,
+    markdownLineEnd,
+    width,
+    height
+  );
+  
+  console.log('🎯 SYNC: Size update - markdown changed:', currentContent !== updatedMarkdown);
+  console.log('🎯 SYNC: Updated markdown content:', updatedMarkdown);
+  
+  editor.updateSlideContent(updatedMarkdown);
   slideStore.markDirty();
 }
 

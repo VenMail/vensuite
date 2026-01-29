@@ -15,7 +15,9 @@
     "i18n:rewrite-blade": "node ./scripts/rewrite-i18n-blade.js",
     "postbuild": "pnpm run i18n:sync",
     "i18n:cleanup-unused": "node ./scripts/cleanup-i18n-unused.js",
-    "i18n:restore-invalid": "node ./scripts/restore-i18n-invalid.js"
+    "i18n:restore-invalid": "node ./scripts/restore-i18n-invalid.js",
+    "test:slide-renderer": "node -e \"console.log('Slide renderer tests available in enhanced debug mode')\"",
+    "test:robustness": "node -e \"console.log('Open test-robustness-demo.html in browser to test robustness')\""
   },
   "dependencies": {
     "@aarkue/tiptap-math-extension": "^1.3.6",

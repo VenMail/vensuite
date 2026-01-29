@@ -4,10 +4,15 @@ This directory contains reusable composables for rendering Slidev-flavored markd
 
 ## useSlideRenderer
 
-A composable that provides core markdown rendering functionality for slides.
+A composable that provides enhanced markdown rendering functionality for slides with robust error handling, security improvements, and performance optimizations.
 
 ### Features
 
+- **Robust Parsing**: Enhanced parsing with error recovery and validation
+- **Security**: XSS prevention, URL validation, and CSS filtering
+- **Performance**: Optimized rendering with metrics collection
+- **Error Recovery**: Automatic retry with exponential backoff
+- **Diagnostics**: Comprehensive error reporting and debug tools
 - **Markdown Parsing**: Parses Slidev-flavored markdown into structured blocks
 - **HTML Rendering**: Converts blocks to HTML with data attributes for line tracking
 - **Position Classes**: Applies arbitrary position classes (e.g., `top-[18%]`, `left-[30%]`)
@@ -27,10 +32,16 @@ const {
   parsePresentation,
   applyArbitraryPositionClasses,
   updateElementPosition,
-  cleanup
+  cleanup,
+  slideErrors,
+  slideWarnings,
+  renderMetrics,
+  getDiagnostics
 } = useSlideRenderer({
   container: presentationRef,
-  enableArrangeMode: true
+  enableArrangeMode: true,
+  enableErrorRecovery: true,
+  maxRetries: 3
 });
 
 // Render a single slide
@@ -77,24 +88,30 @@ A simple presentation component that uses the slide renderer composable.
 </template>
 ```
 
-### SlidesPreviewPane
+### SlidesPreviewPaneEnhanced
 
-The main preview pane component that uses the composable architecture. This is the refactored version that replaces the old implementation.
+The main preview pane component that uses the enhanced composable architecture with robust error handling, security improvements, and performance optimizations. This replaces the old SlidesPreviewPane implementation.
 
 ## Migration Guide
 
-### From Direct Rendering
+### From Old Renderer
 
 Old way:
 ```typescript
-import { parseMarkdownToHtml } from '@/utils/slidevMarkdown';
-const html = parseMarkdownToHtml(markdown);
+import { useSlideRenderer } from '@/composables/useSlideRenderer';
+import SlidesPreviewPane from '@/components/slides/SlidesPreviewPane.vue';
+const { renderedContent, renderSlide } = useSlideRenderer();
+await renderSlide(markdown);
 ```
 
 New way:
 ```typescript
-import { useSlideRenderer } from '@/composables/useSlideRenderer';
-const { renderedContent, renderSlide } = useSlideRenderer();
+import { useSlideRendererEnhanced } from '@/composables/useSlideRendererEnhanced';
+import SlidesPreviewPaneEnhanced from '@/components/slides/SlidesPreviewPaneEnhanced.vue';
+const { renderedContent, renderSlide, slideErrors, slideWarnings } = useSlideRendererEnhanced({
+  enableErrorRecovery: true,
+  maxRetries: 3
+});
 await renderSlide(markdown);
 ```
 
@@ -111,12 +128,35 @@ await renderSlide(markdown);
 
 ```
 useSlideRenderer (Core)
-├── slidevMarkdown.ts (Parsing)
+├── slideRendererRobustness.ts (Robust parsing & rendering)
+├── slidevMarkdown.ts (Base parsing)
 ├── markdownElementDetector.ts (Element detection)
 └── Components
     ├── SlidePresentation.vue
-    └── SlidesPreviewPane.vue (refactored)
+    └── SlidesPreviewPane.vue (enhanced with error handling)
 ```
+
+## Enhanced Features
+
+### Error Recovery
+- Automatic retry with exponential backoff
+- Graceful degradation on syntax errors
+- Comprehensive error reporting and diagnostics
+
+### Security
+- XSS prevention with input sanitization
+- URL validation and CSS filtering
+- Safe rendering of user content
+
+### Performance
+- Optimized parsing for large content
+- Memory management and cleanup
+- Performance metrics collection
+
+### Developer Experience
+- Built-in debug mode and testing tools
+- Visual error feedback
+- Comprehensive test suite
 
 ## Future Enhancements
 

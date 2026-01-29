@@ -70,8 +70,26 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
     }
   });
 
-  const renderedContent = computed(() => {
+  // Temporarily disabled enhanced renderer to prevent hanging
+  // const {
+  //   renderedContent: enhancedRenderedContent,
+  //   renderSlide,
+  //   slideErrors,
+  //   slideWarnings,
+  //   renderMetrics,
+  //   isRendering: rendererIsRendering,
+  //   resetMetrics
+  // } = useSlideRenderer({
+  //   enableErrorRecovery: true,
+  //   maxRetries: 2
+  // });
+
+  const legacyRenderedContent = computed(() => {
     return parseMarkdownToHtml(currentSlideContent.value, currentLayout.value);
+  });
+
+  const renderedContent = computed(() => {
+    return legacyRenderedContent.value;
   });
 
   const themeStyleObject = computed(() => {

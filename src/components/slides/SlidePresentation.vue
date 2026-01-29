@@ -42,7 +42,9 @@ const {
   cleanup
 } = useSlideRenderer({
   container: presentationRef,
-  enableArrangeMode: false
+  enableArrangeMode: false,
+  enableErrorRecovery: true,
+  maxRetries: 3
 });
 
 // Computed properties

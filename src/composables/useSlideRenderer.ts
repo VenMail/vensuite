@@ -1,15 +1,18 @@
+/**
+ * Slide Renderer with Robust Error Handling
+ * Integrates comprehensive robustness improvements
+ */
+
 import { ref, computed, nextTick, watch, type Ref } from 'vue';
 import { 
-  parseSlidevMarkdown, 
-  splitMarkdownIntoBlocks,
-  renderBlocksToHtml, 
-  type MarkdownBlock 
+  parseSlidevMarkdown
 } from '@/utils/slidevMarkdown';
-
-export interface SlideRendererOptions {
-  container?: Ref<HTMLElement | null>;
-  enableArrangeMode?: boolean;
-}
+import { 
+  splitMarkdownIntoBlocksRobust, 
+  renderBlocksToHtmlRobust
+} from '@/utils/slideRendererRobustness';
+import { useAnimations } from './useAnimations';
+import { useVideoEmbed } from './useVideoEmbed';
 
 export interface AnimationConfig {
   [elementId: string]: {
@@ -21,217 +24,486 @@ export interface AnimationConfig {
   };
 }
 
-export interface RenderedSlide {
+export interface SlideRendererOptions {
+  container?: Ref<HTMLElement | null>;
+  enableArrangeMode?: boolean;
+  enableErrorRecovery?: boolean;
+  maxRetries?: number;
+}
+
+export interface EnhancedRenderedSlide {
   id: string;
   content: string;
   notes: string;
   frontmatter?: Record<string, any>;
   renderedHtml: string;
-  blocks: MarkdownBlock[];
+  blocks: any[];
+  errors: string[];
+  warnings: string[];
+  renderTime: number;
+}
+
+export interface RenderMetrics {
+  totalSlides: number;
+  successfulRenders: number;
+  failedRenders: number;
+  averageRenderTime: number;
+  totalErrors: number;
+  totalWarnings: number;
 }
 
 export function useSlideRenderer(options: SlideRendererOptions = {}) {
-  const { container, enableArrangeMode = false } = options;
+  const { 
+    container, 
+    enableArrangeMode = false, 
+    enableErrorRecovery = true,
+    maxRetries = 3 
+  } = options;
 
   // Reactive state
-  const currentSlide = ref<RenderedSlide | null>(null);
+  const currentSlide = ref<EnhancedRenderedSlide | null>(null);
   const isRendering = ref(false);
   const renderError = ref<string | null>(null);
+  const renderMetrics = ref<RenderMetrics>({
+    totalSlides: 0,
+    successfulRenders: 0,
+    failedRenders: 0,
+    averageRenderTime: 0,
+    totalErrors: 0,
+    totalWarnings: 0
+  });
+
+  // Use composables
+  const { animations, setAnimations, applyAnimations, initializeAnimations } = useAnimations();
+  const { initializeVideoEmbeds } = useVideoEmbed();
 
   // Computed properties
   const renderedContent = computed(() => currentSlide.value?.renderedHtml || '');
   const slideBlocks = computed(() => currentSlide.value?.blocks || []);
+  const slideErrors = computed(() => currentSlide.value?.errors || []);
+  const slideWarnings = computed(() => currentSlide.value?.warnings || []);
 
   /**
-   * Parse and render a markdown slide
+   * Enhanced slide rendering with comprehensive error handling
    */
-  async function renderSlide(markdown: string): Promise<RenderedSlide> {
+  async function renderSlide(markdown: string, retryCount = 0): Promise<EnhancedRenderedSlide> {
+    const startTime = performance.now();
     isRendering.value = true;
     renderError.value = null;
 
     try {
-      // Parse markdown into blocks
-      const blocks = splitMarkdownIntoBlocks(markdown);
-      
-      // Render blocks to HTML
-      const renderedHtml = renderBlocksToHtml(blocks);
+      // Input validation
+      if (!markdown || typeof markdown !== 'string') {
+        throw new Error('Invalid markdown input: expected non-empty string');
+      }
 
-      const renderedSlide: RenderedSlide = {
-        id: `slide-${Date.now()}`,
+      // Parse blocks with robust error handling
+      const { blocks, errors: blockErrors, warnings: blockWarnings } = splitMarkdownIntoBlocksRobust(markdown);
+      
+      // Render HTML with robust error handling
+      const { html, errors: renderErrors, warnings: renderWarnings } = renderBlocksToHtmlRobust(blocks);
+
+      // Combine all errors and warnings
+      const allErrors = [...blockErrors, ...renderErrors];
+      const allWarnings = [...blockWarnings, ...renderWarnings];
+
+      const renderedSlide: EnhancedRenderedSlide = {
+        id: `slide-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         content: markdown,
         notes: '',
-        renderedHtml,
-        blocks
+        renderedHtml: html,
+        blocks,
+        errors: allErrors,
+        warnings: allWarnings,
+        renderTime: performance.now() - startTime
       };
 
       currentSlide.value = renderedSlide;
+      
+      // Update metrics
+      updateMetrics(renderedSlide);
+
+      // Log warnings and errors
+      if (allWarnings.length > 0) {
+        console.warn('Slide rendering warnings:', allWarnings);
+      }
+      
+      if (allErrors.length > 0) {
+        console.error('Slide rendering errors:', allErrors);
+        if (!enableErrorRecovery) {
+          throw new Error(`Rendering failed with ${allErrors.length} errors`);
+        }
+      }
+
       return renderedSlide;
+
     } catch (error) {
-      console.error('Error rendering markdown:', error);
-      renderError.value = error instanceof Error ? error.message : 'Unknown error';
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      renderError.value = errorMessage;
+      
+      console.error('Slide rendering error:', error);
+
+      // Retry logic
+      if (enableErrorRecovery && retryCount < maxRetries) {
+        console.log(`Retrying render (${retryCount + 1}/${maxRetries})...`);
+        await new Promise(resolve => setTimeout(resolve, 100 * (retryCount + 1))); // Exponential backoff
+        return renderSlide(markdown, retryCount + 1);
+      }
+
+      // Create fallback slide
+      const fallbackSlide: EnhancedRenderedSlide = {
+        id: `slide-fallback-${Date.now()}`,
+        content: markdown,
+        notes: '',
+        renderedHtml: `<div class="render-error">
+          <h3>Rendering Error</h3>
+          <p>Failed to render slide content.</p>
+          <details>
+            <summary>Error Details</summary>
+            <pre>${escapeHtml(errorMessage)}</pre>
+          </details>
+          <details>
+            <summary>Original Content</summary>
+            <pre>${escapeHtml(markdown)}</pre>
+          </details>
+        </div>`,
+        blocks: [],
+        errors: [errorMessage],
+        warnings: [],
+        renderTime: performance.now() - startTime
+      };
+
+      currentSlide.value = fallbackSlide;
+      updateMetrics(fallbackSlide);
+      
+      return fallbackSlide;
     } finally {
       isRendering.value = false;
     }
   }
 
   /**
-   * Parse complete presentation
+   * Enhanced presentation parsing with error recovery
    */
-  function parsePresentation(markdown: string): RenderedSlide[] {
-    const presentation = parseSlidevMarkdown(markdown);
-    return presentation.slides.map(slide => {
-      const blocks = splitMarkdownIntoBlocks(slide.content);
-      const renderedHtml = renderBlocksToHtml(blocks);
+  function parsePresentation(markdown: string): EnhancedRenderedSlide[] {
+    const startTime = performance.now();
+    const slides: EnhancedRenderedSlide[] = [];
+    
+    try {
+      if (!markdown || typeof markdown !== 'string') {
+        throw new Error('Invalid presentation input');
+      }
+
+      const presentation = parseSlidevMarkdown(markdown);
       
-      return {
-        ...slide,
-        renderedHtml,
-        blocks
-      };
-    });
+      for (const slide of presentation.slides) {
+        try {
+          const { blocks, errors: blockErrors, warnings: blockWarnings } = splitMarkdownIntoBlocksRobust(slide.content);
+          const { html, errors: renderErrors, warnings: renderWarnings } = renderBlocksToHtmlRobust(blocks);
+          
+          const enhancedSlide: EnhancedRenderedSlide = {
+            ...slide,
+            id: slide.id || `slide-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            renderedHtml: html,
+            blocks,
+            errors: [...blockErrors, ...renderErrors],
+            warnings: [...blockWarnings, ...renderWarnings],
+            renderTime: 0 // Not tracked for batch parsing
+          };
+          
+          slides.push(enhancedSlide);
+          
+        } catch (slideError) {
+          console.error(`Error parsing slide ${slide.id}:`, slideError);
+          
+          // Add fallback slide
+          const fallbackSlide: EnhancedRenderedSlide = {
+            ...slide,
+            id: slide.id || `slide-fallback-${Date.now()}`,
+            renderedHtml: `<div class="slide-error">
+              <h3>Slide Parse Error</h3>
+              <p>Failed to parse this slide.</p>
+              <details>
+                <summary>Error Details</summary>
+                <pre>${escapeHtml(slideError instanceof Error ? slideError.message : String(slideError))}</pre>
+              </details>
+            </div>`,
+            blocks: [],
+            errors: [slideError instanceof Error ? slideError.message : String(slideError)],
+            warnings: [],
+            renderTime: 0
+          };
+          
+          slides.push(fallbackSlide);
+        }
+      }
+
+      console.log(`Parsed ${slides.length} slides in ${(performance.now() - startTime).toFixed(2)}ms`);
+      return slides;
+
+    } catch (error) {
+      console.error('Critical presentation parsing error:', error);
+      
+      // Return minimal fallback presentation
+      return [{
+        id: 'fallback-presentation',
+        content: markdown || '',
+        notes: '',
+        renderedHtml: `<div class="presentation-error">
+          <h2>Presentation Error</h2>
+          <p>Failed to parse the entire presentation.</p>
+          <details>
+            <summary>Error Details</summary>
+            <pre>${escapeHtml(error instanceof Error ? error.message : String(error))}</pre>
+          </details>
+        </div>`,
+        blocks: [],
+        errors: [error instanceof Error ? error.message : String(error)],
+        warnings: [],
+        renderTime: 0
+      }];
+    }
   }
 
   /**
-   * Apply arbitrary position classes to elements
+   * Enhanced arbitrary position class application
    */
-  function applyArbitraryPositionClasses(container: HTMLElement | null) {
+  function applyArbitraryPositionClasses(container: HTMLElement | null): void {
     if (!container) return;
 
-    container.querySelectorAll('[class*="["]').forEach((el) => {
-      const htmlEl = el as HTMLElement;
-      const cls = htmlEl.className || '';
-      const hasAbsolute = /\babsolute\b/.test(cls);
+    try {
+      const elements = container.querySelectorAll('[class*="["]');
+      console.log('🎨 DEBUG: Elements with bracket classes:', elements.length);
       
-      // Handle arbitrary top values like top-[18%], top-[100px], etc.
-      const topMatch = cls.match(/\btop-\[([^\]]+)\]/);
-      if (topMatch) {
-        const topValue = topMatch[1];
-        htmlEl.style.position = 'absolute';
-        htmlEl.style.top = topValue;
-      }
-      
-      // Handle arbitrary left values like left-[30%], left-[200px], etc.
-      const leftMatch = cls.match(/\bleft-\[([^\]]+)\]/);
-      if (leftMatch) {
-        const leftValue = leftMatch[1];
-        htmlEl.style.position = 'absolute';
-        htmlEl.style.left = leftValue;
-      }
-      
-      // If element has absolute positioning but no top/left, center it
-      if (hasAbsolute && !topMatch && !leftMatch) {
-        htmlEl.style.position = 'absolute';
-        if (!htmlEl.style.top && !htmlEl.style.left) {
-          htmlEl.style.top = '50%';
-          htmlEl.style.left = '50%';
-          htmlEl.style.transform = 'translate(-50%, -50%)';
-          htmlEl.style.transformOrigin = 'center center';
+      elements.forEach((el, index) => {
+        try {
+          const htmlEl = el as HTMLElement;
+          const cls = htmlEl.className || '';
+          console.log(`🎨 DEBUG: Element ${index} classes:`, cls);
+          
+          // Handle arbitrary top values
+          const topMatch = cls.match(/\btop-\[([^\]]+)\]/);
+          if (topMatch) {
+            const topValue = topMatch[1];
+            console.log(`🎨 DEBUG: Found top value: ${topValue}`);
+            
+            // Validate and sanitize top value
+            if (isValidPositionValue(topValue)) {
+              htmlEl.style.position = 'absolute';
+              htmlEl.style.top = topValue;
+              console.log(`🎨 DEBUG: Applied top: ${topValue}`);
+            } else {
+              console.warn(`Invalid top value: ${topValue}`);
+            }
+          }
+          
+          // Handle arbitrary left values
+          const leftMatch = cls.match(/\bleft-\[([^\]]+)\]/);
+          if (leftMatch) {
+            const leftValue = leftMatch[1];
+            console.log(`🎨 DEBUG: Found left value: ${leftValue}`);
+            
+            // Validate and sanitize left value
+            if (isValidPositionValue(leftValue)) {
+              htmlEl.style.position = 'absolute';
+              htmlEl.style.left = leftValue;
+              console.log(`🎨 DEBUG: Applied left: ${leftValue}`);
+            } else {
+              console.warn(`Invalid left value: ${leftValue}`);
+            }
+          }
+          
+          // Handle absolute positioning without explicit coordinates
+          const hasAbsolute = /\babsolute\b/.test(cls);
+          console.log(`🎨 DEBUG: Has absolute class: ${hasAbsolute}`);
+          if (hasAbsolute && !topMatch && !leftMatch) {
+            htmlEl.style.position = 'absolute';
+            if (!htmlEl.style.top && !htmlEl.style.left) {
+              htmlEl.style.top = '50%';
+              htmlEl.style.left = '50%';
+              htmlEl.style.transform = 'translate(-50%, -50%)';
+              htmlEl.style.transformOrigin = 'center center';
+            }
+          } else if (hasAbsolute || topMatch || leftMatch) {
+            if (!htmlEl.style.transform || htmlEl.style.transform === 'none') {
+              htmlEl.style.transform = 'translate(-50%, -50%)';
+              htmlEl.style.transformOrigin = 'center center';
+            }
+          }
+
+        } catch (elementError) {
+          console.error('Error applying position classes to element:', elementError);
         }
-      } else if (hasAbsolute || topMatch || leftMatch) {
-        if (!htmlEl.style.transform || htmlEl.style.transform === 'none') {
-          htmlEl.style.transform = 'translate(-50%, -50%)';
-          htmlEl.style.transformOrigin = 'center center';
-        }
-      }
-    });
+      });
+
+    } catch (error) {
+      console.error('Error applying arbitrary position classes:', error);
+    }
   }
 
   /**
-   * Update element position in markdown
+   * Validate position values for security and correctness
    */
-  function updateElementPosition(
-    markdown: string, 
-    lineStart: number, 
-    lineEnd: number, 
-    position: { top?: string; left?: string }
-  ): string {
-    const lines = markdown.split('\n');
-    const blockLines = lines.slice(lineStart, lineEnd + 1);
-    const firstLine = blockLines[0] || '';
+  function isValidPositionValue(value: string): boolean {
+    if (!value || typeof value !== 'string') return false;
     
-    // Parse existing attributes
-    const attrMatch = firstLine.match(/^(.*?)(\s*\{([^}]*)\}\s*)?$/);
-    if (!attrMatch) return markdown;
+    // Allow percentage values
+    if (/^-?\d+(\.\d+)?%$/.test(value)) return true;
     
-    const content = attrMatch[1];
-    const existingAttrs = attrMatch[3] || '';
+    // Allow pixel values
+    if (/^-?\d+px$/.test(value)) return true;
     
-    // Parse position classes
-    const classes = existingAttrs.match(/\.([^\s]+)/g) || [];
-    const filtered = classes.filter(c => {
-      const cls = c.slice(1);
-      return !cls.startsWith('top-[') && !cls.startsWith('left-[') && 
-             !['static', 'relative', 'absolute'].includes(cls);
-    });
+    // Allow viewport units
+    if (/^-?\d+(\.\d+)?vh$/.test(value)) return true;
+    if (/^-?\d+(\.\d+)?vw$/.test(value)) return true;
     
-    // Add new position classes
-    const newClasses = ['absolute'];
-    if (position.top) {
-      newClasses.push(position.top.includes('%') ? `top-[${position.top}]` : position.top);
-    }
-    if (position.left) {
-      newClasses.push(position.left.includes('%') ? `left-[${position.left}]` : position.left);
+    // Allow em/rem values
+    if (/^-?\d+(\.\d+)?em$/.test(value)) return true;
+    if (/^-?\d+(\.\d+)?rem$/.test(value)) return true;
+    
+    // Allow calc() expressions (basic validation)
+    if (value.startsWith('calc(') && value.endsWith(')')) {
+      const inner = value.slice(5, -1);
+      // Basic check for potentially dangerous content
+      if (!/javascript:|data:|expression\(/.test(inner)) {
+        return true;
+      }
     }
     
-    const allClasses = [...filtered, ...newClasses].filter(Boolean);
-    const classAttr = allClasses.length ? `.${allClasses.join(' .')}` : '';
-    
-    // Reconstruct line
-    const newFirstLine = content + (classAttr ? ` {${classAttr}}` : '');
-    const newBlockLines = [newFirstLine, ...blockLines.slice(1)];
-    const newLines = [
-      ...lines.slice(0, lineStart),
-      ...newBlockLines,
-      ...lines.slice(lineEnd + 1)
-    ];
-    
-    return newLines.join('\n');
+    return false;
   }
 
   /**
-   * Setup automatic rendering and style application
+   * Update rendering metrics
    */
-  function setupAutoRender() {
+  function updateMetrics(slide: EnhancedRenderedSlide): void {
+    renderMetrics.value.totalSlides++;
+    
+    if (slide.errors.length > 0) {
+      renderMetrics.value.failedRenders++;
+    } else {
+      renderMetrics.value.successfulRenders++;
+    }
+    
+    renderMetrics.value.totalErrors += slide.errors.length;
+    renderMetrics.value.totalWarnings += slide.warnings.length;
+    
+    // Update average render time
+    const totalTime = renderMetrics.value.averageRenderTime * (renderMetrics.value.totalSlides - 1) + slide.renderTime;
+    renderMetrics.value.averageRenderTime = totalTime / renderMetrics.value.totalSlides;
+  }
+
+  /**
+   * Reset metrics
+   */
+  function resetMetrics(): void {
+    renderMetrics.value = {
+      totalSlides: 0,
+      successfulRenders: 0,
+      failedRenders: 0,
+      averageRenderTime: 0,
+      totalErrors: 0,
+      totalWarnings: 0
+    };
+  }
+
+  /**
+   * Setup enhanced auto-render with error handling
+   */
+  function setupAutoRender(): void {
     if (!container?.value) return;
 
-    // Watch for content changes
+    // Watch for content changes with error handling
     watch(() => currentSlide.value?.renderedHtml, async () => {
-      await nextTick();
-      if (container.value) {
-        applyArbitraryPositionClasses(container.value);
+      try {
+        await nextTick();
+        if (container.value) {
+          applyArbitraryPositionClasses(container.value);
+          
+          // Initialize animations with error handling
+          try {
+            await initializeAnimations(container.value);
+          } catch (animError) {
+            console.warn('Animation initialization failed:', animError);
+          }
+          
+          // Initialize video embeds with error handling
+          try {
+            await initializeVideoEmbeds(container.value);
+          } catch (videoError) {
+            console.warn('Video embed initialization failed:', videoError);
+          }
+        }
+      } catch (error) {
+        console.error('Auto-render setup error:', error);
       }
     }, { immediate: true });
 
-    // Set up MutationObserver for arrange mode
+    // Enhanced MutationObserver for arrange mode
     if (enableArrangeMode && container.value) {
-      const observer = new MutationObserver(() => {
-        if (container.value) {
-          setTimeout(() => applyArbitraryPositionClasses(container.value), 10);
+      const observer = new MutationObserver(async () => {
+        try {
+          if (container.value) {
+            setTimeout(() => {
+              try {
+                applyArbitraryPositionClasses(container.value);
+                if (container.value) applyAnimations(container.value);
+              } catch (error) {
+                console.error('MutationObserver error:', error);
+              }
+            }, 10);
+          }
+        } catch (error) {
+          console.error('MutationObserver callback error:', error);
         }
       });
       
-      observer.observe(container.value, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['class']
-      });
-      
-      // Store observer for cleanup
-      (container.value as any)._mutationObserver = observer;
+      try {
+        observer.observe(container.value, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['class']
+        });
+        
+        // Store observer for cleanup
+        (container.value as any)._mutationObserver = observer;
+      } catch (error) {
+        console.error('Failed to setup MutationObserver:', error);
+      }
     }
   }
 
   /**
-   * Cleanup resources
+   * Enhanced cleanup
    */
-  function cleanup() {
-    // Clear MutationObserver
-    if (container?.value && (container.value as any)._mutationObserver) {
-      (container.value as any)._mutationObserver.disconnect();
-      delete (container.value as any)._mutationObserver;
+  function cleanup(): void {
+    try {
+      // Clear MutationObserver
+      if (container?.value && (container.value as any)._mutationObserver) {
+        (container.value as any)._mutationObserver.disconnect();
+        delete (container.value as any)._mutationObserver;
+      }
+    } catch (error) {
+      console.error('Cleanup error:', error);
     }
+  }
+
+  /**
+   * Get diagnostic information
+   */
+  function getDiagnostics(): {
+    currentSlide: EnhancedRenderedSlide | null;
+    metrics: RenderMetrics;
+    isRendering: boolean;
+    renderError: string | null;
+  } {
+    return {
+      currentSlide: currentSlide.value,
+      metrics: { ...renderMetrics.value },
+      isRendering: isRendering.value,
+      renderError: renderError.value
+    };
   }
 
   // Initialize auto-render if container is provided
@@ -244,15 +516,44 @@ export function useSlideRenderer(options: SlideRendererOptions = {}) {
     currentSlide: computed(() => currentSlide.value),
     renderedContent,
     slideBlocks,
+    slideErrors,
+    slideWarnings,
     isRendering: computed(() => isRendering.value),
     renderError: computed(() => renderError.value),
+    renderMetrics: computed(() => renderMetrics.value),
     
     // Methods
-    renderSlide,
-    parsePresentation,
-    applyArbitraryPositionClasses,
-    updateElementPosition,
-    setupAutoRender,
-    cleanup
+    renderSlide: renderSlide,
+    parsePresentation: parsePresentation,
+    applyArbitraryPositionClasses: applyArbitraryPositionClasses,
+    setupAutoRender: setupAutoRender,
+    cleanup: cleanup,
+    resetMetrics,
+    getDiagnostics,
+    
+    // Animation methods
+    animations,
+    setAnimations,
+    applyAnimations,
+    initializeAnimations,
+    
+    // Video methods
+    initializeVideoEmbeds
   };
+}
+
+/**
+ * Simple HTML escape function
+ */
+function escapeHtml(text: string): string {
+  if (!text || typeof text !== 'string') {
+    return '';
+  }
+  
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

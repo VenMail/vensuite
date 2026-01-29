@@ -1,4 +1,5 @@
 import { t } from '@/i18n';
+import { parseVideoMarkdown } from '@/composables/useVideoEmbed';
 /**
  * Slidev Markdown Utilities
  * Handles parsing and conversion of Slidev-flavored markdown
@@ -184,13 +185,23 @@ export function parseBlockAttributesFromLine(line: string): { rest: string; clas
   if (!match) return { rest: line };
   const rest = line.slice(0, match.index).trim();
   const attrs = match[1];
-  const classMatch = attrs.match(/\.([a-zA-Z0-9_-]+)/g);
+  
+  // Enhanced regex to support arbitrary values like .top-[5.3%], .left-[4.0%], .w-[736px]
+  const classMatch = attrs.match(/\.([a-zA-Z0-9_\-\[\]%\.]+)/g);
   const styleMatch = attrs.match(/style\s*=\s*"([^"]*)"/);
-  return {
+  
+  const result = {
     rest,
     class: classMatch ? classMatch.map((c: string) => c.slice(1)).join(' ') : undefined,
     style: styleMatch ? styleMatch[1] : undefined
   };
+  
+  // Debug logging
+  if (result.class) {
+    console.log('🎨 DEBUG: Parsed block classes:', result.class, 'from line:', line);
+  }
+  
+  return result;
 }
 
 function parseBlockAttributes(line: string): { rest: string; class?: string; style?: string } {
@@ -224,6 +235,7 @@ function processInlineContent(html: string): string {
 }
 
 interface MarkdownBlock {
+  id: string; // Unique identifier
   startLine: number;
   endLine: number;
   type: string;
@@ -242,6 +254,11 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
   const blocks: MarkdownBlock[] = [];
   let i = 0;
 
+  // Generate unique ID for each block
+  const generateBlockId = (type: string, start: number, end: number): string => {
+    return `${type}-${start}-${end}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   while (i < lines.length) {
     const line = lines[i];
     const trimmed = line.trim();
@@ -250,7 +267,13 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
       const start = i;
       i++;
       while (i < lines.length && !lines[i].trim().startsWith('```')) i++;
-      blocks.push({ startLine: start, endLine: i, type: 'mermaid', lines: lines.slice(start, i + 1) });
+      blocks.push({ 
+        id: generateBlockId('mermaid', start, i),
+        startLine: start, 
+        endLine: i, 
+        type: 'mermaid', 
+        lines: lines.slice(start, i + 1) 
+      });
       i++;
       continue;
     }
@@ -258,7 +281,13 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
       const start = i;
       i++;
       while (i < lines.length && !lines[i].trim().startsWith('```')) i++;
-      blocks.push({ startLine: start, endLine: i, type: 'plantuml', lines: lines.slice(start, i + 1) });
+      blocks.push({ 
+        id: generateBlockId('plantuml', start, i),
+        startLine: start, 
+        endLine: i, 
+        type: 'plantuml', 
+        lines: lines.slice(start, i + 1) 
+      });
       i++;
       continue;
     }
@@ -266,7 +295,13 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
       const start = i;
       i++;
       while (i < lines.length && !lines[i].trim().startsWith('```')) i++;
-      blocks.push({ startLine: start, endLine: i, type: 'code', lines: lines.slice(start, i + 1) });
+      blocks.push({ 
+        id: generateBlockId('code', start, i),
+        startLine: start, 
+        endLine: i, 
+        type: 'code', 
+        lines: lines.slice(start, i + 1) 
+      });
       i++;
       continue;
     }
@@ -276,6 +311,7 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
       const innerMatch = rest.match(/^(#{1,6})\s+(.+)$/);
       const content = innerMatch ? innerMatch[2] : rest;
       blocks.push({
+        id: generateBlockId('heading', i, i),
         startLine: i,
         endLine: i,
         type: 'heading',
@@ -293,6 +329,7 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
       const imgMatch = rest.match(/!\[([^\]]*)\]\(([^)]+)\)/);
       if (imgMatch) {
         blocks.push({
+          id: generateBlockId('image', i, i),
           startLine: i,
           endLine: i,
           type: 'image',
@@ -306,10 +343,30 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
       i++;
       continue;
     }
+    if (trimmed.match(/@\[(youtube|vimeo|video)\]\(([^)]+)\)/)) {
+      const { class: blockClass, style: blockStyle } = parseBlockAttributes(trimmed);
+      blocks.push({
+        id: generateBlockId('video', i, i),
+        startLine: i,
+        endLine: i,
+        type: 'video',
+        lines: [line],
+        blockClass,
+        blockStyle
+      });
+      i++;
+      continue;
+    }
     if (trimmed.includes('|') && trimmed.match(/\|.+\|/)) {
       const start = i;
       while (i < lines.length && lines[i].trim().includes('|')) i++;
-      blocks.push({ startLine: start, endLine: i - 1, type: 'table', lines: lines.slice(start, i) });
+      blocks.push({ 
+        id: generateBlockId('table', start, i - 1),
+        startLine: start, 
+        endLine: i - 1, 
+        type: 'table', 
+        lines: lines.slice(start, i) 
+      });
       continue;
     }
     if (trimmed.match(/^[\*\-+]\s/) || trimmed.match(/^\d+\.\s/)) {
@@ -327,17 +384,35 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
         break;
       }
       if (i > start && lines[i - 1].trim() === '') i--;
-      blocks.push({ startLine: start, endLine: Math.max(start, i - 1), type: 'list', lines: lines.slice(start, i) });
+      blocks.push({ 
+        id: generateBlockId('list', start, i - 1),
+        startLine: start, 
+        endLine: i - 1, 
+        type: 'list', 
+        lines: lines.slice(start, i) 
+      });
       continue;
     }
     if (trimmed.startsWith('>')) {
       const start = i;
       while (i < lines.length && lines[i].trim().startsWith('>')) i++;
-      blocks.push({ startLine: start, endLine: i - 1, type: 'blockquote', lines: lines.slice(start, i) });
+      blocks.push({ 
+        id: generateBlockId('blockquote', start, i - 1),
+        startLine: start, 
+        endLine: i - 1, 
+        type: 'blockquote', 
+        lines: lines.slice(start, i) 
+      });
       continue;
     }
     if (trimmed.match(/^[-*_]{3,}$/)) {
-      blocks.push({ startLine: i, endLine: i, type: 'hr', lines: [line] });
+      blocks.push({ 
+        id: generateBlockId('hr', i, i),
+        startLine: i, 
+        endLine: i, 
+        type: 'hr', 
+        lines: [line] 
+      });
       i++;
       continue;
     }
@@ -356,9 +431,23 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
     const { rest: firstRest, class: blockClass, style: blockStyle } = parseBlockAttributes(firstLine.trim());
     if (blockClass || blockStyle) {
       paraLines[0] = firstRest;
-      blocks.push({ startLine: start, endLine: i - 1, type: 'paragraph', lines: paraLines, blockClass, blockStyle });
+      blocks.push({
+        id: generateBlockId('paragraph', start, i - 1),
+        startLine: start,
+        endLine: i - 1,
+        type: 'paragraph',
+        lines: paraLines,
+        blockClass,
+        blockStyle
+      });
     } else {
-      blocks.push({ startLine: start, endLine: i - 1, type: 'paragraph', lines: paraLines });
+      blocks.push({
+        id: generateBlockId('paragraph', start, i - 1),
+        startLine: start,
+        endLine: i - 1,
+        type: 'paragraph',
+        lines: paraLines
+      });
     }
   }
 
@@ -372,8 +461,9 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
   const parts: string[] = [];
 
   for (const block of blocks) {
-    const { startLine, endLine, type, lines, blockClass, blockStyle } = block;
-    const dataAttrs = ` data-markdown-line-start="${startLine}" data-markdown-line-end="${endLine}" data-markdown-type="${type}"`;
+    const { id, startLine, endLine, type, lines, blockClass, blockStyle } = block;
+    // Include block ID in data attributes for better tracking
+    const dataAttrs = ` data-block-id="${id}" data-markdown-line-start="${startLine}" data-markdown-line-end="${endLine}" data-markdown-type="${type}"`;
     const classAttr = blockClass ? ` class="${blockClass}"` : '';
     const styleAttr = blockStyle ? ` style="${blockStyle}"` : '';
 
@@ -385,6 +475,13 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
     if (type === 'plantuml') {
       const code = lines.slice(1, -1).join('\n').trim();
       parts.push(`<div class="plantuml-diagram"${dataAttrs} data-plantuml="${encodeURIComponent(code)}">${renderPlantumlPlaceholder(code)}</div>`);
+      continue;
+    }
+    if (type === 'video') {
+      // Handle video blocks with video parsing
+      const videoMarkdown = lines.join('\n');
+      const videoHtml = parseVideoMarkdown(videoMarkdown);
+      parts.push(`<div${dataAttrs}${classAttr}${styleAttr}>${videoHtml}</div>`);
       continue;
     }
     if (type === 'code') {
@@ -454,9 +551,15 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
     }
     if (type === 'paragraph') {
       const text = lines.join('\n');
-      parts.push(`<p${classAttr}${styleAttr}${dataAttrs}>${processInlineContent(text)}</p>`);
+      // Process video syntax in paragraphs
+      const processedText = parseVideoMarkdown(text);
+      parts.push(`<p${classAttr}${styleAttr}${dataAttrs}>${processInlineContent(processedText)}</p>`);
       continue;
     }
+    
+    // Default case
+    const text = lines.join('\n');
+    parts.push(`<div${classAttr}${styleAttr}${dataAttrs}>${processInlineContent(text)}</div>`);
   }
 
   return parts.join('\n');
@@ -533,7 +636,7 @@ export function processMarkdownContent(markdown: string): string {
 
   // Handle PlantUML diagrams
   html = html.replace(/```plantuml\n([\s\S]*?)```/g, (_, code) => {
-    return `<div class="plantuml-diagram" data-plantuml="${encodeURIComponent(code.trim())}">${renderPlantumlPlaceholder(code.trim())}</div>`;
+    return `<div class="plantuml-diagram" data-plantuml="${encodeURI(code.trim())}">${renderPlantumlPlaceholder(code.trim())}</div>`;
   });
 
   // Handle code blocks with line numbers and highlighting

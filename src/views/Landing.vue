@@ -53,7 +53,7 @@ const goToApp = () => {
 }
 
 const goToLogin = () => {
-  window.location.href = '/login'
+  window.location.href = '/login?action=login'
 }
 
 const goToGithub = () => {
@@ -162,6 +162,99 @@ const goToGithub = () => {
               </CardDescription>
             </CardContent>
           </Card>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screenshot Showcase -->
+    <section class="py-20 px-4 bg-gray-50 dark:bg-gray-900 transition-colors">
+      <div class="container mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-colors">
+            See It in Action
+          </h2>
+          <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto transition-colors">
+            Experience the power of modern productivity tools with AI-powered features and beautiful interfaces
+          </p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <!-- AI Form Creation -->
+          <div class="group relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div class="absolute top-4 left-4 z-10">
+                <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                  AI Powered
+                </div>
+              </div>
+              <div class="p-4">
+                <img 
+                  src="/form-ai.png" 
+                  alt="AI Form Creation" 
+                  class="w-full h-64 object-cover rounded-lg"
+                />
+                <div class="mt-4">
+                  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">AI Form Builder</h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">Create beautiful forms instantly with AI. Just describe what you need and watch the magic happen.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document Editor -->
+          <div class="group relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div class="absolute top-4 left-4 z-10">
+                <div class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                  Rich Editor
+                </div>
+              </div>
+              <div class="p-4">
+                <img 
+                  src="/docs-editor.png" 
+                  alt="Document Editor" 
+                  class="w-full h-64 object-cover rounded-lg"
+                />
+                <div class="mt-4">
+                  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Document Editor</h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">Professional document editing with real-time collaboration and beautiful formatting.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workspace Dashboard -->
+          <div class="group relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div class="absolute top-4 left-4 z-10">
+                <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                  Workspace
+                </div>
+              </div>
+              <div class="p-4">
+                <img 
+                  src="/drive_home.png" 
+                  alt="Workspace Dashboard" 
+                  class="w-full h-64 object-cover rounded-lg"
+                />
+                <div class="mt-4">
+                  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Unified Workspace</h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">All your documents, forms, and files in one beautiful, organized workspace.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="text-center mt-12">
+          <Button size="lg" @click="goToLogin" class="bg-primary-600 hover:bg-primary-700 shadow-lg hover:shadow-xl transition-all duration-200">
+            <Zap class="w-5 h-5 mr-2" />
+            Try These Features Now
+            <ArrowRight class="w-5 h-5 ml-2" />
+          </Button>
         </div>
       </div>
     </section>

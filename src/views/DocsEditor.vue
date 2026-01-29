@@ -383,6 +383,13 @@
         </div>
       </div>
       </div>
+      
+      <!-- Page Badge Overlay -->
+      <PageBadgeOverlay
+        :page-gap="paginationSettings.pageGap || 40"
+        :label="'Made with ❤️ by VenSuite'"
+        :href="'https://vensuite.dev'"
+      />
     </div>
 
     <!-- Chat Panel -->
@@ -622,6 +629,7 @@ import ShareCard from '@/components/ShareCard.vue';
 import { parseSharingInfoString, serializeSharingInfoString, labelToShareLevel, type ShareMember, type ShareLevel, type ShareLevelLabel } from '@/utils/sharing';
 import ImagePicker from '@/components/ImagePicker.vue';
 import PageRuler from '@/components/forms/PageRuler.vue';
+import PageBadgeOverlay from '@/components/docs/PageBadgeOverlay.vue';
 import { Button } from '@/components/ui/button';
 import { useDocumentConflictResolver } from '@/composables/useDocumentConflictResolver';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
@@ -2457,6 +2465,7 @@ const paginationSettings = reactive({
   footerRight: '{page}',
   pageBorder: true,
   pageShadow: true,
+  pageGap: 40,
 });
 
 const MM_TO_PX = 96 / 25.4;

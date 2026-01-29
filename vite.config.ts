@@ -1,9 +1,6 @@
 import path from "node:path";
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
-
-import tailwind from "tailwindcss";
-import autoprefixer from "autoprefixer";
 // @ts-ignore
 import { univerPlugin } from '@univerjs/vite-plugin';
 
@@ -12,11 +9,6 @@ export default defineConfig(({ mode }) => {
   const shareBaseUrl = env.VITE_SHARE_BASE_URL || 'https://venia.cloud';
 
   return {
-    css: {
-      postcss: {
-        plugins: [tailwind(), autoprefixer()],
-      },
-    },
     plugins: [
       vue(),
       univerPlugin(),
