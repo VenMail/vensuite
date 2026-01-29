@@ -8,6 +8,12 @@ import { apiClient } from './apiClient';
 import type { SlidevSlide } from '@/utils/slidevMarkdown';
 import { generateDeckThumbnail, createPlaceholderThumbnail } from '@/utils/thumbnailGenerator';
 
+const SLIDE_DECKS_DEBUG = Boolean(import.meta.env.DEV);
+const logSlideDecksDebug = (...args: unknown[]) => {
+  if (!SLIDE_DECKS_DEBUG) return;
+  console.log(...args);
+};
+
 export interface SlideDeck {
   id: string;
   title: string;
@@ -44,7 +50,7 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
   isLoadingList.value = true;
   
   try {
-    console.log('🔍 Fetching slide decks - trying multiple approaches...');
+    logSlideDecksDebug('🔍 Fetching slide decks - trying multiple approaches...');
     
     // Try multiple approaches to find slide decks
     let allItems: any[] = [];
@@ -52,7 +58,7 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
     
     // Method 1: Try file_type: 'slides'
     try {
-      console.log('🔄 Trying file_type: slides');
+      logSlideDecksDebug('🔄 Trying file_type: slides');
       const response1 = await apiClient.get('/app-files', {
         params: {
           file_type: 'slides',
@@ -65,12 +71,12 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
         fetchMethods.push('file_type: slides');
       }
     } catch (error) {
-      console.log('❌ file_type: slides failed');
+      logSlideDecksDebug('❌ file_type: slides failed');
     }
     
     // Method 2: Try file_type: 'pptx' (since slides are being saved as pptx)
     try {
-      console.log('🔄 Trying file_type: pptx');
+      logSlideDecksDebug('🔄 Trying file_type: pptx');
       const response2 = await apiClient.get('/app-files', {
         params: {
           file_type: 'pptx',
@@ -83,12 +89,12 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
         fetchMethods.push('file_type: pptx');
       }
     } catch (error) {
-      console.log('❌ file_type: pptx failed');
+      logSlideDecksDebug('❌ file_type: pptx failed');
     }
     
     // Method 3: Try type: 'slides'
     try {
-      console.log('🔄 Trying type: slides');
+      logSlideDecksDebug('🔄 Trying type: slides');
       const response3 = await apiClient.get('/app-files', {
         params: {
           type: 'slides',
@@ -101,12 +107,12 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
         fetchMethods.push('type: slides');
       }
     } catch (error) {
-      console.log('❌ type: slides failed');
+      logSlideDecksDebug('❌ type: slides failed');
     }
     
     // Method 4: Try type: 'pptx'
     try {
-      console.log('🔄 Trying type: pptx');
+      logSlideDecksDebug('🔄 Trying type: pptx');
       const response4 = await apiClient.get('/app-files', {
         params: {
           type: 'pptx',
@@ -119,7 +125,7 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
         fetchMethods.push('type: pptx');
       }
     } catch (error) {
-      console.log('❌ type: pptx failed');
+      logSlideDecksDebug('❌ type: pptx failed');
     }
 
     // Remove duplicates by ID
@@ -127,9 +133,9 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
       index === self.findIndex((t) => t.id === item.id)
     );
 
-    console.log('📄 Combined results from methods:', fetchMethods.join(', '));
-    console.log('📄 Total unique items found:', uniqueItems.length);
-    console.log('📄 Items:', uniqueItems.map(item => ({
+    logSlideDecksDebug('📄 Combined results from methods:', fetchMethods.join(', '));
+    logSlideDecksDebug('📄 Total unique items found:', uniqueItems.length);
+    logSlideDecksDebug('📄 Items:', uniqueItems.map(item => ({
       id: item.id,
       title: item.title,
       file_type: item.file_type,
@@ -138,7 +144,7 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
     })));
 
     const decks: SlideDeck[] = uniqueItems.map((item: any) => {
-      console.log('🔍 Processing item:', {
+      logSlideDecksDebug('🔍 Processing item:', {
         id: item.id,
         title: item.title,
         file_type: item.file_type,
@@ -148,7 +154,7 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
       });
       
       const slides = parseSlidesFromMetadata(item.metadata, item.content);
-      console.log('📊 Parsed slides count:', slides.length, 'for item:', item.id);
+      logSlideDecksDebug('📊 Parsed slides count:', slides.length, 'for item:', item.id);
       
       return {
         id: item.id,
@@ -163,15 +169,15 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
       };
     });
 
-    console.log('🎯 Final decks array:', decks);
-    console.log('🎯 Number of decks processed:', decks.length);
+    logSlideDecksDebug('🎯 Final decks array:', decks);
+    logSlideDecksDebug('🎯 Number of decks processed:', decks.length);
 
     // Clear cache and update with fresh data
     slideDecksCache.value.clear();
     decks.forEach(deck => {
       slideDecksCache.value.set(deck.id, deck);
     });
-    console.log('🗑️ Cache cleared and updated with', decks.length, 'decks');
+    logSlideDecksDebug('🗑️ Cache cleared and updated with', decks.length, 'decks');
 
     return decks;
   } catch (error) {
@@ -265,7 +271,7 @@ export async function getDeckThumbnail(deck: SlideDeck): Promise<string> {
  * Parse slides from metadata or content
  */
 function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[] {
-  console.log('🔧 parseSlidesFromMetadata called with:', {
+  logSlideDecksDebug('🔧 parseSlidesFromMetadata called with:', {
     hasMetadata: !!metadata,
     hasContent: !!content,
     metadataSlides: metadata?.slides,
@@ -277,7 +283,7 @@ function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[]
   if (content) {
     try {
       const data: any = JSON.parse(content);
-      console.log('📖 Parsed content data:', {
+      logSlideDecksDebug('📖 Parsed content data:', {
         hasSlides: !!data.slides,
         slidesType: typeof data.slides,
         slidesIsArray: Array.isArray(data.slides),
@@ -286,7 +292,7 @@ function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[]
       });
       
       if (data.slides && Array.isArray(data.slides)) {
-        console.log('✅ Returning slides from content:', data.slides.length);
+        logSlideDecksDebug('✅ Returning slides from content:', data.slides.length);
         return data.slides;
       }
     } catch (error) {
@@ -300,7 +306,7 @@ function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[]
       const data: any = JSON.parse(content);
       // Check if it's a slide deck structure (from persistence)
       if (data.title && data.theme && data.slides) {
-        console.log('✅ Found slide deck structure in content:', data.slides.length);
+        logSlideDecksDebug('✅ Found slide deck structure in content:', data.slides.length);
         return data.slides;
       }
     } catch (error) {
@@ -310,11 +316,11 @@ function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[]
   
   // Fallback to metadata.slides
   if (!metadata || !metadata.slides) {
-    console.log('❌ No metadata.slides found, checking for PPTX indicators...');
+    logSlideDecksDebug('❌ No metadata.slides found, checking for PPTX indicators...');
     
     // For PPTX files, create a default slide if we can't find any
     if (content && (content.includes('pptx') || content.includes('presentation'))) {
-      console.log('🔄 PPTX file detected but no slides found, creating default slide');
+      logSlideDecksDebug('🔄 PPTX file detected but no slides found, creating default slide');
       return [{
         id: 'slide-1-default',
         content: '# Untitled Presentation\n\nYour presentation content here',
@@ -328,7 +334,7 @@ function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[]
     return [];
   }
 
-  console.log('🔄 Trying metadata.slides fallback:', {
+  logSlideDecksDebug('🔄 Trying metadata.slides fallback:', {
     metadataSlidesType: typeof metadata.slides,
     metadataSlidesIsString: typeof metadata.slides === 'string',
     metadataSlidesIsArray: Array.isArray(metadata.slides)
@@ -338,18 +344,18 @@ function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[]
     if (typeof metadata.slides === 'string') {
       // Parse from JSON string
       const parsed = JSON.parse(metadata.slides);
-      console.log('✅ Parsed metadata.slides from string:', parsed.length);
+      logSlideDecksDebug('✅ Parsed metadata.slides from string:', parsed.length);
       return parsed;
     } else if (Array.isArray(metadata.slides)) {
       // Already parsed
-      console.log('✅ Using metadata.slides array directly:', metadata.slides.length);
+      logSlideDecksDebug('✅ Using metadata.slides array directly:', metadata.slides.length);
       return metadata.slides;
     }
   } catch (error) {
     console.warn('Failed to parse slides from metadata:', error);
   }
 
-  console.log('❌ All parsing attempts failed, returning empty array');
+  logSlideDecksDebug('❌ All parsing attempts failed, returning empty array');
   return [];
 }
 

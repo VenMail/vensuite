@@ -83,10 +83,10 @@
     </WorkspaceTopBar>
 
     <!-- Main Content -->
-    <div class="flex-1 min-h-0 flex flex-col mt-6">
+    <div class="flex-1 min-h-0 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6">
       <ScrollArea
         :class="[
-          'flex-1 min-h-0 rounded-lg shadow-sm border mx-6 mb-6',
+          'flex-1 min-h-0 rounded-lg shadow-sm border',
           'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700',
         ]"
       >
@@ -95,7 +95,7 @@
           <!-- Select All header for list view -->
           <div
             v-if="viewMode === 'list'"
-            class="flex items-center gap-3 px-6 py-3"
+            class="flex items-center gap-3 px-3 sm:px-4 md:px-6 py-3"
           >
             <input
               type="checkbox"
@@ -112,7 +112,7 @@
           <!-- Select All button for grid and thumbnail views -->
           <div
             v-else
-            class="flex items-center justify-between px-6 py-3"
+            class="flex items-center justify-between px-3 sm:px-4 md:px-6 py-3"
           >
             <Button
               variant="ghost"

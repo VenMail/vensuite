@@ -11,6 +11,8 @@
     @update-file="$emit('update-file', $event)"
     @delete-file="$emit('delete-file', $event)"
     @contextmenu-file="$emit('contextmenu-file', $event)"
+    @swipe-left="handleSwipeLeft"
+    @swipe-right="handleSwipeRight"
   />
   
   <!-- Render desktop FileItem on non-mobile devices -->
@@ -608,6 +610,19 @@ const onDragStart = (event: DragEvent) => {
 const onDragEnd = () => {
   if (isRenaming.value) return;
   if (fileItemRef.value) fileItemRef.value.style.opacity = "1";
+};
+
+// Swipe handlers for mobile touch devices
+const handleSwipeLeft = (file: FileData) => {
+  console.log('Swipe left detected for file:', file.title);
+  // Swipe left typically triggers delete action
+  deleteFile();
+};
+
+const handleSwipeRight = (file: FileData) => {
+  console.log('Swipe right detected for file:', file.title);
+  // Swipe right typically triggers open/share action
+  openFile();
 };
 
 onMounted(() => {

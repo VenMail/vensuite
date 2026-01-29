@@ -901,7 +901,6 @@ function joinDoc() {
   if (wsService.value && docId && docId !== 'new') {
     try {
       isJoined.value = wsService.value.joinSheet(docId, handleIncomingMessage);
-      console.log('Joined document:', docId);
     } catch (error) {
       console.error('Error joining document:', error);
     }

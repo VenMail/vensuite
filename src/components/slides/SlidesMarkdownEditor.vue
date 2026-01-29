@@ -16,6 +16,16 @@
         </button>
         
         <div class="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+
+        <!-- Arrange layout: enter arrange mode, collapse markdown, focus in preview -->
+        <button
+          type="button"
+          class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+          title="Arrange layout: move elements in preview. Markdown collapses; click Finish when done."
+          @click="emit('enter-arrange')"
+        >
+          <Move class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+        </button>
         
         <!-- Emoji Button -->
         <button
@@ -79,7 +89,7 @@ import { ref, nextTick } from 'vue';
 import { 
   Heading, List, Code, Image, Quote, Table,
   GitBranch, LayoutGrid, Link, Palette, StickyNote, ChevronDown,
-  Smile
+  Smile, Move
 } from 'lucide-vue-next';
 import EmojiPickerDialog from './EmojiPickerDialog.vue';
 import { getElementAtCursor, getCursorPosition, type MarkdownElement } from '@/utils/markdownElementDetector';
@@ -105,6 +115,7 @@ const emit = defineEmits<{
   'update:notes': [value: string];
   'insert-markdown': [template: string];
   'cursor-change': [element: MarkdownElement | null];
+  'enter-arrange': [];
 }>();
 
 const editorRef = ref<HTMLTextAreaElement | null>(null);

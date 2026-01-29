@@ -12,7 +12,7 @@
     </div>
 
     <!-- File browser -->
-    <div class="flex-1 flex flex-col gap-6 p-4 sm:p-6 overflow-hidden">
+    <div class="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 overflow-hidden">
       <WorkspaceTopBar
         :title="currentTitle"
         :subtitle="sheetsSubtitle"
@@ -125,7 +125,7 @@
                   {{$t('Views.Sheets.heading.create_new_spreadsheet')}}
                 </DialogTitle>
               </DialogHeader>
-              <div class="grid grid-cols-2 gap-4 p-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 sm:gap-4 p-2">
                 <Button
                   v-for="template in spreadsheetTemplates"
                   :key="template.name"
@@ -150,7 +150,7 @@
       <div
         class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/70 backdrop-blur shadow-sm overflow-hidden group hover:shadow-lg transition-all duration-300"
       >
-        <div class="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200/70 dark:border-gray-800/70">
+        <div class="flex items-center justify-between px-3 sm:px-4 md:px-6 py-2 sm:py-3 border-b border-gray-200/70 dark:border-gray-800/70">
           <div>
             <p class="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">
               {{$t('Views.Sheets.heading.start_a_new_spreadsheet')}}
@@ -163,11 +163,11 @@
         </div>
         <div class="relative">
           <div class="absolute inset-0 bg-gradient-to-r from-gray-50/90 via-white/70 to-gray-50/90 dark:from-gray-900/80 dark:via-gray-900/40 dark:to-gray-900/80 blur-xl opacity-70 group-hover:opacity-0 transition-opacity duration-300 pointer-events-none"></div>
-          <div class="template-preview-scroll overflow-x-auto px-3 sm:px-5 py-4 space-x-4 flex">
+          <div class="template-preview-scroll overflow-x-auto px-2 sm:px-3 md:px-5 py-3 sm:py-4 space-x-3 sm:space-x-4 flex">
             <div
               v-for="template in spreadsheetTemplates"
               :key="template.slug"
-              class="w-44 min-w-[11rem] rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+              class="w-40 sm:w-44 min-w-[10rem] sm:min-w-[11rem] rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
               @click="createNewSpreadsheet(template.slug)"
             >
               <div
@@ -258,12 +258,12 @@
             </span>
           </div>
 
-          <div class="p-2 sm:p-4">
+          <div class="p-2 sm:p-4 lg:p-6">
             <div
               :class="{
-                'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4':
+                'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4':
                   viewMode === 'grid',
-                'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2':
+                'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3':
                   viewMode === 'thumbnail',
                 'space-y-1': viewMode === 'list',
               }"
@@ -504,7 +504,6 @@ function buildContextMenuActions({
       label: "Share",
       icon: Share2,
       action: () => {
-        console.log("Share");
         close();
       },
     });
@@ -856,7 +855,6 @@ function openUploadDialog() {
 }
 
 async function handleUploadComplete(files: any[]) {
-  console.log("Upload completed:", files);
   toast.success(
     `Successfully uploaded ${files.length} file${files.length !== 1 ? "s" : ""}`
   );

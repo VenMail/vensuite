@@ -25,8 +25,6 @@ const props = defineProps({
   }
 })
 
-console.log('Sidebar props:', { isVisible: props.isVisible, isCollapsed: props.isCollapsed })
-
 const emit = defineEmits(['toggle', 'collapse'])
 
 const items = [
@@ -42,7 +40,8 @@ const items = [
 const router = useRouter()
 const route = useRoute()
 const activeItem = ref('Home')
-const { isMobile } = useMobileDetection({ breakpoint: 1024 })
+const { isMobile } = useMobileDetection({ breakpoint: 768 })
+const isTablet = computed(() => !isMobile.value && window.innerWidth >= 768 && window.innerWidth < 1024)
 const isDialogOpen = ref(false)
 
 function goToVenmail() {
@@ -50,14 +49,11 @@ function goToVenmail() {
 }
 
 watch(() => route.path, (path) => {
-  console.log('Route path changed:', path)
   const matchingItems = items.filter(item => path.startsWith(item.route))
   if (matchingItems.length > 0) {
     const bestMatch = matchingItems.sort((a, b) => b.route.length - a.route.length)[0]
-    console.log('Found matching item:', bestMatch.name)
     activeItem.value = bestMatch.name
   } else {
-    console.log('No matching item found for path:', path)
   }
 }, { immediate: true })
 
@@ -70,7 +66,6 @@ const closeSidebar = () => {
 }
 
 const setActiveItem = (item: string, route: string) => {
-  console.log('setActiveItem called:', item, route)
   activeItem.value = item
   router.push(route)
   if (isMobile.value) {
@@ -83,7 +78,7 @@ const sidebarClasses = computed(() =>
     'h-full transition-all duration-200',
     props.isVisible ? 'border-r bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800' : '',
     props.isVisible ? 'translate-x-0' : '-translate-x-full',
-    props.isVisible ? (props.isCollapsed ? 'w-16' : 'w-64') : 'w-0',
+    props.isVisible ? (props.isCollapsed ? 'w-16' : (isTablet.value ? 'w-56' : 'w-64')) : 'w-0',
     // Remove fixed positioning on mobile to integrate with layout
   )
 )
@@ -114,30 +109,22 @@ function handleTemplateClick(category: string, templateName: string) {
 }
 
 function createNewFile(type: string, template?: string) {
-  console.log('Creating new file:', type, template)
-  
   if (type === "Spreadsheets") {
     if (template?.toLowerCase().includes("blank")) {
-      console.log('Navigating directly to /sheets/new')
       router.push("/sheets/new")
     } else {
-      console.log('Navigating to /sheets/t/' + template)
       router.push("/sheets/t/" + template)
     }
   } else if (type === "Documents") {
     if (template?.toLowerCase().includes("blank")) {
-      console.log('Navigating directly to /docs/new')
       router.push("/docs/new")
     } else {
-      console.log('Navigating to /docs/t/' + template)
       router.push("/docs/t/" + template)
     }
   } else if (type === "Slides") {
     if (template?.toLowerCase().includes("blank")) {
-      console.log('Navigating directly to /slides/new')
       router.push("/slides/new")
     } else if (template) {
-      console.log('Navigating to /slides/t/' + template.toLowerCase().replace(/\s+/g, '-'))
       router.push("/slides/t/" + template.toLowerCase().replace(/\s+/g, '-'))
     }
   }

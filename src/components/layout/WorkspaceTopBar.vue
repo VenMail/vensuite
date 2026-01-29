@@ -1,7 +1,7 @@
 <template>
-  <header class="px-3 sm:px-6 py-3 sm:py-4 border-b transition-colors duration-200 bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800">
+  <header class="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 border-b transition-colors duration-200 bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800">
     <!-- Mobile Header: Title + Actions -->
-    <div class="flex items-center justify-between gap-3 sm:hidden mb-3">
+    <div class="flex items-center justify-between gap-2 sm:gap-3 mb-2 sm:mb-3 md:hidden">
       <div class="min-w-0 flex-1">
         <h2 class="truncate text-lg font-semibold text-gray-800 dark:text-gray-100">
           {{ title }}
@@ -46,7 +46,7 @@
     </div>
 
     <!-- Mobile Navigation -->
-    <div v-if="showNavigation && breadcrumbs?.length" class="flex items-center gap-2 sm:hidden mb-3">
+    <div v-if="showNavigation && breadcrumbs?.length" class="flex items-center gap-2 mb-2 sm:mb-3 md:hidden">
       <button
         class="inline-flex items-center justify-center h-7 w-7 rounded-md border transition-colors shrink-0"
         :class="navigationButtonClass"
@@ -72,7 +72,7 @@
     </div>
 
     <!-- Mobile Stats & Filters -->
-    <div class="flex flex-col gap-3 sm:hidden">
+    <div class="flex flex-col gap-2 sm:gap-3 md:hidden">
       <!-- Mobile Stats -->
       <div v-if="stats?.length" class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
         <template v-for="(stat, index) in stats" :key="stat.label">
@@ -201,8 +201,133 @@
       </div>
     </div>
 
+    <!-- Tablet Layout (768px - 1023px) -->
+    <div class="hidden md:flex lg:hidden flex-col gap-3 w-full">
+      <!-- First Row: Title + Actions -->
+      <div class="flex flex-row items-center gap-4 w-full">
+        <div class="flex flex-row items-center gap-3 flex-1 min-w-0">
+          <div v-if="showNavigation" class="flex items-center gap-2">
+            <button
+              class="inline-flex items-center justify-center h-7 w-7 rounded-md border transition-colors shrink-0"
+              :class="navigationButtonClass"
+              :disabled="!canNavigateUp"
+              aria-label="Up one level"
+              title="Up one level"
+              @click="$emit('navigate-up')"
+            >
+              <ArrowUp class="h-3 w-3 text-primary-600" />
+            </button>
+
+            <nav
+              v-if="breadcrumbs?.length"
+              aria-label="Breadcrumb"
+              class="flex items-center text-sm"
+            >
+              <template v-for="(crumb, idx) in breadcrumbs.slice(0, -1)" :key="crumb.id ?? idx">
+                <button
+                  class="text-primary-600 hover:underline"
+                  @click="$emit('navigate-breadcrumb', idx)"
+                >
+                  {{ crumb.title }}
+                </button>
+                <span v-if="idx < breadcrumbs.slice(0, -1).length - 1" class="mx-2 text-gray-400">/</span>
+              </template>
+            </nav>
+          </div>
+
+          <div class="min-w-0">
+            <h2 class="truncate text-lg font-semibold text-gray-800 dark:text-gray-100">
+              {{ title }}
+            </h2>
+            <p v-if="subtitle" class="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {{ subtitle }}
+            </p>
+          </div>
+        </div>
+
+        <div v-if="getVisibleActions().length" class="flex items-center gap-2">
+          <component
+            v-for="action in getVisibleActions().slice(0, 3)"
+            :is="action.component || Button"
+            :key="action.key || action.label"
+            v-bind="action.props"
+            size="sm"
+            @click="emitAction(action)"
+          >
+            <slot
+              v-if="action.slot"
+              :name="`action-${action.slot}`"
+              :action="action"
+            />
+            <template v-else>
+              <component v-if="action.icon" :is="action.icon" class="h-4 w-4" />
+              <span v-if="action.label" class="hidden sm:inline">{{ action.label }}</span>
+            </template>
+          </component>
+          
+          <Button
+            v-if="getVisibleActions().length > 3"
+            variant="ghost"
+            size="sm"
+            @click="showTabletActions = !showTabletActions"
+          >
+            <MoreHorizontal class="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <!-- Second Row: Stats + Filters + View Options -->
+      <div class="flex flex-row items-center gap-3 flex-wrap">
+        <slot name="stats">
+          <div v-if="stats?.length" class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+            <template v-for="(stat, index) in stats" :key="stat.label">
+              <span>{{ stat.value }} {{ stat.label }}</span>
+              <span v-if="index < stats.length - 1">•</span>
+            </template>
+          </div>
+        </slot>
+
+        <div v-if="filters?.length" class="flex items-center gap-1 flex-wrap">
+          <Button
+            v-for="filter in filters.slice(0, 2)"
+            :key="filter.key || filter.label"
+            variant="outline"
+            size="sm"
+            :class="filter.active ? 'border-primary-500 text-primary-600' : ''"
+            @click="$emit('filter-select', filter.value)"
+          >
+            <component v-if="filter.icon" :is="filter.icon" class="h-3 w-3 mr-1" />
+            {{ filter.label }}
+          </Button>
+          <Button
+            v-if="filters.length > 2"
+            variant="outline"
+            size="sm"
+            @click="showTabletFilters = !showTabletFilters"
+          >
+            +{{ filters.length - 2 }}
+          </Button>
+        </div>
+
+        <div v-if="viewOptions?.length" class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <Button
+            v-for="option in viewOptions"
+            :key="option.value"
+            variant="ghost"
+            size="sm"
+            :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+            @click="$emit('view-change', option.value)"
+          >
+            <component v-if="option.icon" :is="option.icon" class="h-3 w-3" />
+          </Button>
+        </div>
+
+        <slot name="extra" />
+      </div>
+    </div>
+
     <!-- Desktop Layout -->
-    <div class="hidden sm:flex flex-row items-center gap-4 w-full">
+    <div class="hidden lg:flex flex-row items-center gap-4 w-full">
       <div class="flex flex-row items-center gap-4 flex-1 min-w-0">
         <div v-if="showNavigation" class="flex items-center gap-2">
           <button
@@ -405,6 +530,8 @@ const emit = defineEmits(['navigate-up', 'navigate-breadcrumb', 'action', 'filte
 // Mobile dropdown states
 const showMobileActions = ref(false)
 const showMobileFilters = ref(false)
+const showTabletActions = ref(false)
+const showTabletFilters = ref(false)
 
 // Computed property to filter actions based on selection state
 const getVisibleActions = () => {

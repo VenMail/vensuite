@@ -4,7 +4,7 @@
       <div class="loading-progress"></div>
     </div>
 
-    <div class="flex-1 flex flex-col gap-6 p-4 sm:p-6 overflow-hidden">
+    <div class="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 overflow-hidden">
       <WorkspaceTopBar
         :title="currentTitle"
         :subtitle="homeSubtitle"
@@ -24,7 +24,7 @@
         </template>
 
         <template #extra>
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <div class="flex flex-col sm:flex-row md:flex-row lg:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto md:w-auto lg:w-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" class="border-gray-300 dark:border-gray-600 dark:text-gray-100">
@@ -76,7 +76,7 @@
                   {{ $t('Views.Home.heading.choose_a_template') }}
                 </DialogTitle>
               </DialogHeader>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 sm:gap-4 p-2">
                 <Button
                   variant="outline"
                   :class="['h-24 flex flex-col items-center justify-center', 'hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400']"
@@ -148,11 +148,11 @@
             </span>
           </div>
 
-          <div class="p-2 sm:p-4">
+          <div class="p-2 sm:p-4 lg:p-6">
             <div
               :class="{
-                'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4': viewMode === 'grid',
-                'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2': viewMode === 'thumbnail',
+                'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4': viewMode === 'grid',
+                'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3': viewMode === 'thumbnail',
                 'space-y-1': viewMode === 'list'
               }"
             >

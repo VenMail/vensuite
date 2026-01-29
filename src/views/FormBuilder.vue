@@ -2391,7 +2391,6 @@ const handleGenerateAI = async () => {
     }
     showAIDialog.value = false;
     aiPrompt.value = "";
-    console.log("Questions generated successfully!");
     triggerSave();
   } catch (error) {
     console.error("Failed to generate blocks:", error);
@@ -2403,7 +2402,6 @@ const handleGenerateAI = async () => {
 
 const handleBack = () => {
   if (isSaving.value) {
-    console.log("Saving changes before leaving...");
     setTimeout(() => {
       router.push({ name: "forms" });
     }, 1000);
@@ -2505,21 +2503,16 @@ const closeWebhooksModal = () => {
 
 const ensurePublishedShareSlug = async (): Promise<FormDefinition | null> => {
   if (!formId.value) return null;
-  console.log("Ensure published share slug for form:", formId.value);
   const latest = await formStore.fetchForm(formId.value);
-  console.log("Latest form:", latest);
 
   const alreadyPublished = latest?.status === "published";
   const existingShareSlug = latest?.sharing?.share_slug;
-  console.log("Already published:", alreadyPublished);
-  console.log("Existing share slug:", existingShareSlug);
 
   if (alreadyPublished && existingShareSlug) {
     return latest;
   }
 
   const published = await formStore.publishForm(formId.value);
-  console.log("Published form:", published);
   if (published?.status === "published" && published?.sharing?.share_slug) {
     return published;
   }
@@ -2544,13 +2537,11 @@ const handlePreview = async () => {
 
 const handlePublish = async () => {
   if (!formId.value || blocks.value.length === 0) return;
-  console.log("Publishing form...");
 
   isPublishing.value = true;
   try {
     await saveForm();
     const definition = await ensurePublishedShareSlug();
-    console.log("Published form:", definition);
     if (definition) {
       let effectiveDefinition: any = definition;
       let autoMadePublic = false;

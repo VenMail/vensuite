@@ -53,6 +53,131 @@
           </div>
         </div>
 
+        <!-- Layout (UnoCSS): Position, Margin, Padding - for heading, paragraph, image -->
+        <template v-if="['heading', 'paragraph', 'image'].includes(markdownElement.type)">
+          <div class="pt-1 border-t border-gray-200 dark:border-gray-700 first:border-t-0 first:pt-0">
+            <span class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 block mb-2">Layout</span>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Position</label>
+            <div class="flex gap-1 flex-wrap">
+              <button
+                v-for="pos in positionTypes"
+                :key="pos.value"
+                class="px-2 py-1 text-xs rounded border transition-colors"
+                :class="blockLayout.position === pos.value ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                @click="applyBlockLayout({ position: pos.value })"
+              >
+                {{ pos.label }}
+              </button>
+            </div>
+          </div>
+          <div v-if="blockLayout.position === 'absolute'" class="space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-gray-500 block mb-0.5">Top</label>
+                <select
+                  :value="blockLayout.top"
+                  class="w-full text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded"
+                  @change="applyBlockLayout({ top: ($event.target as HTMLSelectElement).value })"
+                >
+                  <option value="">—</option>
+                  <option value="top-0">0</option>
+                  <option value="top-4">4</option>
+                  <option value="top-8">8</option>
+                  <option value="top-1/2 -translate-y-1/2">50%</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[10px] text-gray-500 block mb-0.5">Left</label>
+                <select
+                  :value="blockLayout.left"
+                  class="w-full text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded"
+                  @change="applyBlockLayout({ left: ($event.target as HTMLSelectElement).value })"
+                >
+                  <option value="">—</option>
+                  <option value="left-0">0</option>
+                  <option value="left-4">4</option>
+                  <option value="left-8">8</option>
+                  <option value="left-1/2 -translate-x-1/2">50%</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-gray-500 block mb-0.5">Top (custom)</label>
+                <input
+                  :value="blockLayoutTopCustom"
+                  type="text"
+                  class="w-full text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-mono"
+                  placeholder="e.g. 20% or 100px"
+                  @input="applyBlockLayoutTopCustom(($event.target as HTMLInputElement).value)"
+                />
+              </div>
+              <div>
+                <label class="text-[10px] text-gray-500 block mb-0.5">Left (custom)</label>
+                <input
+                  :value="blockLayoutLeftCustom"
+                  type="text"
+                  class="w-full text-xs px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-mono"
+                  placeholder="e.g. 30% or 80px"
+                  @input="applyBlockLayoutLeftCustom(($event.target as HTMLInputElement).value)"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+            <span class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 block mb-2">Spacing</span>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Margin</label>
+            <div class="flex gap-1 flex-wrap">
+              <button
+                v-for="m in marginPresets"
+                :key="m.value"
+                class="px-2 py-1 text-[10px] rounded border transition-colors"
+                :class="blockLayout.margin === m.value ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                @click="applyBlockLayout({ margin: m.value })"
+              >
+                {{ m.label }}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Padding</label>
+            <div class="flex gap-1 flex-wrap">
+              <button
+                v-for="p in paddingPresets"
+                :key="p.value"
+                class="px-2 py-1 text-[10px] rounded border transition-colors"
+                :class="blockLayout.padding === p.value ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                @click="applyBlockLayout({ padding: p.value })"
+              >
+                {{ p.label }}
+              </button>
+            </div>
+          </div>
+          <template v-if="['heading', 'paragraph'].includes(markdownElement.type)">
+            <div class="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+              <span class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 block mb-2">Typography</span>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Font</label>
+              <div class="flex gap-1 flex-wrap">
+                <button
+                  v-for="f in fontFamilyPresets"
+                  :key="f.value"
+                  class="px-2 py-1 text-[10px] rounded border transition-colors"
+                  :class="blockLayout.font === f.value ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+                  @click="applyBlockLayout({ font: f.value })"
+                >
+                  {{ f.label }}
+                </button>
+              </div>
+            </div>
+          </template>
+        </template>
+
         <!-- Mermaid/Code Specific Controls -->
         <template v-if="markdownElement.type === 'mermaid' || markdownElement.type === 'code'">
           <div>
@@ -145,9 +270,10 @@
             <div class="space-y-2">
               <input
                 :value="markdownElement.attributes?.url || ''"
-                type="text"
+                type="url"
                 class="w-full text-sm px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
                 placeholder="https://example.com/image.jpg"
+                :title="String(markdownElement.attributes?.url || '')"
                 @input="updateImageUrl(($event.target as HTMLInputElement).value)"
               />
               <div class="grid grid-cols-3 gap-1">
@@ -900,6 +1026,7 @@ import { Settings, Zap } from 'lucide-vue-next';
 import { 
   SLIDEV_LAYOUTS, 
   SLIDE_TEMPLATES,
+  parseBlockAttributesFromLine,
   type SlideTemplate
 } from '@/utils/slidevMarkdown';
 import type { MarkdownElement } from '@/utils/markdownElementDetector';
@@ -956,6 +1083,184 @@ const titleTemplates = computed(() =>
 const contentTemplates = computed(() => 
   SLIDE_TEMPLATES.filter(t => t.category === 'content').slice(0, 4)
 );
+
+const positionTypes = [
+  { value: 'static', label: 'Static' },
+  { value: 'relative', label: 'Relative' },
+  { value: 'absolute', label: 'Absolute' }
+];
+
+const marginPresets = [
+  { value: '', label: '—' },
+  { value: 'm-0', label: '0' },
+  { value: 'm-1', label: '1' },
+  { value: 'm-2', label: '2' },
+  { value: 'm-4', label: '4' },
+  { value: 'm-6', label: '6' },
+  { value: 'm-8', label: '8' },
+  { value: 'm-12', label: '12' },
+  { value: 'm-16', label: '16' },
+  { value: 'mt-1', label: 'mt-1' },
+  { value: 'mt-2', label: 'mt-2' },
+  { value: 'mt-4', label: 'mt-4' },
+  { value: 'mt-8', label: 'mt-8' },
+  { value: 'mb-1', label: 'mb-1' },
+  { value: 'mb-2', label: 'mb-2' },
+  { value: 'mb-4', label: 'mb-4' },
+  { value: 'ml-2', label: 'ml-2' },
+  { value: 'ml-4', label: 'ml-4' },
+  { value: 'mr-2', label: 'mr-2' },
+  { value: 'mr-4', label: 'mr-4' }
+];
+
+const paddingPresets = [
+  { value: '', label: '—' },
+  { value: 'p-0', label: '0' },
+  { value: 'p-1', label: '1' },
+  { value: 'p-2', label: '2' },
+  { value: 'p-3', label: '3' },
+  { value: 'p-4', label: '4' },
+  { value: 'p-6', label: '6' },
+  { value: 'p-8', label: '8' },
+  { value: 'p-12', label: '12' },
+  { value: 'px-2', label: 'px-2' },
+  { value: 'px-4', label: 'px-4' },
+  { value: 'py-2', label: 'py-2' },
+  { value: 'py-4', label: 'py-4' }
+];
+
+const fontFamilyPresets = [
+  { value: '', label: 'Default' },
+  { value: 'font-sans', label: 'Sans' },
+  { value: 'font-serif', label: 'Serif' },
+  { value: 'font-mono', label: 'Mono' }
+];
+
+function parseBlockClassIntoLayout(blockClass: string | undefined): { position: string; top: string; left: string; margin: string; padding: string; font: string } {
+  const classes = (blockClass || '').trim().split(/\s+/).filter(Boolean);
+  const position = classes.includes('absolute') ? 'absolute' : classes.includes('relative') ? 'relative' : 'static';
+  const top = classes.includes('top-1/2') && classes.includes('-translate-y-1/2') ? 'top-1/2 -translate-y-1/2' : (classes.find(c => c.startsWith('top-')) || '');
+  const left = classes.includes('left-1/2') && classes.includes('-translate-x-1/2') ? 'left-1/2 -translate-x-1/2' : (classes.find(c => c.startsWith('left-')) || '');
+  const margin = classes.find(c => /^m[trbl]?-\d+$/.test(c) || c === 'm-0') || '';
+  const padding = classes.find(c => /^p[trbl]?-\d+$/.test(c) || c === 'p-0') || '';
+  const font = classes.find(c => FONT_FAMILY_CLASSES.includes(c)) || '';
+  return { position, top, left, margin, padding, font };
+}
+
+const blockLayout = computed(() => {
+  if (!props.markdownElement) return { position: 'static' as string, top: '', left: '', margin: '', padding: '', font: '' };
+  const layout = parseBlockClassIntoLayout(props.markdownElement.blockClass);
+  console.log('🎯 Block layout computed:', layout);
+  return layout;
+});
+
+function parseArbitraryClassValue(className: string): string {
+  const match = className.match(/^[a-z]+-\[(.+)\]$/);
+  return match ? match[1] : '';
+}
+
+const blockLayoutTopCustom = computed(() => {
+  const t = blockLayout.value.top;
+  if (!t || t === 'top-0' || t === 'top-4' || t === 'top-8' || (t.includes('top-1/2') && t.includes('-translate-y-1/2'))) return '';
+  return parseArbitraryClassValue(t.split(' ')[0] || '');
+});
+
+const blockLayoutLeftCustom = computed(() => {
+  const l = blockLayout.value.left;
+  if (!l || l === 'left-0' || l === 'left-4' || l === 'left-8' || (l.includes('left-1/2') && l.includes('-translate-x-1/2'))) return '';
+  return parseArbitraryClassValue(l.split(' ')[0] || '');
+});
+
+function applyBlockLayoutTopCustom(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    applyBlockLayout({ top: '' });
+    return;
+  }
+  const topClass = trimmed.includes('%') || trimmed.includes('px') || /^\d+$/.test(trimmed)
+    ? `top-[${trimmed.replace(/^(\d+)$/, '$1px')}]`
+    : `top-[${trimmed}]`;
+  applyBlockLayout({ top: topClass });
+}
+
+function applyBlockLayoutLeftCustom(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    applyBlockLayout({ left: '' });
+    return;
+  }
+  const leftClass = trimmed.includes('%') || trimmed.includes('px') || /^\d+$/.test(trimmed)
+    ? `left-[${trimmed.replace(/^(\d+)$/, '$1px')}]`
+    : `left-[${trimmed}]`;
+  applyBlockLayout({ left: leftClass });
+}
+
+const FONT_FAMILY_CLASSES = ['font-sans', 'font-serif', 'font-mono'];
+
+const LAYOUT_CLASS_DROP = new Set([
+  'static', 'relative', 'absolute',
+  'top-0', 'top-4', 'top-8', 'top-1/2', '-translate-y-1/2',
+  'left-0', 'left-4', 'left-8', 'left-1/2', '-translate-x-1/2',
+  'm-0', 'm-1', 'm-2', 'm-4', 'm-6', 'm-8', 'm-12', 'm-16',
+  'mt-1', 'mt-2', 'mt-4', 'mt-8', 'mb-1', 'mb-2', 'mb-4', 'ml-2', 'ml-4', 'mr-2', 'mr-4',
+  'p-0', 'p-1', 'p-2', 'p-3', 'p-4', 'p-6', 'p-8', 'p-12', 'px-2', 'px-4', 'py-2', 'py-4',
+  ...FONT_FAMILY_CLASSES
+]);
+
+function mergeBlockClasses(
+  existingClass: string | undefined,
+  updates: { position?: string; top?: string; left?: string; margin?: string; padding?: string; font?: string }
+): string {
+  const existing = (existingClass || '').trim().split(/\s+/).filter(Boolean);
+  const filtered = existing.filter(
+    (c) =>
+      !LAYOUT_CLASS_DROP.has(c) &&
+      !c.startsWith('top-') &&
+      !c.startsWith('left-') &&
+      !FONT_FAMILY_CLASSES.includes(c)
+  );
+  const add: string[] = [];
+  if (updates.position && updates.position !== 'static') add.push(updates.position);
+  if (updates.top) add.push(...updates.top.split(' '));
+  if (updates.left) add.push(...updates.left.split(' '));
+  if (updates.margin) add.push(updates.margin);
+  if (updates.padding) add.push(updates.padding);
+  if (updates.font) add.push(updates.font);
+  return [...filtered, ...add].filter(Boolean).join(' ');
+}
+
+function applyBlockLayout(updates: { position?: string; top?: string; left?: string; margin?: string; padding?: string; font?: string }) {
+  if (!props.markdownElement) return;
+  const current = blockLayout.value;
+  const merged = mergeBlockClasses(props.markdownElement.blockClass, {
+    position: updates.position ?? current.position,
+    top: updates.top !== undefined ? updates.top : current.top,
+    left: updates.left !== undefined ? updates.left : current.left,
+    margin: updates.margin !== undefined ? updates.margin : current.margin,
+    padding: updates.padding !== undefined ? updates.padding : current.padding,
+    font: updates.font !== undefined ? updates.font : current.font
+  });
+  const classesAttr = merged ? ' {.' + merged.replace(/\s+/g, ' .') + '}' : '';
+  let newContent: string;
+  if (props.markdownElement.type === 'heading') {
+    const level = props.markdownElement.level ?? 1;
+    const text = getTextContent();
+    newContent = '#'.repeat(level) + ' ' + text + classesAttr;
+  } else if (props.markdownElement.type === 'paragraph') {
+    const lines = props.markdownElement.content.split('\n');
+    const firstLine = lines[0] || '';
+    const { rest } = parseBlockAttributesFromLine(firstLine.trim());
+    const newFirst = rest + classesAttr;
+    newContent = [newFirst, ...lines.slice(1)].join('\n');
+  } else if (props.markdownElement.type === 'image') {
+    const alt = String(props.markdownElement.attributes?.alt ?? '');
+    const url = String(props.markdownElement.attributes?.url ?? '');
+    newContent = `![${alt}](${url})${classesAttr}`;
+  } else {
+    return;
+  }
+  emit('update-markdown-element', { ...props.markdownElement, content: newContent });
+}
 
 // Element-specific state
 const elementStyles = ref({

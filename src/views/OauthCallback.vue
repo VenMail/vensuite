@@ -49,22 +49,18 @@ function authenticateWithCookie(authCookie: string) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        console.log("setting token", data);
         authStore.login(data.token);
         authStore.setUserInfo(data.user);
         const redirectPath = getIntendedRedirect();
         router.push(redirectPath);
       } else {
-        console.log("Auth failed with cookie:", data);
         errorMessage.value = data.message || "Authentication failed. Please try again.";
-        console.log("Error value set to:", errorMessage.value);
         isLoading.value = false;
       }
     })
     .catch((error) => {
       console.error("Error during authentication with cookie:", error);
       errorMessage.value = "Failed to connect to authentication service. Please try again.";
-      console.log("Error value set to:", errorMessage.value);
       isLoading.value = false;
     });
 }
@@ -81,23 +77,19 @@ function authenticateWithCode(code: string) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        console.log("Auth suc", data);
         document.cookie = `venAuthToken=${data.token}; path=/`;
         authStore.login(data.token);
         authStore.setUserInfo(data.user);
         const redirectPath = getIntendedRedirect();
         router.push(redirectPath);
       } else {
-        console.log("Auth failed with code:", data);
         errorMessage.value = data.message || "Authentication failed. Please try again.";
-        console.log("Error value set to:", errorMessage.value);
         isLoading.value = false;
       }
     })
     .catch((error) => {
       console.error("Error during authentication with code:", error);
       errorMessage.value = "Failed to connect to authentication service. Please try again.";
-      console.log("Error value set to:", errorMessage.value);
       isLoading.value = false;
     });
 }

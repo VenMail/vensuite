@@ -2,6 +2,8 @@
  * Utility to detect markdown elements at cursor position
  */
 
+import { parseBlockAttributesFromLine } from '@/utils/slidevMarkdown';
+
 export interface MarkdownElement {
   type: 'heading' | 'paragraph' | 'code' | 'mermaid' | 'image' | 'list' | 'quote' | 'table' | 'divider' | 'text';
   level?: number; // For headings
@@ -12,6 +14,8 @@ export interface MarkdownElement {
   endColumn: number;
   content: string;
   attributes?: Record<string, string | number | boolean>; // Allow more flexible types
+  blockClass?: string; // UnoCSS classes from block {.class}
+  blockStyle?: string; // Inline style from block {style="..."}
 }
 
 /**
@@ -153,7 +157,7 @@ function detectFencedCodeBlock(
 }
 
 /**
- * Detect headings (# ## ### etc.)
+ * Detect headings (# ## ### etc.) and optional block {.class}/{style}
  */
 function detectHeading(
   lines: string[],
@@ -161,7 +165,8 @@ function detectHeading(
   _cursorColumn: number
 ): MarkdownElement | null {
   const line = lines[cursorLine];
-  const match = line.match(/^(#{1,6})\s+(.+)$/);
+  const { rest, class: blockClass, style: blockStyle } = parseBlockAttributesFromLine(line.trim());
+  const match = rest.match(/^(#{1,6})\s+(.+)$/);
   
   if (match) {
     const level = match[1].length;
@@ -173,7 +178,9 @@ function detectHeading(
       endLine: cursorLine,
       startColumn: 0,
       endColumn: line.length,
-      content
+      content,
+      ...(blockClass && { blockClass }),
+      ...(blockStyle && { blockStyle })
     };
   }
 
@@ -325,7 +332,7 @@ function detectQuote(
 }
 
 /**
- * Detect images ![alt](url)
+ * Detect images ![alt](url) and optional block {.class}/{style}
  */
 function detectImage(
   lines: string[],
@@ -338,6 +345,7 @@ function detectImage(
   if (match) {
     const altText = match[1];
     const url = match[2];
+    const { class: blockClass, style: blockStyle } = parseBlockAttributesFromLine(line.trim());
     return {
       type: 'image',
       startLine: cursorLine,
@@ -345,7 +353,9 @@ function detectImage(
       startColumn: line.indexOf('!'),
       endColumn: line.indexOf(')') + 1,
       content: line,
-      attributes: { alt: altText, url }
+      attributes: { alt: altText, url },
+      ...(blockClass && { blockClass }),
+      ...(blockStyle && { blockStyle })
     };
   }
 
@@ -423,13 +433,17 @@ function detectParagraph(
   }
 
   const content = lines.slice(paraStart, paraEnd + 1).join('\n');
+  const firstLine = lines[paraStart]?.trim() || '';
+  const { rest: _firstRest, class: blockClass, style: blockStyle } = parseBlockAttributesFromLine(firstLine);
   return {
     type: 'paragraph',
     startLine: paraStart,
     endLine: paraEnd,
     startColumn: 0,
     endColumn: lines[paraEnd].length,
-    content
+    content,
+    ...(blockClass && { blockClass }),
+    ...(blockStyle && { blockStyle })
   };
 }
 
@@ -451,4 +465,78 @@ export function getCursorPosition(textarea: HTMLTextAreaElement): { line: number
   const column = lines[lines.length - 1].length;
   
   return { line: lineNumber, column: column };
+}
+
+/**
+ * Get markdown element that spans the given line range (for preview selection → markdown mapping)
+ */
+export function getElementByLineRange(
+  markdown: string,
+  startLine: number,
+  endLine: number
+): MarkdownElement | null {
+  const el = getElementAtCursor(markdown, startLine, 0);
+  if (el && el.startLine === startLine && el.endLine === endLine) return el;
+  const lines = markdown.split('\n');
+  if (startLine < 0 || endLine >= lines.length || startLine > endLine) return null;
+  const content = lines.slice(startLine, endLine + 1).join('\n');
+  const firstLine = lines[startLine] || '';
+  const { class: blockClass, style: blockStyle } = parseBlockAttributesFromLine(firstLine.trim());
+  let type: MarkdownElement['type'] = 'paragraph';
+  let level: number | undefined;
+  if (firstLine.trim().match(/^(#{1,6})\s/)) {
+    type = 'heading';
+    level = (firstLine.trim().match(/^(#{1,6})/) || [])[1]?.length;
+  } else if (firstLine.match(/!\[[^\]]*\]\([^)]+\)/)) {
+    type = 'image';
+  } else if (firstLine.includes('|')) {
+    type = 'table';
+  } else if (firstLine.trim().match(/^[-*+]\s/) || firstLine.trim().match(/^\d+\.\s/)) {
+    type = 'list';
+  } else if (firstLine.trim().startsWith('>')) {
+    type = 'quote';
+  } else if (firstLine.trim().match(/^[-*_]{3,}$/)) {
+    type = 'divider';
+  }
+  return {
+    type,
+    startLine,
+    endLine,
+    startColumn: 0,
+    endColumn: lines[endLine]?.length ?? 0,
+    content,
+    ...(level !== undefined && { level }),
+    ...(blockClass && { blockClass }),
+    ...(blockStyle && { blockStyle })
+  };
+}
+
+/**
+ * Get element type info for display in properties panel
+ */
+export function getElementTypeInfo(element: HTMLElement): string {
+  const tagName = element.tagName.toLowerCase();
+  if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+    return `Heading (${tagName})`;
+  } else if (tagName === 'p') {
+    return 'Paragraph';
+  } else if (tagName === 'img') {
+    return 'Image';
+  } else if (tagName === 'ul' || tagName === 'ol') {
+    return tagName === 'ul' ? 'List (unordered)' : 'List (ordered)';
+  } else if (tagName === 'blockquote') {
+    return 'Quote';
+  } else if (tagName === 'code' || tagName === 'pre') {
+    return 'Code Block';
+  } else if (tagName === 'table') {
+    return 'Table';
+  } else if (tagName === 'hr') {
+    return 'Divider';
+  } else if (element.classList.contains('mermaid-diagram')) {
+    return 'Mermaid Diagram';
+  } else if (element.classList.contains('plantuml-diagram')) {
+    return 'PlantUML Diagram';
+  } else {
+    return 'Element';
+  }
 }

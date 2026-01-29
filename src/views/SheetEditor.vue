@@ -36,6 +36,12 @@ import axios from 'axios'
 import { extractSheetFields } from '@/utils/fieldExtractor'
 import { t } from '@/i18n';
 
+const SHEET_EDITOR_DEBUG = Boolean(import.meta.env.DEV);
+const logSheetEditorDebug = (...args: unknown[]) => {
+  if (!SHEET_EDITOR_DEBUG) return;
+  console.log(...args);
+};
+
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -194,7 +200,7 @@ function onUniverRefChange(childUniverRef: FUniver | null) {
 async function loadData(id: string) {
   isLoading.value = true
   try {
-    console.log('Loading spreadsheet data for ID:', id)
+    logSheetEditorDebug('Loading spreadsheet data for ID:', id)
     const loadedData = await fileStore.loadDocument(id, 'xlsx')
     if (!loadedData) {
       console.error('Failed to load document:', id)
@@ -215,7 +221,7 @@ async function loadData(id: string) {
     if (loadedData?.title) {
       document.title = loadedData.title
       title.value = loadedData.title
-      console.log('Set title from loaded document:', loadedData.title)
+      logSheetEditorDebug('Set title from loaded document:', loadedData.title)
     }
     try {
       const ts = (loadedData as any).updated_at || (loadedData as any).created_at
@@ -236,7 +242,7 @@ async function loadData(id: string) {
             parsedData.name = loadedData.title
           }
 
-          console.log('Successfully parsed spreadsheet data:', {
+          logSheetEditorDebug('Successfully parsed spreadsheet data:', {
             hasId: !!parsedData.id,
             hasSheets: !!parsedData.sheets,
             hasName: !!parsedData.name,
@@ -269,14 +275,14 @@ async function loadData(id: string) {
         }
         document.title = loadedData.title || 'Spreadsheet'
         title.value = loadedData.title || 'Spreadsheet'
-        console.log('Public link access: initializing viewer with default structure')
+        logSheetEditorDebug('Public link access: initializing viewer with default structure')
         return fallback as any
       }
       accessDenied.value = true
       requestEmail.value = authStore.email || ''
       return null
     }
-    console.log('No contents found for existing document (authenticated), will use default structure but keep title')
+    logSheetEditorDebug('No contents found for existing document (authenticated), will use default structure but keep title')
     return {
       ...DEFAULT_WORKBOOK_DATA,
       id,
@@ -356,14 +362,14 @@ async function saveTitle() {
         } as FileData
 
         const result = await fileStore.saveDocument(doc)
-        console.log('Title saved:', newTitle)
+        logSheetEditorDebug('Title saved:', newTitle)
 
         // Send WebSocket message for real-time collaboration
         wsService.value?.sendMessage(route.params.id as string, 'title', { title: newTitle }, userId.value, userName.value)
 
         // Handle redirect for documents that got new server IDs
         if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
-          console.log('Document got new server ID after title change, redirecting to:', result.redirectId)
+          logSheetEditorDebug('Document got new server ID after title change, redirecting to:', result.redirectId)
           await router.replace(`/sheets/${result.redirectId}`)
         }
       } catch (error) {
@@ -389,12 +395,12 @@ const SOCKET_URI = import.meta.env.SOCKET_BASE_URL || 'wss://w.venmail.io:8443'
 
 function initializeWebSocketAndJoinSheet() {
   if (!canJoinRealtime.value || !route.params.id) {
-    console.log('Cannot join realtime:', { canJoin: canJoinRealtime.value, id: route.params.id, privacyType: privacyType.value })
+    logSheetEditorDebug('Cannot join realtime:', { canJoin: canJoinRealtime.value, id: route.params.id, privacyType: privacyType.value })
     return
   }
   if (!wsService.value) {
     const wsUrl = `${SOCKET_URI}?sheetId=${route.params.id}&userName=${userName.value}&userId=${userId.value}`
-    console.log('Initializing WebSocket for sheet:', { url: wsUrl, isGuest: !authStore.isAuthenticated })
+    logSheetEditorDebug('Initializing WebSocket for sheet:', { url: wsUrl, isGuest: !authStore.isAuthenticated })
     wsService.value = initializeWebSocket(wsUrl)
   }
   joinSheet()
@@ -405,7 +411,7 @@ function joinSheet() {
   if (wsService.value && route.params.id) {
     try {
       isJoined.value = wsService.value.joinSheet(route.params.id as string, handleIncomingMessage)
-      console.log('Joined sheet:', route.params.id)
+      logSheetEditorDebug('Joined sheet:', route.params.id)
       // Start presence heartbeat after joining
       startPresenceHeartbeat()
     } catch (error) {
@@ -463,7 +469,7 @@ onMounted(async () => {
         docTitle = 'Task Tracker'
       }
 
-      console.log('Creating new document from template:', templateName)
+      logSheetEditorDebug('Creating new document from template:', templateName)
 
       const newDoc = await fileStore.createNewDocument('xlsx', docTitle)
 
@@ -487,7 +493,7 @@ onMounted(async () => {
       if (existingDoc && existingDoc.title) {
         title.value = existingDoc.title
         document.title = existingDoc.title
-        console.log('Set title from existing store data:', existingDoc.title)
+        logSheetEditorDebug('Set title from existing store data:', existingDoc.title)
       }
 
       const loadedData = await loadData(route.params.id as string)
@@ -496,14 +502,14 @@ onMounted(async () => {
         const finalTitle = title.value || loadedData.name || (loadedData as any).title || 'New Spreadsheet'
         document.title = finalTitle
         title.value = finalTitle
-        console.log('Loaded existing document:', {
+        logSheetEditorDebug('Loaded existing document:', {
           id: loadedData.id,
           name: loadedData.name,
           title: finalTitle,
           hasSheets: !!loadedData.sheets,
         })
       } else {
-        console.log('Creating new document with ID:', route.params.id)
+        logSheetEditorDebug('Creating new document with ID:', route.params.id)
         const currentTitle = title.value || 'New Spreadsheet'
         const newDocData = {
           ...DEFAULT_WORKBOOK_DATA,
@@ -520,7 +526,7 @@ onMounted(async () => {
     }
     // Handle completely new document without ID (route: /sheets)
     else {
-      console.log('Creating completely new document')
+      logSheetEditorDebug('Creating completely new document')
 
       const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
 
@@ -560,7 +566,7 @@ onUnmounted(() => {
 
 // Watch for changes in the connection status
 watch(isConnected, (newIsConnected, oldIsConnected) => {
-  console.log('WebSocket connection state changed:', { 
+  logSheetEditorDebug('WebSocket connection state changed:', { 
     from: oldIsConnected, 
     to: newIsConnected, 
     wsServiceExists: !!wsService.value,
@@ -568,10 +574,10 @@ watch(isConnected, (newIsConnected, oldIsConnected) => {
     isGuest: !authStore.isAuthenticated
   })
   if (newIsConnected) {
-    console.log('WebSocket connection established. Joining sheet...')
+    logSheetEditorDebug('WebSocket connection established. Joining sheet...')
     if (canJoinRealtime.value) joinSheet()
   } else {
-    console.log('WebSocket connection lost.')
+    logSheetEditorDebug('WebSocket connection lost.')
     isJoined.value = false
   }
 })
@@ -876,7 +882,7 @@ async function saveData() {
   }
 
   if (isSaving.value) {
-    console.log('Save already in progress, skipping')
+    logSheetEditorDebug('Save already in progress, skipping')
     return
   }
 
@@ -907,7 +913,7 @@ async function saveData() {
       last_viewed: new Date(),
     } as FileData
 
-    console.log('Saving document with complete data:', {
+    logSheetEditorDebug('Saving document with complete data:', {
       id: doc.id,
       title: doc.title,
       dataSize: doc.content?.length || 0,
@@ -915,10 +921,10 @@ async function saveData() {
     })
 
     const result = await fileStore.saveDocument(doc)
-    console.log('saveResult', result)
+    logSheetEditorDebug('saveResult', result)
 
     if (result.shouldRedirect && result.redirectId && result.redirectId !== route.params.id) {
-      console.log('Document got new server ID, redirecting to:', result.redirectId)
+      logSheetEditorDebug('Document got new server ID, redirecting to:', result.redirectId)
       await router.replace(`/sheets/${result.redirectId}`)
       toast.success('Document saved and synced successfully')
     } else {
@@ -926,7 +932,7 @@ async function saveData() {
     }
     lastSavedAt.value = new Date()
 
-    console.log('Document saved successfully')
+    logSheetEditorDebug('Document saved successfully')
   } catch (error) {
     console.error('Error saving document:', error)
     toast.error('Failed to save document. Please try again.')

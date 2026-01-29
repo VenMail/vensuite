@@ -19,6 +19,29 @@
         </button>
       </div>
 
+      <!-- Arrange / Finish (when in edit mode) -->
+      <template v-if="mode === 'edit'">
+        <button
+          v-if="!arrangeMode"
+          type="button"
+          class="px-3 py-1.5 text-sm font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          title="Arrange layout: move elements in preview. Markdown collapses; click Finish when done."
+          @click="emit('enter-arrange')"
+        >
+          <Move class="h-4 w-4 inline-block mr-1.5" />
+          Arrange
+        </button>
+        <button
+          v-else
+          type="button"
+          class="px-3 py-1.5 text-sm font-medium rounded-md bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+          title="Finish arranging"
+          @click="emit('finish-arrange')"
+        >
+          Finish
+        </button>
+      </template>
+
       <!-- Slide Navigation -->
       <div class="flex items-center gap-2">
         <button
@@ -109,7 +132,7 @@
 
 <script setup lang="ts">
 import { 
-  ChevronLeft, ChevronRight, Edit, Eye, BarChart3, MoreHorizontal, MonitorSpeaker, Download, FileText, Printer
+  ChevronLeft, ChevronRight, Edit, Eye, Move, BarChart3, MoreHorizontal, MonitorSpeaker, Download, FileText, Printer
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { SLIDEV_LAYOUTS, SLIDEV_THEMES } from '@/utils/slidevMarkdown';
@@ -125,18 +148,21 @@ import {
 
 interface Props {
   mode: 'edit' | 'preview';
+  arrangeMode?: boolean;
   currentSlideIndex: number;
   totalSlides: number;
   currentTheme: string;
   currentLayout: string;
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), { arrangeMode: false });
 
 const emit = defineEmits<{
   (e: 'update:mode', value: 'edit' | 'preview'): void;
   (e: 'update:theme', value: string): void;
   (e: 'update:layout', value: string): void;
+  (e: 'enter-arrange'): void;
+  (e: 'finish-arrange'): void;
   (e: 'previous-slide'): void;
   (e: 'next-slide'): void;
   (e: 'add-slide'): void;

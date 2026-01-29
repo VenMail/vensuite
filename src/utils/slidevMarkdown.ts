@@ -177,6 +177,300 @@ function stringifyYamlFrontmatter(obj: Record<string, any>): string {
 }
 
 /**
+ * Parse optional block attributes at end of line: {.class1 .class2} or {style="..."}
+ */
+export function parseBlockAttributesFromLine(line: string): { rest: string; class?: string; style?: string } {
+  const match = line.match(/\s*\{([^}]+)\}\s*$/);
+  if (!match) return { rest: line };
+  const rest = line.slice(0, match.index).trim();
+  const attrs = match[1];
+  const classMatch = attrs.match(/\.([a-zA-Z0-9_-]+)/g);
+  const styleMatch = attrs.match(/style\s*=\s*"([^"]*)"/);
+  return {
+    rest,
+    class: classMatch ? classMatch.map((c: string) => c.slice(1)).join(' ') : undefined,
+    style: styleMatch ? styleMatch[1] : undefined
+  };
+}
+
+function parseBlockAttributes(line: string): { rest: string; class?: string; style?: string } {
+  return parseBlockAttributesFromLine(line);
+}
+
+/**
+ * Process inline content only (bold, italic, links, code, MDC, LaTeX) - no block wrappers
+ */
+function processInlineContent(html: string): string {
+  let out = html;
+  out = out.replace(/\$\$([\s\S]*?)\$\$/g, (_, latex) => `<div class="latex-block">${latex}</div>`);
+  out = out.replace(/\$([^$\n]+)\$/g, (_, latex) => `<span class="latex-inline">${latex}</span>`);
+  out = out.replace(/\[([^\]]+)\]\{([^}]+)\}/g, (_, text, attrs) => {
+    const styleMatch = attrs.match(/style="([^"]+)"/);
+    const classMatch = attrs.match(/\.([a-zA-Z0-9_-]+)/g);
+    const style = styleMatch ? ` style="${styleMatch[1]}"` : '';
+    const className = classMatch ? ` class="${classMatch.map((c: string) => c.slice(1)).join(' ')}"` : '';
+    return `<span${className}${style}>${text}</span>`;
+  });
+  out = out.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  out = out.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  out = out.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  out = out.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>');
+  out = out.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  out = out.replace(/_(.+?)_/g, '<em>$1</em>');
+  out = out.replace(/~~(.+?)~~/g, '<del>$1</del>');
+  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  out = out.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+  return out;
+}
+
+interface MarkdownBlock {
+  startLine: number;
+  endLine: number;
+  type: string;
+  lines: string[];
+  blockClass?: string;
+  blockStyle?: string;
+}
+
+export { MarkdownBlock };
+
+/**
+ * Split markdown into blocks with line ranges and optional block attributes
+ */
+export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
+  const lines = markdown.split('\n');
+  const blocks: MarkdownBlock[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('```mermaid')) {
+      const start = i;
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith('```')) i++;
+      blocks.push({ startLine: start, endLine: i, type: 'mermaid', lines: lines.slice(start, i + 1) });
+      i++;
+      continue;
+    }
+    if (trimmed.startsWith('```plantuml')) {
+      const start = i;
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith('```')) i++;
+      blocks.push({ startLine: start, endLine: i, type: 'plantuml', lines: lines.slice(start, i + 1) });
+      i++;
+      continue;
+    }
+    if (trimmed.match(/^```(\w+)?/)) {
+      const start = i;
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith('```')) i++;
+      blocks.push({ startLine: start, endLine: i, type: 'code', lines: lines.slice(start, i + 1) });
+      i++;
+      continue;
+    }
+    const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      const { rest, class: blockClass, style: blockStyle } = parseBlockAttributes(trimmed);
+      const innerMatch = rest.match(/^(#{1,6})\s+(.+)$/);
+      const content = innerMatch ? innerMatch[2] : rest;
+      blocks.push({
+        startLine: i,
+        endLine: i,
+        type: 'heading',
+        lines: [line],
+        blockClass,
+        blockStyle
+      });
+      (blocks[blocks.length - 1] as MarkdownBlock & { headingLevel: number }).headingLevel = headingMatch[1].length;
+      (blocks[blocks.length - 1] as MarkdownBlock & { headingContent: string }).headingContent = content;
+      i++;
+      continue;
+    }
+    if (trimmed.match(/!\[([^\]]*)\]\(([^)]+)\)/)) {
+      const { rest, class: blockClass, style: blockStyle } = parseBlockAttributes(trimmed);
+      const imgMatch = rest.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+      if (imgMatch) {
+        blocks.push({
+          startLine: i,
+          endLine: i,
+          type: 'image',
+          lines: [line],
+          blockClass,
+          blockStyle
+        });
+        (blocks[blocks.length - 1] as MarkdownBlock & { imageAlt: string; imageSrc: string }).imageAlt = imgMatch[1];
+        (blocks[blocks.length - 1] as MarkdownBlock & { imageSrc: string }).imageSrc = imgMatch[2];
+      }
+      i++;
+      continue;
+    }
+    if (trimmed.includes('|') && trimmed.match(/\|.+\|/)) {
+      const start = i;
+      while (i < lines.length && lines[i].trim().includes('|')) i++;
+      blocks.push({ startLine: start, endLine: i - 1, type: 'table', lines: lines.slice(start, i) });
+      continue;
+    }
+    if (trimmed.match(/^[\*\-+]\s/) || trimmed.match(/^\d+\.\s/)) {
+      const start = i;
+      while (i < lines.length) {
+        const t = lines[i].trim();
+        if (t === '' && i + 1 < lines.length && lines[i + 1].match(/^(\s*)([\*\-+]|\d+\.)\s/)) {
+          i++;
+          continue;
+        }
+        if (lines[i].match(/^(\s*)([\*\-+]|\d+\.)\s/)) {
+          i++;
+          continue;
+        }
+        break;
+      }
+      if (i > start && lines[i - 1].trim() === '') i--;
+      blocks.push({ startLine: start, endLine: Math.max(start, i - 1), type: 'list', lines: lines.slice(start, i) });
+      continue;
+    }
+    if (trimmed.startsWith('>')) {
+      const start = i;
+      while (i < lines.length && lines[i].trim().startsWith('>')) i++;
+      blocks.push({ startLine: start, endLine: i - 1, type: 'blockquote', lines: lines.slice(start, i) });
+      continue;
+    }
+    if (trimmed.match(/^[-*_]{3,}$/)) {
+      blocks.push({ startLine: i, endLine: i, type: 'hr', lines: [line] });
+      i++;
+      continue;
+    }
+    if (trimmed === '') {
+      i++;
+      continue;
+    }
+    const start = i;
+    while (i < lines.length && lines[i].trim() !== '') {
+      const l = lines[i].trim();
+      if (l.startsWith('#') || l.startsWith('```') || l.startsWith('>') || l.match(/^[\*\-+]\s/) || l.match(/^\d+\.\s/) || l.match(/!\[.*\]\(.*\)/) || (l.includes('|') && l.match(/\|.+\|/))) break;
+      i++;
+    }
+    const paraLines = lines.slice(start, i);
+    const firstLine = paraLines[0] || '';
+    const { rest: firstRest, class: blockClass, style: blockStyle } = parseBlockAttributes(firstLine.trim());
+    if (blockClass || blockStyle) {
+      paraLines[0] = firstRest;
+      blocks.push({ startLine: start, endLine: i - 1, type: 'paragraph', lines: paraLines, blockClass, blockStyle });
+    } else {
+      blocks.push({ startLine: start, endLine: i - 1, type: 'paragraph', lines: paraLines });
+    }
+  }
+
+  return blocks;
+}
+
+/**
+ * Render blocks to HTML with data-markdown-line-start/end and optional block class/style
+ */
+export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
+  const parts: string[] = [];
+
+  for (const block of blocks) {
+    const { startLine, endLine, type, lines, blockClass, blockStyle } = block;
+    const dataAttrs = ` data-markdown-line-start="${startLine}" data-markdown-line-end="${endLine}" data-markdown-type="${type}"`;
+    const classAttr = blockClass ? ` class="${blockClass}"` : '';
+    const styleAttr = blockStyle ? ` style="${blockStyle}"` : '';
+
+    if (type === 'mermaid') {
+      const code = lines.slice(1, -1).join('\n').trim();
+      parts.push(`<div class="mermaid-diagram"${dataAttrs} data-mermaid="${encodeURIComponent(code)}">${renderMermaidPlaceholder(code)}</div>`);
+      continue;
+    }
+    if (type === 'plantuml') {
+      const code = lines.slice(1, -1).join('\n').trim();
+      parts.push(`<div class="plantuml-diagram"${dataAttrs} data-plantuml="${encodeURIComponent(code)}">${renderPlantumlPlaceholder(code)}</div>`);
+      continue;
+    }
+    if (type === 'code') {
+      const langMatch = lines[0].match(/^```(\w+)?/);
+      const lang = langMatch ? langMatch[1] || 'text' : 'text';
+      const code = lines.slice(1, -1).join('\n');
+      const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      parts.push(`<pre class="code-block"${dataAttrs}><code class="language-${lang}">${escapedCode}</code></pre>`);
+      continue;
+    }
+    if (type === 'heading') {
+      const level = (block as MarkdownBlock & { headingLevel: number }).headingLevel;
+      const content = (block as MarkdownBlock & { headingContent: string }).headingContent || '';
+      const tag = `h${level}`;
+      const inner = processInlineContent(content);
+      parts.push(`<${tag}${classAttr}${styleAttr}${dataAttrs}>${inner}</${tag}>`);
+      continue;
+    }
+    if (type === 'image') {
+      const alt = (block as MarkdownBlock & { imageAlt: string }).imageAlt || '';
+      const src = (block as MarkdownBlock & { imageSrc: string }).imageSrc || '';
+      const rawLine = lines[0] || '';
+      const braceMatch = rawLine.match(/!\[[^\]]*\]\([^)]+\)\s*\{([^}]+)\}/);
+      let extraClass = blockClass || '';
+      let extraStyle = blockStyle || '';
+      if (braceMatch) {
+        const attrs = braceMatch[1];
+        const widthMatch = attrs.match(/width=(\d+)/);
+        const heightMatch = attrs.match(/height=(\d+)/);
+        const classMatch = attrs.match(/\.([a-zA-Z0-9_-]+)/g);
+        const styleMatch = attrs.match(/style\s*=\s*"([^"]*)"/);
+        if (widthMatch) extraStyle += (extraStyle ? ' ' : '') + `width: ${widthMatch[1]}px;`;
+        if (heightMatch) extraStyle += (extraStyle ? ' ' : '') + `height: ${heightMatch[1]}px;`;
+        if (classMatch) extraClass = (extraClass ? extraClass + ' ' : '') + classMatch.map((c: string) => c.slice(1)).join(' ');
+        if (styleMatch) extraStyle += (extraStyle ? ' ' : '') + styleMatch[1];
+      }
+      const imgClass = extraClass ? `slide-image ${extraClass}` : 'slide-image';
+      const finalClass = ` class="${imgClass}"`;
+      const finalStyle = extraStyle ? ` style="${extraStyle.trim()}"` : '';
+      parts.push(`<img src="${src}" alt="${alt}"${finalClass}${finalStyle}${dataAttrs} />`);
+      continue;
+    }
+    if (type === 'table') {
+      const tableHtml = parseMarkdownTables(lines.join('\n'));
+      const withData = tableHtml.replace(/^<table/, `<table${dataAttrs}${blockClass ? ` class="slide-table ${blockClass}"` : ' class="slide-table"'}`);
+      parts.push(withData);
+      continue;
+    }
+    if (type === 'list') {
+      const listContent = lines
+        .map((l) => {
+          const bullet = l.replace(/^(\s*)([\*\-+]|\d+\.)\s+(.*)$/s, '$3');
+          return `<li>${processInlineContent(bullet)}</li>`;
+        })
+        .join('\n');
+      parts.push(`<ul class="slide-list"${classAttr}${styleAttr}${dataAttrs}>\n${listContent}\n</ul>`);
+      continue;
+    }
+    if (type === 'blockquote') {
+      const quoteContent = lines.map((l) => l.replace(/^>\s?/, '')).join('\n');
+      parts.push(`<blockquote${classAttr}${styleAttr}${dataAttrs}>${processInlineContent(quoteContent)}</blockquote>`);
+      continue;
+    }
+    if (type === 'hr') {
+      parts.push(`<hr class="slide-divider"${dataAttrs} />`);
+      continue;
+    }
+    if (type === 'paragraph') {
+      const text = lines.join('\n');
+      parts.push(`<p${classAttr}${styleAttr}${dataAttrs}>${processInlineContent(text)}</p>`);
+      continue;
+    }
+  }
+
+  return parts.join('\n');
+}
+
+/**
+ * Process markdown content to HTML with data-markdown-line-* on block elements and block-level {.class}/{style}
+ */
+function processMarkdownContentWithLineNumbers(markdown: string): string {
+  const blocks = splitMarkdownIntoBlocks(markdown);
+  return renderBlocksToHtml(blocks);
+}
+
+/**
  * Convert markdown to HTML for preview with full Slidev syntax support
  */
 export function parseMarkdownToHtml(markdown: string, layout?: string): string {
@@ -190,10 +484,9 @@ export function parseMarkdownToHtml(markdown: string, layout?: string): string {
     const colsData = parseTwoColsLayout(markdown);
     
     if (colsData.type === 'two-cols-header') {
-      // Process each section separately
-      const headerHtml = processMarkdownContent(colsData.header || '');
-      const leftHtml = processMarkdownContent(colsData.left || '');
-      const rightHtml = processMarkdownContent(colsData.right || '');
+      const headerHtml = processMarkdownContentWithLineNumbers(colsData.header || '');
+      const leftHtml = processMarkdownContentWithLineNumbers(colsData.left || '');
+      const rightHtml = processMarkdownContentWithLineNumbers(colsData.right || '');
       
       return `<div class="two-cols-header-container" data-layout="two-cols-header">
         <div class="header-content" data-section="header">${headerHtml}</div>
@@ -203,9 +496,8 @@ export function parseMarkdownToHtml(markdown: string, layout?: string): string {
         </div>
       </div>`;
     } else if (colsData.type === 'two-cols') {
-      // Process each column separately
-      const leftHtml = processMarkdownContent(colsData.left || '');
-      const rightHtml = processMarkdownContent(colsData.right || '');
+      const leftHtml = processMarkdownContentWithLineNumbers(colsData.left || '');
+      const rightHtml = processMarkdownContentWithLineNumbers(colsData.right || '');
       
       return `<div class="two-cols-container" data-layout="two-cols">
         <div class="col-left" data-section="left">${leftHtml}</div>
@@ -214,14 +506,14 @@ export function parseMarkdownToHtml(markdown: string, layout?: string): string {
     }
   }
   
-  // Process regular content
-  return processMarkdownContent(markdown);
+  return processMarkdownContentWithLineNumbers(markdown);
 }
 
 /**
- * Process markdown content to HTML
+ * Process markdown content to HTML (legacy, without line numbers).
+ * Prefer parseMarkdownToHtml which uses processMarkdownContentWithLineNumbers.
  */
-function processMarkdownContent(markdown: string): string {
+export function processMarkdownContent(markdown: string): string {
   let html = markdown;
 
   // Handle LaTeX blocks (must be before regular code blocks)
@@ -332,7 +624,8 @@ function processMarkdownContent(markdown: string): string {
   });
   
   // Regular images
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="slide-image" />');
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) =>
+    `<img src="${src}" alt="${alt}" class="slide-image" />`);
 
   // Blockquotes
   html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');

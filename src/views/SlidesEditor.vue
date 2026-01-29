@@ -46,6 +46,7 @@
     <!-- Main Toolbar -->
     <SlidesToolbar
       :mode="editor.mode"
+      :arrange-mode="arrangeMode"
       :current-slide-index="editor.currentSlideIndex"
       :total-slides="editor.slides.length"
       :current-theme="editor.currentTheme"
@@ -53,6 +54,8 @@
       @update:mode="editor.mode = $event"
       @update:theme="handleThemeChange"
       @update:layout="handleLayoutChange"
+      @enter-arrange="arrangeMode = true"
+      @finish-arrange="handleFinishArrange"
       @previous-slide="editor.previousSlide"
       @next-slide="editor.nextSlide"
       @add-slide="handleAddSlide"
@@ -80,9 +83,24 @@
         <!-- Edit Mode -->
         <template v-if="editor.mode === 'edit'">
           <div class="flex-1 flex overflow-hidden min-h-0">
-            <!-- Markdown Editor (Full Height) -->
-            <div class="flex-1 min-w-0 h-full">
+            <!-- Markdown Editor: full when not arrange; collapsed or toggled when arrange -->
+            <div
+              class="h-full flex flex-col transition-[flex] duration-200 min-w-0 relative"
+              :class="arrangeMode ? (showMarkdownInArrange ? 'flex-1 max-w-[400px]' : 'w-0 overflow-hidden flex-shrink-0') : 'flex-1'"
+            >
+              <div v-if="arrangeMode && !showMarkdownInArrange" class="absolute left-2 top-2 z-10 flex items-center gap-2">
+                <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Arrange mode — select in preview, or show Markdown.</span>
+                <button
+                  type="button"
+                  class="p-2 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow hover:bg-gray-50 dark:hover:bg-gray-700"
+                  title="Show Markdown"
+                  @click="showMarkdownInArrange = true"
+                >
+                  <FileCode class="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
               <SlidesMarkdownEditor
+                v-show="!arrangeMode || showMarkdownInArrange"
                 ref="markdownEditorRef"
                 :content="editor.currentSlideContent"
                 :notes="editor.currentSlideNotes"
@@ -90,6 +108,7 @@
                 @update:notes="handleNotesChange"
                 @insert-markdown="handleInsertMarkdown"
                 @cursor-change="handleCursorChange"
+                @enter-arrange="handleEnterArrangeFromEditor"
               />
             </div>
 
@@ -126,17 +145,24 @@
               @update-animation="handleAnimationUpdate"
             />
 
-            <!-- Live Preview (Right, Flexible Width) -->
-            <div class="flex-1 min-w-0 max-w-[600px]">
+            <!-- Live Preview: flexible width; expands when arrange mode -->
+            <div class="flex-1 min-w-0 h-full" :class="{ 'max-w-[600px]': !arrangeMode }">
+              <div v-if="arrangeMode" class="px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                Select elements to move. Click <strong>Finish</strong> when done.
+              </div>
               <SlidesPreviewPane
                 :rendered-content="editor.renderedContent"
-                :layout-class="editor.getLayoutClass(editor.currentLayout)"
+                :layout="editor.currentLayout"
                 :background="editor.slideBackground"
                 :theme-background="editor.currentThemeObj?.colors.background"
                 :theme-text="editor.currentThemeObj?.colors.text"
                 :theme-style="editor.themeStyleObject as Record<string, string>"
-                :animations="elementAnimations"
-                :zoom="editor.zoom"
+                :arrange-mode="arrangeMode"
+                :focus-line-range="focusLineRange"
+                :selected-line-range="currentMarkdownElement ? { start: currentMarkdownElement.startLine, end: currentMarkdownElement.endLine } : null"
+                @update-element-position="handleUpdateElementPosition"
+                @update-element-size="handleUpdateElementSize"
+                @preview-element-selected="handlePreviewElementSelection"
               />
             </div>
           </div>
@@ -147,16 +173,12 @@
           <div class="flex-1 flex items-center justify-center p-6">
             <SlidesPreviewPane
               :rendered-content="editor.renderedContent"
-              :layout-class="editor.getLayoutClass(editor.currentLayout)"
+              :layout="editor.currentLayout"
               :background="editor.slideBackground"
               :theme-background="editor.currentThemeObj?.colors.background"
               :theme-text="editor.currentThemeObj?.colors.text"
               :theme-style="editor.themeStyleObject as Record<string, string>"
-              :base-width="1200"
-              :base-height="900"
-              :animations="elementAnimations"
-              :zoom="editor.zoom"
-              fullscreen
+              :is-fullscreen="true"
             />
           </div>
         </template>
@@ -235,7 +257,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { toast } from 'vue-sonner';
+import { FileCode } from 'lucide-vue-next';
+
+const SLIDES_EDITOR_DEBUG = Boolean(import.meta.env.DEV);
+const logSlidesEditorDebug = (...args: unknown[]) => {
+  if (!SLIDES_EDITOR_DEBUG) return;
+  console.log(...args);
+};
 
 // Components
 import SlidesTitleBar from '@/components/slides/SlidesTitleBar.vue';
@@ -254,8 +282,9 @@ import { useAuthStore } from '@/store/auth';
 import { IWebsocketService, useWebSocket } from '@/lib/wsService';
 
 // Types
-import type { SlideTemplate } from '@/utils/slidevMarkdown';
-import type { MarkdownElement } from '@/utils/markdownElementDetector';
+import { parseBlockAttributesFromLine, type SlideTemplate } from '@/utils/slidevMarkdown';
+import { getElementByLineRange, type MarkdownElement } from '@/utils/markdownElementDetector';
+import { toast } from '@/composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
@@ -274,6 +303,9 @@ const showInfographics = ref(false);
 const selectedElement = ref<HTMLElement | null>(null);
 const selectedElementType = ref('');
 const currentMarkdownElement = ref<MarkdownElement | null>(null);
+const arrangeMode = ref(false);
+const showMarkdownInArrange = ref(false);
+const focusLineRange = ref<{ start: number; end: number } | null>(null);
 
 // Title bar state
 const showRuler = ref(false);
@@ -361,7 +393,7 @@ const presentationDuration = computed(() => {
 
 // Debug editor mode (after editor is initialized)
 watch(() => editor.mode, (newVal) => {
-  console.log('🎛️ editor.mode changed:', newVal);
+  logSlidesEditorDebug('🎛️ editor.mode changed:', newVal);
 });
 
 // Event Handlers - Title Bar
@@ -500,7 +532,7 @@ function handleComponentScale(scale: number) {
 
 function handleClearSelection() {
   if (selectedElement.value) {
-    selectedElement.value.classList.remove('selected-element');
+    selectedElement.value.classList.remove('element-selected');
     selectedElement.value = null;
     selectedElementType.value = '';
   }
@@ -515,25 +547,48 @@ function handleAnimationUpdate(animation: ElementAnimation) {
   slideStore.markDirty();
 }
 
-// Element selection handler
-function handleElementSelection(element: HTMLElement, elementType: string) {
-  selectedElement.value = element;
-  selectedElementType.value = elementType;
-  currentMarkdownElement.value = null;
-  
-  // Add visual feedback for selected element
-  // Remove previous selection
-  document.querySelectorAll('.element-selected')?.forEach(el => {
+// Element selection handler: sync DOM selection to markdown element by line range
+function handleElementSelection(
+  element: HTMLElement,
+  _elementType: string,
+  markdownLineStart?: number,
+  markdownLineEnd?: number
+) {
+  if (markdownLineStart !== undefined) {
+    const newElement = getElementByLineRange(editor.currentSlide.content, markdownLineStart, markdownLineEnd || markdownLineStart);
+    if (newElement) {
+      currentMarkdownElement.value = newElement;
+      // Update cursor in markdown editor to match selection
+      const markdownEditor = markdownEditorRef.value;
+      if (markdownEditor && markdownEditor.$el) {
+        const textarea = markdownEditor.$el.querySelector('textarea') as HTMLTextAreaElement;
+        if (textarea) {
+          const lines = textarea.value.split('\n');
+          const targetLine = Math.max(0, Math.min(markdownLineStart, lines.length - 1));
+          const lineStart = lines.slice(0, targetLine).join('\n').length + (targetLine > 0 ? 1 : 0);
+          textarea.setSelectionRange(lineStart, lineStart);
+          textarea.focus();
+        }
+      }
+    } else {
+      currentMarkdownElement.value = null;
+    }
+  }
+
+  document.querySelectorAll('.element-selected')?.forEach((el) => {
     el.classList.remove('element-selected');
   });
-  
-  // Add selection to current element
   element.classList.add('element-selected');
+}
+
+// Wrapper for preview element selection event
+function handlePreviewElementSelection(detail: { element: HTMLElement; type: string; markdownLineStart?: number; markdownLineEnd?: number; markdownType?: string }) {
+  handleElementSelection(detail.element, detail.type, detail.markdownLineStart, detail.markdownLineEnd);
 }
 
 // Event Handlers - Markdown Cursor Tracking
 function handleCursorChange(element: MarkdownElement | null) {
-  console.log('🔍 handleCursorChange called:', {
+  logSlidesEditorDebug('🔍 handleCursorChange called:', {
     element: element ? `${element.type} at line ${element.startLine}` : 'null',
     mode: editor.mode
   });
@@ -574,6 +629,146 @@ function handleMarkdownElementUpdate(updatedElement: any) {
 
 function handleClearMarkdownElement() {
   currentMarkdownElement.value = null;
+}
+
+function handleEnterArrangeFromEditor() {
+  arrangeMode.value = true;
+  showMarkdownInArrange.value = false;
+  focusLineRange.value = currentMarkdownElement.value
+    ? { start: currentMarkdownElement.value.startLine, end: currentMarkdownElement.value.endLine }
+    : null;
+}
+
+function handleFinishArrange() {
+  arrangeMode.value = false;
+  showMarkdownInArrange.value = false;
+  focusLineRange.value = null;
+}
+
+function handleUpdateElementPosition(payload: {
+  markdownLineStart: number;
+  markdownLineEnd: number;
+  position: { top?: string; left?: string };
+}) {
+  const { markdownLineStart, markdownLineEnd, position } = payload;
+  const el = getElementByLineRange(editor.currentSlideContent, markdownLineStart, markdownLineEnd);
+  if (!el) return;
+  
+  console.log('🎯 Updating element position in markdown:', payload);
+  
+  const lines = editor.currentSlideContent.split('\n');
+  const blockLines = lines.slice(markdownLineStart, markdownLineEnd + 1);
+  const firstLine = blockLines[0] || '';
+  const { rest, class: existingClass, style: existingStyle } = parseBlockAttributesFromLine(firstLine.trim());
+  const existing = (existingClass || '').trim().split(/\s+/).filter(Boolean);
+  
+  // Drop position-related classes but keep arbitrary values
+  const drop = new Set(['static', 'relative', 'absolute', 'top-0', 'top-4', 'top-8', 'top-1/2', '-translate-y-1/2', 'left-0', 'left-4', 'left-8', 'left-1/2', '-translate-x-1/2']);
+  const filtered = existing.filter((c) => {
+    // Keep classes that don't start with top- or left- (except the specific ones in drop)
+    if (drop.has(c)) return false;
+    if (c.startsWith('top-[') || c.startsWith('left-[')) return false; // Drop arbitrary position classes
+    if (c.startsWith('top-') || c.startsWith('left-')) return false; // Drop standard position classes
+    return true;
+  });
+  
+  const add: string[] = ['absolute'];
+  if (position.top) {
+    // Ensure the top value is in the correct format
+    const topValue = position.top.includes('%') ? `top-[${position.top}]` : position.top;
+    add.push(topValue);
+  }
+  if (position.left) {
+    // Ensure the left value is in the correct format
+    const leftValue = position.left.includes('%') ? `left-[${position.left}]` : position.left;
+    add.push(leftValue);
+  }
+  
+  const merged = [...filtered, ...add].filter(Boolean).join(' ');
+  const blockAttrParts: string[] = [];
+  if (merged) blockAttrParts.push('.' + merged.replace(/\s+/g, ' .'));
+  if (existingStyle) blockAttrParts.push(`style="${existingStyle}"`);
+  const blockAttr = blockAttrParts.length ? ' {' + blockAttrParts.join(' ') + '}' : '';
+  
+  let newFirstLine: string;
+  if (el.type === 'heading' && el.level) {
+    const headingText = rest.replace(/^#+\s+/, '').trim();
+    newFirstLine = '#'.repeat(el.level) + ' ' + headingText + blockAttr;
+  } else if (el.type === 'image') {
+    const alt = String(el.attributes?.alt ?? '');
+    const url = String(el.attributes?.url ?? '');
+    newFirstLine = `![${alt}](${url})${blockAttr}`;
+  } else {
+    newFirstLine = rest + blockAttr;
+  }
+  
+  const newBlockLines = [newFirstLine, ...blockLines.slice(1)];
+  const newLines = [
+    ...lines.slice(0, markdownLineStart),
+    ...newBlockLines,
+    ...lines.slice(markdownLineEnd + 1)
+  ];
+  
+  const newContent = newLines.join('\n');
+  console.log('🎯 New markdown content:', newContent);
+  
+  editor.updateSlideContent(newContent);
+  slideStore.markDirty();
+  
+  // Update the current markdown element to reflect the changes
+  if (currentMarkdownElement.value && 
+      currentMarkdownElement.value.startLine === markdownLineStart && 
+      currentMarkdownElement.value.endLine === markdownLineEnd) {
+    // Re-parse the element to get updated blockClass
+    const updatedElement = getElementByLineRange(newContent, markdownLineStart, markdownLineEnd);
+    if (updatedElement) {
+      currentMarkdownElement.value = updatedElement;
+      console.log('🎯 Updated currentMarkdownElement with new blockClass:', updatedElement.blockClass);
+    }
+  }
+}
+
+function handleUpdateElementSize(payload: {
+  markdownLineStart: number;
+  markdownLineEnd: number;
+  width: number;
+  height: number;
+}) {
+  const { markdownLineStart, markdownLineEnd, width, height } = payload;
+  const el = getElementByLineRange(editor.currentSlideContent, markdownLineStart, markdownLineEnd);
+  if (!el || el.type !== 'image') return;
+  const lines = editor.currentSlideContent.split('\n');
+  const blockLines = lines.slice(markdownLineStart, markdownLineEnd + 1);
+  const firstLine = blockLines[0] || '';
+  const { style: existingStyle } = parseBlockAttributesFromLine(firstLine.trim());
+  const braceMatch = firstLine.trim().match(/\s*\{([^}]+)\}\s*$/);
+  const styleParts: string[] = (existingStyle || '').split(';').map(s => s.trim()).filter(Boolean);
+  const styleMap = new Map<string, string>();
+  for (const part of styleParts) {
+    const colon = part.indexOf(':');
+    if (colon > 0) styleMap.set(part.slice(0, colon).trim().toLowerCase(), part.slice(colon + 1).trim());
+  }
+  styleMap.set('width', `${width}px`);
+  styleMap.set('height', `${height}px`);
+  const newStyleStr = Array.from(styleMap.entries()).map(([k, v]) => `${k}: ${v}`).join('; ');
+  let blockAttr: string;
+  if (braceMatch) {
+    const inner = braceMatch[1].replace(/\s*style\s*=\s*"[^"]*"/g, '').trim();
+    blockAttr = ' {' + (inner ? inner + ' ' : '') + `style="${newStyleStr}"` + '}';
+  } else {
+    blockAttr = ' {style="' + newStyleStr + '"}';
+  }
+  const alt = String(el.attributes?.alt ?? '');
+  const url = String(el.attributes?.url ?? '');
+  const newFirstLine = `![${alt}](${url})${blockAttr}`;
+  const newBlockLines = [newFirstLine, ...blockLines.slice(1)];
+  const newLines = [
+    ...lines.slice(0, markdownLineStart),
+    ...newBlockLines,
+    ...lines.slice(markdownLineEnd + 1)
+  ];
+  editor.updateSlideContent(newLines.join('\n'));
+  slideStore.markDirty();
 }
 
 // Enhanced UI Handlers
@@ -854,9 +1049,20 @@ onMounted(async () => {
   setTimeout(() => {
     const previewPane = document.querySelector('.slide-preview-content');
     if (previewPane) {
-      previewPane.addEventListener('preview-element-selected', (e: any) => {
-        const event = e as CustomEvent;
-        handleElementSelection(event.detail.element, event.detail.type);
+      previewPane.addEventListener('preview-element-selected', (e: Event) => {
+        const ev = e as CustomEvent<{
+          element: HTMLElement;
+          type: string;
+          markdownLineStart?: number;
+          markdownLineEnd?: number;
+        }>;
+        const d = ev.detail;
+        handleElementSelection(
+          d.element,
+          d.type,
+          d.markdownLineStart,
+          d.markdownLineEnd
+        );
       });
     }
   }, 100);

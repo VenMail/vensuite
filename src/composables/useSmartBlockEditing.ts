@@ -103,7 +103,7 @@ export function useSmartBlockEditing() {
       
       // Clear any existing selection
       if (selectedElement.value) {
-        selectedElement.value.classList.remove('selected-element');
+        selectedElement.value.classList.remove('element-selected');
         selectedElement.value = null;
       }
       

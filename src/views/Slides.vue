@@ -30,6 +30,12 @@ import SlideThumbnailRenderer from "@/components/slides/SlideThumbnailRenderer.v
 import { vIntersection } from "@/directives/intersection";
 import { t } from '@/i18n';
 
+const SLIDES_VIEW_DEBUG = Boolean(import.meta.env.DEV);
+const logSlidesViewDebug = (...args: unknown[]) => {
+  if (!SLIDES_VIEW_DEBUG) return;
+  console.log(...args);
+};
+
 // Define types locally since they're not exported from WorkspaceTopBar
 interface BreadcrumbItem {
   id?: string | null
@@ -223,8 +229,8 @@ const thumbnailUrls = ref<Record<string, string>>({});
 const loadingThumbnails = ref<Set<string>>(new Set());
 
 const filteredSlideDecks = computed(() => {
-  console.log('🔄 filteredSlideDecks computed, slideDecks.value:', slideDecks.value);
-  console.log('🔄 slideDecks.value length:', slideDecks.value.length);
+  logSlidesViewDebug('🔄 filteredSlideDecks computed, slideDecks.value:', slideDecks.value);
+  logSlidesViewDebug('🔄 slideDecks.value length:', slideDecks.value.length);
   return slideDecks.value;
 });
 
@@ -238,7 +244,7 @@ const cardsContainerClass = computed(() => {
   if (viewMode.value === "list") {
     return "flex flex-col gap-3 sm:gap-4";
   }
-  return "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+  return "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4";
 });
 
 // Computed properties for WorkspaceTopBar
@@ -308,7 +314,7 @@ const topBarActions = computed<ActionItem[]>(() => {
 
 // Event handlers
 const handleFilter = (filter: string) => {
-  console.log('Filter:', filter);
+  logSlidesViewDebug('Filter:', filter);
   selectedSlideDeck.value = null;
 };
 
@@ -318,14 +324,14 @@ const handleViewChange = (mode: "grid" | "list") => {
 
 // Load slide decks on mount
 onMounted(async () => {
-  console.log('🚀 Slides.vue mounted, calling fetchSlideDecks()');
+  logSlidesViewDebug('🚀 Slides.vue mounted, calling fetchSlideDecks()');
   const fetchedDecks = await fetchSlideDecks();
-  console.log('📊 fetchSlideDecks returned:', fetchedDecks.length, 'decks');
-  console.log('📊 slideDecks.value after fetch:', slideDecks.value.length);
+  logSlidesViewDebug('📊 fetchSlideDecks returned:', fetchedDecks.length, 'decks');
+  logSlidesViewDebug('📊 slideDecks.value after fetch:', slideDecks.value.length);
   
   // Preload thumbnails for first few decks
   const decksToPreload = slideDecks.value.slice(0, 5);
-  console.log('🖼️ Preloading thumbnails for', decksToPreload.length, 'decks');
+  logSlidesViewDebug('🖼️ Preloading thumbnails for', decksToPreload.length, 'decks');
   await Promise.allSettled(
     decksToPreload.map(deck => loadThumbnail(deck.id))
   );
@@ -384,9 +390,9 @@ function selectSlideDeck(deckId: string) {
 
 // Manual refresh function for debugging
 async function refreshSlideDecks() {
-  console.log('🔄 Manual refresh triggered');
+  logSlidesViewDebug('🔄 Manual refresh triggered');
   const fetchedDecks = await fetchSlideDecks();
-  console.log('📊 Manual refresh result:', fetchedDecks.length, 'decks');
+  logSlidesViewDebug('📊 Manual refresh result:', fetchedDecks.length, 'decks');
 }
 </script>
 
@@ -439,7 +445,7 @@ async function refreshSlideDecks() {
                 {{$t('Views.heading.create_new_presentation')}}
               </DialogTitle>
             </DialogHeader>
-            <div class="grid grid-cols-2 gap-4 p-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 sm:gap-4 p-2">
               <Button
                 v-for="template in slideTemplates"
                 :key="template.name"
@@ -461,12 +467,12 @@ async function refreshSlideDecks() {
     </WorkspaceTopBar>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col gap-6 p-4 sm:p-6 overflow-hidden">
+    <div class="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 overflow-hidden">
       <!-- Template previews -->
       <div
         class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/70 backdrop-blur shadow-sm overflow-hidden group hover:shadow-lg transition-all duration-300"
       >
-        <div class="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200/70 dark:border-gray-700/70">
+        <div class="flex items-center justify-between px-3 sm:px-4 md:px-6 py-2 sm:py-3 border-b border-gray-200/70 dark:border-gray-700/70">
           <div>
             <p class="text-xs uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">
               {{$t('Views.text.start_a_new_presentation')}}
@@ -479,11 +485,11 @@ async function refreshSlideDecks() {
         </div>
         <div class="relative">
           <div class="absolute inset-0 bg-gradient-to-r from-gray-50/90 via-white/70 to-gray-50/90 dark:from-gray-900/80 dark:via-gray-900/40 dark:to-gray-900/80 blur-xl opacity-70 group-hover:opacity-0 transition-opacity duration-300 pointer-events-none"></div>
-          <div class="template-preview-scroll overflow-x-auto px-3 sm:px-5 py-4 space-x-4 flex">
+          <div class="template-preview-scroll overflow-x-auto px-2 sm:px-3 md:px-5 py-3 sm:py-4 space-x-3 sm:space-x-4 flex">
             <div
               v-for="template in slideTemplates"
               :key="template.slug"
-              class="w-44 min-w-[11rem] rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+              class="w-40 sm:w-44 min-w-[10rem] sm:min-w-[11rem] rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
               @click="createNewPresentationFromTemplate(template)"
             >
               <div
@@ -573,7 +579,7 @@ async function refreshSlideDecks() {
             </span>
           </div>
 
-          <div class="p-2 sm:p-4">
+          <div class="p-2 sm:p-4 lg:p-6">
             <div :class="cardsContainerClass">
               <!-- Slide deck cards -->
               <div
