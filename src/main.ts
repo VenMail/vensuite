@@ -2,6 +2,9 @@ import { createApp, defineComponent, h, VNode } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia } from 'pinia'
 
+// Import preset styling CSS
+import './assets/css/presets.css'
+
 // Load mammoth browser build as a script asset (works reliably with Umo Editor v8)
 // Vite will emit a URL for the browser build; we inject it before initializing the editor
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

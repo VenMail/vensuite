@@ -135,18 +135,22 @@
 
         <!-- Slide Content -->
         <div 
-          class="presenter-slide bg-white shadow-2xl relative"
+          class="presenter-slide shadow-2xl relative"
           :style="{ 
             width: slideWidth + 'px', 
             height: slideHeight + 'px',
-            background: slideBackground || '#ffffff'
+            background: slideBackground || themeBackground || '#ffffff',
+            color: themeText || '#1e293b',
+            ...themeStyle
           }"
           :class="layoutClass"
           @mousemove="updatePointer"
           @mouseleave="clearPointer"
         >
           <div 
-            class="slide-content h-full p-16 overflow-hidden"
+            ref="slideContentRef"
+            class="slide-content h-full overflow-hidden p-8"
+            :style="{ color: 'inherit' }"
             v-html="renderedContent"
           />
         </div>
@@ -349,6 +353,7 @@ import {
   Pencil, MousePointer, LayoutGrid, StickyNote, Circle, Download
 } from 'lucide-vue-next';
 import { parseMarkdownToHtml, type SlidevSlide } from '@/utils/slidevMarkdown';
+import { useSharedSlideRenderer } from '@/composables/useSharedSlideRenderer';
 
 interface DrawingPoint {
   x: number;
@@ -363,6 +368,9 @@ interface Props {
   renderedContent: string;
   layoutClass: string;
   slideBackground?: string;
+  themeBackground?: string;
+  themeText?: string;
+  themeStyle?: Record<string, string>;
   currentNotes?: string;
   nextSlideContent?: string;
   formattedTime: string;
@@ -379,6 +387,9 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   slideWidth: 1200,
   slideHeight: 900,
+  themeBackground: '#ffffff',
+  themeText: '#1e293b',
+  themeStyle: () => ({}),
   isPaused: false,
   isDrawingMode: false,
   isPointerMode: false,
@@ -406,6 +417,10 @@ const emit = defineEmits<{
 const presenterRef = ref<HTMLDivElement | null>(null);
 const drawingCanvas = ref<HTMLCanvasElement | null>(null);
 const cameraVideo = ref<HTMLVideoElement | null>(null);
+const slideContentRef = ref<HTMLDivElement | null>(null);
+
+// Use shared renderer for consistent positioning
+const sharedRenderer = useSharedSlideRenderer();
 
 // Enhanced state
 const showNavigationBar = ref(true);
@@ -434,6 +449,23 @@ watch(() => props.cameraStream, (stream) => {
     cameraVideo.value.srcObject = stream;
   }
 });
+
+// Apply positioning when slide content changes
+watch(() => props.renderedContent, async () => {
+  await nextTick();
+  if (slideContentRef.value) {
+    // Apply position classes using shared renderer for consistency with preview
+    sharedRenderer.applyPositionsWithZoom(slideContentRef.value, 100);
+    
+    // Apply theme colors to ensure text visibility
+    sharedRenderer.renderSlideContent(slideContentRef.value, {
+      background: props.slideBackground || props.themeBackground || '#ffffff',
+      textColor: props.themeText || '#1e293b',
+      padding: '48px', // Presenter mode uses fullscreen padding
+      layoutClass: props.layoutClass
+    });
+  }
+}, { immediate: true });
 
 // Navigation bar auto-hide
 function keepNavigationVisible() {
@@ -712,26 +744,31 @@ onUnmounted(() => {
   font-size: 3rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
+  color: inherit;
 }
 
 .slide-content :deep(h2) {
   font-size: 2.25rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  color: inherit;
 }
 
 .slide-content :deep(p) {
   font-size: 1.5rem;
   line-height: 1.75;
+  color: inherit;
 }
 
 .slide-content :deep(ul),
 .slide-content :deep(ol) {
   font-size: 1.5rem;
   margin-left: 2rem;
+  color: inherit;
 }
 
 .slide-content :deep(li) {
   margin-bottom: 0.5rem;
+  color: inherit;
 }
 </style>

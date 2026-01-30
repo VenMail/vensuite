@@ -220,6 +220,9 @@
       :rendered-content="editor.renderedContent"
       :layout-class="editor.getLayoutClass(editor.currentLayout)"
       :slide-background="editor.slideBackground"
+      :theme-background="editor.currentThemeObj?.colors.background"
+      :theme-text="editor.currentThemeObj?.colors.text"
+      :theme-style="editor.themeStyleObject as Record<string, string>"
       :current-notes="editor.currentSlideNotes"
       :next-slide-content="nextSlidePreviewHtml"
       :formatted-time="presenter.formattedTime"
@@ -828,7 +831,7 @@ function handleInsertInfographic(markdown: string) {
 
 // Event Handlers - Templates
 async function handleTemplateRoute(templateSlug: string) {
-  // Initialize new deck first
+  // Initialize new deck first - this now sets deckId to 'new' for proper reload handling
   slideStore.initializeNewDeck();
   
   // Apply template based on slug

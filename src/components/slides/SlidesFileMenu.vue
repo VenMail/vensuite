@@ -136,38 +136,6 @@
       </DropdownMenuContent>
     </DropdownMenu>
 
-    <!-- Presentation Menu Dropdown -->
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" class="h-8 px-3">
-          <Play class="h-4 w-4 mr-2" />
-          {{$t('Commons.button.presentation')}}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent class="w-56">
-        <DropdownMenuItem @click="startPresentation" class="text-green-600 dark:text-green-400">
-          <Play class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.start_presentation')}}
-          <KeyboardShortcut class="ml-auto text-xs text-gray-500">F5</KeyboardShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem @click="startPresenterMode" class="text-blue-600 dark:text-blue-400">
-          <MonitorSpeaker class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.presenter_mode')}}
-          <KeyboardShortcut class="ml-auto text-xs text-gray-500">Ctrl+F5</KeyboardShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem @click="startOverview">
-          <LayoutGrid class="h-4 w-4 mr-2" />
-          {{$t('Commons.heading.slide_overview')}}
-          <KeyboardShortcut class="ml-auto text-xs text-gray-500">O</KeyboardShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem @click="exportForPresentation">
-          <ExternalLink class="h-4 w-4 mr-2" />
-          {{$t('Components.Slides.text.export_for_web')}}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-
     <!-- Tools Menu Dropdown -->
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -230,9 +198,6 @@ import {
   BarChart3,
   LayoutGrid,
   Settings,
-  Play,
-  MonitorSpeaker,
-  ExternalLink,
   Wrench,
   CheckCircle,
   Smile,
@@ -286,10 +251,6 @@ const emit = defineEmits<{
   (e: 'show-infographics'): void;
   (e: 'toggle-thumbnails'): void;
   (e: 'toggle-properties'): void;
-  (e: 'start-presentation'): void;
-  (e: 'start-presenter-mode'): void;
-  (e: 'start-overview'): void;
-  (e: 'export-for-presentation'): void;
   (e: 'toggle-spell-check'): void;
   (e: 'show-emoji-picker'): void;
   (e: 'show-keyboard-shortcuts'): void;
@@ -370,23 +331,6 @@ function toggleThumbnails() {
 
 function toggleProperties() {
   emit('toggle-properties');
-}
-
-// Presentation menu handlers
-function startPresentation() {
-  emit('start-presentation');
-}
-
-function startPresenterMode() {
-  emit('start-presenter-mode');
-}
-
-function startOverview() {
-  emit('start-overview');
-}
-
-function exportForPresentation() {
-  emit('export-for-presentation');
 }
 
 // Tools menu handlers

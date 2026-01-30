@@ -1,5 +1,6 @@
 import { t } from '@/i18n';
 import { parseVideoMarkdown } from '@/composables/useVideoEmbed';
+import { parsePresetSyntax, applyPresetStyles } from './presetStyling';
 /**
  * Slidev Markdown Utilities
  * Handles parsing and conversion of Slidev-flavored markdown
@@ -179,32 +180,55 @@ function stringifyYamlFrontmatter(obj: Record<string, any>): string {
 
 /**
  * Parse optional block attributes at end of line: {.class1 .class2} or {style="..."}
+ * Enhanced to support preset syntax: {.presets.styling.vignette{intensity=0.8,color=#000}}
  */
-export function parseBlockAttributesFromLine(line: string): { rest: string; class?: string; style?: string } {
+export function parseBlockAttributesFromLine(line: string): { rest: string; class?: string; style?: string; presets?: string } {
   const match = line.match(/\s*\{([^}]+)\}\s*$/);
   if (!match) return { rest: line };
   const rest = line.slice(0, match.index).trim();
   const attrs = match[1];
   
   // Enhanced regex to support arbitrary values like .top-[5.3%], .left-[4.0%], .w-[736px]
-  const classMatch = attrs.match(/\.([a-zA-Z0-9_\-\[\]%\.]+)/g);
+  // Also support preset syntax with nested braces
+  const classMatch = attrs.match(/\.([a-zA-Z0-9_\-\[\]%\.]+(?:\{[^}]*\})?)/g);
   const styleMatch = attrs.match(/style\s*=\s*"([^"]*)"/);
+  
+  // Separate regular classes from preset classes
+  const regularClasses: string[] = [];
+  const presetClasses: string[] = [];
+  
+  if (classMatch) {
+    for (const classWithBraces of classMatch) {
+      const className = classWithBraces.slice(1); // Remove the dot
+      if (className.includes('.presets.') || className.includes('{')) {
+        // This is a preset class
+        presetClasses.push(className);
+      } else {
+        // Regular class
+        regularClasses.push(className);
+      }
+    }
+  }
   
   const result = {
     rest,
-    class: classMatch ? classMatch.map((c: string) => c.slice(1)).join(' ') : undefined,
-    style: styleMatch ? styleMatch[1] : undefined
+    class: regularClasses.length > 0 ? regularClasses.join(' ') : undefined,
+    style: styleMatch ? styleMatch[1] : undefined,
+    presets: presetClasses.length > 0 ? presetClasses.join(' ') : undefined
   };
   
   // Debug logging
   if (result.class) {
     console.log('🎨 DEBUG: Parsed block classes:', result.class, 'from line:', line);
   }
+  if (result.presets) {
+    console.log('🎨 DEBUG: Parsed preset classes:', result.presets, 'from line:', line);
+  }
   
   return result;
 }
 
-function parseBlockAttributes(line: string): { rest: string; class?: string; style?: string } {
+function parseBlockAttributes(line: string): { rest: string; class?: string; style?: string; presets?: string } {
   return parseBlockAttributesFromLine(line);
 }
 
@@ -242,6 +266,7 @@ interface MarkdownBlock {
   lines: string[];
   blockClass?: string;
   blockStyle?: string;
+  blockPresets?: string; // Preset syntax like "presets.styling.vignette{intensity=0.8}"
 }
 
 export { MarkdownBlock };
@@ -307,7 +332,7 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
     }
     const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
     if (headingMatch) {
-      const { rest, class: blockClass, style: blockStyle } = parseBlockAttributes(trimmed);
+      const { rest, class: blockClass, style: blockStyle, presets: blockPresets } = parseBlockAttributes(trimmed);
       const innerMatch = rest.match(/^(#{1,6})\s+(.+)$/);
       const content = innerMatch ? innerMatch[2] : rest;
       blocks.push({
@@ -317,7 +342,8 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
         type: 'heading',
         lines: [line],
         blockClass,
-        blockStyle
+        blockStyle,
+        blockPresets
       });
       (blocks[blocks.length - 1] as MarkdownBlock & { headingLevel: number }).headingLevel = headingMatch[1].length;
       (blocks[blocks.length - 1] as MarkdownBlock & { headingContent: string }).headingContent = content;
@@ -325,7 +351,7 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
       continue;
     }
     if (trimmed.match(/!\[([^\]]*)\]\(([^)]+)\)/)) {
-      const { rest, class: blockClass, style: blockStyle } = parseBlockAttributes(trimmed);
+      const { rest, class: blockClass, style: blockStyle, presets: blockPresets } = parseBlockAttributes(trimmed);
       const imgMatch = rest.match(/!\[([^\]]*)\]\(([^)]+)\)/);
       if (imgMatch) {
         blocks.push({
@@ -335,7 +361,8 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
           type: 'image',
           lines: [line],
           blockClass,
-          blockStyle
+          blockStyle,
+          blockPresets
         });
         (blocks[blocks.length - 1] as MarkdownBlock & { imageAlt: string; imageSrc: string }).imageAlt = imgMatch[1];
         (blocks[blocks.length - 1] as MarkdownBlock & { imageSrc: string }).imageSrc = imgMatch[2];
@@ -428,8 +455,8 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
     }
     const paraLines = lines.slice(start, i);
     const firstLine = paraLines[0] || '';
-    const { rest: firstRest, class: blockClass, style: blockStyle } = parseBlockAttributes(firstLine.trim());
-    if (blockClass || blockStyle) {
+    const { rest: firstRest, class: blockClass, style: blockStyle, presets: blockPresets } = parseBlockAttributes(firstLine.trim());
+    if (blockClass || blockStyle || blockPresets) {
       paraLines[0] = firstRest;
       blocks.push({
         id: generateBlockId('paragraph', start, i - 1),
@@ -438,7 +465,8 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
         type: 'paragraph',
         lines: paraLines,
         blockClass,
-        blockStyle
+        blockStyle,
+        blockPresets
       });
     } else {
       blocks.push({
@@ -455,17 +483,35 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
 }
 
 /**
- * Render blocks to HTML with data-markdown-line-start/end and optional block class/style
+ * Render blocks to HTML with data-markdown-line-start/end and optional block class/style/presets
  */
 export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
   const parts: string[] = [];
 
   for (const block of blocks) {
-    const { id, startLine, endLine, type, lines, blockClass, blockStyle } = block;
+    const { id, startLine, endLine, type, lines, blockClass, blockStyle, blockPresets } = block;
     // Include block ID in data attributes for better tracking
     const dataAttrs = ` data-block-id="${id}" data-markdown-line-start="${startLine}" data-markdown-line-end="${endLine}" data-markdown-type="${type}"`;
-    const classAttr = blockClass ? ` class="${blockClass}"` : '';
+    
+    // Process presets to extract CSS classes and data attributes
+    let presetClasses: string[] = [];
+    let presetDataAttrs: string[] = [];
+    
+    if (blockPresets) {
+      const presets = parsePresetSyntax(blockPresets);
+      for (const preset of presets) {
+        presetClasses.push(preset.cssClass);
+        for (const [key, value] of Object.entries(preset.options)) {
+          presetDataAttrs.push(`data-preset-${key}="${value}"`);
+        }
+      }
+    }
+    
+    // Combine all classes
+    const allClasses = [blockClass, ...presetClasses].filter(Boolean).join(' ');
+    const classAttr = allClasses ? ` class="${allClasses}"` : '';
     const styleAttr = blockStyle ? ` style="${blockStyle}"` : '';
+    const presetAttrs = presetDataAttrs.length > 0 ? ' ' + presetDataAttrs.join(' ') : '';
 
     if (type === 'mermaid') {
       const code = lines.slice(1, -1).join('\n').trim();
@@ -481,7 +527,7 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
       // Handle video blocks with video parsing
       const videoMarkdown = lines.join('\n');
       const videoHtml = parseVideoMarkdown(videoMarkdown);
-      parts.push(`<div${dataAttrs}${classAttr}${styleAttr}>${videoHtml}</div>`);
+      parts.push(`<div${dataAttrs}${classAttr}${styleAttr}${presetAttrs}>${videoHtml}</div>`);
       continue;
     }
     if (type === 'code') {
@@ -489,7 +535,7 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
       const lang = langMatch ? langMatch[1] || 'text' : 'text';
       const code = lines.slice(1, -1).join('\n');
       const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      parts.push(`<pre class="code-block"${dataAttrs}><code class="language-${lang}">${escapedCode}</code></pre>`);
+      parts.push(`<pre class="code-block"${dataAttrs}${presetAttrs}><code class="language-${lang}">${escapedCode}</code></pre>`);
       continue;
     }
     if (type === 'heading') {
@@ -497,7 +543,7 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
       const content = (block as MarkdownBlock & { headingContent: string }).headingContent || '';
       const tag = `h${level}`;
       const inner = processInlineContent(content);
-      parts.push(`<${tag}${classAttr}${styleAttr}${dataAttrs}>${inner}</${tag}>`);
+      parts.push(`<${tag}${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${inner}</${tag}>`);
       continue;
     }
     if (type === 'image') {
@@ -518,15 +564,19 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
         if (classMatch) extraClass = (extraClass ? extraClass + ' ' : '') + classMatch.map((c: string) => c.slice(1)).join(' ');
         if (styleMatch) extraStyle += (extraStyle ? ' ' : '') + styleMatch[1];
       }
-      const imgClass = extraClass ? `slide-image ${extraClass}` : 'slide-image';
+      // Combine with preset classes
+      const allImgClasses = [extraClass, ...presetClasses].filter(Boolean).join(' ');
+      const imgClass = allImgClasses ? `slide-image ${allImgClasses}` : 'slide-image';
       const finalClass = ` class="${imgClass}"`;
       const finalStyle = extraStyle ? ` style="${extraStyle.trim()}"` : '';
-      parts.push(`<img src="${src}" alt="${alt}"${finalClass}${finalStyle}${dataAttrs} />`);
+      parts.push(`<img src="${src}" alt="${alt}"${finalClass}${finalStyle}${presetAttrs}${dataAttrs} />`);
       continue;
     }
     if (type === 'table') {
       const tableHtml = parseMarkdownTables(lines.join('\n'));
-      const withData = tableHtml.replace(/^<table/, `<table${dataAttrs}${blockClass ? ` class="slide-table ${blockClass}"` : ' class="slide-table"'}`);
+      const allTableClasses = ['slide-table', blockClass, ...presetClasses].filter(Boolean).join(' ');
+      const tableClassAttr = ` class="${allTableClasses}"`;
+      const withData = tableHtml.replace(/^<table/, `<table${dataAttrs}${presetAttrs}${tableClassAttr}`);
       parts.push(withData);
       continue;
     }
@@ -537,29 +587,29 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
           return `<li>${processInlineContent(bullet)}</li>`;
         })
         .join('\n');
-      parts.push(`<ul class="slide-list"${classAttr}${styleAttr}${dataAttrs}>\n${listContent}\n</ul>`);
+      parts.push(`<ul class="slide-list"${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>\n${listContent}\n</ul>`);
       continue;
     }
     if (type === 'blockquote') {
       const quoteContent = lines.map((l) => l.replace(/^>\s?/, '')).join('\n');
-      parts.push(`<blockquote${classAttr}${styleAttr}${dataAttrs}>${processInlineContent(quoteContent)}</blockquote>`);
+      parts.push(`<blockquote${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${processInlineContent(quoteContent)}</blockquote>`);
       continue;
     }
     if (type === 'hr') {
-      parts.push(`<hr class="slide-divider"${dataAttrs} />`);
+      parts.push(`<hr class="slide-divider"${presetAttrs}${dataAttrs} />`);
       continue;
     }
     if (type === 'paragraph') {
       const text = lines.join('\n');
       // Process video syntax in paragraphs
       const processedText = parseVideoMarkdown(text);
-      parts.push(`<p${classAttr}${styleAttr}${dataAttrs}>${processInlineContent(processedText)}</p>`);
+      parts.push(`<p${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${processInlineContent(processedText)}</p>`);
       continue;
     }
     
     // Default case
     const text = lines.join('\n');
-    parts.push(`<div${classAttr}${styleAttr}${dataAttrs}>${processInlineContent(text)}</div>`);
+    parts.push(`<div${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${processInlineContent(text)}</div>`);
   }
 
   return parts.join('\n');

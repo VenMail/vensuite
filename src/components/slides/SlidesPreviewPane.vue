@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue';
 import { useMermaid } from '@/composables/useMermaid';
+import { useSharedSlideRenderer } from '@/composables/useSharedSlideRenderer';
 
 interface Props {
   renderedContent: string;
@@ -125,6 +126,9 @@ interface ElementAnimation {
 
 // Composables
 const mermaid = useMermaid();
+const sharedRenderer = useSharedSlideRenderer({
+  zoom: zoom.value
+});
 
 // Import position class application from useSlideRenderer
 import { useSlideRenderer } from '@/composables/useSlideRenderer';
@@ -165,8 +169,8 @@ const previewStyle = computed(() => {
 const contentWatcher = watch(() => props.renderedContent, async () => {
   await nextTick();
   if (previewRef.value) {
-    // Apply position classes using our custom function that handles zoom properly
-    applyPositionsWithZoom(previewRef.value);
+    // Apply position classes using shared renderer
+    sharedRenderer.applyPositionsWithZoom(previewRef.value, zoom.value);
     
     // Add line range data attributes for drag & drop
     if (props.arrangeMode) {
@@ -205,8 +209,8 @@ const animationsWatcher = watch(() => props.animations, () => {
 onMounted(async () => {
   await nextTick();
   if (previewRef.value) {
-    // Apply position classes using our custom function
-    applyPositionsWithZoom(previewRef.value);
+    // Apply position classes using shared renderer
+    sharedRenderer.applyPositionsWithZoom(previewRef.value, zoom.value);
     
     // Add line range data attributes for drag & drop
     if (props.arrangeMode) {
@@ -734,83 +738,6 @@ function cleanupArrangeMode() {
   
   // Re-enable text selection
   document.body.style.userSelect = '';
-}
-
-// Custom position application that accounts for zoom
-function applyPositionsWithZoom(container: HTMLElement) {
-  if (!container) return;
-
-  try {
-    const elements = container.querySelectorAll('[class*="["]');
-    
-    elements.forEach((el) => {
-      try {
-        const htmlEl = el as HTMLElement;
-        const cls = htmlEl.className || '';
-        
-        // Handle arbitrary top values
-        const topMatch = cls.match(/\btop-\[([^\]]+)\]/);
-        if (topMatch) {
-          const topValue = topMatch[1];
-          
-          // Validate and sanitize top value
-          if (isValidPositionValue(topValue)) {
-            htmlEl.style.position = 'absolute';
-            htmlEl.style.top = topValue;
-          }
-        }
-        
-        // Handle arbitrary left values
-        const leftMatch = cls.match(/\bleft-\[([^\]]+)\]/);
-        if (leftMatch) {
-          const leftValue = leftMatch[1];
-          
-          // Validate and sanitize left value
-          if (isValidPositionValue(leftValue)) {
-            htmlEl.style.position = 'absolute';
-            htmlEl.style.left = leftValue;
-          }
-        }
-        
-        // Handle absolute positioning without explicit coordinates
-        const hasAbsolute = /\babsolute\b/.test(cls);
-        if (hasAbsolute && !topMatch && !leftMatch) {
-          htmlEl.style.position = 'absolute';
-          htmlEl.style.top = '0';
-          htmlEl.style.left = '0';
-        }
-      } catch (error) {
-        console.error(`🎨 ERROR: Failed to process element:`, error);
-      }
-    });
-  } catch (error) {
-    console.error('🎨 ERROR: Failed to apply position classes:', error);
-  }
-}
-
-// Helper function to validate position values
-function isValidPositionValue(value: string): boolean {
-  if (!value) return false;
-  
-  // Allow percentage values
-  if (value.endsWith('%')) {
-    const num = parseFloat(value.slice(0, -1));
-    return !isNaN(num) && num >= 0 && num <= 100;
-  }
-  
-  // Allow pixel values
-  if (value.endsWith('px')) {
-    const num = parseFloat(value.slice(0, -2));
-    return !isNaN(num) && num >= 0;
-  }
-  
-  // Allow rem values
-  if (value.endsWith('rem')) {
-    const num = parseFloat(value.slice(0, -3));
-    return !isNaN(num) && num >= 0;
-  }
-  
-  return false;
 }
 
 // CRITICAL FIX: Restore positions for elements being manipulated

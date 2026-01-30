@@ -95,7 +95,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
           toast.info(`Auto-detected title: "${guessedTitle}"`);
         }
       }
-      // Trigger immediate auto-save on first change
+      // Trigger immediate auto-save on first change for new presentations
       setTimeout(() => {
         persistDeck().catch(err => console.warn('First change auto-save failed:', err));
       }, 1000);
@@ -104,28 +104,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
     scheduleAutosave();
   }
 
-  function scheduleAutosave() {
-    // Clear existing timeout
-    if (autosaveDebounce.value) {
-      clearTimeout(autosaveDebounce.value);
-    }
-    
-    // Use debounce with minimum delay to prevent rapid saves
-    autosaveDebounce.value = setTimeout(() => {
-      if (hasUnsavedChanges.value && !isSaving.value) {
-        persistDeck().catch(err => console.warn('Autosave failed:', err));
-      }
-    }, Math.max(autosaveDelay, 1000)); // Minimum 1 second delay
-  }
-
-  function cancelAutosave() {
-    if (autosaveDebounce.value) {
-      clearTimeout(autosaveDebounce.value);
-      autosaveDebounce.value = null;
-    }
-  }
-
-  // Save deck with improved concurrency handling
+  // Save deck with improved concurrency handling and reload for new presentations
   async function persistDeck(): Promise<boolean> {
     if (isSaving.value) {
       // Queue the save instead of rejecting to prevent lost saves
@@ -136,6 +115,10 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
 
     try {
       isSaving.value = true;
+      
+      // Check if this is a new deck that needs reload after save
+      const wasNewDeck = !deckId.value || deckId.value === 'new';
+      console.log('💾 persistDeck called - wasNewDeck:', wasNewDeck, 'current deckId:', deckId.value);
 
       const deckData: DeckData = {
         title: deckTitle.value,
@@ -154,7 +137,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
 
       // Get existing document if we have an ID, otherwise create new
       let existingDoc: FileData | null = null;
-      if (deckId.value) {
+      if (deckId.value && deckId.value !== 'new') {
         existingDoc = await fileStore.loadDocument(deckId.value, 'pptx');
         console.log('📂 Loaded existing document:', existingDoc ? 'found' : 'not found');
       }
@@ -170,7 +153,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         } as DocumentMetadata,
         last_viewed: new Date(),
       } : {
-        id: deckId.value || undefined, // Use existing ID if we have one
+        id: deckId.value === 'new' ? undefined : (deckId.value || undefined), // Don't pass 'new' or null as ID
         title: deckTitle.value,
         file_type: 'pptx', // Use pptx to match what's shown in Home.vue
         content: JSON.stringify(deckData),
@@ -206,6 +189,15 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
           console.log('🔄 Local document saved online, new ID:', result.redirectId);
           deckId.value = result.redirectId;
         }
+        
+        // Handle reload for new decks
+        if (wasNewDeck && deckId.value && deckId.value !== 'new') {
+          console.log('🔄 New presentation saved, reloading with ID:', deckId.value);
+          // Use setTimeout to ensure the save completes before reload
+          setTimeout(() => {
+            window.location.href = `/slides/${deckId.value}`;
+          }, 100);
+        }
       }
 
       hasUnsavedChanges.value = false;
@@ -233,6 +225,28 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
       throw error;
     } finally {
       isSaving.value = false;
+    }
+  }
+
+  function scheduleAutosave() {
+    // Clear existing timeout
+    if (autosaveDebounce.value) {
+      clearTimeout(autosaveDebounce.value);
+    }
+    
+    // Use debounce with minimum delay to prevent rapid saves
+    autosaveDebounce.value = setTimeout(() => {
+      if (hasUnsavedChanges.value && !isSaving.value) {
+        // Always use persistDeck() - it now handles reload logic internally
+        persistDeck().catch(err => console.warn('Autosave failed:', err));
+      }
+    }, Math.max(autosaveDelay, 1000)); // Minimum 1 second delay
+  }
+
+  function cancelAutosave() {
+    if (autosaveDebounce.value) {
+      clearTimeout(autosaveDebounce.value);
+      autosaveDebounce.value = null;
     }
   }
 
@@ -610,6 +624,9 @@ download: true
 
   // Initialize new deck with title guessing
   function initializeNewDeck(initialSlides?: any[]) {
+    // Set deckId to 'new' to indicate this is a new presentation that should reload on first save
+    deckId.value = 'new';
+    
     // Set default slides if none provided
     if (initialSlides && initialSlides.length > 0) {
       editor.setSlides(initialSlides);

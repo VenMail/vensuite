@@ -41,10 +41,6 @@
           @show-infographics="$emit('show-infographics')"
           @toggle-thumbnails="$emit('toggle-thumbnails')"
           @toggle-properties="$emit('toggle-properties')"
-          @start-presentation="$emit('start-presentation')"
-          @start-presenter-mode="$emit('start-presenter-mode')"
-          @start-overview="$emit('start-overview')"
-          @export-for-presentation="$emit('export-for-presentation')"
           @toggle-spell-check="$emit('toggle-spell-check')"
           @show-emoji-picker="$emit('show-emoji-picker')"
           @show-keyboard-shortcuts="$emit('show-keyboard-shortcuts')"
@@ -72,27 +68,46 @@
 
         <!-- Quick Actions -->
         <div class="flex items-center gap-1">
-          <!-- Presentation Quick Start -->
-          <Button
-            variant="default"
-            size="sm"
-            class="bg-green-600 hover:bg-green-700"
-            @click="$emit('start-presentation')"
-          >
-            <Play class="h-4 w-4 mr-1" />
-            {{$t('Commons.button.present')}}
-          </Button>
-
-          <!-- Presenter Mode -->
-          <Button
-            v-if="showPresenterMode"
-            variant="outline"
-            size="sm"
-            @click="$emit('start-presenter-mode')"
-          >
-            <MonitorSpeaker class="h-4 w-4 mr-1" />
-            {{$t('Commons.button.presenter')}}
-          </Button>
+          <!-- Unified Present Controls -->
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="default"
+              size="sm"
+              class="bg-green-600 hover:bg-green-700"
+            >
+              <Play class="h-4 w-4 mr-1" />
+              Present
+              <ChevronDown class="h-4 w-4 ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-56" align="end">
+            <DropdownMenuItem @click="$emit('start-presentation')" class="text-green-600 dark:text-green-400">
+              <Play class="h-4 w-4 mr-2" />
+              Start Presentation
+              <DropdownMenuShortcut>F5</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              v-if="showPresenterMode"
+              @click="$emit('start-presenter-mode')" 
+              class="text-blue-600 dark:text-blue-400"
+            >
+              <MonitorSpeaker class="h-4 w-4 mr-2" />
+              Presenter Mode
+              <DropdownMenuShortcut>Ctrl+F5</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem @click="$emit('start-overview')">
+              <LayoutGrid class="h-4 w-4 mr-2" />
+              Slide Overview
+              <DropdownMenuShortcut>O</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="$emit('export-for-presentation')">
+              <ExternalLink class="h-4 w-4 mr-2" />
+              Export for Web
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
           <!-- Dark Mode Toggle -->
           <button
@@ -203,7 +218,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { 
-  ArrowLeft, PencilIcon, Share2, Wifi, WifiOff, Sun, Moon, Play, MonitorSpeaker, Palette, Layout, FileText
+  ArrowLeft, PencilIcon, Share2, Wifi, WifiOff, Sun, Moon, Play, MonitorSpeaker, Palette, Layout, FileText, ChevronDown, LayoutGrid, ExternalLink
 } from 'lucide-vue-next';
 import * as defaultIcons from '@iconify-prerendered/vue-file-icons';
 import Button from '@/components/ui/button/Button.vue';
@@ -215,6 +230,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuShortcut,
+} from '@/components/ui/dropdown-menu';
 import SlidesFileMenu from './SlidesFileMenu.vue';
 
 type ThemeMode = 'light' | 'dark';

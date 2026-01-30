@@ -1,0 +1,347 @@
+/* Preset Styling CSS */
+/* Generated from src/utils/presetStyling.ts */
+
+/* Preset Styling - Vignette Effect */
+.preset-styling-vignette {
+  position: relative;
+  overflow: hidden;
+}
+
+.preset-styling-vignette::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    rgba(var(--vignette-color-rgb, 0, 0, 0), 0) var(--vignette-stop, 40%),
+    rgba(var(--vignette-color-rgb, 0, 0, 0), var(--vignette-intensity, 0.7)) 100%
+  );
+}
+
+/* Size variations */
+.preset-styling-vignette[data-preset-size="small"]::before {
+  --vignette-stop: 60%;
+}
+
+.preset-styling-vignette[data-preset-size="medium"]::before {
+  --vignette-stop: 40%;
+}
+
+.preset-styling-vignette[data-preset-size="large"]::before {
+  --vignette-stop: 20%;
+}
+
+/* Color variations - convert hex to RGB */
+.preset-styling-vignette[data-preset-color="#000000"]::before {
+  --vignette-color-rgb: 0, 0, 0;
+}
+
+.preset-styling-vignette[data-preset-color="#ffffff"]::before {
+  --vignette-color-rgb: 255, 255, 255;
+}
+
+.preset-styling-vignette[data-preset-color="#ff0000"]::before {
+  --vignette-color-rgb: 255, 0, 0;
+}
+
+.preset-styling-vignette[data-preset-color="#00ff00"]::before {
+  --vignette-color-rgb: 0, 255, 0;
+}
+
+.preset-styling-vignette[data-preset-color="#0000ff"]::before {
+  --vignette-color-rgb: 0, 0, 255;
+}
+
+.preset-styling-vignette[data-preset-color="#3b82f6"]::before {
+  --vignette-color-rgb: 59, 130, 246;
+}
+
+.preset-styling-vignette[data-preset-color="#ef4444"]::before {
+  --vignette-color-rgb: 239, 68, 68;
+}
+
+.preset-styling-vignette[data-preset-color="#10b981"]::before {
+  --vignette-color-rgb: 16, 185, 129;
+}
+
+.preset-styling-vignette[data-preset-color="#f59e0b"]::before {
+  --vignette-color-rgb: 245, 158, 11;
+}
+
+.preset-styling-vignette[data-preset-color="#8b5cf6"]::before {
+  --vignette-color-rgb: 139, 92, 246;
+}
+
+.preset-styling-vignette[data-preset-color="#ec4899"]::before {
+  --vignette-color-rgb: 236, 72, 153;
+}
+
+/* Ensure content stays above vignette */
+.preset-styling-vignette img,
+.preset-styling-vignette video,
+.preset-styling-vignette .content {
+  position: relative;
+  z-index: 0;
+}
+
+/* Additional preset styles */
+
+/* Glow Effect */
+.preset-styling-glow {
+  position: relative;
+}
+
+.preset-styling-glow::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: radial-gradient(circle, var(--glow-color, #3b82f6), transparent 70%);
+  opacity: var(--glow-intensity, 0.5);
+  filter: blur(var(--glow-blur, 10px));
+  z-index: -1;
+}
+
+/* Shadow Effect */
+.preset-styling-shadow {
+  box-shadow: var(--shadow-size, 0 10px 30px) var(--shadow-color, rgba(0, 0, 0, 0.3));
+}
+
+/* Border Effect */
+.preset-styling-border {
+  border: var(--border-width, 2px) solid var(--border-color, #3b82f6);
+  border-radius: var(--border-radius, 8px);
+}
+
+/* Blur Effect */
+.preset-styling-blur {
+  filter: blur(var(--blur-amount, 2px));
+}
+
+/* Grayscale Effect */
+.preset-styling-grayscale {
+  filter: grayscale(var(--grayscale-amount, 100%));
+}
+
+/* Sepia Effect */
+.preset-styling-sepia {
+  filter: sepia(var(--sepia-amount, 100%));
+}
+
+/* Brightness Effect */
+.preset-styling-brightness {
+  filter: brightness(var(--brightness-level, 1.2));
+}
+
+/* Contrast Effect */
+.preset-styling-contrast {
+  filter: contrast(var(--contrast-level, 1.2));
+}
+
+/* Saturate Effect */
+.preset-styling-saturate {
+  filter: saturate(var(--saturate-level, 1.5));
+}
+
+/* Hue Rotate Effect */
+.preset-styling-hue-rotate {
+  filter: hue-rotate(var(--hue-rotate-degrees, 90deg));
+}
+
+/* Fade Effect */
+.preset-styling-fade {
+  opacity: var(--fade-opacity, 0.7);
+}
+
+/* Tilt Effect */
+.preset-styling-tilt {
+  transform: rotate(var(--tilt-degrees, 5deg));
+}
+
+/* Scale Effect */
+.preset-styling-scale {
+  transform: scale(var(--scale-factor, 1.1));
+}
+
+/* Pulse Animation */
+.preset-styling-pulse {
+  animation: pulse var(--pulse-duration, 2s) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: var(--pulse-opacity, 0.5);
+  }
+}
+
+/* Shake Animation */
+.preset-styling-shake {
+  animation: shake var(--shake-duration, 0.5s);
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(var(--shake-intensity, 10px));
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(calc(-1 * var(--shake-intensity, 10px)));
+  }
+}
+
+/* Bounce Animation */
+.preset-styling-bounce {
+  animation: bounce var(--bounce-duration, 1s);
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40%, 43% {
+    transform: translateY(var(--bounce-height, -30px));
+  }
+  70% {
+    transform: translateY(var(--bounce-height, -15px));
+  }
+  90% {
+    transform: translateY(var(--bounce-height, -4px));
+  }
+}
+
+/* Fade In Animation */
+.preset-styling-fade-in {
+  animation: fadeIn var(--fade-in-duration, 1s);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Slide In Animation */
+.preset-styling-slide-in {
+  animation: slideIn var(--slide-in-duration, 0.5s);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(var(--slide-in-distance, -100%));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Zoom In Animation */
+.preset-styling-zoom-in {
+  animation: zoomIn var(--zoom-in-duration, 0.5s);
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(var(--zoom-in-start, 0));
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Rotate Animation */
+.preset-styling-rotate {
+  animation: rotate var(--rotate-duration, 2s) linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Neon Glow Effect */
+.preset-styling-neon {
+  position: relative;
+  color: var(--neon-color, #fff);
+  text-shadow: 
+    0 0 10px var(--neon-color, #fff),
+    0 0 20px var(--neon-color, #fff),
+    0 0 30px var(--neon-color, #fff),
+    0 0 40px var(--neon-accent, #3b82f6),
+    0 0 70px var(--neon-accent, #3b82f6),
+    0 0 80px var(--neon-accent, #3b82f6),
+    0 0 100px var(--neon-accent, #3b82f6);
+}
+
+/* Retro Effect */
+.preset-styling-retro {
+  filter: sepia(0.5) contrast(1.2) brightness(0.9);
+  border: 4px solid #333;
+  border-radius: 2px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Polaroid Effect */
+.preset-styling-polaroid {
+  background: white;
+  padding: 1rem 1rem 3rem 1rem;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: rotate(var(--polaroid-rotation, -2deg));
+}
+
+.preset-styling-polaroid img {
+  width: 100%;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+/* Film Grain Effect */
+.preset-styling-film-grain {
+  position: relative;
+}
+
+.preset-styling-film-grain::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: var(--grain-opacity, 0.15);
+  z-index: 1;
+  pointer-events: none;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.1) 2px,
+      rgba(0, 0, 0, 0.1) 4px
+    );
+}
+
+/* Ensure content stays above effects */
+.preset-styling-film-grain > * {
+  position: relative;
+  z-index: 2;
+}
