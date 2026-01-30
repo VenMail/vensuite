@@ -848,6 +848,9 @@ function updateEditorEmptyState(instance?: Editor) {
   isEditorEmpty.value = empty;
   if (!empty) {
     hasEnteredContent.value = true;
+  } else {
+    // Reset hasEnteredContent when editor becomes empty
+    hasEnteredContent.value = false;
   }
 }
 
@@ -3712,6 +3715,9 @@ function initializeEditor(contentOverride?: any) {
 
   // Add collaboration update listener
   editor.value.on('update', () => {
+    // Update placeholder state when content changes
+    updateEditorEmptyState(editor.value);
+    
     if (!changesPending.value && !isJustLoaded.value) {
       broadcastChange();
       // Trigger auto-save for authenticated users

@@ -30,9 +30,9 @@ const emit = defineEmits(['toggle', 'collapse'])
 const items = [
   { name: 'Home', icon: Home, route: '/' },
   { name: 'Documents', icon: FileText, route: '/docs' },
+  { name: 'Spreadsheets', icon: Table, route: '/sheets' },
   { name: 'Forms', icon: FileBoxIcon, route: '/forms' },
   { name: 'Slides', icon: Presentation, route: '/slides' },
-  { name: 'Spreadsheets', icon: Table, route: '/sheets' },
   { name: 'Media', icon: Image, route: '/media' },
   { name: 'Bin', icon: Trash2, route: '/bin' }
 ]

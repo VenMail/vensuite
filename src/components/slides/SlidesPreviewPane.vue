@@ -10,10 +10,10 @@
     
     <!-- Preview Content: Read-Only -->
     <div class="flex-1 overflow-auto bg-gray-100 dark:bg-gray-950 p-4">
-      <div class="flex items-center justify-center min-h-full">
+      <div class="flex items-center justify-center min-h-full relative">
         <div
           ref="previewRef"
-          class="slide-preview-content flex-shrink-0"
+          class="slide-preview-content flex-shrink-0 relative"
           :class="layoutClass"
           :style="previewStyle"
           v-html="renderedContent"
@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick, computed } from 'vue';
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue';
 import { useMermaid } from '@/composables/useMermaid';
 
 interface Props {
@@ -68,6 +68,9 @@ const elementHandlers = ref<Map<HTMLElement, { click?: EventListener; mouseenter
 
 // Track elements currently being manipulated to prevent watch overwrites
 const elementsBeingManipulated = ref<Set<string>>(new Set());
+
+// Track timeouts for cleanup
+const activeTimeouts = ref<Set<NodeJS.Timeout>>(new Set());
 
 // Drag state
 const isDragging = ref(false);
@@ -125,7 +128,7 @@ const mermaid = useMermaid();
 
 // Import position class application from useSlideRenderer
 import { useSlideRenderer } from '@/composables/useSlideRenderer';
-const { applyArbitraryPositionClasses } = useSlideRenderer({
+const { } = useSlideRenderer({
   container: previewRef,
   enableArrangeMode: props.arrangeMode,
   enableErrorRecovery: false,
@@ -153,18 +156,17 @@ const previewStyle = computed(() => {
     boxShadow: isFullscreen 
       ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
       : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    position: 'relative' as const, // CRITICAL: Establish positioning context
     ...props.themeStyle
   };
 });
 
 // Watch for content changes and render mermaid diagrams
-watch(() => props.renderedContent, async () => {
+const contentWatcher = watch(() => props.renderedContent, async () => {
   await nextTick();
   if (previewRef.value) {
-    console.log('🔍 DEBUG: Preview content updated, HTML:', previewRef.value.innerHTML.substring(0, 500) + '...');
-    
-    // Apply position classes first
-    applyArbitraryPositionClasses(previewRef.value);
+    // Apply position classes using our custom function that handles zoom properly
+    applyPositionsWithZoom(previewRef.value);
     
     // Add line range data attributes for drag & drop
     if (props.arrangeMode) {
@@ -180,16 +182,31 @@ watch(() => props.renderedContent, async () => {
   }
 }, { immediate: true });
 
+// Watch for arrange mode changes to properly initialize/cleanup controls
+const arrangeModeWatcher = watch(() => props.arrangeMode, async (newArrangeMode, _oldArrangeMode) => {
+  await nextTick();
+  
+  if (previewRef.value) {
+    if (newArrangeMode) {
+      // Entering arrange mode - add drag/resize controls
+      addLineRangeAttributes();
+    } else {
+      // Exiting arrange mode - remove controls and reset styles
+      cleanupArrangeMode();
+    }
+  }
+});
+
 // Watch for animations changes
-watch(() => props.animations, () => {
+const animationsWatcher = watch(() => props.animations, () => {
   applyAnimations();
 }, { deep: true });
 
 onMounted(async () => {
   await nextTick();
   if (previewRef.value) {
-    // Apply position classes
-    applyArbitraryPositionClasses(previewRef.value);
+    // Apply position classes using our custom function
+    applyPositionsWithZoom(previewRef.value);
     
     // Add line range data attributes for drag & drop
     if (props.arrangeMode) {
@@ -210,46 +227,179 @@ onMounted(async () => {
       });
       previewRef.value?.dispatchEvent(parentEvent);
     });
+    
+    // Add keyboard event listener for arrow key movement
+    document.addEventListener('keydown', handleKeyDown);
   }
 });
+
+onUnmounted(() => {
+  // Clear all active timeouts
+  activeTimeouts.value.forEach(timeoutId => clearTimeout(timeoutId));
+  activeTimeouts.value.clear();
+  
+  // Clean up all watchers to prevent memory leaks
+  contentWatcher?.();
+  arrangeModeWatcher?.();
+  animationsWatcher?.();
+  
+  // Clean up animation observer
+  if (animationObserver.value) {
+    animationObserver.value.disconnect();
+    animationObserver.value = null;
+  }
+  
+  // Clean up all event handlers
+  cleanupAnimationHandlers();
+  
+  // Clean up arrange mode
+  cleanupArrangeMode();
+  
+  // Remove document event listeners
+  document.removeEventListener('mousemove', throttledMouseMove);
+  document.removeEventListener('mouseup', handleMouseUp);
+  document.removeEventListener('mousemove', throttledResizeMove);
+  document.removeEventListener('mouseup', handleResizeEnd);
+  document.removeEventListener('keydown', handleKeyDown);
+  
+  // Reset text selection
+  document.body.style.userSelect = '';
+  
+  // Clear all refs
+  previewRef.value = null;
+  elementHandlers.value.clear();
+  elementsBeingManipulated.value.clear();
+});
+
+// Arrow key movement handler
+function handleKeyDown(e: KeyboardEvent) {
+  // Only handle arrow keys in arrange mode
+  if (!props.arrangeMode) return;
+  
+  // Don't handle arrow keys if user is typing in input fields
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+    return;
+  }
+  
+  // Find selected element
+  const selectedElement = previewRef.value?.querySelector('.element-selected') as HTMLElement;
+  if (!selectedElement) return;
+  
+  // Movement amount in pixels (adjustable based on zoom)
+  const moveAmount = e.shiftKey ? 10 : 1; // Shift + arrow = faster movement
+  const zoomFactor = zoom.value / 100;
+  const adjustedMoveAmount = moveAmount / zoomFactor;
+  
+  let deltaX = 0;
+  let deltaY = 0;
+  
+  switch (e.key) {
+    case 'ArrowUp':
+      e.preventDefault();
+      deltaY = -adjustedMoveAmount;
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      deltaY = adjustedMoveAmount;
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      deltaX = -adjustedMoveAmount;
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      deltaX = adjustedMoveAmount;
+      break;
+    default:
+      return; // Not an arrow key
+  }
+  
+  // Get current position
+  const currentTop = parseFloat(selectedElement.style.top) || 0;
+  const currentLeft = parseFloat(selectedElement.style.left) || 0;
+  
+  // Calculate new position
+  const newTop = currentTop + deltaY;
+  const newLeft = currentLeft + deltaX;
+  
+  // Apply new position immediately for visual feedback
+  selectedElement.style.position = 'absolute';
+  selectedElement.style.top = `${newTop}px`;
+  selectedElement.style.left = `${newLeft}px`;
+  selectedElement.style.zIndex = '1000';
+  
+  // Store temp position
+  const blockId = selectedElement.dataset.blockId || '';
+  selectedElement.dataset.tempPosition = JSON.stringify({
+    top: `${newTop}px`,
+    left: `${newLeft}px`,
+    zIndex: '1000'
+  });
+  
+  // Mark element as being manipulated
+  if (blockId) {
+    elementsBeingManipulated.value.add(blockId);
+  }
+  
+  // Get line numbers for markdown update
+  const lineStart = parseInt(selectedElement.dataset.lineStart || '0');
+  const lineEnd = parseInt(selectedElement.dataset.lineEnd || '0');
+  
+  // Calculate position as percentage for markdown
+  const containerRect = previewRef.value!.getBoundingClientRect();
+  const topPercent = ((newTop * zoomFactor) / containerRect.height * 100).toFixed(1);
+  const leftPercent = ((newLeft * zoomFactor) / containerRect.width * 100).toFixed(1);
+  
+  const updatePayload = {
+    element: selectedElement,
+    markdownLineStart: lineStart,
+    markdownLineEnd: lineEnd,
+    position: {
+      top: `${topPercent}%`,
+      left: `${leftPercent}%`
+    }
+  };
+  
+  // Emit position update
+  emit('update-element-position', updatePayload);
+  
+  // Clear tempPosition after delay
+  const timeoutId = setTimeout(() => {
+    if (selectedElement) {
+      delete selectedElement.dataset.tempPosition;
+    }
+    elementsBeingManipulated.value.delete(blockId);
+    activeTimeouts.value.delete(timeoutId);
+  }, 1000);
+  activeTimeouts.value.add(timeoutId);
+}
 
 // Apply animations to elements
 function applyAnimations() {
   if (!previewRef.value || !props.animations) return;
   
   // Clear existing animations and handlers
-  const elements = previewRef.value.querySelectorAll('*');
-  elements.forEach(el => {
-    const element = el as HTMLElement;
-    if (element.dataset.animation) {
-      element.style.animation = '';
-      element.classList.remove('animated-element', 'animation-on-load', 'animation-on-click', 'animation-on-hover', 'animation-on-scroll');
-      delete element.dataset.animation;
-      
-      // Clean up handlers
-      const handlers = elementHandlers.value.get(element);
-      if (handlers) {
-        if (handlers.click) element.removeEventListener('click', handlers.click);
-        if (handlers.mouseenter) element.removeEventListener('mouseenter', handlers.mouseenter);
-        if (handlers.mouseleave) element.removeEventListener('mouseleave', handlers.mouseleave);
-        elementHandlers.value.delete(element);
-      }
-    }
-    
-    // Add click handler for element selection
-    if (!element.dataset.selectionHandler) {
-      element.style.cursor = 'pointer';
-      element.addEventListener('click', (e) => {
-        e.stopPropagation();
-        // Emit selection event to parent
-        const event = new CustomEvent('element-selected', {
-          detail: { element, type: getElementTypeInfo(element) }
+  cleanupAnimationHandlers();
+  
+  // Add click handlers for element selection (non-arrange mode)
+  if (!props.arrangeMode) {
+    const elements = previewRef.value.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, span, div, img');
+    elements.forEach((element) => {
+      const htmlElement = element as HTMLElement;
+      if (!htmlElement.dataset.selectionHandler) {
+        htmlElement.style.cursor = 'pointer';
+        htmlElement.addEventListener('click', (e: MouseEvent) => {
+          e.stopPropagation();
+          // Emit selection event to parent
+          const event = new CustomEvent('element-selected', {
+            detail: { element: htmlElement, type: getElementTypeInfo(htmlElement) }
+          });
+          previewRef.value?.dispatchEvent(event);
         });
-        previewRef.value?.dispatchEvent(event);
-      });
-      element.dataset.selectionHandler = 'true';
-    }
-  });
+        htmlElement.dataset.selectionHandler = 'true';
+      }
+    });
+  }
   
   // Apply new animations
   props.animations.forEach((animation, elementId) => {
@@ -288,6 +438,16 @@ function applyAnimations() {
       applyAnimationToElement(element, animation);
     }
   });
+}
+
+// Cleanup animation handlers
+function cleanupAnimationHandlers() {
+  elementHandlers.value.forEach((handlers, element) => {
+    if (handlers.click) element.removeEventListener('click', handlers.click);
+    if (handlers.mouseenter) element.removeEventListener('mouseenter', handlers.mouseenter);
+    if (handlers.mouseleave) element.removeEventListener('mouseleave', handlers.mouseleave);
+  });
+  elementHandlers.value.clear();
 }
 
 // Helper function to get element type info
@@ -466,7 +626,6 @@ function addLineRangeAttributes() {
     const lineEnd = element.dataset.markdownLineEnd;
     
     if (!lineStart || !lineEnd) {
-      console.warn('Element missing line numbers:', element);
       return;
     }
     
@@ -492,6 +651,166 @@ function addLineRangeAttributes() {
       addResizeHandles(element);
     }
   });
+  
+  // Also handle images that might not have line data
+  if (props.arrangeMode) {
+    const images = previewRef.value.querySelectorAll('img');
+    
+    images.forEach((img, index) => {
+      const element = img as HTMLElement;
+      
+      // Skip if already processed
+      if (element.classList.contains('draggable-element')) {
+        return;
+      }
+      
+      // Generate synthetic line data for images without line data
+      const lineStart = element.dataset.markdownLineStart || `image-${index}`;
+      const lineEnd = element.dataset.markdownLineEnd || lineStart;
+      
+      element.dataset.lineStart = lineStart;
+      element.dataset.lineEnd = lineEnd;
+      element.dataset.blockId = `img-${index}`;
+      
+      // Make draggable
+      element.classList.add('draggable-element');
+      element.style.cursor = 'move';
+      
+      // Add mousedown handler for dragging
+      element.addEventListener('mousedown', (e: MouseEvent) => {
+        // Don't trigger drag if clicking on resize handle
+        if ((e.target as HTMLElement).classList.contains('resize-handle')) {
+          return;
+        }
+        handleMouseDown(e, element);
+      });
+      
+      // Add resize handles
+      addResizeHandles(element);
+    });
+  }
+}
+
+// Cleanup arrange mode controls and styles
+function cleanupArrangeMode() {
+  if (!previewRef.value) return;
+  
+  // Remove draggable classes and styles
+  const draggableElements = previewRef.value.querySelectorAll('.draggable-element');
+  draggableElements.forEach((element) => {
+    const el = element as HTMLElement;
+    el.classList.remove('draggable-element', 'dragging');
+    el.style.cursor = '';
+    
+    // Remove resize handles
+    const handles = el.querySelectorAll('.resize-handle');
+    handles.forEach(handle => handle.remove());
+    
+    // Remove selection handlers
+    if (el.dataset.selectionHandler) {
+      delete el.dataset.selectionHandler;
+    }
+  });
+  
+  // Clean up all animation handlers
+  cleanupAnimationHandlers();
+  
+  // Clear manipulation tracking
+  elementsBeingManipulated.value.clear();
+  
+  // Remove any remaining event listeners from document
+  document.removeEventListener('mousemove', throttledMouseMove);
+  document.removeEventListener('mouseup', handleMouseUp);
+  document.removeEventListener('mousemove', throttledResizeMove);
+  document.removeEventListener('mouseup', handleResizeEnd);
+  
+  // Reset drag state
+  isDragging.value = false;
+  draggedElement.value = null;
+  
+  // Reset resize state
+  resizeState.value.isResizing = false;
+  resizeState.value.element = null;
+  
+  // Re-enable text selection
+  document.body.style.userSelect = '';
+}
+
+// Custom position application that accounts for zoom
+function applyPositionsWithZoom(container: HTMLElement) {
+  if (!container) return;
+
+  try {
+    const elements = container.querySelectorAll('[class*="["]');
+    
+    elements.forEach((el) => {
+      try {
+        const htmlEl = el as HTMLElement;
+        const cls = htmlEl.className || '';
+        
+        // Handle arbitrary top values
+        const topMatch = cls.match(/\btop-\[([^\]]+)\]/);
+        if (topMatch) {
+          const topValue = topMatch[1];
+          
+          // Validate and sanitize top value
+          if (isValidPositionValue(topValue)) {
+            htmlEl.style.position = 'absolute';
+            htmlEl.style.top = topValue;
+          }
+        }
+        
+        // Handle arbitrary left values
+        const leftMatch = cls.match(/\bleft-\[([^\]]+)\]/);
+        if (leftMatch) {
+          const leftValue = leftMatch[1];
+          
+          // Validate and sanitize left value
+          if (isValidPositionValue(leftValue)) {
+            htmlEl.style.position = 'absolute';
+            htmlEl.style.left = leftValue;
+          }
+        }
+        
+        // Handle absolute positioning without explicit coordinates
+        const hasAbsolute = /\babsolute\b/.test(cls);
+        if (hasAbsolute && !topMatch && !leftMatch) {
+          htmlEl.style.position = 'absolute';
+          htmlEl.style.top = '0';
+          htmlEl.style.left = '0';
+        }
+      } catch (error) {
+        console.error(`🎨 ERROR: Failed to process element:`, error);
+      }
+    });
+  } catch (error) {
+    console.error('🎨 ERROR: Failed to apply position classes:', error);
+  }
+}
+
+// Helper function to validate position values
+function isValidPositionValue(value: string): boolean {
+  if (!value) return false;
+  
+  // Allow percentage values
+  if (value.endsWith('%')) {
+    const num = parseFloat(value.slice(0, -1));
+    return !isNaN(num) && num >= 0 && num <= 100;
+  }
+  
+  // Allow pixel values
+  if (value.endsWith('px')) {
+    const num = parseFloat(value.slice(0, -2));
+    return !isNaN(num) && num >= 0;
+  }
+  
+  // Allow rem values
+  if (value.endsWith('rem')) {
+    const num = parseFloat(value.slice(0, -3));
+    return !isNaN(num) && num >= 0;
+  }
+  
+  return false;
 }
 
 // CRITICAL FIX: Restore positions for elements being manipulated
@@ -501,13 +820,18 @@ function restoreManipulatedElementPositions() {
   elementsBeingManipulated.value.forEach(blockId => {
     const element = previewRef.value?.querySelector(`[data-block-id="${blockId}"]`) as HTMLElement;
     if (element && element.dataset.tempPosition) {
-      const pos = JSON.parse(element.dataset.tempPosition);
-      element.style.position = 'absolute';
-      element.style.top = pos.top;
-      element.style.left = pos.left;
-      if (pos.width) element.style.width = pos.width;
-      if (pos.height) element.style.height = pos.height;
-      element.style.zIndex = pos.zIndex || '1000';
+      // CRITICAL FIX: Only restore if the element doesn't already have correct position from markdown
+      const hasCorrectPosition = element.style.position === 'absolute' && 
+                               element.style.top && 
+                               element.style.left;
+      
+      if (!hasCorrectPosition) {
+        const pos = JSON.parse(element.dataset.tempPosition);
+        element.style.position = 'absolute';
+        element.style.top = pos.top;
+        element.style.left = pos.left;
+        element.style.zIndex = pos.zIndex;
+      }
     }
   });
 }
@@ -541,6 +865,35 @@ function handleMouseDown(e: MouseEvent, element: HTMLElement) {
   e.preventDefault();
   e.stopPropagation();
   
+  // Only start drag if this is actually a drag operation (moved more than 5px)
+  const startX = e.clientX;
+  const startY = e.clientY;
+  
+  const mouseMoveHandler = (moveEvent: MouseEvent) => {
+    const deltaX = Math.abs(moveEvent.clientX - startX);
+    const deltaY = Math.abs(moveEvent.clientY - startY);
+    
+    if (deltaX > 5 || deltaY > 5) {
+      // This is a drag, not a click
+      document.removeEventListener('mousemove', mouseMoveHandler);
+      document.removeEventListener('mouseup', mouseUpHandler);
+      
+      // Start the actual drag
+      startDragOperation(e, element);
+    }
+  };
+  
+  const mouseUpHandler = () => {
+    // This was just a click, clean up
+    document.removeEventListener('mousemove', mouseMoveHandler);
+    document.removeEventListener('mouseup', mouseUpHandler);
+  };
+  
+  document.addEventListener('mousemove', mouseMoveHandler);
+  document.addEventListener('mouseup', mouseUpHandler);
+}
+
+function startDragOperation(e: MouseEvent, element: HTMLElement) {
   isDragging.value = true;
   draggedElement.value = element;
   dragStartPos.value = { x: e.clientX, y: e.clientY };
@@ -629,13 +982,19 @@ function handleMouseUp(e: MouseEvent) {
   const topPercent = (finalTop / containerRect.height * 100).toFixed(1);
   const leftPercent = (finalLeft / containerRect.width * 100).toFixed(1);
   
-  // Store temp position on element
+  // Store temp position on element AND apply it immediately
   const blockId = draggedElement.value.dataset.blockId || '';
   draggedElement.value.dataset.tempPosition = JSON.stringify({
     top: `${finalTop}px`,
     left: `${finalLeft}px`,
     zIndex: '1000'
   });
+  
+  // Apply the position immediately to prevent jumping
+  draggedElement.value.style.position = 'absolute';
+  draggedElement.value.style.top = `${finalTop}px`;
+  draggedElement.value.style.left = `${finalLeft}px`;
+  draggedElement.value.style.zIndex = '1000';
   
   // Mark element as being manipulated
   if (blockId) {
@@ -645,10 +1004,15 @@ function handleMouseUp(e: MouseEvent) {
   const lineStart = parseInt(draggedElement.value.dataset.lineStart || '0');
   const lineEnd = parseInt(draggedElement.value.dataset.lineEnd || '0');
   
+  // CRITICAL FIX: Handle synthetic line data for images
+  const isSyntheticLineData = isNaN(lineStart) || isNaN(lineEnd);
+  const finalLineStart = isSyntheticLineData ? 0 : lineStart;
+  const finalLineEnd = isSyntheticLineData ? 0 : lineEnd;
+  
   const updatePayload = {
     element: draggedElement.value,
-    markdownLineStart: lineStart,
-    markdownLineEnd: lineEnd,
+    markdownLineStart: finalLineStart,
+    markdownLineEnd: finalLineEnd,
     position: {
       top: `${topPercent}%`,
       left: `${leftPercent}%` 
@@ -658,10 +1022,16 @@ function handleMouseUp(e: MouseEvent) {
   // Emit immediately - no debounce
   emit('update-element-position', updatePayload);
   
-  // Remove from manipulated set after markdown updates (3 seconds buffer)
-  setTimeout(() => {
+  // CRITICAL FIX: Clear tempPosition sooner to prevent interference
+  const timeoutId = setTimeout(() => {
+    // Clear tempPosition after markdown has had time to update
+    if (draggedElement.value) {
+      delete draggedElement.value.dataset.tempPosition;
+    }
     elementsBeingManipulated.value.delete(blockId);
-  }, 3000);
+    activeTimeouts.value.delete(timeoutId);
+  }, 1000); // Reduced from 3000ms to 1000ms
+  activeTimeouts.value.add(timeoutId);
   
   draggedElement.value.classList.remove('dragging');
   isDragging.value = false;
@@ -944,11 +1314,16 @@ function handleResizeEnd() {
   const lineStart = parseInt(element.dataset.lineStart || '0');
   const lineEnd = parseInt(element.dataset.lineEnd || '0');
   
+  // CRITICAL FIX: Handle synthetic line data for images
+  const isSyntheticLineData = isNaN(lineStart) || isNaN(lineEnd);
+  const finalLineStart = isSyntheticLineData ? 0 : lineStart;
+  const finalLineEnd = isSyntheticLineData ? 0 : lineEnd;
+  
   // Emit both position and size updates
   emit('update-element-position', {
     element,
-    markdownLineStart: lineStart,
-    markdownLineEnd: lineEnd,
+    markdownLineStart: finalLineStart,
+    markdownLineEnd: finalLineEnd,
     position: {
       top: `${topPercent}%`,
       left: `${leftPercent}%` 
@@ -957,16 +1332,22 @@ function handleResizeEnd() {
   
   emit('update-element-size', {
     element,
-    markdownLineStart: lineStart,
-    markdownLineEnd: lineEnd,
+    markdownLineStart: finalLineStart,
+    markdownLineEnd: finalLineEnd,
     width: Math.round(finalWidth),
     height: Math.round(finalHeight)
   });
   
   // Remove from manipulated set after markdown updates
-  setTimeout(() => {
+  const resizeTimeoutId = setTimeout(() => {
+    // Clear tempPosition after markdown has had time to update
+    if (element) {
+      delete element.dataset.tempPosition;
+    }
     elementsBeingManipulated.value.delete(blockId);
-  }, 3000);
+    activeTimeouts.value.delete(resizeTimeoutId);
+  }, 1000); // Reduced from 3000ms to 1000ms
+  activeTimeouts.value.add(resizeTimeoutId);
   
   element.classList.remove('resizing');
   resizeState.value.isResizing = false;

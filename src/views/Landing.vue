@@ -183,11 +183,11 @@ const goToGithub = () => {
           <div class="group relative">
             <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
             <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
-              <div class="absolute top-4 left-4 z-10">
+              <!-- <div class="absolute top-4 left-4 z-10">
                 <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
                   AI Powered
                 </div>
-              </div>
+              </div> -->
               <div class="p-4">
                 <img 
                   src="/form-ai.png" 
@@ -206,11 +206,11 @@ const goToGithub = () => {
           <div class="group relative">
             <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
             <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
-              <div class="absolute top-4 left-4 z-10">
-                <div class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                  Rich Editor
-                </div>
-              </div>
+                <!-- <div class="absolute top-4 left-4 z-10">
+                  <div class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                    Rich Editor
+                  </div>
+                </div> -->
               <div class="p-4">
                 <img 
                   src="/docs-editor.png" 
@@ -229,11 +229,11 @@ const goToGithub = () => {
           <div class="group relative">
             <div class="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
             <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
-              <div class="absolute top-4 left-4 z-10">
+              <!-- <div class="absolute top-4 left-4 z-10">
                 <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
                   Workspace
                 </div>
-              </div>
+              </div> -->
               <div class="p-4">
                 <img 
                   src="/drive_home.png" 
@@ -252,7 +252,7 @@ const goToGithub = () => {
         <div class="text-center mt-12">
           <Button size="lg" @click="goToLogin" class="bg-primary-600 hover:bg-primary-700 shadow-lg hover:shadow-xl transition-all duration-200">
             <Zap class="w-5 h-5 mr-2" />
-            Try These Features Now
+            Try Now
             <ArrowRight class="w-5 h-5 ml-2" />
           </Button>
         </div>

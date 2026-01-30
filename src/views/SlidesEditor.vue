@@ -586,58 +586,99 @@ function handleAnimationUpdate(animation: ElementAnimation) {
   slideStore.markDirty();
 }
 
-// Element selection handler: sync DOM selection to markdown element by line range
+// Simplified element selection handler
 function handleElementSelection(
   element: HTMLElement,
   _elementType: string,
   markdownLineStart?: number,
   markdownLineEnd?: number
 ) {
-  if (markdownLineStart !== undefined) {
-    const newElement = getElementByLineRange(editor.currentSlide.content, markdownLineStart, markdownLineEnd || markdownLineStart);
-    if (newElement) {
-      currentMarkdownElement.value = newElement;
-      // Update cursor in markdown editor to match selection
-      const markdownEditor = markdownEditorRef.value;
-      if (markdownEditor && markdownEditor.$el) {
-        const textarea = markdownEditor.$el.querySelector('textarea') as HTMLTextAreaElement;
-        if (textarea) {
-          const lines = textarea.value.split('\n');
-          const targetLine = Math.max(0, Math.min(markdownLineStart, lines.length - 1));
-          const lineStart = lines.slice(0, targetLine).join('\n').length + (targetLine > 0 ? 1 : 0);
-          textarea.setSelectionRange(lineStart, lineStart);
-          textarea.focus();
-        }
-      }
-    } else {
-      currentMarkdownElement.value = null;
-    }
-  }
-
+  console.log('🎯 Element selection:', { markdownLineStart, markdownLineEnd });
+  
+  // Clear previous DOM selections
   document.querySelectorAll('.element-selected')?.forEach((el) => {
     el.classList.remove('element-selected');
   });
   element.classList.add('element-selected');
+  
+  // Update markdown element if line numbers provided
+  if (markdownLineStart !== undefined) {
+    const newElement = getElementByLineRange(
+      editor.currentSlide.content, 
+      markdownLineStart, 
+      markdownLineEnd || markdownLineStart
+    );
+    
+    if (newElement) {
+      console.log('🎯 Markdown element found:', newElement.type);
+      currentMarkdownElement.value = newElement;
+      showAnimationPanel.value = false; // Show properties panel
+      
+      // Sync markdown editor cursor (optional, best effort)
+      syncMarkdownEditorCursor(markdownLineStart);
+    } else {
+      console.log('🎯 No markdown element found');
+      currentMarkdownElement.value = null;
+    }
+  }
 }
 
-// Wrapper for preview element selection event
-function handlePreviewElementSelection(detail: { element: HTMLElement; type: string; markdownLineStart?: number; markdownLineEnd?: number; markdownType?: string }) {
-  handleElementSelection(detail.element, detail.type, detail.markdownLineStart, detail.markdownLineEnd);
+// Helper to sync markdown editor cursor (best effort, non-critical)
+function syncMarkdownEditorCursor(targetLine: number) {
+  try {
+    const markdownEditor = markdownEditorRef.value;
+    if (markdownEditor?.$el) {
+      const textarea = markdownEditor.$el.querySelector('textarea') as HTMLTextAreaElement;
+      if (textarea) {
+        const lines = textarea.value.split('\n');
+        const lineIndex = Math.max(0, Math.min(targetLine, lines.length - 1));
+        const lineStart = lines.slice(0, lineIndex).join('\n').length + (lineIndex > 0 ? 1 : 0);
+        textarea.setSelectionRange(lineStart, lineStart);
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to sync markdown cursor:', error);
+  }
 }
 
-// Event Handlers - Markdown Cursor Tracking
-function handleCursorChange(element: MarkdownElement | null) {
-  logSlidesEditorDebug('🔍 handleCursorChange called:', {
-    element: element ? `${element.type} at line ${element.startLine}` : 'null',
-    mode: editor.mode
-  });
+// Simplified preview element selection handler
+function handlePreviewElementSelection(detail: { 
+  element: HTMLElement; 
+  type: string; 
+  markdownLineStart?: number; 
+  markdownLineEnd?: number; 
+}) {
+  console.log('🎯 Preview element selected:', detail.type);
   
-  // Update the current markdown element
-  currentMarkdownElement.value = element;
-  
-  // Clear preview element selection when cursor moves in markdown
+  // Clear any existing DOM selection
   if (selectedElement.value) {
     handleClearSelection();
+  }
+  
+  // Handle the selection
+  handleElementSelection(
+    detail.element, 
+    detail.type, 
+    detail.markdownLineStart, 
+    detail.markdownLineEnd
+  );
+}
+
+// Simplified cursor change handler
+function handleCursorChange(element: MarkdownElement | null) {
+  logSlidesEditorDebug('🔍 Cursor change:', element?.type || 'null');
+  
+  // Update current markdown element
+  currentMarkdownElement.value = element;
+  
+  // Clear DOM element selection when cursor moves in markdown
+  if (selectedElement.value) {
+    handleClearSelection();
+  }
+  
+  // Ensure properties panel is shown for markdown elements
+  if (element && !arrangeMode.value) {
+    showAnimationPanel.value = false;
   }
 }
 
@@ -670,20 +711,41 @@ function handleClearMarkdownElement() {
   currentMarkdownElement.value = null;
 }
 
+// Simplified arrange mode handlers
 function handleEnterArrangeFromEditor() {
+  console.log('🎯 Entering arrange mode');
   arrangeMode.value = true;
   showMarkdownInArrange.value = false;
-  focusLineRange.value = currentMarkdownElement.value
-    ? { start: currentMarkdownElement.value.startLine, end: currentMarkdownElement.value.endLine }
-    : null;
+  
+  // Set focus range if we have a current element
+  if (currentMarkdownElement.value) {
+    focusLineRange.value = {
+      start: currentMarkdownElement.value.startLine,
+      end: currentMarkdownElement.value.endLine
+    };
+  }
 }
 
 function handleFinishArrange() {
+  console.log('🎯 Finishing arrange mode');
+  
+  // Clear selections and state
+  if (selectedElement.value) {
+    handleClearSelection();
+  }
+  currentMarkdownElement.value = null;
+  
+  // Reset arrange mode
   arrangeMode.value = false;
   showMarkdownInArrange.value = false;
   focusLineRange.value = null;
+  
+  // Trigger re-render to apply changes
+  const currentContent = editor.currentSlideContent;
+  editor.updateSlideContent(currentContent);
 }
 
+// Simplified element position/size handlers
 function handleUpdateElementPosition(payload: {
   markdownLineStart: number;
   markdownLineEnd: number;
@@ -691,30 +753,23 @@ function handleUpdateElementPosition(payload: {
 }) {
   const { markdownLineStart, markdownLineEnd, position } = payload;
   
-  console.log('🎯 SYNC: Updating position for lines', markdownLineStart, '-', markdownLineEnd, 'to', position);
-  
-  // Get current content IMMEDIATELY
-  const currentContent = editor.currentSlideContent;
-  
-  console.log('🎯 SYNC: Current markdown length:', currentContent.length);
-  
-  // Use the sync utility
-  const updatedMarkdown = updateElementPosition(
-    currentContent,
-    markdownLineStart,
-    markdownLineEnd,
-    position.top || '0%',
-    position.left || '0%'
-  );
-  
-  console.log('🎯 SYNC: Updated markdown length:', updatedMarkdown.length);
-  console.log('🎯 SYNC: Markdown changed:', currentContent !== updatedMarkdown);
-  
-  // Update content SYNCHRONOUSLY
-  editor.updateSlideContent(updatedMarkdown);
-  slideStore.markDirty();
-  
-  console.log('🎯 SYNC: Update complete');
+  try {
+    const currentContent = editor.currentSlideContent;
+    const updatedMarkdown = updateElementPosition(
+      currentContent,
+      markdownLineStart,
+      markdownLineEnd,
+      position.top || '0%',
+      position.left || '0%'
+    );
+    
+    editor.updateSlideContent(updatedMarkdown);
+    slideStore.markDirty();
+    
+    console.log('🎯 Position updated successfully');
+  } catch (error) {
+    console.error('🎯 Failed to update position:', error);
+  }
 }
 
 function handleUpdateElementSize(payload: {
@@ -725,23 +780,23 @@ function handleUpdateElementSize(payload: {
 }) {
   const { markdownLineStart, markdownLineEnd, width, height } = payload;
   
-  console.log('🎯 SYNC: Updating size for lines', markdownLineStart, '-', markdownLineEnd);
-  
-  const currentContent = editor.currentSlideContent;
-  
-  const updatedMarkdown = updateElementSize(
-    currentContent,
-    markdownLineStart,
-    markdownLineEnd,
-    width,
-    height
-  );
-  
-  console.log('🎯 SYNC: Size update - markdown changed:', currentContent !== updatedMarkdown);
-  console.log('🎯 SYNC: Updated markdown content:', updatedMarkdown);
-  
-  editor.updateSlideContent(updatedMarkdown);
-  slideStore.markDirty();
+  try {
+    const currentContent = editor.currentSlideContent;
+    const updatedMarkdown = updateElementSize(
+      currentContent,
+      markdownLineStart,
+      markdownLineEnd,
+      width,
+      height
+    );
+    
+    editor.updateSlideContent(updatedMarkdown);
+    slideStore.markDirty();
+    
+    console.log('🎯 Size updated successfully');
+  } catch (error) {
+    console.error('🎯 Failed to update size:', error);
+  }
 }
 
 // Enhanced UI Handlers
