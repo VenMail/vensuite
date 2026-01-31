@@ -23,6 +23,14 @@ import {
   ZoomInIcon,
   ZoomOutIcon,
   RefreshCcwIcon,
+  SnowflakeIcon,
+  ColumnsIcon,
+  RowsIcon,
+  XIcon,
+  SearchIcon,
+  CheckSquareIcon,
+  DollarSignIcon,
+  FileTextIcon,
 } from 'lucide-vue-next'
 import {
   Menubar,
@@ -61,13 +69,23 @@ const emit = defineEmits([
   'format-italic',
   'format-underline',
   'format-strike',
+  'freeze-top-row',
+  'freeze-first-column',
+  'freeze-panes',
+  'unfreeze',
   'view-zoom-in',
   'view-zoom-out',
   'view-zoom-reset',
   'data-sort',
   'data-filter',
   'data-group',
+  'data-validation',
+  'number-format',
+  'advanced-sort',
+  'find-replace',
+  'conditional-format',
   'print',
+  'convert-to-form',
   'navigate-to-collaborator',
 ])
 
@@ -230,6 +248,11 @@ function formatSelectionLabel(selection: any): string {
           <RedoIcon class="h-4 w-4 mr-2" />
           {{$t('Commons.text.redo')}}
         </MenubarItem>
+        <MenubarSeparator />
+        <MenubarItem @click="emit('find-replace')">
+          <SearchIcon class="h-4 w-4 mr-2" />
+          Find & Replace
+        </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
 
@@ -238,6 +261,32 @@ function formatSelectionLabel(selection: any): string {
       <MenubarMenu>
         <MenubarTrigger>{{$t('Commons.text.view')}}</MenubarTrigger>
         <MenubarContent>
+          <MenubarSub>
+            <MenubarSubTrigger>
+              <SnowflakeIcon class="h-4 w-4 mr-2" />
+              Freeze Panes
+            </MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarItem @click="emit('freeze-top-row')">
+                <RowsIcon class="h-4 w-4 mr-2" />
+                Freeze Top Row
+              </MenubarItem>
+              <MenubarItem @click="emit('freeze-first-column')">
+                <ColumnsIcon class="h-4 w-4 mr-2" />
+                Freeze First Column
+              </MenubarItem>
+              <MenubarItem @click="emit('freeze-panes')">
+                <SnowflakeIcon class="h-4 w-4 mr-2" />
+                Freeze Panes
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem @click="emit('unfreeze')">
+                <XIcon class="h-4 w-4 mr-2" />
+                Unfreeze Panes
+              </MenubarItem>
+            </MenubarSubContent>
+          </MenubarSub>
+          <MenubarSeparator />
           <MenubarItem @click="emit('view-zoom-in')">
             <ZoomInIcon class="h-4 w-4 mr-2" />
             {{$t('Commons.text.zoom_in')}}
@@ -278,10 +327,22 @@ function formatSelectionLabel(selection: any): string {
       <MenubarMenu>
         <MenubarTrigger>{{$t('Commons.text.date')}}</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem @click="emit('data-sort')">
-            <SortAscIcon class="h-4 w-4 mr-2" />
-            {{$t('Commons.button.sort')}}
-          </MenubarItem>
+          <MenubarSub>
+            <MenubarSubTrigger>
+              <SortAscIcon class="h-4 w-4 mr-2" />
+              {{$t('Commons.button.sort')}}
+            </MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarItem @click="emit('data-sort')">
+                <SortAscIcon class="h-4 w-4 mr-2" />
+                Quick Sort
+              </MenubarItem>
+              <MenubarItem @click="emit('advanced-sort')">
+                <SortAscIcon class="h-4 w-4 mr-2" />
+                Advanced Sort
+              </MenubarItem>
+            </MenubarSubContent>
+          </MenubarSub>
           <MenubarItem @click="emit('data-filter')">
             <FilterIcon class="h-4 w-4 mr-2" />
             {{$t('Commons.text.filter')}}
@@ -289,6 +350,24 @@ function formatSelectionLabel(selection: any): string {
           <MenubarItem @click="emit('data-group')">
             <GroupIcon class="h-4 w-4 mr-2" />
             Group
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem @click="emit('data-validation')">
+            <CheckSquareIcon class="h-4 w-4 mr-2" />
+            Data Validation
+          </MenubarItem>
+          <MenubarItem @click="emit('number-format')">
+            <DollarSignIcon class="h-4 w-4 mr-2" />
+            Number Format
+          </MenubarItem>
+          <MenubarItem @click="emit('conditional-format')">
+            <CheckSquareIcon class="h-4 w-4 mr-2" />
+            Conditional Formatting
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem @click="emit('convert-to-form')">
+            <FileTextIcon class="h-4 w-4 mr-2" />
+            Convert to Form
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>

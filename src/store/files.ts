@@ -1029,13 +1029,31 @@ export const useFileStore = defineStore("files", {
     }> {
       document.last_viewed = new Date();
 
-      // Save locally first for immediate responsiveness
+      // For new documents (no ID), don't save locally until we have a server ID
+      if (!document.id) {
+        // Skip local save for new documents, go directly to API
+        if (this.isOnline) {
+          const saveResult = await this.saveToAPI(document);
+          if (saveResult) {
+            // Save the server result locally
+            this.saveToLocalCache(saveResult);
+            this.updateFiles(saveResult);
+            return { document: saveResult };
+          } else {
+            throw new Error("Failed to save new document to server");
+          }
+        } else {
+          throw new Error("Cannot create new document while offline");
+        }
+      }
+
+      // Save locally first for existing documents
       this.saveToLocalCache(document);
       this.updateFiles(document);
 
       // Then attempt online sync if connected
       if (this.isOnline) {
-        const isLocalDoc = this.isLocalDocument(document.id!);
+        const isLocalDoc = this.isLocalDocument(document.id);
         const saveResult = await this.saveToAPI(document);
 
         if (saveResult) {
@@ -1102,7 +1120,7 @@ export const useFileStore = defineStore("files", {
         localOnlyFields.forEach(field => delete payload[field]);
 
         // Use proper HTTP methods: PUT for updates, POST for creates
-        const isUpdate = !this.isLocalDocument(document.id!) && document.id;
+        const isUpdate = document.id && !this.isLocalDocument(document.id);
         const url = isUpdate ? `${FILES_ENDPOINT}/${document.id}` : FILES_ENDPOINT;
         const method = isUpdate ? 'put' : 'post';
 

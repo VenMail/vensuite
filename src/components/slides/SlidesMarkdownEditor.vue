@@ -27,6 +27,15 @@
           <Move class="h-4 w-4 text-gray-500 dark:text-gray-400" />
         </button>
         
+        <!-- Image Upload Button -->
+        <button
+          class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+          title="Upload Image"
+          @click="showImageUploadDialog = true"
+        >
+          <Upload class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+        </button>
+        
         <!-- Emoji Button -->
         <button
           class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -81,6 +90,13 @@
       @update:open="showEmojiPicker = $event"
       @select="handleEmojiSelect"
     />
+    
+    <!-- Image Upload Dialog -->
+    <SlidesImageUploadDialog
+      :open="showImageUploadDialog"
+      @update:open="showImageUploadDialog = $event"
+      @insert="handleImageInsert"
+    />
   </div>
 </template>
 
@@ -89,9 +105,10 @@ import { ref, nextTick } from 'vue';
 import { 
   Heading, List, Code, Image, Quote, Table,
   GitBranch, LayoutGrid, Link, Palette, StickyNote, ChevronDown,
-  Smile, Move
+  Smile, Move, Upload
 } from 'lucide-vue-next';
 import EmojiPickerDialog from './EmojiPickerDialog.vue';
+import SlidesImageUploadDialog from './SlidesImageUploadDialog.vue';
 import { getElementAtCursor, getCursorPosition, type MarkdownElement } from '@/utils/markdownElementDetector';
 
 interface Props {
@@ -121,6 +138,7 @@ const emit = defineEmits<{
 const editorRef = ref<HTMLTextAreaElement | null>(null);
 const showNotes = ref(false);
 const showEmojiPicker = ref(false);
+const showImageUploadDialog = ref(false);
 const selectedText = ref('');
 const selectionStart = ref(0);
 const selectionEnd = ref(0);
@@ -204,6 +222,10 @@ function handleEmojiSelect(emoji: string) {
     const newPos = selectionStart.value + emoji.length;
     textarea.selectionStart = textarea.selectionEnd = newPos;
   });
+}
+
+function handleImageInsert(markdown: string) {
+  insertMarkdown(markdown);
 }
 
 

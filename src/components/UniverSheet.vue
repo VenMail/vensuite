@@ -3,28 +3,31 @@
 </template>
 
 <script setup lang="ts">
-import '@univerjs/preset-sheets-core/lib/index.css'
-import { createUniver, LocaleType, mergeLocales, type Univer } from '@univerjs/presets'
-import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core'
-import sheetsCoreEnUs from '@univerjs/preset-sheets-core/locales/en-US'
-import { UserManagerService, type IWorkbookData } from '@univerjs/core'
-import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue'
+import "@univerjs/design/lib/index.css";
+import "@univerjs/ui/lib/index.css";
+import "@univerjs/docs-ui/lib/index.css";
+import "@univerjs/sheets-ui/lib/index.css";
+
+import { type IWorkbookData, UserManagerService, Univer, UniverInstanceType, LocaleType } from "@univerjs/core";
+import { defaultTheme } from "@univerjs/design";
+import { UniverDocsPlugin } from "@univerjs/docs";
+import { UniverDocsUIPlugin } from "@univerjs/docs-ui";
+import { UniverFormulaEnginePlugin } from "@univerjs/engine-formula";
+import { UniverRenderEnginePlugin } from "@univerjs/engine-render";
+import { UniverSheetsPlugin } from "@univerjs/sheets";
+import { UniverSheetsFormulaPlugin } from "@univerjs/sheets-formula";
+import { UniverSheetsUIPlugin } from "@univerjs/sheets-ui";
+import { UniverUIPlugin } from "@univerjs/ui";
+import { onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data'
 import type { IWebsocketService } from '@/lib/wsService'
 
-type UniverAPI = any
-
-const univerRef = ref<Univer | null>(null)
-const fUniver = ref<UniverAPI | null>(null)
-const container = ref<HTMLElement | null>(null)
-const collaborationDisposers: Array<() => void> = []
-const isMounted = ref(false)
-
-const props = defineProps({
+const { data, ws, changesPending, userName } = defineProps({
+  // workbook data
   data: {
     type: Object as () => IWorkbookData | null,
     required: false,
-    default: null,
+    default: () => DEFAULT_WORKBOOK_DATA,
   },
   ws: {
     type: Object as () => IWebsocketService | null,
@@ -33,275 +36,199 @@ const props = defineProps({
   },
   changesPending: {
     type: Boolean,
-    required: true,
-  },
-  sheetId: {
-    type: String,
-    required: true,
-  },
-  userId: {
-    type: String,
-    required: true,
+    required: false,
+    default: false,
   },
   userName: {
     type: String,
-    required: true,
+    required: false,
+    default: 'User',
   },
 })
 
 const emit = defineEmits(['univerRefChange'])
 
-const activeWorkbook = ref<any>(null)
-
-function setupUniver(data: IWorkbookData) {
-  try {
-    if (!container.value) {
-      throw new Error('Container element is missing')
-    }
-
-    const { univer, univerAPI } = createUniver({
-      locale: LocaleType.EN_US,
-      locales: {
-        [LocaleType.EN_US]: mergeLocales(sheetsCoreEnUs),
-      },
-      presets: [
-        UniverSheetsCorePreset({
-          container: container.value,
-        }) as any,
-      ],
-    })
-
-    univerRef.value = univer
-    fUniver.value = univerAPI
-
-    try {
-      const injector = univer.__getInjector()
-      const userManager = injector.get(UserManagerService)
-      userManager.setCurrentUser({
-        userID: props.userId,
-        name: props.userName,
-        anonymous: false,
-        canBindAnonymous: false,
-      } as any)
-    } catch {}
-
-    const workbook = activeWorkbook.value ?? univerAPI.createWorkbook(data || DEFAULT_WORKBOOK_DATA, { makeCurrent: true })
-    activeWorkbook.value = workbook
-
-    scheduleCollaboration()
-
-    return univerAPI
-  } catch (error) {
-    console.error('Error setting up Univer:', error)
-    return null
-  }
-}
-
-function scheduleCollaboration() {
-  cleanupCollaboration()
-
-  if (!props.ws || !fUniver.value || !activeWorkbook.value) {
-    return
-  }
-
-  const commandDisposer = fUniver.value.onCommandExecuted((command: any) => {
-    if (!props.ws) return
-    if (props.changesPending) {
-      return
-    }
-    if (command.id.startsWith('sheet.')) {
-      let serializedParams: any = undefined
-      if (command.params !== undefined) {
-        try {
-          const seen = new WeakSet()
-          const replacer = (_k: string, v: any) => {
-            if (typeof v === 'function') return undefined
-            if (v && typeof v === 'object') {
-              if (seen.has(v)) return undefined
-              seen.add(v)
-              // Drop internal/private props and rxjs internals
-              const clone: any = Array.isArray(v) ? [] : {}
-              for (const key of Object.keys(v)) {
-                if (key.startsWith('_') || key === 'source' || key === 'scheduler') continue
-                clone[key] = v[key]
-              }
-              return clone
-            }
-            return v
-          }
-          serializedParams = JSON.parse(JSON.stringify(command.params, replacer))
-        } catch (error) {
-          console.warn('Unable to serialize command params for broadcast, skipping command.', error)
-          return
-        }
-      }
-      const payload = {
-        command: {
-          id: command.id,
-          params: serializedParams,
-        },
-      }
-      props.ws?.sendMessage(props.sheetId, 'change', payload, props.userId, props.userName)
-    }
-  }) as any
-
-  addCollaborationDisposer(commandDisposer)
-
-  // Note: We no longer broadcast cursor selection on every change to avoid
-  // disrupting other users' editing experience. Presence is tracked via
-  // periodic heartbeats or explicit actions instead.
-}
-
-function addCollaborationDisposer(disposer: any) {
-  if (!disposer) return
-  if (typeof disposer === 'function') {
-    collaborationDisposers.push(disposer)
-  } else if (typeof disposer.dispose === 'function') {
-    collaborationDisposers.push(() => disposer.dispose())
-  }
-}
-
-function cleanupCollaboration() {
-  while (collaborationDisposers.length) {
-    const dispose = collaborationDisposers.pop()
-    try {
-      dispose?.()
-    } catch (error) {
-      console.error('Error cleaning collaboration handler:', error)
-    }
-  }
-}
-
-watch(
-  () => props.data,
-  async next => {
-    if (!isMounted.value) return
-    
-    if (!next) {
-      if (!fUniver.value) {
-        init(DEFAULT_WORKBOOK_DATA)
-      }
-      return
-    }
-
-    if (!fUniver.value) {
-      init(next)
-      return
-    }
-
-    await setData(next)
-  },
-  { immediate: true },
-)
-
-watch(
-  () => props.ws,
-  newWs => {
-    if (newWs && fUniver.value) {
-      scheduleCollaboration()
-    }
-  },
-  { immediate: false },
-)
+const univerInstance = ref<any>(null)
+const workbook = ref<any>(null)
+const container = ref<HTMLElement | null>(null)
+const collaborationDisposers: Array<() => void> = []
+const isMounted = ref(false)
 
 onMounted(() => {
   isMounted.value = true
-  // Trigger initialization with current data
-  if (props.data) {
-    init(props.data)
-  } else {
-    init(DEFAULT_WORKBOOK_DATA)
-  }
+  // Add small delay to ensure DOM is ready
+  setTimeout(() => {
+    if (data) {
+      init(data)
+    }
+  }, 100)
 })
 
 onBeforeUnmount(() => {
   destroyUniver()
 })
 
-function init(data: IWorkbookData | null) {
+watch(() => data, (newData) => {
+  if (newData && isMounted.value && univerInstance.value) {
+    setData(newData)
+  }
+}, { deep: true })
+
+/**
+ * Initialize univer instance and workbook instance
+ * Following official Vue 3 example pattern
+ */
+async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
   try {
-    activeWorkbook.value = null
-    const api = setupUniver(data || DEFAULT_WORKBOOK_DATA)
-    if (api) {
-      emit('univerRefChange', api)
+    if (!container.value) {
+      throw new Error('Container element is missing')
     }
+
+    // Prevent duplicate initialization
+    if (univerInstance.value) {
+      console.warn('Univer already initialized')
+      return
+    }
+
+    // Create Univer instance
+    const univer = new Univer()
+
+    // Register core plugins
+    univer.registerPlugin(UniverRenderEnginePlugin)
+    univer.registerPlugin(UniverFormulaEnginePlugin)
+    univer.registerPlugin(UniverUIPlugin, {
+      container: container.value,
+      header: false,
+      toolbar: true,
+      footer: false,
+    })
+
+    // Register doc plugins
+    univer.registerPlugin(UniverDocsPlugin, {
+      hasScroll: false,
+    })
+    univer.registerPlugin(UniverDocsUIPlugin)
+
+    // Register sheet plugins
+    univer.registerPlugin(UniverSheetsPlugin)
+    univer.registerPlugin(UniverSheetsUIPlugin)
+    univer.registerPlugin(UniverSheetsFormulaPlugin)
+
+    // Initialize locale after plugins are registered
+    univer.setLocale(LocaleType.EN_US)
+
+    // Set up user management
+    try {
+      const injector = univer.__getInjector()
+      if (injector) {
+        const userManager = injector.get(UserManagerService)
+        if (userManager) {
+          userManager.setCurrentUser({
+            userID: 'Owner_qxVnhPbQ',
+            name: userName,
+            anonymous: false,
+            canBindAnonymous: false,
+          } as any)
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to set up user management:', error)
+    }
+
+    // Create workbook instance using official example approach
+    workbook.value = univer.createUnit(UniverInstanceType.UNIVER_SHEET, data)
+    univerInstance.value = univer
+
+    emit('univerRefChange', { univer, workbook })
   } catch (error) {
     console.error('Error initializing Univer:', error)
   }
 }
 
+/**
+ * Destroy univer instance and workbook instance
+ */
 function destroyUniver() {
-  try {
-    cleanupCollaboration()
-    if (fUniver.value) {
-      fUniver.value.dispose()
-      fUniver.value = null
+  if (univerInstance.value) {
+    try {
+      // Dispose all units first
+      const univer = univerInstance.value
+      const instanceService = univer.__getInjector()?.get('UniverInstanceService')
+      if (instanceService) {
+        const allUnits = instanceService.getAllUnitsForType(UniverInstanceType.UNIVER_SHEET)
+        allUnits.forEach((unit: any) => {
+          try {
+            instanceService.disposeUnit(unit.getUnitId())
+          } catch (e) {
+            console.warn('Failed to dispose unit:', e)
+          }
+        })
+      }
+      
+      // Then dispose the univer instance
+      univerInstance.value.dispose()
+    } catch (error) {
+      console.warn('Error during Univer disposal:', error)
+    } finally {
+      univerInstance.value = null
+      workbook.value = null
     }
-    if (univerRef.value) {
-      toRaw(univerRef.value)?.dispose()
-      univerRef.value = null
-    }
-    activeWorkbook.value = null
-  } catch (error) {
-    console.error('Error destroying Univer:', error)
   }
+  cleanupCollaboration()
 }
 
-async function getData() {
-  try {
-    const workbook = fUniver.value?.getActiveWorkbook()
-    if (!workbook) {
-      return null
-    }
-    if (typeof (workbook as any).save === 'function') {
-      return await (workbook as any).save()
-    }
-    if (typeof (workbook as any).getSnapshot === 'function') {
-      return (workbook as any).getSnapshot()
-    }
+/**
+ * Get workbook data
+ */
+async function getData(): Promise<IWorkbookData | null> {
+  if (!workbook.value) {
+    console.warn('Workbook is not initialized')
     return null
+  }
+  try {
+    return await workbook.value.save()
   } catch (error) {
     console.error('Error getting data:', error)
     return null
   }
 }
 
+/**
+ * Set workbook data
+ */
 async function setData(data: IWorkbookData) {
   try {
-    if (!fUniver.value) {
-      init(data)
+    if (!univerInstance.value) {
+      await init(data)
       return await getData()
     }
 
-    let workbook = fUniver.value.getActiveWorkbook()
-    const incomingId = (data as any)?.id
-    const currentId = (workbook as any)?.getUnitId?.() || (await (async () => {
-      try { const s = typeof (workbook as any).save === 'function' ? await (workbook as any).save() : null; return s?.id } catch { return undefined }
-    })())
-
-    if (!workbook) {
-      // No active workbook; create one
-      workbook = fUniver.value.createWorkbook(data, { makeCurrent: true })
-      activeWorkbook.value = workbook
-      scheduleCollaboration()
+    if (!workbook.value) {
+      workbook.value = univerInstance.value.createUnit(UniverInstanceType.UNIVER_SHEET, data)
       return await getData()
     }
 
-    if (typeof (workbook as any).fromJSON === 'function') {
-      await (workbook as any).fromJSON(data)
+    // Update existing workbook data instead of creating new one
+    if (typeof workbook.value.fromJSON === 'function') {
+      await workbook.value.fromJSON(data)
     } else {
-      // Avoid duplicate unit creation if ids match; skip re-create
-      if (incomingId && currentId && incomingId === currentId) {
-        return await getData()
-      }
+      // If fromJSON is not available, we need to dispose the old workbook first
       try {
-        workbook = fUniver.value.createWorkbook(data, { makeCurrent: true })
-        activeWorkbook.value = workbook
-        scheduleCollaboration()
+        // Try to dispose the old workbook
+        if (workbook.value && typeof workbook.value.dispose === 'function') {
+          workbook.value.dispose()
+        }
       } catch (e) {
-        console.error('Error setting data (createWorkbook):', e)
-        return await getData()
+        console.warn('Failed to dispose old workbook:', e)
       }
+      
+      // Create new workbook with unique ID
+      const newData = { ...data }
+      if (newData.id) {
+        // Generate unique ID to avoid conflicts
+        newData.id = `${newData.id}_${Date.now()}`
+      }
+      workbook.value = univerInstance.value.createUnit(UniverInstanceType.UNIVER_SHEET, newData)
     }
 
     return await getData()
@@ -311,13 +238,15 @@ async function setData(data: IWorkbookData) {
   }
 }
 
+/**
+ * Set workbook name
+ */
 function setName(n: string) {
   try {
-    const workbook = fUniver.value?.getActiveWorkbook()
-    if (!workbook) {
+    if (!workbook.value) {
       throw new Error('Workbook is not initialized')
     }
-    workbook.setName(n)
+    workbook.value.setName(n)
     return n
   } catch (error) {
     console.error('Error setting name:', error)
@@ -325,11 +254,29 @@ function setName(n: string) {
   }
 }
 
+/**
+ * Cleanup collaboration
+ */
+function cleanupCollaboration() {
+  collaborationDisposers.forEach((dispose) => dispose())
+  collaborationDisposers.length = 0
+}
+
+/**
+ * Schedule collaboration (simplified for plugin approach)
+ */
+function scheduleCollaboration() {
+  cleanupCollaboration()
+  // Note: Collaboration setup would need to be adapted for plugin approach
+  // The official example doesn't include collaboration features
+}
+
 defineExpose({
   getData,
-  setName,
   setData,
-  fUniver,
+  setName,
+  univer: univerInstance,
+  workbook,
 })
 </script>
 
@@ -340,7 +287,79 @@ defineExpose({
   overflow: hidden;
 }
 
+/* Hide the menubar to match our UI needs */
 :global(.univer-menubar) {
   display: none;
+}
+
+/* Fix for cell positioning and freeze pane styling */
+:global(.univer-sheet-container) {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+:global(.univer-sheet-canvas) {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+:global(.univer-sheet-viewport) {
+  position: relative !important;
+  overflow: auto !important;
+}
+
+:global(.univer-sheet-row-header) {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 10 !important;
+  background: #f8f9fa !important;
+}
+
+:global(.univer-sheet-column-header) {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 11 !important;
+  background: #f8f9fa !important;
+}
+
+:global(.univer-sheet-corner) {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 12 !important;
+  background: #f8f9fa !important;
+}
+
+/* Dark mode fixes */
+:global(.dark .univer-sheet-row-header),
+:global(.dark .univer-sheet-column-header),
+:global(.dark .univer-sheet-corner) {
+  background: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Freeze pane fixes */
+:global(.univer-sheet-frozen-row) {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
+  background: inherit !important;
+}
+
+:global(.univer-sheet-frozen-column) {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 5 !important;
+  background: inherit !important;
+}
+
+:global(.univer-sheet-frozen-corner) {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 6 !important;
+  background: inherit !important;
 }
 </style>

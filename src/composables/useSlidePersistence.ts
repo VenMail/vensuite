@@ -135,7 +135,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         slidesPreview: editor.slides.value.slice(0, 2).map(s => ({ id: s.id, contentPreview: s.content.substring(0, 50) + '...' }))
       });
 
-      // Get existing document if we have an ID, otherwise create new
+      // Get existing document if we have a real ID, otherwise create new
       let existingDoc: FileData | null = null;
       if (deckId.value && deckId.value !== 'new') {
         existingDoc = await fileStore.loadDocument(deckId.value, 'pptx');
@@ -153,7 +153,7 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         } as DocumentMetadata,
         last_viewed: new Date(),
       } : {
-        id: deckId.value === 'new' ? undefined : (deckId.value || undefined), // Don't pass 'new' or null as ID
+        // For new decks, don't pass any id field to let backend generate it
         title: deckTitle.value,
         file_type: 'pptx', // Use pptx to match what's shown in Home.vue
         content: JSON.stringify(deckData),
@@ -169,6 +169,11 @@ export function useSlidePersistence(options: UseSlidePersistenceOptions) {
         ...filePayload,
         content: filePayload.content?.substring(0, 200) + '...' // Truncate for logging
       });
+      
+      // Debug: Check what we're actually sending
+      console.log('🔍 Debug - deckId.value:', deckId.value);
+      console.log('🔍 Debug - filePayload.id:', filePayload.id);
+      console.log('🔍 Debug - wasNewDeck:', wasNewDeck);
 
       const result = await fileStore.saveDocument(filePayload as any);
       console.log('📋 Save result:', {

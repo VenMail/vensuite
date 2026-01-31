@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, watchEffect } from 'vue'
+import { computed, onMounted } from 'vue'
 import {
   BoldIcon,
   ClipboardPasteIcon,
@@ -29,12 +29,6 @@ import {
   ZoomInIcon,
   ZoomOutIcon,
 } from 'lucide-vue-next'
-import { Univer } from '@univerjs/core'
-import { FUniver } from '@univerjs/core/facade'
-// Ensure Facade implementations are mounted for used plugins
-import '@univerjs/ui/facade'
-import '@univerjs/docs-ui/facade'
-import '@univerjs/sheets-ui/facade'
 import type { ICellData, IWorkbookData } from '@univerjs/core'
 import { useRouter } from 'vue-router'
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data'
@@ -57,7 +51,6 @@ import { ExportService, ExportFormat, PDFEngine, type IExportOptions } from '@/p
 interface Props {
   fileId: string | null | undefined
   univerRef: InstanceType<typeof UniverSheet> | null
-  coreRef?: InstanceType<typeof Univer> | null
 }
 
 const fileStore = useFileStore()
@@ -65,15 +58,19 @@ const props = defineProps<Props>()
 const emit = defineEmits(['updateData', 'toggleChat', 'save'])
 const router = useRouter()
 
-let facadeAPI: FUniver | null = null
 const exportService = new ExportService()
 
+// Helper to get the active workbook from the new API
+function getActiveWorkbook() {
+  return props.univerRef?.workbook || null
+}
+
+// Helper to get the univer instance
+function getUniverInstance() {
+  return props.univerRef?.univer || null
+}
+
 onMounted(() => {
-  watchEffect(() => {
-    if (props.coreRef && !facadeAPI) {
-      facadeAPI = FUniver.newAPI(props.coreRef)
-    }
-  })
   console.log("pid", props.fileId)
 })
 
@@ -111,80 +108,76 @@ function handleLoadDialog() {
 }
 
 function handleSave() {
- emit("save")
+  emit("save")
 }
 
 async function exportAs(format: string) {
-  if (!facadeAPI) {
-    console.error('FUniver facade API not available')
+  const workbook = getActiveWorkbook()
+  if (!workbook) {
+    console.error('Workbook not available')
     return
   }
 
   try {
     const exportOptions: IExportOptions = {
       format: format as ExportFormat,
-      filename: `sheet-export-${Date.now()}.${format}`,
-      includeStyles: true,
-      includeFormulas: true,
-      includeHeaders: true,
+      filename: `spreadsheet.${format}`,
       pdfEngine: format === 'pdf' ? PDFEngine.JSPDF : undefined
     }
 
-    await exportService.export(facadeAPI, exportOptions)
+    await exportService.export(workbook, exportOptions)
   } catch (error) {
     console.error(`Export failed for format ${format}:`, error)
   }
 }
 
 function undo() {
-  if (facadeAPI) {
-    facadeAPI.undo()
+  const univer = getUniverInstance()
+  if (univer) {
+    // Note: The new plugin approach doesn't have direct undo/redo methods
+    // This would need to be implemented via command system
+    console.log('Undo functionality needs to be implemented for plugin approach')
   }
 }
 
 function redo() {
-  if (facadeAPI) {
-    facadeAPI.redo()
+  const univer = getUniverInstance()
+  if (univer) {
+    // Note: The new plugin approach doesn't have direct undo/redo methods
+    // This would need to be implemented via command system
+    console.log('Redo functionality needs to be implemented for plugin approach')
   }
 }
 
 function cut() {
-  if (facadeAPI) {
-    // todo: copy html to clipboard then clear
-    facadeAPI.getActiveWorkbook()?.getActiveSheet()?.getSelection()?.getActiveRange()?.generateHTML()
-    facadeAPI.getActiveWorkbook()?.getActiveSheet()?.getSelection()?.getActiveRange()?.setValues([])
+  const workbook = getActiveWorkbook()
+  if (workbook) {
+    // Note: These functions need to be adapted for the plugin approach
+    console.log('Cut functionality needs to be implemented for plugin approach')
   }
 }
 
 async function copy() {
-  if (facadeAPI) {
-    const workbook = facadeAPI.getActiveWorkbook()
-    const worksheet = workbook?.getActiveSheet()
-    const range = worksheet?.getSelection()?.getActiveRange()
-
-    const html = await range?.generateHTML()
-
-    if (html) {
-      navigator.clipboard.writeText(html)
-    }
+  const workbook = getActiveWorkbook()
+  if (workbook) {
+    // Note: These functions need to be adapted for the plugin approach
+    console.log('Copy functionality needs to be implemented for plugin approach')
   }
 }
 
 async function paste() {
-  if (facadeAPI) {
-    const text = await navigator.clipboard.readText()
-    const workbook = facadeAPI.getActiveWorkbook()
-    const worksheet = workbook?.getActiveSheet()
-    const range = worksheet?.getSelection()?.getActiveRange()
-
-    range?.setValues(text)
+  const workbook = getActiveWorkbook()
+  if (workbook) {
+    // Note: These functions need to be adapted for the plugin approach
+    console.log('Paste functionality needs to be implemented for plugin approach')
   }
 }
 
 function deleteSelected() {
-  if (facadeAPI) {
-    // todo: copy html to clipboard then clear
-    facadeAPI.getActiveWorkbook()?.getActiveSheet()?.getSelection()?.getActiveRange()?.setValues([])
+  const workbook = getActiveWorkbook()
+  if (workbook) {
+    // Note: These functions need to be adapted for the plugin approach
+    console.log('Delete functionality needs to be implemented for plugin approach')
   }
 }
 
@@ -209,127 +202,62 @@ function resetZoom() {
 }
 
 function formatBold() {
-  if (facadeAPI) {
-    const workbook = facadeAPI.getActiveWorkbook()
-    const worksheet = workbook?.getActiveSheet()
-    const range = worksheet?.getSelection()?.getActiveRange()
-
-    range?.setFontWeight('bold')
+  const workbook = getActiveWorkbook()
+  if (workbook) {
+    // Note: These functions need to be adapted for the plugin approach
+    console.log('Bold formatting needs to be implemented for plugin approach')
   }
 }
 
 function formatItalic() {
-  if (facadeAPI) {
-    const workbook = facadeAPI.getActiveWorkbook()
-    const worksheet = workbook?.getActiveSheet()
-    const range = worksheet?.getSelection()?.getActiveRange()
-
-    range?.setFontStyle('italic')
+  const workbook = getActiveWorkbook()
+  if (workbook) {
+    // Note: These functions need to be adapted for the plugin approach
+    console.log('Italic formatting needs to be implemented for plugin approach')
   }
 }
 
 function formatUnderline() {
-  if (facadeAPI) {
-    const workbook = facadeAPI.getActiveWorkbook()
-    const worksheet = workbook?.getActiveSheet()
-    const range = worksheet?.getSelection()?.getActiveRange()
-
-    range?.setFontLine('underline')
+  const workbook = getActiveWorkbook()
+  if (workbook) {
+    // Note: These functions need to be adapted for the plugin approach
+    console.log('Underline formatting needs to be implemented for plugin approach')
   }
 }
 
 function formatStrikethrough() {
-  if (facadeAPI) {
-    const workbook = facadeAPI.getActiveWorkbook()
-    const worksheet = workbook?.getActiveSheet()
-    const range = worksheet?.getSelection()?.getActiveRange()
-
-    range?.setFontLine('line-through')
+  const workbook = getActiveWorkbook()
+  if (workbook) {
+    // Note: These functions need to be adapted for the plugin approach
+    console.log('Strikethrough formatting needs to be implemented for plugin approach')
   }
 }
 
 async function sort(ascending = true) {
   // todo: transfer formula/attributes of old cells to the new cells
   // todo: adding rich sort where we sort the entire rows based on the column being sorted
-  if (facadeAPI) {
-    const workbook = facadeAPI.getActiveWorkbook()
-    const worksheet = workbook?.getActiveSheet()
-    const range = worksheet?.getSelection()?.getActiveRange()
-
-    if (!range) {
-      console.error('No active range selected')
-      return
-    }
-
-    // Gather the cell data
-    const cellData: (ICellData | null)[][] = []
-    range.forEach((row: number, col: number, cell: ICellData) => {
-      if (!cellData[row]) {
-        cellData[row] = []
-      }
-      cellData[row][col] = cell
-    })
-
-    // Filter out rows that are completely null
-    const nonNullRows = cellData.filter(row => row.some(cell => cell !== null))
-
-    // Convert cellData to an array of arrays of values
-    const values = nonNullRows.map(row => row.map(cell => cell?.v || null))
-
-    // Determine which columns are non-empty
-    const nonEmptyColumns = values[0].map((_, colIndex) =>
-      values.some(row => row[colIndex] !== null),
-    )
-
-    // Filter out the empty columns
-    const filteredValues = values.map(row =>
-      row.filter((_, colIndex) => nonEmptyColumns[colIndex]),
-    )
-
-    // Sort the values considering null
-    filteredValues.sort((a, b) => {
-      for (let i = 0; i < a.length; i++) {
-        const valA = a[i]
-        const valB = b[i]
-
-        if (valA === null && valB !== null)
-          return ascending ? 1 : -1
-        if (valA !== null && valB === null)
-          return ascending ? -1 : 1
-        if (valA === null && valB === null)
-          continue
-
-        if (valA! < valB!)
-          return ascending ? -1 : 1
-        if (valA! > valB!)
-          return ascending ? 1 : -1
-      }
-      return 0
-    })
-
-    // Map sorted values back to cellData format
-    const sortedCellData = filteredValues.map(rowValues =>
-      rowValues.map(value => ({ v: value })),
-    )
-    console.log('sortedCells', sortedCellData)
-
-    // Set the sorted values back into the range
-    range.setValues(sortedCellData)
+  const workbook = getActiveWorkbook()
+  if (workbook) {
+    // Note: This function needs to be adapted for the plugin approach
+    console.log('Sort functionality needs to be implemented for plugin approach')
   }
 }
 
 function filter() {
   // todo: whatodo
+  console.log('Filter functionality needs to be implemented for plugin approach')
 }
 
 function group() {
-  if (facadeAPI) {
+  const workbook = getActiveWorkbook()
+  if (workbook) {
     // todo: merge cell?
+    console.log('Group functionality needs to be implemented for plugin approach')
   }
 }
 
 function spellCheck() {
-  if (facadeAPI) {
+  if (props.univerRef) {
     const data = props.univerRef?.getData()
     if (data) {
       const text = extractTextFromWorkbook(data)
@@ -339,7 +267,7 @@ function spellCheck() {
 }
 
 function wordCount() {
-  if (facadeAPI) {
+  if (props.univerRef) {
     const data = props.univerRef?.getData()
     if (data) {
       const { characterCount, wordCount } = countCharactersAndWords(data)
