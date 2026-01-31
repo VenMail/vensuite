@@ -3,6 +3,11 @@ import type { IWorkbookData } from "@univerjs/core";
 import {
   DEFAULT_WORKBOOK_DATA,
   BUDGET_TEMPLATE_DATA,
+  EXPENSE_TRACKER_TEMPLATE_DATA,
+  PROJECT_TIMELINE_TEMPLATE_DATA,
+  SALES_CRM_TEMPLATE_DATA,
+  INVENTORY_TRACKER_TEMPLATE_DATA,
+  CONTENT_CALENDAR_TEMPLATE_DATA,
   INVOICE_TEMPLATE_DATA,
   OKR_TEMPLATE_DATA,
   TASKS_TEMPLATE_DATA,
@@ -35,8 +40,6 @@ function cloneWorkbookData(data: IWorkbookData): IWorkbookData {
   return JSON.parse(JSON.stringify(data));
 }
 
-const DEFAULT_TEMPLATE_DATA = () => cloneWorkbookData(DEFAULT_WORKBOOK_DATA as IWorkbookData);
-
 export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
   {
     name: "Blank Spreadsheet",
@@ -66,7 +69,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);",
     workbookTitle: "Expense Tracker",
-    workbookData: cloneWorkbookData(BUDGET_TEMPLATE_DATA as IWorkbookData),
+    workbookData: cloneWorkbookData(EXPENSE_TRACKER_TEMPLATE_DATA as IWorkbookData),
   },
   {
     name: "Project Timeline",
@@ -76,7 +79,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);",
     workbookTitle: "Project Timeline",
-    workbookData: DEFAULT_TEMPLATE_DATA(),
+    workbookData: cloneWorkbookData(PROJECT_TIMELINE_TEMPLATE_DATA as IWorkbookData),
   },
   {
     name: "Sales CRM",
@@ -86,7 +89,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);",
     workbookTitle: "Sales CRM",
-    workbookData: DEFAULT_TEMPLATE_DATA(),
+    workbookData: cloneWorkbookData(SALES_CRM_TEMPLATE_DATA as IWorkbookData),
   },
   {
     name: "Inventory Tracker",
@@ -96,7 +99,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);",
     workbookTitle: "Inventory Tracker",
-    workbookData: DEFAULT_TEMPLATE_DATA(),
+    workbookData: cloneWorkbookData(INVENTORY_TRACKER_TEMPLATE_DATA as IWorkbookData),
   },
   {
     name: "Content Calendar",
@@ -106,7 +109,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);",
     workbookTitle: "Content Calendar",
-    workbookData: DEFAULT_TEMPLATE_DATA(),
+    workbookData: cloneWorkbookData(CONTENT_CALENDAR_TEMPLATE_DATA as IWorkbookData),
   },
   {
     name: "Invoice",

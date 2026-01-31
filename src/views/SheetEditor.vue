@@ -21,10 +21,7 @@ import { useFavicon } from '@vueuse/core'
 import {
   DEFAULT_WORKBOOK_DATA,
 } from '@/assets/default-workbook-data'
-import {
-  spreadsheetTemplateMap,
-  type SpreadsheetTemplateSlug,
-} from '@/constants/sheetTemplates'
+import { spreadsheetTemplateMap } from '@/constants/sheetTemplates'
 
 import { extractSheetFields } from '@/utils/fieldExtractor'
 import { convertSheetToForm } from '@/utils/sheetToFormConverter'
@@ -120,6 +117,10 @@ watch(() => sheetData.privacyType.value, (newPrivacyType) => {
 const route = useRoute()
 const router = useRouter()
 
+// Check if this is a template route (for potential future use)
+// const isTemplateRoute = computed(() => !!(route.params.template as string))
+// const templateSlug = computed(() => route.params.template as string)
+
 // Refs for UI elements
 const iconRef = ref<HTMLElement | null>(null)
 
@@ -153,17 +154,13 @@ const shareMembersForCard = computed(() => {
   return []
 })
 
-// Template loading
-function loadTemplate(templateSlug: SpreadsheetTemplateSlug): IWorkbookData | null {
-  const template = spreadsheetTemplateMap[templateSlug];
-  if (!template) {
-    console.error(`Template "${templateSlug}" not found`);
-    return null;
-  }
-  
-  console.log(`Loading template: ${template.name}`);
-  return template.workbookData;
-}
+// Template loading (for future use)
+// const templates = {
+//   budget: BUDGET_TEMPLATE_DATA,
+//   invoice: INVOICE_TEMPLATE_DATA,
+//   okr: OKR_TEMPLATE_DATA,
+//   tasks: TASKS_TEMPLATE_DATA,
+// }
 
 // Univer event handlers
 function onUniverReady(event: { univer: any, workbook: any, univerAPI: any }) {
@@ -320,6 +317,21 @@ async function handleRotateSheetPublicApiKey() {
     console.error('Failed to rotate API key:', error)
   } finally {
     isUpdatingSheetPublicApi.value = false
+  }
+}
+
+// Template loading function
+async function loadTemplate(templateSlug: string): Promise<IWorkbookData | null> {
+  try {
+    const template = spreadsheetTemplateMap[templateSlug as keyof typeof spreadsheetTemplateMap]
+    if (template) {
+      // Return a deep copy of the template data to prevent mutations
+      return JSON.parse(JSON.stringify(template.workbookData))
+    }
+    return null
+  } catch (error) {
+    console.error('Error loading template:', error)
+    return null
   }
 }
 
@@ -508,38 +520,37 @@ async function createFormFromQuestions() {
 
 // Lifecycle hooks
 onMounted(async () => {
-  // Check if we're loading from a template
-  const templateParam = route.params.template as string;
-  
-  if (templateParam) {
-    // Load from template
-    const templateData = loadTemplate(templateParam as SpreadsheetTemplateSlug);
+  // Load data based on route
+  if (route.params.template) {
+    // Handle template route
+    const template = route.params.template as string
+    const templateData = await loadTemplate(template)
     if (templateData) {
-      data.value = templateData;
-      title.value = templateData.name || 'New Spreadsheet';
+      data.value = templateData
+      title.value = templateData.name || title.value
     } else {
       // Fallback to default if template not found
-      data.value = DEFAULT_WORKBOOK_DATA;
-      title.value = 'New Spreadsheet';
+      data.value = DEFAULT_WORKBOOK_DATA
+      title.value = 'New Spreadsheet'
     }
   } else if (route.params.id) {
-    // Load existing sheet
-    const loaded = await loadData(route.params.id as string);
+    // Handle existing sheet
+    const loaded = await loadData(route.params.id as string)
     if (loaded) {
-      data.value = loaded;
-      title.value = loaded.name || title.value;
+      data.value = loaded
+      title.value = loaded.name || title.value
     }
   } else {
     // Create new sheet
-    data.value = DEFAULT_WORKBOOK_DATA;
+    data.value = DEFAULT_WORKBOOK_DATA
   }
 
   // Set favicon
   nextTick(() => {
-    const iconHTML = iconRef.value?.outerHTML;
+    const iconHTML = iconRef.value?.outerHTML
     if (iconHTML) {
-      const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML.replace(/currentColor/g, '#38a169'))}`;
-      useFavicon(iconDataURL);
+      const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML.replace(/currentColor/g, '#38a169'))}`
+      useFavicon(iconDataURL)
     }
   })
 })
@@ -851,7 +862,7 @@ watch(title, (newTitle) => {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Validation Type
             </label>
-            <select v-model="formatting.validationType" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+            <select v-model="formatting.validationType.value" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
               <option value="list">List</option>
               <option value="whole">Whole Number</option>
               <option value="decimal">Decimal</option>
@@ -865,7 +876,7 @@ watch(title, (newTitle) => {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Operator
             </label>
-            <select v-model="formatting.validationOperator" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+            <select v-model="formatting.validationOperator.value" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
               <option value="between">Between</option>
               <option value="notBetween">Not Between</option>
               <option value="equal">Equal To</option>
@@ -879,14 +890,14 @@ watch(title, (newTitle) => {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Value 1
             </label>
-            <input v-model="formatting.validationValue1" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
+            <input v-model="formatting.validationValue1.value" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div v-if="formatting.validationOperator.value === 'between' || formatting.validationOperator.value === 'notBetween'">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Value 2
             </label>
-            <input v-model="formatting.validationValue2" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
+            <input v-model="formatting.validationValue2.value" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div class="flex gap-2">
@@ -913,29 +924,29 @@ watch(title, (newTitle) => {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Find
             </label>
-            <input v-model="dataTools.findText" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
+            <input v-model="dataTools.findText.value" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Replace With
             </label>
-            <input v-model="dataTools.replaceText" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
+            <input v-model="dataTools.replaceText.value" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div class="space-y-2">
             <label class="flex items-center gap-2">
-              <input v-model="dataTools.matchCase" type="checkbox" class="rounded" />
+              <input v-model="dataTools.matchCase.value" type="checkbox" class="rounded" />
               <span class="text-sm">Match Case</span>
             </label>
             
             <label class="flex items-center gap-2">
-              <input v-model="dataTools.matchWholeWord" type="checkbox" class="rounded" />
+              <input v-model="dataTools.matchWholeWord.value" type="checkbox" class="rounded" />
               <span class="text-sm">Match Whole Word</span>
             </label>
             
             <label class="flex items-center gap-2">
-              <input v-model="dataTools.useRegex" type="checkbox" class="rounded" />
+              <input v-model="dataTools.useRegex.value" type="checkbox" class="rounded" />
               <span class="text-sm">Use Regular Expression</span>
             </label>
           </div>

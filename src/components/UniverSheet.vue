@@ -4,12 +4,13 @@
 
 <script setup lang="ts">
 import '@univerjs/presets/lib/styles/preset-sheets-core.css';
-import { type IWorkbookData } from '@univerjs/presets';
+import { type IWorkbookData, LocaleType, merge } from '@univerjs/presets';
+import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core';
+import UniverPresetSheetsCoreEnUS from '@univerjs/preset-sheets-core/locales/en-US';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data';
 import type { IWebsocketService } from '@/lib/wsService';
 import { useSheetCollaboration } from '@/composables/useSheetCollaboration';
-import { getOrCreateUniver, registerComponent, unregisterComponent } from '@/utils/univerSingleton';
 
 const { data, ws, changesPending, userName } = defineProps({
   // workbook data
@@ -43,11 +44,9 @@ const container = ref<HTMLElement | null>(null);
 const collaborationDisposers: Array<() => void> = [];
 const isMounted = ref(false);
 const isInitialized = ref(false);
-const instanceId = ref<string>('');
 
 onMounted(() => {
   isMounted.value = true;
-  instanceId.value = registerComponent();
   if (data) {
     init(data);
   }
@@ -66,8 +65,12 @@ watch(() => data, (newData) => {
   }
 }, { deep: true });
 
+// Global instance tracker to prevent multiple Univer instances
+let univerInstanceCount = 0
+let globalUniverAPI: any = null
+
 /**
- * Initialize univer instance using singleton pattern
+ * Initialize univer instance using simplified preset approach
  */
 async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
   try {
@@ -75,28 +78,61 @@ async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
       throw new Error('Container element is missing');
     }
 
-    console.log(`Initializing component ${instanceId.value}`);
+    // Prevent duplicate initialization globally
+    if (globalUniverAPI) {
+      console.warn('Univer already initialized globally, reusing instance');
+      univerAPI.value = globalUniverAPI;
+      
+      // Create new workbook with unique ID
+      const workbookData = { ...data };
+      if (workbookData.id) {
+        workbookData.id = `${workbookData.id}_${Date.now()}_${univerInstanceCount++}`;
+      }
+      workbook.value = univerAPI.value.createWorkbook(workbookData);
+      isInitialized.value = true;
+      
+      // Initialize collaboration after Univer is ready
+      scheduleCollaboration();
+      emit('ready', { univer: { univerAPI: globalUniverAPI }, workbook, univerAPI: globalUniverAPI });
+      return;
+    }
 
-    // Use singleton to get or create Univer instance
-    const result = await getOrCreateUniver(container.value, data);
+    // Dynamic import to avoid SSR issues
+    const { createUniver, defaultTheme } = await import('@univerjs/presets');
+
+    // Ensure unique workbook ID by adding timestamp if needed
+    const workbookData = { ...data };
+    if (workbookData.id) {
+      workbookData.id = `${workbookData.id}_${Date.now()}_${univerInstanceCount++}`;
+    }
+
+    // Create Univer instance using preset (much simpler!)
+    const univer = createUniver({
+      locale: LocaleType.EN_US,
+      locales: {
+        enUS: merge({}, UniverPresetSheetsCoreEnUS),
+      },
+      theme: defaultTheme,
+      presets: [
+        UniverSheetsCorePreset({
+          container: container.value,
+        }),
+      ],
+    });
+
+    univerAPI.value = univer.univerAPI;
+    globalUniverAPI = univer.univerAPI; // Store global reference
     
-    univerAPI.value = result.univerAPI;
-    workbook.value = result.workbook;
+    // Create workbook with unique ID
+    workbook.value = univerAPI.value.createWorkbook(workbookData);
     isInitialized.value = true;
-
-    console.log(`Component ${instanceId.value} initialized successfully`);
 
     // Initialize collaboration after Univer is ready
     scheduleCollaboration();
 
-    emit('ready', { univer: result.univer, workbook, univerAPI: result.univerAPI });
+    emit('ready', { univer: univer.univer, workbook, univerAPI: univerAPI.value });
   } catch (error) {
-    console.error('Error initializing Univer component:', error);
-    // Reset state on error
-    univerAPI.value = null;
-    workbook.value = null;
-    isInitialized.value = false;
-    instanceId.value = '';
+    console.error('Error initializing Univer:', error);
   }
 }
 
@@ -105,8 +141,6 @@ async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
  */
 function destroyUniver() {
   try {
-    console.log(`Destroying component ${instanceId.value}`);
-    
     // Cleanup collaboration first
     cleanupCollaboration();
     
@@ -122,18 +156,22 @@ function destroyUniver() {
       workbook.value = null;
     }
     
-    // Clear component references
+    // Only dispose univer instance if this is the last component using it
+    if (univerAPI.value === globalUniverAPI) {
+      // Check if other components might be using this instance
+      // For now, we'll keep it alive to prevent re-initialization issues
+      console.log('Keeping global Univer instance alive to prevent re-initialization conflicts');
+    }
+    
     univerAPI.value = null;
+    
+    // Reset initialization state
     isInitialized.value = false;
-    instanceId.value = '';
     
     // Clear container to prevent memory leaks
     if (container.value) {
       container.value.innerHTML = '';
     }
-    
-    // Unregister component (will dispose global instance if last one)
-    unregisterComponent();
   } catch (error) {
     console.error('Error during cleanup:', error);
   }
@@ -186,7 +224,7 @@ async function setData(data: IWorkbookData) {
       // Ensure unique ID for new workbook
       const newData = { ...data };
       if (newData.id) {
-        newData.id = `${newData.id}_${instanceId.value}_${Date.now()}`;
+        newData.id = `${newData.id}_${Date.now()}_${univerInstanceCount++}`;
       }
       workbook.value = univerAPI.value.createWorkbook(newData);
     }
