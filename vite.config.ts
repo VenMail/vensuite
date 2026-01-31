@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       vue(),
-      univerPlugin(),
+      univerPlugin(), // Re-enabled for proper locale handling
     ],
     server: {
       proxy: {

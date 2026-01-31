@@ -21,6 +21,10 @@ import { useFavicon } from '@vueuse/core'
 import {
   DEFAULT_WORKBOOK_DATA,
 } from '@/assets/default-workbook-data'
+import {
+  spreadsheetTemplateMap,
+  type SpreadsheetTemplateSlug,
+} from '@/constants/sheetTemplates'
 
 import { extractSheetFields } from '@/utils/fieldExtractor'
 import { convertSheetToForm } from '@/utils/sheetToFormConverter'
@@ -149,27 +153,31 @@ const shareMembersForCard = computed(() => {
   return []
 })
 
-// Template loading (for future use)
-// const templates = {
-//   budget: BUDGET_TEMPLATE_DATA,
-//   invoice: INVOICE_TEMPLATE_DATA,
-//   okr: OKR_TEMPLATE_DATA,
-//   tasks: TASKS_TEMPLATE_DATA,
-// }
+// Template loading
+function loadTemplate(templateSlug: SpreadsheetTemplateSlug): IWorkbookData | null {
+  const template = spreadsheetTemplateMap[templateSlug];
+  if (!template) {
+    console.error(`Template "${templateSlug}" not found`);
+    return null;
+  }
+  
+  console.log(`Loading template: ${template.name}`);
+  return template.workbookData;
+}
 
 // Univer event handlers
-function onUniverReady(core: FUniver) {
-  univerCoreRef.value = core
+function onUniverReady(event: { univer: any, workbook: any, univerAPI: any }) {
+  univerCoreRef.value = event.univerAPI
   
   // Initialize collaboration if ready
   if (canJoinRealtime.value) {
     initializeWebSocketAndJoinSheet()
   }
   
-  // Load data if available
-  if (data.value) {
-    univerRef.value?.setData(data.value as IWorkbookData)
-  }
+  // Don't set data here - it's already set during initialization
+  // This prevents the duplicate unit ID error
+  
+  console.log('Univer ready event received:', event)
 }
 
 function onUniverChange() {
@@ -500,24 +508,38 @@ async function createFormFromQuestions() {
 
 // Lifecycle hooks
 onMounted(async () => {
-  // Load data based on route
-  if (route.params.id) {
-    const loaded = await loadData(route.params.id as string)
+  // Check if we're loading from a template
+  const templateParam = route.params.template as string;
+  
+  if (templateParam) {
+    // Load from template
+    const templateData = loadTemplate(templateParam as SpreadsheetTemplateSlug);
+    if (templateData) {
+      data.value = templateData;
+      title.value = templateData.name || 'New Spreadsheet';
+    } else {
+      // Fallback to default if template not found
+      data.value = DEFAULT_WORKBOOK_DATA;
+      title.value = 'New Spreadsheet';
+    }
+  } else if (route.params.id) {
+    // Load existing sheet
+    const loaded = await loadData(route.params.id as string);
     if (loaded) {
-      data.value = loaded
-      title.value = loaded.name || title.value
+      data.value = loaded;
+      title.value = loaded.name || title.value;
     }
   } else {
     // Create new sheet
-    data.value = DEFAULT_WORKBOOK_DATA
+    data.value = DEFAULT_WORKBOOK_DATA;
   }
 
   // Set favicon
   nextTick(() => {
-    const iconHTML = iconRef.value?.outerHTML
+    const iconHTML = iconRef.value?.outerHTML;
     if (iconHTML) {
-      const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML.replace(/currentColor/g, '#38a169'))}`
-      useFavicon(iconDataURL)
+      const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML.replace(/currentColor/g, '#38a169'))}`;
+      useFavicon(iconDataURL);
     }
   })
 })
