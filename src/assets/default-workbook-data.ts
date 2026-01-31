@@ -20,6 +20,12 @@ export const DEFAULT_WORKBOOK_DATA = {
       id: 'sheet-01',
       name: 'Sheet1',
       cellData: {},
+      rowCount: 1000,
+      columnCount: 26,
+      defaultColumnWidth: 100,
+      defaultRowHeight: 25,
+      rowData: [],
+      columnData: [],
     },
   },
 }
@@ -52,7 +58,6 @@ export const BUDGET_TEMPLATE_DATA = {
   },
   sheets: {
     'budget-sheet': {
-      type: SheetTypes.GRID,
       id: 'budget-sheet',
       name: 'Budget',
       cellData: {
@@ -129,6 +134,23 @@ export const BUDGET_TEMPLATE_DATA = {
           1: { v: 2000, t: 2, s: 'currency' },
         },
       },
+      rowCount: 100,
+      columnCount: 10,
+      defaultColumnWidth: 120,
+      defaultRowHeight: 25,
+      rowData: [],
+      columnData: [
+        { w: 200, hd: 0 }, // Column A: Description
+        { w: 120, hd: 0 }, // Column B: Amount
+        { w: 100, hd: 0 }, // Column C
+        { w: 100, hd: 0 }, // Column D
+        { w: 100, hd: 0 }, // Column E
+        { w: 100, hd: 0 }, // Column F
+        { w: 100, hd: 0 }, // Column G
+        { w: 100, hd: 0 }, // Column H
+        { w: 100, hd: 0 }, // Column I
+        { w: 100, hd: 0 }, // Column J
+      ],
     },
   },
 }
@@ -149,7 +171,6 @@ export const OKR_TEMPLATE_DATA = {
   },
   sheets: {
     'okr-sheet': {
-      type: SheetTypes.GRID,
       id: 'okr-sheet',
       name: 'OKRs',
       cellData: {
@@ -186,6 +207,19 @@ export const OKR_TEMPLATE_DATA = {
           5: { v: 'High', t: 1 },
         },
       },
+      rowCount: 100,
+      columnCount: 8,
+      defaultColumnWidth: 100,
+      defaultRowHeight: 25,
+      rowData: [],
+      columnData: [
+        { w: 250, hd: 0 }, // Column A: Objective
+        { w: 200, hd: 0 }, // Column B: Key Result
+        { w: 100, hd: 0 }, // Column C: Owner
+        { w: 80, hd: 0 },  // Column D: Target
+        { w: 80, hd: 0 },  // Column E: Current
+        { w: 100, hd: 0 }, // Column F: Confidence
+      ],
     },
   },
 }

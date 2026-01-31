@@ -911,9 +911,9 @@ export const useFileStore = defineStore("files", {
     },
 
     /** Create a new document - tries online first, falls back to local */
-    async createNewDocument(fileType: string = "docx", title: string = "Untitled"): Promise<FileData> {
+    async createNewDocument(fileType: string = "docx", title: string = "Untitled", content?: string): Promise<FileData> {
       // Use proper default content based on file type
-      const defaultContent = fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE : "";
+      const defaultContent = fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE : content || "";
       const auth = useAuthStore();
 
       const newDoc = {

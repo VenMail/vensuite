@@ -4,6 +4,7 @@ import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import type { Ref } from 'vue'
 import type { IWorkbookData } from '@univerjs/core'
 import { FUniver } from '@univerjs/core/facade'
+import { debounce } from '@univerjs/core'
 
 import '@/assets/index.css'
 import { MessageSquareIcon, XIcon, ArrowLeft, Share2, FileTextIcon } from 'lucide-vue-next'
@@ -27,7 +28,7 @@ import { extractSheetFields } from '@/utils/fieldExtractor'
 import { convertSheetToForm } from '@/utils/sheetToFormConverter'
 import { createForm } from '@/services/forms'
 import type { FormDefinition } from '@/types'
-// import { useAuthStore } from '@/store/auth'
+import { useFileStore } from '@/store/files'
 // import { t } from '@/i18n'
 
 // Import composables
@@ -36,6 +37,9 @@ import { useSheetFormatting } from '@/composables/useSheetFormatting'
 import { useSheetDataTools } from '@/composables/useSheetDataTools'
 import { useSheetCollaboration } from '@/composables/useSheetCollaboration'
 import { useSheetExport } from '@/composables/useSheetExport'
+
+// Initialize stores
+const fileStore = useFileStore()
 
 // Initialize composables
 const sheetData = useSheetData()
@@ -56,8 +60,15 @@ const {
   saveData,
   editTitle,
   saveTitle,
-  updateTitle,
+  restoreCursorPosition,
 } = sheetData
+
+// Debounced title save (from old implementation)
+const debouncedHandleTitleChange = debounce(() => {
+  if (univerRef.value && isUniverReady.value) {
+    saveTitle(univerRef.value)
+  }
+}, 300)
 
 // Univer refs
 const univerRef: Ref<InstanceType<typeof UniverSheet> | null> = ref(null)
@@ -162,9 +173,13 @@ const shareMembersForCard = computed(() => {
 //   tasks: TASKS_TEMPLATE_DATA,
 // }
 
+// Univer ready state
+const isUniverReady = ref(false)
+
 // Univer event handlers
 function onUniverReady(event: { univer: any, workbook: any, univerAPI: any }) {
   univerCoreRef.value = event.univerAPI
+  isUniverReady.value = true
   
   // Initialize collaboration if ready
   if (canJoinRealtime.value) {
@@ -173,15 +188,32 @@ function onUniverReady(event: { univer: any, workbook: any, univerAPI: any }) {
   
   // Don't set data here - it's already set during initialization
   // This prevents the duplicate unit ID error
-  
-  console.log('Univer ready event received:', event)
 }
 
-function onUniverChange() {
-  // Broadcast changes to collaborators
-  if (wsService.value && route.params.id) {
-    // This would broadcast the change via WebSocket
-  }
+// Local title update function (from old implementation)
+function handleTitleUpdate(event: Event) {
+  if (sheetData.isSettingCursor.value) return
+
+  const target = event.target as HTMLElement
+  const newText = target.innerText.trim()
+
+  if (sheetData.editableTitle.value === newText) return
+
+  sheetData.editableTitle.value = newText
+  sheetData.title.value = newText
+  document.title = newText
+
+  const selection = window.getSelection()
+  const range = selection?.getRangeAt(0)
+  const offset = range?.startOffset
+
+  nextTick(() => {
+    sheetData.isSettingCursor.value = true
+    restoreCursorPosition(target, offset ?? newText.length)
+    sheetData.isSettingCursor.value = false
+  })
+
+  debouncedHandleTitleChange()
 }
 
 // Menu event handlers
@@ -524,10 +556,60 @@ onMounted(async () => {
   if (route.params.template) {
     // Handle template route
     const template = route.params.template as string
+    
+    // Special case: "new" template means create new document
+    if (template === 'new') {
+      const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
+      
+      if (!newDoc || !newDoc.id) {
+        console.error('Failed to create document - invalid response:', newDoc)
+        data.value = DEFAULT_WORKBOOK_DATA
+        document.title = 'New Spreadsheet'
+        title.value = document.title
+        return
+      }
+      
+      const newDocData = {
+        ...DEFAULT_WORKBOOK_DATA,
+        id: newDoc.id,
+        name: 'New Spreadsheet',
+      }
+      
+      data.value = newDocData
+      document.title = 'New Spreadsheet'
+      title.value = document.title
+      
+      await router.replace(`/sheets/${newDoc.id}`)
+      return
+    }
+    
+    // Normal template loading
     const templateData = await loadTemplate(template)
     if (templateData) {
-      data.value = templateData
-      title.value = templateData.name || title.value
+      const templateContent = JSON.stringify(templateData)
+      const newDoc = await fileStore.createNewDocument('xlsx', templateData.name || 'New Spreadsheet', templateContent)
+      
+      if (!newDoc || !newDoc.id) {
+        console.error('Failed to create document - invalid response:', newDoc)
+        data.value = templateData
+        title.value = templateData.name || title.value
+        return
+      }
+      
+      // Use template data but with real document ID
+      const newDocData = {
+        ...templateData,
+        id: newDoc.id,
+        name: templateData.name || 'New Spreadsheet',
+      }
+      
+      data.value = newDocData
+      document.title = templateData.name || 'New Spreadsheet'
+      title.value = document.title
+      
+      // Wait for next tick to ensure route is updated before navigation
+      await nextTick()
+      await router.replace(`/sheets/${newDoc.id}`)
     } else {
       // Fallback to default if template not found
       data.value = DEFAULT_WORKBOOK_DATA
@@ -541,8 +623,34 @@ onMounted(async () => {
       title.value = loaded.name || title.value
     }
   } else {
-    // Create new sheet
-    data.value = DEFAULT_WORKBOOK_DATA
+    // Create new sheet (match old implementation exactly)
+    const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
+    
+    if (!newDoc || !newDoc.id) {
+      console.error('Failed to create document - invalid response:', newDoc)
+      // Fallback to default data
+      data.value = DEFAULT_WORKBOOK_DATA
+      document.title = 'New Spreadsheet'
+      title.value = document.title
+      return
+    }
+    
+    const newDocData = {
+      ...DEFAULT_WORKBOOK_DATA,
+      id: newDoc.id,
+      name: 'New Spreadsheet',
+    }
+    
+    data.value = newDocData
+    document.title = 'New Spreadsheet'
+    title.value = document.title
+    
+    await router.replace(`/sheets/${newDoc.id}`)
+    
+    // Initialize collaboration after redirect
+    if (canJoinRealtime.value) {
+      initializeWebSocketAndJoinSheet()
+    }
   }
 
   // Set favicon
@@ -557,28 +665,82 @@ onMounted(async () => {
 
 onUnmounted(() => {
   leaveSheet()
+  // Cleanup auto-save timeouts
+  if (saveTimeout) clearTimeout(saveTimeout)
+  if (maxWaitTimeout) clearTimeout(maxWaitTimeout)
 })
 
-onBeforeRouteLeave((_to, _from, next) => {
+onBeforeRouteLeave(async (_to, _from, next) => {
   // Check if there are unsaved changes before leaving
-  if (canEditSheet.value && univerRef.value) {
-    // Save data before leaving
-    saveData(univerRef.value)
+  if (canEditSheet.value && univerRef.value && router.currentRoute.value.params.id) {
+    try {
+      // Save data before leaving - wait for completion
+      await saveData(univerRef.value)
+    } catch (error) {
+      console.warn('Failed to save before route leave:', error)
+      // Continue anyway - don't block navigation
+    }
   }
   next()
-})
-
-// Watch for data changes to save to Univer
-watch(data, (newData) => {
-  if (newData && univerRef.value) {
-    univerRef.value.setData(newData as IWorkbookData)
-  }
 })
 
 // Watch for title changes
 watch(title, (newTitle) => {
   document.title = newTitle
 })
+
+// Watch for data changes to save to Univer
+watch(data, (newData) => {
+  if (newData && univerRef.value) {
+    try {
+      univerRef.value.setData(newData as unknown as IWorkbookData)
+    } catch (error) {
+      console.error('Failed to set data in Univer:', error)
+    }
+  }
+})
+
+// Auto-save functionality
+let saveTimeout: ReturnType<typeof setTimeout> | null = null
+let maxWaitTimeout: ReturnType<typeof setTimeout> | null = null
+const autoSaveIdleDelay = 3000 // 3 seconds idle
+const autoSaveMaxWait = 30000 // 30 seconds max
+
+// Schedule auto-save
+function scheduleAutoSave() {
+  if (!canEditSheet.value || !univerRef.value || !isUniverReady.value) {
+    return
+  }
+  
+  // Clear existing timeouts
+  if (saveTimeout) clearTimeout(saveTimeout)
+  
+  // Schedule save after idle delay
+  saveTimeout = setTimeout(() => {
+    if (univerRef.value) {
+      saveData(univerRef.value)
+    }
+  }, autoSaveIdleDelay)
+  
+  // Ensure we save within max wait regardless of activity
+  if (!maxWaitTimeout) {
+    maxWaitTimeout = setTimeout(() => {
+      if (univerRef.value) {
+        saveData(univerRef.value)
+      }
+      maxWaitTimeout = null
+    }, autoSaveMaxWait)
+  }
+}
+
+// Watch for Univer changes to trigger auto-save
+function onUniverChange() {
+  scheduleAutoSave()
+  // Broadcast changes to collaborators
+  if (wsService.value && route.params.id) {
+    // This would broadcast the change via WebSocket
+  }
+}
 
 // Expose methods for template (if needed)
 // const $t = t
@@ -608,9 +770,9 @@ watch(title, (newTitle) => {
           <div
             v-else
             contenteditable="true"
-            @input="updateTitle"
-            @keydown.enter.prevent="saveTitle(univerRef)"
+            @input="handleTitleUpdate"
             @blur="saveTitle(univerRef)"
+            @keydown.enter.prevent="saveTitle(univerRef)"
             class="text-lg font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500"
             ref="titleRef"
           >

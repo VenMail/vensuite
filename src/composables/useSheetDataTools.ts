@@ -15,65 +15,42 @@ export function useSheetDataTools(univerRef: any) {
   const sortColumns = ref([{ column: '', order: 'asc' }])
   const sortHasHeaders = ref(true)
 
-  // Freeze panes functions - Simplified for new Univer API
+  // Freeze panes functions - Using Univer API
   function handleFreezeTopRow() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      // Simplified freeze functionality for now
-      toast.success('Top row frozen (simplified)')
+      // For now, use a simple approach - the actual freeze functionality 
+      // may require additional Univer plugins that aren't loaded
+      console.log('Freeze top row functionality requires Univer freeze plugin')
+      // TODO: Implement proper freeze when freeze plugin is available
     } catch (error) {
       console.error('Error freezing top row:', error)
-      toast.error('Failed to freeze top row')
     }
   }
 
   function handleFreezeFirstColumn() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      toast.success('First column frozen (simplified)')
+      console.log('Freeze first column functionality requires Univer freeze plugin')
+      // TODO: Implement proper freeze when freeze plugin is available
     } catch (error) {
       console.error('Error freezing first column:', error)
-      toast.error('Failed to freeze first column')
     }
   }
 
   function handleFreezePanes() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      toast.info('Select a cell and freeze panes (simplified)')
+      console.log('Freeze panes functionality requires Univer freeze plugin')
+      // TODO: Implement proper freeze when freeze plugin is available
     } catch (error) {
       console.error('Error freezing panes:', error)
-      toast.error('Failed to freeze panes')
     }
   }
 
   function handleUnfreeze() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      toast.success('Panes unfrozen (simplified)')
+      console.log('Unfreeze functionality requires Univer freeze plugin')
+      // TODO: Implement proper unfreeze when freeze plugin is available
     } catch (error) {
       console.error('Error unfreezing panes:', error)
-      toast.error('Failed to unfreeze panes')
     }
   }
 
@@ -85,42 +62,39 @@ export function useSheetDataTools(univerRef: any) {
   function executeFind() {
     try {
       if (!findText.value.trim()) {
-        toast.info('Please enter text to find')
+        console.log('Please enter text to find')
         return
       }
       
-      toast.info('Find functionality requires additional Univer preset installation')
+      console.log('Find functionality requires additional Univer preset installation')
     } catch (error) {
       console.error('Error finding text:', error)
-      toast.error('Failed to find text')
     }
   }
 
   function executeReplace() {
     try {
       if (!findText.value.trim()) {
-        toast.info('Please enter text to find')
+        console.log('Please enter text to find')
         return
       }
       
-      toast.info('Replace functionality requires additional Univer preset installation')
+      console.log('Replace functionality requires additional Univer preset installation')
     } catch (error) {
       console.error('Error replacing text:', error)
-      toast.error('Failed to replace text')
     }
   }
 
   function executeReplaceAll() {
     try {
       if (!findText.value.trim()) {
-        toast.info('Please enter text to find')
+        console.log('Please enter text to find')
         return
       }
       
-      toast.info('Replace All functionality requires additional Univer preset installation')
+      console.log('Replace All functionality requires additional Univer preset installation')
     } catch (error) {
       console.error('Error replacing all text:', error)
-      toast.error('Failed to replace all text')
     }
   }
 
@@ -157,118 +131,80 @@ export function useSheetDataTools(univerRef: any) {
         }))
       
       if (sortSpec.length === 0) {
-        toast.info('Please select at least one column to sort by')
+        console.log('Please select at least one column to sort by')
         return
       }
       
       // Apply multi-column sort
-      toast.success(`Sorted by ${sortSpec.length} column(s) (simplified)`)
+      console.log(`Sorting by ${sortSpec.length} column(s)`)
       advancedSortOpen.value = false
     } catch (error) {
       console.error('Error applying advanced sort:', error)
-      toast.error('Failed to apply advanced sort')
     }
   }
 
-  // Data tools functions - Simplified
+  // Data tools functions - Remove unnecessary toasts for now
   function handleDataSort() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      toast.success('Data sorted (simplified)')
+      console.log('Data sort functionality requires Univer data plugin')
+      // TODO: Implement proper sort when data plugin is available
     } catch (error) {
       console.error('Error sorting data:', error)
-      toast.error('Failed to sort data')
     }
   }
 
   function handleDataFilter() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      toast.success('Filter applied (simplified)')
+      console.log('Data filter functionality requires Univer data plugin')
+      // TODO: Implement proper filter when data plugin is available
     } catch (error) {
       console.error('Error filtering data:', error)
-      toast.error('Failed to filter data')
     }
   }
 
   function handleDataGroup() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      toast.success('Data grouped (simplified)')
+      console.log('Data group functionality requires Univer data plugin')
+      // TODO: Implement proper grouping when data plugin is available
     } catch (error) {
       console.error('Error grouping data:', error)
-      toast.error('Failed to group data')
     }
   }
 
-  // View functions
+  // View functions - Using browser zoom for now
   function handleViewZoomIn() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      toast.success('Zoomed in (simplified)')
+      const currentZoom = parseFloat(document.body.style.zoom || '1')
+      const newZoom = Math.min(currentZoom * 1.1, 4)
+      document.body.style.zoom = newZoom.toString()
     } catch (error) {
       console.error('Error zooming in:', error)
-      toast.error('Failed to zoom in')
     }
   }
 
   function handleViewZoomOut() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      toast.success('Zoomed out (simplified)')
+      const currentZoom = parseFloat(document.body.style.zoom || '1')
+      const newZoom = Math.max(currentZoom * 0.9, 0.1)
+      document.body.style.zoom = newZoom.toString()
     } catch (error) {
       console.error('Error zooming out:', error)
-      toast.error('Failed to zoom out')
     }
   }
 
   function handleViewZoomReset() {
     try {
-      const univerAPI = univerRef.value?.univer
-      if (!univerAPI) {
-        toast.error('Univer not initialized')
-        return
-      }
-      
-      toast.success('Zoom reset (simplified)')
+      document.body.style.zoom = '1'
     } catch (error) {
       console.error('Error resetting zoom:', error)
-      toast.error('Failed to reset zoom')
     }
   }
 
   function handlePrint() {
     try { 
-      window.print() 
-      toast.success('Print dialog opened')
+      window.print()
     } catch (error) {
       console.error('Error printing:', error)
-      toast.error('Failed to open print dialog')
     }
   }
 

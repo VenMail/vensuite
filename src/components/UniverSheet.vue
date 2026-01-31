@@ -7,12 +7,12 @@ import '@univerjs/presets/lib/styles/preset-sheets-core.css';
 import { type IWorkbookData, LocaleType, merge } from '@univerjs/presets';
 import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core';
 import UniverPresetSheetsCoreEnUS from '@univerjs/preset-sheets-core/locales/en-US';
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data';
 import type { IWebsocketService } from '@/lib/wsService';
 import { useSheetCollaboration } from '@/composables/useSheetCollaboration';
 
-const { data, ws, changesPending, userName } = defineProps({
+const { data, ws } = defineProps({
   // workbook data
   data: {
     type: Object as () => IWorkbookData | null,
@@ -59,11 +59,8 @@ onBeforeUnmount(() => {
 // Initialize collaboration
 const collaboration = useSheetCollaboration(univerAPI);
 
-watch(() => data, (newData) => {
-  if (newData && isMounted.value && isInitialized.value) {
-    setData(newData);
-  }
-}, { deep: true });
+// Remove problematic deep watch that causes double mutations
+// The parent component will handle data synchronization
 
 // Global instance tracker to prevent multiple Univer instances
 let univerInstanceCount = 0
@@ -123,7 +120,55 @@ async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
     univerAPI.value = univer.univerAPI;
     globalUniverAPI = univer.univerAPI; // Store global reference
     
-    // Create workbook with unique ID
+    // Create workbook with unique ID and validate data
+    if (!workbookData.sheets || Object.keys(workbookData.sheets).length === 0) {
+      console.warn('No sheets found in workbook data, creating default sheet')
+      workbookData.sheets = {
+        'Sheet1': {
+          id: 'Sheet1',
+          name: 'Sheet1',
+          cellData: {},
+          rowCount: 1000,
+          columnCount: 26,
+          defaultColumnWidth: 100,
+          defaultRowHeight: 25,
+          rowData: [],
+          columnData: [],
+        }
+      }
+    }
+    
+    // Ensure all sheets have required properties and valid column data
+    Object.keys(workbookData.sheets).forEach(sheetKey => {
+      const sheet = workbookData.sheets[sheetKey]
+      
+      // Only set essential properties that are actually missing
+      if (!sheet.columnData) {
+        sheet.columnData = Array.from({ length: sheet.columnCount || 26 }, () => ({ 
+          w: sheet.defaultColumnWidth || 100, 
+          hd: 0 
+        }));
+      } else {
+        // Ensure columnData is an array and has valid width for all columns
+        const columnArray = Array.isArray(sheet.columnData) ? sheet.columnData : [];
+        const targetLength = sheet.columnCount || 26;
+        
+        // Fill missing columns
+        while (columnArray.length < targetLength) {
+          columnArray.push({ w: sheet.defaultColumnWidth || 100, hd: 0 });
+        }
+        
+        // Fix any invalid width values
+        for (let i = 0; i < columnArray.length; i++) {
+          if (!columnArray[i] || columnArray[i].w <= 0) {
+            columnArray[i] = { w: sheet.defaultColumnWidth || 100, hd: 0 };
+          }
+        }
+        
+        sheet.columnData = columnArray;
+      }
+    })
+    
     workbook.value = univerAPI.value.createWorkbook(workbookData);
     isInitialized.value = true;
 
@@ -181,12 +226,35 @@ function destroyUniver() {
  * Get workbook data
  */
 async function getData(): Promise<IWorkbookData | null> {
-  if (!workbook.value) {
-    console.warn('Workbook is not initialized');
+  if (!univerAPI.value) {
+    console.warn('Univer API is not initialized');
     return null;
   }
+  
   try {
-    return await workbook.value.save();
+    // Try to get active workbook first (new 0.15.2 pattern)
+    const activeWorkbook = univerAPI.value.getActiveWorkbook();
+    if (!activeWorkbook) {
+      console.warn('No active workbook found');
+      return null;
+    }
+    
+    // Try save method first, fallback to snapshot
+    if (typeof (activeWorkbook as any).save === 'function') {
+      return await (activeWorkbook as any).save();
+    }
+    
+    if (typeof (activeWorkbook as any).getSnapshot === 'function') {
+      return (activeWorkbook as any).getSnapshot();
+    }
+    
+    // Fallback to our workbook ref
+    if (workbook.value && typeof (workbook.value as any).save === 'function') {
+      return await (workbook.value as any).save();
+    }
+    
+    console.warn('No save method available on workbook');
+    return null;
   } catch (error) {
     console.error('Error getting data:', error);
     return null;

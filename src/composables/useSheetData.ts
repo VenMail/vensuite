@@ -171,9 +171,16 @@ export function useSheetData() {
     if (!canEditSheet.value) {
       return
     }
-    if (!univerRef || !router.currentRoute.value.params.id) {
-      console.warn('Cannot save: univerRef or route.params.id is missing')
-      toast.error('Cannot save: Missing document reference or ID')
+    
+    // Production-ready validation with better error messages
+    if (!univerRef) {
+      console.warn('Cannot save: Univer reference not available')
+      return
+    }
+    
+    const routeId = router.currentRoute.value.params.id
+    if (!routeId) {
+      console.warn('Cannot save: No document ID in route')
       return
     }
 
@@ -237,17 +244,7 @@ export function useSheetData() {
     }
   }
 
-  // Title management
-  function editTitle() {
-    isTitleEdit.value = true
-    editableTitle.value = title.value
-    nextTick(() => {
-      const titleEl = document.querySelector('[contenteditable="true"]') as HTMLElement
-      if (titleEl) {
-        titleEl.focus()
-      }
-    })
-  }
+  // Debounced title save (moved to component scope like old implementation)
 
   async function saveTitle(univerRef: any) {
     const newTitle = title.value.trim()
@@ -287,6 +284,17 @@ export function useSheetData() {
     }
   }
 
+  function editTitle() {
+    isTitleEdit.value = true
+    editableTitle.value = title.value
+    nextTick(() => {
+      const titleEl = document.querySelector('[contenteditable="true"]') as HTMLElement
+      if (titleEl) {
+        titleEl.focus()
+      }
+    })
+  }
+
   function updateTitle(event: Event) {
     if (isSettingCursor.value) return
 
@@ -297,6 +305,7 @@ export function useSheetData() {
 
     editableTitle.value = newText
     title.value = newText
+    document.title = newText
 
     const selection = window.getSelection()
     const range = selection?.getRangeAt(0)
@@ -307,6 +316,8 @@ export function useSheetData() {
       restoreCursorPosition(target, offset ?? newText.length)
       isSettingCursor.value = false
     })
+
+    // Note: Debounced save is handled in component scope (like old implementation)
   }
 
   function restoreCursorPosition(element: HTMLElement, offset: number) {
@@ -399,5 +410,6 @@ export function useSheetData() {
     updateTitle,
     updateTitleRemote,
     handleBeforeUnload,
+    restoreCursorPosition,
   }
 }
