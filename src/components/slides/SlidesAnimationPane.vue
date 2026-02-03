@@ -322,51 +322,104 @@
           </div>
         </template>
       </template>
+
+      <!-- Animation Timeline -->
+      <div v-if="motionConfig && Object.keys(motionConfig).length > 0" class="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="mb-3">
+          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Animation Timeline</h4>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Visualize and control animation sequence</p>
+        </div>
+        <MotionTimeline
+          :config="motionConfig as any"
+          :current-time="timelineCurrentTime"
+          :is-playing="isTimelinePlaying"
+          @update:current-time="handleTimelineTimeUpdate"
+          @update:is-playing="handleTimelinePlayState"
+          @item-click="handleTimelineItemClick"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { ArrowLeft, X, Sparkles, Play } from 'lucide-vue-next';
-import type { MarkdownElement } from '@/utils/markdownElementDetector';
-
-interface ElementAnimation {
-  enabled: boolean;
-  type: string;
-  duration: number;
-  delay: number;
-  easing: string;
-  trigger: 'onLoad' | 'onClick' | 'onHover' | 'onScroll';
-  repeat: boolean;
-  repeatCount: number | 'infinite';
-}
+import MotionTimeline from './motion/MotionTimeline.vue';
 
 interface Props {
   selectedElement?: HTMLElement | null;
-  markdownElement?: MarkdownElement | null;
+  markdownElement?: any | null; // MarkdownElement type
+  motionConfig?: Record<string, any>;
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  selectedElement: null,
-  markdownElement: null
-});
+const props = withDefaults(defineProps<Props>(), {});
 
 const emit = defineEmits<{
-  (e: 'back'): void;
-  (e: 'close'): void;
-  (e: 'update-animation', animation: ElementAnimation): void;
+  close: [];
+  back: [];
+  'update-motion-config': [config: Record<string, any>];
 }>();
 
-// Animation state
-const animationEnabled = ref(false);
-const animationType = ref('fadeIn');
-const animationDuration = ref(1000);
-const animationDelay = ref(0);
-const animationEasing = ref('ease-in-out');
-const animationTrigger = ref<'onLoad' | 'onClick' | 'onHover' | 'onScroll'>('onLoad');
-const animationRepeat = ref(false);
-const animationRepeatCount = ref<number | 'infinite'>(1);
+// Animation state derived from motion config
+const elementId = computed(() => {
+  return props.selectedElement?.id || 
+         (props.markdownElement ? `markdown-${props.markdownElement.startLine}` : 'unknown');
+});
+
+const currentElementConfig = computed(() => {
+  const items = props.motionConfig?.items || [];
+  return items.find((item: any) => item.id === elementId.value) || {};
+});
+
+const animationEnabled = computed(() => currentElementConfig.value?.enabled ?? false);
+const animationType = computed(() => currentElementConfig.value?.variant ?? 'fadeIn');
+const animationDuration = computed(() => currentElementConfig.value?.duration ?? 1000);
+const animationDelay = computed(() => currentElementConfig.value?.delay ?? 0);
+const animationEasing = computed(() => currentElementConfig.value?.easing ?? 'ease-in-out');
+const animationTrigger = computed(() => currentElementConfig.value?.trigger ?? 'onLoad');
+const animationRepeat = computed(() => currentElementConfig.value?.repeat ?? false);
+const animationRepeatCount = computed(() => currentElementConfig.value?.repeatCount ?? 1);
+
+// Helper function to update motion config with proper element handling
+function updateMotionConfig(updates: Partial<Record<string, any>>) {
+  if (!props.selectedElement && !props.markdownElement) return;
+  
+  // Get element ID
+  const elementId = props.selectedElement?.id || 
+                   (props.markdownElement ? `markdown-${props.markdownElement.startLine}` : 'unknown');
+  
+  // Create or update element-specific motion config
+  const currentConfig = props.motionConfig || {};
+  const items = currentConfig.items || [];
+  
+  // Find existing item or create new one
+  let itemIndex = items.findIndex((item: any) => item.id === elementId);
+  if (itemIndex === -1) {
+    itemIndex = items.length;
+  }
+  
+  // Update the item
+  items[itemIndex] = {
+    id: elementId,
+    variant: updates.type || 'fadeIn',
+    delay: updates.delay || 0,
+    duration: updates.duration || 1000,
+    easing: updates.easing || 'ease-in-out',
+    trigger: updates.trigger || 'onLoad',
+    repeat: updates.repeat || false,
+    repeatCount: updates.repeatCount || 1,
+    enabled: updates.enabled !== false,
+    ...updates
+  };
+  
+  // Emit updated motion config
+  const newConfig = {
+    ...currentConfig,
+    items
+  };
+  emit('update-motion-config', newConfig);
+}
 
 // Computed CSS code
 const cssCode = computed(() => {
@@ -385,80 +438,65 @@ const cssCode = computed(() => {
 
 // Methods
 function toggleAnimation(enabled: boolean) {
-  animationEnabled.value = enabled;
-  emitUpdate();
+  updateMotionConfig({ enabled });
 }
 
 function updateAnimationType(type: string) {
-  animationType.value = type;
-  emitUpdate();
+  updateMotionConfig({ type });
 }
 
 function updateAnimationDuration(duration: number) {
-  animationDuration.value = duration;
-  emitUpdate();
+  updateMotionConfig({ duration });
 }
 
 function updateAnimationDelay(delay: number) {
-  animationDelay.value = delay;
-  emitUpdate();
+  updateMotionConfig({ delay });
 }
 
 function updateAnimationEasing(easing: string) {
-  animationEasing.value = easing;
-  emitUpdate();
+  updateMotionConfig({ easing });
 }
 
 function updateAnimationTrigger(trigger: 'onLoad' | 'onClick' | 'onHover' | 'onScroll') {
-  animationTrigger.value = trigger;
-  emitUpdate();
+  updateMotionConfig({ trigger });
 }
 
 function updateAnimationRepeat(repeat: boolean) {
-  animationRepeat.value = repeat;
-  emitUpdate();
+  updateMotionConfig({ repeat });
 }
 
 function updateAnimationRepeatCount(count: number | 'infinite') {
-  animationRepeatCount.value = count;
-  emitUpdate();
-}
-
-function emitUpdate() {
-  const animation: ElementAnimation = {
-    enabled: animationEnabled.value,
-    type: animationType.value,
-    duration: animationDuration.value,
-    delay: animationDelay.value,
-    easing: animationEasing.value,
-    trigger: animationTrigger.value,
-    repeat: animationRepeat.value,
-    repeatCount: animationRepeatCount.value
-  };
-  
-  emit('update-animation', animation);
+  updateMotionConfig({ repeatCount: count });
 }
 
 function previewAnimation() {
   if (!props.selectedElement) return;
   
-  // Apply animation temporarily for preview
-  const element = props.selectedElement;
-  const originalStyle = element.style.cssText;
+  // TODO: Implement animation preview logic
+  // - Apply animation temporarily to selected element
+  // - Store original style to restore later
+  // - Trigger animation preview
   
-  // Apply animation
-  element.style.animation = `${animationType.value} ${animationDuration.value}ms ${animationEasing.value} ${animationDelay.value}ms ${animationRepeat.value ? (animationRepeatCount.value === 'infinite' ? 'infinite' : animationRepeatCount.value) : '1'}`;
-  
-  // Remove animation after it completes
-  setTimeout(() => {
-    element.style.cssText = originalStyle;
-  }, animationDuration.value + animationDelay.value + 100);
 }
 
 function copyCssCode() {
-  navigator.clipboard.writeText(cssCode.value).then(() => {
-    // Show success feedback (you could emit an event or use a toast)
-    console.log('CSS code copied to clipboard');
-  });
+  navigator.clipboard.writeText(cssCode.value);
+}
+
+// Timeline state and handlers
+const timelineCurrentTime = ref(0);
+const isTimelinePlaying = ref(false);
+
+function handleTimelineTimeUpdate(time: number) {
+  timelineCurrentTime.value = time;
+}
+
+function handleTimelinePlayState(playing: boolean) {
+  isTimelinePlaying.value = playing;
+}
+
+function handleTimelineItemClick(item: any) {
+  console.log('Timeline item clicked:', item);
+  // Could select the element or highlight it in the preview
 }
 </script>

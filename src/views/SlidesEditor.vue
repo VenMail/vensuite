@@ -113,36 +113,30 @@
             </div>
 
             <!-- Properties Panel (Center, Fixed Width) -->
-            <DynamicPropertiesPanel
+            <ImprovedPropertiesPanel
               v-if="!showAnimationPanel"
               :layout="editor.currentLayout"
               :background="editor.slideBackground"
               :transition="editor.slideTransition"
-              :selected-element="selectedElement"
-              :element-type="selectedElementType"
-              :markdown-element="currentMarkdownElement"
+              :current-theme="editor.currentTheme"
+              :current-layout="editor.currentLayout"
               @toggle-panel="() => {}"
               @show-animation-panel="showAnimationPanel = true"
               @update:layout="handleLayoutChange"
               @update:background="handleBackgroundChange"
               @update:transition="handleTransitionChange"
+              @update:theme="handleThemeChange"
               @apply-template="handleApplyTemplate"
-              @update-element-style="handleElementStyleUpdate"
-              @update-component-scale="handleComponentScale"
-              @clear-selection="handleClearSelection"
-              @update-markdown-element="handleMarkdownElementUpdate"
-              @clear-markdown-element="handleClearMarkdownElement"
-              @update-animation="handleAnimationUpdate"
             />
-            
             <!-- Animation Panel (replaces properties panel when shown) -->
             <SlidesAnimationPane
               v-if="showAnimationPanel"
               :selected-element="selectedElement"
               :markdown-element="currentMarkdownElement"
+              :motion-config="editor.getMotionConfig()"
               @back="showAnimationPanel = false"
               @close="showAnimationPanel = false"
-              @update-animation="handleAnimationUpdate"
+              @update-motion-config="handleMotionConfigUpdate"
             />
 
             <!-- Live Preview: flexible width; expands when arrange mode -->
@@ -162,10 +156,14 @@
                 :arrange-mode="arrangeMode"
                 :focus-line-range="focusLineRange"
                 :selected-line-range="currentMarkdownElement ? { start: currentMarkdownElement.startLine, end: currentMarkdownElement.endLine } : null"
-                :enable-debug-mode="false"
+                :slide-variant="resolvedSlideVariant"
+                :slide-phase="slidePhase"
+                :slide-direction="slideDirection"
+                :content-variant="currentContentVariant"
+                :content-phase="contentPhase"
                 @update-element-position="handleUpdateElementPosition"
                 @update-element-size="handleUpdateElementSize"
-                @preview-element-selected="handlePreviewElementSelection"
+                @element-selected="handleElementSelection"
               />
             </div>
           </div>
@@ -183,6 +181,11 @@
               :theme-text="editor.currentThemeObj?.colors.text"
               :theme-style="editor.themeStyleObject as Record<string, string>"
               :animations="animationConfig"
+              :slide-variant="resolvedSlideVariant"
+              :slide-phase="slidePhase"
+              :slide-direction="slideDirection"
+              :content-variant="currentContentVariant"
+              :content-phase="contentPhase"
               :is-fullscreen="true"
               :enable-debug-mode="false"
             />
@@ -280,15 +283,18 @@ import SlidesToolbar from '@/components/slides/SlidesToolbar.vue';
 import SlidesThumbnailSidebar from '@/components/slides/SlidesThumbnailSidebar.vue';
 import SlidesMarkdownEditor from '@/components/slides/SlidesMarkdownEditor.vue';
 import SlidesPreviewPane from '@/components/slides/SlidesPreviewPane.vue';
-import DynamicPropertiesPanel from '@/components/slides/DynamicPropertiesPanel.vue';
+import ImprovedPropertiesPanel from '@/components/slides/ImprovedPropertiesPanel.vue';
 import SlidesAnimationPane from '@/components/slides/SlidesAnimationPane.vue';
 import SlidesPresenter from '@/components/slides/SlidesPresenter.vue';
 import InfographicsDialog from '@/components/slides/InfographicsDialog.vue';
 
 // Composables
-import { useSlidesStore } from '../store/slides';
-import { useAuthStore } from '@/store/auth';
+import { useMotionConfig } from '@/composables/useMotionConfig';
 import { IWebsocketService, useWebSocket } from '@/lib/wsService';
+
+// Stores
+import { useAuthStore } from '@/store/auth';
+import { useSlidesStore } from '../store/slides';
 
 // Types
 import { type SlideTemplate } from '@/utils/slidevMarkdown';
@@ -299,6 +305,7 @@ import { updateElementPosition, updateElementSize } from '@/utils/markdownPositi
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const slideStore = useSlidesStore();
 
 // Refs
 const markdownEditorRef = ref<InstanceType<typeof SlidesMarkdownEditor> | null>(null);
@@ -311,7 +318,6 @@ defineExpose({ pptxInput, htmlInput });
 // UI State
 const showInfographics = ref(false);
 const selectedElement = ref<HTMLElement | null>(null);
-const selectedElementType = ref('');
 const currentMarkdownElement = ref<MarkdownElement | null>(null);
 const arrangeMode = ref(false);
 const showMarkdownInArrange = ref(false);
@@ -325,23 +331,76 @@ const spellCheckEnabled = ref(true);
 
 // Animation State
 const showAnimationPanel = ref(false);
-const elementAnimations = ref<Map<string, ElementAnimation>>(new Map());
+const motionConfig = useMotionConfig();
+const slidePhase = ref<'enter' | 'center' | 'exit'>('center');
+const contentPhase = ref<'hidden' | 'visible'>('visible');
+const slideDirection = ref(1);
 
-// Convert elementAnimations to AnimationConfig format
+const currentSlideFrontmatter = computed(() => editor.currentSlide?.frontmatter || {});
+
+const slideVariantMap: Record<string, string> = {
+  'venmail-3d': 'venmail3d',
+  'venmail3d': 'venmail3d',
+  'slide-left': 'slideLeft',
+  'slideLeft': 'slideLeft'
+};
+
+const resolvedSlideVariant = computed(() => {
+  const motionVariant = currentSlideFrontmatter.value?.motion?.slideVariant;
+  const transition = motionVariant || currentSlideFrontmatter.value?.transition || editor.slideTransition;
+  if (!transition) return 'venmail3d';
+  return slideVariantMap[transition] || transition;
+});
+
+const currentContentVariant = computed(() => {
+  return currentSlideFrontmatter.value?.motion?.contentVariant || 'default';
+});
+
+function triggerSlideAnimation() {
+  slidePhase.value = 'enter';
+  contentPhase.value = 'hidden';
+  requestAnimationFrame(() => {
+    slidePhase.value = 'center';
+    contentPhase.value = 'visible';
+  });
+}
+
+watch(
+  () => editor.currentSlideIndex,
+  (newVal, oldVal) => {
+    if (typeof newVal === 'number' && typeof oldVal === 'number') {
+      slideDirection.value = newVal >= oldVal ? 1 : -1;
+    }
+    triggerSlideAnimation();
+  },
+  { immediate: true }
+);
+
+watch(currentSlideFrontmatter, () => {
+  triggerSlideAnimation();
+});
+
+// Convert motionConfig to legacy AnimationConfig format (for compatibility)
 const animationConfig = computed(() => {
   const config = new Map<string, ElementAnimation>();
-  elementAnimations.value.forEach((animation, elementId) => {
-    config.set(elementId, {
-      enabled: animation.enabled,
-      type: animation.trigger.toLowerCase() as 'onLoad' | 'onClick' | 'onHover' | 'onScroll',
-      duration: animation.duration,
-      delay: animation.delay,
-      easing: animation.easing || 'ease',
-      trigger: animation.trigger as 'onLoad' | 'onClick' | 'onHover' | 'onScroll',
-      repeat: animation.repeat || false,
-      repeatCount: animation.repeatCount || 1
-    });
+  
+  // Convert structured motion config to legacy format
+  Object.entries(motionConfig.elements.value).forEach(([elementId, elementConfig]) => {
+    const cssAnim = elementConfig.cssAnimation;
+    if (cssAnim?.enabled) {
+      config.set(elementId, {
+        enabled: cssAnim.enabled,
+        type: cssAnim.type,
+        duration: cssAnim.duration,
+        delay: cssAnim.delay,
+        easing: cssAnim.easing,
+        trigger: cssAnim.trigger,
+        repeat: cssAnim.repeat,
+        repeatCount: cssAnim.repeatCount
+      });
+    }
   });
+  
   return config;
 });
 
@@ -395,7 +454,6 @@ const canJoinRealtime = computed(() => {
 });
 
 // Initialize composables
-const slideStore = useSlidesStore();
 const { editor, persistence, presenter } = slideStore;
 
 // Computed / Derived state
@@ -539,54 +597,19 @@ function handleTransitionChange(transition: string) {
 
 function handleApplyTemplate(template: any) {
   editor.applyTemplate(template);
-  // Note: Now handled by onSlideChange callback in editor
-}
-
-// Event Handlers - Dynamic Properties
-function handleElementStyleUpdate(property: string, value: string) {
-  if (!selectedElement.value) return;
-  
-  // Apply style to the selected element
-  selectedElement.value.style[property as any] = value;
-  
-  // Note: Direct DOM manipulation doesn't trigger onSlideChange, so manually mark dirty
   slideStore.markDirty();
 }
 
-
-function handleComponentScale(scale: number) {
-  if (!selectedElement.value) return;
-  
-  // Apply scale transform
-  selectedElement.value.style.transform = `scale(${scale})`;
-  selectedElement.value.style.transformOrigin = 'center';
-  
-  // For mermaid diagrams, also adjust container
-  if (selectedElement.value.classList.contains('mermaid-diagram')) {
-    selectedElement.value.style.display = 'flex';
-    selectedElement.value.style.justifyContent = 'center';
-    selectedElement.value.style.alignItems = 'center';
-  }
-  
-  // Note: Direct DOM manipulation doesn't trigger onSlideChange, so manually mark dirty
-  slideStore.markDirty();
+// Animation handlers
+function handleMotionConfigUpdate(motionConfig: Record<string, any>) {
+  editor.setMotionConfig(motionConfig);
 }
 
 function handleClearSelection() {
   if (selectedElement.value) {
     selectedElement.value.classList.remove('element-selected');
     selectedElement.value = null;
-    selectedElementType.value = '';
   }
-}
-
-
-// Animation handlers
-function handleAnimationUpdate(animation: ElementAnimation) {
-  const elementId = selectedElement.value?.id || (currentMarkdownElement.value ? `markdown-${currentMarkdownElement.value.startLine}` : 'unknown');
-  elementAnimations.value.set(elementId, animation);
-  // Note: Animation state doesn't trigger onSlideChange, so manually mark dirty
-  slideStore.markDirty();
 }
 
 // Simplified element selection handler
@@ -644,29 +667,6 @@ function syncMarkdownEditorCursor(targetLine: number) {
   }
 }
 
-// Simplified preview element selection handler
-function handlePreviewElementSelection(detail: { 
-  element: HTMLElement; 
-  type: string; 
-  markdownLineStart?: number; 
-  markdownLineEnd?: number; 
-}) {
-  console.log('🎯 Preview element selected:', detail.type);
-  
-  // Clear any existing DOM selection
-  if (selectedElement.value) {
-    handleClearSelection();
-  }
-  
-  // Handle the selection
-  handleElementSelection(
-    detail.element, 
-    detail.type, 
-    detail.markdownLineStart, 
-    detail.markdownLineEnd
-  );
-}
-
 // Simplified cursor change handler
 function handleCursorChange(element: MarkdownElement | null) {
   logSlidesEditorDebug('🔍 Cursor change:', element?.type || 'null');
@@ -683,35 +683,6 @@ function handleCursorChange(element: MarkdownElement | null) {
   if (element && !arrangeMode.value) {
     showAnimationPanel.value = false;
   }
-}
-
-function handleMarkdownElementUpdate(updatedElement: any) {
-  if (!currentMarkdownElement.value) return;
-  
-  const lines = editor.currentSlideContent.split('\n');
-  
-  // Replace the lines that contain the element
-  const startLine = currentMarkdownElement.value.startLine;
-  const endLine = currentMarkdownElement.value.endLine;
-  
-  // Remove old lines and insert new content
-  const newLines = [
-    ...lines.slice(0, startLine),
-    ...updatedElement.content.split('\n'),
-    ...lines.slice(endLine + 1)
-  ];
-  
-  const newContent = newLines.join('\n');
-  editor.updateSlideContent(newContent);
-  // Note: updateSlideContent already triggers onSlideChange, but this is explicit
-  slideStore.markDirty();
-  
-  // Update the current element reference
-  currentMarkdownElement.value = updatedElement;
-}
-
-function handleClearMarkdownElement() {
-  currentMarkdownElement.value = null;
 }
 
 // Simplified arrange mode handlers
@@ -883,6 +854,20 @@ function getTemplateBySlug(slug: string) {
       slug: "blank",
       slides: [
         { content: "# Start Here\n\nBegin your presentation", notes: "" }
+      ]
+    },
+    {
+      name: "Venmail Pitch",
+      slug: "venmail-pitch",
+      slides: [
+        { 
+          content: "---\nlayout: cover\n\n# Venmail OS\n\n<div class=\"cinematic-frame border-purple-700 text-center p-12\">\n  <div class=\"w-20 h-20 mx-auto mb-6\">\n    <div class=\"icon-rotate text-purple-400\">🎯</div>\n  </div>\n  \n  <h1 class=\"text-6xl font-bold text-white mb-4\">Venmail OS</h1>\n  \n  <p class=\"text-2xl text-purple-300 mb-6\">One Operating System for Modern Communication</p>\n  \n  <p class=\"text-lg text-purple-400\">Email • Office • Collaboration • Meetings — One Platform, Unlimited Users</p>\n</div>", 
+          notes: "Cover slide with cinematic frame and animated icon" 
+        },
+        { 
+          content: "---\nlayout: content\ntitle: \"Mission\"\n\n<div class=\"cinematic-frame border-emerald-700 p-8\">\n  <div class=\"flex items-center gap-4 mb-6\">\n    <div class=\"w-12 h-12 text-emerald-400\">🚀</div>\n    <h2 class=\"text-4xl font-bold text-white\">Our Mission</h2>\n  </div>\n  \n  <div class=\"space-y-4\">\n    <p class=\"text-xl text-gray-300\">Revolutionize business communication with an integrated platform</p>\n    \n    <ul class=\"text-lg text-gray-400 space-y-2\">\n      <li>• Unified email and office suite</li>\n      <li>• Real-time collaboration tools</li>\n      <li>• AI-powered productivity features</li>\n      <li>• Enterprise-grade security</li>\n    </ul>\n  </div>\n</div>", 
+          notes: "Mission slide with cinematic frame and bullet points" 
+        }
       ]
     }
   ];

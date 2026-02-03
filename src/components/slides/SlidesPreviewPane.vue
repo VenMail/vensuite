@@ -11,13 +11,28 @@
     <!-- Preview Content: Read-Only -->
     <div class="flex-1 overflow-auto bg-gray-100 dark:bg-gray-950 p-4">
       <div class="flex items-center justify-center min-h-full relative">
-        <div
-          ref="previewRef"
-          class="slide-preview-content flex-shrink-0 relative"
-          :class="layoutClass"
-          :style="previewStyle"
-          v-html="renderedContent"
-        />
+        <MotionSlide
+          :variant="resolvedSlideVariant"
+          :state="resolvedSlidePhase"
+          :direction="slideDirection"
+          tag="div"
+          class="w-full flex items-center justify-center"
+        >
+          <MotionContent
+            :variant="resolvedContentVariant"
+            :state="resolvedContentPhase"
+            tag="div"
+            class="w-full flex items-center justify-center"
+          >
+            <div
+              ref="previewRef"
+              class="slide-preview-content flex-shrink-0 relative"
+              :class="layoutClass"
+              :style="previewStyle"
+              v-html="renderedContent"
+            />
+          </MotionContent>
+        </MotionSlide>
       </div>
     </div>
   </div>
@@ -27,6 +42,8 @@
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue';
 import { useMermaid } from '@/composables/useMermaid';
 import { useSharedSlideRenderer } from '@/composables/useSharedSlideRenderer';
+import MotionSlide from './motion/MotionSlide.vue'
+import MotionContent from './motion/MotionContent.vue'
 
 interface Props {
   renderedContent: string;
@@ -40,11 +57,17 @@ interface Props {
   baseHeight?: number;
   fullscreen?: boolean;
   animations?: Map<string, ElementAnimation>;
+  motionConfig?: Record<string, any>;
   zoom?: number;
   arrangeMode?: boolean;
   focusLineRange?: { start: number; end: number } | null;
   selectedLineRange?: { start: number; end: number } | null;
   enableDebugMode?: boolean;
+  slideVariant?: string;
+  slidePhase?: keyof import('@/composables/useVenmailMotion').SlideVariant;
+  slideDirection?: number;
+  contentVariant?: string;
+  contentPhase?: keyof import('@/composables/useVenmailMotion').ContentVariant;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -55,11 +78,17 @@ const props = withDefaults(defineProps<Props>(), {
   baseHeight: 420,
   fullscreen: false,
   animations: () => new Map(),
+  motionConfig: () => ({}),
   zoom: 100,
   arrangeMode: false,
   focusLineRange: null,
   selectedLineRange: null,
-  enableDebugMode: false
+  enableDebugMode: false,
+  slideVariant: 'venmail3d',
+  slidePhase: 'center',
+  slideDirection: 1,
+  contentVariant: 'default',
+  contentPhase: 'visible'
 });
 
 // Refs
@@ -71,7 +100,28 @@ const elementHandlers = ref<Map<HTMLElement, { click?: EventListener; mouseenter
 const elementsBeingManipulated = ref<Set<string>>(new Set());
 
 // Track timeouts for cleanup
-const activeTimeouts = ref<Set<NodeJS.Timeout>>(new Set());
+const activeTimeouts = ref<Map<number, NodeJS.Timeout>>(new Map());
+let timeoutCounter = 0;
+
+// Resolve variants from motion config
+const resolvedSlideVariant = computed(() => {
+  return props.motionConfig?.slideVariant || props.slideVariant;
+});
+
+const resolvedContentVariant = computed(() => {
+  return props.motionConfig?.contentVariant || props.contentVariant;
+});
+
+// Resolve slide phase from motion config
+const resolvedSlidePhase = computed(() => {
+  // For now, use the prop phase. In future, this could be driven by slide navigation state
+  return props.slidePhase;
+});
+
+const resolvedContentPhase = computed(() => {
+  // For now, use the prop phase. In future, this could be driven by content animation state
+  return props.contentPhase;
+});
 
 // Drag state
 const isDragging = ref(false);
@@ -368,14 +418,15 @@ function handleKeyDown(e: KeyboardEvent) {
   emit('update-element-position', updatePayload);
   
   // Clear tempPosition after delay
+  const timeoutKey = ++timeoutCounter;
   const timeoutId = setTimeout(() => {
     if (selectedElement) {
       delete selectedElement.dataset.tempPosition;
     }
     elementsBeingManipulated.value.delete(blockId);
-    activeTimeouts.value.delete(timeoutId);
+    activeTimeouts.value.delete(timeoutKey);
   }, 1000);
-  activeTimeouts.value.add(timeoutId);
+  activeTimeouts.value.set(timeoutKey, timeoutId);
 }
 
 // Apply animations to elements
@@ -950,15 +1001,16 @@ function handleMouseUp(e: MouseEvent) {
   emit('update-element-position', updatePayload);
   
   // CRITICAL FIX: Clear tempPosition sooner to prevent interference
+  const timeoutKey = ++timeoutCounter;
   const timeoutId = setTimeout(() => {
     // Clear tempPosition after markdown has had time to update
     if (draggedElement.value) {
       delete draggedElement.value.dataset.tempPosition;
     }
     elementsBeingManipulated.value.delete(blockId);
-    activeTimeouts.value.delete(timeoutId);
+    activeTimeouts.value.delete(timeoutKey);
   }, 1000); // Reduced from 3000ms to 1000ms
-  activeTimeouts.value.add(timeoutId);
+  activeTimeouts.value.set(timeoutKey, timeoutId);
   
   draggedElement.value.classList.remove('dragging');
   isDragging.value = false;
@@ -1266,15 +1318,16 @@ function handleResizeEnd() {
   });
   
   // Remove from manipulated set after markdown updates
+  const timeoutKey = ++timeoutCounter;
   const resizeTimeoutId = setTimeout(() => {
     // Clear tempPosition after markdown has had time to update
     if (element) {
       delete element.dataset.tempPosition;
     }
     elementsBeingManipulated.value.delete(blockId);
-    activeTimeouts.value.delete(resizeTimeoutId);
+    activeTimeouts.value.delete(timeoutKey);
   }, 1000); // Reduced from 3000ms to 1000ms
-  activeTimeouts.value.add(resizeTimeoutId);
+  activeTimeouts.value.set(timeoutKey, resizeTimeoutId);
   
   element.classList.remove('resizing');
   resizeState.value.isResizing = false;

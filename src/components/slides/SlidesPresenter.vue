@@ -134,26 +134,39 @@
         />
 
         <!-- Slide Content -->
-        <div 
-          class="presenter-slide shadow-2xl relative"
-          :style="{ 
-            width: slideWidth + 'px', 
-            height: slideHeight + 'px',
-            background: slideBackground || themeBackground || '#ffffff',
-            color: themeText || '#1e293b',
-            ...themeStyle
-          }"
-          :class="layoutClass"
-          @mousemove="updatePointer"
-          @mouseleave="clearPointer"
+        <MotionSlide
+          :variant="resolvedSlideVariant"
+          :state="slidePhase"
+          :direction="slideDirection"
+          class="flex items-center justify-center"
         >
-          <div 
-            ref="slideContentRef"
-            class="slide-content h-full overflow-hidden p-8"
-            :style="{ color: 'inherit' }"
-            v-html="renderedContent"
-          />
-        </div>
+          <MotionContent
+            :variant="currentContentVariant"
+            :state="contentPhase"
+            class="flex items-center justify-center"
+          >
+            <div 
+              class="presenter-slide shadow-2xl relative"
+              :style="{ 
+                width: slideWidth + 'px', 
+                height: slideHeight + 'px',
+                background: slideBackground || themeBackground || '#ffffff',
+                color: themeText || '#1e293b',
+                ...themeStyle
+              }"
+              :class="layoutClass"
+              @mousemove="updatePointer"
+              @mouseleave="clearPointer"
+            >
+              <div 
+                ref="slideContentRef"
+                class="slide-content h-full overflow-hidden p-8"
+                :style="{ color: 'inherit' }"
+                v-html="renderedContent"
+              />
+            </div>
+          </MotionContent>
+        </MotionSlide>
 
         <!-- Slide Transition Animation -->
         <Transition
@@ -347,13 +360,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue';
+import { ref, onMounted, watch, nextTick, onUnmounted, computed } from 'vue';
 import { 
   ChevronLeft, ChevronRight, X, RotateCcw, Camera,
   Pencil, MousePointer, LayoutGrid, StickyNote, Circle, Download
 } from 'lucide-vue-next';
 import { parseMarkdownToHtml, type SlidevSlide } from '@/utils/slidevMarkdown';
 import { useSharedSlideRenderer } from '@/composables/useSharedSlideRenderer';
+import MotionSlide from './motion/MotionSlide.vue';
+import MotionContent from './motion/MotionContent.vue';
 
 interface DrawingPoint {
   x: number;
@@ -410,7 +425,7 @@ const emit = defineEmits<{
   (e: 'toggle-overview'): void;
   (e: 'clear-drawings'): void;
   (e: 'add-stroke', stroke: { points: DrawingPoint[]; color: string; width: number }): void;
-  (e: 'update-pointer', position: DrawingPoint | null): void;
+  (e: 'update-pointer', position: { x: number; y: number } | null): void;
   (e: 'keydown', event: KeyboardEvent): void;
 }>();
 
@@ -418,6 +433,55 @@ const presenterRef = ref<HTMLDivElement | null>(null);
 const drawingCanvas = ref<HTMLCanvasElement | null>(null);
 const cameraVideo = ref<HTMLVideoElement | null>(null);
 const slideContentRef = ref<HTMLDivElement | null>(null);
+const pointerPosition = ref<{ x: number; y: number } | null>(null);
+const slidePhase = ref<'enter' | 'center' | 'exit'>('center');
+const contentPhase = ref<'hidden' | 'visible'>('visible');
+const slideDirection = ref(1);
+
+const currentSlide = computed(() => props.slides[props.currentSlideIndex] || null);
+const currentSlideFrontmatter = computed(() => currentSlide.value?.frontmatter || {});
+
+const slideVariantMap: Record<string, string> = {
+  'venmail-3d': 'venmail3d',
+  venmail3d: 'venmail3d',
+  'slide-left': 'slideLeft',
+  slideLeft: 'slideLeft'
+};
+
+const resolvedSlideVariant = computed(() => {
+  const motionVariant = currentSlideFrontmatter.value?.motion?.slideVariant;
+  const transition = motionVariant || currentSlideFrontmatter.value?.transition;
+  if (!transition) return 'venmail3d';
+  return slideVariantMap[transition] || transition;
+});
+
+const currentContentVariant = computed(() => {
+  return currentSlideFrontmatter.value?.motion?.contentVariant || 'default';
+});
+
+function triggerSlideAnimation() {
+  slidePhase.value = 'enter';
+  contentPhase.value = 'hidden';
+  requestAnimationFrame(() => {
+    slidePhase.value = 'center';
+    contentPhase.value = 'visible';
+  });
+}
+
+watch(
+  () => props.currentSlideIndex,
+  (newVal, oldVal) => {
+    if (typeof newVal === 'number' && typeof oldVal === 'number') {
+      slideDirection.value = newVal >= oldVal ? 1 : -1;
+    }
+    triggerSlideAnimation();
+  },
+  { immediate: true }
+);
+
+watch(currentSlideFrontmatter, () => {
+  triggerSlideAnimation();
+});
 
 // Use shared renderer for consistent positioning
 const sharedRenderer = useSharedSlideRenderer();
@@ -432,7 +496,6 @@ const navigationTimeout = ref<NodeJS.Timeout | null>(null);
 // Drawing state
 const isDrawing = ref(false);
 const currentPath = ref<DrawingPoint[]>([]);
-const pointerPosition = ref<DrawingPoint | null>(null);
 
 // Focus presenter on mount
 watch(() => props.isPresenting, (presenting) => {

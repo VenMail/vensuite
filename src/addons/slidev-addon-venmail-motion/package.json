@@ -1,0 +1,9 @@
+{
+  "name": "slidev-addon-venmail-motion",
+  "version": "1.0.0",
+  "description": "Framer Motion-style animations for Slidev presentations",
+  "keywords": ["slidev-addon", "slidev", "animation", "motion", "framer-motion"],
+  "engines": {
+    "slidev": ">=0.48.0"
+  }
+}

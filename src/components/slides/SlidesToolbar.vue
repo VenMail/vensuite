@@ -64,25 +64,12 @@
       </div>
 
       <!-- Theme & Layout Controls -->
-      <select
-        :value="currentTheme"
-        class="text-sm px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
-        @change="emit('update:theme', ($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="theme in themes" :key="theme.value" :value="theme.value">
-          {{ theme.label }}
-        </option>
-      </select>
-
-      <select
-        :value="currentLayout"
-        class="text-sm px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
-        @change="emit('update:layout', ($event.target as HTMLSelectElement).value)"
-      >
-        <option v-for="layout in layouts" :key="layout.value" :value="layout.value">
-          {{ layout.label }}
-        </option>
-      </select>
+      <ImprovedToolbarControls
+        :current-theme="currentTheme"
+        :current-layout="currentLayout"
+        @update:theme="emit('update:theme', $event)"
+        @update:layout="emit('update:layout', $event)"
+      />
     </div>
 
     <!-- Right: Slide Actions -->
@@ -135,8 +122,8 @@ import {
   ChevronLeft, ChevronRight, Edit, Eye, Move, BarChart3, MoreHorizontal, MonitorSpeaker, Download, FileText, Printer
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
-import { SLIDEV_LAYOUTS, SLIDEV_THEMES } from '@/utils/slidevMarkdown';
 import AddSlideSplitButton from './AddSlideSplitButton.vue';
+import ImprovedToolbarControls from './ImprovedToolbarControls.vue';
 import type { SlideTemplate } from '@/utils/slidevMarkdown';
 import {
   DropdownMenu,
@@ -177,7 +164,4 @@ const modes = [
   { value: 'edit', label: 'Edit', icon: Edit },
   { value: 'preview', label: 'Preview', icon: Eye }
 ];
-
-const layouts = SLIDEV_LAYOUTS;
-const themes = SLIDEV_THEMES;
 </script>

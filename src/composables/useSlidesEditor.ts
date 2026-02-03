@@ -318,6 +318,182 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
     if (onSlideChange) onSlideChange();
   }
 
+  // Motion configuration operations
+  function setMotionConfig(motionConfig: Record<string, any>) {
+    if (currentSlide.value) {
+      currentSlide.value.frontmatter = {
+        ...currentSlide.value.frontmatter,
+        motion: motionConfig
+      };
+    }
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
+  }
+
+  function updateMotionConfig(path: string, value: any) {
+    if (!currentSlide.value) return;
+    
+    const currentMotion = currentSlide.value.frontmatter?.motion || {};
+    const updatedMotion = setNestedProperty(currentMotion, path, value);
+    
+    setMotionConfig(updatedMotion);
+  }
+
+  function getMotionConfig(): Record<string, any> {
+    return currentSlide.value?.frontmatter?.motion || {};
+  }
+
+  function getMotionValue(path: string, defaultValue?: any): any {
+    const motion = getMotionConfig();
+    return getNestedProperty(motion, path, defaultValue);
+  }
+
+  // Convenience methods for common motion properties
+  function getSlideVariant(): string {
+    return getMotionValue('slideVariant') || slideTransition.value || 'venmail3d';
+  }
+
+  function getContentVariant(): string {
+    return getMotionValue('contentVariant') || 'default';
+  }
+
+  function setSlideVariant(variant: string) {
+    updateMotionConfig('slideVariant', variant);
+  }
+
+  function setContentVariant(variant: string) {
+    updateMotionConfig('contentVariant', variant);
+  }
+
+  // Background and layout configuration
+  function setBackgroundConfig(backgroundConfig: Record<string, any>) {
+    if (currentSlide.value) {
+      currentSlide.value.frontmatter = {
+        ...currentSlide.value.frontmatter,
+        background: backgroundConfig
+      };
+    }
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
+  }
+
+  function setLayoutConfig(layoutConfig: Record<string, any>) {
+    if (currentSlide.value) {
+      currentSlide.value.frontmatter = {
+        ...currentSlide.value.frontmatter,
+        layout: layoutConfig
+      };
+    }
+    
+    // Emit change event for persistence
+    if (onSlideChange) onSlideChange();
+  }
+
+  // Helper functions for nested property access
+  function setNestedProperty(obj: Record<string, any>, path: string, value: any): Record<string, any> {
+    const keys = path.split('.');
+    const result = { ...obj };
+    let current = result;
+    
+    for (let i = 0; i < keys.length - 1; i++) {
+      const key = keys[i];
+      if (!current[key] || typeof current[key] !== 'object') {
+        current[key] = {};
+      }
+      current[key] = { ...current[key] };
+      current = current[key];
+    }
+    
+    current[keys[keys.length - 1]] = value;
+    return result;
+  }
+
+  function getNestedProperty(obj: Record<string, any>, path: string, defaultValue?: any): any {
+    const keys = path.split('.');
+    let current = obj;
+    
+    for (const key of keys) {
+      if (current === null || current === undefined || !(key in current)) {
+        return defaultValue;
+      }
+      current = current[key];
+    }
+    
+    return current;
+  }
+
+  // Migration utilities
+  function migrateLegacyMotionData() {
+    slides.value.forEach((slide, index) => {
+      const frontmatter = slide.frontmatter || {};
+      let needsUpdate = false;
+      const updatedFrontmatter = { ...frontmatter };
+
+      // Migrate legacy transition to motion.slideVariant
+      if (frontmatter.transition && !frontmatter.motion?.slideVariant) {
+        updatedFrontmatter.motion = {
+          ...updatedFrontmatter.motion,
+          slideVariant: frontmatter.transition
+        };
+        needsUpdate = true;
+      }
+
+      // Migrate legacy background to structured background config
+      if (frontmatter.background && typeof frontmatter.background === 'string' && typeof updatedFrontmatter.background === 'string') {
+        updatedFrontmatter.background = {
+          gradient: frontmatter.background,
+          animated: false,
+          particles: false
+        };
+        needsUpdate = true;
+      }
+
+      // Migrate legacy layout to structured layout config
+      if (frontmatter.layout && typeof frontmatter.layout === 'string' && typeof updatedFrontmatter.layout === 'string') {
+        updatedFrontmatter.layout = {
+          type: frontmatter.layout,
+          aspectRatio: '16:9'
+        };
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        slides.value[index] = {
+          ...slide,
+          frontmatter: updatedFrontmatter
+        };
+      }
+    });
+
+    // Trigger save if migrations occurred
+    if (onSlideChange) onSlideChange();
+  }
+
+  // Helper to check if slide needs migration
+  function needsMigration(slide: SlidevSlide): boolean {
+    const frontmatter = slide.frontmatter || {};
+    
+    // Check for legacy transition without motion.slideVariant
+    if (frontmatter.transition && !frontmatter.motion?.slideVariant) return true;
+    
+    // Check for legacy background string without structured config
+    if (frontmatter.background && typeof frontmatter.background === 'string' && typeof frontmatter.background === 'string') return true;
+    
+    // Check for legacy layout string without structured config
+    if (frontmatter.layout && typeof frontmatter.layout === 'string' && typeof frontmatter.layout === 'string') return true;
+    
+    return false;
+  }
+
+  // Get migration status for all slides
+  function getMigrationStatus(): { total: number; needsMigration: number } {
+    const total = slides.value.length;
+    const needsMigrationCount = slides.value.filter(slide => needsMigration(slide)).length;
+    return { total, needsMigration: needsMigrationCount };
+  }
+
   function setSlideClass(className: string) {
     slideClass.value = className;
     if (currentSlide.value) {
@@ -545,6 +721,23 @@ download: true
     zoomIn,
     zoomOut,
     resetZoom,
+    
+    // Motion helpers
+    getMotionConfig,
+    setMotionConfig,
+    updateMotionConfig,
+    getMotionValue,
+    getSlideVariant,
+    getContentVariant,
+    setSlideVariant,
+    setContentVariant,
+    setBackgroundConfig,
+    setLayoutConfig,
+    
+    // Migration helpers
+    migrateLegacyMotionData,
+    needsMigration,
+    getMigrationStatus,
     
     // Constants
     layouts: SLIDEV_LAYOUTS,

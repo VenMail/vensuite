@@ -1,0 +1,231 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Venmail Brand Colors */
+  --venmail-purple: #8B5CF6;
+  --venmail-purple-dark: #6D28D9;
+  --venmail-purple-light: #A78BFA;
+  --venmail-emerald: #10B981;
+  --venmail-emerald-dark: #047857;
+  --venmail-emerald-light: #34D399;
+  --venmail-amber: #F59E0B;
+  --venmail-amber-dark: #D97706;
+  --venmail-amber-light: #FCD34D;
+  --venmail-blue: #3B82F6;
+  --venmail-blue-dark: #2563EB;
+  --venmail-blue-light: #60A5FA;
+  --venmail-rose: #F43F5E;
+  --venmail-rose-dark: #E11D48;
+  --venmail-rose-light: #FB7185;
+  --venmail-slate: #64748B;
+  --venmail-slate-dark: #475569;
+  --venmail-slate-light: #94A3B8;
+  
+  /* Slidev overrides */
+  --slidev-theme-primary: var(--venmail-purple);
+  --slidev-theme-secondary: var(--venmail-emerald);
+  --slidev-theme-background: #0f172a;
+  --slidev-theme-background-code: #1e293b;
+  --slidev-theme-text: #ffffff;
+  --slidev-theme-text-secondary: #94a3b8;
+  
+  /* Gradient tokens */
+  --gradient-purple: linear-gradient(135deg, #581c87 0%, #6b21a8 50%, #4c1d95 100%);
+  --gradient-emerald: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+  --gradient-blue: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+  --gradient-amber: linear-gradient(135deg, #78350f 0%, #92400e 50%, #b45309 100%);
+  --gradient-rose: linear-gradient(135deg, #881337 0%, #be123c 50%, #9f1239 100%);
+  --gradient-slate: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+  
+  /* Animation tokens */
+  --motion-duration-fast: 300ms;
+  --motion-duration-normal: 600ms;
+  --motion-duration-slow: 1000ms;
+  --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Base slide styling */
+.slidev-layout {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+}
+
+/* Cinematic frame component */
+.cinematic-frame {
+  position: relative;
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Gradient backgrounds */
+.bg-gradient-purple {
+  background: var(--gradient-purple);
+}
+
+.bg-gradient-emerald {
+  background: var(--gradient-emerald);
+}
+
+.bg-gradient-blue {
+  background: var(--gradient-blue);
+}
+
+.bg-gradient-amber {
+  background: var(--gradient-amber);
+}
+
+.bg-gradient-rose {
+  background: var(--gradient-rose);
+}
+
+.bg-gradient-slate {
+  background: var(--gradient-slate);
+}
+
+/* Tokenized gradient utilities */
+.bg-gradient-primary {
+  background: var(--gradient-purple);
+}
+
+.bg-gradient-secondary {
+  background: var(--gradient-emerald);
+}
+
+/* Animation utilities */
+.motion-safe {
+  will-change: transform, opacity;
+}
+
+.icon-rotate {
+  animation: spin 8s linear infinite;
+}
+
+.icon-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.icon-bounce {
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.icon-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Motion variants for Venmail components */
+.motion-fade-in {
+  animation: fadeIn var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+.motion-slide-up {
+  animation: slideUp var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+.motion-slide-down {
+  animation: slideDown var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+.motion-slide-left {
+  animation: slideLeft var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+.motion-slide-right {
+  animation: slideRight var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+.motion-scale-in {
+  animation: scaleIn var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideLeft {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Stagger animation utilities */
+.stagger-children > * {
+  opacity: 0;
+  animation: slideUp var(--motion-duration-normal) var(--motion-ease-out) forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 400ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 500ms; }
+
+/* Responsive motion */
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe,
+  .icon-rotate,
+  .icon-pulse,
+  .icon-bounce,
+  .icon-float,
+  .motion-fade-in,
+  .motion-slide-up,
+  .motion-slide-down,
+  .motion-slide-left,
+  .motion-slide-right,
+  .motion-scale-in {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  
+  .stagger-children > * {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}

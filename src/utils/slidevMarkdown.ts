@@ -1,6 +1,6 @@
 import { t } from '@/i18n';
 import { parseVideoMarkdown } from '@/composables/useVideoEmbed';
-import { parsePresetSyntax, applyPresetStyles } from './presetStyling';
+import { parsePresetSyntax } from './presetStyling';
 /**
  * Slidev Markdown Utilities
  * Handles parsing and conversion of Slidev-flavored markdown
@@ -134,48 +134,173 @@ export function slidesToMarkdown(presentation: SlidevPresentation): string {
 }
 
 /**
- * Parse simple YAML frontmatter
+ * Parse simple YAML frontmatter with support for Venmail motion keys
+ * Enhanced to support nested objects and arrays for complex motion metadata
  */
 function parseYamlFrontmatter(yaml: string): Record<string, any> {
   const result: Record<string, any> = {};
   const lines = yaml.split('\n');
+  let currentContext: string[] = [];
+  let inArray = false;
+  let arrayKey = '';
 
-  for (const line of lines) {
-    const colonIndex = line.indexOf(':');
-    if (colonIndex > 0) {
-      const key = line.substring(0, colonIndex).trim();
-      let value: any = line.substring(colonIndex + 1).trim();
-
-      // Parse value types
-      if (value === 'true') value = true;
-      else if (value === 'false') value = false;
-      else if (/^\d+$/.test(value)) value = parseInt(value, 10);
-      else if (/^\d+\.\d+$/.test(value)) value = parseFloat(value);
-      else if (value.startsWith('"') && value.endsWith('"')) {
-        value = value.slice(1, -1);
-      } else if (value.startsWith("'") && value.endsWith("'")) {
-        value = value.slice(1, -1);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmedLine = line.trim();
+    
+    // Skip empty lines and comments
+    if (!trimmedLine || trimmedLine.startsWith('#')) continue;
+    
+    // Handle array items (indented with -)
+    if (trimmedLine.startsWith('- ')) {
+      if (!inArray || !arrayKey) {
+        console.warn('Array item found outside array context:', trimmedLine);
+        continue;
       }
-
-      result[key] = value;
+      
+      const itemValue = parseYamlValue(trimmedLine.slice(2));
+      if (!result[arrayKey]) result[arrayKey] = [];
+      result[arrayKey].push(itemValue);
+      continue;
     }
+    
+    // Detect indentation changes for nested context
+    const indentLevel = line.length - line.trimLeft().length;
+    if (indentLevel === 0) {
+      // Top level
+      currentContext = [];
+      inArray = false;
+      arrayKey = '';
+    } else if (indentLevel > 0 && currentContext.length > 0) {
+      // Nested level - continue in current context
+      // (Simplified for now - full YAML parsing would be more complex)
+    }
+    
+    const colonIndex = trimmedLine.indexOf(':');
+    if (colonIndex > 0) {
+      const key = trimmedLine.substring(0, colonIndex).trim();
+      const valueStr = trimmedLine.substring(colonIndex + 1).trim();
+      
+      // Build the full key path
+      const fullKeyPath = currentContext.length > 0 ? [...currentContext, key] : [key];
+      const fullKey = fullKeyPath.join('.');
+      
+      // Check if this is an array start (next line has -)
+      if (i + 1 < lines.length && lines[i + 1].trim().startsWith('- ')) {
+        inArray = true;
+        arrayKey = fullKey;
+        result[fullKey] = [];
+        currentContext.push(key);
+        continue;
+      }
+      
+      // Parse the value
+      const value = valueStr ? parseYamlValue(valueStr) : {};
+      
+      // Set the value in the nested structure
+      setNestedValue(result, fullKeyPath, value);
+      
+      // Update context for nested objects
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        currentContext.push(key);
+      } else {
+        currentContext = [];
+        inArray = false;
+        arrayKey = '';
+      }
+    }
+  }
+
+  // Handle legacy motion format
+  if (result.motion && typeof result.motion === 'string') {
+    result.motion = { slideVariant: result.motion };
   }
 
   return result;
 }
 
 /**
- * Stringify object to simple YAML format
+ * Parse a YAML value with proper type handling
  */
-function stringifyYamlFrontmatter(obj: Record<string, any>): string {
-  return Object.entries(obj)
-    .map(([key, value]) => {
-      if (typeof value === 'string') {
-        return `${key}: "${value}"`;
+function parseYamlValue(valueStr: string): any {
+  if (!valueStr || valueStr === 'null') return null;
+  if (valueStr === 'true') return true;
+  if (valueStr === 'false') return false;
+  if (/^\d+$/.test(valueStr)) return parseInt(valueStr, 10);
+  if (/^\d+\.\d+$/.test(valueStr)) return parseFloat(valueStr);
+  if (valueStr.startsWith('"') && valueStr.endsWith('"')) return valueStr.slice(1, -1);
+  if (valueStr.startsWith("'") && valueStr.endsWith("'")) return valueStr.slice(1, -1);
+  return valueStr;
+}
+
+/**
+ * Set a nested value using dot notation
+ */
+function setNestedValue(obj: Record<string, any>, keyPath: string[], value: any): void {
+  let current = obj;
+  for (let i = 0; i < keyPath.length - 1; i++) {
+    const key = keyPath[i];
+    if (!current[key] || typeof current[key] !== 'object') {
+      current[key] = {};
+    }
+    current = current[key];
+  }
+  current[keyPath[keyPath.length - 1]] = value;
+}
+
+/**
+ * Stringify object to simple YAML format with support for motion objects
+ * Enhanced to handle nested objects and arrays properly
+ */
+function stringifyYamlFrontmatter(obj: Record<string, any>, indent = 0): string {
+  const lines: string[] = [];
+  const indentStr = '  '.repeat(indent);
+  
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === undefined || value === null) continue;
+    
+    if (Array.isArray(value)) {
+      // Handle arrays
+      lines.push(`${indentStr}${key}:`);
+      for (const item of value) {
+        if (typeof item === 'object' && item !== null) {
+          // Nested object in array
+          lines.push(`${indentStr}  -`);
+          const nestedStr = stringifyYamlFrontmatter(item, indent + 2);
+          lines.push(...nestedStr.split('\n').filter(line => line.trim()).map(line => `${indentStr}    ${line}`));
+        } else {
+          // Simple value in array
+          lines.push(`${indentStr}  - ${stringifyYamlValue(item)}`);
+        }
       }
-      return `${key}: ${value}`;
-    })
-    .join('\n');
+    } else if (typeof value === 'object') {
+      // Handle nested objects
+      lines.push(`${indentStr}${key}:`);
+      const nestedStr = stringifyYamlFrontmatter(value, indent + 1);
+      if (nestedStr) {
+        lines.push(...nestedStr.split('\n').filter(line => line.trim()));
+      }
+    } else {
+      // Handle simple values
+      lines.push(`${indentStr}${key}: ${stringifyYamlValue(value)}`);
+    }
+  }
+  
+  return lines.join('\n');
+}
+
+/**
+ * Stringify a YAML value with proper quoting
+ */
+function stringifyYamlValue(value: any): string {
+  if (typeof value === 'string') {
+    // Quote strings with spaces or special characters
+    if (value.includes(' ') || value.includes(':') || value.includes('#') || value.includes('"')) {
+      return `"${value}"`;
+    }
+    return value;
+  }
+  return String(value);
 }
 
 /**
@@ -270,6 +395,214 @@ interface MarkdownBlock {
 }
 
 export { MarkdownBlock };
+
+interface ParsedHtmlAttribute {
+  name: string;
+  value: string | true;
+}
+
+const MOTION_DIRECTIVE_PATTERN = /(v-motion|motion-)/i;
+const MOTION_ROLE_NAMES = new Set(['item', 'stagger', 'progress', 'content', 'slide']);
+const MOTION_ATTRIBUTE_ALIASES: Record<string, string> = {
+  delay: 'delay',
+  duration: 'duration',
+  easing: 'easing',
+  stagger: 'stagger',
+  'stagger-children': 'stagger-children',
+  'delay-children': 'delay-children',
+  trigger: 'trigger',
+  repeat: 'repeat',
+  'repeat-delay': 'repeat-delay',
+  direction: 'direction',
+  state: 'state',
+  phase: 'phase',
+  order: 'order',
+  role: 'role',
+  variant: 'variant',
+  'motion-id': 'id',
+  id: 'id'
+};
+
+function toKebabCase(input: string): string {
+  return input
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/_/g, '-')
+    .toLowerCase();
+}
+
+function escapeAttributeValue(value: string): string {
+  return value.replace(/"/g, '&quot;');
+}
+
+function normalizeColonAttributes(attrStr: string): string {
+  return attrStr.replace(/(\s)([a-zA-Z0-9_-]+)\s*:\s*([^\s"'>]+)/g, (_match, ws, name, value) => {
+    return `${ws}${name}="${value}"`;
+  });
+}
+
+function parseHtmlAttributes(attributeChunk: string): ParsedHtmlAttribute[] {
+  const attrs: ParsedHtmlAttribute[] = [];
+  const tokens: string[] = [];
+  let buffer = '';
+  let quote: string | null = null;
+
+  for (let i = 0; i < attributeChunk.length; i++) {
+    const char = attributeChunk[i];
+    if (char === '"' || char === '\'') {
+      if (quote === char) {
+        quote = null;
+      } else if (!quote) {
+        quote = char;
+      }
+      buffer += char;
+      continue;
+    }
+    if (!quote && /\s/.test(char)) {
+      if (buffer) {
+        tokens.push(buffer);
+        buffer = '';
+      }
+      continue;
+    }
+    buffer += char;
+  }
+
+  if (buffer) {
+    tokens.push(buffer);
+  }
+
+  for (const token of tokens) {
+    const trimmed = token.trim();
+    if (!trimmed) continue;
+    const eqIndex = trimmed.indexOf('=');
+    if (eqIndex === -1) {
+      attrs.push({ name: trimmed, value: true });
+      continue;
+    }
+    const name = trimmed.slice(0, eqIndex).trim();
+    let value = trimmed.slice(eqIndex + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith('\'') && value.endsWith('\''))) {
+      value = value.slice(1, -1);
+    }
+    attrs.push({ name, value });
+  }
+
+  return attrs;
+}
+
+function serializeAttribute(attr: ParsedHtmlAttribute): string {
+  if (!attr.name) return '';
+  if (attr.value === true) return attr.name;
+  return `${attr.name}="${escapeAttributeValue(String(attr.value))}"`;
+}
+
+function resolveMotionAlias(attributeName: string): string | null {
+  if (!attributeName) return null;
+  let normalized = attributeName;
+  if (normalized.startsWith('motion-')) {
+    normalized = normalized.slice(7);
+  }
+  normalized = toKebabCase(normalized);
+  if (MOTION_ATTRIBUTE_ALIASES[normalized]) {
+    return MOTION_ATTRIBUTE_ALIASES[normalized];
+  }
+  return MOTION_ATTRIBUTE_ALIASES[attributeName] || null;
+}
+
+function applyMotionDirectives(html: string, generateMotionId: () => string): string {
+  if (!MOTION_DIRECTIVE_PATTERN.test(html)) {
+    return html;
+  }
+
+  return html.replace(/<([a-zA-Z0-9-]+)([^<>]*?)(\/?)>/g, (match, tagName, rawAttributes, selfClosing) => {
+    if (!rawAttributes || (!rawAttributes.includes('v-motion') && !rawAttributes.includes('motion-'))) {
+      return match;
+    }
+
+    const normalizedAttributes = normalizeColonAttributes(rawAttributes);
+    const parsedAttrs = parseHtmlAttributes(normalizedAttributes);
+    if (parsedAttrs.length === 0) {
+      return match;
+    }
+
+    let hasMotionDirective = false;
+    let directiveVariant: string | null = null;
+    let directiveRole: string | null = null;
+    const motionData: Record<string, string> = {};
+    const keptAttributes: ParsedHtmlAttribute[] = [];
+
+    for (const attr of parsedAttrs) {
+      const name = attr.name;
+      if (!name) continue;
+      const lowerName = name.toLowerCase();
+
+      if (lowerName.startsWith('v-motion')) {
+        hasMotionDirective = true;
+        let variantName: string | null = null;
+        if (lowerName === 'v-motion' && attr.value && attr.value !== true) {
+          variantName = String(attr.value);
+        } else if (name.startsWith('v-motion-')) {
+          variantName = name.slice('v-motion-'.length);
+        }
+        if (variantName) {
+          if (MOTION_ROLE_NAMES.has(variantName)) {
+            directiveRole = variantName;
+          } else {
+            directiveVariant = variantName;
+          }
+        }
+        continue;
+      }
+
+      if (lowerName.startsWith('data-motion-')) {
+        hasMotionDirective = true;
+        keptAttributes.push(attr);
+        continue;
+      }
+
+      const alias = resolveMotionAlias(lowerName);
+      if (alias) {
+        hasMotionDirective = true;
+        motionData[alias] = attr.value === true ? 'true' : String(attr.value);
+        continue;
+      }
+
+      keptAttributes.push(attr);
+    }
+
+    if (!hasMotionDirective) {
+      return match;
+    }
+
+    const attrSegments = keptAttributes.map(serializeAttribute).filter(Boolean);
+    const variantValue = motionData.variant || directiveVariant;
+    const roleValue = motionData.role || directiveRole;
+    const motionId = motionData.id || generateMotionId();
+
+    const motionAttrSegments: string[] = [
+      'data-motion="true"',
+      `data-motion-id="${escapeAttributeValue(motionId)}"`
+    ];
+
+    if (variantValue) {
+      motionAttrSegments.push(`data-motion-variant="${escapeAttributeValue(variantValue)}"`);
+    }
+    if (roleValue) {
+      motionAttrSegments.push(`data-motion-role="${escapeAttributeValue(roleValue)}"`);
+    }
+
+    for (const [key, value] of Object.entries(motionData)) {
+      if (key === 'id' || key === 'variant' || key === 'role') continue;
+      motionAttrSegments.push(`data-motion-${toKebabCase(key)}="${escapeAttributeValue(String(value))}"`);
+    }
+
+    const attrString = attrSegments.length ? ' ' + attrSegments.join(' ') : '';
+    const motionAttrString = motionAttrSegments.length ? ' ' + motionAttrSegments.join(' ') : '';
+    const closing = selfClosing ? ' /' : '';
+
+    return `<${tagName}${attrString}${motionAttrString}${closing}>`;
+  });
+}
 
 /**
  * Split markdown into blocks with line ranges and optional block attributes
@@ -484,19 +817,21 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
 
 /**
  * Render blocks to HTML with data-markdown-line-start/end and optional block class/style/presets
+ * Enhanced to emit stable data-motion-id attributes for Venmail motion
  */
 export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
   const parts: string[] = [];
+  let motionElementCounter = 0;
+
+  const nextMotionId = (blockId: string) => `${blockId}-motion-${++motionElementCounter}`;
 
   for (const block of blocks) {
     const { id, startLine, endLine, type, lines, blockClass, blockStyle, blockPresets } = block;
-    // Include block ID in data attributes for better tracking
     const dataAttrs = ` data-block-id="${id}" data-markdown-line-start="${startLine}" data-markdown-line-end="${endLine}" data-markdown-type="${type}"`;
-    
-    // Process presets to extract CSS classes and data attributes
+
     let presetClasses: string[] = [];
     let presetDataAttrs: string[] = [];
-    
+
     if (blockPresets) {
       const presets = parsePresetSyntax(blockPresets);
       for (const preset of presets) {
@@ -506,47 +841,36 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
         }
       }
     }
-    
-    // Combine all classes
+
     const allClasses = [blockClass, ...presetClasses].filter(Boolean).join(' ');
     const classAttr = allClasses ? ` class="${allClasses}"` : '';
     const styleAttr = blockStyle ? ` style="${blockStyle}"` : '';
-    const presetAttrs = presetDataAttrs.length > 0 ? ' ' + presetDataAttrs.join(' ') : '';
+    const presetAttrs = presetDataAttrs.length > 0 ? ` ${presetDataAttrs.join(' ')}` : '';
+    let blockHtml = '';
 
     if (type === 'mermaid') {
       const code = lines.slice(1, -1).join('\n').trim();
-      parts.push(`<div class="mermaid-diagram"${dataAttrs} data-mermaid="${encodeURIComponent(code)}">${renderMermaidPlaceholder(code)}</div>`);
-      continue;
-    }
-    if (type === 'plantuml') {
+      blockHtml = `<div class="mermaid-diagram"${dataAttrs} data-mermaid="${encodeURIComponent(code)}">${renderMermaidPlaceholder(code)}</div>`;
+    } else if (type === 'plantuml') {
       const code = lines.slice(1, -1).join('\n').trim();
-      parts.push(`<div class="plantuml-diagram"${dataAttrs} data-plantuml="${encodeURIComponent(code)}">${renderPlantumlPlaceholder(code)}</div>`);
-      continue;
-    }
-    if (type === 'video') {
-      // Handle video blocks with video parsing
+      blockHtml = `<div class="plantuml-diagram"${dataAttrs} data-plantuml="${encodeURIComponent(code)}">${renderPlantumlPlaceholder(code)}</div>`;
+    } else if (type === 'video') {
       const videoMarkdown = lines.join('\n');
       const videoHtml = parseVideoMarkdown(videoMarkdown);
-      parts.push(`<div${dataAttrs}${classAttr}${styleAttr}${presetAttrs}>${videoHtml}</div>`);
-      continue;
-    }
-    if (type === 'code') {
+      blockHtml = `<div${dataAttrs}${classAttr}${styleAttr}${presetAttrs}>${videoHtml}</div>`;
+    } else if (type === 'code') {
       const langMatch = lines[0].match(/^```(\w+)?/);
       const lang = langMatch ? langMatch[1] || 'text' : 'text';
       const code = lines.slice(1, -1).join('\n');
       const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      parts.push(`<pre class="code-block"${dataAttrs}${presetAttrs}><code class="language-${lang}">${escapedCode}</code></pre>`);
-      continue;
-    }
-    if (type === 'heading') {
+      blockHtml = `<pre class="code-block"${dataAttrs}${presetAttrs}><code class="language-${lang}">${escapedCode}</code></pre>`;
+    } else if (type === 'heading') {
       const level = (block as MarkdownBlock & { headingLevel: number }).headingLevel;
       const content = (block as MarkdownBlock & { headingContent: string }).headingContent || '';
       const tag = `h${level}`;
       const inner = processInlineContent(content);
-      parts.push(`<${tag}${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${inner}</${tag}>`);
-      continue;
-    }
-    if (type === 'image') {
+      blockHtml = `<${tag}${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${inner}</${tag}>`;
+    } else if (type === 'image') {
       const alt = (block as MarkdownBlock & { imageAlt: string }).imageAlt || '';
       const src = (block as MarkdownBlock & { imageSrc: string }).imageSrc || '';
       const rawLine = lines[0] || '';
@@ -564,52 +888,41 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
         if (classMatch) extraClass = (extraClass ? extraClass + ' ' : '') + classMatch.map((c: string) => c.slice(1)).join(' ');
         if (styleMatch) extraStyle += (extraStyle ? ' ' : '') + styleMatch[1];
       }
-      // Combine with preset classes
       const allImgClasses = [extraClass, ...presetClasses].filter(Boolean).join(' ');
       const imgClass = allImgClasses ? `slide-image ${allImgClasses}` : 'slide-image';
       const finalClass = ` class="${imgClass}"`;
       const finalStyle = extraStyle ? ` style="${extraStyle.trim()}"` : '';
-      parts.push(`<img src="${src}" alt="${alt}"${finalClass}${finalStyle}${presetAttrs}${dataAttrs} />`);
-      continue;
-    }
-    if (type === 'table') {
+      blockHtml = `<img src="${src}" alt="${alt}"${finalClass}${finalStyle}${presetAttrs}${dataAttrs} />`;
+    } else if (type === 'table') {
       const tableHtml = parseMarkdownTables(lines.join('\n'));
       const allTableClasses = ['slide-table', blockClass, ...presetClasses].filter(Boolean).join(' ');
       const tableClassAttr = ` class="${allTableClasses}"`;
-      const withData = tableHtml.replace(/^<table/, `<table${dataAttrs}${presetAttrs}${tableClassAttr}`);
-      parts.push(withData);
-      continue;
-    }
-    if (type === 'list') {
+      blockHtml = tableHtml.replace(/^<table/, `<table${dataAttrs}${presetAttrs}${tableClassAttr}`);
+    } else if (type === 'list') {
       const listContent = lines
         .map((l) => {
           const bullet = l.replace(/^(\s*)([\*\-+]|\d+\.)\s+(.*)$/s, '$3');
           return `<li>${processInlineContent(bullet)}</li>`;
         })
         .join('\n');
-      parts.push(`<ul class="slide-list"${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>\n${listContent}\n</ul>`);
-      continue;
-    }
-    if (type === 'blockquote') {
+      blockHtml = `<ul class="slide-list"${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>\n${listContent}\n</ul>`;
+    } else if (type === 'blockquote') {
       const quoteContent = lines.map((l) => l.replace(/^>\s?/, '')).join('\n');
-      parts.push(`<blockquote${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${processInlineContent(quoteContent)}</blockquote>`);
-      continue;
-    }
-    if (type === 'hr') {
-      parts.push(`<hr class="slide-divider"${presetAttrs}${dataAttrs} />`);
-      continue;
-    }
-    if (type === 'paragraph') {
+      blockHtml = `<blockquote${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${processInlineContent(quoteContent)}</blockquote>`;
+    } else if (type === 'hr') {
+      blockHtml = `<hr class="slide-divider"${presetAttrs}${dataAttrs} />`;
+    } else if (type === 'paragraph') {
       const text = lines.join('\n');
-      // Process video syntax in paragraphs
       const processedText = parseVideoMarkdown(text);
-      parts.push(`<p${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${processInlineContent(processedText)}</p>`);
-      continue;
+      blockHtml = `<p${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${processInlineContent(processedText)}</p>`;
+    } else {
+      const text = lines.join('\n');
+      blockHtml = `<div${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${processInlineContent(text)}</div>`;
     }
-    
-    // Default case
-    const text = lines.join('\n');
-    parts.push(`<div${classAttr}${styleAttr}${presetAttrs}${dataAttrs}>${processInlineContent(text)}</div>`);
+
+    if (!blockHtml) continue;
+    const blockWithMotion = applyMotionDirectives(blockHtml, () => nextMotionId(id));
+    parts.push(blockWithMotion);
   }
 
   return parts.join('\n');

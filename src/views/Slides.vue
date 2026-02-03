@@ -213,6 +213,15 @@ const slideTemplates: SlideTemplate[] = [
     description: t('Views.text.theme_designed_for_scientific')
   },
   {
+    name: "Venmail Pitch",
+    slug: "venmail-pitch",
+    subtitle: "Cinematic pitch deck with motion support",
+    badge: "Venmail",
+    icon: Presentation,
+    previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #6b21a8 50%, #4c1d95 100%);",
+    description: "Professional pitch deck with cinematic styling and smooth animations"
+  },
+  {
     name: "Blank Canvas",
     slug: "blank",
     subtitle: "Start from scratch",

@@ -1,0 +1,20 @@
+{
+  "name": "slidev-theme-venmail-pitch",
+  "version": "1.0.0",
+  "description": "Venmail pitch deck theme with cinematic styling",
+  "keywords": ["slidev-theme", "slidev", "pitch-deck", "venmail"],
+  "engines": {
+    "slidev": ">=0.48.0"
+  },
+  "slidev": {
+    "colorSchema": "dark",
+    "defaults": {
+      "aspectRatio": "16/9",
+      "canvasWidth": 1280,
+      "fonts": {
+        "sans": "Inter",
+        "mono": "JetBrains Mono"
+      }
+    }
+  }
+}

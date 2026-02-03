@@ -194,19 +194,78 @@
       <!-- Quick Info -->
       <div v-if="showExtendedInfo" class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
         <!-- Theme Info -->
-        <div v-if="currentTheme" class="flex items-center gap-2">
-          <Palette class="h-4 w-4" />
-          <span>{{ currentTheme }}</span>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button class="flex items-center gap-2 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+              <Palette class="h-4 w-4" />
+              <span>{{ currentTheme }}</span>
+              <ChevronDown class="h-3 w-3" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-64" align="start">
+            <div class="p-2">
+              <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Current Theme</div>
+              <div class="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                <div 
+                  class="w-8 h-8 rounded border border-gray-300 dark:border-gray-600"
+                  :style="{ background: currentThemePreview }"
+                ></div>
+                <div>
+                  <div class="text-sm font-medium text-gray-800 dark:text-gray-200 capitalize">{{ currentTheme }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ getThemeCategory(currentTheme) }}</div>
+                </div>
+              </div>
+              <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <button 
+                  @click="$emit('show-theme-settings')"
+                  class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                >
+                  Change Theme
+                </button>
+              </div>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <!-- Layout Info -->
-        <div v-if="currentLayout" class="flex items-center gap-2">
-          <Layout class="h-4 w-4" />
-          <span>{{ currentLayout }}</span>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button class="flex items-center gap-2 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+              <Layout class="h-4 w-4" />
+              <span>{{ currentLayout }}</span>
+              <ChevronDown class="h-3 w-3" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-64" align="start">
+            <div class="p-2">
+              <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Current Layout</div>
+              <div class="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                <div class="w-10 h-6 bg-white dark:bg-gray-900 rounded border border-gray-300 dark:border-gray-600 flex-shrink-0">
+                  <div class="p-0.5 h-full flex items-center justify-center">
+                    <div class="w-full h-full flex" :class="getLayoutPreviewClass(currentLayout)">
+                      <div class="bg-gray-300 dark:bg-gray-600 rounded-sm" :class="getLayoutBoxes(currentLayout)[0]"></div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="text-sm font-medium text-gray-800 dark:text-gray-200 capitalize">{{ currentLayout }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ getLayoutDescription(currentLayout) }}</div>
+                </div>
+              </div>
+              <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <button 
+                  @click="$emit('show-layout-settings')"
+                  class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                >
+                  Change Layout
+                </button>
+              </div>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <!-- Word Count -->
-        <div v-if="wordCount !== undefined" class="flex items-center gap-2">
+        <div class="flex items-center gap-2">
           <FileText class="h-4 w-4" />
           <span>{{ wordCount }} words</span>
         </div>
@@ -305,6 +364,8 @@ const emit = defineEmits<{
   (e: 'show-emoji-picker'): void;
   (e: 'show-keyboard-shortcuts'): void;
   (e: 'show-help'): void;
+  (e: 'show-theme-settings'): void;
+  (e: 'show-layout-settings'): void;
 }>();
 
 const THEME_STORAGE_KEY = 'theme';
@@ -386,6 +447,62 @@ const lastSavedText = computed(() => {
   const mm = props.lastSavedAt.getMinutes().toString().padStart(2, '0');
   return `Saved at ${hh}:${mm}`;
 });
+
+// Theme and layout helper functions
+const currentThemePreview = computed(() => {
+  const themePreviews: Record<string, string> = {
+    'default': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'venmail-pitch': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'seriph': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'apple-basic': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'shades-of-purple': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  };
+  return themePreviews[props.currentTheme || 'default'] || themePreviews.default;
+});
+
+function getThemeCategory(theme?: string): string {
+  const categories: Record<string, string> = {
+    'default': 'Modern',
+    'venmail-pitch': 'Business',
+    'seriph': 'Elegant',
+    'apple-basic': 'Clean',
+    'shades-of-purple': 'Vibrant',
+  };
+  return categories[theme || 'default'] || 'Custom';
+}
+
+function getLayoutPreviewClass(layout?: string): string {
+  const previews: Record<string, string> = {
+    'default': 'justify-center items-center',
+    'cover': 'justify-center items-center',
+    'center': 'justify-center items-center',
+    'two-cols': 'justify-between items-center',
+    'image-right': 'justify-between items-center',
+  };
+  return previews[layout || 'default'] || previews.default;
+}
+
+function getLayoutBoxes(layout?: string): string[] {
+  const boxes: Record<string, string[]> = {
+    'default': ['w-3/4 h-3/4'],
+    'cover': ['w-full h-full'],
+    'center': ['w-2/3 h-2/3'],
+    'two-cols': ['w-5/12 h-3/4', 'w-5/12 h-3/4'],
+    'image-right': ['w-1/2 h-3/4', 'w-5/12 h-3/4'],
+  };
+  return boxes[layout || 'default'] || boxes.default;
+}
+
+function getLayoutDescription(layout?: string): string {
+  const descriptions: Record<string, string> = {
+    'default': 'Standard centered layout',
+    'cover': 'Full screen hero layout',
+    'center': 'Content centered on screen',
+    'two-cols': 'Side by side content',
+    'image-right': 'Text with image on right',
+  };
+  return descriptions[layout || 'default'] || 'Custom layout';
+}
 
 const saveTooltip = computed(() => (props.hasUnsavedChanges ? 'Click to save now' : 'Last saved time'));
 
