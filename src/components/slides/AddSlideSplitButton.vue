@@ -31,6 +31,29 @@
       @click.stop
     >
       <div class="py-1">
+        <!-- Theme-specific templates (if available) -->
+        <template v-if="props.currentTheme && props.currentTheme.includes('venmail') && isThemeTemplateLoaded('venmail')">
+          <div class="px-3 py-1 text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+            🎯 Venmail Templates
+          </div>
+          <button
+            v-for="template in getTemplatesForTheme('venmail')"
+            :key="template.id"
+            class="w-full text-left px-3 py-2 text-sm hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2"
+            @click="handleAddThemeTemplate(template)"
+          >
+            <div class="w-8 h-6 rounded bg-purple-100 dark:bg-purple-800 flex items-center justify-center text-xs">
+              {{ template.icon }}
+            </div>
+            <div class="flex-1">
+              <div class="font-medium text-purple-700 dark:text-purple-300">{{ template.name }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">{{ template.description }}</div>
+            </div>
+          </button>
+          
+          <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+        </template>
+        
         <!-- Most Used Templates -->
         <div class="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           {{$t('Commons.text.most_used')}}
@@ -87,17 +110,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Plus, ChevronDown } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { SLIDE_TEMPLATES, type SlideTemplate, getTemplateById } from '@/utils/slidevMarkdown';
+import { useThemeTemplates } from '@/composables/useThemeTemplates';
 
 const emit = defineEmits<{
   (e: 'add-slide'): void;
   (e: 'add-slide-with-template', template: SlideTemplate): void;
 }>();
 
+const props = defineProps<{
+  currentTheme?: string;
+}>();
+
 const showDropdown = ref(false);
+
+// Theme templates composable
+const { 
+  loadThemeTemplates, 
+  getTemplatesForTheme, 
+  isThemeTemplateLoaded 
+} = useThemeTemplates();
+
+// Load theme templates when component mounts or theme changes
+onMounted(async () => {
+  if (props.currentTheme && props.currentTheme.includes('venmail')) {
+    await loadThemeTemplates('venmail');
+  }
+});
+
+watch(() => props.currentTheme, async (newTheme) => {
+  if (newTheme && newTheme.includes('venmail')) {
+    await loadThemeTemplates('venmail');
+  }
+});
 
 const templateCategories = [
   { key: 'title', name: 'Title Slides' },
@@ -156,6 +204,21 @@ const handleAddSlide = () => {
 
 const handleAddSlideWithTemplate = (template: SlideTemplate) => {
   emit('add-slide-with-template', template);
+  closeDropdown();
+};
+
+const handleAddThemeTemplate = (themeTemplate: any) => {
+  // Convert theme template to SlideTemplate format
+  const slideTemplate: SlideTemplate = {
+    id: themeTemplate.id,
+    name: themeTemplate.name,
+    description: themeTemplate.description,
+    category: themeTemplate.category as any,
+    layout: themeTemplate.frontmatter?.layout || 'default',
+    content: themeTemplate.content,
+    frontmatter: themeTemplate.frontmatter
+  };
+  emit('add-slide-with-template', slideTemplate);
   closeDropdown();
 };
 

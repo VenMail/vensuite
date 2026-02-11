@@ -150,11 +150,12 @@
               :style="{ 
                 width: slideWidth + 'px', 
                 height: slideHeight + 'px',
+                // Use theme background dynamically
                 background: slideBackground || themeBackground || '#ffffff',
                 color: themeText || '#1e293b',
                 ...themeStyle
               }"
-              :class="layoutClass"
+              :class="[layoutClass, props.customClass].filter(Boolean)"
               @mousemove="updatePointer"
               @mouseleave="clearPointer"
             >
@@ -367,8 +368,12 @@ import {
 } from 'lucide-vue-next';
 import { parseMarkdownToHtml, type SlidevSlide } from '@/utils/slidevMarkdown';
 import { useSharedSlideRenderer } from '@/composables/useSharedSlideRenderer';
+import { useThemeLoader } from '@/composables/useThemeLoader';
 import MotionSlide from './motion/MotionSlide.vue';
 import MotionContent from './motion/MotionContent.vue';
+
+// Import Venmail theme CSS for presenter
+import '../../themes/slidev-theme-venmail-pitch/styles/index.css'
 
 interface DrawingPoint {
   x: number;
@@ -386,6 +391,7 @@ interface Props {
   themeBackground?: string;
   themeText?: string;
   themeStyle?: Record<string, string>;
+  theme?: string; // Add theme prop
   currentNotes?: string;
   nextSlideContent?: string;
   formattedTime: string;
@@ -397,6 +403,9 @@ interface Props {
   showOverview?: boolean;
   slideWidth?: number;
   slideHeight?: number;
+  enablePointer?: boolean;
+  enableDrawing?: boolean;
+  customClass?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -405,6 +414,7 @@ const props = withDefaults(defineProps<Props>(), {
   themeBackground: '#ffffff',
   themeText: '#1e293b',
   themeStyle: () => ({}),
+  theme: 'default', // Add default theme
   isPaused: false,
   isDrawingMode: false,
   isPointerMode: false,
@@ -437,6 +447,10 @@ const pointerPosition = ref<{ x: number; y: number } | null>(null);
 const slidePhase = ref<'enter' | 'center' | 'exit'>('center');
 const contentPhase = ref<'hidden' | 'visible'>('visible');
 const slideDirection = ref(1);
+
+// Theme loading
+const currentTheme = ref(props.theme);
+const { applyThemeToElement } = useThemeLoader(currentTheme);
 
 const currentSlide = computed(() => props.slides[props.currentSlideIndex] || null);
 const currentSlideFrontmatter = computed(() => currentSlide.value?.frontmatter || {});
@@ -527,6 +541,14 @@ watch(() => props.renderedContent, async () => {
       padding: '48px', // Presenter mode uses fullscreen padding
       layoutClass: props.layoutClass
     });
+  }
+}, { immediate: true });
+
+// Watch for theme changes
+watch(() => props.theme, (newTheme) => {
+  currentTheme.value = newTheme;
+  if (slideContentRef.value) {
+    applyThemeToElement(slideContentRef.value, newTheme);
   }
 }, { immediate: true });
 

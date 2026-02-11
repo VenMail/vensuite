@@ -39,132 +39,232 @@
         </p>
       </div>
 
-      <!-- Animation Controls -->
+      <!-- Structured Motion Controls -->
       <template v-else>
-        <!-- Enable Animation -->
+        <!-- Motion Role Selection -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Motion Role
+          </label>
+          <select
+            :value="motionRole"
+            class="w-full text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
+            @change="updateMotionRole(($event.target as HTMLSelectElement).value)"
+          >
+            <option value="slide">Slide (Transition)</option>
+            <option value="content">Content (Container)</option>
+            <option value="item">Item (Element)</option>
+            <option value="progress">Progress (Timeline)</option>
+          </select>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Determines the animation context and timing
+          </p>
+        </div>
+
+        <!-- Enable Motion -->
         <div>
           <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             <input
               type="checkbox"
-              :checked="animationEnabled"
+              :checked="motionEnabled"
               class="rounded border-gray-300 dark:border-gray-600"
-              @change="toggleAnimation(($event.target as HTMLInputElement).checked)"
+              @change="toggleMotion(($event.target as HTMLInputElement).checked)"
             />
-            {{$t('Commons.label.enable_animation')}}
+            Enable Motion
           </label>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {{$t('Components.Slides.text.add_entrance_emphasis_or')}}
+            Apply Venmail motion effects to this element
           </p>
         </div>
 
-        <template v-if="animationEnabled">
-          <!-- Animation Type -->
+        <template v-if="motionEnabled">
+          <!-- Motion Variant -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{$t('Commons.label.animation_type')}}
+              Motion Variant
             </label>
-            <div class="space-y-2">
-              <select
-                :value="animationType"
-                class="w-full text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
-                @change="updateAnimationType(($event.target as HTMLSelectElement).value)"
-              >
-                <optgroup label="Entrance Animations">
-                  <option value="fadeIn">{{$t('Commons.text.fade_in')}}</option>
-                  <option value="slideInLeft">{{$t('Components.Slides.text.slide_in_left')}}</option>
-                  <option value="slideInRight">{{$t('Components.Slides.text.slide_in_right')}}</option>
-                  <option value="slideInUp">{{$t('Components.Slides.text.slide_in_up')}}</option>
-                  <option value="slideInDown">{{$t('Components.Slides.text.slide_in_down')}}</option>
-                  <option value="zoomIn">{{$t('Commons.text.zoom_in')}}</option>
-                  <option value="rotateIn">{{$t('Commons.text.rotate_in')}}</option>
-                  <option value="bounceIn">{{$t('Commons.text.bounce_in')}}</option>
-                  <option value="flipIn">{{$t('Commons.text.flip_in')}}</option>
-                </optgroup>
-                <optgroup label="Emphasis Animations">
-                  <option value="pulse">{{$t('Commons.text.pulse')}}</option>
-                  <option value="shake">{{$t('Commons.text.shake')}}</option>
-                  <option value="swing">{{$t('Commons.text.swing')}}</option>
-                  <option value="tada">{{$t('Commons.text.tada')}}</option>
-                  <option value="wobble">{{$t('Commons.text.wobble')}}</option>
-                  <option value="jello">{{$t('Commons.text.jello')}}</option>
-                  <option value="heartBeat">{{$t('Commons.text.heart_beat')}}</option>
-                </optgroup>
-                <optgroup label="Exit Animations">
-                  <option value="fadeOut">{{$t('Commons.text.fade_out')}}</option>
-                  <option value="slideOutLeft">{{$t('Components.Slides.text.slide_out_left')}}</option>
-                  <option value="slideOutRight">{{$t('Components.Slides.text.slide_out_right')}}</option>
-                  <option value="slideOutUp">{{$t('Components.Slides.text.slide_out_up')}}</option>
-                  <option value="slideOutDown">{{$t('Components.Slides.text.slide_out_down')}}</option>
-                  <option value="zoomOut">{{$t('Commons.text.zoom_out')}}</option>
-                  <option value="rotateOut">{{$t('Commons.text.rotate_out')}}</option>
-                  <option value="bounceOut">{{$t('Commons.text.bounce_out')}}</option>
-                  <option value="flipOut">{{$t('Commons.text.flip_out')}}</option>
-                </optgroup>
-              </select>
-            </div>
+            <select
+              :value="motionVariant"
+              class="w-full text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
+              @change="updateMotionVariant(($event.target as HTMLSelectElement).value)"
+            >
+              <optgroup label="Slide Transitions">
+                <option value="venmail3d">Venmail 3D</option>
+                <option value="slideLeft">Slide Left</option>
+                <option value="slideRight">Slide Right</option>
+                <option value="slideUp">Slide Up</option>
+                <option value="slideDown">Slide Down</option>
+                <option value="fade">Fade</option>
+                <option value="zoom">Zoom</option>
+              </optgroup>
+              <optgroup label="Content Animations" v-if="motionRole === 'content'">
+                <option value="default">Default</option>
+                <option value="staggered">Staggered</option>
+                <option value="fadeIn">Fade In</option>
+                <option value="slideUp">Slide Up</option>
+              </optgroup>
+              <optgroup label="Item Animations" v-if="motionRole === 'item'">
+                <option value="default">Default</option>
+                <option value="slideLeft">Slide Left</option>
+                <option value="slideRight">Slide Right</option>
+                <option value="scaleIn">Scale In</option>
+                <option value="fadeIn">Fade In</option>
+              </optgroup>
+              <optgroup label="Progress Animations" v-if="motionRole === 'progress'">
+                <option value="default">Default</option>
+                <option value="slideIn">Slide In</option>
+                <option value="fadeIn">Fade In</option>
+              </optgroup>
+            </select>
           </div>
 
-          <!-- Animation Duration -->
+          <!-- Motion State -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{$t('Commons.label.duration')}}
+              Motion State
             </label>
             <div class="space-y-2">
-              <div class="flex items-center gap-2">
+              <label class="flex items-center gap-2">
                 <input
-                  :value="animationDuration"
-                  type="range"
-                  min="100"
-                  max="5000"
-                  step="100"
-                  class="flex-1"
-                  @input="updateAnimationDuration(parseInt(($event.target as HTMLInputElement).value))"
+                  type="radio"
+                  :checked="motionState === 'enter'"
+                  name="state"
+                  class="border-gray-300 dark:border-gray-600"
+                  @change="updateMotionState('enter')"
                 />
-                <span class="text-sm text-gray-600 dark:text-gray-400 w-12 text-right">
-                  {{ animationDuration }}ms
-                </span>
-              </div>
-              <div class="flex gap-1">
-                <button
-                  v-for="duration in [500, 1000, 2000]"
-                  :key="duration"
-                  class="flex-1 px-2 py-1 text-xs border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  :class="animationDuration === duration ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 dark:border-gray-600'"
-                  @click="updateAnimationDuration(duration)"
-                >
-                  {{ duration }}ms
-                </button>
-              </div>
+                <span class="text-sm">Enter (Entrance)</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input
+                  type="radio"
+                  :checked="motionState === 'center'"
+                  name="state"
+                  class="border-gray-300 dark:border-gray-600"
+                  @change="updateMotionState('center')"
+                />
+                <span class="text-sm">Center (Active)</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input
+                  type="radio"
+                  :checked="motionState === 'exit'"
+                  name="state"
+                  class="border-gray-300 dark:border-gray-600"
+                  @change="updateMotionState('exit')"
+                />
+                <span class="text-sm">Exit (Leave)</span>
+              </label>
+              <template v-if="motionRole === 'content' || motionRole === 'item'">
+                <label class="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    :checked="motionState === 'hidden'"
+                    name="state"
+                    class="border-gray-300 dark:border-gray-600"
+                    @change="updateMotionState('hidden')"
+                  />
+                  <span class="text-sm">Hidden</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    :checked="motionState === 'visible'"
+                    name="state"
+                    class="border-gray-300 dark:border-gray-600"
+                    @change="updateMotionState('visible')"
+                  />
+                  <span class="text-sm">Visible</span>
+                </label>
+              </template>
             </div>
           </div>
 
-          <!-- Animation Delay -->
+          <!-- Motion Trigger -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{$t('Commons.label.delay')}}
+              Motion Trigger
+            </label>
+            <div class="space-y-2">
+              <label class="flex items-center gap-2">
+                <input
+                  type="radio"
+                  :checked="motionTrigger === 'immediate'"
+                  name="trigger"
+                  class="border-gray-300 dark:border-gray-600"
+                  @change="updateMotionTrigger('immediate')"
+                />
+                <span class="text-sm">Immediate</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input
+                  type="radio"
+                  :checked="motionTrigger === 'delayed'"
+                  name="trigger"
+                  class="border-gray-300 dark:border-gray-600"
+                  @change="updateMotionTrigger('delayed')"
+                />
+                <span class="text-sm">Delayed</span>
+              </label>
+              <label class="flex items-center gap-2" v-if="motionRole === 'content'">
+                <input
+                  type="radio"
+                  :checked="motionTrigger === 'on-click'"
+                  name="trigger"
+                  class="border-gray-300 dark:border-gray-600"
+                  @change="updateMotionTrigger('on-click')"
+                />
+                <span class="text-sm">On Click</span>
+              </label>
+              <label class="flex items-center gap-2" v-if="motionRole === 'item'">
+                <input
+                  type="radio"
+                  :checked="motionTrigger === 'on-hover'"
+                  name="trigger"
+                  class="border-gray-300 dark:border-gray-600"
+                  @change="updateMotionTrigger('on-hover')"
+                />
+                <span class="text-sm">On Hover</span>
+              </label>
+              <label class="flex items-center gap-2" v-if="motionRole === 'progress'">
+                <input
+                  type="radio"
+                  :checked="motionTrigger === 'on-load'"
+                  name="trigger"
+                  class="border-gray-300 dark:border-gray-600"
+                  @change="updateMotionTrigger('on-load')"
+                />
+                <span class="text-sm">On Load</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Motion Delay -->
+          <div v-if="motionTrigger === 'delayed' || motionTrigger === 'on-load'">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Motion Delay (ms)
             </label>
             <div class="space-y-2">
               <div class="flex items-center gap-2">
                 <input
-                  :value="animationDelay"
+                  :value="motionDelay"
                   type="range"
                   min="0"
                   max="5000"
                   step="100"
                   class="flex-1"
-                  @input="updateAnimationDelay(parseInt(($event.target as HTMLInputElement).value))"
+                  @input="updateMotionDelay(parseInt(($event.target as HTMLInputElement).value))"
                 />
                 <span class="text-sm text-gray-600 dark:text-gray-400 w-12 text-right">
-                  {{ animationDelay }}ms
+                  {{ motionDelay }}ms
                 </span>
               </div>
               <div class="flex gap-1">
                 <button
-                  v-for="delay in [0, 500, 1000, 2000]"
+                  v-for="delay in [0, 300, 600, 1000]"
                   :key="delay"
                   class="flex-1 px-2 py-1 text-xs border rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  :class="animationDelay === delay ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 dark:border-gray-600'"
-                  @click="updateAnimationDelay(delay)"
+                  :class="motionDelay === delay ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 dark:border-gray-600'"
+                  @click="updateMotionDelay(delay)"
                 >
                   {{ delay }}ms
                 </button>
@@ -172,152 +272,48 @@
             </div>
           </div>
 
-          <!-- Easing Function -->
-          <div>
+          <!-- Stagger Settings (for items) -->
+          <div v-if="motionRole === 'item'">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{$t('Commons.label.easing')}}
+              Item Index
             </label>
-            <select
-              :value="animationEasing"
+            <input
+              :value="itemIndex"
+              type="number"
+              min="0"
+              max="20"
               class="w-full text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
-              @change="updateAnimationEasing(($event.target as HTMLSelectElement).value)"
-            >
-              <option value="linear">{{$t('Commons.text.linear')}}</option>
-              <option value="ease">{{$t('Commons.text.ease')}}</option>
-              <option value="ease-in">{{$t('Commons.text.ease_in')}}</option>
-              <option value="ease-out">{{$t('Commons.text.ease_out')}}</option>
-              <option value="ease-in-out">{{$t('Components.Slides.text.ease_in_out')}}</option>
-              <optgroup label="Bounce">
-                <option value="ease-bounce">{{$t('Commons.label.bounce')}}</option>
-                <option value="ease-bounce-in">{{$t('Commons.text.bounce_in')}}</option>
-                <option value="ease-bounce-out">{{$t('Commons.text.bounce_out')}}</option>
-              </optgroup>
-              <optgroup label="Elastic">
-                <option value="ease-elastic">{{$t('Commons.label.elastic')}}</option>
-                <option value="ease-elastic-in">{{$t('Commons.text.elastic_in')}}</option>
-                <option value="ease-elastic-out">{{$t('Commons.text.elastic_out')}}</option>
-              </optgroup>
-            </select>
+              @input="updateItemIndex(parseInt(($event.target as HTMLInputElement).value))"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Determines stagger timing in sequence
+            </p>
           </div>
 
-          <!-- Animation Trigger -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{$t('Commons.label.trigger')}}
-            </label>
-            <div class="space-y-2">
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  :checked="animationTrigger === 'onLoad'"
-                  name="trigger"
-                  class="border-gray-300 dark:border-gray-600"
-                  @change="updateAnimationTrigger('onLoad')"
-                />
-                <span class="text-sm">{{$t('Commons.text.on_load')}}</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  :checked="animationTrigger === 'onClick'"
-                  name="trigger"
-                  class="border-gray-300 dark:border-gray-600"
-                  @change="updateAnimationTrigger('onClick')"
-                />
-                <span class="text-sm">{{$t('Commons.text.on_click')}}</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  :checked="animationTrigger === 'onHover'"
-                  name="trigger"
-                  class="border-gray-300 dark:border-gray-600"
-                  @change="updateAnimationTrigger('onHover')"
-                />
-                <span class="text-sm">{{$t('Commons.text.on_hover')}}</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input
-                  type="radio"
-                  :checked="animationTrigger === 'onScroll'"
-                  name="trigger"
-                  class="border-gray-300 dark:border-gray-600"
-                  @change="updateAnimationTrigger('onScroll')"
-                />
-                <span class="text-sm">{{$t('Commons.text.on_scroll')}}</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Repeat Animation -->
-          <div>
-            <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              <input
-                type="checkbox"
-                :checked="animationRepeat"
-                class="rounded border-gray-300 dark:border-gray-600"
-                @change="updateAnimationRepeat(($event.target as HTMLInputElement).checked)"
-              />
-              {{$t('Commons.label.repeat_animation')}}
-            </label>
-            <template v-if="animationRepeat">
-              <div class="mt-2 space-y-2">
-                <label class="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    :checked="animationRepeatCount === 'infinite'"
-                    name="repeat"
-                    class="border-gray-300 dark:border-gray-600"
-                    @change="updateAnimationRepeatCount('infinite')"
-                  />
-                  <span class="text-sm">{{$t('Commons.text.infinite')}}</span>
-                </label>
-                <div class="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    :checked="animationRepeatCount !== 'infinite'"
-                    name="repeat"
-                    class="border-gray-300 dark:border-gray-600"
-                    @change="updateAnimationRepeatCount(1)"
-                  />
-                  <span class="text-sm">Times:</span>
-                  <input
-                    :value="animationRepeatCount === 'infinite' ? 1 : animationRepeatCount"
-                    type="number"
-                    min="1"
-                    max="10"
-                    class="w-16 text-sm px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    @input="updateAnimationRepeatCount(parseInt(($event.target as HTMLInputElement).value))"
-                  />
-                </div>
-              </div>
-            </template>
-          </div>
-
-          <!-- Preview Animation -->
+          <!-- Preview Motion -->
           <div>
             <button
-              @click="previewAnimation"
+              @click="previewMotion"
               class="w-full px-4 py-2 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
             >
               <Play class="h-4 w-4" />
-              {{$t('Commons.button.preview_animation')}}
+              Preview Motion
             </button>
           </div>
 
-          <!-- CSS Code Preview -->
+          <!-- Motion Config Preview -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{$t('Commons.label.css_code')}}
+              Motion Configuration
             </label>
             <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
-              <pre class="text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto"><code>{{ cssCode }}</code></pre>
+              <pre class="text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto"><code>{{ motionConfigJson }}</code></pre>
             </div>
             <button
-              @click="copyCssCode"
+              @click="copyMotionConfig"
               class="mt-2 px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
-              {{$t('Commons.button.copy_css')}}
+              Copy Config
             </button>
           </div>
         </template>
@@ -326,8 +322,8 @@
       <!-- Animation Timeline -->
       <div v-if="motionConfig && Object.keys(motionConfig).length > 0" class="pt-4 border-t border-gray-200 dark:border-gray-700">
         <div class="mb-3">
-          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Animation Timeline</h4>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Visualize and control animation sequence</p>
+          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Motion Timeline</h4>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Visualize and control motion sequence</p>
         </div>
         <MotionTimeline
           :config="motionConfig as any"
@@ -361,7 +357,7 @@ const emit = defineEmits<{
   'update-motion-config': [config: Record<string, any>];
 }>();
 
-// Animation state derived from motion config
+// Motion state derived from structured config
 const elementId = computed(() => {
   return props.selectedElement?.id || 
          (props.markdownElement ? `markdown-${props.markdownElement.startLine}` : 'unknown');
@@ -372,16 +368,16 @@ const currentElementConfig = computed(() => {
   return items.find((item: any) => item.id === elementId.value) || {};
 });
 
-const animationEnabled = computed(() => currentElementConfig.value?.enabled ?? false);
-const animationType = computed(() => currentElementConfig.value?.variant ?? 'fadeIn');
-const animationDuration = computed(() => currentElementConfig.value?.duration ?? 1000);
-const animationDelay = computed(() => currentElementConfig.value?.delay ?? 0);
-const animationEasing = computed(() => currentElementConfig.value?.easing ?? 'ease-in-out');
-const animationTrigger = computed(() => currentElementConfig.value?.trigger ?? 'onLoad');
-const animationRepeat = computed(() => currentElementConfig.value?.repeat ?? false);
-const animationRepeatCount = computed(() => currentElementConfig.value?.repeatCount ?? 1);
+// Motion properties
+const motionEnabled = computed(() => currentElementConfig.value?.enabled ?? false);
+const motionRole = computed(() => currentElementConfig.value?.role ?? 'item');
+const motionVariant = computed(() => currentElementConfig.value?.variant ?? 'default');
+const motionState = computed(() => currentElementConfig.value?.state ?? 'visible');
+const motionTrigger = computed(() => currentElementConfig.value?.trigger ?? 'immediate');
+const motionDelay = computed(() => currentElementConfig.value?.delay ?? 0);
+const itemIndex = computed(() => currentElementConfig.value?.index ?? 0);
 
-// Helper function to update motion config with proper element handling
+// Helper function to update structured motion config
 function updateMotionConfig(updates: Partial<Record<string, any>>) {
   if (!props.selectedElement && !props.markdownElement) return;
   
@@ -390,7 +386,7 @@ function updateMotionConfig(updates: Partial<Record<string, any>>) {
                    (props.markdownElement ? `markdown-${props.markdownElement.startLine}` : 'unknown');
   
   // Create or update element-specific motion config
-  const currentConfig = props.motionConfig || {};
+  const currentConfig = props.motionConfig || { items: [] };
   const items = currentConfig.items || [];
   
   // Find existing item or create new one
@@ -399,17 +395,16 @@ function updateMotionConfig(updates: Partial<Record<string, any>>) {
     itemIndex = items.length;
   }
   
-  // Update the item
+  // Update the item with structured motion properties
   items[itemIndex] = {
     id: elementId,
-    variant: updates.type || 'fadeIn',
-    delay: updates.delay || 0,
-    duration: updates.duration || 1000,
-    easing: updates.easing || 'ease-in-out',
-    trigger: updates.trigger || 'onLoad',
-    repeat: updates.repeat || false,
-    repeatCount: updates.repeatCount || 1,
+    role: updates.role || motionRole.value,
     enabled: updates.enabled !== false,
+    variant: updates.variant || motionVariant.value,
+    state: updates.state || motionState.value,
+    trigger: updates.trigger || motionTrigger.value,
+    delay: updates.delay ?? motionDelay.value,
+    index: updates.index ?? itemIndex.value,
     ...updates
   };
   
@@ -421,66 +416,72 @@ function updateMotionConfig(updates: Partial<Record<string, any>>) {
   emit('update-motion-config', newConfig);
 }
 
-// Computed CSS code
-const cssCode = computed(() => {
-  if (!animationEnabled.value) return '/* Animation disabled */';
-  
-  const repeatValue = animationRepeat.value 
-    ? animationRepeatCount.value === 'infinite' 
-      ? 'infinite' 
-      : animationRepeatCount.value
-    : '1';
-  
-  return `.animated-element {
-  animation: ${animationType.value} ${animationDuration.value}ms ${animationEasing.value} ${animationDelay.value}ms ${repeatValue};
-}`;
+// Computed motion config JSON for preview
+const motionConfigJson = computed(() => {
+  return JSON.stringify(currentElementConfig.value, null, 2);
 });
 
-// Methods
-function toggleAnimation(enabled: boolean) {
+// Methods for updating motion properties
+function toggleMotion(enabled: boolean) {
   updateMotionConfig({ enabled });
 }
 
-function updateAnimationType(type: string) {
-  updateMotionConfig({ type });
+function updateMotionRole(role: string) {
+  updateMotionConfig({ role });
+  
+  // Reset variant to appropriate default for new role
+  let defaultVariant = 'default';
+  if (role === 'slide') defaultVariant = 'venmail3d';
+  else if (role === 'content') defaultVariant = 'default';
+  else if (role === 'progress') defaultVariant = 'default';
+  
+  updateMotionConfig({ variant: defaultVariant });
 }
 
-function updateAnimationDuration(duration: number) {
-  updateMotionConfig({ duration });
+function updateMotionVariant(variant: string) {
+  updateMotionConfig({ variant });
 }
 
-function updateAnimationDelay(delay: number) {
-  updateMotionConfig({ delay });
+function updateMotionState(state: string) {
+  updateMotionConfig({ state });
 }
 
-function updateAnimationEasing(easing: string) {
-  updateMotionConfig({ easing });
-}
-
-function updateAnimationTrigger(trigger: 'onLoad' | 'onClick' | 'onHover' | 'onScroll') {
+function updateMotionTrigger(trigger: string) {
   updateMotionConfig({ trigger });
 }
 
-function updateAnimationRepeat(repeat: boolean) {
-  updateMotionConfig({ repeat });
+function updateMotionDelay(delay: number) {
+  updateMotionConfig({ delay });
 }
 
-function updateAnimationRepeatCount(count: number | 'infinite') {
-  updateMotionConfig({ repeatCount: count });
+function updateItemIndex(index: number) {
+  updateMotionConfig({ index });
 }
 
-function previewAnimation() {
+function previewMotion() {
   if (!props.selectedElement) return;
   
-  // TODO: Implement animation preview logic
-  // - Apply animation temporarily to selected element
-  // - Store original style to restore later
-  // - Trigger animation preview
+  // Apply motion data attributes to element for preview
+  const element = props.selectedElement;
+  element.setAttribute('data-motion-role', motionRole.value);
+  element.setAttribute('data-motion-variant', motionVariant.value);
+  element.setAttribute('data-motion-state', motionState.value);
+  element.setAttribute('data-motion-trigger', motionTrigger.value);
+  element.setAttribute('data-motion-delay', motionDelay.toString());
   
+  if (motionRole.value === 'item') {
+    element.setAttribute('data-motion-index', itemIndex.toString());
+  }
+  
+  // Trigger a re-render to apply the motion
+  element.style.display = 'none';
+  setTimeout(() => {
+    element.style.display = '';
+  }, 10);
 }
 
-function copyCssCode() {
-  navigator.clipboard.writeText(cssCode.value);
+function copyMotionConfig() {
+  navigator.clipboard.writeText(motionConfigJson.value);
 }
 
 // Timeline state and handlers

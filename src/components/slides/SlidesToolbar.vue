@@ -77,6 +77,7 @@
       <AddSlideSplitButton 
         @add-slide="emit('add-slide')"
         @add-slide-with-template="emit('add-slide-with-template', $event)"
+        :current-theme="currentTheme"
       />
       
       <!-- Infographics Button -->
@@ -133,16 +134,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-interface Props {
+const props = withDefaults(defineProps<{
   mode: 'edit' | 'preview';
-  arrangeMode?: boolean;
+  arrangeMode: boolean;
   currentSlideIndex: number;
   totalSlides: number;
   currentTheme: string;
   currentLayout: string;
-}
-
-withDefaults(defineProps<Props>(), { arrangeMode: false });
+}>(), {
+  arrangeMode: false
+});
 
 const emit = defineEmits<{
   (e: 'update:mode', value: 'edit' | 'preview'): void;

@@ -168,11 +168,10 @@
       
       <div class="p-6 print:p-0">
         <div 
-          class="mx-auto bg-white shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none"
+          class="doc-page mx-auto bg-white shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none relative"
           :class="{ 'landscape-mode': pageOrientation === 'landscape' }"
-          :style="pageStyles"
+          :style="{ ...pageStyles, ...contentPadding }"
         >
-          <div :style="contentPadding" class="doc-page relative">
           <div
             v-if="showPlaceholderOverlay"
             class="editor-placeholder-overlay"
@@ -376,12 +375,10 @@
           <EditorContent
             v-if="editor"
             :editor="editor"
-            class="prose prose-lg max-w-none"
+            class="editor-wrapper prose prose-lg max-w-none"
             @focusin="onEditorFocus"
             @focusout="onEditorBlur"
           />
-        </div>
-      </div>
       </div>
       
       <!-- Page Badge Overlay -->
@@ -390,6 +387,7 @@
         :label="'Made with ❤️ by VenSuite'"
         :href="'https://vensuite.dev'"
       />
+    </div>
     </div>
 
     <!-- Chat Panel -->
@@ -632,14 +630,14 @@ import PageRuler from '@/components/forms/PageRuler.vue';
 import PageBadgeOverlay from '@/components/docs/PageBadgeOverlay.vue';
 import { Button } from '@/components/ui/button';
 import { useDocumentConflictResolver } from '@/composables/useDocumentConflictResolver';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { guardEditorBeforeSave } from '@/composables/useTiptapContent';
-import { saveAs } from 'file-saver';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
 import { NodeSelection } from '@tiptap/pm/state';
 import { IWebsocketService, Message, useWebSocket } from '@/lib/wsService';
 import { useTranslation } from '@/composables/useTranslation';
+import { exportDocument } from '@/services/exportService';
+import { pxToTwips } from '@/utils/exportUtils';
 
 const route = useRoute();
 const router = useRouter();
@@ -2453,12 +2451,12 @@ const pageDimensions = {
   card: { width: 88.9, height: 50.8 },
 } as const;
 
-// Pagination settings state (used by Pagination extension)
+// Pagination settings state (matched to DocExCore demo for export fidelity)
 const paginationSettings = reactive({
-  marginTop: 50,
-  marginBottom: 50,
-  marginLeft: 50,
-  marginRight: 50,
+  marginTop: 96,    // Match DocExCore demo's pageMargin
+  marginBottom: 96,
+  marginLeft: 96,
+  marginRight: 96,
   showPageNumbers: true,
   pageNumberPosition: 'bottom-right' as string,
   printPageNumbers: false,
@@ -2474,10 +2472,10 @@ const paginationSettings = reactive({
 const MM_TO_PX = 96 / 25.4;
 
 const contentPadding = computed(() => {
-  // Remove outer padding so on-screen pagination matches print exactly.
-  // All spacing comes from the pagination plugin margins and content margins.
+  // Use 96px padding to match DocExCore demo for export fidelity
+  // This ensures proper positioning during DOCX export
   return {
-    padding: '0',
+    padding: '96px',
   };
 });
 
@@ -2551,7 +2549,6 @@ function updatePrintStyles() {
   @media print {
     html, body { margin: 0 !important; padding: 0 !important; }
     .doc-page,
-    .document-container,
     .editor,
     .editor-content,
     .ProseMirror {
@@ -2745,7 +2742,7 @@ function printAsHtml() {
       padding: 2rem;
     }
     
-    .document-container {
+    .doc-page {
       max-width: ${pageOrientation.value === 'landscape' ? '1122px' : '794px'};
       margin: 0 auto;
       padding: 48px 64px;
@@ -2995,182 +2992,30 @@ function downloadViaUrl(url: string, filename: string) {
 
 async function exportToDocx() {
   if (!editor.value) return;
-  
+
   try {
-    const html = editor.value.getHTML();
     const title = documentTitle.value || 'document';
-    
-    // Enhanced HTML to DOCX conversion with better formatting
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    
-    const paragraphs: Paragraph[] = [];
-    const children: any[] = [];
-    
-    // Process each node in the HTML
-    const processNode = (node: any) => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent?.trim();
-        if (text) {
-          children.push(new TextRun({ text }));
-        }
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const tagName = node.tagName?.toLowerCase();
-        const text = node.textContent?.trim() || '';
-        
-        if (!text) return;
-        
-        switch (tagName) {
-          case 'h1':
-            children.push(new TextRun({ 
-              text, 
-              bold: true, 
-              size: 32 
-            }));
-            break;
-          case 'h2':
-            children.push(new TextRun({ 
-              text, 
-              bold: true, 
-              size: 28 
-            }));
-            break;
-          case 'h3':
-            children.push(new TextRun({ 
-              text, 
-              bold: true, 
-              size: 24 
-            }));
-            break;
-          case 'h4':
-          case 'h5':
-          case 'h6':
-            children.push(new TextRun({ 
-              text, 
-              bold: true, 
-              size: 20 
-            }));
-            break;
-          case 'strong':
-          case 'b':
-            children.push(new TextRun({ 
-              text, 
-              bold: true 
-            }));
-            break;
-          case 'em':
-          case 'i':
-            children.push(new TextRun({ 
-              text, 
-              italics: true 
-            }));
-            break;
-          case 'u':
-            children.push(new TextRun({ 
-              text, 
-              underline: {} 
-            }));
-            break;
-          case 'p':
-          case 'div':
-            if (children.length > 0) {
-              paragraphs.push(new Paragraph({
-                children: [...children],
-              }));
-              children.length = 0; // Clear children for next paragraph
-            }
-            // Process child nodes
-            Array.from(node.childNodes).forEach(processNode);
-            break;
-          case 'ul':
-          case 'ol':
-            if (children.length > 0) {
-              paragraphs.push(new Paragraph({
-                children: [...children],
-              }));
-              children.length = 0;
-            }
-            // List items
-            const listItems = node.querySelectorAll('li');
-            listItems.forEach((li: any) => {
-              const liText = li.textContent?.trim();
-              if (liText) {
-                paragraphs.push(new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: tagName === 'ul' ? '• ' : '1. ',
-                      bold: true
-                    }),
-                    new TextRun({ text: liText })
-                  ],
-                }));
-              }
-            });
-            break;
-          case 'br':
-            if (children.length > 0) {
-              paragraphs.push(new Paragraph({
-                children: [...children],
-              }));
-              children.length = 0;
-            }
-            break;
-          case 'table':
-            // Skip tables for now (complex conversion)
-            console.warn('Table export to DOCX not fully supported yet');
-            break;
-          default:
-            // Handle other elements as regular text
-            children.push(new TextRun({ text }));
-        }
-      }
+    // Use margins directly since padding is now properly set to 96px like DocExCore demo
+    const margins = {
+      top: pxToTwips(paginationSettings.marginTop),
+      bottom: pxToTwips(paginationSettings.marginBottom),
+      left: pxToTwips(paginationSettings.marginLeft),
+      right: pxToTwips(paginationSettings.marginRight),
     };
-    
-    // Process all nodes
-    Array.from(tempDiv.childNodes).forEach(processNode);
-    
-    // Add any remaining children as a paragraph
-    if (children.length > 0) {
-      paragraphs.push(new Paragraph({
-        children: [...children],
-      }));
-    }
-    
-    // If no paragraphs were created, add a simple text paragraph
-    if (paragraphs.length === 0) {
-      const textContent = tempDiv.textContent || '';
-      if (textContent.trim()) {
-        paragraphs.push(new Paragraph({
-          children: [new TextRun(textContent.trim())],
-        }));
-      }
-    }
-    
-    const doc = new Document({
-      sections: [{
-        properties: {
-          page: {
-            size: {
-              orientation: pageOrientation.value === 'landscape' ? 'landscape' as any : 'portrait' as any,
-              // Use A4 size by default
-              width: pageSize.value === 'letter' ? 8.5 * 1440 : 210 * 56.7, // inches to twips
-              height: pageSize.value === 'letter' ? 11 * 1440 : 297 * 56.7,  // inches/cm to twips
-            },
-            margin: {
-              top: 1440,    // 1 inch in twips
-              right: 1440,
-              bottom: 1440,
-              left: 1440,
-            },
-          },
-        },
-        children: paragraphs,
-      }],
+
+    const blob = await exportDocument(editor.value, 'docx', {
+      fileName: title,
+      orientation: pageOrientation.value,
+      pageSize: pageSize.value === 'letter' ? 'letter' : 'a4',
+      margins,
+      toDownload: true,
     });
-    
-    const blob = await Packer.toBlob(doc);
-    saveAs(blob, `${title}.docx`);
-    toast.success(t('Views.DocsEditor.text.docx_exported_successfully'));
+
+    if (blob && blob.size > 0) {
+      toast.success(t('Views.DocsEditor.text.docx_exported_successfully'));
+    } else {
+      toast.warning(t('Views.DocsEditor.text.failed_to_export_docx'));
+    }
   } catch (error) {
     console.error('DOCX export error:', error);
     toast.error(t('Views.DocsEditor.text.failed_to_export_docx'));
@@ -3854,6 +3699,93 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* DocExCore CSS Variables for Export Fidelity */
+:root {
+  --doc-height: 29.7cm;
+  --editor-padding: 96px;
+  --editor-margin: 0px;
+}
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* DocExCore Editor Wrapper Styles for Export Fidelity */
+:deep(.editor-wrapper) {
+  min-height: var(--doc-height);
+  background-color: white;
+  width: 8.27in; /* Exact A4 width like DocExCore */
+  margin: 0 auto;
+  display: block;
+  justify-content: center;
+  position: relative;
+  box-sizing: border-box;
+  word-break: break-word;
+  display: inline-block;
+  flex-shrink: 0; /* prevent shrinking inside flex containers */
+}
+
+/* Remove focus outline - exact match to DocExCore */
+:deep(.ProseMirror) {
+  outline: none !important;
+}
+
+:deep(.ProseMirror-focused) {
+  outline: none !important;
+}
+
+/* DocExCore List Styling for Export Fidelity */
+:deep(ol) {
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(ol > li) {
+  margin: 2px;
+}
+
+:deep(ul) {
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(ul > li) {
+  margin: 2px;
+}
+
+/* DocExCore Table Cell Styling for Export Fidelity */
+:deep(th p),
+:deep(th > h1),
+:deep(th > h2),
+:deep(th > h3),
+:deep(th > h4),
+:deep(th > h5),
+:deep(th > h6) {
+  margin-block-start: 2em;
+  margin-block-end: 0;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
+:deep(th p:first-child),
+:deep(th > h1:first-child),
+:deep(th > h2:first-child),
+:deep(th > h3:first-child),
+:deep(th > h4:first-child),
+:deep(th > h5:first-child),
+:deep(th > h6:first-child) {
+  margin-block-start: 1em;
+}
+
+:deep(th p:last-child),
+:deep(th > h1:last-child),
+:deep(th > h2:last-child),
+:deep(th > h3:last-child),
+:deep(th > h4:last-child),
+:deep(th > h5:last-child),
+:deep(th > h6:last-child) {
+  margin-block-end: 1em;
+}
+
 /* Neutralize Tailwind Typography defaults so paragraphSpacing controls spacing */
 :deep(.prose :where(p):not(:where([class~="not-prose"],[class~="not-prose"] *))),
 :deep(.prose-lg :where(p):not(:where([class~="not-prose"],[class~="not-prose"] *))) {

@@ -41,7 +41,7 @@ export async function exportDocument(
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
     
-    // Configure export options
+    // Configure export options - support custom page sizes
     const exportOptions: ExportOptions = {
       fileName: `${title}.${format}`,
       toDownload: options.toDownload ?? true,
@@ -125,7 +125,7 @@ export async function exportDocumentAdvanced(
     password
   } = options;
 
-  // Build export options
+  // Build export options - support custom page sizes
   const exportOptions: ExportOptions = {
     fileName: `${fileName || 'document'}.${format}`,
     toDownload: false, // Let caller handle download

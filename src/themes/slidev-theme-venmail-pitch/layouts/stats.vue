@@ -1,7 +1,7 @@
 <template>
   <div class="slidev-layout stats h-full p-8">
     <div 
-      class="cinematic-frame w-full h-full relative overflow-hidden p-6 flex flex-col"
+      class="cinematic-frame w-full h-full relative overflow-hidden p-6 flex flex-col bg-gradient-blue"
       :class="$attrs.class"
     >
       <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />

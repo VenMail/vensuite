@@ -1418,6 +1418,7 @@ export interface SlidevTheme {
   description: string;
   colors: ThemeColors;
   fontFamily?: string;
+  cssPath?: string;
 }
 
 /**
@@ -1570,6 +1571,23 @@ export const SLIDEV_THEMES: SlidevTheme[] = [
       accent: '#c4a7e7',
       gradient: 'linear-gradient(135deg, #191724 0%, #26233a 100%)'
     }
+  },
+  {
+    value: 'venmail-pitch',
+    label: 'Venmail Pitch',
+    description: 'Professional pitch deck with cinematic frames',
+    colors: {
+      primary: '#8B5CF6',
+      secondary: '#10B981',
+      background: '#0f172a',
+      surface: '#1e293b',
+      text: '#ffffff',
+      textMuted: '#94a3b8',
+      accent: '#8B5CF6',
+      gradient: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+    },
+    fontFamily: 'Inter, system-ui, sans-serif',
+    cssPath: '@/themes/slidev-theme-venmail-pitch/styles/index.css'
   }
 ];
 

@@ -8,7 +8,7 @@
     <div 
       ref="previewRef"
       class="slide-preview-content"
-      :class="layoutClass"
+      :class="[layoutClass, customClass].filter(Boolean)"
       :style="previewStyle"
       v-html="renderedContent"
     />
@@ -18,7 +18,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { useMermaid } from '@/composables/useMermaid';
-import type { SlidevSlide } from '@/utils/slidevMarkdown';
+import { parseMarkdownToHtml, type SlidevSlide } from '@/utils/slidevMarkdown';
+
+// Ensure Venmail theme styles are available when rendering thumbnails
+import '@/themes/slidev-theme-venmail-pitch/styles/index.css';
 
 interface Props {
   slide: SlidevSlide;
@@ -69,8 +72,8 @@ const previewStyle = computed(() => ({
   height: `${props.height / props.scale}px`,
   transform: `scale(${props.scale})`,
   transformOrigin: 'top left',
-  background: props.slide.frontmatter?.background || '#ffffff',
-  color: '#1e293b',
+  background: props.slide.frontmatter?.background || '#0f172a',
+  color: '#f8fafc',
   padding: '24px',
   overflow: 'hidden',
   borderRadius: '0px',
@@ -81,7 +84,6 @@ const previewStyle = computed(() => ({
 }));
 
 const layoutClass = computed(() => {
-  // Map slide layout to CSS class
   const layout = props.slide.frontmatter?.layout;
   switch (layout) {
     case 'two-cols':
@@ -90,16 +92,15 @@ const layoutClass = computed(() => {
       return 'slide-layout-two-cols-header';
     case 'center':
       return 'slide-layout-center';
-    case 'default':
     default:
       return 'slide-layout-default';
   }
 });
 
+const customClass = computed(() => props.slide.frontmatter?.class || '');
+
 const renderedContent = computed(() => {
-  // This would come from the markdown rendering system
-  // For now, we'll use the slide's content directly
-  return props.slide.content || '';
+  return parseMarkdownToHtml(props.slide.content || '', props.slide.frontmatter?.layout);
 });
 
 // Watch for content changes and render mermaid diagrams

@@ -2,6 +2,15 @@ import { ElementParser, ParagraphParser, HeadingParser, TableParser, OrderedList
 import { FileChild, Document } from "docx";
 import * as docx from "docx";
 import { ExportOptions, createSectionProperties } from "./export";
+import {
+  nextListInstance,
+  resetListCounter,
+} from "./ElementParsers/util/listCounter";
+import {
+  bulletList,
+  numberedLevelList,
+  unnumberedLevelList,
+} from "./ElementParsers/util/listConfig";
 
 type ElementParserClass = (new (exporter: Exporter) => ElementParser) &
   Pick<typeof ElementParser, keyof typeof ElementParser>;
@@ -45,20 +54,18 @@ export class Exporter {
 
   /**
    * Export the document to DOCX
-   * Based on DocExCore's export method
+   * Exactly matches DocExCore's export method
    */
   public async export(options: ExportOptions = {}): Promise<Document> {
     const children: FileChild[] = [];
+    resetListCounter();
     
-    // Reset any state (like list counters)
-    this.resetState();
-    
-    // Process each element in the document
+    // Process each element in the document - exactly like DocExCore
     for (const element of this.document.children) {
       if (!(element instanceof HTMLElement)) continue;
       
-      // Parse the element into one or more FileChild
-      const parsed = this.parse(element, this.getNextInstance());
+      // Parse the element into one or more FileChild - exactly like DocExCore
+      const parsed = this.parse(element, nextListInstance());
       const parsedArray = Array.isArray(parsed)
         ? parsed
         : parsed
@@ -67,19 +74,22 @@ export class Exporter {
 
       children.push(...parsedArray);
 
-      // Handle spacers (page breaks)
+      // Handle spacers (page breaks) - exactly like DocExCore
       if (element.classList.contains("spacer")) {
         const last = children.at(-1);
         if (last instanceof docx.Paragraph) {
-          last.addChildElement(new docx.PageBreak());
+          last?.addChildElement(new docx.PageBreak());
         }
       }
     }
 
-    // Create the document with proper formatting
+    // Create document with numbering - exactly like DocExCore
     const sectionProperties = createSectionProperties(options);
     
     const doc = new Document({
+      numbering: {
+        config: [numberedLevelList, unnumberedLevelList, bulletList],
+      },
       sections: [
         {
           properties: sectionProperties,
@@ -146,22 +156,4 @@ export class Exporter {
     return parsedChildren ?? [];
   }
 
-  /**
-   * Reset any parser state (called before export)
-   * Override in subclasses to implement state management
-   */
-  protected resetState(): void {
-    // Default implementation does nothing
-    // Subclasses can override to reset counters, etc.
-  }
-
-  /**
-   * Get the next instance number for elements that need it
-   * Override in subclasses to implement instance tracking
-   */
-  protected getNextInstance(): number {
-    // Default implementation returns 0
-    // Subclasses can override to implement instance tracking
-    return 0;
-  }
 }

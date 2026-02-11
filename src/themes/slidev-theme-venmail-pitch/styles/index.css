@@ -193,6 +193,215 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+/* Metric card component */
+.metric-card {
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Venmail Market Layout */
+.venmail-market-slide {
+  width: 100%;
+  min-height: 100%;
+  padding: clamp(2rem, 4vw, 3.5rem);
+  border-radius: 2rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 35px 80px -40px rgba(15, 23, 42, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.venmail-market-slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(255,255,255,0.15), transparent 45%);
+  pointer-events: none;
+}
+
+.venmail-market-slide > * {
+  position: relative;
+  z-index: 1;
+}
+
+.market-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.market-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.market-title-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.market-title-row h1 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 700;
+  margin: 0;
+}
+
+.market-tagline {
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.market-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.market-metric {
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-height: 100%;
+}
+
+.market-metric span {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(226, 232, 240, 0.7);
+}
+
+.market-metric strong {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.market-metric small {
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.7);
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.market-card {
+  padding: clamp(1.5rem, 3vw, 2rem);
+  border-radius: 1.5rem;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 20px 40px -30px rgba(15, 23, 42, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.market-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.market-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.8rem;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.market-card.market-highlight {
+  border-color: rgba(139, 92, 246, 0.35);
+  background: linear-gradient(135deg, rgba(76, 29, 149, 0.75), rgba(37, 99, 235, 0.4));
+}
+
+.market-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.market-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.market-list li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.market-list span {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(226, 232, 240, 0.65);
+}
+
+.market-list strong {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+@media (max-width: 1024px) {
+  .market-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .market-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .venmail-market-slide {
+    padding: 1.5rem;
+  }
+  .market-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Stagger animation utilities */
 .stagger-children > * {
   opacity: 0;

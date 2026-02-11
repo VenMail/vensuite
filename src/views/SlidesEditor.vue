@@ -152,7 +152,9 @@
                 :theme-background="editor.currentThemeObj?.colors.background"
                 :theme-text="editor.currentThemeObj?.colors.text"
                 :theme-style="editor.themeStyleObject as Record<string, string>"
+                :theme="editor.currentTheme"
                 :animations="animationConfig"
+                :custom-class="editor.slideClass"
                 :arrange-mode="arrangeMode"
                 :focus-line-range="focusLineRange"
                 :selected-line-range="currentMarkdownElement ? { start: currentMarkdownElement.startLine, end: currentMarkdownElement.endLine } : null"
@@ -180,7 +182,9 @@
               :theme-background="editor.currentThemeObj?.colors.background"
               :theme-text="editor.currentThemeObj?.colors.text"
               :theme-style="editor.themeStyleObject as Record<string, string>"
+              :theme="editor.currentTheme"
               :animations="animationConfig"
+              :custom-class="editor.slideClass"
               :slide-variant="resolvedSlideVariant"
               :slide-phase="slidePhase"
               :slide-direction="slideDirection"
@@ -226,6 +230,8 @@
       :theme-background="editor.currentThemeObj?.colors.background"
       :theme-text="editor.currentThemeObj?.colors.text"
       :theme-style="editor.themeStyleObject as Record<string, string>"
+      :theme="editor.currentTheme"
+      :custom-class="editor.slideClass"
       :current-notes="editor.currentSlideNotes"
       :next-slide-content="nextSlidePreviewHtml"
       :formatted-time="presenter.formattedTime"
@@ -365,20 +371,7 @@ function triggerSlideAnimation() {
   });
 }
 
-watch(
-  () => editor.currentSlideIndex,
-  (newVal, oldVal) => {
-    if (typeof newVal === 'number' && typeof oldVal === 'number') {
-      slideDirection.value = newVal >= oldVal ? 1 : -1;
-    }
-    triggerSlideAnimation();
-  },
-  { immediate: true }
-);
-
-watch(currentSlideFrontmatter, () => {
-  triggerSlideAnimation();
-});
+// Watch statements will be moved after editor initialization
 
 // Convert motionConfig to legacy AnimationConfig format (for compatibility)
 const animationConfig = computed(() => {
@@ -455,6 +448,22 @@ const canJoinRealtime = computed(() => {
 
 // Initialize composables
 const { editor, persistence, presenter } = slideStore;
+
+// Watch statements that depend on editor (moved here after initialization)
+watch(
+  () => editor.currentSlideIndex,
+  (newVal, oldVal) => {
+    if (typeof newVal === 'number' && typeof oldVal === 'number') {
+      slideDirection.value = newVal >= oldVal ? 1 : -1;
+    }
+    triggerSlideAnimation();
+  },
+  { immediate: true }
+);
+
+watch(currentSlideFrontmatter, () => {
+  triggerSlideAnimation();
+});
 
 // Computed / Derived state
 const nextSlidePreviewHtml = ref('');
@@ -865,6 +874,10 @@ function getTemplateBySlug(slug: string) {
           notes: "Cover slide with cinematic frame and animated icon" 
         },
         { 
+          content: "---\nlayout: stats\ntitle: \"Market Opportunity\"\n\n<div class=\"cinematic-frame bg-gradient-blue p-8\">\n  <div class=\"flex items-center gap-4 mb-6\">\n    <div class=\"w-12 h-12 text-blue-400\">📊</div>\n    <h2 class=\"text-4xl font-bold text-white\">Market Opportunity</h2>\n  </div>\n  \n  <div class=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6\">\n    <div class=\"metric-card\">\n      <div class=\"text-3xl font-bold text-blue-400\">$4.2B</div>\n      <div class=\"text-lg text-gray-300\">Market Size</div>\n      <div class=\"text-sm text-gray-400\">Growing 18% YoY</div>\n    </div>\n    \n    <div class=\"metric-card\">\n      <div class=\"text-3xl font-bold text-emerald-400\">250M+</div>\n      <div class=\"text-lg text-gray-300\">Active Users</div>\n      <div class=\"text-sm text-gray-400\">Global reach</div>\n    </div>\n    \n    <div class=\"metric-card\">\n      <div class=\"text-3xl font-bold text-purple-400\">85%</div>\n      <div class=\"text-lg text-gray-300\">Satisfaction</div>\n      <div class=\"text-sm text-gray-400\">Industry leading</div>\n    </div>\n    \n    <div class=\"metric-card\">\n      <div class=\"text-3xl font-bold text-amber-400\">12M</div>\n      <div class=\"text-lg text-gray-300\">Enterprises</div>\n      <div class=\"text-sm text-gray-400\">Fortune 500</div>\n    </div>\n  </div>\n</div>", 
+          notes: "Market opportunity slide with metrics and cinematic frame" 
+        },
+        { 
           content: "---\nlayout: content\ntitle: \"Mission\"\n\n<div class=\"cinematic-frame border-emerald-700 p-8\">\n  <div class=\"flex items-center gap-4 mb-6\">\n    <div class=\"w-12 h-12 text-emerald-400\">🚀</div>\n    <h2 class=\"text-4xl font-bold text-white\">Our Mission</h2>\n  </div>\n  \n  <div class=\"space-y-4\">\n    <p class=\"text-xl text-gray-300\">Revolutionize business communication with an integrated platform</p>\n    \n    <ul class=\"text-lg text-gray-400 space-y-2\">\n      <li>• Unified email and office suite</li>\n      <li>• Real-time collaboration tools</li>\n      <li>• AI-powered productivity features</li>\n      <li>• Enterprise-grade security</li>\n    </ul>\n  </div>\n</div>", 
           notes: "Mission slide with cinematic frame and bullet points" 
         }
@@ -878,6 +891,11 @@ function getTemplateBySlug(slug: string) {
 async function applyTemplateSlides(template: any) {
   // Clear existing slides by setting empty array
   editor.setSlides([]);
+  
+  // Set theme if this is the Venmail Pitch template
+  if (template.slug === 'venmail-pitch') {
+    editor.currentTheme = 'venmail-pitch';
+  }
   
   for (const slideData of template.slides) {
     editor.addSlide();

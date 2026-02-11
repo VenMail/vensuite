@@ -72,8 +72,17 @@ export const getDefaultMargins = () => ({
  * Create section properties for DOCX document
  */
 export const createSectionProperties = (options: ExportOptions): ISectionPropertiesOptions => {
-  const pageSize = options.pageSize || getDefaultPageSize(options.orientation);
-  const margins = options.margins || getDefaultMargins();
+  // Use custom page size if provided, otherwise use DocExCore's exact default
+  const pageSize = options.pageSize || {
+    width: docx.convertInchesToTwip(8.7),   // DocExCore default width
+    height: docx.convertInchesToTwip(11.69), // DocExCore default height
+  };
+  const margins = options.margins || {
+    top: docx.convertInchesToTwip(1),    // DocExCore default margins
+    right: docx.convertInchesToTwip(1),
+    bottom: docx.convertInchesToTwip(1),
+    left: docx.convertInchesToTwip(1),
+  };
   
   return {
     page: {

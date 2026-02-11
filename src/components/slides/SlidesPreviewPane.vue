@@ -24,10 +24,10 @@
             tag="div"
             class="w-full flex items-center justify-center"
           >
-            <div
+            <div 
               ref="previewRef"
               class="slide-preview-content flex-shrink-0 relative"
-              :class="layoutClass"
+              :class="[layoutClass, props.customClass].filter(Boolean)"
               :style="previewStyle"
               v-html="renderedContent"
             />
@@ -42,8 +42,12 @@
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue';
 import { useMermaid } from '@/composables/useMermaid';
 import { useSharedSlideRenderer } from '@/composables/useSharedSlideRenderer';
+import { useThemeLoader } from '@/composables/useThemeLoader';
 import MotionSlide from './motion/MotionSlide.vue'
 import MotionContent from './motion/MotionContent.vue'
+
+// Import Venmail theme CSS for slide previews
+import '../../themes/slidev-theme-venmail-pitch/styles/index.css'
 
 interface Props {
   renderedContent: string;
@@ -53,6 +57,7 @@ interface Props {
   themeBackground?: string;
   themeText?: string;
   themeStyle?: Record<string, string>;
+  theme?: string; // Add theme prop
   baseWidth?: number;
   baseHeight?: number;
   fullscreen?: boolean;
@@ -64,16 +69,18 @@ interface Props {
   selectedLineRange?: { start: number; end: number } | null;
   enableDebugMode?: boolean;
   slideVariant?: string;
-  slidePhase?: keyof import('@/composables/useVenmailMotion').SlideVariant;
+  slidePhase?: 'enter' | 'center' | 'exit';
   slideDirection?: number;
   contentVariant?: string;
-  contentPhase?: keyof import('@/composables/useVenmailMotion').ContentVariant;
+  contentPhase?: 'hidden' | 'visible';
+  customClass?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   themeBackground: '#ffffff',
   themeText: '#1e293b',
   themeStyle: () => ({}),
+  theme: 'default', // Add default theme
   baseWidth: 560,
   baseHeight: 420,
   fullscreen: false,
@@ -88,13 +95,18 @@ const props = withDefaults(defineProps<Props>(), {
   slidePhase: 'center',
   slideDirection: 1,
   contentVariant: 'default',
-  contentPhase: 'visible'
+  contentPhase: 'visible',
+  customClass: ''
 });
 
 // Refs
 const previewRef = ref<HTMLElement | null>(null);
 const animationObserver = ref<IntersectionObserver | null>(null);
 const elementHandlers = ref<Map<HTMLElement, { click?: EventListener; mouseenter?: EventListener; mouseleave?: EventListener }>>(new Map());
+
+// Theme loading
+const currentTheme = ref(props.theme);
+const { applyThemeToElement } = useThemeLoader(currentTheme);
 
 // Track elements currently being manipulated to prevent watch overwrites
 const elementsBeingManipulated = ref<Set<string>>(new Set());
@@ -202,6 +214,7 @@ const previewStyle = computed(() => {
     minHeight: '300px',
     transform: `scale(${zoom.value / 100})`,
     transformOrigin: 'center center',
+    // Use theme background or fallback to gradient
     background: props.background || props.themeBackground || '#ffffff',
     color: props.themeText || '#1e293b',
     padding: isFullscreen ? '48px' : '32px',
@@ -211,6 +224,7 @@ const previewStyle = computed(() => {
       ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
       : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     position: 'relative' as const, // CRITICAL: Establish positioning context
+    // Apply theme CSS variables
     ...props.themeStyle
   };
 });
@@ -256,6 +270,14 @@ const animationsWatcher = watch(() => props.animations, () => {
   applyAnimations();
 }, { deep: true });
 
+// Watch for theme changes
+const themeWatcher = watch(() => props.theme, (newTheme) => {
+  currentTheme.value = newTheme;
+  if (previewRef.value) {
+    applyThemeToElement(previewRef.value, newTheme);
+  }
+}, { immediate: true });
+
 onMounted(async () => {
   await nextTick();
   if (previewRef.value) {
@@ -296,6 +318,7 @@ onUnmounted(() => {
   contentWatcher?.();
   arrangeModeWatcher?.();
   animationsWatcher?.();
+  themeWatcher?.();
   
   // Clean up animation observer
   if (animationObserver.value) {
@@ -429,9 +452,9 @@ function handleKeyDown(e: KeyboardEvent) {
   activeTimeouts.value.set(timeoutKey, timeoutId);
 }
 
-// Apply animations to elements
+// Apply structured motion config to elements
 function applyAnimations() {
-  if (!previewRef.value || !props.animations) return;
+  if (!previewRef.value) return;
   
   // Clear existing animations and handlers
   cleanupAnimationHandlers();
@@ -456,43 +479,78 @@ function applyAnimations() {
     });
   }
   
-  // Apply new animations
-  props.animations.forEach((animation, elementId) => {
-    if (!animation.enabled) return;
-    
-    let element: HTMLElement | null = null;
-    
-    // Try to find element by ID
-    element = previewRef.value?.querySelector(`#${elementId}`) as HTMLElement;
-    
-    // If not found by ID, try other selectors
-    if (!element) {
-      // Try by data-id attribute
-      element = previewRef.value?.querySelector(`[data-id="${elementId}"]`) as HTMLElement;
-    }
-    
-    if (!element) {
-      // Try to find by text content (for markdown elements)
-      const allElements = previewRef.value?.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, span, div');
-      if (allElements) {
-        for (const el of allElements) {
-          const htmlElement = el as HTMLElement;
-          if (htmlElement.textContent?.trim() && elementId.includes('markdown')) {
-            // For markdown elements, use a heuristic based on position
-            const index = parseInt(elementId.split('-')[1]) || 0;
-            if (Array.from(allElements).indexOf(htmlElement) === index) {
-              element = htmlElement;
-              break;
+  // Apply structured motion config
+  if (props.motionConfig && props.motionConfig.items) {
+    props.motionConfig.items.forEach((motionItem: any) => {
+      if (!motionItem.enabled) return;
+      
+      let element: HTMLElement | null = null;
+      
+      // Try to find element by ID
+      element = previewRef.value?.querySelector(`#${motionItem.id}`) as HTMLElement;
+      
+      // If not found by ID, try other selectors
+      if (!element) {
+        // Try by data-id attribute
+        element = previewRef.value?.querySelector(`[data-id="${motionItem.id}"]`) as HTMLElement;
+      }
+      
+      if (!element && motionItem.id.includes('markdown')) {
+        // Try to find by text content (for markdown elements)
+        const allElements = previewRef.value?.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, span, div');
+        if (allElements) {
+          const index = parseInt(motionItem.id.split('-').pop() || '0') || 0;
+          if (index < allElements.length) {
+            element = allElements[index] as HTMLElement;
+          }
+        }
+      }
+      
+      if (element) {
+        applyMotionConfigToElement(element, motionItem);
+      }
+    });
+  }
+  
+  // Fallback to legacy animation map for backward compatibility
+  if (props.animations && props.animations.size > 0) {
+    props.animations.forEach((animation, elementId) => {
+      if (!animation.enabled) return;
+      
+      let element: HTMLElement | null = null;
+      
+      // Try to find element by ID
+      element = previewRef.value?.querySelector(`#${elementId}`) as HTMLElement;
+      
+      // If not found by ID, try other selectors
+      if (!element) {
+        // Try by data-id attribute
+        element = previewRef.value?.querySelector(`[data-id="${elementId}"]`) as HTMLElement;
+      }
+      
+      if (!element) {
+        // Try to find by text content (for markdown elements)
+        const allElements = previewRef.value?.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, span, div');
+        if (allElements) {
+          for (const el of allElements) {
+            const htmlElement = el as HTMLElement;
+            if (htmlElement.textContent?.trim() && elementId.includes('markdown')) {
+              // For markdown elements, use a heuristic based on position
+              const index = parseInt(elementId.split('-')[1]) || 0;
+              if (Array.from(allElements).indexOf(htmlElement) === index) {
+                element = htmlElement;
+                break;
+              }
             }
           }
         }
       }
-    }
-    
-    if (element) {
-      applyAnimationToElement(element, animation);
-    }
-  });
+      
+      if (element) {
+        applyLegacyAnimationToElement(element, animation);
+      }
+    });
+  }
 }
 
 // Cleanup animation handlers
@@ -530,7 +588,44 @@ function getElementTypeInfo(element: HTMLElement): string {
   return 'Element';
 }
 
-function applyAnimationToElement(element: HTMLElement, animation: ElementAnimation) {
+function applyMotionConfigToElement(element: HTMLElement, motionItem: any) {
+  if (!motionItem.enabled) {
+    // Clear motion data attributes
+    element.removeAttribute('data-motion-role');
+    element.removeAttribute('data-motion-variant');
+    element.removeAttribute('data-motion-state');
+    element.removeAttribute('data-motion-trigger');
+    element.removeAttribute('data-motion-delay');
+    element.removeAttribute('data-motion-index');
+    return;
+  }
+  
+  // Apply motion data attributes
+  element.setAttribute('data-motion-role', motionItem.role || 'item');
+  element.setAttribute('data-motion-variant', motionItem.variant || 'default');
+  element.setAttribute('data-motion-state', motionItem.state || 'visible');
+  element.setAttribute('data-motion-trigger', motionItem.trigger || 'immediate');
+  element.setAttribute('data-motion-delay', (motionItem.delay || 0).toString());
+  
+  if (motionItem.role === 'item' && motionItem.index !== undefined) {
+    element.setAttribute('data-motion-index', motionItem.index.toString());
+  }
+  
+  // Setup event listeners for triggers - use existing animation trigger setup
+  const animationConfig = {
+    trigger: motionItem.trigger as 'onLoad' | 'onClick' | 'onHover' | 'onScroll',
+    type: motionItem.variant || 'default',
+    duration: 1000,
+    delay: motionItem.delay || 0,
+    easing: 'ease-in-out',
+    repeat: false,
+    repeatCount: 1,
+    enabled: true
+  };
+  setupAnimationTriggers(element, animationConfig);
+}
+
+function applyLegacyAnimationToElement(element: HTMLElement, animation: ElementAnimation) {
   if (!animation.enabled) {
     element.style.animation = '';
     element.classList.remove('animated-element', 'animation-on-load', 'animation-on-click', 'animation-on-hover', 'animation-on-scroll');
