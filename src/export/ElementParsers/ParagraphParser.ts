@@ -1,7 +1,7 @@
 import { ElementParser } from "./ElementParser";
-import { FileChild, Paragraph, TextRun } from "docx";
-import { getComputedFont, getComputedFontSize, hasFormatting, getComputedAlignment } from "../../utils/exportUtils";
+import { FileChild, Paragraph } from "docx";
 import type { Exporter } from "../Exporter";
+import { ParagraphHandler } from "./ParagraphHandler";
 
 /**
  * Paragraph Parser
@@ -14,37 +14,12 @@ export class ParagraphParser extends ElementParser {
   }
 
   public parse(element: HTMLElement): FileChild | FileChild[] | null {
-    const text = element.textContent?.trim();
-    if (!text) return null;
+    const handler = new ParagraphHandler();
+    const segments = handler.segmentParagraph(element);
+    if (!segments.length) return null;
 
-    // Get computed styles
-    const fontSize = getComputedFontSize(element);
-    const fontFamily = getComputedFont(element);
-    const alignment = getComputedAlignment(element);
-    const formatting = hasFormatting(element);
-
-    // Create text runs with formatting
-    const runs: TextRun[] = [];
-    
-    // Simple text run for now (can be enhanced to handle mixed formatting)
-    runs.push(new TextRun({
-      text,
-      size: fontSize * 2, // DOCX uses half-points
-      font: fontFamily,
-      bold: formatting.bold,
-      italics: formatting.italic,
-      underline: formatting.underline ? {} : undefined,
-      strike: formatting.strike,
-    }));
-
-    // Create paragraph with alignment
-    return new Paragraph({
-      children: runs,
-      alignment: alignment === 'justify' ? 'both' : alignment,
-      spacing: {
-        after: 200, // 10 points after paragraph
-      },
-    });
+    const paragraphs = segments.map(({ props }) => new Paragraph(props));
+    return paragraphs.length === 1 ? paragraphs[0] : paragraphs;
   }
 
   // This static method ensures this parser only processes <p> elements.

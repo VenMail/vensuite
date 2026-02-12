@@ -20,33 +20,39 @@ background:
   gradient: from-green-900 via-emerald-800 to-teal-900
 ---
 
-# Pricing & Next Steps
+:::market-slide{gradient="emerald"}
 
-### Simple, Predictable Pricing
+:::headline{pill="Pricing"}
+## Simple, Predictable Pricing
+:::
 
-#### Business Plan - $299/month
-- Unlimited users
-- Unlimited storage
-- All features included
-- Priority support
+:::card-grid{cols=2}
+:::card{title="Business Plan — $299/month" highlight}
+- **Unlimited users** — grow without cost fears
+- **Unlimited storage** — never worry about limits
+- **All features included** — no upsells
+- **Priority support** — dedicated team
+:::
+:::card{title="Free Forever Plan"}
+- **Up to 3 users** — perfect for solopreneurs
+- **200MB storage** — core essentials
+- **Core features** — email, docs, forms
+- **Community support** — help when you need it
+:::
+:::
 
-#### Free Forever Plan
-- Up to 3 users
-- 200MB storage
-- Core features
-- Community support
+:::spacer{size="4"}
+:::
 
-### Get Started Today
+:::headline{pill="Get Started"}
+## Let's Build the Future of Business Communication
+:::
 
-1. **Sign up** - 2-minute setup
-2. **Import** - Migrate from existing tools
-3. **Collaborate** - Start working immediately
+1. **Sign up** — 2-minute setup
+2. **Import** — Migrate from existing tools
+3. **Collaborate** — Start working immediately
 
-### Special Offer
-
-🎯 **First 100 customers get 50% off for 12 months**
-
-# Let's Build the Future of Business Communication
+:::
 
 <!--
 

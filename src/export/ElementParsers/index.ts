@@ -5,7 +5,9 @@
 
 export { ElementParser } from "./ElementParser";
 export { ParagraphParser } from "./ParagraphParser";
+export { ParagraphHandler, SegmentInfo } from "./ParagraphHandlerWorking";
 export { HeadingParser } from "./HeadingParser";
 export { TableParser } from "./TableParser";
 export { OrderedListParser } from "./OrderedListParser";
 export { BulletListParser } from "./BulletListParser";
+export { ListHandler } from "./ListHandler";

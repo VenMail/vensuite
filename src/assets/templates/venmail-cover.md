@@ -17,11 +17,14 @@ background:
   gradient: from-purple-900 via-purple-800 to-indigo-900
 ---
 
+:::cover-slide{gradient="purple" align="center"}
+
 # Venmail OS
 
-## One Operating System for Modern Communication
+One Operating System for Modern Communication
 
-### Email • Office • Collaboration • Meetings — One Platform, Unlimited Users
+*Email • Office • Collaboration • Meetings — One Platform, Unlimited Users*
+:::
 
 <!--
 

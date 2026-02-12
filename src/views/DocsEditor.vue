@@ -71,6 +71,13 @@
       @update-pagination="updatePaginationSettings"
       @print="handlePrint"
     />
+    <!-- Find & Replace -->
+    <DocsFindReplace
+      :editor="editor"
+      :is-open="isFindReplaceOpen"
+      @close="isFindReplaceOpen = false"
+    />
+
     <div v-if="collaboratorList.length" class="px-6 py-1 flex flex-wrap gap-2 items-center justify-end bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 text-xs">
       <span class="text-gray-500 dark:text-gray-400">{{$t('Commons.text.also_editing')}}</span>
       <button
@@ -166,7 +173,7 @@
         </div>
       </div>
       
-      <div class="p-6 print:p-0">
+      <div class="p-6 pb-12 print:p-0" :style="zoomLevel !== 100 ? { transformOrigin: 'top center', transform: `scale(${zoomLevel / 100})` } : undefined">
         <div 
           class="doc-page mx-auto bg-white shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none relative"
           :class="{ 'landscape-mode': pageOrientation === 'landscape' }"
@@ -534,6 +541,32 @@
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <!-- AI Writer (floating on selection) -->
+    <DocsAIWriter
+      :editor="editor"
+      :is-visible="isAIWriterVisible && editorMode === 'editing'"
+      :selection-rect="aiSelectionRect"
+      @close="isAIWriterVisible = false"
+      @content-inserted="isAIWriterVisible = false"
+    />
+
+    <!-- Status Bar -->
+    <DocsStatusBar
+      :word-count="wordCount"
+      :char-count="charCount"
+      :page-count="pageCount"
+      :current-page="currentPage"
+      :current-heading="currentHeadingContext"
+      :zoom="zoomLevel"
+      :is-saving="isSaving"
+      :has-unsaved-changes="hasUnsavedChanges"
+      :is-offline="isOffline"
+      :editor-mode="editorMode"
+      @zoom-in="zoomIn"
+      @zoom-out="zoomOut"
+      @reset-zoom="resetZoom"
+    />
   </div>
 </template>
 
@@ -609,7 +642,11 @@ import { AbsPage } from '@/extensions/abs-page';
 import { AbsTable } from '@/extensions/abs-table';
 import { AbsImage } from '@/extensions/abs-image';
 import { AbsShape } from '@/extensions/abs-shape';
+import { Indent } from '@/extensions/indent';
 import { maybeConvertHtmlToAnnotatedAbsoluteHtml } from '@/utils/html-to-tiptap';
+import DocsStatusBar from '@/components/docs/DocsStatusBar.vue';
+import DocsFindReplace from '@/components/docs/DocsFindReplace.vue';
+import DocsAIWriter from '@/components/docs/DocsAIWriter.vue';
 
 // Use page sizes from our pagination extension
 const PAGE_SIZES = PAGINATION_SIZES;
@@ -852,48 +889,6 @@ function updateEditorEmptyState(instance?: Editor) {
   }
 }
 
-// function handleEditorContentChange(instance: Editor) {
-//   updateEditorEmptyState(instance);
-
-//   if (isJustLoaded.value) {
-//     return;
-//   }
-
-//   if (!instance.isEmpty) {
-//     hasUnsavedChanges.value = true;
-//     scheduleSave();
-//   }
-// }
-
-// function attachEditorEventListeners(instance: Editor) {
-//   detachEditorListeners?.();
-
-//   const handleUpdate = () => handleEditorContentChange(instance);
-//   const handleSelection = () => {
-//     updateEditorEmptyState(instance);
-//     syncBubbleLinkFromEditor(instance);
-//   };
-//   const handleFocus = () => { isEditorFocused.value = true; };
-//   const handleBlur = () => { isEditorFocused.value = false; };
-
-//   instance.on('update', handleUpdate);
-//   instance.on('selectionUpdate', handleSelection);
-//   instance.on('transaction', handleSelection);
-//   instance.on('focus', handleFocus);
-//   instance.on('blur', handleBlur);
-
-//   detachEditorListeners = () => {
-//     instance.off('update', handleUpdate);
-//     instance.off('selectionUpdate', handleSelection);
-//     instance.off('transaction', handleSelection);
-//     instance.off('focus', handleFocus);
-//     instance.off('blur', handleBlur);
-//     detachEditorListeners = null;
-//   };
-
-//   nextTick(() => updateEditorEmptyState(instance));
-// }
-
 // WebSocket collaboration functions
 function initializeWebSocketAndJoinDoc() {
   if (!canJoinRealtime.value) return;
@@ -1117,6 +1112,85 @@ watch(canEditDoc, (canEdit) => {
 // Table of Contents state
 const isTocOpen = ref(false);
 const isToolbarExpanded = ref(false);
+
+// ── New feature state ──
+const editorMode = ref<'editing' | 'viewing'>('editing');
+const zoomLevel = ref(100);
+const isFindReplaceOpen = ref(false);
+const isAIWriterVisible = ref(false);
+const aiSelectionRect = ref<{ top: number; left: number; bottom: number } | null>(null);
+
+// Word / character count
+const wordCount = computed(() => {
+  if (!editor.value) return 0;
+  const text = editor.value.state.doc.textContent;
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
+});
+const charCount = computed(() => {
+  if (!editor.value) return 0;
+  return editor.value.state.doc.textContent.length;
+});
+
+// Current page (approximate from scroll position)
+const currentPage = ref(1);
+const pageCount = computed(() => {
+  if (!editor.value) return 1;
+  const pages = editor.value.view.dom.querySelectorAll('.rm-pagination-page');
+  return pages.length || 1;
+});
+
+// Current heading context for status bar
+const currentHeadingContext = computed(() => {
+  if (!editor.value) return '';
+  const { $anchor } = editor.value.state.selection;
+  for (let d = $anchor.depth; d > 0; d--) {
+    const node = $anchor.node(d);
+    if (node.type.name === 'heading') return node.textContent;
+  }
+  return '';
+});
+
+// Zoom helpers
+function zoomIn() { zoomLevel.value = Math.min(200, zoomLevel.value + 25); }
+function zoomOut() { zoomLevel.value = Math.max(50, zoomLevel.value - 25); }
+function resetZoom() { zoomLevel.value = 100; }
+
+// Keyboard shortcuts
+function handleGlobalKeydown(e: KeyboardEvent) {
+  // Ctrl+F → Find & Replace
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    e.preventDefault();
+    isFindReplaceOpen.value = true;
+  }
+  // Ctrl+H → Find & Replace with replace open
+  if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+    e.preventDefault();
+    isFindReplaceOpen.value = true;
+  }
+  // Escape → close panels
+  if (e.key === 'Escape') {
+    if (isFindReplaceOpen.value) { isFindReplaceOpen.value = false; return; }
+    if (isAIWriterVisible.value) { isAIWriterVisible.value = false; return; }
+  }
+  // Ctrl+= / Ctrl+- → Zoom
+  if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomIn(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); zoomOut(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); resetZoom(); }
+}
+
+// AI Writer: show on text selection
+function updateAIWriterPosition() {
+  if (!editor.value) return;
+  const { from, to } = editor.value.state.selection;
+  if (to - from > 3) {
+    const coords = editor.value.view.coordsAtPos(to);
+    aiSelectionRect.value = { top: coords.top, left: coords.left, bottom: coords.bottom };
+    isAIWriterVisible.value = true;
+  } else {
+    isAIWriterVisible.value = false;
+    aiSelectionRect.value = null;
+  }
+}
 
 // Bubble menu state (quick link/image editors)
 const bubbleShellClass = 'flex w-full max-w-[340px] flex-col gap-1 rounded-xl border border-gray-200 bg-white/95 px-2 py-1 text-gray-700 shadow-xl print:hidden dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200';
@@ -2456,7 +2530,7 @@ const paginationSettings = reactive({
   marginTop: 96,    // Match DocExCore demo's pageMargin
   marginBottom: 96,
   marginLeft: 96,
-  marginRight: 96,
+  marginRight: 50,    // Adjusted for proper export fidelity
   showPageNumbers: true,
   pageNumberPosition: 'bottom-right' as string,
   printPageNumbers: false,
@@ -2472,11 +2546,9 @@ const paginationSettings = reactive({
 const MM_TO_PX = 96 / 25.4;
 
 const contentPadding = computed(() => {
-  // Use 96px padding to match DocExCore demo for export fidelity
-  // This ensures proper positioning during DOCX export
-  return {
-    padding: '96px',
-  };
+  // No padding applied directly - margins handle the spacing
+  // This prevents double padding issue with outer container
+  return {};
 });
 
 function resolvePageMetrics(sizeKey: keyof typeof pageDimensions, orientation: 'portrait' | 'landscape') {
@@ -2492,14 +2564,12 @@ function resolvePageMetrics(sizeKey: keyof typeof pageDimensions, orientation: '
 // Computed styles for page dimensions
 const pageStyles = computed(() => {
   const metrics = resolvePageMetrics(pageSize.value as keyof typeof pageDimensions, pageOrientation.value);
-  const padding = contentPadding.value.padding;
 
   return {
     maxWidth: `${metrics.widthPx}px`,
     width: '100%',
     '--page-width': `${metrics.widthMm}mm`,
     '--page-height': `${metrics.heightMm}mm`,
-    '--page-padding': padding,
   } as Record<string, string>;
 });
 
@@ -2641,15 +2711,15 @@ async function saveDocument(isManual = false) {
         pagination: {
           orientation: pageOrientation.value,
           pageSize: pageSize.value,
-          showPageNumbers: true, // Default from getPaginationConfig
-          pageNumberPosition: 'bottom-right', // Default from getPaginationConfig
-          printPageNumbers: false, // Default from getPaginationConfig
-          marginTop: 50, // Default from getPaginationConfig
-          marginBottom: 50, // Default from getPaginationConfig
-          marginLeft: 50, // Default from getPaginationConfig
-          marginRight: 50, // Default from getPaginationConfig
-          pageBorder: true, // Default from getPaginationConfig
-          pageShadow: true, // Default from getPaginationConfig
+          showPageNumbers: paginationSettings.showPageNumbers,
+          pageNumberPosition: paginationSettings.pageNumberPosition,
+          printPageNumbers: paginationSettings.printPageNumbers,
+          marginTop: paginationSettings.marginTop,
+          marginBottom: paginationSettings.marginBottom,
+          marginLeft: paginationSettings.marginLeft,
+          marginRight: paginationSettings.marginRight,
+          pageBorder: paginationSettings.pageBorder,
+          pageShadow: paginationSettings.pageShadow,
         }
       },
       last_viewed: new Date(),
@@ -2673,26 +2743,6 @@ async function saveDocument(isManual = false) {
     isSaving.value = false;
   }
 }
-
-// function scheduleSave() {
-//   // Clear existing idle timeout
-//   if (saveTimeout) {
-//     clearTimeout(saveTimeout);
-//   }
-  
-//   // Schedule save after 3 seconds of idle (more responsive)
-//   saveTimeout = setTimeout(() => {
-//     saveDocument(false);
-//   }, 3000);
-  
-//   // Ensure we save within 30 seconds regardless of activity
-//   if (!maxWaitTimeout) {
-//     maxWaitTimeout = setTimeout(() => {
-//       saveDocument(false);
-//       maxWaitTimeout = null;
-//     }, 30000); // 30 seconds
-//   }
-// }
 
 function handlePrint() {
   if (!editor.value) return;
@@ -3538,6 +3588,7 @@ function initializeEditor(contentOverride?: any) {
       ChartExtension,
       FormExtension,
       FormControlExtension,
+      Indent,
       // Add PageBreak node for explicit page breaks
       PageBreak,
       // Add Pagination extension (replaces PaginationPlus)
@@ -3628,8 +3679,13 @@ onMounted(async () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
   }
 
-  // Debug: Log pagination status
-  console.log('Pagination initialized with page size:', pageSize.value, 'orientation:', pageOrientation.value);
+  // Global keyboard shortcuts (Find, Zoom, etc.)
+  window.addEventListener('keydown', handleGlobalKeydown);
+
+  // AI Writer: track selection position
+  if (editor.value) {
+    editor.value.on('selectionUpdate', updateAIWriterPosition);
+  }
 });
 
 watch([pageSize, pageOrientation], () => {
@@ -3694,6 +3750,8 @@ onUnmounted(() => {
   }
   window.removeEventListener('online', handleOnline);
   window.removeEventListener('offline', handleOffline);
+  window.removeEventListener('keydown', handleGlobalKeydown);
+  try { editor.value?.off('selectionUpdate', updateAIWriterPosition); } catch {}
   editor.value?.destroy();
 });
 </script>
@@ -4426,6 +4484,56 @@ onUnmounted(() => {
 @media print {
   .tiptap-toolbar {
     display: none!important;
+  }
+  .docs-status-bar {
+    display: none!important;
+  }
+  .docs-ai-writer {
+    display: none!important;
+  }
+}
+
+/* ── Mobile Responsiveness ── */
+@media (max-width: 768px) {
+  .doc-page {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100vw !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .toc-toggle {
+    display: none !important;
+  }
+
+  :deep(.ProseMirror) {
+    min-height: 300px !important;
+  }
+
+  :deep(.ProseMirror img) {
+    max-width: 100% !important;
+  }
+
+  :deep(.ProseMirror table) {
+    font-size: 0.85em;
+  }
+}
+
+@media (max-width: 480px) {
+  .doc-page {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  :deep(.ProseMirror h1) {
+    font-size: 1.5rem !important;
+  }
+
+  :deep(.ProseMirror h2) {
+    font-size: 1.25rem !important;
   }
 }
 

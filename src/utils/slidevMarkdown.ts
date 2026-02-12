@@ -1,6 +1,7 @@
 import { t } from '@/i18n';
 import { parseVideoMarkdown } from '@/composables/useVideoEmbed';
 import { parsePresetSyntax } from './presetStyling';
+import { renderBlock, parseBlockProps } from './slideBlocks';
 /**
  * Slidev Markdown Utilities
  * Handles parsing and conversion of Slidev-flavored markdown
@@ -308,7 +309,9 @@ function stringifyYamlValue(value: any): string {
  * Enhanced to support preset syntax: {.presets.styling.vignette{intensity=0.8,color=#000}}
  */
 export function parseBlockAttributesFromLine(line: string): { rest: string; class?: string; style?: string; presets?: string } {
-  const match = line.match(/\s*\{([^}]+)\}\s*$/);
+  // Use a greedy match that handles nested brackets like .top-[15.8%]
+  // Find the last { that has a matching } at end of line, allowing [] inside
+  const match = line.match(/\s*\{((?:[^{}]|\[[^\]]*\])+)\}\s*$/);
   if (!match) return { rest: line };
   const rest = line.slice(0, match.index).trim();
   const attrs = match[1];
@@ -621,6 +624,42 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
     const line = lines[i];
     const trimmed = line.trim();
 
+    // Container blocks: :::type{props} ... :::
+    const containerMatch = trimmed.match(/^(:{3,})(\w[\w-]*)(?:\{([^}]*)\})?\s*$/);
+    if (containerMatch) {
+      const start = i;
+      const openColons = containerMatch[1].length;
+      let depth = 1;
+      i++;
+      while (i < lines.length && depth > 0) {
+        const inner = lines[i].trim();
+        // Another opening container
+        if (/^:{3,}\w[\w-]*/.test(inner)) {
+          depth++;
+        }
+        // Bare closing :::
+        else if (/^:{3,}\s*$/.test(inner) && inner.replace(/\s/g, '').length >= openColons) {
+          depth--;
+          if (depth === 0) break;
+        }
+        i++;
+      }
+      const endLine = i;
+      const block: MarkdownBlock = {
+        id: generateBlockId('container', start, endLine),
+        startLine: start,
+        endLine: endLine,
+        type: 'container',
+        lines: lines.slice(start, endLine + 1),
+      };
+      // Attach container metadata
+      (block as any).containerType = containerMatch[2];
+      (block as any).containerProps = containerMatch[3] || '';
+      blocks.push(block);
+      i++;
+      continue;
+    }
+
     if (trimmed.startsWith('```mermaid')) {
       const start = i;
       i++;
@@ -780,10 +819,33 @@ export function splitMarkdownIntoBlocks(markdown: string): MarkdownBlock[] {
       i++;
       continue;
     }
+
+    // Standalone block attribute line: {.class1 .class2} or {style="..."} on its own
+    // Merge into the preceding block instead of creating an empty paragraph
+    // Use regex that allows [] inside {} for Tailwind arbitrary values like .top-[15.8%]
+    if (/^\{(?:[^{}]|\[[^\]]*\])+\}\s*$/.test(trimmed)) {
+      const { rest, class: attrClass, style: attrStyle, presets: attrPresets } = parseBlockAttributes(trimmed);
+      const restTrimmed = rest.trim();
+      if ((attrClass || attrStyle || attrPresets) && !restTrimmed) {
+        // Apply to the preceding block
+        if (blocks.length > 0) {
+          const prevBlock = blocks[blocks.length - 1];
+          prevBlock.blockClass = [prevBlock.blockClass, attrClass].filter(Boolean).join(' ') || undefined;
+          prevBlock.blockStyle = [prevBlock.blockStyle, attrStyle].filter(Boolean).join('; ') || undefined;
+          prevBlock.blockPresets = [prevBlock.blockPresets, attrPresets].filter(Boolean).join(' ') || undefined;
+          prevBlock.endLine = i;
+        }
+        i++;
+        continue;
+      }
+    }
+
     const start = i;
     while (i < lines.length && lines[i].trim() !== '') {
       const l = lines[i].trim();
       if (l.startsWith('#') || l.startsWith('```') || l.startsWith('>') || l.match(/^[\*\-+]\s/) || l.match(/^\d+\.\s/) || l.match(/!\[.*\]\(.*\)/) || (l.includes('|') && l.match(/\|.+\|/))) break;
+      // Also break if the next line is a standalone attribute block
+      if (/^\{(?:[^{}]|\[[^\]]*\])+\}\s*$/.test(l) && i > start) break;
       i++;
     }
     const paraLines = lines.slice(start, i);
@@ -848,7 +910,20 @@ export function renderBlocksToHtml(blocks: MarkdownBlock[]): string {
     const presetAttrs = presetDataAttrs.length > 0 ? ` ${presetDataAttrs.join(' ')}` : '';
     let blockHtml = '';
 
-    if (type === 'mermaid') {
+    if (type === 'container') {
+      const containerType = (block as any).containerType || 'div';
+      const containerPropsStr = (block as any).containerProps || '';
+      const containerProps = parseBlockProps(containerPropsStr);
+      // Extract inner content (between opening and closing :::)
+      const innerLines = lines.slice(1, -1);
+      const innerMarkdown = innerLines.join('\n');
+      // Recursively parse inner content to handle nested blocks
+      const innerBlocks = splitMarkdownIntoBlocks(innerMarkdown);
+      const innerHtml = renderBlocksToHtml(innerBlocks);
+      blockHtml = renderBlock(containerType, containerProps, innerHtml, id);
+      // Add line-range data attributes to the outermost element
+      blockHtml = blockHtml.replace(/^(<\w[^>]*)>/, `$1${dataAttrs}>`);
+    } else if (type === 'mermaid') {
       const code = lines.slice(1, -1).join('\n').trim();
       blockHtml = `<div class="mermaid-diagram"${dataAttrs} data-mermaid="${encodeURIComponent(code)}">${renderMermaidPlaceholder(code)}</div>`;
     } else if (type === 'plantuml') {

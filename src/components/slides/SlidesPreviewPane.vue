@@ -1828,9 +1828,31 @@ if (typeof window !== 'undefined') {
 .slide-preview-content :deep(.font-semibold) { font-weight: 600; }
 .slide-preview-content :deep(.font-medium) { font-weight: 500; }
 
+/* Text colors for block renderers */
+.slide-preview-content :deep(.text-white) { color: #ffffff; }
+.slide-preview-content :deep(.text-purple-400) { color: #a78bfa; }
+.slide-preview-content :deep(.text-emerald-400) { color: #34d399; }
+.slide-preview-content :deep(.text-blue-400) { color: #60a5fa; }
+.slide-preview-content :deep(.text-amber-400) { color: #fbbf24; }
+.slide-preview-content :deep(.text-rose-400) { color: #fb7185; }
+.slide-preview-content :deep(.text-orange-400) { color: #fb923c; }
+.slide-preview-content :deep(.text-green-400) { color: #4ade80; }
+.slide-preview-content :deep(.text-red-400) { color: #f87171; }
+.slide-preview-content :deep(.text-cyan-400) { color: #22d3ee; }
+.slide-preview-content :deep(.text-indigo-400) { color: #818cf8; }
+.slide-preview-content :deep(.text-pink-400) { color: #f472b6; }
+.slide-preview-content :deep(.text-teal-400) { color: #2dd4bf; }
+
 /* Width/Height */
 .slide-preview-content :deep(.w-full) { width: 100%; }
 .slide-preview-content :deep(.h-full) { height: 100%; }
+.slide-preview-content :deep(.w-12) { width: 3rem; }
+.slide-preview-content :deep(.h-12) { height: 3rem; }
+.slide-preview-content :deep(.flex-shrink-0) { flex-shrink: 0; }
+.slide-preview-content :deep(.flex-1) { flex: 1 1 0%; }
+.slide-preview-content :deep(.justify-center) { justify-content: center; }
+.slide-preview-content :deep(.items-start) { align-items: flex-start; }
+.slide-preview-content :deep(.mb-6) { margin-bottom: 1.5rem; }
 
 /* Two-column layout styles */
 .slide-preview-content :deep(.two-cols-container) {

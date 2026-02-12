@@ -46,6 +46,57 @@ export const CSS_FONT_TO_WORD_FONT = {
 
 export type CSSFont = keyof typeof CSS_FONT_TO_WORD_FONT;
 
+const RGB_REGEX = /rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\)/i;
+
+const normalizeHex = (hex: string) =>
+  hex
+    .replace('#', '')
+    .split('')
+    .map((char, _idx, arr) => (arr.length === 3 ? char + char : char))
+    .join('')
+    .slice(0, 6)
+    .padEnd(6, '0');
+
+export const cssColorToHex = (color?: string | null): string | undefined => {
+  if (!color) return undefined;
+  const trimmed = color.trim();
+  if (
+    !trimmed ||
+    trimmed === 'transparent' ||
+    trimmed === 'rgba(0, 0, 0, 0)'
+  ) {
+    return undefined;
+  }
+
+  if (trimmed.startsWith('#')) {
+    return normalizeHex(trimmed);
+  }
+
+  const rgbMatch = trimmed.match(RGB_REGEX);
+  if (rgbMatch) {
+    const r = Number(rgbMatch[1]).toString(16).padStart(2, '0');
+    const g = Number(rgbMatch[2]).toString(16).padStart(2, '0');
+    const b = Number(rgbMatch[3]).toString(16).padStart(2, '0');
+    const alpha = rgbMatch[4] ? Number(rgbMatch[4]) : 1;
+    if (alpha === 0) return undefined;
+    return `${r}${g}${b}`.toUpperCase();
+  }
+
+  return undefined;
+};
+
+export const getComputedColor = (element: HTMLElement): string | undefined => {
+  const style = window.getComputedStyle(element);
+  return cssColorToHex(style.color);
+};
+
+export const getComputedBackgroundColor = (
+  element: HTMLElement
+): string | undefined => {
+  const style = window.getComputedStyle(element);
+  return cssColorToHex(style.backgroundColor);
+};
+
 /**
  * Get computed font family and map to Word font
  */

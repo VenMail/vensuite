@@ -1,5 +1,5 @@
 <template>
-  <div class="w-80 max-w-80 min-w-0 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+  <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Header -->
     <div class="p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
       <div class="flex items-center justify-between">

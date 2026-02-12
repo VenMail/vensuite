@@ -1,6 +1,7 @@
 import { ElementParser } from "./ElementParser";
-import { FileChild, Paragraph, TextRun } from "docx";
-import { getComputedAlignment } from "../../utils/exportUtils";
+import { FileChild } from "docx";
+import { ListHandler } from "./ListHandler";
+import { orderedConfig } from "./util/listConfig";
 import type { Exporter } from "../Exporter";
 
 /**
@@ -9,42 +10,17 @@ import type { Exporter } from "../Exporter";
  * Handles <ol> elements and converts them to DOCX numbered lists
  */
 export class OrderedListParser extends ElementParser {
+  private handler = new ListHandler(orderedConfig);
+
   constructor(exporter: Exporter) {
     super(exporter, 3); // Priority 3 - process after headings
   }
 
-  public parse(element: HTMLElement): FileChild | FileChild[] | null {
-    if (element.tagName !== "OL") return null;
-
-    const paragraphs: Paragraph[] = [];
-    const listItems = element.querySelectorAll('li');
-    const alignment = getComputedAlignment(element);
-
-    listItems.forEach((li, index) => {
-      const liText = li.textContent?.trim();
-      if (liText) {
-        paragraphs.push(new Paragraph({
-          children: [
-            new TextRun({
-              text: `${index + 1}. `,
-              bold: true,
-            }),
-            new TextRun({ text: liText })
-          ],
-          alignment: alignment === 'justify' ? 'both' : alignment,
-          numbering: {
-            reference: "numbered-list",
-            level: 0,
-          },
-        }));
-      }
-    });
-
-    return paragraphs.length > 0 ? paragraphs : null;
+  static matches(el: HTMLElement): boolean {
+    return el.tagName === "OL";
   }
 
-  // This static method ensures this parser only processes ordered list elements.
-  static matches(element: HTMLElement): boolean {
-    return element.tagName === "OL";
+  public parse(element: HTMLElement, listInstance: number): FileChild[] {
+    return this.handler.parse(element, listInstance, 0);
   }
 }

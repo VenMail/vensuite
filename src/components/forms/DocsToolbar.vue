@@ -82,6 +82,7 @@
        
       <div v-if="isExpanded" class="tiptap-toolbar__section-label">{{$t('Commons.label.font')}}</div>
       <div class="tiptap-toolbar__group">
+        <ParagraphStylesDropdown :editor="editor" />
         <select
           class="tiptap-toolbar__select bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 focus:border-blue-500 dark:focus:border-blue-400 shadow-sm"
           :value="selectedFontFamily"
@@ -215,6 +216,20 @@
           @click="editor?.chain().focus().setTextAlign('justify').run()"
         >
           <AlignJustify class="h-4 w-4" />
+        </button>
+        <button
+          class="tiptap-toolbar__btn"
+          title="Increase Indent (Tab)"
+          @click="editor?.chain().focus().indent().run()"
+        >
+          <IndentIncrease class="h-4 w-4" />
+        </button>
+        <button
+          class="tiptap-toolbar__btn"
+          title="Decrease Indent (Shift+Tab)"
+          @click="editor?.chain().focus().outdent().run()"
+        >
+          <IndentDecrease class="h-4 w-4" />
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
@@ -857,6 +872,8 @@ import {
   Undo2,
   Underline as UnderlineIcon,
   Upload,
+  IndentIncrease,
+  IndentDecrease,
 } from 'lucide-vue-next';
 import {
   Dialog,
@@ -875,6 +892,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import ChartConfigurator from '@/components/editor/ChartConfigurator.vue';
+import ParagraphStylesDropdown from '@/components/docs/ParagraphStylesDropdown.vue';
 import ImagePicker from '@/components/ImagePicker.vue';
 import type { ChartAttrs } from '@/extensions/chart';
 import { NodeSelection } from '@tiptap/pm/state';

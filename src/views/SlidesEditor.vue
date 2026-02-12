@@ -113,31 +113,76 @@
             </div>
 
             <!-- Properties Panel (Center, Fixed Width) -->
-            <ImprovedPropertiesPanel
-              v-if="!showAnimationPanel"
-              :layout="editor.currentLayout"
-              :background="editor.slideBackground"
-              :transition="editor.slideTransition"
-              :current-theme="editor.currentTheme"
-              :current-layout="editor.currentLayout"
-              @toggle-panel="() => {}"
-              @show-animation-panel="showAnimationPanel = true"
-              @update:layout="handleLayoutChange"
-              @update:background="handleBackgroundChange"
-              @update:transition="handleTransitionChange"
-              @update:theme="handleThemeChange"
-              @apply-template="handleApplyTemplate"
-            />
-            <!-- Animation Panel (replaces properties panel when shown) -->
-            <SlidesAnimationPane
-              v-if="showAnimationPanel"
-              :selected-element="selectedElement"
-              :markdown-element="currentMarkdownElement"
-              :motion-config="editor.getMotionConfig()"
-              @back="showAnimationPanel = false"
-              @close="showAnimationPanel = false"
-              @update-motion-config="handleMotionConfigUpdate"
-            />
+            <div class="w-80 max-w-80 min-w-0 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+              <!-- Tab bar: Layout / Blocks / Animation -->
+              <div class="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <button
+                  @click="showAnimationPanel = false; propertiesTab = 'layout'"
+                  class="flex-1 px-2 py-2 text-xs font-medium transition-colors border-b-2"
+                  :class="!showAnimationPanel && propertiesTab === 'layout'
+                    ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                >
+                  Layout
+                </button>
+                <button
+                  @click="showAnimationPanel = false; propertiesTab = 'blocks'"
+                  class="flex-1 px-2 py-2 text-xs font-medium transition-colors border-b-2"
+                  :class="!showAnimationPanel && propertiesTab === 'blocks'
+                    ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                >
+                  Blocks
+                  <span v-if="hasBlocks" class="ml-1 px-1 py-0.5 text-[10px] bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded">{{ blockInstances.length }}</span>
+                </button>
+                <button
+                  @click="showAnimationPanel = true"
+                  class="flex-1 px-2 py-2 text-xs font-medium transition-colors border-b-2"
+                  :class="showAnimationPanel
+                    ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                >
+                  Motion
+                </button>
+              </div>
+
+              <!-- Layout & Style Panel -->
+              <ImprovedPropertiesPanel
+                v-if="!showAnimationPanel && propertiesTab === 'layout'"
+                :layout="editor.currentLayout"
+                :background="editor.slideBackground"
+                :transition="editor.slideTransition"
+                :current-theme="editor.currentTheme"
+                :current-layout="editor.currentLayout"
+                @toggle-panel="() => {}"
+                @update:layout="handleLayoutChange"
+                @update:background="handleBackgroundChange"
+                @update:transition="handleTransitionChange"
+                @update:theme="handleThemeChange"
+                @apply-template="handleApplyTemplate"
+              />
+
+              <!-- Block Properties Panel -->
+              <BlockPropertiesPanel
+                v-if="!showAnimationPanel && propertiesTab === 'blocks'"
+                :active-block="activeBlock"
+                :markdown-content="editor.currentSlideContent"
+                @update-prop="handleBlockPropUpdate"
+                @insert-block="handleInsertBlock"
+                @close="activeBlock = null"
+              />
+
+              <!-- Animation Panel -->
+              <SlidesAnimationPane
+                v-if="showAnimationPanel"
+                :selected-element="selectedElement"
+                :markdown-element="currentMarkdownElement"
+                :motion-config="editor.getMotionConfig()"
+                @back="showAnimationPanel = false"
+                @close="showAnimationPanel = false"
+                @update-motion-config="handleMotionConfigUpdate"
+              />
+            </div>
 
             <!-- Live Preview: flexible width; expands when arrange mode -->
             <div class="flex-1 min-w-0 h-full" :class="{ 'max-w-[600px]': !arrangeMode }">
@@ -290,6 +335,7 @@ import SlidesThumbnailSidebar from '@/components/slides/SlidesThumbnailSidebar.v
 import SlidesMarkdownEditor from '@/components/slides/SlidesMarkdownEditor.vue';
 import SlidesPreviewPane from '@/components/slides/SlidesPreviewPane.vue';
 import ImprovedPropertiesPanel from '@/components/slides/ImprovedPropertiesPanel.vue';
+import BlockPropertiesPanel from '@/components/slides/BlockPropertiesPanel.vue';
 import SlidesAnimationPane from '@/components/slides/SlidesAnimationPane.vue';
 import SlidesPresenter from '@/components/slides/SlidesPresenter.vue';
 import InfographicsDialog from '@/components/slides/InfographicsDialog.vue';
@@ -307,6 +353,7 @@ import { type SlideTemplate } from '@/utils/slidevMarkdown';
 import { getElementByLineRange, type MarkdownElement } from '@/utils/markdownElementDetector';
 import { toast } from '@/composables/useToast';
 import { updateElementPosition, updateElementSize } from '@/utils/markdownPositionSync';
+import { extractBlockInstances, updateBlockPropInMarkdown, type BlockInstance } from '@/utils/slideBlocks';
 
 const route = useRoute();
 const router = useRouter();
@@ -334,6 +381,18 @@ const showRuler = ref(false);
 const showThumbnails = ref(true);
 const showProperties = ref(false);
 const spellCheckEnabled = ref(true);
+const propertiesTab = ref<'layout' | 'blocks'>('layout');
+
+// Block editing state
+const activeBlock = ref<BlockInstance | null>(null);
+
+const blockInstances = computed(() => {
+  const content = editor.currentSlideContent;
+  if (!content) return [];
+  return extractBlockInstances(content);
+});
+
+const hasBlocks = computed(() => blockInstances.value.length > 0);
 
 // Animation State
 const showAnimationPanel = ref(false);
@@ -614,6 +673,29 @@ function handleMotionConfigUpdate(motionConfig: Record<string, any>) {
   editor.setMotionConfig(motionConfig);
 }
 
+// Block editing handlers
+function handleBlockPropUpdate(payload: { blockId: string; propKey: string; propValue: any }) {
+  const content = editor.currentSlideContent;
+  const updated = updateBlockPropInMarkdown(content, payload.blockId, payload.propKey, payload.propValue);
+  if (updated !== content) {
+    editor.updateSlideContent(updated);
+    slideStore.markDirty();
+    // Re-resolve active block after update
+    nextTick(() => {
+      const instances = extractBlockInstances(editor.currentSlideContent);
+      const match = instances.find(b => b.blockId === payload.blockId);
+      if (match) activeBlock.value = match;
+    });
+  }
+}
+
+function handleInsertBlock(markdown: string) {
+  const currentContent = editor.currentSlideContent;
+  const separator = currentContent.trim() ? '\n\n' : '';
+  editor.updateSlideContent(currentContent + separator + markdown);
+  slideStore.markDirty();
+}
+
 function handleClearSelection() {
   if (selectedElement.value) {
     selectedElement.value.classList.remove('element-selected');
@@ -635,6 +717,24 @@ function handleElementSelection(
     el.classList.remove('element-selected');
   });
   element.classList.add('element-selected');
+
+  // Check if the selected element (or an ancestor) is a container block
+  const blockEl = element.closest('[data-block-type]') as HTMLElement | null;
+  if (blockEl) {
+    const blockType = blockEl.getAttribute('data-block-type');
+    const blockId = blockEl.getAttribute('data-block-id');
+    if (blockType && blockId) {
+      const match = blockInstances.value.find(b => b.blockId === blockId);
+      if (match) {
+        activeBlock.value = match;
+        showAnimationPanel.value = false;
+        propertiesTab.value = 'blocks';
+        console.log('🧱 Block selected:', blockType, blockId);
+      }
+    }
+  } else {
+    activeBlock.value = null;
+  }
   
   // Update markdown element if line numbers provided
   if (markdownLineStart !== undefined) {
@@ -647,9 +747,19 @@ function handleElementSelection(
     if (newElement) {
       console.log('🎯 Markdown element found:', newElement.type);
       currentMarkdownElement.value = newElement;
-      showAnimationPanel.value = false; // Show properties panel
+      showAnimationPanel.value = false;
       
-      // Sync markdown editor cursor (optional, best effort)
+      // Also try to match to a block instance by line range
+      if (!activeBlock.value) {
+        const matchByLine = blockInstances.value.find(
+          b => markdownLineStart >= b.startLine && markdownLineStart <= b.endLine
+        );
+        if (matchByLine) {
+          activeBlock.value = matchByLine;
+          console.log('🧱 Block matched by line range:', matchByLine.type);
+        }
+      }
+      
       syncMarkdownEditorCursor(markdownLineStart);
     } else {
       console.log('🎯 No markdown element found');
@@ -869,17 +979,174 @@ function getTemplateBySlug(slug: string) {
       name: "Venmail Pitch",
       slug: "venmail-pitch",
       slides: [
-        { 
-          content: "---\nlayout: cover\n\n# Venmail OS\n\n<div class=\"cinematic-frame border-purple-700 text-center p-12\">\n  <div class=\"w-20 h-20 mx-auto mb-6\">\n    <div class=\"icon-rotate text-purple-400\">🎯</div>\n  </div>\n  \n  <h1 class=\"text-6xl font-bold text-white mb-4\">Venmail OS</h1>\n  \n  <p class=\"text-2xl text-purple-300 mb-6\">One Operating System for Modern Communication</p>\n  \n  <p class=\"text-lg text-purple-400\">Email • Office • Collaboration • Meetings — One Platform, Unlimited Users</p>\n</div>", 
-          notes: "Cover slide with cinematic frame and animated icon" 
+        {
+          content: `---
+layout: cover
+
+:::cover-slide{gradient="purple" align="center"}
+
+# Venmail OS
+
+One Operating System for Modern Communication
+
+*Email • Office • Collaboration • Meetings — One Platform, Unlimited Users*
+:::`,
+          notes: "Cover slide — edit gradient and alignment in the Blocks panel"
         },
-        { 
-          content: "---\nlayout: stats\ntitle: \"Market Opportunity\"\n\n<div class=\"cinematic-frame bg-gradient-blue p-8\">\n  <div class=\"flex items-center gap-4 mb-6\">\n    <div class=\"w-12 h-12 text-blue-400\">📊</div>\n    <h2 class=\"text-4xl font-bold text-white\">Market Opportunity</h2>\n  </div>\n  \n  <div class=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6\">\n    <div class=\"metric-card\">\n      <div class=\"text-3xl font-bold text-blue-400\">$4.2B</div>\n      <div class=\"text-lg text-gray-300\">Market Size</div>\n      <div class=\"text-sm text-gray-400\">Growing 18% YoY</div>\n    </div>\n    \n    <div class=\"metric-card\">\n      <div class=\"text-3xl font-bold text-emerald-400\">250M+</div>\n      <div class=\"text-lg text-gray-300\">Active Users</div>\n      <div class=\"text-sm text-gray-400\">Global reach</div>\n    </div>\n    \n    <div class=\"metric-card\">\n      <div class=\"text-3xl font-bold text-purple-400\">85%</div>\n      <div class=\"text-lg text-gray-300\">Satisfaction</div>\n      <div class=\"text-sm text-gray-400\">Industry leading</div>\n    </div>\n    \n    <div class=\"metric-card\">\n      <div class=\"text-3xl font-bold text-amber-400\">12M</div>\n      <div class=\"text-lg text-gray-300\">Enterprises</div>\n      <div class=\"text-sm text-gray-400\">Fortune 500</div>\n    </div>\n  </div>\n</div>", 
-          notes: "Market opportunity slide with metrics and cinematic frame" 
+        {
+          content: `---
+layout: stats
+title: "Market Opportunity"
+
+:::market-slide{gradient="blue"}
+
+:::headline{pill="Market Opportunity"}
+## $160M ARR in underserved SMB markets
+Email • Collaboration • Automation — one stack
+:::
+
+:::metrics{cols=4}
+:::metric{value="$4.2B" label="Market Size" detail="Growing 18% YoY" color="blue"}
+:::
+:::metric{value="250M+" label="Active Users" detail="Global reach" color="emerald"}
+:::
+:::metric{value="85%" label="Satisfaction" detail="Industry leading" color="purple"}
+:::
+:::metric{value="12M" label="Enterprises" detail="Fortune 500" color="amber"}
+:::
+:::
+
+:::`,
+          notes: "Market opportunity — click any metric to edit its value, label, and detail in the Blocks panel"
         },
-        { 
-          content: "---\nlayout: content\ntitle: \"Mission\"\n\n<div class=\"cinematic-frame border-emerald-700 p-8\">\n  <div class=\"flex items-center gap-4 mb-6\">\n    <div class=\"w-12 h-12 text-emerald-400\">🚀</div>\n    <h2 class=\"text-4xl font-bold text-white\">Our Mission</h2>\n  </div>\n  \n  <div class=\"space-y-4\">\n    <p class=\"text-xl text-gray-300\">Revolutionize business communication with an integrated platform</p>\n    \n    <ul class=\"text-lg text-gray-400 space-y-2\">\n      <li>• Unified email and office suite</li>\n      <li>• Real-time collaboration tools</li>\n      <li>• AI-powered productivity features</li>\n      <li>• Enterprise-grade security</li>\n    </ul>\n  </div>\n</div>", 
-          notes: "Mission slide with cinematic frame and bullet points" 
+        {
+          content: `---
+layout: content
+title: "Our Mission"
+
+:::market-slide{gradient="emerald"}
+
+:::icon-row{icon="🚀" color="emerald"}
+## Our Mission
+:::
+
+Revolutionize business communication with an integrated platform
+
+- Unified email and office suite
+- Real-time collaboration tools
+- AI-powered productivity features
+- Enterprise-grade security
+
+:::`,
+          notes: "Mission slide — edit icon and color in the Blocks panel"
+        },
+        {
+          content: `---
+layout: content
+title: "Product Overview"
+
+:::market-slide{gradient="purple"}
+
+:::headline{pill="Product"}
+## All-in-One Platform
+:::
+
+:::card-grid{cols=2}
+:::card{title="Email Suite"}
+- **Smart Inbox**: AI-powered email triage
+- **Templates**: Professional email templates
+- **Scheduling**: Send later & follow-ups
+:::
+:::card{title="Collaboration"}
+- **Real-time Docs**: Live co-editing
+- **Video Meetings**: Built-in conferencing
+- **Team Chat**: Instant messaging
+:::
+:::
+
+:::`,
+          notes: "Product overview — add/remove cards and edit titles in the Blocks panel"
+        },
+        {
+          content: `---
+layout: content
+title: "Market Sizing"
+
+:::market-slide{gradient="blue"}
+
+:::icon-row{icon="📊" color="blue"}
+## Market Sizing
+:::
+
+:::data-list
+:::data-item{label="TAM" value="400M SMBs globally — $8.5B email software market"}
+:::
+:::data-item{label="SAM" value="40M tech-enabled SMBs in target geographies"}
+:::
+:::data-item{label="SOM" value="150K+ SMBs reachable via partnerships & direct sales"}
+:::
+:::
+
+:::spacer{size="4"}
+:::
+
+:::metrics{cols=3}
+:::metric{value="$50B+" label="Public Sector" detail="12% CAGR" color="blue"}
+:::
+:::metric{value="$30K" label="Effective ACV" detail="Storage-based pricing" color="emerald"}
+:::
+:::metric{value="3x" label="LTV/CAC" detail="Target ratio" color="purple"}
+:::
+:::
+
+:::`,
+          notes: "Market sizing — edit TAM/SAM/SOM values and metrics in the Blocks panel"
+        },
+        {
+          content: `---
+layout: content
+title: "Roadmap"
+
+:::market-slide{gradient="slate"}
+
+:::headline{pill="Roadmap"}
+## Go-to-Market Timeline
+:::
+
+:::card-grid{cols=3}
+:::card{title="Phase 1" badge="Q1-Q2 2025"}
+- Launch beta program
+- 500 pilot customers
+- Core email + docs
+:::
+:::card{title="Phase 2" badge="Q3-Q4 2025"}
+- Public launch
+- 5,000 customers
+- Video + chat integration
+:::
+:::card{title="Phase 3" badge="2026"}
+- Enterprise tier
+- 25,000 customers
+- AI automation suite
+:::
+:::
+
+:::`,
+          notes: "Roadmap — edit phases, badges, and milestones in the Blocks panel"
+        },
+        {
+          content: `---
+layout: cover
+
+:::cover-slide{gradient="purple" align="center"}
+
+# Thank You
+
+**hello@venmail.com** • venmail.com
+
+*Let's build the future of business communication together*
+:::`,
+          notes: "Closing slide — edit contact info directly in the markdown"
         }
       ]
     }
@@ -888,30 +1155,77 @@ function getTemplateBySlug(slug: string) {
   return templates.find(t => t.slug === slug);
 }
 
+function parseTemplateSlide(rawContent: string) {
+  const trimmed = rawContent?.trimStart() || '';
+  if (!trimmed.startsWith('---')) {
+    return { content: rawContent, frontmatter: undefined };
+  }
+
+  const lines = trimmed.split('\n');
+  const frontmatterLines: string[] = [];
+  let cursor = 1; // skip opening ---
+  let frontmatterEnded = false;
+
+  while (cursor < lines.length) {
+    const line = lines[cursor];
+    const normalized = line.trim();
+
+    if (normalized === '---') {
+      cursor++;
+      frontmatterEnded = true;
+      break;
+    }
+
+    if (!normalized) {
+      cursor++;
+      frontmatterEnded = true;
+      break;
+    }
+
+    frontmatterLines.push(line);
+    cursor++;
+  }
+
+  const frontmatter = frontmatterLines.reduce<Record<string, any>>((acc, rawLine) => {
+    const delimiterIndex = rawLine.indexOf(':');
+    if (delimiterIndex === -1) return acc;
+
+    const key = rawLine.slice(0, delimiterIndex).trim();
+    let value = rawLine.slice(delimiterIndex + 1).trim();
+    value = value.replace(/^"|"$/g, '').replace(/^'|'$/g, '');
+    acc[key] = value;
+    return acc;
+  }, {});
+
+  const bodyStart = frontmatterEnded ? cursor : 1;
+  const content = lines.slice(bodyStart).join('\n').trimStart();
+
+  return { content, frontmatter };
+}
+
 async function applyTemplateSlides(template: any) {
-  // Clear existing slides by setting empty array
-  editor.setSlides([]);
-  
-  // Set theme if this is the Venmail Pitch template
-  if (template.slug === 'venmail-pitch') {
-    editor.currentTheme = 'venmail-pitch';
-  }
-  
-  for (const slideData of template.slides) {
-    editor.addSlide();
-    editor.updateSlideContent(slideData.content);
-    if (slideData.notes) {
-      editor.updateSlideNotes(slideData.notes);
-    }
-    // Move to next slide for content
-    if (slideData !== template.slides[template.slides.length - 1]) {
-      editor.nextSlide();
-    }
-  }
-  
-  // Go back to first slide
+  const timestamp = Date.now();
+  const slides = template.slides.map((slideData: any, index: number) => {
+    const { content, frontmatter } = parseTemplateSlide(slideData.content || '');
+    return {
+      id: `${template.slug}-${timestamp}-${index}`,
+      content: content || '# New Slide',
+      notes: slideData.notes || '',
+      frontmatter: {
+        ...(frontmatter || {}),
+        ...(slideData.frontmatter || {})
+      }
+    };
+  });
+
+  editor.setSlides(slides);
   editor.selectSlide(0);
-  // Note: selectSlide doesn't trigger onSlideChange, so manually mark dirty
+
+  const themeSlug = template.slug === 'blank' ? 'default' : template.slug;
+  if (themeSlug) {
+    slideStore.setTheme(themeSlug);
+  }
+
   slideStore.markDirty();
 }
 

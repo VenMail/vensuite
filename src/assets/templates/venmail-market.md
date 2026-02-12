@@ -24,126 +24,74 @@ motion:
 background: '#0f172a'
 ---
 
-<section class="venmail-market-slide bg-gradient-blue text-white">
-  <header class="market-headline" data-motion-id="headline">
-    <div class="market-pill">Market Opportunity</div>
-    <div class="market-title-row">
-      <h1>$120M ARR in underserved SMB markets</h1>
-      <p class="market-tagline">
-        Email • Collaboration • Automation — one stack for 150K+ organizations racing to modernize
-      </p>
-    </div>
-    <div class="market-metrics">
-      <div class="market-metric">
-        <span class="metric-label">Email Software</span>
-        <strong>$8.5B → $13.2B</strong>
-        <small>9.2% CAGR by 2030</small>
-      </div>
-      <div class="market-metric">
-        <span class="metric-label">Target SMBs</span>
-        <strong>150K+</strong>
-        <small>Fastest-growing & least served</small>
-      </div>
-      <div class="market-metric">
-        <span class="metric-label">Public Sector</span>
-        <strong>$50B+</strong>
-        <small>12% CAGR, few competitors</small>
-      </div>
-      <div class="market-metric">
-        <span class="metric-label">Effective ACV</span>
-        <strong>$30K</strong>
-        <small>Storage-based pricing unlocks scale</small>
-      </div>
-    </div>
-  </header>
+:::market-slide{gradient="blue"}
 
-  <div class="market-grid">
-    <article class="market-card" data-motion-id="opportunity">
-      <div class="market-card-title">Market Sweet Spot</div>
-      <ul class="market-list">
-        <li>
-          <span>TAM</span>
-          <strong>400M SMBs globally</strong>
-        </li>
-        <li>
-          <span>SAM</span>
-          <strong>40M tech-enabled SMBs</strong>
-        </li>
-        <li>
-          <span>SOM (Years 1-3)</span>
-          <strong>3.7K orgs / $3M ARR</strong>
-        </li>
-        <li>
-          <span>Monetization</span>
-          <strong>Flat pricing, storage-based tiers</strong>
-        </li>
-      </ul>
-    </article>
+:::headline{pill="Market Opportunity"}
+## $120M ARR in underserved SMB markets
+Email • Collaboration • Automation — one stack for 150K+ organizations racing to modernize
+:::
 
-    <article class="market-card market-highlight" data-motion-id="sizing">
-      <div class="market-card-title">Path to $120M ARR</div>
-      <div class="market-badge">Milestone Plan</div>
-      <ul class="market-list">
-        <li>
-          <span>Phase 1 · Validate</span>
-          <strong>200 design partners → $1M ARR</strong>
-        </li>
-        <li>
-          <span>Phase 2 · Scale</span>
-          <strong>1.2K orgs → $12M ARR</strong>
-        </li>
-        <li>
-          <span>Phase 3 · Expand</span>
-          <strong>5% share of SAM → $120M ARR</strong>
-        </li>
-      </ul>
-    </article>
+:::metrics{cols=4}
+:::metric{value="$8.5B → $13.2B" label="Email Software" detail="9.2% CAGR by 2030" color="blue"}
+:::
+:::metric{value="150K+" label="Target SMBs" detail="Fastest-growing & least served" color="emerald"}
+:::
+:::metric{value="$50B+" label="Public Sector" detail="12% CAGR, few competitors" color="purple"}
+:::
+:::metric{value="$30K" label="Effective ACV" detail="Storage-based pricing unlocks scale" color="amber"}
+:::
+:::
 
-    <article class="market-card" data-motion-id="advantage">
-      <div class="market-card-title">Locale Advantage</div>
-      <ul class="market-list">
-        <li>
-          <span>Native French + Spanish</span>
-          <strong>800M speakers covered</strong>
-        </li>
-        <li>
-          <span>Emerging Markets</span>
-          <strong>Offline-first + telecom partners</strong>
-        </li>
-        <li>
-          <span>Compliance Ready</span>
-          <strong>Local residency + sovereign storage</strong>
-        </li>
-        <li>
-          <span>Integrated Suite</span>
-          <strong>Replace 5+ tools day one</strong>
-        </li>
-      </ul>
-    </article>
+:::card-grid{cols=2}
+:::card{title="Market Sweet Spot"}
+:::data-list
+:::data-item{label="TAM" value="400M SMBs globally"}
+:::
+:::data-item{label="SAM" value="40M tech-enabled SMBs"}
+:::
+:::data-item{label="SOM (Years 1-3)" value="3.7K orgs / $3M ARR"}
+:::
+:::data-item{label="Monetization" value="Flat pricing, storage-based tiers"}
+:::
+:::
+:::
+:::card{title="Path to $120M ARR" badge="Milestone Plan" highlight}
+:::data-list
+:::data-item{label="Phase 1 · Validate" value="200 design partners → $1M ARR"}
+:::
+:::data-item{label="Phase 2 · Scale" value="1.2K orgs → $12M ARR"}
+:::
+:::data-item{label="Phase 3 · Expand" value="5% share of SAM → $120M ARR"}
+:::
+:::
+:::
+:::card{title="Locale Advantage"}
+:::data-list
+:::data-item{label="Native French + Spanish" value="800M speakers covered"}
+:::
+:::data-item{label="Emerging Markets" value="Offline-first + telecom partners"}
+:::
+:::data-item{label="Compliance Ready" value="Local residency + sovereign storage"}
+:::
+:::data-item{label="Integrated Suite" value="Replace 5+ tools day one"}
+:::
+:::
+:::
+:::card{title="Growth Catalysts"}
+:::data-list
+:::data-item{label="Freelance + Hybrid Work" value="Demand for smarter email workflows"}
+:::
+:::data-item{label="Cost Pressure" value="Consolidation from 8 tools → 2"}
+:::
+:::data-item{label="AI Acceleration" value="Automation baked into comms"}
+:::
+:::data-item{label="Infrastructure Moat" value="Owned stack = $500-$2K savings / org"}
+:::
+:::
+:::
+:::
 
-    <article class="market-card" data-motion-id="drivers">
-      <div class="market-card-title">Growth Catalysts</div>
-      <ul class="market-list">
-        <li>
-          <span>Freelance + Hybrid Work</span>
-          <strong>Demand for smarter email workflows</strong>
-        </li>
-        <li>
-          <span>Cost Pressure</span>
-          <strong>Consolidation from 8 tools → 2</strong>
-        </li>
-        <li>
-          <span>AI Acceleration</span>
-          <strong>Automation baked into comms</strong>
-        </li>
-        <li>
-          <span>Infrastructure Moat</span>
-          <strong>Owned stack = $500-$2K savings / org</strong>
-        </li>
-      </ul>
-    </article>
-  </div>
-</section>
+:::
 
 <!--
 
