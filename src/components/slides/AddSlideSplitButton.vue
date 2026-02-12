@@ -32,12 +32,12 @@
     >
       <div class="py-1">
         <!-- Theme-specific templates (if available) -->
-        <template v-if="props.currentTheme && props.currentTheme.includes('venmail') && isThemeTemplateLoaded('venmail')">
+        <template v-if="currentThemeTemplateKey && isThemeTemplateLoaded(currentThemeTemplateKey)">
           <div class="px-3 py-1 text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
-            🎯 Venmail Templates
+            🎯 {{ currentThemeLabel }} Templates
           </div>
           <button
-            v-for="template in getTemplatesForTheme('venmail')"
+            v-for="template in getTemplatesForTheme(currentThemeTemplateKey)"
             :key="template.id"
             class="w-full text-left px-3 py-2 text-sm hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2"
             @click="handleAddThemeTemplate(template)"
@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { Plus, ChevronDown } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { SLIDE_TEMPLATES, type SlideTemplate, getTemplateById } from '@/utils/slidevMarkdown';
@@ -134,16 +134,33 @@ const {
   isThemeTemplateLoaded 
 } = useThemeTemplates();
 
+// Map theme values to template file prefixes and labels
+const themeTemplateMap: Record<string, { key: string; label: string }> = {
+  'venmail-pitch': { key: 'venmail', label: 'Venmail Pitch' },
+  'academic': { key: 'academic', label: 'Academic' },
+  'solutions': { key: 'solutions', label: 'Solutions' },
+};
+
+const currentThemeTemplateKey = computed(() => {
+  return themeTemplateMap[props.currentTheme || 'venmail-pitch']?.key || 'venmail';
+});
+
+const currentThemeLabel = computed(() => {
+  return themeTemplateMap[props.currentTheme || 'venmail-pitch']?.label || 'Theme';
+});
+
 // Load theme templates when component mounts or theme changes
 onMounted(async () => {
-  if (props.currentTheme && props.currentTheme.includes('venmail')) {
-    await loadThemeTemplates('venmail');
+  const key = currentThemeTemplateKey.value;
+  if (key) {
+    await loadThemeTemplates(key);
   }
 });
 
-watch(() => props.currentTheme, async (newTheme) => {
-  if (newTheme && newTheme.includes('venmail')) {
-    await loadThemeTemplates('venmail');
+watch(() => props.currentTheme, async () => {
+  const key = currentThemeTemplateKey.value;
+  if (key) {
+    await loadThemeTemplates(key);
   }
 });
 

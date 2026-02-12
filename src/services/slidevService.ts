@@ -40,7 +40,7 @@ export class SlidevService {
   convertSlidesToMarkdown(slides: SlidevSlide[], options: SlidevExportOptions): string {
     const frontmatter = [
       '---',
-      `theme: ${options.theme || 'default'}`,
+      `theme: ${options.theme || 'venmail-pitch'}`,
       `title: "${options.title || 'Presentation'}"`,
       options.author ? `author: "${options.author}"` : '',
       'download: true',
@@ -243,7 +243,7 @@ export class SlidevService {
           content: markdown,
           title: options.title || 'Presentation',
           author: options.author,
-          theme: options.theme || 'default',
+          theme: options.theme || 'venmail-pitch',
         }),
       });
 
@@ -320,20 +320,11 @@ export class SlidevService {
       console.warn('Failed to fetch themes from server, using defaults');
     }
 
-    // Fallback themes
+    // Fallback themes — 3 premium themes
     return [
-      { name: 'default', description: t('Services.SlidevService.text.default_slidev_theme') },
-      { name: 'seriph', description: t('Services.SlidevService.text.serif_typography_theme') },
-      { name: 'shades-of-purple', description: t('Services.SlidevService.text.purple_gradient_theme') },
-      { name: 'apple-basic', description: 'Apple-style presentation' },
-      { name: 'bricks', description: t('Services.SlidevService.text.brick_wall_background_theme') },
-      { name: 'carbon', description: t('Services.SlidevService.text.dark_carbon_fiber_theme') },
-      { name: 'circuit-board', description: t('Services.SlidevService.text.tech_circuit_board_theme') },
-      { name: 'gradient', description: t('Services.SlidevService.text.gradient_background_theme') },
-      { name: 'mini', description: t('Services.SlidevService.text.compact_presentation_theme') },
-      { name: 'penguin', description: t('Services.SlidevService.text.linux_penguin_theme') },
-      { name: 'science', description: t('Services.SlidevService.text.scientific_presentation_theme') },
-      { name: 'vibrant', description: t('Services.SlidevService.text.vibrant_colors_theme') },
+      { name: 'venmail-pitch', description: 'Professional pitch deck with cinematic frames' },
+      { name: 'academic', description: 'Scholarly presentations with clean serif typography' },
+      { name: 'solutions', description: 'Demos, proposals, and market research presentations' },
     ];
   }
 

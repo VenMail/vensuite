@@ -451,24 +451,20 @@ const lastSavedText = computed(() => {
 // Theme and layout helper functions
 const currentThemePreview = computed(() => {
   const themePreviews: Record<string, string> = {
-    'default': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'venmail-pitch': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'seriph': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    'apple-basic': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    'shades-of-purple': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'venmail-pitch': 'linear-gradient(135deg, #0f172a 0%, #8B5CF6 50%, #10B981 100%)',
+    'academic': 'linear-gradient(135deg, #1B2A4A 0%, #C9A84C 50%, #FAF7F0 100%)',
+    'solutions': 'linear-gradient(135deg, #1A1A2E 0%, #00D4FF 50%, #7C5CFC 100%)',
   };
-  return themePreviews[props.currentTheme || 'default'] || themePreviews.default;
+  return themePreviews[props.currentTheme || 'venmail-pitch'] || themePreviews['venmail-pitch'];
 });
 
 function getThemeCategory(theme?: string): string {
   const categories: Record<string, string> = {
-    'default': 'Modern',
-    'venmail-pitch': 'Business',
-    'seriph': 'Elegant',
-    'apple-basic': 'Clean',
-    'shades-of-purple': 'Vibrant',
+    'venmail-pitch': 'Pitch Deck',
+    'academic': 'Academic',
+    'solutions': 'Proposal / Demo',
   };
-  return categories[theme || 'default'] || 'Custom';
+  return categories[theme || 'venmail-pitch'] || 'Custom';
 }
 
 function getLayoutPreviewClass(layout?: string): string {

@@ -1,7 +1,8 @@
 <template>
   <div
     v-if="currentQuestion"
-    class="relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 rounded-3xl border px-6 py-8 transition bg-white/95 dark:bg-gray-900/60 border-gray-200/80 dark:border-gray-700/70 shadow-xl"
+    class="relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 rounded-3xl border px-6 py-8 transition shadow-xl"
+    style="background: var(--player-surface, rgba(255,255,255,0.95)); border-color: var(--player-surface-border, rgba(203,213,225,0.5));"
   >
     <div class="space-y-6">
       <div v-if="showProgress" class="space-y-4">
@@ -17,7 +18,7 @@
           </p>
         </div>
 
-        <div class="relative h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+        <div class="relative h-2 w-full overflow-hidden rounded-full" style="background: var(--player-progress-track, rgba(226,232,240,0.95));">
           <div
             class="h-full bg-gradient-to-r from-[var(--player-accent)] to-[var(--player-accent-strong)] transition-all duration-500 ease-out"
             :style="{ width: `${progressPercent}%` }"
@@ -33,14 +34,15 @@
             :label-placement="labelPlacement"
             :density="density"
             :disabled="isSubmitting"
-            @update:model-value="onAnswerInput"
+            :show-shortcut-labels="true"
+            @update:model-value="onAnswerInputWithAutoAdvance"
             @enter="handleEnter"
           />
         </div>
       </Transition>
     </div>
 
-    <div class="mt-auto flex flex-col gap-4 rounded-2xl border px-6 py-5 transition bg-gray-50/80 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 shadow">
+    <div class="mt-auto flex flex-col gap-4 rounded-2xl border px-6 py-5 transition shadow" style="background: var(--player-muted-surface, rgba(248,250,252,0.85)); border-color: var(--player-muted-border, rgba(203,213,225,0.6));">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-gray-500 dark:text-gray-400">
           {{ footerMessage }}
@@ -54,6 +56,7 @@
             @click="handleBack"
           >
             {{$t('Commons.button.back_2')}}
+            <kbd class="ml-1 hidden sm:inline-flex items-center rounded border border-gray-300/60 dark:border-gray-600/60 bg-gray-100/60 dark:bg-gray-800/60 px-1.5 py-0.5 text-[10px] font-mono leading-none text-gray-500 dark:text-gray-400">Esc</kbd>
           </button>
 
           <button
@@ -69,21 +72,25 @@
           <button
             v-if="hasNextQuestion"
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-gray-900"
+            class="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            :style="{ background: 'var(--player-accent)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--player-accent) 25%, transparent)' }"
             :disabled="isSubmitting || !canProceed"
             @click="handleNext"
           >
             {{$t('Commons.button.next')}}
+            <kbd class="ml-1.5 hidden sm:inline-flex items-center rounded border border-white/30 bg-white/10 px-1.5 py-0.5 text-[10px] font-mono leading-none">Enter ↵</kbd>
           </button>
 
           <button
             v-else
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-60 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-gray-900"
+            class="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            :style="{ background: 'var(--player-accent)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--player-accent) 25%, transparent)' }"
             :disabled="isSubmitting || !canProceed"
             @click="emitComplete"
           >
             {{ isSubmitting ? 'Submitting…' : $t('Commons.button.submit_form') }}
+            <kbd class="ml-1.5 hidden sm:inline-flex items-center rounded border border-white/30 bg-white/10 px-1.5 py-0.5 text-[10px] font-mono leading-none">Enter ↵</kbd>
           </button>
         </div>
       </div>
@@ -103,6 +110,7 @@ import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import QuestionRenderer from '@/components/forms/player/QuestionRenderer.vue';
 import { useFormPlayerStore } from '@/store/formPlayer';
+import { useFormKeyboard } from '@/composables/useFormKeyboard';
 import type { FormDensity, FormLabelPlacement, FormQuestion, TextValidation, FormPhoneQuestion } from '@/types';
 import { defaultValidations } from '@/types';
 
@@ -279,6 +287,72 @@ const handleBack = () => {
 const emitComplete = () => {
   emit('complete');
 };
+
+// Auto-advance for single-choice questions (radio, yesno, rating)
+const AUTO_ADVANCE_DELAY = 400;
+let autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
+
+const onAnswerInputWithAutoAdvance = (value: unknown) => {
+  onAnswerInput(value);
+  const q = currentQuestion.value;
+  if (!q) return;
+  const autoAdvanceTypes = ['radio', 'yesno', 'rating'];
+  if (autoAdvanceTypes.includes(q.type) && hasNextQuestion.value) {
+    if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+    autoAdvanceTimer = setTimeout(() => {
+      handleNext();
+    }, AUTO_ADVANCE_DELAY);
+  }
+};
+
+// Keyboard navigation
+const currentQuestionType = computed(() => currentQuestion.value?.type ?? null);
+const currentOptionCount = computed(() => {
+  const q = currentQuestion.value;
+  if (!q) return 0;
+  if ('options' in q && Array.isArray((q as any).options)) return (q as any).options.length;
+  return 0;
+});
+const submittingRef = computed(() => props.isSubmitting ?? false);
+
+const handleKeyboardSelectOption = (index: number) => {
+  const q = currentQuestion.value;
+  if (!q) return;
+  const opts = ('options' in q ? (q as any).options : []) as { value: string }[];
+  if (index >= opts.length) return;
+  const optionValue = opts[index].value;
+  if (q.type === 'radio' || q.type === 'select') {
+    onAnswerInputWithAutoAdvance(optionValue);
+  } else if (q.type === 'checkbox' || q.type === 'tags') {
+    const current = Array.isArray(playerStore.getAnswerValue(q.id)) ? [...(playerStore.getAnswerValue(q.id) as string[])] : [];
+    const idx = current.indexOf(optionValue);
+    if (idx !== -1) current.splice(idx, 1);
+    else current.push(optionValue);
+    onAnswerInput(current);
+  }
+};
+
+const handleKeyboardYes = () => {
+  onAnswerInputWithAutoAdvance(true);
+};
+
+const handleKeyboardNo = () => {
+  onAnswerInputWithAutoAdvance(false);
+};
+
+useFormKeyboard({
+  onNext: () => {
+    if (hasNextQuestion.value) handleNext();
+    else if (canProceed.value) emitComplete();
+  },
+  onBack: handleBack,
+  onSelectOption: handleKeyboardSelectOption,
+  onYes: handleKeyboardYes,
+  onNo: handleKeyboardNo,
+  questionType: currentQuestionType,
+  optionCount: currentOptionCount,
+  isSubmitting: submittingRef,
+});
 </script>
 
 <style scoped>

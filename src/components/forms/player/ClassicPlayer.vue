@@ -1,6 +1,6 @@
 <template>
   <div v-if="questionSections.length" class="mx-auto my-4 w-full max-w-4xl px-3 sm:px-5 lg:px-6">
-    <header class="flex flex-col gap-4 border-b border-gray-200 pb-5 dark:border-gray-700">
+    <header class="flex flex-col gap-4 border-b pb-5" style="border-color: var(--player-surface-border, rgba(203,213,225,0.5));">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div class="flex flex-col gap-2.5">
           <span class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-gray-500 dark:text-gray-400">
@@ -20,7 +20,7 @@
           <span>{{ answeredCount }} of {{ totalQuestions }} answered</span>
           <span>{{ progressPercent }}%</span>
         </div>
-        <div class="h-1.5 w-full overflow-hidden rounded-full bg-gradient-to-r from-gray-200 via-gray-200 to-gray-300 dark:from-gray-700 dark:via-gray-700 dark:to-gray-600">
+        <div class="h-1.5 w-full overflow-hidden rounded-full" style="background: var(--player-progress-track, rgba(226,232,240,0.95));">
           <div
             class="h-full bg-gradient-to-r from-[var(--player-accent)] to-[var(--player-accent-strong)] transition-all duration-500 ease-out"
             :style="{ width: `${progressPercent}%` }"
@@ -110,7 +110,8 @@
     </main>
 
     <footer
-      class="flex flex-col gap-3 border-t border-gray-200 pt-5 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between"
+      class="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between"
+      style="border-color: var(--player-surface-border, rgba(203,213,225,0.5));"
     >
       <div class="flex flex-col gap-1">
         <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
@@ -123,7 +124,8 @@
 
       <button
         type="button"
-        class="inline-flex items-center gap-2 rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-primary-500 dark:shadow-primary-900/30 dark:hover:bg-primary-600 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-900"
+        class="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        :style="{ background: 'var(--player-accent)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--player-accent) 25%, transparent)' }"
         :disabled="isSubmitting || !canSubmit"
         @click="emitSubmit"
       >
@@ -182,11 +184,11 @@ const questionGridClass = computed(() => {
 });
 
 const questionCardClass = computed(() => {
-  const base = ['rounded-2xl border border-gray-200/80 bg-white/95 shadow-sm transition hover:-translate-y-0.5 dark:border-gray-700/70 dark:bg-gray-900/60'];
+  const base = ['rounded-2xl shadow-sm transition hover:-translate-y-0.5 question-card--themed'];
   if (resolvedDensity.value === 'compact') {
-    base.push('px-4 py-3 hover:border-primary-200/60 dark:hover:border-primary-500/30');
+    base.push('px-4 py-3');
   } else {
-    base.push('px-5 py-4 hover:border-primary-200/70 dark:hover:border-primary-500/40');
+    base.push('px-5 py-4');
   }
   return base.join(' ');
 });
@@ -627,5 +629,14 @@ const emitSubmit = () => {
   padding: 3rem;
   text-align: center;
   color: #64748b;
+}
+
+.question-card--themed {
+  border: 1px solid var(--player-surface-border, rgba(203, 213, 225, 0.5));
+  background: var(--player-surface, rgba(255, 255, 255, 0.95));
+}
+
+.question-card--themed:hover {
+  border-color: color-mix(in srgb, var(--player-accent) 30%, var(--player-surface-border, rgba(203, 213, 225, 0.5)));
 }
 </style>

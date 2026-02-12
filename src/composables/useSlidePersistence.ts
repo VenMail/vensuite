@@ -540,7 +540,7 @@ download: true
       
       // Configure Slidev conversion options
       const slidevOptions: SlidevSlideOptions = {
-        theme: 'default',
+        theme: 'venmail-pitch',
         defaultLayout: 'default',
         preserveImages: true,
         detectMermaid: true,

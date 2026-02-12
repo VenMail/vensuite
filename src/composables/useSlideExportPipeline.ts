@@ -193,7 +193,7 @@ export class SlideExportPipeline {
         html: htmlContent,
         format: 'pdf',
         title: options.title || 'presentation',
-        theme: options.theme || 'default',
+        theme: options.theme || 'venmail-pitch',
         orientation: options.orientation || 'portrait',
         includeNotes: options.includeNotes || false
       })
@@ -256,7 +256,7 @@ export class SlideExportPipeline {
       body: JSON.stringify({
         content: slidevMarkdown,
         title: options.title || 'presentation',
-        theme: options.theme || 'default'
+        theme: options.theme || 'venmail-pitch'
       })
     });
 

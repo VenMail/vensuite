@@ -370,7 +370,7 @@ async function loadThumbnail(deckId: string) {
 // Create new presentation with template
 async function createNewPresentation(template?: SlideTemplate) {
   const title = template ? `${template.name} Presentation` : 'New Presentation';
-  const theme = template?.slug || 'default';
+  const theme = template?.slug || 'venmail-pitch';
   
   const newDeck = await createSlideDeck(title, theme);
   if (newDeck) {

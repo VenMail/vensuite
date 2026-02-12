@@ -101,13 +101,11 @@ const emit = defineEmits<{
   (e: 'update:layout', value: string): void;
 }>();
 
-// Available themes with previews
+// Available themes with previews — 3 premium themes
 const themes = [
-  { value: 'default', preview: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', category: 'Modern' },
-  { value: 'venmail-pitch', preview: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', category: 'Business' },
-  { value: 'seriph', preview: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', category: 'Elegant' },
-  { value: 'apple-basic', preview: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', category: 'Clean' },
-  { value: 'shades-of-purple', preview: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', category: 'Vibrant' },
+  { value: 'venmail-pitch', preview: 'linear-gradient(135deg, #0f172a 0%, #8B5CF6 50%, #10B981 100%)', category: 'Pitch Deck' },
+  { value: 'academic', preview: 'linear-gradient(135deg, #1B2A4A 0%, #C9A84C 50%, #FAF7F0 100%)', category: 'Academic' },
+  { value: 'solutions', preview: 'linear-gradient(135deg, #1A1A2E 0%, #00D4FF 50%, #7C5CFC 100%)', category: 'Proposal / Demo' },
 ];
 
 // Layouts with visual previews
@@ -152,7 +150,7 @@ const layouts = [
 // Computed properties
 const currentThemeLabel = computed(() => {
   const theme = themes.find(t => t.value === props.currentTheme);
-  return theme ? theme.value.charAt(0).toUpperCase() + theme.value.slice(1) : 'Default';
+  return theme ? theme.category : 'Venmail Pitch';
 });
 
 const currentLayoutLabel = computed(() => {

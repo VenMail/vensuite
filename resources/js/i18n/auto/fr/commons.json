@@ -91,6 +91,7 @@
       "request_access": "Demander l'accès",
       "reset": "Réinitialiser",
       "restore": "Rétablir",
+      "resume": "Reprendre",
       "resume_responses": "Reprendre les réponses",
       "retry": "Réessayer",
       "right": "➡️ Right",
@@ -111,6 +112,7 @@
       "skip_setup": "Passer la configuration",
       "sort": "Trier",
       "sort_2": "Sort:",
+      "start_over": "Recommencer",
       "stop_responses": "Arrêter les réponses",
       "submit_form": "Envoyer le formulaire",
       "transpose": "🔄 Transpose",
@@ -196,6 +198,7 @@
       "version_history": "Historique des versions",
       "webhooks": "Webhooks",
       "welcome": "Bienvenue",
+      "welcome_back": "Bon retour !",
       "your_workspace": "Your Workspace,"
     },
     "label": {
@@ -501,7 +504,16 @@
       "your_organization": "votre organisation",
       "your_rules": "Your Rules",
       "zoom_in": "Agrandir",
-      "zoom_out": "Réduire"
+      "zoom_out": "Réduire",
+      "characters": "caractères",
+      "offline": "Hors ligne",
+      "page": "Page",
+      "saved": "Enregistré",
+      "saving": "Enregistrement...",
+      "suggesting": "Suggestion",
+      "unsaved": "Non enregistré",
+      "view_only": "Affichage uniquement",
+      "words": "mots"
     },
     "toast": {
       "visibility_updated": "Visibility updated"

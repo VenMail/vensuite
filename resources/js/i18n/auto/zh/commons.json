@@ -91,6 +91,7 @@
       "request_access": "请求访问",
       "reset": "重置",
       "restore": "恢复",
+      "resume": "继续",
       "resume_responses": "恢复响应",
       "retry": "重试",
       "right": "➡️ Right",
@@ -111,6 +112,7 @@
       "skip_setup": "跳过设置",
       "sort": "排序",
       "sort_2": "Sort:",
+      "start_over": "重新开始",
       "stop_responses": "停止响应",
       "submit_form": "提交表单",
       "transpose": "🔄 Transpose",
@@ -196,6 +198,7 @@
       "version_history": "版本历史",
       "webhooks": "网络钩子",
       "welcome": "欢迎",
+      "welcome_back": "欢迎回来！",
       "your_workspace": "Your Workspace,"
     },
     "label": {
@@ -501,7 +504,16 @@
       "your_organization": "你的组织",
       "your_rules": "Your Rules",
       "zoom_in": "放大",
-      "zoom_out": "缩小"
+      "zoom_out": "缩小",
+      "characters": "字符",
+      "offline": "离线",
+      "page": "页面",
+      "saved": "已保存",
+      "saving": "正在保存...",
+      "suggesting": "建议中",
+      "unsaved": "未保存",
+      "view_only": "仅查看",
+      "words": "单词"
     },
     "toast": {
       "visibility_updated": "Visibility updated"

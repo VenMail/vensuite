@@ -153,6 +153,16 @@ function determineTemplateCategory(templateId: string, title: string): string {
     return 'content';
   }
   
+  // Academic slides
+  if (id.includes('methodology') || id.includes('findings') || id.includes('references') || id.includes('literature')) {
+    return 'content';
+  }
+  
+  // Solutions/Proposal slides
+  if (id.includes('demo') || id.includes('proposal') || id.includes('capability') || id.includes('capabilities')) {
+    return 'content';
+  }
+  
   // Pricing/Market slides
   if (id.includes('pricing') || id.includes('market')) {
     return 'data';
@@ -191,6 +201,18 @@ function generateDescription(templateId: string, content: string): string {
   if (id.includes('market')) {
     return 'Market opportunity and target audience';
   }
+  if (id.includes('methodology')) {
+    return 'Research design, data collection, and analysis';
+  }
+  if (id.includes('findings')) {
+    return 'Key results and discussion';
+  }
+  if (id.includes('references')) {
+    return 'References and contact information';
+  }
+  if (id.includes('demo')) {
+    return 'Platform capabilities and feature showcase';
+  }
   if (id.includes('thank')) {
     return 'Thank you slide with contact info';
   }
@@ -212,6 +234,10 @@ function getTemplateIcon(templateId: string): string {
   if (id.includes('solution')) return '💡';
   if (id.includes('pricing')) return '💰';
   if (id.includes('market')) return '📊';
+  if (id.includes('methodology')) return '🔬';
+  if (id.includes('findings')) return '📈';
+  if (id.includes('references')) return '📚';
+  if (id.includes('demo')) return '🖥️';
   if (id.includes('thank')) return '🙏';
   
   return '📄';

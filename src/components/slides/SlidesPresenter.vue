@@ -414,7 +414,7 @@ const props = withDefaults(defineProps<Props>(), {
   themeBackground: '#ffffff',
   themeText: '#1e293b',
   themeStyle: () => ({}),
-  theme: 'default', // Add default theme
+  theme: 'venmail-pitch',
   isPaused: false,
   isDrawingMode: false,
   isPointerMode: false,

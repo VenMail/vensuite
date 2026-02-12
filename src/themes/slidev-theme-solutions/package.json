@@ -1,0 +1,20 @@
+{
+  "name": "slidev-theme-solutions",
+  "version": "1.0.0",
+  "description": "Solutions proposal and market research presentation theme",
+  "keywords": ["slidev-theme", "slidev", "proposal", "solutions", "market-research"],
+  "engines": {
+    "slidev": ">=0.48.0"
+  },
+  "slidev": {
+    "colorSchema": "dark",
+    "defaults": {
+      "aspectRatio": "16/9",
+      "canvasWidth": 1280,
+      "fonts": {
+        "sans": "DM Sans",
+        "mono": "JetBrains Mono"
+      }
+    }
+  }
+}

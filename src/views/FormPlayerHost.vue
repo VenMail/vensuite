@@ -45,6 +45,36 @@
           <button type="button" class="player-host__button" @click="reload">{{$t('Commons.button.retry')}}</button>
         </section>
 
+        <section v-else-if="stage === 'welcome' && showResumePrompt" class="player-host__welcome">
+          <div
+            class="welcome-card rounded-3xl border border-slate-200/70 bg-white/90 text-slate-900 shadow-2xl shadow-slate-900/10 dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-100 dark:shadow-black/40"
+          >
+            <div class="resume-icon mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--player-accent)]/10">
+              <svg class="h-8 w-8 text-[var(--player-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2>{{ $t('Commons.heading.welcome_back') ?? 'Welcome back!' }}</h2>
+            <p class="text-slate-600 dark:text-slate-300">{{ $t('Views.FormPlayerHost.text.you_have_unsaved_progress') ?? 'You have unsaved progress on this form. Would you like to continue where you left off?' }}</p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                type="button"
+                class="player-host__button player-host__button--primary border border-transparent bg-[var(--player-accent)] text-white shadow-lg shadow-primary-500/25 hover:bg-[var(--player-accent-strong)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:shadow-black/40 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-950"
+                @click="resumeForm"
+              >
+                {{ $t('Commons.button.resume') ?? 'Resume' }}
+              </button>
+              <button
+                type="button"
+                class="player-host__button border border-slate-300/60 bg-white/90 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-300 dark:hover:bg-slate-950"
+                @click="startFresh"
+              >
+                {{ $t('Commons.button.start_over') ?? 'Start over' }}
+              </button>
+            </div>
+          </div>
+        </section>
+
         <section v-else-if="stage === 'welcome'" class="player-host__welcome">
           <div
             class="welcome-card rounded-3xl border border-slate-200/70 bg-white/90 text-slate-900 shadow-2xl shadow-slate-900/10 dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-100 dark:shadow-black/40"
@@ -139,6 +169,7 @@ import { fetchPublicForm, submitResponse, updateResponseDraft, finalizeResponseS
 import { fetchForm } from '@/services/forms';
 import { useFormPlayerStore } from '@/store/formPlayer';
 import { usePaymentClient } from '@/composables/usePaymentClient';
+import { useFormProgressCache } from '@/composables/useFormProgressCache';
 import { toast } from '@/composables/useToast';
 import type { FormCompletionScreen, FormDefinition, FormWelcomeScreen, FormDensity, FormLabelPlacement, FormResponse } from '@/types';
 import { useAuthStore } from '@/store/auth';
@@ -156,10 +187,13 @@ const submissionSlug = computed(() => formDefinition.value?.sharing?.share_slug 
 const paymentSlug = computed(() => submissionSlug.value);
 const paymentClient = usePaymentClient({ slug: paymentSlug });
 
+const progressCache = useFormProgressCache();
+
 const formDefinition = ref<FormDefinition | null>(null);
 const isSubmitting = ref(false);
 const loadError = ref<string | null>(null);
 const stage = ref<'loading' | 'welcome' | 'playing' | 'payment' | 'completed' | 'error'>('loading');
+const showResumePrompt = ref(false);
 
 const welcomeScreen = computed<FormWelcomeScreen | null>(() => {
   const screen = formDefinition.value?.welcome_screen;
@@ -330,11 +364,13 @@ const ensureWelcomeStage = () => {
 };
 
 const resetState = () => {
+  progressCache.stopWatching();
   playerStore.reset();
   paymentClient.clearPayment();
   loadError.value = null;
   stage.value = 'loading';
   formDefinition.value = null;
+  showResumePrompt.value = false;
 };
 
 const resolveAuthOptions = () => {
@@ -350,6 +386,15 @@ const applyDefinition = (definition: FormDefinition) => {
   );
   const paymentEnabled = Boolean(definition.payment?.enabled && (definition.payment?.amount_cents ?? 0) > 0);
   playerStore.setPaymentRequired(paymentEnabled);
+
+  // Check for cached progress
+  const savePartial = definition.settings?.save_partial_responses !== false;
+  if (savePartial && progressCache.hasProgress()) {
+    showResumePrompt.value = true;
+    stage.value = 'welcome';
+    return;
+  }
+
   ensureWelcomeStage();
 };
 
@@ -425,7 +470,29 @@ const loadForm = async () => {
 };
 
 const startForm = () => {
+  showResumePrompt.value = false;
   stage.value = 'playing';
+  progressCache.startWatching();
+};
+
+const resumeForm = () => {
+  const restored = progressCache.restoreProgress();
+  showResumePrompt.value = false;
+  if (restored) {
+    stage.value = 'playing';
+    progressCache.startWatching();
+    toast.success('Progress restored. Pick up where you left off!');
+  } else {
+    ensureWelcomeStage();
+    progressCache.startWatching();
+  }
+};
+
+const startFresh = () => {
+  progressCache.clearProgress();
+  showResumePrompt.value = false;
+  ensureWelcomeStage();
+  progressCache.startWatching();
 };
 
 const startPaymentFlow = async (responseId: string) => {
@@ -550,6 +617,8 @@ const submitAnswers = async () => {
 
     paymentClient.clearPayment();
     playerStore.advanceToQuestion(null);
+    progressCache.clearProgress();
+    progressCache.stopWatching();
     stage.value = 'completed';
     toast.success('Response submitted successfully.');
   } catch (error: any) {
@@ -611,6 +680,8 @@ const paymentSuccessUrl = computed(() => {
 const handlePaymentSuccess = () => {
   playerStore.setPaymentState('succeeded');
   playerStore.advanceToQuestion(null);
+  progressCache.clearProgress();
+  progressCache.stopWatching();
   stage.value = 'completed';
   toast.success('Payment confirmed. Thank you!');
   const target = buildSuccessRoute();

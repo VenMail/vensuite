@@ -119,7 +119,8 @@
     },
     "FormPlayerHost": {
       "text": {
-        "we_will_ask_for": "我们将询问您的电子邮件地址，以便发送确认和收据。"
+        "we_will_ask_for": "我们将询问您的电子邮件地址，以便发送确认和收据。",
+        "you_have_unsaved_progress": "您在此表单上有未保存的进度。是否要从上次中断的地方继续？"
       }
     },
     "FormResponses": {

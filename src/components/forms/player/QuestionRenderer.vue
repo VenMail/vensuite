@@ -48,6 +48,9 @@
         :key="option.value"
         class="flex items-center gap-3 cursor-pointer group"
       >
+        <span v-if="showShortcutLabels" class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] font-semibold transition-colors" :class="modelValue === option.value ? 'border-primary-500 bg-primary-500 text-white dark:border-primary-400 dark:bg-primary-400' : 'border-slate-300 bg-white text-slate-500 group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'">
+          {{ getOptionShortcutLabel(idx) }}
+        </span>
         <input
           :id="`${inputId}-${idx}`"
           type="radio"
@@ -56,6 +59,7 @@
           :checked="modelValue === option.value"
           :disabled="disabled"
           class="h-4 w-4 cursor-pointer border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500 dark:focus:ring-primary-400"
+          :class="{ 'sr-only': showShortcutLabels }"
           @change="updateValue(option.value)"
         />
           <span class="text-sm text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
@@ -87,6 +91,9 @@
         :key="option.value"
         class="flex items-center gap-3 cursor-pointer group"
       >
+        <span v-if="showShortcutLabels" class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] font-semibold transition-colors" :class="arrayValue.includes(option.value) ? 'border-primary-500 bg-primary-500 text-white dark:border-primary-400 dark:bg-primary-400' : 'border-slate-300 bg-white text-slate-500 group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'">
+          {{ getOptionShortcutLabel(idx) }}
+        </span>
         <input
           :id="`${inputId}-${idx}`"
           type="checkbox"
@@ -94,6 +101,7 @@
           :checked="arrayValue.includes(option.value)"
           :disabled="disabled"
           class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500 dark:focus:ring-primary-400"
+          :class="{ 'sr-only': showShortcutLabels }"
           @change="toggleCheckbox(option.value, ($event.target as HTMLInputElement).checked)"
         />
           <span class="text-sm text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
@@ -103,19 +111,36 @@
       </fieldset>
 
        
-      <label v-else-if="type === 'yesno'" class="flex items-center gap-3 cursor-pointer group">
-      <input
-        :id="inputId"
-        type="checkbox"
-        :checked="booleanValue"
-        :disabled="disabled"
-        class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500 dark:focus:ring-primary-400"
-        @change="updateValue(($event.target as HTMLInputElement).checked)"
-      />
-        <span class="text-sm text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
-        {{ yesNoLabel }}
-      </span>
-    </label>
+      <div v-else-if="type === 'yesno'" class="flex items-center gap-4">
+        <button
+          type="button"
+          :class="[
+            'inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50',
+            booleanValue === true
+              ? 'border-primary-500 bg-primary-500 text-white dark:border-primary-400 dark:bg-primary-400'
+              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+          ]"
+          :disabled="disabled"
+          @click="updateValue(true)"
+        >
+          <kbd v-if="showShortcutLabels" class="inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold" :class="booleanValue === true ? 'border-white/30 bg-white/10' : 'border-slate-300 dark:border-slate-600'">Y</kbd>
+          Yes
+        </button>
+        <button
+          type="button"
+          :class="[
+            'inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50',
+            booleanValue === false && modelValue != null
+              ? 'border-primary-500 bg-primary-500 text-white dark:border-primary-400 dark:bg-primary-400'
+              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+          ]"
+          :disabled="disabled"
+          @click="updateValue(false)"
+        >
+          <kbd v-if="showShortcutLabels" class="inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold" :class="booleanValue === false && modelValue != null ? 'border-white/30 bg-white/10' : 'border-slate-300 dark:border-slate-600'">N</kbd>
+          No
+        </button>
+      </div>
 
        
       <div v-else-if="isSlider" class="space-y-2">
@@ -217,6 +242,7 @@
 import { computed } from 'vue';
 import type { FormDensity, FormLabelPlacement, FormQuestion, Option, TextValidation, FormPhoneQuestion } from '@/types';
 import { defaultValidations } from '@/types';
+import { getOptionShortcutLabel } from '@/composables/useFormKeyboard';
 
 const props = defineProps<{
   question: FormQuestion;
@@ -224,6 +250,7 @@ const props = defineProps<{
   disabled?: boolean;
   labelPlacement?: FormLabelPlacement;
   density?: FormDensity;
+  showShortcutLabels?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -300,8 +327,6 @@ const numberValue = computed<number>(() => {
 });
 
 const booleanValue = computed(() => Boolean(props.modelValue));
-
-const yesNoLabel = computed(() => options.value?.[0]?.label ?? 'Yes / No');
 
 const fileNames = computed(() => {
   const value = props.modelValue;
@@ -406,4 +431,25 @@ const lengthHint = computed(() => {
 </script>
 
 <style scoped>
+:deep(input:focus),
+:deep(textarea:focus),
+:deep(select:focus) {
+  --tw-ring-color: var(--player-accent, #3b82f6);
+  border-color: var(--player-accent, #3b82f6);
+}
+
+:deep(input[type="radio"]:checked),
+:deep(input[type="checkbox"]:checked) {
+  background-color: var(--player-accent, #3b82f6);
+  border-color: var(--player-accent, #3b82f6);
+}
+
+:deep(input[type="radio"]:focus),
+:deep(input[type="checkbox"]:focus) {
+  --tw-ring-color: var(--player-accent, #3b82f6);
+}
+
+:deep(input[type="range"]) {
+  accent-color: var(--player-accent, #3b82f6);
+}
 </style>

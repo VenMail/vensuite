@@ -119,7 +119,8 @@
     },
     "FormPlayerHost": {
       "text": {
-        "we_will_ask_for": "Nous vous demanderons votre adresse e-mail afin de pouvoir envoyer des confirmations et des reçus."
+        "we_will_ask_for": "Nous vous demanderons votre adresse e-mail afin de pouvoir envoyer des confirmations et des reçus.",
+        "you_have_unsaved_progress": "Vous avez des réponses non enregistrées sur ce formulaire. Souhaitez-vous reprendre là où vous vous êtes arrêté ?"
       }
     },
     "FormResponses": {

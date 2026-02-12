@@ -1497,156 +1497,12 @@ export interface SlidevTheme {
 }
 
 /**
- * Available Slidev themes with full color definitions
+ * Available Slidev themes — 3 premium themes
+ * venmail-pitch: Default cinematic pitch deck (dark, vibrant)
+ * academic: Scholarly presentations with serif typography (light, professional)
+ * solutions: Proposals, demos, and market research (dark, modern)
  */
 export const SLIDEV_THEMES: SlidevTheme[] = [
-  { 
-    value: 'default', 
-    label: 'Default', 
-    description: t('Utils.SlidevMarkdown.text.clean_and_minimal'),
-    colors: {
-      primary: '#3b82f6',
-      secondary: '#64748b',
-      background: '#ffffff',
-      surface: '#f8fafc',
-      text: '#1e293b',
-      textMuted: '#64748b',
-      accent: '#3b82f6'
-    }
-  },
-  { 
-    value: 'seriph', 
-    label: 'Seriph', 
-    description: t('Utils.SlidevMarkdown.text.elegant_serif_typography'),
-    colors: {
-      primary: '#2c3e50',
-      secondary: '#7f8c8d',
-      background: '#fdfcfb',
-      surface: '#f5f4f0',
-      text: '#2c3e50',
-      textMuted: '#7f8c8d',
-      accent: '#e74c3c'
-    },
-    fontFamily: 'Playfair Display, serif'
-  },
-  { 
-    value: 'apple-basic', 
-    label: 'Apple Basic', 
-    description: 'Apple-style presentation',
-    colors: {
-      primary: '#007aff',
-      secondary: '#8e8e93',
-      background: '#ffffff',
-      surface: '#f2f2f7',
-      text: '#1c1c1e',
-      textMuted: '#8e8e93',
-      accent: '#007aff'
-    },
-    fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
-  },
-  { 
-    value: 'dracula', 
-    label: 'Dracula', 
-    description: t('Utils.SlidevMarkdown.text.dark_purple_theme'),
-    colors: {
-      primary: '#bd93f9',
-      secondary: '#6272a4',
-      background: '#282a36',
-      surface: '#44475a',
-      text: '#f8f8f2',
-      textMuted: '#6272a4',
-      accent: '#ff79c6',
-      gradient: 'linear-gradient(135deg, #282a36 0%, #44475a 100%)'
-    }
-  },
-  { 
-    value: 'geist', 
-    label: 'Geist', 
-    description: 'Vercel-inspired design',
-    colors: {
-      primary: '#000000',
-      secondary: '#666666',
-      background: '#ffffff',
-      surface: '#fafafa',
-      text: '#000000',
-      textMuted: '#666666',
-      accent: '#0070f3'
-    },
-    fontFamily: 'Geist, Inter, sans-serif'
-  },
-  { 
-    value: 'unicorn', 
-    label: 'Unicorn', 
-    description: 'Colorful gradient',
-    colors: {
-      primary: '#ff6b6b',
-      secondary: '#4ecdc4',
-      background: '#ffffff',
-      surface: '#fef9f9',
-      text: '#2d3436',
-      textMuted: '#636e72',
-      accent: '#a29bfe',
-      gradient: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #a29bfe 100%)'
-    }
-  },
-  { 
-    value: 'shibainu', 
-    label: 'Shibainu', 
-    description: t('Utils.SlidevMarkdown.text.warm_and_friendly'),
-    colors: {
-      primary: '#f59e0b',
-      secondary: '#78716c',
-      background: '#fffbeb',
-      surface: '#fef3c7',
-      text: '#451a03',
-      textMuted: '#78716c',
-      accent: '#ea580c'
-    }
-  },
-  { 
-    value: 'bricks', 
-    label: 'Bricks', 
-    description: t('Utils.SlidevMarkdown.text.bold_and_structured'),
-    colors: {
-      primary: '#dc2626',
-      secondary: '#78716c',
-      background: '#fef2f2',
-      surface: '#fee2e2',
-      text: '#450a0a',
-      textMuted: '#78716c',
-      accent: '#b91c1c'
-    }
-  },
-  {
-    value: 'night-owl',
-    label: 'Night Owl',
-    description: t('Utils.SlidevMarkdown.text.dark_blue_developer_theme'),
-    colors: {
-      primary: '#82aaff',
-      secondary: '#637777',
-      background: '#011627',
-      surface: '#0b2942',
-      text: '#d6deeb',
-      textMuted: '#637777',
-      accent: '#c792ea',
-      gradient: 'linear-gradient(135deg, #011627 0%, #0b2942 100%)'
-    }
-  },
-  {
-    value: 'rose-pine',
-    label: 'Rosé Pine',
-    description: t('Utils.SlidevMarkdown.text.soft_and_elegant_dark'),
-    colors: {
-      primary: '#ebbcba',
-      secondary: '#908caa',
-      background: '#191724',
-      surface: '#1f1d2e',
-      text: '#e0def4',
-      textMuted: '#908caa',
-      accent: '#c4a7e7',
-      gradient: 'linear-gradient(135deg, #191724 0%, #26233a 100%)'
-    }
-  },
   {
     value: 'venmail-pitch',
     label: 'Venmail Pitch',
@@ -1663,6 +1519,39 @@ export const SLIDEV_THEMES: SlidevTheme[] = [
     },
     fontFamily: 'Inter, system-ui, sans-serif',
     cssPath: '@/themes/slidev-theme-venmail-pitch/styles/index.css'
+  },
+  {
+    value: 'academic',
+    label: 'Academic',
+    description: 'Scholarly presentations with clean serif typography',
+    colors: {
+      primary: '#1B2A4A',
+      secondary: '#C9A84C',
+      background: '#FAF7F0',
+      surface: '#ffffff',
+      text: '#1B2A4A',
+      textMuted: '#6B6560',
+      accent: '#C9A84C'
+    },
+    fontFamily: 'Merriweather Sans, system-ui, sans-serif',
+    cssPath: '@/themes/slidev-theme-academic/styles/index.css'
+  },
+  {
+    value: 'solutions',
+    label: 'Solutions Proposal',
+    description: 'Demos, proposals, and market research presentations',
+    colors: {
+      primary: '#00D4FF',
+      secondary: '#7C5CFC',
+      background: '#1A1A2E',
+      surface: '#22223A',
+      text: '#EEEEF5',
+      textMuted: '#8888A8',
+      accent: '#00D4FF',
+      gradient: 'linear-gradient(135deg, #1A1A2E 0%, #22223A 100%)'
+    },
+    fontFamily: 'DM Sans, system-ui, sans-serif',
+    cssPath: '@/themes/slidev-theme-solutions/styles/index.css'
   }
 ];
 

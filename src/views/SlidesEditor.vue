@@ -1221,7 +1221,7 @@ async function applyTemplateSlides(template: any) {
   editor.setSlides(slides);
   editor.selectSlide(0);
 
-  const themeSlug = template.slug === 'blank' ? 'default' : template.slug;
+  const themeSlug = template.slug === 'blank' ? 'venmail-pitch' : template.slug;
   if (themeSlug) {
     slideStore.setTheme(themeSlug);
   }

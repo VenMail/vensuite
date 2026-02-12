@@ -1,0 +1,21 @@
+{
+  "name": "slidev-theme-academic",
+  "version": "1.0.0",
+  "description": "Academic presentation theme with clean typography and scholarly design",
+  "keywords": ["slidev-theme", "slidev", "academic", "research", "scholarly"],
+  "engines": {
+    "slidev": ">=0.48.0"
+  },
+  "slidev": {
+    "colorSchema": "light",
+    "defaults": {
+      "aspectRatio": "16/9",
+      "canvasWidth": 1280,
+      "fonts": {
+        "sans": "Merriweather Sans",
+        "serif": "Merriweather",
+        "mono": "JetBrains Mono"
+      }
+    }
+  }
+}

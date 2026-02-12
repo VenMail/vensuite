@@ -119,7 +119,8 @@
     },
     "FormPlayerHost": {
       "text": {
-        "we_will_ask_for": "We will ask for your email address so we can send confirmations and receipts."
+        "we_will_ask_for": "We will ask for your email address so we can send confirmations and receipts.",
+        "you_have_unsaved_progress": "You have unsaved progress on this form. Would you like to continue where you left off?"
       }
     },
     "FormResponses": {

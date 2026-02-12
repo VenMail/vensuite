@@ -8,7 +8,8 @@ import { type SlidevTheme, getThemeByValue } from '@/utils/slidevMarkdown';
 // Theme CSS imports - these will be dynamically loaded
 const themeCssModules = {
   'venmail-pitch': () => import('@/themes/slidev-theme-venmail-pitch/styles/index.css?inline'),
-  // Add other themes as needed
+  'academic': () => import('@/themes/slidev-theme-academic/styles/index.css?inline'),
+  'solutions': () => import('@/themes/slidev-theme-solutions/styles/index.css?inline'),
 };
 
 export function useThemeLoader(theme: Ref<string>) {

@@ -32,7 +32,7 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
   // Core state
   const slides = ref<SlidevSlide[]>(options.initialSlides || createDefaultSlides());
   const currentSlideIndex = ref(0);
-  const currentTheme = ref(options.initialTheme || 'default');
+  const currentTheme = ref(options.initialTheme || 'venmail-pitch');
   const currentLayout = ref('default');
   const slideBackground = ref('#ffffff');
   const slideTransition = ref('slide-left');
@@ -551,7 +551,7 @@ export function useSlidesEditor(options: UseSlidesEditorOptions = {}) {
   function reset() {
     slides.value = createDefaultSlides();
     currentSlideIndex.value = 0;
-    currentTheme.value = 'default';
+    currentTheme.value = 'venmail-pitch';
     currentLayout.value = 'default';
     slideBackground.value = '#ffffff';
     slideTransition.value = 'slide-left';

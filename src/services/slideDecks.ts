@@ -159,7 +159,7 @@ export async function fetchSlideDecks(): Promise<SlideDeck[]> {
       return {
         id: item.id,
         title: item.title || 'Untitled Presentation',
-        theme: item.metadata?.theme || 'default',
+        theme: item.metadata?.theme || 'venmail-pitch',
         slides: slides,
         slideCount: slides.length,
         lastModified: item.updated_at,
@@ -210,7 +210,7 @@ export async function fetchSlideDeck(deckId: string): Promise<SlideDeck | null> 
     const deck: SlideDeck = {
       id: item.id,
       title: item.title || 'Untitled Presentation',
-      theme: item.metadata?.theme || 'default',
+      theme: item.metadata?.theme || 'venmail-pitch',
       slides: slides,
       slideCount: slides.length,
       lastModified: item.updated_at,
@@ -362,7 +362,7 @@ function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[]
 /**
  * Create a new slide deck
  */
-export async function createSlideDeck(title: string, theme: string = 'default'): Promise<SlideDeck | null> {
+export async function createSlideDeck(title: string, theme: string = 'venmail-pitch'): Promise<SlideDeck | null> {
   try {
     const response = await apiClient.post('/app-files', {
       title,
