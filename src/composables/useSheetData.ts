@@ -247,6 +247,9 @@ export function useSheetData() {
   // Debounced title save (moved to component scope like old implementation)
 
   async function saveTitle(univerRef: any) {
+    // Exit edit mode first
+    isTitleEdit.value = false
+    
     const newTitle = title.value.trim()
     if (newTitle && newTitle !== document.title) {
       document.title = newTitle

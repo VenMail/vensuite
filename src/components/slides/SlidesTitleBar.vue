@@ -410,10 +410,12 @@ function handleExternalTheme(event: Event) {
 onMounted(() => {
   syncThemeFromStorage();
   window.addEventListener(THEME_EVENT, handleExternalTheme as EventListener);
+  window.addEventListener('click', handleClickOutside);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener(THEME_EVENT, handleExternalTheme as EventListener);
+  window.removeEventListener('click', handleClickOutside);
 });
 
 function toggleDarkMode() {
@@ -539,6 +541,13 @@ function handleBlur() {
 }
 
 function handleEnter() {
+  if (!isTitleEdit.value) return;
   titleRef.value?.blur();
+}
+
+function handleClickOutside(event: MouseEvent) {
+  if (isTitleEdit.value && titleRef.value && !titleRef.value.contains(event.target as Node)) {
+    titleRef.value.blur();
+  }
 }
 </script>

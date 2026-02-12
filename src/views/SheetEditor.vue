@@ -29,6 +29,8 @@ import { convertSheetToForm } from '@/utils/sheetToFormConverter'
 import { createForm } from '@/services/forms'
 import type { FormDefinition } from '@/types'
 import { useFileStore } from '@/store/files'
+import { toast } from '@/composables/useToast'
+import type { ShareMember, ShareLevel } from '@/utils/sharing'
 // import { t } from '@/i18n'
 
 // Import composables
@@ -145,6 +147,10 @@ const isUpdatingSheetPublicApi = ref(false)
 const generatedFormQuestions = ref<any[]>([])
 const isConvertingToForm = ref(false)
 
+// Sharing state
+const shareMembers = ref<ShareMember[]>([])
+const isUpdatingSharing = ref(false)
+
 // Initialize stores (fileStore used by composables)
 
 // Computed properties
@@ -161,8 +167,7 @@ const shareLinkSheet = computed(() => {
 })
 
 const shareMembersForCard = computed(() => {
-  // This would need to use shareMembers from the data
-  return []
+  return shareMembers.value
 })
 
 // Template loading (for future use)
@@ -308,15 +313,177 @@ function openShareDialog() {
   shareOpen.value = true
 }
 
-function copyShareLink() {
+async function copyShareLink() {
   if (shareLinkSheet.value) {
     navigator.clipboard.writeText(shareLinkSheet.value)
       .then(() => {
-        // Success feedback could be added here
+        toast.success('Share link copied to clipboard')
       })
       .catch(err => {
         console.error('Failed to copy share link:', err)
+        toast.error('Failed to copy share link')
       })
+  }
+}
+
+async function handleChangePrivacy(newPrivacyType: number) {
+  if (isUpdatingSharing.value) return
+  
+  const id = route.params.id as string
+  if (!id) return
+  
+  isUpdatingSharing.value = true
+  try {
+    // Update local state immediately for responsive UI
+    privacyType.value = newPrivacyType
+    
+    // Load current document and update privacy
+    const currentDoc = await fileStore.loadDocument(id, 'xlsx')
+    if (currentDoc) {
+      const updatedDoc = { ...currentDoc, privacy_type: newPrivacyType }
+      await fileStore.saveToAPI(updatedDoc)
+    }
+    
+    toast.success('Privacy settings updated')
+  } catch (error) {
+    console.error('Failed to update privacy:', error)
+    toast.error('Failed to update privacy settings')
+    // Revert on error
+    privacyType.value = sheetData.privacyType.value
+  } finally {
+    isUpdatingSharing.value = false
+  }
+}
+
+async function handleUpdateMember(payload: { email: string; shareLevel: ShareLevel; label: string }) {
+  if (isUpdatingSharing.value) return
+  
+  const id = route.params.id as string
+  if (!id) return
+  
+  isUpdatingSharing.value = true
+  try {
+    // Update local members list
+    const memberIndex = shareMembers.value.findIndex(m => m.email === payload.email)
+    if (memberIndex !== -1) {
+      shareMembers.value[memberIndex].shareLevel = payload.shareLevel
+    }
+    
+    // Load current document and update sharing
+    const currentDoc = await fileStore.loadDocument(id, 'xlsx')
+    if (currentDoc) {
+      const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
+      const updatedDoc = { ...currentDoc, sharing: updatedSharing }
+      await fileStore.saveToAPI(updatedDoc)
+    }
+    
+    toast.success(`Updated ${payload.email}'s access`)
+  } catch (error) {
+    console.error('Failed to update member:', error)
+    toast.error('Failed to update member access')
+    // Revert on error by reloading
+    await loadSharingData()
+  } finally {
+    isUpdatingSharing.value = false
+  }
+}
+
+async function handleRemoveMember(payload: { email: string }) {
+  if (isUpdatingSharing.value) return
+  
+  const id = route.params.id as string
+  if (!id) return
+  
+  isUpdatingSharing.value = true
+  try {
+    // Update local members list
+    shareMembers.value = shareMembers.value.filter(m => m.email !== payload.email)
+    
+    // Load current document and update sharing
+    const currentDoc = await fileStore.loadDocument(id, 'xlsx')
+    if (currentDoc) {
+      const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
+      const updatedDoc = { ...currentDoc, sharing: updatedSharing }
+      await fileStore.saveToAPI(updatedDoc)
+    }
+    
+    toast.success(`Removed ${payload.email}`)
+  } catch (error) {
+    console.error('Failed to remove member:', error)
+    toast.error('Failed to remove member')
+    // Revert on error by reloading
+    await loadSharingData()
+  } finally {
+    isUpdatingSharing.value = false
+  }
+}
+
+async function handleInvite(payload: { email: string; shareLevel: ShareLevel; label: string; note?: string }) {
+  if (isUpdatingSharing.value) return
+  
+  const id = route.params.id as string
+  if (!id) return
+  
+  isUpdatingSharing.value = true
+  try {
+    // Check if member already exists
+    if (shareMembers.value.some(m => m.email === payload.email)) {
+      toast.error('This person already has access')
+      return
+    }
+    
+    // Add to local members list
+    const newMember: ShareMember = {
+      email: payload.email,
+      shareLevel: payload.shareLevel,
+      status: 'pending'
+    }
+    shareMembers.value.push(newMember)
+    
+    // Load current document and update sharing
+    const currentDoc = await fileStore.loadDocument(id, 'xlsx')
+    if (currentDoc) {
+      const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
+      const updatedDoc = { ...currentDoc, sharing: updatedSharing }
+      await fileStore.saveToAPI(updatedDoc)
+    }
+    
+    toast.success(`Invited ${payload.email}`)
+  } catch (error) {
+    console.error('Failed to invite member:', error)
+    toast.error('Failed to send invitation')
+    // Revert on error by reloading
+    await loadSharingData()
+  } finally {
+    isUpdatingSharing.value = false
+  }
+}
+
+async function loadSharingData() {
+  const id = route.params.id as string
+  if (!id) return
+  
+  try {
+    const document = await fileStore.loadDocument(id, 'xlsx')
+    if (document && (document as any).sharing) {
+      // Parse sharing string into members
+      const sharingString = (document as any).sharing
+      if (sharingString) {
+        shareMembers.value = sharingString
+          .split(',')
+          .map((entry: string) => {
+            const [email, level] = entry.split(':')
+            return {
+              email: email.trim(),
+              shareLevel: (level || 'v').trim() as ShareLevel,
+              status: 'accepted' as const
+            }
+          })
+          .filter((m: any) => m.email)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load sharing data:', error)
   }
 }
 
@@ -661,6 +828,11 @@ onMounted(async () => {
       useFavicon(iconDataURL)
     }
   })
+
+  // Load sharing data for existing sheets
+  if (route.params.id && !route.params.template) {
+    await loadSharingData()
+  }
 })
 
 onUnmounted(() => {
@@ -985,6 +1157,10 @@ function onUniverChange() {
           :can-edit-privacy="canEditSheet"
           @close="shareOpen = false"
           @copy-link="copyShareLink"
+          @change-privacy="handleChangePrivacy"
+          @update-member="handleUpdateMember"
+          @remove-member="handleRemoveMember"
+          @invite="handleInvite"
         />
       </DialogContent>
     </Dialog>

@@ -294,6 +294,7 @@ onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener(THEME_EVENT, handleExternalTheme as EventListener);
     window.addEventListener('click', handleOutsideClick);
+    window.addEventListener('click', handleClickOutside);
   }
 });
 
@@ -301,6 +302,7 @@ onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener(THEME_EVENT, handleExternalTheme as EventListener);
     window.removeEventListener('click', handleOutsideClick);
+    window.removeEventListener('click', handleClickOutside);
   }
 });
 
@@ -435,12 +437,20 @@ function restoreCursorPosition(element: HTMLElement, offset: number) {
 }
 
 function handleBlur() {
+  if (!isTitleEdit.value) return;
   isTitleEdit.value = false;
   emit('manual-save');
 }
 
 function handleEnter() {
+  if (!isTitleEdit.value) return;
   if (titleRef.value) {
+    titleRef.value.blur();
+  }
+}
+
+function handleClickOutside(event: MouseEvent) {
+  if (isTitleEdit.value && titleRef.value && !titleRef.value.contains(event.target as Node)) {
     titleRef.value.blur();
   }
 }
