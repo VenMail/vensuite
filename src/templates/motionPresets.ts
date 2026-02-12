@@ -463,7 +463,7 @@ export function applyTemplate(template: MotionTemplate, targetConfig: MotionConf
     slide: template.config.slide,
     content: template.config.content,
     elements: { ...template.config.elements },
-    global: { ...targetConfig.global, ...template.config.global }
+    global: { ...(targetConfig.global ?? {}), ...(template.config.global ?? {}) } as MotionConfig['global']
   }
 }
 

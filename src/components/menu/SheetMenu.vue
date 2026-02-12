@@ -233,7 +233,7 @@ function formatStrikethrough() {
   }
 }
 
-async function sort(ascending = true) {
+async function sort(_ascending = true) {
   // todo: transfer formula/attributes of old cells to the new cells
   // todo: adding rich sort where we sort the entire rows based on the column being sorted
   const workbook = getActiveWorkbook()

@@ -35,7 +35,7 @@
           v-for="(section, idx) in sectionSummaries"
           :key="section.id"
           :class="[
-            'flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm text-gray-600 transition hover:border-primary-200 hover:bg-primary-50/80 hover:text-primary-700 dark:text-gray-300 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-300',
+            'flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm text-gray-600 transition section-nav-item dark:text-gray-300',
             section.hasErrors ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500 dark:bg-rose-900/30 dark:text-rose-300' : ''
           ]"
         >
@@ -426,9 +426,9 @@ const emitSubmit = () => {
 }
 
 .classic-outline__item:hover {
-  border-color: rgba(37, 99, 235, 0.25);
-  color: #1d4ed8;
-  background: rgba(219, 234, 254, 0.9);
+  border-color: color-mix(in srgb, var(--player-accent, #2563eb) 25%, transparent);
+  color: var(--player-accent-strong, #1d4ed8);
+  background: color-mix(in srgb, var(--player-accent, #2563eb) 10%, rgba(248, 250, 252, 0.9));
 }
 
 .classic-outline__item--alert {
@@ -604,13 +604,13 @@ const emitSubmit = () => {
   font-weight: 600;
   color: #fff;
   background: linear-gradient(135deg, var(--player-accent), var(--player-accent-strong));
-  box-shadow: 0 12px 35px -18px rgba(37, 99, 235, 0.55);
+  box-shadow: 0 12px 35px -18px color-mix(in srgb, var(--player-accent, #2563eb) 55%, transparent);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .classic-footer__button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 45px -18px rgba(37, 99, 235, 0.65);
+  box-shadow: 0 16px 45px -18px color-mix(in srgb, var(--player-accent, #2563eb) 65%, transparent);
 }
 
 .classic-footer__button:disabled {
@@ -638,5 +638,11 @@ const emitSubmit = () => {
 
 .question-card--themed:hover {
   border-color: color-mix(in srgb, var(--player-accent) 30%, var(--player-surface-border, rgba(203, 213, 225, 0.5)));
+}
+
+.section-nav-item:hover {
+  border-color: color-mix(in srgb, var(--player-accent, #2563eb) 20%, transparent);
+  background: color-mix(in srgb, var(--player-accent, #2563eb) 8%, rgba(248, 250, 252, 0.9));
+  color: var(--player-accent-strong, #1d4ed8);
 }
 </style>

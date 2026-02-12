@@ -3,8 +3,7 @@
  * Handles performance optimizations and prefers-reduced-motion support
  */
 
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import type { MotionConfig } from '@/types/motion'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 export interface MotionPerformanceConfig {
   // Performance settings
@@ -366,7 +365,7 @@ export function useMotionPerformance(initialConfig?: Partial<MotionPerformanceCo
     return effectiveVariants.value[originalVariant] || originalVariant
   }
   
-  function shouldAnimate(element: HTMLElement): boolean {
+  function shouldAnimate(_element: HTMLElement): boolean {
     if (!isEnabled.value) return false
     if (isReducedMotion.value && config.value.respectPrefersReducedMotion) return false
     if (isLowPerformanceDevice.value && activeAnimations.value.size > config.value.maxConcurrentAnimations) return false

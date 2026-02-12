@@ -17,7 +17,7 @@
       v-if="isShortInput"
       :id="inputId"
       :type="inputType"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
+      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-1 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-[var(--player-accent)] dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
       :placeholder="placeholder"
       :value="stringValue"
       :disabled="disabled"
@@ -31,13 +31,12 @@
       <textarea
       v-else-if="isLongInput"
       :id="inputId"
-      class="min-h-[140px] w-full resize-y rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
+      class="min-h-[140px] w-full resize-y rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-1 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-[var(--player-accent)] dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
       :placeholder="placeholder"
       :value="stringValue"
       :disabled="disabled"
       :required="required"
       :aria-invalid="hasError ? 'true' : 'false'"
-      @keydown.enter.prevent="emitEnter"
       @input="updateValue(($event.target as HTMLTextAreaElement).value)"
     />
 
@@ -48,7 +47,7 @@
         :key="option.value"
         class="flex items-center gap-3 cursor-pointer group"
       >
-        <span v-if="showShortcutLabels" class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] font-semibold transition-colors" :class="modelValue === option.value ? 'border-primary-500 bg-primary-500 text-white dark:border-primary-400 dark:bg-primary-400' : 'border-slate-300 bg-white text-slate-500 group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'">
+        <span v-if="showShortcutLabels" class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] font-semibold transition-colors" :class="modelValue === option.value ? 'shortcut-badge--active text-white' : 'border-slate-300 bg-white text-slate-500 group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'">
           {{ getOptionShortcutLabel(idx) }}
         </span>
         <input
@@ -58,7 +57,7 @@
           :value="option.value"
           :checked="modelValue === option.value"
           :disabled="disabled"
-          class="h-4 w-4 cursor-pointer border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500 dark:focus:ring-primary-400"
+          class="h-4 w-4 cursor-pointer border-slate-300 focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:focus:ring-[var(--player-accent)]"
           :class="{ 'sr-only': showShortcutLabels }"
           @change="updateValue(option.value)"
         />
@@ -72,7 +71,7 @@
       <select
       v-else-if="type === 'select'"
       :id="inputId"
-      class="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:focus:border-primary-400 dark:focus:ring-primary-400 dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
+      class="form-input w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-1 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
       :value="(modelValue as string) ?? ''"
       :disabled="disabled"
       :required="required"
@@ -91,7 +90,7 @@
         :key="option.value"
         class="flex items-center gap-3 cursor-pointer group"
       >
-        <span v-if="showShortcutLabels" class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] font-semibold transition-colors" :class="arrayValue.includes(option.value) ? 'border-primary-500 bg-primary-500 text-white dark:border-primary-400 dark:bg-primary-400' : 'border-slate-300 bg-white text-slate-500 group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'">
+        <span v-if="showShortcutLabels" class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] font-semibold transition-colors" :class="arrayValue.includes(option.value) ? 'shortcut-badge--active text-white' : 'border-slate-300 bg-white text-slate-500 group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'">
           {{ getOptionShortcutLabel(idx) }}
         </span>
         <input
@@ -100,7 +99,7 @@
           :value="option.value"
           :checked="arrayValue.includes(option.value)"
           :disabled="disabled"
-          class="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-primary-500 dark:focus:ring-primary-400"
+          class="form-checkbox h-4 w-4 cursor-pointer rounded border-slate-300 focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800"
           :class="{ 'sr-only': showShortcutLabels }"
           @change="toggleCheckbox(option.value, ($event.target as HTMLInputElement).checked)"
         />
@@ -115,9 +114,9 @@
         <button
           type="button"
           :class="[
-            'inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50',
+            'inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50 yesno-btn',
             booleanValue === true
-              ? 'border-primary-500 bg-primary-500 text-white dark:border-primary-400 dark:bg-primary-400'
+              ? 'yesno-btn--active text-white'
               : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
           ]"
           :disabled="disabled"
@@ -129,9 +128,9 @@
         <button
           type="button"
           :class="[
-            'inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50',
+            'inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50 yesno-btn',
             booleanValue === false && modelValue != null
-              ? 'border-primary-500 bg-primary-500 text-white dark:border-primary-400 dark:bg-primary-400'
+              ? 'yesno-btn--active text-white'
               : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
           ]"
           :disabled="disabled"
@@ -147,7 +146,7 @@
       <input
         :id="inputId"
         type="range"
-        class="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-700 dark:accent-primary-500 dark:focus:ring-primary-400"
+        class="form-range h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-700"
         :min="sliderConfig?.min ?? 0"
         :max="sliderConfig?.max ?? 100"
         :step="sliderConfig?.step ?? 1"
@@ -164,21 +163,21 @@
 
        
       <div v-else-if="type === 'rating'" class="flex flex-wrap gap-2">
-      <button
-        v-for="ratingValue in ratingScale"
-        :key="ratingValue"
-        type="button"
-        :class="[
-          'flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50',
-          numberValue >= ratingValue
-            ? 'border-amber-400 bg-amber-400 text-amber-950 hover:bg-amber-500 dark:border-amber-500 dark:bg-amber-500'
-            : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-        ]"
-        :disabled="disabled"
-        @click="updateValue(ratingValue)"
+        <button
+          v-for="ratingValue in ratingScale"
+          :key="ratingValue"
+          type="button"
+          :class="[
+            'flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 rating-btn',
+            numberValue >= ratingValue
+              ? 'rating-btn--active text-white'
+              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+          ]"
+          :disabled="disabled"
+          @click="updateValue(ratingValue)"
         >
-        {{ ratingValue }}
-      </button>
+          {{ ratingValue }}
+        </button>
       </div>
 
        
@@ -193,7 +192,7 @@
       <input
         :id="inputId"
         type="file"
-        class="w-full cursor-pointer rounded-lg border border-slate-300 bg-white text-sm text-slate-900 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-1.5 file:text-xs file:font-semibold file:text-primary-700 hover:file:bg-primary-100 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:file:bg-primary-900/30 dark:file:text-primary-300 dark:hover:file:bg-primary-900/50 dark:focus:border-primary-400 dark:focus:ring-primary-400"
+        class="file-input-themed w-full cursor-pointer rounded-lg border border-slate-300 bg-white text-sm text-slate-900 file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:px-4 file:py-1.5 file:text-xs file:font-semibold focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
         :multiple="isMultipleFiles"
         :disabled="disabled"
         :required="required"
@@ -214,7 +213,7 @@
       v-else
       :id="inputId"
       type="text"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
+      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-1 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-[var(--player-accent)] dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
       :placeholder="placeholder"
       :value="stringValue"
       :disabled="disabled"
@@ -451,5 +450,45 @@ const lengthHint = computed(() => {
 
 :deep(input[type="range"]) {
   accent-color: var(--player-accent, #3b82f6);
+}
+
+.shortcut-badge--active {
+  border-color: var(--player-accent, #3b82f6);
+  background-color: var(--player-accent, #3b82f6);
+}
+
+.yesno-btn {
+  --tw-ring-color: var(--player-accent, #3b82f6);
+}
+
+.yesno-btn--active {
+  border-color: var(--player-accent, #3b82f6);
+  background-color: var(--player-accent, #3b82f6);
+}
+
+.rating-btn {
+  --tw-ring-color: var(--player-accent, #3b82f6);
+}
+
+.rating-btn--active {
+  border-color: var(--player-accent, #3b82f6);
+  background-color: var(--player-accent, #3b82f6);
+}
+
+.file-input-themed {
+  --tw-ring-color: var(--player-accent, #3b82f6);
+}
+
+.file-input-themed:focus {
+  border-color: var(--player-accent, #3b82f6);
+}
+
+.file-input-themed::file-selector-button {
+  background-color: color-mix(in srgb, var(--player-accent, #3b82f6) 15%, transparent);
+  color: var(--player-accent, #3b82f6);
+}
+
+.file-input-themed:hover::file-selector-button {
+  background-color: color-mix(in srgb, var(--player-accent, #3b82f6) 25%, transparent);
 }
 </style>

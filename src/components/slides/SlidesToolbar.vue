@@ -134,7 +134,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
   mode: 'edit' | 'preview';
   arrangeMode: boolean;
   currentSlideIndex: number;

@@ -1,27 +1,16 @@
 import {
   IParagraphOptions,
-  IRunOptions,
   ISpacingProperties,
   TextRun,
 } from "docx";
 import {
   computedStyleToNumber,
-  CSS_FONT_TO_WORD_FONT,
-  pxToPt,
   pxToTwips,
 } from "../../utils/exportUtils";
 
 interface MeasurementNode {
   wrapperDiv: HTMLDivElement;
   measurementSpan: HTMLSpanElement;
-}
-
-interface StyledPiece {
-  text: string;
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
-  strike: boolean;
 }
 
 interface Range {
@@ -41,17 +30,6 @@ interface FormattingRanges {
   italicRanges: Range[];
   underlineRanges: Range[];
   strikeRanges: Range[];
-}
-
-type TextStyle = {
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
-  strike: boolean;
-};
-
-interface StyledRun extends TextStyle {
-  text: string;
 }
 
 /**
@@ -256,7 +234,6 @@ export class ParagraphHandlerEnhanced {
 
     // Extract bold ranges
     const boldMatches = htmlFragment.matchAll(/<strong[^>]*>(.*?)<\/strong>/gi);
-    let offset = 0;
     for (const match of boldMatches) {
       const beforeText = htmlFragment.substring(0, match.index!);
       const textBefore = beforeText.replace(/<[^>]*>/g, "");
@@ -280,7 +257,7 @@ export class ParagraphHandlerEnhanced {
   /**
    * Measure paragraph line for text wrapping
    */
-  private measureParagraphLine(text: string, computedStyle: CSSStyleDeclaration): string {
+  private measureParagraphLine(text: string, _computedStyle: CSSStyleDeclaration): string {
     // Simplified measurement - in real implementation this would use the measurement container
     return text;
   }
@@ -399,7 +376,7 @@ export class ParagraphHandlerEnhanced {
   /**
    * Get spacing after paragraph in pixels
    */
-  private getSpacingAfterPx(element: HTMLElement, computedStyle: CSSStyleDeclaration): number {
+  private getSpacingAfterPx(_element: HTMLElement, computedStyle: CSSStyleDeclaration): number {
     return computedStyleToNumber(computedStyle.marginBottom);
   }
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Visual Regression Tests for Motion System
  * Tests animation variants, timing, and visual consistency

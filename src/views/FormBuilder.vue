@@ -49,6 +49,14 @@
            
           <button
             class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            @click="showDesignPanel = true"
+          >
+            <Paintbrush class="w-4 h-4" />
+            Design
+          </button>
+
+          <button
+            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             @click="handlePreview"
           >
             <Eye class="w-4 h-4" />
@@ -211,6 +219,17 @@
               </button>
 
                
+              <button
+                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
+                @click="
+                  showDesignPanel = true;
+                  openDropdown = null;
+                "
+              >
+                <Paintbrush class="w-4 h-4" />
+                Design
+              </button>
+
               <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
                 @click="
@@ -667,6 +686,12 @@
       :initial-config="formConfig ?? undefined"
       @complete="handleConfigComplete"
       @skip="handleConfigSkip"
+    />
+
+    <FormDesignPanel
+      :open="showDesignPanel"
+      @close="showDesignPanel = false"
+      @save="triggerSave"
     />
 
      
@@ -1261,6 +1286,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Paintbrush,
 } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
@@ -1270,6 +1296,7 @@ import { toast } from "@/composables/useToast";
 import BlockItemNew from "@/components/forms/blocks/BlockItemNew.vue";
 import SlashMenu from "@/components/forms/blocks/SlashMenu.vue";
 import FormConfigWizard from "@/components/forms/FormConfigWizardSimple.vue";
+import FormDesignPanel from "@/components/forms/FormDesignPanel.vue";
 import WebhooksPanel from "@/components/forms/WebhooksPanel.vue";
 import ImagePicker from "@/components/ImagePicker.vue";
 import ShareCard from "@/components/ShareCard.vue";
@@ -1319,6 +1346,7 @@ const lastSaved = ref("");
 const showConfigWizard = ref(false);
 const isNewForm = ref(false);
 const formConfig = ref<FormConfig | null>(null);
+const showDesignPanel = ref(false);
 const showWebhooksPanel = ref(false);
 const webhookStep = ref<"intro" | "configure">("intro");
 const showImagePicker = ref(false);

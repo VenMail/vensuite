@@ -14,7 +14,7 @@
 
       <div
         v-if="emailRequired"
-        class="player-host__callout border border-primary-200/60 bg-primary-50/70 text-primary-950 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-100"
+        class="player-host__callout player-host__callout--accent"
       >
         <h3>{{$t('Commons.heading.email_required')}}</h3>
         <p>{{$t('Views.FormPlayerHost.text.we_will_ask_for')}}</p>
@@ -59,14 +59,14 @@
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 type="button"
-                class="player-host__button player-host__button--primary border border-transparent bg-[var(--player-accent)] text-white shadow-lg shadow-primary-500/25 hover:bg-[var(--player-accent-strong)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:shadow-black/40 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-950"
+                class="player-host__button player-host__button--primary"
                 @click="resumeForm"
               >
                 {{ $t('Commons.button.resume') ?? 'Resume' }}
               </button>
               <button
                 type="button"
-                class="player-host__button border border-slate-300/60 bg-white/90 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-300 dark:hover:bg-slate-950"
+                class="player-host__button player-host__button--secondary"
                 @click="startFresh"
               >
                 {{ $t('Commons.button.start_over') ?? 'Start over' }}
@@ -83,7 +83,7 @@
             <p v-if="welcomeScreen?.subtitle" class="text-slate-600 dark:text-slate-300">{{ welcomeScreen?.subtitle }}</p>
             <button
               type="button"
-              class="player-host__button player-host__button--primary border border-transparent bg-[var(--player-accent)] text-white shadow-lg shadow-primary-500/25 hover:bg-[var(--player-accent-strong)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:shadow-black/40 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-950"
+              class="player-host__button player-host__button--primary"
               @click="startForm"
             >
               {{ welcomeScreen?.button_text ?? $t('Commons.button.share') }}
@@ -131,7 +131,7 @@
                 'completion-card__badge',
                 isClassicMode
                   ? 'completion-card__badge--classic'
-                  : 'completion-card__badge--focus border border-primary-200/70 bg-white dark:border-primary-500/40 dark:bg-slate-950'
+                  : 'completion-card__badge--focus'
               ]"
             >
               <svg viewBox="0 0 52 52" aria-hidden="true">
@@ -145,7 +145,7 @@
               <button
                 v-if="completionButtonText"
                 type="button"
-                class="player-host__button completion-card__button border border-slate-300/60 bg-white/90 text-slate-800 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:hover:bg-slate-950 dark:focus:ring-primary-400 dark:focus:ring-offset-slate-950"
+                class="player-host__button player-host__button--secondary completion-card__button"
                 @click="reload"
               >
                 {{ completionButtonText }}
@@ -812,6 +812,12 @@ watch(
   font-size: 0.925rem;
 }
 
+.player-host__callout--accent {
+  border: 1px solid color-mix(in srgb, var(--player-accent, #2563eb) 20%, transparent);
+  background: color-mix(in srgb, var(--player-accent, #2563eb) 7%, rgba(248, 250, 252, 0.9));
+  color: var(--player-text-color, #0f172a);
+}
+
 .player-host__callout--payment {
 }
 
@@ -867,10 +873,36 @@ watch(
 }
 
 .player-host__button--primary {
+  border: 1px solid transparent;
+  background: var(--player-accent, #2563eb);
+  color: #fff;
+  box-shadow: 0 10px 25px -8px color-mix(in srgb, var(--player-accent, #2563eb) 35%, transparent);
 }
 
 .player-host__button--primary:hover {
   background: var(--player-accent-strong, #1d4ed8);
+  transform: translateY(-2px);
+}
+
+.player-host__button--primary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--player-bg, #fff), 0 0 0 4px var(--player-accent, #2563eb);
+}
+
+.player-host__button--secondary {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--player-text-color, #334155);
+}
+
+.player-host__button--secondary:hover {
+  background: rgba(248, 250, 252, 0.95);
+  transform: translateY(-1px);
+}
+
+.player-host__button--secondary:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--player-bg, #fff), 0 0 0 4px var(--player-accent, #2563eb);
 }
 
 .player-host__welcome,
@@ -911,7 +943,7 @@ watch(
   place-items: center;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 20px 45px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 20px 45px color-mix(in srgb, var(--player-accent, #2563eb) 18%, transparent);
 }
 
 .completion-card__badge svg {
@@ -942,7 +974,7 @@ watch(
 }
 
 .completion-card__badge--focus svg circle {
-  stroke: rgba(37, 99, 235, 0.18);
+  stroke: color-mix(in srgb, var(--player-accent, #2563eb) 18%, transparent);
 }
 
 .completion-card__badge--focus svg polyline {
@@ -963,8 +995,8 @@ watch(
 }
 
 .completion-card--classic {
-  background: radial-gradient(circle at top, rgba(37, 99, 235, 0.08), transparent 60%), white;
-  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: radial-gradient(circle at top, color-mix(in srgb, var(--player-accent, #2563eb) 8%, transparent), transparent 60%), white;
+  border: 1px solid color-mix(in srgb, var(--player-accent, #2563eb) 18%, transparent);
 }
 
 .completion-card--focus {

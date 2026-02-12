@@ -162,7 +162,7 @@ interface Emits {
   'insert': [markdown: string];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
