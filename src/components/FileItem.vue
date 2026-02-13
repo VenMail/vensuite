@@ -155,7 +155,7 @@
         <div v-else>
           <!-- File Title -->
           <h3
-            class="font-semibold text-sm mb-1 line-clamp-2 text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200"
+            class="font-semibold text-sm mb-1 text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200 truncate"
           >
             {{ file.title }}
           </h3>

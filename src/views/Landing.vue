@@ -383,7 +383,7 @@ const goToGithub = () => {
         </div>
         
         <div class="border-t border-gray-800 dark:border-gray-700 mt-8 pt-8 text-center text-gray-400 dark:text-gray-300 text-sm transition-colors">
-          <p>&copy; 2025 Venmail Drive. Licensed under MIT.</p>
+          <p>&copy; 2026 Venmail Drive. Licensed under MIT.</p>
         </div>
       </div>
     </footer>
