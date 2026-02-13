@@ -9,30 +9,13 @@ import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core';
 import UniverPresetSheetsCoreEnUS from '@univerjs/preset-sheets-core/locales/en-US';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data';
-import type { IWebsocketService } from '@/lib/wsService';
-import { useSheetCollaboration } from '@/composables/useSheetCollaboration';
 
-const { data, ws } = defineProps({
+const { data } = defineProps({
   // workbook data
   data: {
     type: Object as () => IWorkbookData | null,
     required: false,
     default: () => DEFAULT_WORKBOOK_DATA,
-  },
-  ws: {
-    type: Object as () => IWebsocketService | null,
-    required: false,
-    default: null,
-  },
-  changesPending: {
-    type: Boolean,
-    required: false,
-    default: false,
-  },
-  userName: {
-    type: String,
-    required: false,
-    default: 'User',
   },
 });
 
@@ -41,7 +24,6 @@ const emit = defineEmits(['ready', 'change']);
 const univerAPI = ref<any>(null);
 const workbook = ref<any>(null);
 const container = ref<HTMLElement | null>(null);
-const collaborationDisposers: Array<() => void> = [];
 const isMounted = ref(false);
 const isInitialized = ref(false);
 
@@ -55,12 +37,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   destroyUniver();
 });
-
-// Initialize collaboration
-const collaboration = useSheetCollaboration(univerAPI);
-
-// Remove problematic deep watch that causes double mutations
-// The parent component will handle data synchronization
 
 // Global instance tracker to prevent multiple Univer instances
 let univerInstanceCount = 0
@@ -88,8 +64,6 @@ async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
       workbook.value = univerAPI.value.createWorkbook(workbookData);
       isInitialized.value = true;
       
-      // Initialize collaboration after Univer is ready
-      scheduleCollaboration();
       emit('ready', { univer: { univerAPI: globalUniverAPI }, workbook, univerAPI: globalUniverAPI });
       return;
     }
@@ -172,9 +146,6 @@ async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
     workbook.value = univerAPI.value.createWorkbook(workbookData);
     isInitialized.value = true;
 
-    // Initialize collaboration after Univer is ready
-    scheduleCollaboration();
-
     emit('ready', { univer: univer.univer, workbook, univerAPI: univerAPI.value });
   } catch (error) {
     console.error('Error initializing Univer:', error);
@@ -186,9 +157,6 @@ async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
  */
 function destroyUniver() {
   try {
-    // Cleanup collaboration first
-    cleanupCollaboration();
-    
     // Dispose workbook if it exists
     if (workbook.value) {
       try {
@@ -320,35 +288,12 @@ function setName(n: string) {
   }
 }
 
-/**
- * Cleanup collaboration
- */
-function cleanupCollaboration() {
-  collaborationDisposers.forEach((dispose) => dispose());
-  collaborationDisposers.length = 0;
-}
-
-/**
- * Schedule collaboration (integrated with custom WebSocket)
- */
-function scheduleCollaboration() {
-  cleanupCollaboration();
-  // Initialize collaboration if WebSocket service is provided
-  if (ws) {
-    collaboration.initializeWebSocketAndJoinSheet();
-    collaborationDisposers.push(() => {
-      collaboration.leaveSheet();
-    });
-  }
-}
-
 defineExpose({
   getData,
   setData,
   setName,
   univer: univerAPI,
   workbook,
-  collaboration,
 });
 </script>
 

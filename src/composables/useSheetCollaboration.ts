@@ -278,6 +278,36 @@ export function useSheetCollaboration(univerCoreRef: any) {
     stopPresenceHeartbeat()
   }
 
+  function broadcastChange(command: any) {
+    if (!wsService.value || !route.params.id || !command) return
+    try {
+      wsService.value.sendMessage(
+        route.params.id as string,
+        'change',
+        { command },
+        userId.value,
+        userName.value,
+      )
+    } catch (error) {
+      console.error('Error broadcasting sheet change:', error)
+    }
+  }
+
+  function broadcastTitle(title: string) {
+    if (!wsService.value || !route.params.id || !title) return
+    try {
+      wsService.value.sendMessage(
+        route.params.id as string,
+        'title',
+        { title },
+        userId.value,
+        userName.value,
+      )
+    } catch (error) {
+      console.error('Error broadcasting sheet title:', error)
+    }
+  }
+
   // Watch for connection status changes
   watch(isConnected, (newIsConnected) => {
     if (newIsConnected) {
@@ -333,6 +363,8 @@ export function useSheetCollaboration(univerCoreRef: any) {
     initializeWebSocketAndJoinSheet,
     joinSheet,
     leaveSheet,
+    broadcastChange,
+    broadcastTitle,
     handleIncomingMessage,
     sendChatMessage,
     handleChatEnterKey,

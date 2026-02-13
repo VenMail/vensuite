@@ -85,8 +85,6 @@ const exportComposable = useSheetExport(univerCoreRef)
 // Collaboration
 const collaboration = useSheetCollaboration(univerCoreRef)
 const {
-  userId,
-  userName,
   wsService,
   chatMessages,
   isChatOpen,
@@ -98,6 +96,7 @@ const {
   collaborators,
   privacyType: collaborationPrivacyType,
   canJoinRealtime,
+  broadcastTitle,
   sendChatMessage,
   handleChatEnterKey,
   adjustTextareaHeight,
@@ -220,6 +219,10 @@ function handleTitleUpdate(event: Event) {
   })
 
   debouncedHandleTitleChange()
+
+  if (canJoinRealtime.value) {
+    broadcastTitle(newText)
+  }
 }
 
 // Menu event handlers
@@ -1060,11 +1063,6 @@ function onUniverChange() {
         v-else
         ref="univerRef"
         :data="data as IWorkbookData"
-        :ws="wsService"
-        :changes-pending="changesPending"
-        :sheet-id="route.params.id as string || 'default-sheet'"
-        :user-id="userId"
-        :user-name="userName"
         @ready="onUniverReady"
         @change="onUniverChange"
         class="w-full h-full"
