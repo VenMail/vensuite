@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-screen bg-gray-50">
+  <div class="flex flex-col h-screen" :class="isViewMode ? 'bg-white dark:bg-gray-950' : 'bg-gray-50'">
     <DocsTitleBar
       :title="documentTitle"
       :isSaving="isSaving"
@@ -10,7 +10,8 @@
       :share-link="shareLink"
       :privacy-type="privacyType"
       :share-members="shareMembers"
-      :show-version-history="true"
+      :show-version-history="!isViewMode"
+      :is-view-mode="isViewMode"
       @update:title="documentTitle = $event"
       @back="goBack"
       @manual-save="() => saveDocument(true)"
@@ -56,29 +57,30 @@
       </div>
     </div>
 
-     
-    <DocsToolbar 
-      ref="toolbarRef"
-      :editor="editor" 
-      :page-size="pageSize"
-      :page-orientation="pageOrientation"
-      :unread-count="unreadCount"
-      @update:page-size="handlePageSizeChange"
-      @update:page-orientation="pageOrientation = $event"
-      @export="handleExport"
-      @toggle-comments="isChatOpen = !isChatOpen"
-      @toggle-expanded="isToolbarExpanded = $event"
-      @update-pagination="updatePaginationSettings"
-      @print="handlePrint"
-    />
-    <!-- Find & Replace -->
-    <DocsFindReplace
-      :editor="editor"
-      :is-open="isFindReplaceOpen"
-      @close="isFindReplaceOpen = false"
-    />
+    <!-- Editing toolbar & find/replace — hidden in view mode -->
+    <template v-if="!isViewMode">
+      <DocsToolbar 
+        ref="toolbarRef"
+        :editor="editor" 
+        :page-size="pageSize"
+        :page-orientation="pageOrientation"
+        :unread-count="unreadCount"
+        @update:page-size="handlePageSizeChange"
+        @update:page-orientation="pageOrientation = $event"
+        @export="handleExport"
+        @toggle-comments="isChatOpen = !isChatOpen"
+        @toggle-expanded="isToolbarExpanded = $event"
+        @update-pagination="updatePaginationSettings"
+        @print="handlePrint"
+      />
+      <DocsFindReplace
+        :editor="editor"
+        :is-open="isFindReplaceOpen"
+        @close="isFindReplaceOpen = false"
+      />
+    </template>
 
-    <div v-if="collaboratorList.length" class="px-6 py-1 flex flex-wrap gap-2 items-center justify-end bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 text-xs">
+    <div v-if="collaboratorList.length && !isViewMode" class="px-6 py-1 flex flex-wrap gap-2 items-center justify-end bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 text-xs">
       <span class="text-gray-500 dark:text-gray-400">{{$t('Commons.text.also_editing')}}</span>
       <button
         v-for="c in collaboratorList"
@@ -100,6 +102,7 @@
 
      
     <button
+      v-if="!isViewMode"
       @click="isTocOpen = !isTocOpen"
       :class=" [
         'toc-toggle fixed left-4 z-40 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hover:shadow-xl transition-all hover:scale-105',
@@ -153,9 +156,9 @@
     </div>
 
      
-    <div v-if="!accessDenied" class="flex-1 overflow-auto bg-gray-50 transition-colors custom-scrollbar print:p-0 print:bg-white">
-      <!-- Page Ruler (horizontal) -->
-      <div v-if="showRuler" class="sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 print:hidden">
+    <div v-if="!accessDenied" class="flex-1 overflow-auto transition-colors custom-scrollbar print:p-0 print:bg-white" :class="isViewMode ? 'bg-white dark:bg-gray-950' : 'bg-gray-50'">
+      <!-- Page Ruler (horizontal) — hidden in view mode -->
+      <div v-if="showRuler && !isViewMode" class="sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 print:hidden">
         <div class="mx-auto" :style="{ width: `${currentPageWidth}px`, paddingTop: '8px' }">
           <PageRuler
             orientation="horizontal"
@@ -175,12 +178,16 @@
       
       <div class="p-6 pb-12 print:p-0" :style="zoomLevel !== 100 ? { transformOrigin: 'top center', transform: `scale(${zoomLevel / 100})` } : undefined">
         <div 
-          class="doc-page mx-auto bg-white shadow-lg rounded-lg min-h-full transition-all print:shadow-none print:rounded-none relative"
-          :class="{ 'landscape-mode': pageOrientation === 'landscape' }"
+          class="doc-page mx-auto bg-white min-h-full transition-all print:shadow-none print:rounded-none relative"
+          :class="{
+            'landscape-mode': pageOrientation === 'landscape',
+            'shadow-lg rounded-lg': !isViewMode,
+            'dark:bg-gray-950': isViewMode,
+          }"
           :style="{ ...pageStyles, ...contentPadding }"
         >
           <div
-            v-if="showPlaceholderOverlay"
+            v-if="showPlaceholderOverlay && !isViewMode"
             class="editor-placeholder-overlay"
             @click="focusEditor"
           >
@@ -191,7 +198,7 @@
           </div>
            
           <BubbleMenu
-            v-if="editor"
+            v-if="editor && !isViewMode"
             :editor="editor"
             :tippy-options="bubbleMenuTippyOptions"
             :should-show="bubbleShouldShow"
@@ -382,7 +389,10 @@
           <EditorContent
             v-if="editor"
             :editor="editor"
-            class="editor-wrapper prose prose-lg max-w-none"
+            :class="[
+              'editor-wrapper prose prose-lg max-w-none',
+              isViewMode && 'docs-view-mode'
+            ]"
             @focusin="onEditorFocus"
             @focusout="onEditorBlur"
           />
@@ -397,9 +407,9 @@
     </div>
     </div>
 
-    <!-- Chat Panel -->
+    <!-- Chat Panel — hidden in view mode -->
     <div
-      v-if="isChatOpen"
+      v-if="isChatOpen && !isViewMode"
       class="fixed right-4 bottom-4 w-[calc(100vw-2rem)] max-w-sm h-[70vh] max-h-96 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl flex flex-col"
     >
       <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700">
@@ -542,8 +552,9 @@
       </DialogContent>
     </Dialog>
 
-    <!-- AI Writer (floating on selection) -->
+    <!-- AI Writer (floating on selection) — hidden in view mode -->
     <DocsAIWriter
+      v-if="!isViewMode"
       :editor="editor"
       :is-visible="isAIWriterVisible && editorMode === 'editing'"
       :selection-rect="aiSelectionRect"
@@ -553,6 +564,7 @@
 
     <!-- Status Bar -->
     <DocsStatusBar
+      v-if="!isViewMode"
       :word-count="wordCount"
       :char-count="charCount"
       :page-count="pageCount"
@@ -727,10 +739,40 @@ const canJoinRealtime = computed(() => {
 // Determines if the current user can edit the document
 const canEditDoc = computed(() => authStore.isAuthenticated || editablePrivacyTypes.has(privacyType.value));
 
+// True when the user is in a read-only / viewing state (no edit access OR explicitly in viewing mode)
+const isViewMode = computed(() => !canEditDoc.value || editorMode.value === 'viewing');
+
 const isEditorFocused = ref(false);
 const isEditorEmpty = ref(true);
 const hasEnteredContent = ref(false);
-const showPlaceholderOverlay = computed(() => !isEditorFocused.value && isEditorEmpty.value && !hasEnteredContent.value);
+
+// Placeholder overlay should only appear while editing and for a short idle window (<= 10s)
+const idleOverlayVisible = ref(false);
+let idleOverlayTimeout: number | null = null;
+const PLACEHOLDER_IDLE_DURATION_MS = 10_000;
+
+const shouldAllowOverlay = computed(() => !isEditorFocused.value && isEditorEmpty.value && !hasEnteredContent.value && !isViewMode.value);
+const showPlaceholderOverlay = computed(() => shouldAllowOverlay.value && idleOverlayVisible.value);
+
+function activateIdleOverlayWindow() {
+  if (!shouldAllowOverlay.value) return;
+  idleOverlayVisible.value = true;
+  if (idleOverlayTimeout) {
+    clearTimeout(idleOverlayTimeout);
+  }
+  idleOverlayTimeout = window.setTimeout(() => {
+    idleOverlayVisible.value = false;
+    idleOverlayTimeout = null;
+  }, PLACEHOLDER_IDLE_DURATION_MS);
+}
+
+function deactivateIdleOverlayWindow() {
+  idleOverlayVisible.value = false;
+  if (idleOverlayTimeout) {
+    clearTimeout(idleOverlayTimeout);
+    idleOverlayTimeout = null;
+  }
+}
 
 // Page ruler state
 const showRuler = ref(true);
@@ -860,10 +902,12 @@ function focusEditor() {
   if (!editor.value) return;
   editor.value.chain().focus().run();
   isEditorFocused.value = true;
+  deactivateIdleOverlayWindow();
 }
 
 function onEditorFocus() {
   isEditorFocused.value = true;
+  deactivateIdleOverlayWindow();
 }
 
 function onEditorBlur() {
@@ -871,6 +915,7 @@ function onEditorBlur() {
   requestAnimationFrame(() => {
     if (!editor.value?.isFocused) {
       isEditorFocused.value = false;
+      activateIdleOverlayWindow();
     }
   });
 }
@@ -883,9 +928,11 @@ function updateEditorEmptyState(instance?: Editor) {
   isEditorEmpty.value = empty;
   if (!empty) {
     hasEnteredContent.value = true;
+    deactivateIdleOverlayWindow();
   } else {
     // Reset hasEnteredContent when editor becomes empty
     hasEnteredContent.value = false;
+    activateIdleOverlayWindow();
   }
 }
 
@@ -1102,10 +1149,13 @@ function colorForUser(uid: string) {
   return palette[idx];
 }
 
-// Update editor editable state when canEditDoc changes (e.g., after privacyType is loaded)
+// Update editor editable state and editorMode when canEditDoc changes (e.g., after privacyType is loaded)
 watch(canEditDoc, (canEdit) => {
   if (editor.value) {
     editor.value.setEditable(canEdit);
+  }
+  if (!canEdit) {
+    editorMode.value = 'viewing';
   }
 });
 
@@ -4491,6 +4541,30 @@ onUnmounted(() => {
   .docs-ai-writer {
     display: none!important;
   }
+}
+
+/* ── View Mode: clean reading interface ── */
+:deep(.docs-view-mode) {
+  cursor: default;
+}
+
+:deep(.docs-view-mode .ProseMirror) {
+  min-height: auto !important;
+  cursor: default;
+  caret-color: transparent;
+}
+
+:deep(.docs-view-mode .ProseMirror::selection),
+:deep(.docs-view-mode .ProseMirror *::selection) {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+/* Hide resize handles, column grips, etc. in view mode */
+:deep(.docs-view-mode .ProseMirror .table-col-resize-handle),
+:deep(.docs-view-mode .ProseMirror .table-row-resize-handle),
+:deep(.docs-view-mode .ProseMirror .handle),
+:deep(.docs-view-mode .ProseMirror .selectedCell:after) {
+  display: none !important;
 }
 
 /* ── Mobile Responsiveness ── */

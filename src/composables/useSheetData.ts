@@ -246,44 +246,60 @@ export function useSheetData() {
 
   // Debounced title save (moved to component scope like old implementation)
 
-  async function saveTitle(univerRef: any) {
-    // Exit edit mode first
-    isTitleEdit.value = false
+  async function saveTitle(univerRef: any, exitEditMode = true) {
+    // Exit edit mode unless called from debounced handler mid-typing
+    if (exitEditMode) {
+      isTitleEdit.value = false
+    }
     
-    const newTitle = title.value.trim()
-    if (newTitle && newTitle !== document.title) {
-      document.title = newTitle
-      if (!canEditSheet.value) return
-      if (router.currentRoute.value.params.id && !isSaving.value) {
-        try {
-          try {
-            univerRef?.setName(newTitle)
-          } catch {}
-          if (data.value && typeof data.value === 'object') {
-            ;(data.value as any).name = newTitle
-          }
-          const doc = {
-            id: router.currentRoute.value.params.id as string,
-            title: newTitle,
-            file_name: `${newTitle.toLowerCase().replace(/\s+/g, '-')}.xlsx`,
-            file_type: 'xlsx',
-            is_folder: false,
-            content: JSON.stringify(data.value),
-            last_viewed: new Date(),
-          } as FileData
+    const newTitle = title.value.trim() || 'New Spreadsheet'
+    document.title = newTitle
+    if (!canEditSheet.value) return
+    if (!router.currentRoute.value.params.id || isSaving.value) return
 
-          const result = await fileStore.saveDocument(doc)
-          logSheetEditorDebug('Title saved:', newTitle)
-
-          // Handle redirect for documents that got new server IDs
-          if (result.shouldRedirect && result.redirectId && result.redirectId !== router.currentRoute.value.params.id) {
-            logSheetEditorDebug('Document got new server ID after title change, redirecting to:', result.redirectId)
-            await router.replace(`/sheets/${result.redirectId}`)
-          }
-        } catch (error) {
-          console.error('Error saving title:', error)
-        }
+    try {
+      try {
+        univerRef?.setName(newTitle)
+      } catch {}
+      if (data.value && typeof data.value === 'object') {
+        ;(data.value as any).name = newTitle
       }
+
+      // Get live data from Univer instead of stale data.value
+      let contentToSave: string
+      try {
+        const liveData = await univerRef?.getData()
+        if (liveData) {
+          liveData.name = newTitle
+          contentToSave = JSON.stringify(liveData)
+        } else {
+          contentToSave = JSON.stringify(data.value)
+        }
+      } catch {
+        contentToSave = JSON.stringify(data.value)
+      }
+
+      const doc = {
+        id: router.currentRoute.value.params.id as string,
+        title: newTitle,
+        file_name: `${newTitle.toLowerCase().replace(/\s+/g, '-')}.xlsx`,
+        file_type: 'xlsx',
+        is_folder: false,
+        content: contentToSave,
+        last_viewed: new Date(),
+      } as FileData
+
+      const result = await fileStore.saveDocument(doc)
+      lastSavedAt.value = new Date()
+      logSheetEditorDebug('Title saved:', newTitle)
+
+      // Handle redirect for documents that got new server IDs
+      if (result.shouldRedirect && result.redirectId && result.redirectId !== router.currentRoute.value.params.id) {
+        logSheetEditorDebug('Document got new server ID after title change, redirecting to:', result.redirectId)
+        await router.replace(`/sheets/${result.redirectId}`)
+      }
+    } catch (error) {
+      console.error('Error saving title:', error)
     }
   }
 

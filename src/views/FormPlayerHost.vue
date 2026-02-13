@@ -818,9 +818,6 @@ watch(
   color: var(--player-text-color, #0f172a);
 }
 
-.player-host__callout--payment {
-}
-
 .player-host__body {
   width: 100%;
   display: flex;

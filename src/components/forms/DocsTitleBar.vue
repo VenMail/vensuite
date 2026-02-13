@@ -1,5 +1,40 @@
 <template>
-  <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between transition-colors">
+  <!-- ── View-only header: clean, minimal, reader-friendly ── -->
+  <header
+    v-if="isViewMode"
+    class="bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800 px-4 sm:px-6 py-2.5 flex items-center justify-between transition-colors"
+  >
+    <div class="flex items-center gap-3 min-w-0">
+      <button @click="$emit('back')" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0">
+        <ArrowLeft class="w-5 h-5 text-gray-500 dark:text-gray-400" />
+      </button>
+      <router-link to="/" class="flex-shrink-0">
+        <component :is="iconComponent" class="w-[1.25rem] h-[2.5rem] text-blue-600 dark:text-blue-400" />
+      </router-link>
+      <span class="font-semibold text-gray-900 dark:text-gray-100 truncate text-sm sm:text-base">
+        {{ title || 'Untitled Document' }}
+      </span>
+      <span class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 flex-shrink-0">
+        {{ $t('Commons.text.view_only') }}
+      </span>
+    </div>
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button
+        @click="toggleDarkMode"
+        class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+      >
+        <Sun v-if="isDarkMode" class="h-4 w-4 text-yellow-500" />
+        <Moon v-else class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Full editing header ── -->
+  <header
+    v-else
+    class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between transition-colors"
+  >
     <div class="flex items-center gap-4">
       <button @click="$emit('back')" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
         <ArrowLeft class="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -202,6 +237,7 @@ const props = defineProps<{
   showVersionHistory?: boolean;
   versionCount?: number;
   currentFileId?: string;
+  isViewMode?: boolean;
 }>();
 
 const emit = defineEmits<{

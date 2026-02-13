@@ -66,9 +66,10 @@ const {
 } = sheetData
 
 // Debounced title save (from old implementation)
+// Pass exitEditMode=false so user isn't kicked out of edit mode mid-typing
 const debouncedHandleTitleChange = debounce(() => {
   if (univerRef.value && isUniverReady.value) {
-    saveTitle(univerRef.value)
+    saveTitle(univerRef.value, false)
   }
 }, 300)
 
@@ -944,7 +945,7 @@ function onUniverChange() {
             contenteditable="true"
             @input="handleTitleUpdate"
             @blur="saveTitle(univerRef)"
-            @keydown.enter.prevent="saveTitle(univerRef)"
+            @keydown.enter.prevent="($event.target as HTMLElement)?.blur()"
             class="text-lg font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500"
             ref="titleRef"
           >
