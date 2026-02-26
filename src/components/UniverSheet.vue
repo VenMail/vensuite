@@ -31,6 +31,9 @@ onMounted(() => {
   isMounted.value = true;
   if (data) {
     init(data);
+  } else {
+    console.warn('No data provided to UniverSheet, using default data');
+    init(DEFAULT_WORKBOOK_DATA);
   }
 });
 
@@ -43,6 +46,63 @@ let univerInstanceCount = 0
 let globalUniverAPI: any = null
 
 /**
+ * Validate and normalize workbook data
+ */
+function validateWorkbookData(data: IWorkbookData): IWorkbookData {
+  const workbookData = { ...data }
+  
+  // Ensure sheets exist
+  if (!workbookData.sheets || Object.keys(workbookData.sheets).length === 0) {
+    console.warn('No sheets found in workbook data, creating default sheet')
+    workbookData.sheets = {
+      'Sheet1': {
+        id: 'Sheet1',
+        name: 'Sheet1',
+        cellData: {},
+        rowCount: 1000,
+        columnCount: 26,
+        defaultColumnWidth: 100,
+        defaultRowHeight: 25,
+        rowData: [],
+        columnData: [],
+      }
+    }
+  }
+  
+  // Ensure all sheets have required properties
+  Object.keys(workbookData.sheets).forEach(sheetKey => {
+    const sheet = workbookData.sheets[sheetKey]
+    
+    if (!sheet.columnData) {
+      sheet.columnData = Array.from({ length: sheet.columnCount || 26 }, () => ({ 
+        w: sheet.defaultColumnWidth || 100, 
+        hd: 0 
+      }));
+    } else {
+      // Ensure columnData is an array and has valid width for all columns
+      const columnArray = Array.isArray(sheet.columnData) ? sheet.columnData : [];
+      const targetLength = sheet.columnCount || 26;
+      
+      // Fill missing columns
+      while (columnArray.length < targetLength) {
+        columnArray.push({ w: sheet.defaultColumnWidth || 100, hd: 0 });
+      }
+      
+      // Fix any invalid width values
+      for (let i = 0; i < columnArray.length; i++) {
+        if (!columnArray[i] || columnArray[i].w <= 0) {
+          columnArray[i] = { w: sheet.defaultColumnWidth || 100, hd: 0 };
+        }
+      }
+      
+      sheet.columnData = columnArray;
+    }
+  })
+  
+  return workbookData
+}
+
+/**
  * Initialize univer instance using simplified preset approach
  */
 async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
@@ -51,13 +111,15 @@ async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
       throw new Error('Container element is missing');
     }
 
+    // Validate and normalize workbook data
+    const workbookData = validateWorkbookData(data)
+
     // Prevent duplicate initialization globally
     if (globalUniverAPI) {
       console.warn('Univer already initialized globally, reusing instance');
       univerAPI.value = globalUniverAPI;
       
       // Create new workbook with unique ID
-      const workbookData = { ...data };
       if (workbookData.id) {
         workbookData.id = `${workbookData.id}_${Date.now()}_${univerInstanceCount++}`;
       }
@@ -72,7 +134,6 @@ async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
     const { createUniver, defaultTheme } = await import('@univerjs/presets');
 
     // Ensure unique workbook ID by adding timestamp if needed
-    const workbookData = { ...data };
     if (workbookData.id) {
       workbookData.id = `${workbookData.id}_${Date.now()}_${univerInstanceCount++}`;
     }
@@ -93,55 +154,6 @@ async function init(data: IWorkbookData = DEFAULT_WORKBOOK_DATA) {
 
     univerAPI.value = univer.univerAPI;
     globalUniverAPI = univer.univerAPI; // Store global reference
-    
-    // Create workbook with unique ID and validate data
-    if (!workbookData.sheets || Object.keys(workbookData.sheets).length === 0) {
-      console.warn('No sheets found in workbook data, creating default sheet')
-      workbookData.sheets = {
-        'Sheet1': {
-          id: 'Sheet1',
-          name: 'Sheet1',
-          cellData: {},
-          rowCount: 1000,
-          columnCount: 26,
-          defaultColumnWidth: 100,
-          defaultRowHeight: 25,
-          rowData: [],
-          columnData: [],
-        }
-      }
-    }
-    
-    // Ensure all sheets have required properties and valid column data
-    Object.keys(workbookData.sheets).forEach(sheetKey => {
-      const sheet = workbookData.sheets[sheetKey]
-      
-      // Only set essential properties that are actually missing
-      if (!sheet.columnData) {
-        sheet.columnData = Array.from({ length: sheet.columnCount || 26 }, () => ({ 
-          w: sheet.defaultColumnWidth || 100, 
-          hd: 0 
-        }));
-      } else {
-        // Ensure columnData is an array and has valid width for all columns
-        const columnArray = Array.isArray(sheet.columnData) ? sheet.columnData : [];
-        const targetLength = sheet.columnCount || 26;
-        
-        // Fill missing columns
-        while (columnArray.length < targetLength) {
-          columnArray.push({ w: sheet.defaultColumnWidth || 100, hd: 0 });
-        }
-        
-        // Fix any invalid width values
-        for (let i = 0; i < columnArray.length; i++) {
-          if (!columnArray[i] || columnArray[i].w <= 0) {
-            columnArray[i] = { w: sheet.defaultColumnWidth || 100, hd: 0 };
-          }
-        }
-        
-        sheet.columnData = columnArray;
-      }
-    })
     
     workbook.value = univerAPI.value.createWorkbook(workbookData);
     isInitialized.value = true;
@@ -171,11 +183,12 @@ function destroyUniver() {
     
     // Only dispose univer instance if this is the last component using it
     if (univerAPI.value === globalUniverAPI) {
-      // Check if other components might be using this instance
-      // For now, we'll keep it alive to prevent re-initialization issues
-      console.log('Keeping global Univer instance alive to prevent re-initialization conflicts');
+      // For now, we keep the global instance alive to prevent re-initialization conflicts
+      // But we should clean up the workbook-specific resources
+      console.log('Keeping global Univer instance alive, cleaning workbook resources');
     }
     
+    // Clear the local reference but don't dispose global instance
     univerAPI.value = null;
     
     // Reset initialization state
@@ -234,19 +247,22 @@ async function getData(): Promise<IWorkbookData | null> {
  */
 async function setData(data: IWorkbookData) {
   try {
+    // Validate and normalize the data first
+    const validatedData = validateWorkbookData(data)
+    
     if (!univerAPI.value) {
-      await init(data);
+      await init(validatedData);
       return await getData();
     }
 
     if (!workbook.value) {
-      workbook.value = univerAPI.value.createWorkbook(data);
+      workbook.value = univerAPI.value.createWorkbook(validatedData);
       return await getData();
     }
 
     // Update existing workbook data
     if (typeof workbook.value.fromJSON === 'function') {
-      await workbook.value.fromJSON(data);
+      await workbook.value.fromJSON(validatedData);
     } else {
       // Dispose old workbook and create new one with unique ID
       try {
@@ -258,7 +274,7 @@ async function setData(data: IWorkbookData) {
       }
       
       // Ensure unique ID for new workbook
-      const newData = { ...data };
+      const newData = { ...validatedData };
       if (newData.id) {
         newData.id = `${newData.id}_${Date.now()}_${univerInstanceCount++}`;
       }
