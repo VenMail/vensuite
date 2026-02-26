@@ -31,7 +31,6 @@ import type { FormDefinition } from '@/types'
 import { useFileStore } from '@/store/files'
 import { toast } from '@/composables/useToast'
 import type { ShareMember, ShareLevel } from '@/utils/sharing'
-import { parseSharingInfoString } from '@/utils/sharing'
 // import { t } from '@/i18n'
 
 // Import composables
@@ -471,24 +470,22 @@ async function loadSharingData() {
   try {
     const document = await fileStore.loadDocument(id, 'xlsx')
     if (document && (document as any).sharing) {
-      // Parse sharing string into members using the proper utility function
+      // Parse sharing data into members
       const sharingData = (document as any).sharing
-      if (typeof sharingData === 'string' && sharingData.trim()) {
-        shareMembers.value = parseSharingInfoString(sharingData).map(member => ({
-          ...member,
-          status: 'accepted' as const
-        }))
+      if (typeof sharingData === 'string') {
+        shareMembers.value = sharingData
+          .split(',')
+          .map((entry: string) => {
+            const [email, level] = entry.split(':')
+            return {
+              email: email.trim(),
+              shareLevel: (level || 'v').trim() as ShareLevel,
+              status: 'accepted' as const
+            }
+          })
+          .filter((m: any) => m.email)
       } else if (Array.isArray(sharingData)) {
-        // Handle case where sharing is already an array of members
-        shareMembers.value = sharingData.map((member: any) => ({
-          email: member.email || '',
-          shareLevel: (member.shareLevel || 'v') as ShareLevel,
-          status: member.status || 'accepted' as const,
-          name: member.name,
-          avatarUrl: member.avatarUrl,
-          domain: member.domain,
-          isOwner: member.isOwner
-        }))
+        shareMembers.value = sharingData
       }
     }
   } catch (error) {
@@ -872,20 +869,14 @@ watch(title, (newTitle) => {
 
 // Watch for data changes to save to Univer
 watch(data, (newData) => {
-  if (newData && univerRef.value && isUniverReady.value) {
+  if (newData && univerRef.value) {
     try {
-      // Validate data structure before setting
-      if (!newData.sheets || Object.keys(newData.sheets).length === 0) {
-        console.warn('Invalid data structure: missing sheets, skipping update')
-        return
-      }
-      
       univerRef.value.setData(newData as unknown as IWorkbookData)
     } catch (error) {
       console.error('Failed to set data in Univer:', error)
     }
   }
-}, { deep: true })
+})
 
 // Auto-save functionality
 let saveTimeout: ReturnType<typeof setTimeout> | null = null

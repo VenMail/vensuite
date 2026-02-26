@@ -48,8 +48,17 @@ export function labelToShareLevel(label: ShareLevelLabel): ShareLevel {
   }
 }
 
-export function parseSharingInfoString(sharingInfo?: string | null): ShareMember[] {
+export function parseSharingInfoString(sharingInfo?: string | any[] | null): ShareMember[] {
   if (!sharingInfo) return []
+  
+  if (Array.isArray(sharingInfo)) {
+    return sharingInfo as ShareMember[]
+  }
+  
+  if (typeof sharingInfo !== 'string') {
+    return []
+  }
+
   return sharingInfo
     .split(',')
     .map((entry) => {
