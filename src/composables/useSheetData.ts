@@ -18,6 +18,7 @@ export function useSheetData() {
   const isTitleEdit = ref(false)
   const editableTitle = ref(title.value)
   const isSaving = ref(false)
+  let pendingSaveRequested = false
   const isLoading = ref(false)
   const lastSavedAt = ref<Date | null>(null)
   const isSettingCursor = ref(false)
@@ -186,6 +187,7 @@ export function useSheetData() {
 
     if (isSaving.value) {
       logSheetEditorDebug('Save already in progress, skipping')
+      pendingSaveRequested = true
       return
     }
 
@@ -241,6 +243,12 @@ export function useSheetData() {
       toast.error('Failed to save document. Please try again.')
     } finally {
       isSaving.value = false
+      if (pendingSaveRequested) {
+        pendingSaveRequested = false
+        queueMicrotask(() => {
+          void saveData(univerRef)
+        })
+      }
     }
   }
 

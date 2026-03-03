@@ -564,7 +564,7 @@
 
     <!-- Status Bar -->
     <DocsStatusBar
-      v-if="!isViewMode"
+      v-if="!isViewMode && !isMobileViewport"
       :word-count="wordCount"
       :char-count="charCount"
       :page-count="pageCount"
@@ -579,6 +579,17 @@
       @zoom-out="zoomOut"
       @reset-zoom="resetZoom"
     />
+
+    <button
+      v-if="canEditDoc && isMobileViewport && !accessDenied"
+      type="button"
+      class="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/95 px-4 py-2 text-sm font-medium text-gray-700 shadow-lg backdrop-blur dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200"
+      @click="toggleMobileReaderMode"
+    >
+      <EyeOff v-if="editorMode === 'editing'" class="h-4 w-4" />
+      <Eye v-else class="h-4 w-4" />
+      <span>{{ editorMode === 'editing' ? 'Read mode' : 'Edit mode' }}</span>
+    </button>
   </div>
 </template>
 
@@ -745,6 +756,8 @@ const isViewMode = computed(() => !canEditDoc.value || editorMode.value === 'vie
 const isEditorFocused = ref(false);
 const isEditorEmpty = ref(true);
 const hasEnteredContent = ref(false);
+const isMobileViewport = ref(false);
+const hasUserSelectedMobileMode = ref(false);
 
 // Placeholder overlay should only appear while editing and for a short idle window (<= 10s)
 const idleOverlayVisible = ref(false);
@@ -1149,14 +1162,19 @@ function colorForUser(uid: string) {
   return palette[idx];
 }
 
-// Update editor editable state and editorMode when canEditDoc changes (e.g., after privacyType is loaded)
+// Keep editability and mode aligned with permissions + viewport behavior.
 watch(canEditDoc, (canEdit) => {
-  if (editor.value) {
-    editor.value.setEditable(canEdit);
-  }
   if (!canEdit) {
     editorMode.value = 'viewing';
+    hasUserSelectedMobileMode.value = false;
+  } else {
+    updateViewportState();
   }
+  syncEditorEditableState();
+});
+
+watch(isViewMode, () => {
+  syncEditorEditableState();
 });
 
 // Table of Contents state
@@ -1169,6 +1187,39 @@ const zoomLevel = ref(100);
 const isFindReplaceOpen = ref(false);
 const isAIWriterVisible = ref(false);
 const aiSelectionRect = ref<{ top: number; left: number; bottom: number } | null>(null);
+
+function syncEditorEditableState() {
+  if (!editor.value) return;
+  editor.value.setEditable(canEditDoc.value && !isViewMode.value);
+}
+
+function updateViewportState() {
+  isMobileViewport.value = window.innerWidth <= 768;
+
+  if (!canEditDoc.value) {
+    editorMode.value = 'viewing';
+    return;
+  }
+
+  if (!isMobileViewport.value && hasUserSelectedMobileMode.value) {
+    hasUserSelectedMobileMode.value = false;
+    editorMode.value = 'editing';
+    return;
+  }
+
+  if (isMobileViewport.value && !hasUserSelectedMobileMode.value) {
+    editorMode.value = 'viewing';
+  }
+
+  if (!isMobileViewport.value && !hasUserSelectedMobileMode.value) {
+    editorMode.value = 'editing';
+  }
+}
+
+function toggleMobileReaderMode() {
+  hasUserSelectedMobileMode.value = true;
+  editorMode.value = editorMode.value === 'editing' ? 'viewing' : 'editing';
+}
 
 // Word / character count
 const wordCount = computed(() => {
@@ -3645,7 +3696,7 @@ function initializeEditor(contentOverride?: any) {
       ...(shouldEnablePagination ? [Pagination.configure(paginationConfig as any)] : []),
     ],
     content: contentOverride ?? (existingContent || ''),
-    editable: canEditDoc.value,
+    editable: canEditDoc.value && !isViewMode.value,
     editorProps: {
       attributes: {
         class: 'focus:outline-none min-h-[500px] print:min-h-0 print:overflow-visible'
@@ -3711,6 +3762,8 @@ function handleBeforeUnload(e: BeforeUnloadEvent) {
 }
 
 onMounted(async () => {
+  updateViewportState();
+
   // Initialize editor with Pagination extension
   initializeEditor();
   updatePrintStyles();
@@ -3731,6 +3784,7 @@ onMounted(async () => {
 
   // Global keyboard shortcuts (Find, Zoom, etc.)
   window.addEventListener('keydown', handleGlobalKeydown);
+  window.addEventListener('resize', updateViewportState);
 
   // AI Writer: track selection position
   if (editor.value) {
@@ -3801,6 +3855,7 @@ onUnmounted(() => {
   window.removeEventListener('online', handleOnline);
   window.removeEventListener('offline', handleOffline);
   window.removeEventListener('keydown', handleGlobalKeydown);
+  window.removeEventListener('resize', updateViewportState);
   try { editor.value?.off('selectionUpdate', updateAIWriterPosition); } catch {}
   editor.value?.destroy();
 });

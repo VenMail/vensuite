@@ -31,20 +31,23 @@ const computedShareLink = computed(() => {
   if (isPublished && shareSlug) {
     return `${SHARE_BASE_URL}/f/${shareSlug}`;
   }
-  
-  return `${SHARE_BASE_URL}/f/by-id/${props.form.id}`;
+
+  return '';
 });
 
-const shareHelperItems = computed(() => [
-  {
-    label: t('Commons.button.copy'),
-    action: copyShareLink,
-  },
-  {
-    label: t('components.forms.commons.button.open_new_tab'),
-    action: openShareLink,
-  },
-]);
+const shareHelperItems = computed(() => {
+  if (!computedShareLink.value) return [];
+  return [
+    {
+      label: t('Commons.button.copy'),
+      action: copyShareLink,
+    },
+    {
+      label: t('components.forms.commons.button.open_new_tab'),
+      action: openShareLink,
+    },
+  ];
+});
 
 const copyShareLink = async () => {
   try {
@@ -112,7 +115,7 @@ const closeModal = () => {
             </Button>
           </div>
           <p class="text-xs text-slate-500">
-            {{ t('Views.Forms.text.anyone_with_this_link') }}
+            {{ computedShareLink ? t('Views.Forms.text.anyone_with_this_link') : 'Publish this form to generate a public response link.' }}
           </p>
         </div>
 

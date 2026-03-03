@@ -1411,12 +1411,11 @@ const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || window.location.or
 
 const formShareSlug = computed(() => {
   const form = formStore.allForms.find((f) => f.id === formId.value) as any;
-  return (form?.sharing?.share_slug ?? form?.slug ?? '') as string;
+  return (form?.sharing?.share_slug ?? '') as string;
 });
 
 const formPublicUrl = computed(() => {
-  if (formShareSlug.value) return `${SHARE_BASE_URL}/share/form/${formShareSlug.value}`;
-  if (formId.value) return `${window.location.origin}/f/by-id/${formId.value}`;
+  if (formShareSlug.value) return `${SHARE_BASE_URL}/f/${formShareSlug.value}`;
   return '';
 });
 
@@ -1428,9 +1427,8 @@ const formPublicInsertEndpointApiKey = computed(() => {
 const computedShareLink = computed(() => {
   const target: any = shareTarget.value;
   if (!target) return "";
-  const shareSlug = target?.sharing?.share_slug ?? target?.slug;
-  if (shareSlug) return `${SHARE_BASE_URL}/share/form/${shareSlug}`;
-  if (target?.id) return `${window.location.origin}/f/by-id/${target.id}`;
+  const shareSlug = target?.sharing?.share_slug;
+  if (shareSlug) return `${SHARE_BASE_URL}/f/${shareSlug}`;
   return "";
 });
 
@@ -1501,7 +1499,7 @@ const openShareModal = async () => {
   };
   shareTarget.value = target;
   showShareModal.value = true;
-  const hasShareSlug = (target as any).sharing?.share_slug || (target as any).slug;
+  const hasShareSlug = (target as any).sharing?.share_slug;
   if (hasShareSlug) return;
   try {
     isPublishingShare.value = true;
@@ -1509,7 +1507,7 @@ const openShareModal = async () => {
     if (updated?.sharing?.share_slug) {
       shareTarget.value = updated;
       await navigator.clipboard.writeText(
-        `${SHARE_BASE_URL}/share/form/${updated.sharing.share_slug}`
+        `${SHARE_BASE_URL}/f/${updated.sharing.share_slug}`
       );
       toast.success("Form published. Share link copied to clipboard.");
     } else {
