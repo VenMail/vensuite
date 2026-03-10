@@ -231,11 +231,18 @@ export function useSheetData() {
       if (result.shouldRedirect && result.redirectId && result.redirectId !== router.currentRoute.value.params.id) {
         logSheetEditorDebug('Document got new server ID, redirecting to:', result.redirectId)
         await router.replace(`/sheets/${result.redirectId}`)
-        toast.success('Document saved and synced successfully')
-      } else {
-        toast.success('Document saved successfully')
       }
-      lastSavedAt.value = new Date()
+
+      if (result.syncStatus === 'synced') {
+        lastSavedAt.value = new Date()
+        if (result.shouldRedirect) {
+          toast.success('Document saved and synced successfully')
+        } else {
+          toast.success('Document saved successfully')
+        }
+      } else {
+        toast.error('Changes were kept locally and queued to sync. Please verify your connection.')
+      }
 
       logSheetEditorDebug('Document saved successfully')
     } catch (error) {
@@ -298,8 +305,12 @@ export function useSheetData() {
       } as FileData
 
       const result = await fileStore.saveDocument(doc)
-      lastSavedAt.value = new Date()
-      logSheetEditorDebug('Title saved:', newTitle)
+      if (result.syncStatus === 'synced') {
+        lastSavedAt.value = new Date()
+        logSheetEditorDebug('Title saved:', newTitle)
+      } else {
+        logSheetEditorDebug('Title save queued locally:', newTitle)
+      }
 
       // Handle redirect for documents that got new server IDs
       if (result.shouldRedirect && result.redirectId && result.redirectId !== router.currentRoute.value.params.id) {

@@ -121,6 +121,56 @@ function setWindowLocation(href: string) {
   }
 }
 
+async function loadVersionHistory() {
+  const fileId = route.params.id as string | undefined
+  if (!fileId) {
+    return
+  }
+
+  isLoadingVersions.value = true
+  try {
+    const response = await fileStore.listVersions(fileId)
+    versionHistory.value = response?.versions ?? []
+    currentVersionSummary.value = response?.current_version ?? null
+  } catch (error) {
+    console.error('Failed to load sheet version history:', error)
+    versionHistory.value = []
+    currentVersionSummary.value = null
+    toast.error('Failed to load version history')
+  } finally {
+    isLoadingVersions.value = false
+  }
+}
+
+async function openVersionHistory() {
+  showVersionHistoryDialog.value = true
+  await loadVersionHistory()
+}
+
+function formatVersionDate(value?: string | null) {
+  if (!value) return ''
+  const parsed = Date.parse(value)
+  if (Number.isNaN(parsed)) {
+    return value
+  }
+
+  return new Date(parsed).toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function formatVersionFileSize(bytes?: number | null) {
+  if (!bytes || bytes <= 0) return '0 Bytes'
+  const units = ['Bytes', 'KB', 'MB', 'GB']
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  const value = bytes / Math.pow(1024, exponent)
+  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`
+}
+
 // Update collaboration privacy type when it changes
 watch(() => sheetData.privacyType.value, (newPrivacyType) => {
   collaborationPrivacyType.value = newPrivacyType
@@ -141,6 +191,24 @@ const iconRef = ref<HTMLElement | null>(null)
 const shareOpen = ref(false)
 const integrationsOpen = ref(false)
 const convertToFormOpen = ref(false)
+const showVersionHistoryDialog = ref(false)
+const isLoadingVersions = ref(false)
+const versionHistory = ref<Array<{
+  id: string;
+  version_number: number;
+  file_size: number;
+  file_name: string;
+  mime_type: string;
+  change_note: string | null;
+  created_at: string;
+  created_at_human: string;
+  employee_id: string;
+}>>([])
+const currentVersionSummary = ref<{
+  file_size?: number;
+  updated_at?: string;
+  updated_at_human?: string;
+} | null>(null)
 const sheetPublicApiKey = ref<string>('')
 const sheetPublicApiEnabled = ref<boolean>(false)
 const isUpdatingSheetPublicApi = ref(false)
@@ -960,9 +1028,14 @@ function onUniverChange() {
       </div>
 
       <div class="flex items-center gap-2">
-        <div class="text-sm text-gray-500 dark:text-gray-400">
+        <button
+          type="button"
+          @click="openVersionHistory"
+          class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+          :disabled="!route.params.id"
+        >
           {{ lastSavedText }}
-        </div>
+        </button>
         
         <div v-if="isSaving" class="text-sm text-blue-600 dark:text-blue-400">
           Saving...
@@ -1648,6 +1721,62 @@ function onUniverChange() {
             >
               Cancel
             </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Version History Dialog -->
+    <Dialog v-model:open="showVersionHistoryDialog">
+      <DialogContent class="max-w-2xl dark:bg-gray-900 dark:border-gray-700">
+        <DialogHeader>
+          <DialogTitle class="dark:text-gray-100">Version history</DialogTitle>
+        </DialogHeader>
+
+        <div class="space-y-4">
+          <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-4">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">Current version</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ formatVersionDate(currentVersionSummary?.updated_at_human || currentVersionSummary?.updated_at) }}
+                </div>
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                {{ formatVersionFileSize(currentVersionSummary?.file_size) }}
+              </div>
+            </div>
+          </div>
+
+          <div v-if="isLoadingVersions" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            Loading version history...
+          </div>
+
+          <div v-else-if="versionHistory.length === 0" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            No previous versions available yet.
+          </div>
+
+          <div v-else class="max-h-[28rem] overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
+            <div
+              v-for="version in versionHistory"
+              :key="version.id"
+              class="flex items-start justify-between gap-4 p-4 bg-white dark:bg-gray-900"
+            >
+              <div class="min-w-0">
+                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Version {{ version.version_number }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {{ formatVersionDate(version.created_at_human || version.created_at) }}
+                </div>
+                <div v-if="version.change_note" class="text-xs text-gray-600 dark:text-gray-300 mt-2 break-words">
+                  {{ version.change_note }}
+                </div>
+              </div>
+              <div class="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                {{ formatVersionFileSize(version.file_size) }}
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>

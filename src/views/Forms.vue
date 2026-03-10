@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed, toRef } from "vue";
 import { useFormStore } from "@/store/forms";
 import { useFormTemplates } from "@/composables/useFormTemplates";
 import { useFormFilters } from "@/composables/useFormFilters";
@@ -26,13 +26,14 @@ const showTemplateDialog = ref(false);
 const { } = useMobileDetection({ breakpoint: 1024 });
 
 const formStore = useFormStore();
+const formsSource = toRef(formStore, 'allForms');
 const { formTemplates } = useFormTemplates();
 const { 
   sortedForms, 
   formsSubtitle, 
   computeFieldCount, 
   computeResponseCount 
-} = useFormFilters(formStore.allForms);
+} = useFormFilters(formsSource);
 const { 
   showWizard, 
   wizardPreset, 

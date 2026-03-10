@@ -1,11 +1,13 @@
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, unref, type MaybeRef } from 'vue';
 import type { AppForm, FormDefinition } from '@/types';
 
-export const useFormFilters = (forms: any[]) => {
+export const useFormFilters = (forms: MaybeRef<AppForm[]>) => {
   const searchValue = ref('');
   const debouncedSearch = ref('');
   const currentFilter = ref('all');
   const sortBy = ref('date');
+
+  const formsSource = computed<AppForm[]>(() => unref(forms) ?? []);
 
   let debounceTimer: number | null = null;
   
@@ -49,7 +51,7 @@ export const useFormFilters = (forms: any[]) => {
   };
 
   const filteredForms = computed(() => {
-    let formsList = forms;
+    let formsList = [...formsSource.value];
     
     // Apply filter
     if (currentFilter.value !== 'all') {

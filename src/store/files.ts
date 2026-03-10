@@ -1024,6 +1024,7 @@ export const useFileStore = defineStore("files", {
     /** Save a document - local-first with robust sync */
     async saveDocument(document: FileData): Promise<{
       document: FileData;
+      syncStatus?: 'synced' | 'queued';
       shouldRedirect?: boolean;
       redirectId?: string;
     }> {
@@ -1038,7 +1039,7 @@ export const useFileStore = defineStore("files", {
             // Save the server result locally
             this.saveToLocalCache(saveResult);
             this.updateFiles(saveResult);
-            return { document: saveResult };
+            return { document: saveResult, syncStatus: 'synced' };
           } else {
             throw new Error("Failed to save new document to server");
           }
@@ -1066,6 +1067,7 @@ export const useFileStore = defineStore("files", {
 
             return {
               document: saveResult,
+              syncStatus: 'synced',
               shouldRedirect: true,
               redirectId: saveResult.id
             };
@@ -1073,20 +1075,20 @@ export const useFileStore = defineStore("files", {
             // This was already a server document, just update cache
             this.cacheDocument(saveResult);
             this.updateFiles(saveResult);
-            return { document: saveResult };
+            return { document: saveResult, syncStatus: 'synced' };
           }
         } else {
           // Online save failed - mark as dirty for later sync
           document.isDirty = true;
           this.queueForSync(document);
+          return { document, syncStatus: 'queued' };
         }
       } else {
         // Offline - mark as dirty for later sync
         document.isDirty = true;
         this.queueForSync(document);
+        return { document, syncStatus: 'queued' };
       }
-
-      return { document };
     },
 
     /** Get storage prefix based on file type */
@@ -1141,6 +1143,14 @@ export const useFileStore = defineStore("files", {
             file_type: document.file_type || serverData.file_type,
             is_folder: this.normalizeBooleanFlag(document.is_folder ?? serverData.is_folder, false),
           });
+
+          const responseIncludesContent = Object.prototype.hasOwnProperty.call(serverData ?? {}, 'content')
+            || Object.prototype.hasOwnProperty.call(serverData ?? {}, 'contents');
+
+          if (!responseIncludesContent && document.content !== undefined) {
+            savedDoc.content = this.normalizeContentPayload(document.content, savedDoc.file_type);
+          }
+
           savedDoc.isNew = false;
           savedDoc.isDirty = false;
 
