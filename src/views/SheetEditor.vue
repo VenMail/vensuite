@@ -16,6 +16,7 @@ import Button from '@/components/ui/button/Button.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import IntegrationDialog from '@/components/forms/IntegrationDialog.vue'
 import ShareCard from '@/components/ShareCard.vue'
+import SheetVersionHistory from '@/components/sheets/SheetVersionHistory.vue'
 import * as defaultIcons from '@iconify-prerendered/vue-file-icons'
 import { useFavicon } from '@vueuse/core'
 
@@ -39,6 +40,41 @@ import { useSheetFormatting } from '@/composables/useSheetFormatting'
 import { useSheetDataTools } from '@/composables/useSheetDataTools'
 import { useSheetCollaboration } from '@/composables/useSheetCollaboration'
 import { useSheetExport } from '@/composables/useSheetExport'
+
+const route = useRoute()
+const router = useRouter()
+
+type VersionHistoryItem = {
+  id: string;
+  version_number: number;
+  file_size: number;
+  file_name: string;
+  mime_type: string;
+  change_note: string | null;
+  created_at: string;
+  created_at_human: string;
+  employee_id: string;
+}
+
+type VersionHistoryDetail = VersionHistoryItem & {
+  app_file_id: string;
+  file_url: string;
+  content: string;
+}
+
+type WorkbookSheetSummary = {
+  id: string;
+  name: string;
+  rowCount: number;
+  columnCount: number;
+  populatedCellCount: number;
+  fingerprint: string;
+}
+
+type WorkbookVersionSummary = {
+  sheetCount: number;
+  sheets: WorkbookSheetSummary[];
+}
 
 // Initialize stores
 const fileStore = useFileStore()
@@ -94,7 +130,6 @@ const {
   textareaHeight,
   replyingTo,
   collaborators,
-  privacyType: collaborationPrivacyType,
   canJoinRealtime,
   broadcastTitle,
   sendChatMessage,
@@ -145,44 +180,155 @@ async function loadVersionHistory() {
 async function openVersionHistory() {
   showVersionHistoryDialog.value = true
   await loadVersionHistory()
+  if (versionHistory.value.length > 0) {
+    await selectVersion(versionHistory.value[0])
+  }
 }
 
-function formatVersionDate(value?: string | null) {
-  if (!value) return ''
-  const parsed = Date.parse(value)
-  if (Number.isNaN(parsed)) {
-    return value
+async function selectVersion(version: VersionHistoryItem) {
+  const fileId = route.params.id as string | undefined
+  if (!fileId) {
+    return
   }
 
-  return new Date(parsed).toLocaleString([], {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  selectedVersionNumber.value = version.version_number
+  selectedVersionError.value = null
+  isLoadingVersionDetail.value = true
+
+  try {
+    const detail = await fileStore.getVersion(fileId, version.version_number)
+    if (!detail) {
+      throw new Error('Version details unavailable')
+    }
+    selectedVersionDetail.value = {
+      ...version,
+      ...detail,
+    }
+  } catch (error) {
+    console.error('Failed to load selected version:', error)
+    selectedVersionDetail.value = null
+    selectedVersionError.value = 'Failed to load this version for comparison.'
+  } finally {
+    isLoadingVersionDetail.value = false
+  }
+}
+
+function parseWorkbookSnapshot(raw: unknown): Partial<IWorkbookData> | null {
+  if (!raw) return null
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return null
+    }
+  }
+  if (typeof raw === 'object') {
+    return raw as Partial<IWorkbookData>
+  }
+  return null
+}
+
+function extractCellStats(cellData: unknown): { populatedCellCount: number; sampleValues: string[] } {
+  if (!cellData || typeof cellData !== 'object') {
+    return { populatedCellCount: 0, sampleValues: [] }
+  }
+
+  let populatedCellCount = 0
+  const sampleValues: string[] = []
+
+  Object.values(cellData as Record<string, unknown>).forEach((row) => {
+    if (!row || typeof row !== 'object') return
+    Object.values(row as Record<string, unknown>).forEach((cell) => {
+      if (!cell || typeof cell !== 'object') return
+      const value = (cell as Record<string, unknown>).v
+        ?? (cell as Record<string, unknown>).value
+        ?? (cell as Record<string, unknown>).p
+      if (value === undefined || value === null || value === '') return
+      populatedCellCount += 1
+      if (sampleValues.length < 12) {
+        sampleValues.push(String(value))
+      }
+    })
   })
+
+  return { populatedCellCount, sampleValues }
 }
 
-function formatVersionFileSize(bytes?: number | null) {
-  if (!bytes || bytes <= 0) return '0 Bytes'
-  const units = ['Bytes', 'KB', 'MB', 'GB']
-  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
-  const value = bytes / Math.pow(1024, exponent)
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`
+function summarizeWorkbook(raw: unknown): WorkbookVersionSummary | null {
+  const workbook = parseWorkbookSnapshot(raw)
+  const sheets = (workbook as any)?.sheets
+  if (!sheets || typeof sheets !== 'object') {
+    return null
+  }
+
+  const sheetSummaries = Object.entries(sheets as Record<string, unknown>).map(([sheetId, sheet]) => {
+    const typedSheet = (sheet ?? {}) as Record<string, unknown>
+    const rowCount = Number(typedSheet.rowCount ?? typedSheet.row_count ?? 0)
+    const columnCount = Number(typedSheet.columnCount ?? typedSheet.column_count ?? 0)
+    const { populatedCellCount, sampleValues } = extractCellStats(typedSheet.cellData ?? typedSheet.cell_data)
+
+    return {
+      id: sheetId,
+      name: String(typedSheet.name ?? sheetId),
+      rowCount,
+      columnCount,
+      populatedCellCount,
+      fingerprint: [rowCount, columnCount, populatedCellCount, sampleValues.join('|')].join('::'),
+    }
+  })
+
+  return {
+    sheetCount: sheetSummaries.length,
+    sheets: sheetSummaries,
+  }
 }
 
-// Update collaboration privacy type when it changes
-watch(() => sheetData.privacyType.value, (newPrivacyType) => {
-  collaborationPrivacyType.value = newPrivacyType
+const currentWorkbookSummary = computed(() => summarizeWorkbook(data.value))
+const selectedWorkbookSummary = computed(() => summarizeWorkbook(selectedVersionDetail.value?.content))
+
+const workbookComparison = computed(() => {
+  const current = currentWorkbookSummary.value
+  const selected = selectedWorkbookSummary.value
+  if (!current || !selected) {
+    return null
+  }
+
+  const currentMap = new Map(current.sheets.map((sheet) => [sheet.name, sheet]))
+  const selectedMap = new Map(selected.sheets.map((sheet) => [sheet.name, sheet]))
+
+  const addedSheets: string[] = []
+  const removedSheets: string[] = []
+  const changedSheets: string[] = []
+  const unchangedSheets: string[] = []
+
+  currentMap.forEach((sheet, sheetName) => {
+    const previousSheet = selectedMap.get(sheetName)
+    if (!previousSheet) {
+      addedSheets.push(sheetName)
+      return
+    }
+
+    if (previousSheet.fingerprint !== sheet.fingerprint) {
+      changedSheets.push(sheetName)
+    } else {
+      unchangedSheets.push(sheetName)
+    }
+  })
+
+  selectedMap.forEach((_sheet, sheetName) => {
+    if (!currentMap.has(sheetName)) {
+      removedSheets.push(sheetName)
+    }
+  })
+
+  return {
+    addedSheets,
+    removedSheets,
+    changedSheets,
+    unchangedSheets,
+    hasChanges: addedSheets.length > 0 || removedSheets.length > 0 || changedSheets.length > 0,
+  }
 })
-
-// Route and router
-const route = useRoute()
-const router = useRouter()
-
-// Check if this is a template route (for potential future use)
-// const isTemplateRoute = computed(() => !!(route.params.template as string))
-// const templateSlug = computed(() => route.params.template as string)
 
 // Refs for UI elements
 const iconRef = ref<HTMLElement | null>(null)
@@ -193,22 +339,16 @@ const integrationsOpen = ref(false)
 const convertToFormOpen = ref(false)
 const showVersionHistoryDialog = ref(false)
 const isLoadingVersions = ref(false)
-const versionHistory = ref<Array<{
-  id: string;
-  version_number: number;
-  file_size: number;
-  file_name: string;
-  mime_type: string;
-  change_note: string | null;
-  created_at: string;
-  created_at_human: string;
-  employee_id: string;
-}>>([])
+const versionHistory = ref<VersionHistoryItem[]>([])
 const currentVersionSummary = ref<{
   file_size?: number;
   updated_at?: string;
   updated_at_human?: string;
 } | null>(null)
+const selectedVersionNumber = ref<number | null>(null)
+const selectedVersionDetail = ref<VersionHistoryDetail | null>(null)
+const isLoadingVersionDetail = ref(false)
+const selectedVersionError = ref<string | null>(null)
 const sheetPublicApiKey = ref<string>('')
 const sheetPublicApiEnabled = ref<boolean>(false)
 const isUpdatingSheetPublicApi = ref(false)
@@ -445,7 +585,7 @@ async function handleUpdateMember(payload: { email: string; shareLevel: ShareLev
     const currentDoc = await fileStore.loadDocument(id, 'xlsx')
     if (currentDoc) {
       const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
-      const updatedDoc = { ...currentDoc, sharing: updatedSharing }
+      const updatedDoc = { ...currentDoc, sharing_info: updatedSharing }
       await fileStore.saveToAPI(updatedDoc)
     }
     
@@ -475,7 +615,7 @@ async function handleRemoveMember(payload: { email: string }) {
     const currentDoc = await fileStore.loadDocument(id, 'xlsx')
     if (currentDoc) {
       const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
-      const updatedDoc = { ...currentDoc, sharing: updatedSharing }
+      const updatedDoc = { ...currentDoc, sharing_info: updatedSharing }
       await fileStore.saveToAPI(updatedDoc)
     }
     
@@ -516,7 +656,7 @@ async function handleInvite(payload: { email: string; shareLevel: ShareLevel; la
     const currentDoc = await fileStore.loadDocument(id, 'xlsx')
     if (currentDoc) {
       const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
-      const updatedDoc = { ...currentDoc, sharing: updatedSharing }
+      const updatedDoc = { ...currentDoc, sharing_info: updatedSharing }
       await fileStore.saveToAPI(updatedDoc)
     }
     
@@ -537,9 +677,9 @@ async function loadSharingData() {
   
   try {
     const document = await fileStore.loadDocument(id, 'xlsx')
-    if (document && (document as any).sharing) {
+    const sharingData = (document as any)?.sharing_info ?? (document as any)?.sharing
+    if (document && sharingData) {
       // Parse sharing data into members
-      const sharingData = (document as any).sharing
       if (typeof sharingData === 'string') {
         shareMembers.value = sharingData
           .split(',')
@@ -1007,8 +1147,9 @@ function onUniverChange() {
           </div>
           <div
             v-if="!isTitleEdit"
-            @click="editTitle"
-            class="text-lg font-medium text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded"
+            @click="canEditSheet ? editTitle() : undefined"
+            class="text-lg font-medium text-gray-900 dark:text-gray-100 px-2 py-1 rounded"
+            :class="canEditSheet ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700' : 'cursor-default'"
             ref="titleRef"
           >
             {{ title }}
@@ -1024,6 +1165,12 @@ function onUniverChange() {
           >
             {{ editableTitle }}
           </div>
+          <span
+            v-if="!canEditSheet"
+            class="hidden sm:inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-600 dark:text-gray-300"
+          >
+            View only
+          </span>
         </div>
       </div>
 
@@ -1045,12 +1192,12 @@ function onUniverChange() {
           Syncing...
         </div>
 
-        <Button @click="openShareDialog" variant="outline" size="sm">
+        <Button v-if="canEditSheet" @click="openShareDialog" variant="outline" size="sm">
           <Share2 class="h-4 w-4 mr-2" />
           Share
         </Button>
 
-        <Button @click="toggleChat" variant="outline" size="sm" class="relative">
+        <Button v-if="canEditSheet" @click="toggleChat" variant="outline" size="sm" class="relative">
           <MessageSquareIcon class="h-4 w-4" />
           <span v-if="unreadCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
             {{ unreadCount }}
@@ -1061,8 +1208,9 @@ function onUniverChange() {
       </div>
     </div>
 
-    <!-- Unified Menubar -->
+    <!-- Unified Menubar — hidden in read-only/view mode -->
     <UnifiedMenubar
+      v-if="canEditSheet"
       :file-id="route.params.id as string"
       mode="sheet"
       :collaborators="collaborators"
@@ -1726,61 +1874,21 @@ function onUniverChange() {
       </DialogContent>
     </Dialog>
 
-    <!-- Version History Dialog -->
-    <Dialog v-model:open="showVersionHistoryDialog">
-      <DialogContent class="max-w-2xl dark:bg-gray-900 dark:border-gray-700">
-        <DialogHeader>
-          <DialogTitle class="dark:text-gray-100">Version history</DialogTitle>
-        </DialogHeader>
-
-        <div class="space-y-4">
-          <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-4">
-            <div class="flex items-center justify-between gap-4">
-              <div>
-                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">Current version</div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ formatVersionDate(currentVersionSummary?.updated_at_human || currentVersionSummary?.updated_at) }}
-                </div>
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                {{ formatVersionFileSize(currentVersionSummary?.file_size) }}
-              </div>
-            </div>
-          </div>
-
-          <div v-if="isLoadingVersions" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            Loading version history...
-          </div>
-
-          <div v-else-if="versionHistory.length === 0" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-            No previous versions available yet.
-          </div>
-
-          <div v-else class="max-h-[28rem] overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
-            <div
-              v-for="version in versionHistory"
-              :key="version.id"
-              class="flex items-start justify-between gap-4 p-4 bg-white dark:bg-gray-900"
-            >
-              <div class="min-w-0">
-                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  Version {{ version.version_number }}
-                </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {{ formatVersionDate(version.created_at_human || version.created_at) }}
-                </div>
-                <div v-if="version.change_note" class="text-xs text-gray-600 dark:text-gray-300 mt-2 break-words">
-                  {{ version.change_note }}
-                </div>
-              </div>
-              <div class="shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                {{ formatVersionFileSize(version.file_size) }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <SheetVersionHistory
+      :open="showVersionHistoryDialog"
+      :loading="isLoadingVersions"
+      :versions="versionHistory"
+      :current-version="currentVersionSummary"
+      :selected-number="selectedVersionNumber"
+      :loading-detail="isLoadingVersionDetail"
+      :detail="selectedVersionDetail"
+      :detail-error="selectedVersionError"
+      :current-summary="currentWorkbookSummary"
+      :selected-summary="selectedWorkbookSummary"
+      :comparison="workbookComparison"
+      @close="showVersionHistoryDialog = false"
+      @select="selectVersion"
+    />
   </div>
 </template>
 

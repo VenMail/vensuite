@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="flex flex-col h-screen" :class="isViewMode ? 'bg-white dark:bg-gray-950' : 'bg-gray-50'">
     <DocsTitleBar
       :title="documentTitle"
@@ -36,7 +36,7 @@
           </div>
           <div>
             <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Message (optional)</label>
-            <textarea v-model="requestMessage" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="I’d like to view this document."></textarea>
+            <textarea v-model="requestMessage" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="Iâ€™d like to view this document."></textarea>
           </div>
           <div>
             <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">{{$t('Commons.label.requested_access')}}</label>
@@ -57,7 +57,7 @@
       </div>
     </div>
 
-    <!-- Editing toolbar & find/replace — hidden in view mode -->
+    <!-- Editing toolbar & find/replace â€” hidden in view mode -->
     <template v-if="!isViewMode">
       <DocsToolbar 
         ref="toolbarRef"
@@ -157,7 +157,7 @@
 
      
     <div v-if="!accessDenied" class="flex-1 overflow-auto transition-colors custom-scrollbar print:p-0 print:bg-white" :class="isViewMode ? 'bg-white dark:bg-gray-950' : 'bg-gray-50'">
-      <!-- Page Ruler (horizontal) — hidden in view mode -->
+      <!-- Page Ruler (horizontal) â€” hidden in view mode -->
       <div v-if="showRuler && !isViewMode" class="sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 print:hidden">
         <div class="mx-auto" :style="{ width: `${currentPageWidth}px`, paddingTop: '8px' }">
           <PageRuler
@@ -401,13 +401,13 @@
       <!-- Page Badge Overlay -->
       <PageBadgeOverlay
         :page-gap="paginationSettings.pageGap || 40"
-        :label="'Made with ❤️ by VenSuite'"
+        :label="'Made with â¤ï¸ by VenSuite'"
         :href="'https://vensuite.dev'"
       />
     </div>
     </div>
 
-    <!-- Chat Panel — hidden in view mode -->
+    <!-- Chat Panel â€” hidden in view mode -->
     <div
       v-if="isChatOpen && !isViewMode"
       class="fixed right-4 bottom-4 w-[calc(100vw-2rem)] max-w-sm h-[70vh] max-h-96 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl flex flex-col"
@@ -552,7 +552,7 @@
       </DialogContent>
     </Dialog>
 
-    <!-- AI Writer (floating on selection) — hidden in view mode -->
+    <!-- AI Writer (floating on selection) â€” hidden in view mode -->
     <DocsAIWriter
       v-if="!isViewMode"
       :editor="editor"
@@ -599,41 +599,14 @@ import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { Editor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
-import type { Component } from 'vue';
 import {
-  Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Strikethrough,
-  Heading2,
-  Heading3,
-  Text,
-  Link as LinkIcon,
-  List as BulletListIcon,
-  ListOrdered,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Palette,
-  Highlighter,
   Eraser,
   MoreHorizontal,
   Trash2,
   CheckCircle2,
   ExternalLink,
-  BarChart3,
-  AArrowUp,
-  Type,
   Eye,
   EyeOff,
-  Image as ImageIcon,
-  Upload,
-  Maximize,
-  ArrowDown,
-  ArrowRight,
-  Combine,
-  SplitSquareHorizontal,
 } from 'lucide-vue-next';
 import StarterKit from '@tiptap/starter-kit';
 import UnderlineExtension from '@tiptap/extension-underline';
@@ -656,7 +629,6 @@ import { FontSize } from '@/extensions/font-size';
 import { LineHeight } from '@/extensions/line-height';
 import { ParagraphSpacing } from '@/extensions/paragraph-spacing';
 import { ChartExtension } from '@/extensions/chart';
-import type { ChartAttrs } from '@/extensions/chart';
 import { FormExtension } from '@/extensions/form';
 import { FormControlExtension } from '@/extensions/form-control';
 import { AbsBlock } from '@/extensions/abs-block';
@@ -693,8 +665,8 @@ import { useDocumentConflictResolver } from '@/composables/useDocumentConflictRe
 import { guardEditorBeforeSave } from '@/composables/useTiptapContent';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
-import { NodeSelection } from '@tiptap/pm/state';
 import { IWebsocketService, Message, useWebSocket } from '@/lib/wsService';
+import { useDocsBubbleMenu } from '@/composables/useDocsBubbleMenu';
 import { useTranslation } from '@/composables/useTranslation';
 import { exportDocument } from '@/services/exportService';
 import { pxToTwips } from '@/utils/exportUtils';
@@ -1181,7 +1153,7 @@ watch(isViewMode, () => {
 const isTocOpen = ref(false);
 const isToolbarExpanded = ref(false);
 
-// ── New feature state ──
+// â”€â”€ New feature state â”€â”€
 const editorMode = ref<'editing' | 'viewing'>('editing');
 const zoomLevel = ref(100);
 const isFindReplaceOpen = ref(false);
@@ -1258,22 +1230,22 @@ function resetZoom() { zoomLevel.value = 100; }
 
 // Keyboard shortcuts
 function handleGlobalKeydown(e: KeyboardEvent) {
-  // Ctrl+F → Find & Replace
+  // Ctrl+F â†’ Find & Replace
   if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
     e.preventDefault();
     isFindReplaceOpen.value = true;
   }
-  // Ctrl+H → Find & Replace with replace open
+  // Ctrl+H â†’ Find & Replace with replace open
   if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
     e.preventDefault();
     isFindReplaceOpen.value = true;
   }
-  // Escape → close panels
+  // Escape â†’ close panels
   if (e.key === 'Escape') {
     if (isFindReplaceOpen.value) { isFindReplaceOpen.value = false; return; }
     if (isAIWriterVisible.value) { isAIWriterVisible.value = false; return; }
   }
-  // Ctrl+= / Ctrl+- → Zoom
+  // Ctrl+= / Ctrl+- â†’ Zoom
   if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomIn(); }
   if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); zoomOut(); }
   if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); resetZoom(); }
@@ -1293,198 +1265,27 @@ function updateAIWriterPosition() {
   }
 }
 
-// Bubble menu state (quick link/image editors)
-const bubbleShellClass = 'flex w-full max-w-[340px] flex-col gap-1 rounded-xl border border-gray-200 bg-white/95 px-2 py-1 text-gray-700 shadow-xl print:hidden dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200';
-const bubbleGridClass = 'flex flex-wrap items-center gap-1';
-const bubbleButtonBase = 'inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-transparent text-gray-600 transition-colors duration-150 hover:bg-gray-100 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40';
-const bubbleButtonActive = 'border-blue-500 bg-blue-100 text-blue-700 shadow-sm hover:bg-blue-100 dark:border-blue-400 dark:bg-blue-900/60 dark:text-blue-200';
-const bubbleButtonSuccess = 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/60';
-const bubbleButtonDanger = 'text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/60';
-const bubbleOverflowButtonClass = 'flex w-full items-center rounded-md px-2 py-1 text-left text-xs text-gray-600 transition-colors duration-150 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-gray-200 dark:hover:bg-gray-800';
-const bubbleInlineFormClass = 'flex flex-wrap items-center gap-1 pt-1';
-const bubbleInlineInputClass = 'h-8 w-36 rounded-md border border-gray-300 bg-white px-2 text-xs text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100';
-
-const isMacLike = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/.test((navigator.platform || ''));
-const linkCtrlClickTooltip = computed(() => isMacLike ? 'Tip: Hold ⌘ and click to open the link.' : 'Tip: Hold Ctrl and click to open the link.');
-const openLinkButtonTooltip = computed(() => isMacLike ? 'Open link in new tab (⌘+Click)' : 'Open link in new tab (Ctrl+Click)');
-
-const bubbleLinkUrl = ref('');
-function openBubbleLink() {
-  if (!editor.value) return;
-  syncBubbleLinkFromEditor(editor.value);
-  if (!editor.value.isActive('link')) {
-    editor.value.chain().focus().setLink({ href: bubbleLinkUrl.value || 'https://' }).run();
-    syncBubbleLinkFromEditor(editor.value);
-  }
-}
-function normalizeHref(rawHref: string) {
-  if (!rawHref) return '';
-  return /^(https?:|mailto:|tel:|ftp:)/i.test(rawHref) ? rawHref : `https://${rawHref}`;
-}
-function openHrefInNewTab(rawHref: string) {
-  const trimmed = (rawHref || '').trim();
-  if (!trimmed) return;
-  const urlToOpen = normalizeHref(trimmed);
-  window.open(urlToOpen, '_blank', 'noopener,noreferrer');
-}
-
-function applyBubbleLink() {
-  if (!editor.value) return;
-  const href = (bubbleLinkUrl.value || '').trim();
-  if (!href) {
-    editor.value.chain().focus().unsetLink().run();
-    bubbleLinkUrl.value = '';
-  } else {
-    const normalized = normalizeHref(href);
-    editor.value.chain().focus().setLink({ href: normalized, target: '_blank', rel: 'noopener noreferrer' }).run();
-    bubbleLinkUrl.value = normalized;
-  }
-  isOverflowOpen.value = false;
-}
-function visitBubbleLink() {
-  openHrefInNewTab(bubbleLinkUrl.value || '');
-}
-function removeBubbleLink() {
-  editor.value?.chain().focus().unsetLink().run();
-  bubbleLinkUrl.value = '';
-  isOverflowOpen.value = false;
-}
-
-const bubbleImageUrl = ref('');
-const bubbleImageAlt = ref('');
-
-const isOverflowOpen = ref(false);
-let overflowTimer: ReturnType<typeof setTimeout> | null = null;
-
-function toggleOverflow() {
-  if (!overflowActions.value.length) return;
-  isOverflowOpen.value = !isOverflowOpen.value;
-  clearOverflowTimer();
-}
-
-function suspendOverflowClose() {
-  clearOverflowTimer();
-}
-
-function resumeOverflowClose() {
-  clearOverflowTimer();
-  overflowTimer = setTimeout(() => (isOverflowOpen.value = false), 1200);
-}
-
-function clearOverflowTimer() {
-  if (overflowTimer) {
-    clearTimeout(overflowTimer);
-    overflowTimer = null;
-  }
-}
-
-const isImageEditing = computed(() => {
-  if (!editor.value) return false;
-  // Check for both 'image' and 'imagePlus' node types
-  return editor.value.isActive('image') || editor.value.isActive('imagePlus');
-});
-
-const isTextSelection = computed(() => !!editor.value && !isImageEditing.value && !editor.value.isActive('table') && !editor.value.isActive('chart'));
-const isTableSelection = computed(() => !!editor.value && editor.value.isActive('table'));
-// Tracks table focus by click or selection, so UI appears even on click-only
-const isTableActiveByClick = ref(false);
-const isLinkEditing = computed(() => !!editor.value && editor.value.isActive('link'));
-const isChartSelection = computed(() => !!editor.value && editor.value.isActive('chart'));
-
-// Make BubbleMenu appear when a table is clicked (even without a cell selection)
-const bubbleShouldShow = () => {
-  const instance = editor.value;
-  if (!instance) return false;
-  if (isImageEditing.value) return false;
-  if (!isEditorFocused.value && !isTableActiveByClick.value) return false;
-
-  const hasSelection = !instance.state.selection.empty;
-  if (!hasSelection && !isTableSelection.value && !isTableActiveByClick.value) {
-    return false;
-  }
-
-  return isTextSelection.value || isTableSelection.value || isTableActiveByClick.value;
-};
-
-function setTableActiveUI(active: boolean) {
-  isTableActiveByClick.value = active;
-  const rootEl = editor.value?.view.dom as HTMLElement | undefined;
-  if (!rootEl) return;
-  if (active) rootEl.classList.add('is-table-active');
-  else rootEl.classList.remove('is-table-active');
-}
-
-function handleEditorClick(e: MouseEvent) {
-  const target = e.target as HTMLElement | null;
-  const gapEl = target?.closest('.rm-pagination-gap') as HTMLElement | null;
-
-  if (gapEl) {
-    const breakerEl = gapEl.closest('.breaker') as HTMLElement | null;
-    if (breakerEl) {
-      const isCollapsed = breakerEl.dataset.collapsed === 'true';
-      breakerEl.dataset.collapsed = isCollapsed ? 'false' : 'true';
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-  }
-
-  const isOnTable = !!target?.closest('table');
-  setTableActiveUI(isOnTable);
-}
-
-function syncBubbleLinkFromEditor(activeEditor?: Editor) {
-  const instance = activeEditor ?? editor.value;
-  if (!instance) return;
-  if (instance.isActive('link')) {
-    const attrs = instance.getAttributes('link') as any;
-    bubbleLinkUrl.value = attrs?.href || '';
-  } else {
-    bubbleLinkUrl.value = '';
-  }
-}
-
-function handleLinkCtrlClick(event: MouseEvent) {
-  const target = event.target as HTMLElement | null;
-  const linkEl = target?.closest('a[href]');
-  if (!linkEl) {
-    return false;
-  }
-
-  const href = linkEl.getAttribute('href') || '';
-  if (!href) {
-    return false;
-  }
-
-  const ctrlOrMeta = isMacLike
-    ? (event.metaKey || event.ctrlKey)
-    : event.ctrlKey;
-
-  // Internal in-document TOC links use a special href prefix and only
-  // activate on Ctrl/Cmd + click.
-  if (href.startsWith('#toc:')) {
-    if (!ctrlOrMeta) {
-      return false;
-    }
-
-    event.preventDefault();
-    const rawLabel = decodeURIComponent(href.slice('#toc:'.length));
-    scrollToHeadingByLabel(rawLabel);
-    return true;
-  }
-
-  // For normal links, require Ctrl/Cmd as hinted by the tooltip.
-  if (!ctrlOrMeta) {
-    return false;
-  }
-
-  event.preventDefault();
-  openHrefInNewTab(href);
-  return true;
-}
-
-const activeTextColor = computed(() => editor.value?.getAttributes('textStyle')?.color as string | undefined);
-const activeHighlightColor = computed(() => editor.value?.getAttributes('highlight')?.color as string | undefined);
+// Bubble menu â€” extracted to composable for maintainability
+const bubble = useDocsBubbleMenu(editor, isEditorFocused, toolbarRef);
+const {
+  bubbleShellClass, bubbleGridClass, bubbleButtonBase, bubbleButtonActive,
+  bubbleButtonSuccess, bubbleButtonDanger, bubbleOverflowButtonClass,
+  bubbleInlineFormClass, bubbleInlineInputClass,
+  linkCtrlClickTooltip, openLinkButtonTooltip,
+  bubbleLinkUrl, applyBubbleLink, visitBubbleLink, removeBubbleLink,
+  isLinkEditing,
+  showImageUrlDialog, imageUrlInput, replaceImageUrl,
+  isOverflowOpen, toggleOverflow, suspendOverflowClose, resumeOverflowClose,
+  isTableActiveByClick,
+  bubbleShouldShow, setTableActiveUI,
+  showTextColorPicker, showBgColorPicker, bubbleTextColor, bubbleBgColor,
+  showChartTitleEdit, chartTitleInput, showChartFontSizeEdit, chartFontSizeInput,
+  applyChartTitle, applyChartFontSize,
+  bubbleMenuTippyOptions,
+  primaryActions, overflowActions, executeAction,
+  onBubbleTextColorChange, onBubbleBgColorChange,
+  handleLinkCtrlClick, handleEditorClick,
+} = bubble;
 
 const docsTemplateCache = new Map<string, string>();
 const docsTemplateLoaders = Object.fromEntries(
@@ -1496,728 +1297,6 @@ const docsTemplateLoaders = Object.fromEntries(
     })
 ) as Record<string, () => Promise<string>>;
 
-type BubbleAction = {
-  key: string;
-  icon: Component;
-  handler: () => void;
-  tooltip: string;
-  label: string;
-  disabled?: boolean;
-  isActive?: boolean;
-  className?: string;
-  style?: Partial<Record<string, string>>;
-};
-
-const allTextActions = computed<BubbleAction[]>(() => {
-  if (!editor.value) return [];
-  const instance = editor.value;
-  const highlightStyle = activeHighlightColor.value
-    ? { backgroundColor: String(activeHighlightColor.value), color: '#111827' }
-    : undefined;
-
-  return [
-    {
-      key: 'bold',
-      icon: Bold,
-      handler: () => instance.chain().focus().toggleBold().run(),
-      tooltip: 'Bold (Ctrl+B)',
-      label: 'Bold',
-      isActive: instance.isActive('bold'),
-    },
-    {
-      key: 'italic',
-      icon: Italic,
-      handler: () => instance.chain().focus().toggleItalic().run(),
-      tooltip: 'Italic (Ctrl+I)',
-      label: 'Italic',
-      isActive: instance.isActive('italic'),
-    },
-    {
-      key: 'underline',
-      icon: UnderlineIcon,
-      handler: () => instance.chain().focus().toggleUnderline().run(),
-      tooltip: 'Underline (Ctrl+U)',
-      label: 'Underline',
-      isActive: instance.isActive('underline'),
-    },
-    {
-      key: 'strike',
-      icon: Strikethrough,
-      handler: () => instance.chain().focus().toggleStrike().run(),
-      tooltip: 'Strikethrough',
-      label: 'Strikethrough',
-      isActive: instance.isActive('strike'),
-      className: 'text-gray-500 dark:text-gray-400',
-    },
-    {
-      key: 'text',
-      icon: Text,
-      handler: () => instance.chain().focus().setParagraph().run(),
-      tooltip: 'Normal text',
-      label: 'Paragraph',
-      isActive: instance.isActive('paragraph'),
-    },
-    {
-      key: 'h2',
-      icon: Heading2,
-      handler: () => instance.chain().focus().toggleHeading({ level: 2 }).run(),
-      tooltip: 'Heading 2',
-      label: 'Heading 2',
-      isActive: instance.isActive('heading', { level: 2 }),
-    },
-    {
-      key: 'h3',
-      icon: Heading3,
-      handler: () => instance.chain().focus().toggleHeading({ level: 3 }).run(),
-      tooltip: 'Heading 3',
-      label: 'Heading 3',
-      isActive: instance.isActive('heading', { level: 3 }),
-    },
-    {
-      key: 'color',
-      icon: Palette,
-      handler: () => {
-        const current = instance.getAttributes('textStyle')?.color;
-        if (current && current.toLowerCase() === '#2563eb') {
-          instance.chain().focus().unsetColor().run();
-        } else {
-          instance.chain().focus().setColor('#2563eb').run();
-        }
-      },
-      tooltip: 'Brand foreground color',
-      label: 'Text color',
-      isActive: (instance.getAttributes('textStyle')?.color || '').toLowerCase() === '#2563eb',
-      style: activeTextColor.value ? { color: String(activeTextColor.value) } : undefined,
-    },
-    {
-      key: 'highlight',
-      icon: Highlighter,
-      handler: () => {
-        // This will be intercepted by executeAction to show color picker
-      },
-      tooltip: 'Background color',
-      label: 'Background color',
-      isActive: instance.isActive('highlight'),
-      style: highlightStyle,
-    },
-    {
-      key: 'clear',
-      icon: Eraser,
-      handler: () => {
-        instance.chain().focus().unsetHighlight().unsetAllMarks().clearNodes().run();
-      },
-      tooltip: 'Clear formatting',
-      label: 'Clear formatting',
-      className: 'text-gray-500 dark:text-gray-400',
-    },
-    {
-      key: 'bullet-list',
-      icon: BulletListIcon,
-      handler: () => instance.chain().focus().toggleBulletList().run(),
-      tooltip: 'Bulleted list',
-      label: 'Bulleted list',
-      isActive: instance.isActive('bulletList'),
-    },
-    {
-      key: 'ordered-list',
-      icon: ListOrdered,
-      handler: () => instance.chain().focus().toggleOrderedList().run(),
-      tooltip: 'Numbered list',
-      label: 'Numbered list',
-      isActive: instance.isActive('orderedList'),
-    },
-    {
-      key: 'align-left',
-      icon: AlignLeft,
-      handler: () => instance.chain().focus().setTextAlign('left').run(),
-      tooltip: 'Align left',
-      label: 'Align left',
-      isActive: instance.isActive({ textAlign: 'left' }),
-    },
-    {
-      key: 'align-center',
-      icon: AlignCenter,
-      handler: () => instance.chain().focus().setTextAlign('center').run(),
-      tooltip: 'Align center',
-      label: 'Align center',
-      isActive: instance.isActive({ textAlign: 'center' }),
-    },
-    {
-      key: 'align-right',
-      icon: AlignRight,
-      handler: () => instance.chain().focus().setTextAlign('right').run(),
-      tooltip: 'Align right',
-      label: 'Align right',
-      isActive: instance.isActive({ textAlign: 'right' }),
-    },
-    {
-      key: 'align-justify',
-      icon: AlignJustify,
-      handler: () => instance.chain().focus().setTextAlign('justify').run(),
-      tooltip: 'Align justify',
-      label: 'Align justify',
-      isActive: instance.isActive({ textAlign: 'justify' }),
-    },
-    {
-      key: 'link',
-      icon: LinkIcon,
-      handler: () => openBubbleLink(),
-      tooltip: 'Insert link (Ctrl+K)',
-      label: 'Link',
-      disabled: !instance.can().setLink({ href: '' }),
-      isActive: instance.isActive('link'),
-    },
-  ];
-});
-
-const tableActions = computed<BubbleAction[]>(() => {
-  if (!editor.value) return [];
-  const instance = editor.value;
-
-  return [
-    {
-      key: 'add-col',
-      icon: ArrowRight,
-      handler: () => instance.chain().focus().addColumnAfter().run(),
-      tooltip: 'Add column after',
-      label: 'Add column after',
-    },
-    {
-      key: 'add-row',
-      icon: ArrowDown,
-      handler: () => instance.chain().focus().addRowAfter().run(),
-      tooltip: 'Add row below',
-      label: 'Add row below',
-    },
-    {
-      key: 'merge',
-      icon: Combine,
-      handler: () => instance.chain().focus().mergeCells().run(),
-      tooltip: 'Merge cells',
-      label: 'Merge cells',
-    },
-    {
-      key: 'split',
-      icon: SplitSquareHorizontal,
-      handler: () => instance.chain().focus().splitCell().run(),
-      tooltip: 'Split cell',
-      label: 'Split cell',
-    },
-    {
-      key: 'align-left-table',
-      icon: AlignLeft,
-      handler: () => instance.chain().focus().setCellAttribute('alignment', 'left').run(),
-      tooltip: 'Align left',
-      label: 'Align left',
-    },
-    {
-      key: 'align-center-table',
-      icon: AlignCenter,
-      handler: () => instance.chain().focus().setCellAttribute('alignment', 'center').run(),
-      tooltip: 'Align center',
-      label: 'Align center',
-    },
-    {
-      key: 'align-right-table',
-      icon: AlignRight,
-      handler: () => instance.chain().focus().setCellAttribute('alignment', 'right').run(),
-      tooltip: 'Align right',
-      label: 'Align right',
-    },
-    {
-      key: 'del-col',
-      icon: Trash2,
-      handler: () => instance.chain().focus().deleteColumn().run(),
-      tooltip: 'Delete column',
-      label: 'Delete column',
-      className: 'text-red-500 dark:text-red-400',
-    },
-    {
-      key: 'del-row',
-      icon: Trash2,
-      handler: () => instance.chain().focus().deleteRow().run(),
-      tooltip: 'Delete row',
-      label: 'Delete row',
-      className: 'text-red-500 dark:text-red-400',
-    },
-    {
-      key: 'reset-row-height',
-      icon: Maximize,
-      handler: () => instance.chain().focus().resetRowHeight().run(),
-      tooltip: 'Reset row height',
-      label: 'Reset row height',
-    },
-  ];
-});
-
-// Image replacement state
-const showImageUrlDialog = ref(false);
-const imageUrlInput = ref('');
-
-function openImageUrlDialog() {
-  let attrs = editor.value?.getAttributes('image');
-  if (!attrs?.src) {
-    attrs = editor.value?.getAttributes('imagePlus');
-  }
-  imageUrlInput.value = attrs?.src || '';
-  closeTiptapBubbleMenu();
-  showImageUrlDialog.value = true;
-  isOverflowOpen.value = false;
-}
-
-function replaceImageUrl(url: string) {
-  if (!editor.value || !url) return;
-  
-  // Try to update both node types
-  const chain = editor.value.chain().focus();
-  
-  if (editor.value.isActive('image')) {
-    chain.updateAttributes('image', { src: url }).run();
-  } else if (editor.value.isActive('imagePlus')) {
-    chain.updateAttributes('imagePlus', { src: url }).run();
-  }
-  
-  showImageUrlDialog.value = false;
-  imageUrlInput.value = '';
-}
-
-function openImageUpload() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = (e) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file || !editor.value) return;
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const src = event.target?.result as string;
-      if (src && editor.value) {
-        const chain = editor.value.chain().focus();
-        
-        if (editor.value.isActive('image')) {
-          chain.updateAttributes('image', { src }).run();
-        } else if (editor.value.isActive('imagePlus')) {
-          chain.updateAttributes('imagePlus', { src }).run();
-        }
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-  input.click();
-}
-
-const imageActions = computed<BubbleAction[]>(() => {
-  if (!editor.value) return [];
-  const instance = editor.value;
-  return [
-    {
-      key: 'replace-url',
-      icon: ImageIcon,
-      handler: openImageUrlDialog,
-      tooltip: 'Replace Image',
-      label: 'Replace Image',
-    },
-    {
-      key: 'upload-image',
-      icon: Upload,
-      handler: openImageUpload,
-      tooltip: 'Upload new image',
-      label: 'Upload',
-    },
-    {
-      key: 'image-align-left',
-      icon: AlignLeft,
-      handler: () => instance.chain().focus().setTextAlign('left').run(),
-      tooltip: 'Align left',
-      label: 'Align left',
-      isActive: instance.isActive({ textAlign: 'left' }),
-    },
-    {
-      key: 'image-align-center',
-      icon: AlignCenter,
-      handler: () => instance.chain().focus().setTextAlign('center').run(),
-      tooltip: 'Center image',
-      label: 'Center image',
-      isActive: instance.isActive({ textAlign: 'center' }),
-    },
-    {
-      key: 'image-align-right',
-      icon: AlignRight,
-      handler: () => instance.chain().focus().setTextAlign('right').run(),
-      tooltip: 'Align right',
-      label: 'Align right',
-      isActive: instance.isActive({ textAlign: 'right' }),
-    },
-    {
-      key: 'delete-image',
-      icon: Trash2,
-      handler: () => instance.chain().focus().deleteSelection().run(),
-      tooltip: 'Delete image',
-      label: 'Delete',
-      className: 'text-red-500 dark:text-red-400',
-    },
-  ];
-});
-
-const chartActions = computed<BubbleAction[]>(() => {
-  if (!editor.value) return [];
-  const attrs = getSelectedChartAttrs();
-  const showLegend = attrs?.showLegend ?? true;
-  
-  return [
-    {
-      key: 'edit-chart',
-      icon: BarChart3,
-      handler: openChartConfiguratorFromBubble,
-      tooltip: 'Configure chart data',
-      label: 'Configure data',
-    },
-    {
-      key: 'chart-title',
-      icon: Type,
-      handler: () => toggleChartTitleEdit(),
-      tooltip: 'Edit chart title',
-      label: 'Title',
-      isActive: showChartTitleEdit.value,
-    },
-    {
-      key: 'toggle-legend',
-      icon: showLegend ? Eye : EyeOff,
-      handler: () => toggleChartLegend(),
-      tooltip: showLegend ? 'Hide legend' : 'Show legend',
-      label: showLegend ? 'Hide legend' : 'Show legend',
-      isActive: showLegend,
-    },
-    {
-      key: 'chart-fontsize',
-      icon: AArrowUp,
-      handler: () => toggleChartFontSizeEdit(),
-      tooltip: 'Adjust font size',
-      label: 'Font size',
-      isActive: showChartFontSizeEdit.value,
-    },
-  ];
-});
-
-
-function getSelectedChartAttrs(): ChartAttrs | null {
-  if (!editor.value) return null;
-  const { state } = editor.value;
-  const { selection } = state;
-
-  if (selection instanceof NodeSelection && selection.node.type.name === 'chart') {
-    return { ...(selection.node.attrs as ChartAttrs) };
-  }
-
-  let attrs: ChartAttrs | null = null;
-  state.doc.nodesBetween(selection.from, selection.to, node => {
-    if (!attrs && node.type.name === 'chart') {
-      attrs = { ...(node.attrs as ChartAttrs) };
-      return false;
-    }
-    return undefined;
-  });
-  return attrs;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in template via ref
-
-function closeTiptapBubbleMenu(): void {
-  // Query all Tippy root containers (used by Tiptap BubbleMenu)
-  const tippies = document.querySelectorAll<HTMLElement>('[data-tippy-root]');
-
-  tippies.forEach((tippy) => {
-    const box = tippy.querySelector<HTMLElement>('.tippy-box');
-    if (!box) return;
-
-    // Hide visually and disable interaction
-    tippy.style.visibility = 'hidden';
-    tippy.style.opacity = '0';
-    tippy.style.pointerEvents = 'none';
-
-    // Try to call the Tippy instance hide method if available
-    const anyTippy = tippy as any;
-    if (anyTippy._tippy && typeof anyTippy._tippy.hide === 'function') {
-      try {
-        anyTippy._tippy.hide();
-      } catch {
-        // Silently ignore in case Tippy instance is already destroyed
-      }
-    }
-  });
-}
-
-function openChartConfiguratorFromBubble() {
-  const attrs = getSelectedChartAttrs();
-  if (!attrs) return;
-  // Close bubble menu overflow if open
-  isOverflowOpen.value = false;
-  showChartTitleEdit.value = false;
-  showChartFontSizeEdit.value = false;
-  // Hide the bubble menu
-  closeTiptapBubbleMenu();
-
-  toolbarRef.value?.openChartConfigurator(attrs);
-}
-
-// Chart quick edit state
-const showChartTitleEdit = ref(false);
-const chartTitleInput = ref('');
-const showChartFontSizeEdit = ref(false);
-const chartFontSizeInput = ref(12);
-
-function toggleChartTitleEdit() {
-  const attrs = getSelectedChartAttrs();
-  if (!attrs) return;
-  showChartTitleEdit.value = !showChartTitleEdit.value;
-  showChartFontSizeEdit.value = false;
-  if (showChartTitleEdit.value) {
-    chartTitleInput.value = attrs.title || '';
-  }
-}
-
-function toggleChartFontSizeEdit() {
-  const attrs = getSelectedChartAttrs();
-  if (!attrs) return;
-  showChartFontSizeEdit.value = !showChartFontSizeEdit.value;
-  showChartTitleEdit.value = false;
-  if (showChartFontSizeEdit.value) {
-    chartFontSizeInput.value = attrs.fontSize ?? 12;
-  }
-}
-
-function applyChartTitle() {
-  if (!editor.value) return;
-  const { state } = editor.value;
-  const { selection } = state;
-  
-  if (selection instanceof NodeSelection && selection.node.type.name === 'chart') {
-    const pos = selection.from;
-    editor.value.chain().focus().setNodeSelection(pos).updateAttributes('chart', {
-      title: chartTitleInput.value.trim(),
-    }).run();
-  }
-  showChartTitleEdit.value = false;
-}
-
-function applyChartFontSize() {
-  if (!editor.value) return;
-  const { state } = editor.value;
-  const { selection } = state;
-  
-  if (selection instanceof NodeSelection && selection.node.type.name === 'chart') {
-    const pos = selection.from;
-    editor.value.chain().focus().setNodeSelection(pos).updateAttributes('chart', {
-      fontSize: chartFontSizeInput.value,
-    }).run();
-  }
-  showChartFontSizeEdit.value = false;
-}
-
-function toggleChartLegend() {
-  if (!editor.value) return;
-  const attrs = getSelectedChartAttrs();
-  if (!attrs) return;
-  
-  const { state } = editor.value;
-  const { selection } = state;
-  
-  if (selection instanceof NodeSelection && selection.node.type.name === 'chart') {
-    const pos = selection.from;
-    editor.value.chain().focus().setNodeSelection(pos).updateAttributes('chart', {
-      showLegend: !attrs.showLegend,
-    }).run();
-  }
-}
-
-// Bubble menu state for color pickers
-const showTextColorPicker = ref(false);
-const showBgColorPicker = ref(false);
-const bubbleTextColor = ref('#000000');
-const bubbleBgColor = ref('#ffff00');
-
-function resetBubbleColorPickers() {
-  showTextColorPicker.value = false;
-  showBgColorPicker.value = false;
-  showChartTitleEdit.value = false;
-  showChartFontSizeEdit.value = false;
-}
-
-const bubbleMenuTippyOptions: Record<string, any> = {
-  duration: 100,
-  placement: 'top',
-  maxWidth: 400,
-  onHide: () => {
-    resetBubbleColorPickers();
-  },
-};
-
-// Computed for current colors
-const currentBubbleTextColor = computed(() => {
-  if (!editor.value) return '#000000';
-  const color = editor.value.getAttributes('textStyle')?.color;
-  return color || '#000000';
-});
-
-const currentBubbleBgColor = computed(() => {
-  if (!editor.value) return '#ffff00';
-  const color = editor.value.getAttributes('highlight')?.color;
-  return color || '#ffff00';
-});
-
-// Priority keys for different contexts
-const textPrimaryKeys = ['bold', 'italic', 'underline', 'color', 'highlight', 'link', 'clear'];
-const textOverflowKeys = ['strike', 'bullet-list', 'ordered-list', 'align-left', 'align-center', 'align-right', 'text', 'h2', 'h3'];
-const headingPrimaryKeys = ['h2', 'h3', 'clear', 'text', 'bold', 'italic', 'underline'];
-const headingOverflowKeys = ['strike', 'color', 'highlight', 'link', 'bullet-list', 'ordered-list', 'align-left', 'align-center', 'align-right'];
-const tablePrimaryKeys = ['add-col', 'add-row', 'merge', 'split', 'align-left-table', 'align-center-table', 'align-right-table'];
-const tableOverflowKeys = ['del-col', 'del-row'];
-const imagePrimaryKeys = ['replace-url', 'upload-image', 'image-align-left', 'image-align-center', 'image-align-right', 'delete-image'];
-const chartPrimaryKeys = ['edit-chart', 'chart-title', 'toggle-legend', 'chart-fontsize'];
-
-function splitActions(
-  actions: BubbleAction[],
-  primaryOrder: string[],
-  overflowOrder: string[],
-  excludeKeys: string[] = []
-) {
-  const map = new Map(actions.map((action) => [action.key, action]));
-  const primary: BubbleAction[] = [];
-  const MAX_PRIMARY = 8; // Reserve 1 slot for "more" button (max 9 total)
-  
-  primaryOrder.forEach((key) => {
-    if (excludeKeys.includes(key)) return;
-    if (primary.length >= MAX_PRIMARY) return;
-    const action = map.get(key);
-    if (action) {
-      primary.push(action);
-    }
-  });
-  
-  const used = new Set(primary.map((action) => action.key));
-  const overflow: BubbleAction[] = [];
-  
-  overflowOrder.forEach((key) => {
-    if (excludeKeys.includes(key) || used.has(key)) return;
-    const action = map.get(key);
-    if (action) {
-      overflow.push(action);
-    }
-  });
-  
-  actions.forEach((action) => {
-    if (excludeKeys.includes(action.key)) return;
-    if (!used.has(action.key) && !overflow.find((item) => item.key === action.key)) {
-      overflow.push(action);
-    }
-  });
-  
-  return { primary, overflow };
-}
-
-const actionSets = computed(() => {
-  if (isImageEditing.value) {
-    return splitActions(imageActions.value, imagePrimaryKeys, []);
-  }
-  if (isTableSelection.value) {
-    return splitActions(tableActions.value, tablePrimaryKeys, tableOverflowKeys);
-  }
-  if (isChartSelection.value) {
-    return splitActions(chartActions.value, chartPrimaryKeys, []);
-  }
-  if (isTextSelection.value) {
-    // Check if selection is a heading
-    const isHeading = editor.value?.isActive('heading');
-    const primaryKeys = isHeading ? headingPrimaryKeys : textPrimaryKeys;
-    const overflowKeys = isHeading ? headingOverflowKeys : textOverflowKeys;
-    
-    return splitActions(
-      allTextActions.value,
-      primaryKeys,
-      overflowKeys,
-      isLinkEditing.value ? ['link'] : []
-    );
-  }
-  return { primary: [] as BubbleAction[], overflow: [] as BubbleAction[] };
-});
-
-const primaryActions = computed(() => actionSets.value.primary);
-const overflowActions = computed(() => actionSets.value.overflow);
-
-function executeAction(action: BubbleAction, closeOverflow = false) {
-  if (action.disabled) return;
-  
-  // Handle color picker actions
-  if (action.key === 'color') {
-    const shouldShow = !showTextColorPicker.value;
-    resetBubbleColorPickers();
-    showTextColorPicker.value = shouldShow;
-    if (shouldShow) {
-      bubbleTextColor.value = currentBubbleTextColor.value;
-    }
-    return;
-  }
-
-  if (action.key === 'highlight') {
-    const shouldShow = !showBgColorPicker.value;
-    resetBubbleColorPickers();
-    showBgColorPicker.value = shouldShow;
-    if (shouldShow) {
-      bubbleBgColor.value = currentBubbleBgColor.value;
-    }
-    return;
-  }
-  
-  action.handler();
-  if (closeOverflow) {
-    isOverflowOpen.value = false;
-  }
-}
-
-function onBubbleTextColorChange(event: Event) {
-  if (!editor.value) return;
-  const target = event.target as HTMLInputElement;
-  const color = target.value;
-  editor.value.chain().focus().setColor(color).run();
-  bubbleTextColor.value = color;
-}
-
-function onBubbleBgColorChange(event: Event) {
-  if (!editor.value) return;
-  const target = event.target as HTMLInputElement;
-  const color = target.value;
-  editor.value.chain().focus().setHighlight({ color }).run();
-  bubbleBgColor.value = color;
-}
-
-watch([isTextSelection, isTableSelection, isImageEditing, isChartSelection], () => {
-  isOverflowOpen.value = false;
-  resetBubbleColorPickers();
-  clearOverflowTimer();
-});
-
-watch(isLinkEditing, (active) => {
-  if (active) {
-    syncBubbleLinkFromEditor(editor.value);
-  } else {
-    bubbleLinkUrl.value = '';
-  }
-});
-
-watch(isImageEditing, (active) => {
-  if (active && editor.value) {
-    // Try both node types
-    let attrs = editor.value.getAttributes('image') as any;
-    if (!attrs?.src) {
-      attrs = editor.value.getAttributes('imagePlus') as any;
-    }
-    bubbleImageUrl.value = attrs?.src || '';
-    bubbleImageAlt.value = attrs?.alt || '';
-  }
-});
-
-onUnmounted(() => clearOverflowTimer());
 
 // Share dialog state
 const shareOpen = ref(false);
@@ -2290,22 +1369,6 @@ const tocItems = computed(() => {
   return items;
 });
 
-const normalizeHeadingLabel = (value: string) => value.replace(/\s+/g, ' ').trim().toLowerCase();
-
-function scrollToHeadingByLabel(label: string) {
-  if (!editor.value) return;
-
-  // Strip common numeric prefixes like "1." or "1)" from TOC entries
-  const target = normalizeHeadingLabel(label.replace(/^\d+[).]?\s*/, ''));
-
-  const index = tocItems.value.findIndex((item) => {
-    const itemLabel = normalizeHeadingLabel(item.text.replace(/^\d+[).]?\s*/, ''));
-    return itemLabel === target;
-  });
-
-  if (index === -1) return;
-  scrollToHeading(index);
-}
 
 function getNearestScrollContainer(element: HTMLElement | null): HTMLElement | null {
   let el: HTMLElement | null = element;
@@ -2462,7 +1525,7 @@ function loadContentIntoEditor(content: any) {
         } catch {
           // ignore
         }
-        console.log('✓ Loaded pre-parsed Tiptap JSON content', {
+        console.log('âœ“ Loaded pre-parsed Tiptap JSON content', {
           hasContent: !!maybeDoc.content,
           nodes: Array.isArray(maybeDoc.content) ? maybeDoc.content.length : 0,
         });
@@ -2536,7 +1599,7 @@ function loadContentIntoEditor(content: any) {
         console.warn('[docs] failed to compute post-load stats', e);
       }
 
-      console.log('✓ Loaded HTML content', { length: trimmedContent.length });
+      console.log('âœ“ Loaded HTML content', { length: trimmedContent.length });
       return;
     }
     
@@ -2580,7 +1643,7 @@ function loadContentIntoEditor(content: any) {
       } catch {
         // ignore
       }
-      console.log('✓ Loaded Tiptap JSON content', { hasContent: !!parsed.content, nodes: Array.isArray(parsed.content) ? parsed.content.length : 0 });
+      console.log('âœ“ Loaded Tiptap JSON content', { hasContent: !!parsed.content, nodes: Array.isArray(parsed.content) ? parsed.content.length : 0 });
       return;
     }
     
@@ -2588,7 +1651,7 @@ function loadContentIntoEditor(content: any) {
     editor.value.commands.setContent(`<p>${trimmedContent}</p>`, false);
     hasEnteredContent.value = true;
     updateEditorEmptyState(editor.value);
-    console.log('✓ Loaded as plain text');
+    console.log('âœ“ Loaded as plain text');
 
   } catch (error) {
     console.error('Error loading content:', error);
@@ -2829,11 +1892,14 @@ async function saveDocument(isManual = false) {
     const result = await fileStore.saveDocument(updatedDoc);
     if (result.document) {
       currentDoc.value = result.document;
-      lastSavedAt.value = new Date();
       hasUnsavedChanges.value = false;
-      // Only show toast for manual saves
-      if (isManual) {
-        toast.success('Document saved');
+      if (result.syncStatus === 'synced') {
+        lastSavedAt.value = new Date();
+        if (isManual) {
+          toast.success('Document saved');
+        }
+      } else if (isManual) {
+        toast.error('Changes were saved locally and queued to sync. Please verify your connection.');
       }
     }
   } catch (error) {
@@ -4598,7 +3664,7 @@ onUnmounted(() => {
   }
 }
 
-/* ── View Mode: clean reading interface ── */
+/* â”€â”€ View Mode: clean reading interface â”€â”€ */
 :deep(.docs-view-mode) {
   cursor: default;
 }
@@ -4622,7 +3688,7 @@ onUnmounted(() => {
   display: none !important;
 }
 
-/* ── Mobile Responsiveness ── */
+/* â”€â”€ Mobile Responsiveness â”€â”€ */
 @media (max-width: 768px) {
   .doc-page {
     width: 100% !important;

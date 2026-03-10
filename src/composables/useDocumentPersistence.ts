@@ -239,6 +239,7 @@ export function useDocumentPersistence(
 
         const result = await fileStore.saveDocument(documentToSave);
         let savedDoc = result.document;
+        const wasQueued = result.syncStatus === "queued";
 
         if (!savedDoc) {
           throw new Error("Save operation returned no document data");
@@ -254,7 +255,9 @@ export function useDocumentPersistence(
 
         currentDoc.value = savedDoc;
         hasUnsavedChanges.value = false;
-        lastSavedAt.value = new Date();
+        if (!wasQueued) {
+          lastSavedAt.value = new Date();
+        }
 
         // If we're still on a new-doc path, update the URL to the saved document id
         try {
@@ -267,8 +270,8 @@ export function useDocumentPersistence(
 
         const response: SaveResponse = {
           success: true,
-          offline: !fileStore.isOnline,
-          error: null,
+          offline: wasQueued || !fileStore.isOnline,
+          error: wasQueued ? "Changes were queued locally and will sync when online." : null,
         };
 
         lastSaveResult.value = response;

@@ -94,6 +94,23 @@ export function useSheetData() {
         if (ts) lastSavedAt.value = new Date(ts)
       } catch {}
 
+      // Handle privacy BEFORE content parsing so access checks always run
+      const priv = Number((loadedData as any)?.privacy_type ?? (loadedData as any)?.privacyType)
+      if (!Number.isNaN(priv)) {
+        privacyType.value = priv
+      }
+
+      // Handle guest access — must run before content parse to avoid leaking data
+      if (!authStore.isAuthenticated) {
+        const guestAccessiblePrivacyTypes = [1, 2, 3, 4]
+        // When privacy_type is missing/NaN, default to private (7) for safety
+        const effectivePriv = Number.isNaN(priv) ? 7 : priv
+        if (!guestAccessiblePrivacyTypes.includes(effectivePriv)) {
+          accessDenied.value = true
+          return null
+        }
+      }
+
       // Parse content
       if (loadedData.content !== undefined && loadedData.content !== null && loadedData.content !== '') {
         try {
@@ -129,30 +146,8 @@ export function useSheetData() {
         }
       }
 
-      // Handle privacy
-      const priv = Number((loadedData as any)?.privacy_type ?? (loadedData as any)?.privacyType)
-      if (!Number.isNaN(priv)) {
-        privacyType.value = priv
-      }
-
-      // Handle guest access
-      if (!authStore.isAuthenticated) {
-        if ([1, 2, 3, 4].includes(priv)) {
-          const fallback = {
-            ...DEFAULT_WORKBOOK_DATA,
-            id,
-            name: loadedData.title || 'Spreadsheet',
-          }
-          document.title = loadedData.title || 'Spreadsheet'
-          title.value = loadedData.title || 'Spreadsheet'
-          logSheetEditorDebug('Public link access: initializing viewer with default structure')
-          return fallback as any
-        }
-        accessDenied.value = true
-        return null
-      }
-
-      logSheetEditorDebug('No contents found for existing document (authenticated), will use default structure but keep title')
+      // No content found — return a default workbook structure
+      logSheetEditorDebug('No contents found for existing document, will use default structure but keep title')
       return {
         ...DEFAULT_WORKBOOK_DATA,
         id,
