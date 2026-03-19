@@ -1060,8 +1060,42 @@ onBeforeRouteLeave(async (_to, _from, next) => {
   // Check if there are unsaved changes before leaving
   if (canEditSheet.value && univerRef.value && router.currentRoute.value.params.id) {
     try {
-      // Save data before leaving - wait for completion
-      await saveData(univerRef.value)
+      // Force save data before leaving - bypass the normal saveData queueing logic
+      const routeId = router.currentRoute.value.params.id
+      const name = title.value || 'New Spreadsheet'
+      
+      // Get complete data directly from Univer
+      const completeData = await univerRef.value.getData()
+      if (!completeData) {
+        console.warn('Failed to capture spreadsheet data before navigation')
+        next()
+        return
+      }
+      
+      // Prepare document data
+      completeData.id = routeId as string
+      completeData.name = name
+      
+      // Set name in Univer if possible
+      try {
+        univerRef.value.setName(name)
+      } catch {}
+      
+      const doc = {
+        id: routeId as string,
+        title: name,
+        content: JSON.stringify(completeData),
+        file_type: 'xlsx',
+        is_folder: false,
+        file_name: `${name.toLowerCase().replace(/\s+/g, '-')}.xlsx`,
+        last_viewed: new Date(),
+      } as any
+      
+      // Save directly using fileStore to avoid queuing
+      const fileStore = useFileStore()
+      await fileStore.saveDocument(doc)
+      
+      console.log('Document saved successfully before navigation')
     } catch (error) {
       console.warn('Failed to save before route leave:', error)
       // Continue anyway - don't block navigation

@@ -730,7 +730,9 @@ const loadResponses = async (): Promise<void> => {
     if (!page) {
       responsesPage.value = null;
       pagination.total = 0;
-      throw new Error(formStore.error ?? 'Failed to load responses.');
+      const errorMessage = formStore.error || 'Failed to load responses';
+      loadError.value = errorMessage;
+      throw new Error(errorMessage);
     }
 
     responsesPage.value = page;
@@ -1098,15 +1100,20 @@ const loadResponseDetail = async (responseId: string) => {
       auth: token ? { token } : undefined,
     });
 
+    // Only update if this is still the latest request
     if (detailRequestId.value === requestId) {
       detailState.response = detail;
+      detailState.error = null;
     }
   } catch (error: any) {
+    // Only update if this is still the latest request
     if (detailRequestId.value === requestId) {
-      detailState.error = error?.data?.message ?? error?.message ?? 'Failed to load response detail.';
+      const message = error?.data?.message ?? error?.message ?? 'Failed to load response detail.';
+      detailState.error = message;
       detailState.response = null;
     }
   } finally {
+    // Only update if this is still the latest request
     if (detailRequestId.value === requestId) {
       detailState.isLoading = false;
     }

@@ -722,6 +722,9 @@ const canJoinRealtime = computed(() => {
 // Determines if the current user can edit the document
 const canEditDoc = computed(() => authStore.isAuthenticated || editablePrivacyTypes.has(privacyType.value));
 
+// Editor mode state (editing vs viewing)
+const editorMode = ref<'editing' | 'viewing'>('editing');
+
 // True when the user is in a read-only / viewing state (no edit access OR explicitly in viewing mode)
 const isViewMode = computed(() => !canEditDoc.value || editorMode.value === 'viewing');
 
@@ -1153,8 +1156,7 @@ watch(isViewMode, () => {
 const isTocOpen = ref(false);
 const isToolbarExpanded = ref(false);
 
-// â”€â”€ New feature state â”€â”€
-const editorMode = ref<'editing' | 'viewing'>('editing');
+// â”€â”€// ── New feature state ──
 const zoomLevel = ref(100);
 const isFindReplaceOpen = ref(false);
 const isAIWriterVisible = ref(false);
@@ -1660,10 +1662,12 @@ function loadContentIntoEditor(content: any) {
   }
 }
 
-let saveTimeout: ReturnType<typeof setTimeout> | null = null;
-let maxWaitTimeout: ReturnType<typeof setTimeout> | null = null;
-let autoSaveIdleDelay = 3000; // 3 seconds idle
-let autoSaveMaxWait = 30000; // 30 seconds max
+let saveTimeout: ReturnType<typeof setTimeout> | null = null
+let maxWaitTimeout: ReturnType<typeof setTimeout> | null = null
+const autoSaveIdleDelay = 3000 // 3 seconds idle
+const autoSaveMaxWait = 30000 // 30 seconds max
+let activeSavePromise: Promise<void> | null = null
+let pendingSaveReason: 'manual' | 'auto' | null = null
 
 // Track online/offline status
 const handleOnline = () => {
@@ -1820,8 +1824,8 @@ function scheduleSave() {
 }
 
 async function saveDocument(isManual = false) {
-  if (!editor.value || !currentDoc.value) return;
-  
+  if (!editor.value || !currentDoc.value) return
+
   // Clear timers when save executes
   if (saveTimeout) {
     clearTimeout(saveTimeout);
@@ -1832,6 +1836,19 @@ async function saveDocument(isManual = false) {
     maxWaitTimeout = null;
   }
 
+  const promotePendingReason = (manual: boolean) => {
+    if (manual) {
+      pendingSaveReason = 'manual';
+    } else if (pendingSaveReason !== 'manual') {
+      pendingSaveReason = pendingSaveReason ?? 'auto';
+    }
+  };
+
+  if (isSaving.value && activeSavePromise) {
+    promotePendingReason(isManual);
+    return activeSavePromise;
+  }
+
   if (editor.value.isEmpty && !hasEnteredContent.value) {
     if (isManual) {
       toast.info('Add some content before saving.');
@@ -1839,76 +1856,92 @@ async function saveDocument(isManual = false) {
     return;
   }
 
-  isSaving.value = true;
-  
-  try {
-    // Guard against embedded stringified JSON before saving
-    guardEditorBeforeSave(editor.value);
-    const json = editor.value.getJSON();
-    const hasMeaningfulContent = Array.isArray(json.content)
-      ? json.content.some((node: any) => {
-          if (!node) return false;
-          if (node.type === 'paragraph') {
-            const text = (node.content || [])
-              .map((child: any) => child?.text || '')
-              .join('')
-              .trim();
-            return text.length > 0;
-          }
-          return node.type && node.type !== 'paragraph';
-        })
-      : false;
+  const runSave = async () => {
+    isSaving.value = true;
 
-    if (!hasMeaningfulContent) {
-      if (isManual) {
-        toast.info('Your document is still empty. Add content before saving.');
-      }
-      return;
-    }
+    try {
+          // Guard against embedded stringified JSON before saving
+          if (!editor.value) return;
+          guardEditorBeforeSave(editor.value);
+          const json = editor.value.getJSON();
+      const hasMeaningfulContent = Array.isArray(json.content)
+        ? json.content.some((node: any) => {
+            if (!node) return false;
+            if (node.type === 'paragraph') {
+              const text = (node.content || [])
+                .map((child: any) => child?.text || '')
+                .join('')
+                .trim();
+              return text.length > 0;
+            }
+            return node.type && node.type !== 'paragraph';
+          })
+        : false;
 
-    // Save JSON as string in content field
-    const updatedDoc: FileData = {
-      ...currentDoc.value,
-      content: JSON.stringify(json),
-      metadata: {
-        ...currentDoc.value?.metadata,
-        pagination: {
-          orientation: pageOrientation.value,
-          pageSize: pageSize.value,
-          showPageNumbers: paginationSettings.showPageNumbers,
-          pageNumberPosition: paginationSettings.pageNumberPosition,
-          printPageNumbers: paginationSettings.printPageNumbers,
-          marginTop: paginationSettings.marginTop,
-          marginBottom: paginationSettings.marginBottom,
-          marginLeft: paginationSettings.marginLeft,
-          marginRight: paginationSettings.marginRight,
-          pageBorder: paginationSettings.pageBorder,
-          pageShadow: paginationSettings.pageShadow,
-        }
-      },
-      last_viewed: new Date(),
-    };
-    
-    const result = await fileStore.saveDocument(updatedDoc);
-    if (result.document) {
-      currentDoc.value = result.document;
-      hasUnsavedChanges.value = false;
-      if (result.syncStatus === 'synced') {
-        lastSavedAt.value = new Date();
+      if (!hasMeaningfulContent) {
         if (isManual) {
-          toast.success('Document saved');
+          toast.info('Your document is still empty. Add content before saving.');
         }
-      } else if (isManual) {
-        toast.error('Changes were saved locally and queued to sync. Please verify your connection.');
+        return;
+      }
+
+      // Save JSON as string in content field
+      const updatedDoc: FileData = {
+        ...currentDoc.value,
+        title: currentDoc.value?.title || 'Untitled Document',
+        content: JSON.stringify(json),
+        metadata: {
+          ...currentDoc.value?.metadata,
+          pagination: {
+            orientation: pageOrientation.value,
+            pageSize: pageSize.value,
+            showPageNumbers: paginationSettings.showPageNumbers,
+            pageNumberPosition: paginationSettings.pageNumberPosition,
+            printPageNumbers: paginationSettings.printPageNumbers,
+            marginTop: paginationSettings.marginTop,
+            marginBottom: paginationSettings.marginBottom,
+            marginLeft: paginationSettings.marginLeft,
+            marginRight: paginationSettings.marginRight,
+            pageBorder: paginationSettings.pageBorder,
+            pageShadow: paginationSettings.pageShadow,
+          }
+        },
+        last_viewed: new Date(),
+      };
+      
+      const result = await fileStore.saveDocument(updatedDoc);
+      if (result.document) {
+        currentDoc.value = result.document;
+        hasUnsavedChanges.value = false;
+        if (result.syncStatus === 'synced') {
+          lastSavedAt.value = new Date();
+          if (isManual) {
+            toast.success('Document saved');
+          }
+        } else if (isManual) {
+          toast.error('Changes were saved locally and queued to sync. Please verify your connection.');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save document:', error);
+      // Always show error toasts
+      toast.error('Failed to save document');
+    } finally {
+      isSaving.value = false;
+      const nextReason = pendingSaveReason;
+      pendingSaveReason = null;
+      activeSavePromise = null;
+
+      if (nextReason) {
+        queueMicrotask(() => {
+          void saveDocument(nextReason === 'manual');
+        });
       }
     }
-  } catch (error) {
-    console.error('Failed to save document:', error);
-    // Always show error toasts
-    toast.error('Failed to save document');
-  } finally {
-    isSaving.value = false;
-  }
+  };
+
+  activeSavePromise = runSave();
+  return activeSavePromise;
 }
 
 function handlePrint() {
@@ -2928,15 +2961,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 /* DocExCore CSS Variables for Export Fidelity */
 :root {
   --doc-height: 29.7cm;
   --editor-padding: 96px;
   --editor-margin: 0px;
 }
-
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* DocExCore Editor Wrapper Styles for Export Fidelity */
 :deep(.editor-wrapper) {
