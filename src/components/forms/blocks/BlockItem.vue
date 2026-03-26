@@ -186,6 +186,7 @@
       <div
         v-if="isFocused"
         class="block-item__actions absolute right-2 top-2 flex items-center gap-1"
+        @mousedown.prevent
       >
         <button
           class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"

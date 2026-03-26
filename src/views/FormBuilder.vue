@@ -2152,7 +2152,16 @@ const handleBlockFocus = (blockId: string) => {
 };
 
 const handleBlockBlur = () => {
-  focusedBlockId.value = null;
+  // Delay blur so that clicks on action buttons (delete, move, etc.) within the
+  // block can fire before the focused state is cleared and buttons are removed.
+  setTimeout(() => {
+    // Only clear if nothing re-focused (e.g. another block's focus event)
+    const active = document.activeElement;
+    const stillInBlock = active?.closest('.block-item-new');
+    if (!stillInBlock) {
+      focusedBlockId.value = null;
+    }
+  }, 150);
 };
 
 const handleBlockUpdate = (updatedBlock: FormBlock) => {
@@ -2164,6 +2173,9 @@ const handleBlockUpdate = (updatedBlock: FormBlock) => {
 };
 
 const handleBlockDelete = (blockId: string) => {
+  if (focusedBlockId.value === blockId) {
+    focusedBlockId.value = null;
+  }
   blocks.value = blocks.value.filter((b) => b.id !== blockId);
   triggerSave();
 };
@@ -2172,12 +2184,16 @@ const handleBlockDuplicate = (blockId: string) => {
   const index = blocks.value.findIndex((b) => b.id === blockId);
   if (index !== -1) {
     const original = blocks.value[index];
-    const duplicate = {
+    const duplicate: FormBlock = {
       ...original,
       id: crypto.randomUUID(),
       question: `${original.question} (copy)`,
+      options: original.options ? [...original.options] : undefined,
+      optionValues: original.optionValues ? original.optionValues.map(o => ({ ...o })) : undefined,
+      validation: original.validation ? { ...original.validation } : undefined,
     };
     blocks.value.splice(index + 1, 0, duplicate);
+    focusedBlockId.value = duplicate.id;
     triggerSave();
   }
 };
@@ -2219,6 +2235,7 @@ const handleInsertBelow = (blockId: string) => {
   };
   blocks.value.splice(index + 1, 0, newBlock);
   focusedBlockId.value = newBlock.id;
+  triggerSave();
 };
 
 const handleAddBlock = () => {
@@ -2765,7 +2782,14 @@ onMounted(async () => {
           }
           const pageQuestions =
             form.questions?.filter((q) => q.page_id === page.id) || [];
+          const questionOrder = Array.isArray((page as any).question_order) ? (page as any).question_order as string[] : [];
           const sortedQuestions = [...pageQuestions].sort((a, b) => {
+            // Prefer question_order if available, fall back to position
+            if (questionOrder.length > 0) {
+              const idxA = questionOrder.indexOf(a.id);
+              const idxB = questionOrder.indexOf(b.id);
+              return (idxA === -1 ? Infinity : idxA) - (idxB === -1 ? Infinity : idxB);
+            }
             const posA = (a as any).position || 0;
             const posB = (b as any).position || 0;
             return posA - posB;

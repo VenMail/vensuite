@@ -1,12 +1,13 @@
 <template>
   <div
+    ref="blockEl"
     class="block-item-new group relative"
     :class="{
       'ring-2 ring-blue-500 dark:ring-blue-400': isFocused,
     }"
   >
      
-    <div class="absolute -left-12 top-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div class="absolute -left-12 top-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity" @mousedown.prevent>
       <button
         class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
         title="Drag to reorder"
@@ -188,6 +189,7 @@
       <div
         v-if="isFocused"
         class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+        @mousedown.prevent
       >
         <button
           class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
@@ -224,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
 import {
   GripVertical,
   Plus,
@@ -268,19 +270,24 @@ const emit = defineEmits<{
   (e: "close-slash-menu"): void;
 }>();
 
-const localBlock = ref<FormBlock>({ ...props.block });
+const cloneBlock = (block: FormBlock): FormBlock => ({
+  ...block,
+  options: block.options ? [...block.options] : undefined,
+});
+
+const localBlock = ref<FormBlock>(cloneBlock(props.block));
 const showTypeMenu = ref(false);
 const questionInput = ref<HTMLInputElement | null>(null);
 
 watch(
   () => props.block,
   (newBlock) => {
-    localBlock.value = { ...newBlock };
+    localBlock.value = cloneBlock(newBlock);
   },
   { deep: true }
 );
 
-// Auto-focus input when block becomes focused
+// Auto-focus input when block becomes focused; close menus on unfocus
 watch(
   () => props.isFocused,
   (focused) => {
@@ -291,6 +298,8 @@ watch(
         const length = questionInput.value?.value.length || 0;
         questionInput.value?.setSelectionRange(length, length);
       });
+    } else if (!focused) {
+      showTypeMenu.value = false;
     }
   }
 );
@@ -460,6 +469,20 @@ const removeOption = (index: number) => {
     handleUpdate();
   }
 };
+
+// Close type menu on outside click
+const blockEl = ref<HTMLElement | null>(null);
+const handleClickOutside = (e: MouseEvent) => {
+  if (showTypeMenu.value && blockEl.value && !blockEl.value.contains(e.target as Node)) {
+    showTypeMenu.value = false;
+  }
+};
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <style scoped>
