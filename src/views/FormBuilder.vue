@@ -2109,20 +2109,21 @@ const saveForm = async () => {
       title: formTitle.value,
       pages: pagesPayload,
       questions: questionsPayload as FormQuestion[],
-      // Persist all settings
+      // Persist all settings — nested under 'settings' so the backend
+      // FormSetting model receives them via array_replace_recursive
       layout_mode: settingsStore.state.layoutMode,
       settings: {
         ...settingsStore.state.settings,
+        layout_mode: settingsStore.state.layoutMode,
         webhook_url: formConfig.value?.webhookUrl,
+        header: settingsStore.state.header,
+        typography: settingsStore.state.typography,
+        theme: settingsStore.state.theme,
+        welcome_screen: settingsStore.state.welcomeScreen,
+        completion_screen: settingsStore.state.completionScreen,
+        sharing: settingsStore.state.sharing,
+        security: settingsStore.state.security,
       } as any,
-      header: settingsStore.state.header,
-      typography: settingsStore.state.typography,
-      theme: settingsStore.state.theme,
-      navigation: settingsStore.state.navigation,
-      welcome_screen: settingsStore.state.welcomeScreen,
-      completion_screen: settingsStore.state.completionScreen,
-      sharing: settingsStore.state.sharing,
-      security: settingsStore.state.security,
       payment: settingsStore.state.payment,
     });
 
@@ -2795,6 +2796,7 @@ onMounted(async () => {
             return posA - posB;
           });
           sortedQuestions.forEach((q) => {
+            const qAny = q as any;
             allBlocks.push(
               normalizeBlock({
                 id: q.id,
@@ -2804,10 +2806,25 @@ onMounted(async () => {
                 description: q.description,
                 placeholder: q.placeholder,
                 required: q.required || false,
-                options: (q as any).options?.map((opt: any) =>
+                options: qAny.options?.map((opt: any) =>
                   typeof opt === "string" ? opt : opt.label || opt.value
                 ),
                 pageId: q.page_id,
+                helpText: qAny.help_text,
+                logic: qAny.logic,
+                visibilityCondition: qAny.visibility_condition,
+                metadata: qAny.metadata,
+                // Rating/slider fields
+                iconType: qAny.icon_type,
+                allowHalf: qAny.allow_half,
+                min: qAny.min,
+                max: qAny.max,
+                step: qAny.step,
+                showLabels: qAny.show_labels,
+                // File upload fields
+                allowedTypes: qAny.allowed_types,
+                maxSize: qAny.max_size_mb,
+                multiple: qAny.multiple,
               } as any)
             );
           });

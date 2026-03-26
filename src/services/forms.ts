@@ -75,8 +75,21 @@ const normalizeQuestion = (question: any, pageId: string, fallbackIndex: number)
     visibility_condition: question?.visibility_condition ?? null,
     options: normalizeOptions(config.options ?? question?.options),
     validation: Array.isArray(question?.validation) ? question.validation : [],
-    logic: question?.logic,
-    metadata: question?.metadata,
+    logic: question?.logic ?? config.logic,
+    metadata: question?.metadata ?? config.metadata,
+    // Rating/slider type-specific fields
+    icon_type: config.icon_type ?? question?.icon_type,
+    allow_half: config.allow_half ?? question?.allow_half,
+    min: config.min ?? question?.min,
+    max: config.max ?? question?.max,
+    step: config.step ?? question?.step,
+    show_labels: config.show_labels ?? question?.show_labels,
+    // File upload type-specific fields
+    allowed_types: config.allowed_types ?? question?.allowed_types,
+    max_size_mb: config.max_size_mb ?? question?.max_size_mb,
+    multiple: config.multiple ?? question?.multiple,
+    // Help text
+    help_text: (config.help_text as string) ?? question?.help_text ?? "",
   };
 
   return normalizedQuestion as unknown as FormQuestion;

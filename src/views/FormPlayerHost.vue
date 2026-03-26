@@ -667,13 +667,20 @@ const buildSuccessRoute = () => {
 
 const paymentSuccessUrl = computed(() => {
   const target = buildSuccessRoute();
-  if (!target) return undefined;
+  if (!target) {
+    // Fallback: use current URL with payment=succeeded query param
+    const url = new URL(window.location.href);
+    url.searchParams.set('payment', 'succeeded');
+    return url.toString();
+  }
   try {
     const resolved = router.resolve(target);
     return `${window.location.origin}${resolved.href}`;
   } catch (error) {
     console.error('Failed to resolve payment success URL', error);
-    return undefined;
+    const url = new URL(window.location.href);
+    url.searchParams.set('payment', 'succeeded');
+    return url.toString();
   }
 });
 
