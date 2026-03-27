@@ -33,6 +33,7 @@ watch(() => route.name, (newRouteName) => {
     newRouteName === 'forms' ||
     newRouteName === 'slides' ||
     newRouteName === 'media' ||
+    newRouteName === 'stories' ||
     newRouteName === 'docs-view' ||
     newRouteName === 'sheets-view' ||
     newRouteName === 'bin-view' // Add bin-view to keep sidebar visible
