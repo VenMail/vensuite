@@ -2,7 +2,7 @@
 /**
  * StorySidebar — Right panel with tab switching between Layers, Properties, and Theme.
  */
-import { ref, inject, computed } from 'vue';
+import { ref, inject, computed, watch } from 'vue';
 import { Layers, Settings2, Palette, Sparkles } from 'lucide-vue-next';
 import type { StoryStoreReturn } from '@/store/story';
 import StoryLayersPanel from './StoryLayersPanel.vue';
@@ -24,7 +24,11 @@ const tabs: { id: SidebarTab; label: string; icon: typeof Layers }[] = [
 ];
 
 // Auto-switch to properties when a block is selected
-const hasSelection = computed(() => store.editor.selectedBlockIds.value.size > 0);
+watch(() => store.editor.selectedBlockIds.value.size, (size) => {
+  if (size > 0 && activeTab.value !== 'properties' && activeTab.value !== 'animate') {
+    activeTab.value = 'properties';
+  }
+});
 </script>
 
 <template>

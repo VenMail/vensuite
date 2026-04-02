@@ -149,6 +149,12 @@ export function useStoryEditor(options: UseStoryEditorOptions = {}) {
     notifyChange();
   }
 
+  function updateSceneBackground(index: number, background: Partial<StoryScene['background']>) {
+    if (index < 0 || index >= document.value.scenes.length) return;
+    Object.assign(document.value.scenes[index].background, background);
+    notifyChange();
+  }
+
   // ─── Block Operations ────────────────────────────────────────────
   function addBlock(type: StoryBlockType, partial?: Partial<StoryBlock>): StoryBlock | null {
     if (!currentScene.value) return null;
@@ -328,6 +334,27 @@ export function useStoryEditor(options: UseStoryEditorOptions = {}) {
     return currentScene.value.blocks.find(b => b.id === blockId);
   }
 
+  function updateBlockVisibility(blockId: string, hidden: boolean) {
+    const block = getBlock(blockId);
+    if (!block) return;
+    block.hidden = hidden;
+    notifyChange();
+  }
+
+  function updateBlockLock(blockId: string, locked: boolean) {
+    const block = getBlock(blockId);
+    if (!block) return;
+    block.locked = locked;
+    notifyChange();
+  }
+
+  function updateBlockName(blockId: string, name: string | undefined) {
+    const block = getBlock(blockId);
+    if (!block) return;
+    block.name = name;
+    notifyChange();
+  }
+
   // ─── Animation Operations ─────────────────────────────────────────
   function addAnimation(blockId: string, preset: StoryAnimationPresetName): StoryAnimation | null {
     const block = getBlock(blockId);
@@ -403,6 +430,7 @@ export function useStoryEditor(options: UseStoryEditorOptions = {}) {
     deleteScene,
     moveScene,
     updateSceneLayout,
+    updateSceneBackground,
 
     // Block operations
     addBlock,
@@ -416,6 +444,9 @@ export function useStoryEditor(options: UseStoryEditorOptions = {}) {
     bringToFront,
     sendToBack,
     getBlock,
+    updateBlockVisibility,
+    updateBlockLock,
+    updateBlockName,
 
     // Selection
     selectBlock,

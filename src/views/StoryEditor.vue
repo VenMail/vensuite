@@ -15,6 +15,7 @@
       @redo="handleRedo"
       @preview="showPreview = true"
       @present="presenter.startPresentation()"
+      @share="handleShare"
     />
 
     <!-- Main Content Area -->
@@ -89,6 +90,7 @@ const canvasInnerRef = computed<HTMLElement | null>(() => {
   // StoryCanvas exposes { canvas, blockInteractions, canvasInnerRef } via defineExpose
   return (canvasComponentRef.value as any)?.canvasInnerRef ?? null;
 });
+const canvasViewport = computed(() => (canvasComponentRef.value as any)?.canvas ?? null);
 
 // Animation engine
 const storyAnimations = useStoryAnimations({
@@ -106,10 +108,11 @@ const presenter = useStoryPresenter({
 const showTimeline = ref(false);
 const showPreview = ref(false);
 
-// Provide store and animations for child components
+// Provide store, animations, and canvas for child components
 provide('storyStore', storyStore);
 provide('storyAnimations', storyAnimations);
 provide('storyPresenter', presenter);
+provide('storyCanvas', canvasViewport);
 
 // Undo / Redo state (wired to editor history)
 const canUndo = computed(() => storyStore.editor.canUndo.value);
@@ -168,6 +171,24 @@ async function handleManualSave() {
 
 function goBack() {
   router.push('/stories');
+}
+
+async function handleShare() {
+  // Ensure story is saved first
+  if (storyStore.hasUnsavedChanges) {
+    await storyStore.saveStory();
+  }
+  const link = storyStore.persistence.shareLinkDoc.value;
+  if (link) {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('Share link copied to clipboard');
+    } catch {
+      toast.info(`Share link: ${link}`);
+    }
+  } else {
+    toast.info('Save the story first to get a share link');
+  }
 }
 
 // Undo / Redo

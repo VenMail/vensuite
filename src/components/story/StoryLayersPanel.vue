@@ -10,8 +10,6 @@ import {
   Unlock,
   Trash2,
   Copy,
-  ChevronUp,
-  ChevronDown,
   Type,
   Heading,
   Image,
@@ -57,23 +55,11 @@ function handleSelect(blockId: string, e: MouseEvent) {
 }
 
 function toggleVisibility(block: StoryBlock) {
-  const scene = editor.value.currentScene.value;
-  if (!scene) return;
-  const target = scene.blocks.find(b => b.id === block.id);
-  if (target) {
-    target.hidden = !target.hidden;
-    store.markDirty();
-  }
+  editor.value.updateBlockVisibility(block.id, !block.hidden);
 }
 
 function toggleLock(block: StoryBlock) {
-  const scene = editor.value.currentScene.value;
-  if (!scene) return;
-  const target = scene.blocks.find(b => b.id === block.id);
-  if (target) {
-    target.locked = !target.locked;
-    store.markDirty();
-  }
+  editor.value.updateBlockLock(block.id, !block.locked);
 }
 
 function startRename(block: StoryBlock) {
@@ -82,13 +68,7 @@ function startRename(block: StoryBlock) {
 }
 
 function commitRename(block: StoryBlock) {
-  const scene = editor.value.currentScene.value;
-  if (!scene) return;
-  const target = scene.blocks.find(b => b.id === block.id);
-  if (target) {
-    target.name = editingNameValue.value || undefined;
-    store.markDirty();
-  }
+  editor.value.updateBlockName(block.id, editingNameValue.value || undefined);
   editingNameId.value = null;
 }
 

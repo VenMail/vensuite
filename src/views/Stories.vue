@@ -62,6 +62,7 @@ interface ViewOption {
 
 const router = useRouter();
 const viewMode = ref<'grid' | 'list'>('grid');
+const activeFilter = ref<string>('all');
 const storyList = ref<StoryListItem[]>([]);
 const isLoading = ref(false);
 const isCreating = ref(false);
@@ -78,13 +79,23 @@ async function loadStories() {
 
 onMounted(loadStories);
 
-// ── Sorted ───────────────────────────────────────────────────────────
-const sortedStories = computed(() =>
-  [...storyList.value].sort(
+// ── Sorted & filtered ────────────────────────────────────────────────
+const sortedStories = computed(() => {
+  let filtered = [...storyList.value];
+
+  if (activeFilter.value === 'shared') {
+    filtered = filtered.filter(s => s.shared);
+  } else if (activeFilter.value === 'recent') {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    filtered = filtered.filter(s => new Date(s.lastModified) >= sevenDaysAgo);
+  }
+
+  return filtered.sort(
     (a, b) =>
       new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime(),
-  ),
-);
+  );
+});
 
 // ── Actions ──────────────────────────────────────────────────────────
 async function handleCreateStory() {
@@ -155,9 +166,9 @@ const stats = computed<StatItem[]>(() => [
 ]);
 
 const filterOptions = computed<FilterItem[]>(() => [
-  { key: 'all', label: 'All', value: 'all', icon: BookOpen, active: true },
-  { key: 'shared', label: 'Shared', value: 'shared', icon: Users, active: false },
-  { key: 'recent', label: 'Recent', value: 'recent', icon: Clock, active: false },
+  { key: 'all', label: 'All', value: 'all', icon: BookOpen, active: activeFilter.value === 'all' },
+  { key: 'shared', label: 'Shared', value: 'shared', icon: Users, active: activeFilter.value === 'shared' },
+  { key: 'recent', label: 'Recent', value: 'recent', icon: Clock, active: activeFilter.value === 'recent' },
 ]);
 
 const viewOptions = computed<ViewOption[]>(() => [
@@ -185,8 +196,8 @@ const topBarActions = computed<ActionItem[]>(() => [
   },
 ]);
 
-const handleFilter = (_filter: string) => {
-  // Filtering logic TBD
+const handleFilter = (filter: string) => {
+  activeFilter.value = filter;
 };
 const handleViewChange = (mode: 'grid' | 'list') => {
   viewMode.value = mode;

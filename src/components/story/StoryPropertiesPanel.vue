@@ -47,11 +47,11 @@ function updateContent(field: string, value: unknown) {
 
 // ── Scene background ────────────────────────────────────────────────
 const currentScene = computed(() => editor.value.currentScene.value);
+const currentSceneIndex = computed(() => editor.value.currentSceneIndex.value);
 
 function updateSceneBg(value: string) {
   if (!currentScene.value) return;
-  currentScene.value.background.value = value;
-  store.markDirty();
+  editor.value.updateSceneBackground(currentSceneIndex.value, { value });
 }
 </script>
 

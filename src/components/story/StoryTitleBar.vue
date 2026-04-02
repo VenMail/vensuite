@@ -91,12 +91,13 @@
         Preview
       </Button>
 
-      <!-- Share (placeholder) -->
+      <!-- Share -->
       <Button
         variant="ghost"
         size="sm"
         class="h-8 gap-1.5 text-xs"
         title="Share story"
+        @click="emit('share')"
       >
         <Share2 class="w-4 h-4" />
         Share
@@ -159,7 +160,7 @@ const emit = defineEmits<{
   (e: 'undo'): void;
   (e: 'redo'): void;
   (e: 'preview'): void;
-  (e: 'present'): void;
+  (e: 'share'): void;
 }>();
 
 // ---------------------------------------------------------------------------

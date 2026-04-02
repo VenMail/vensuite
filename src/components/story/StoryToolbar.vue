@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import { useStoryStore } from '@/store/story';
 import type { StoryBlockType, StoryLayoutMode } from '@/types/story';
+import type { StoryCanvasReturn } from '@/composables/useStoryCanvas';
 import {
   Type,
   Heading,
@@ -21,8 +22,9 @@ const emit = defineEmits<{
 }>();
 
 const store = useStoryStore();
+const canvas = inject<StoryCanvasReturn>('storyCanvas');
 
-const zoom = defineModel<number>('zoom', { default: 100 });
+const zoomPercent = computed(() => canvas?.zoomPercent.value ?? 100);
 
 interface BlockOption {
   type: StoryBlockType;
@@ -51,16 +53,16 @@ function toggleLayout() {
   store.editor.updateSceneLayout(store.currentSceneIndex, next);
 }
 
-function zoomIn() {
-  zoom.value = Math.min(zoom.value + 10, 200);
+function handleZoomIn() {
+  canvas?.zoomIn();
 }
 
-function zoomOut() {
-  zoom.value = Math.max(zoom.value - 10, 25);
+function handleZoomOut() {
+  canvas?.zoomOut();
 }
 
 function fitToScreen() {
-  zoom.value = 100;
+  canvas?.zoomToFit();
 }
 </script>
 
@@ -120,7 +122,7 @@ function fitToScreen() {
         class="p-1.5 rounded-full text-gray-500 dark:text-gray-400
                hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         title="Zoom out"
-        @click="zoomOut"
+        @click="handleZoomOut"
       >
         <ZoomOut class="w-4 h-4" />
       </button>
@@ -129,14 +131,14 @@ function fitToScreen() {
         class="min-w-[3rem] text-center text-xs font-medium tabular-nums
                text-gray-600 dark:text-gray-400"
       >
-        {{ zoom }}%
+        {{ zoomPercent }}%
       </span>
 
       <button
         class="p-1.5 rounded-full text-gray-500 dark:text-gray-400
                hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         title="Zoom in"
-        @click="zoomIn"
+        @click="handleZoomIn"
       >
         <ZoomIn class="w-4 h-4" />
       </button>
