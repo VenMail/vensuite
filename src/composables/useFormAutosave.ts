@@ -59,7 +59,7 @@ export const useFormAutosave = (options: AutosaveOptions = {}) => {
 
     try {
       editorStore.markSaving(true);
-      editorStore.markError(" ");
+      editorStore.markError("");
       const payload = getPayload();
       const response = await updateForm(formId, payload, {
         auth: options.authToken ? { token: options.authToken } : undefined,
