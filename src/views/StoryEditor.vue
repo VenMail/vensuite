@@ -21,15 +21,7 @@
     <div class="flex-1 flex flex-col overflow-hidden min-h-0">
       <div class="flex-1 flex overflow-hidden min-h-0">
         <!-- Scene Thumbnails (left sidebar) -->
-        <StorySceneThumbnails
-          :scenes="storyStore.scenes"
-          :current-scene-index="storyStore.currentSceneIndex"
-          @select-scene="storyStore.selectScene"
-          @add-scene="handleAddScene"
-          @duplicate-scene="handleDuplicateScene"
-          @delete-scene="handleDeleteScene"
-          @move-scene="handleMoveScene"
-        />
+        <StorySceneThumbnails />
 
         <!-- Main Canvas (center) -->
         <div class="flex-1 flex flex-col min-w-0 min-h-0">
@@ -69,7 +61,8 @@
 
 <script setup lang="ts">
 import { computed, provide, ref, onMounted, onUnmounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
+import { toast } from 'vue-sonner';
 
 // Components
 import StoryTitleBar from '@/components/story/StoryTitleBar.vue';
@@ -134,7 +127,10 @@ function handleDuplicateScene(index: number) {
 }
 
 function handleDeleteScene(index: number) {
-  storyStore.deleteScene(index);
+  const result = storyStore.deleteScene(index);
+  if (!result) {
+    toast.warning('Cannot delete the last scene');
+  }
 }
 
 function handleMoveScene(from: number, to: number) {
@@ -270,6 +266,25 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 // ---------------------------------------------------------------------------
+// Unsaved changes guard
+// ---------------------------------------------------------------------------
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (storyStore.hasUnsavedChanges) {
+    storyStore.saveStory().catch(() => {});
+    e.preventDefault();
+    e.returnValue = '';
+  }
+}
+
+onBeforeRouteLeave(async () => {
+  try {
+    if (storyStore.hasUnsavedChanges) {
+      await storyStore.saveStory();
+    }
+  } catch {}
+});
+
+// ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
 onMounted(async () => {
@@ -284,11 +299,13 @@ onMounted(async () => {
   }
 
   window.addEventListener('keydown', handleKeydown);
+  window.addEventListener('beforeunload', handleBeforeUnload);
 });
 
 onUnmounted(() => {
   storyStore.stopAutosave();
   window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 
 // Watch route param changes (e.g. navigating between stories without full remount)
@@ -296,6 +313,10 @@ watch(
   () => route.params.storyId,
   async (newId) => {
     if (newId && typeof newId === 'string') {
+      // Save current story if dirty before switching
+      if (storyStore.hasUnsavedChanges) {
+        try { await storyStore.saveStory(); } catch {}
+      }
       if (newId === 'new') {
         storyStore.initializeNewStory();
       } else {

@@ -24,6 +24,20 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 20000,
 });
 
+// Automatically attach auth token from localStorage to every request
+apiClient.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem('venAuthToken');
+    if (token && !config.headers?.Authorization) {
+      config.headers = config.headers || {};
+      (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Silently ignore localStorage errors
+  }
+  return config;
+});
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -59,6 +59,8 @@ export const useFileStore = defineStore("files", {
       if (ft === '1') return 'docx'
       if (ft === '2') return 'xlsx'
       if (ft === '3') return 'pptx'
+      if (ft === '165') return 'story'
+      if (ft === 'story') return 'story'
       return ft
     },
 
@@ -1096,6 +1098,7 @@ export const useFileStore = defineStore("files", {
       switch (fileType.toLowerCase()) {
         case "docx": return "document";
         case "xlsx": return "sheet";
+        case "story": return "story";
         default: return "file";
       }
     },
@@ -1623,7 +1626,7 @@ export const useFileStore = defineStore("files", {
 
     async moveToTrash(id: string): Promise<boolean> {
       try {
-        const response = await axios.patch(`${FILES_ENDPOINT}/${id}/trash`, {}, {
+        const response = await axios.post(`${FILES_ENDPOINT}/${id}/trash`, {}, {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         if (response.status === 200 || response.status === 201) {

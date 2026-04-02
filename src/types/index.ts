@@ -1,5 +1,6 @@
 export * from "./docPersistence";
 export * from "./slides";
+export * from "./story";
 
 export interface DocumentMetadata {
   pagination?: {
