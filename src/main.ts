@@ -32,6 +32,7 @@ import FilePicker from './views/FilePicker.vue'
 import DocsEditor from './views/DocsEditor.vue'
 import Login from './views/Login.vue'
 import SlidesEditor from './views/SlidesEditor.vue'
+import StoryEditor from './views/StoryEditor.vue'
 import Media from './views/Media.vue'
 
 const routes = [
@@ -74,6 +75,19 @@ const routes = [
     component: () => import('./views/FormPlayerHost.vue'),
     meta: { public: true },
   },
+  // Signing routes
+  {
+    path: '/signing/editor/:signingRequestId',
+    name: 'signing-editor',
+    component: () => import('./views/SigningEditor.vue'),
+    meta: { hideLayout: true },
+  },
+  {
+    path: '/signing/sign/:token',
+    name: 'signing-player',
+    component: () => import('./views/SigningPlayer.vue'),
+    meta: { public: true },
+  },
   {
     path: '/f/by-id/:id',
     name: 'form-player-by-id',
@@ -99,6 +113,10 @@ const routes = [
       { path: 'slides/new', name: 'slides-new', component: SlidesEditor, meta: { hideLayout: true } },
       { path: 'slides/:deckId', name: 'slides-edit', component: SlidesEditor, meta: { hideLayout: true } },
       { path: 'slides/t/:template', name: 'slides-template', component: SlidesEditor, meta: { hideLayout: true } },
+      { path: 'stories', name: 'stories', component: () => import('./views/Stories.vue') },
+      { path: 'stories/new', name: 'stories-new', component: StoryEditor, meta: { hideLayout: true } },
+      { path: 'stories/:storyId', name: 'stories-edit', component: StoryEditor, meta: { hideLayout: true, public: true } },
+      { path: 'stories/t/:template', name: 'stories-template', component: StoryEditor, meta: { hideLayout: true } },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/t/:template', name: 'form-template', component: () => import('./views/FormTemplateHandler.vue'), meta: { hideLayout: true } },
       {
