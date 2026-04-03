@@ -80,6 +80,54 @@ export async function generateCompleteForm(
   }
 }
 
+// ── Story AI Generation ─────────────────────────────────────────────
+
+export interface AIGenerateStoryRequest {
+  prompt: string;
+  sceneCount?: number;
+  style?: string;
+}
+
+export interface AIGenerateStoryResponse {
+  title: string;
+  theme: string;
+  scenes: Array<{
+    name: string;
+    background: { type: string; value: string };
+    blocks: Array<{
+      type: string;
+      content: Record<string, unknown>;
+      position: { x: number; y: number; width: number; height: number };
+      style: Record<string, unknown>;
+    }>;
+  }>;
+}
+
+/**
+ * Generate a visual story presentation from a natural language prompt
+ */
+export async function generateStory(
+  prompt: string,
+  options?: { sceneCount?: number; style?: string }
+): Promise<AIGenerateStoryResponse> {
+  try {
+    const requestConfig = buildAuthRequestConfig();
+    const response = await apiClient.post<{ data: AIGenerateStoryResponse }>(
+      "/ai/generate-story",
+      {
+        prompt,
+        scene_count: options?.sceneCount ?? 5,
+        style: options?.style ?? 'modern',
+      },
+      { ...requestConfig, timeout: 90000 }
+    );
+    return response.data.data;
+  } catch (error) {
+    console.error("AI story generation failed:", error);
+    throw new Error("Failed to generate story");
+  }
+}
+
 // ── Document AI Writing ──────────────────────────────────────────────
 
 export type AIWriteAction =

@@ -12,6 +12,10 @@ const props = defineProps<{
   isEditing: boolean;
 }>();
 
+const emit = defineEmits<{
+  'stop-editing': [];
+}>();
+
 // ── Lazy-loaded block type components ────────────────────────────────────
 const StoryTextBlock = defineAsyncComponent(
   () => import('./blocks/StoryTextBlock.vue'),
@@ -55,6 +59,7 @@ const wrapperClasses = computed(() => [
       :is-selected="isSelected"
       :is-editing="isEditing"
       class="h-full w-full"
+      @stop-editing="emit('stop-editing')"
     />
 
     <!-- Fallback placeholder for unsupported block types -->

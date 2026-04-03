@@ -47,28 +47,39 @@ const blockInteractions = useStoryBlocks({
 
 // ── Selection ────────────────────────────────────────────────────────────
 function handleCanvasClick(e: MouseEvent) {
-  // Only deselect when clicking the canvas background itself
   const target = e.target as HTMLElement;
   if (
     target === canvasInnerRef.value ||
     target === canvasContainerRef.value ||
     target.classList.contains('story-canvas__grid')
   ) {
+    editor.value.stopEditing();
     editor.value.deselectAll();
   }
 }
 
 function handleBlockClick(blockId: string, e: MouseEvent) {
   e.stopPropagation();
+  if (editor.value.editingBlockId.value && editor.value.editingBlockId.value !== blockId) {
+    editor.value.stopEditing();
+  }
   editor.value.selectBlock(blockId, e.shiftKey);
+}
+
+function handleBlockDblClick(blockId: string, e: MouseEvent) {
+  e.stopPropagation();
+  editor.value.startEditing(blockId);
+}
+
+function handleStopEditing() {
+  editor.value.stopEditing();
 }
 
 function handleBlockMouseDown(blockId: string, e: MouseEvent) {
   if (e.button !== 0 || canvas.isSpaceHeld.value) return;
-  // Start drag if the block is not locked
+  if (editor.value.editingBlockId.value === blockId) return;
   const block = editor.value.getBlock(blockId);
   if (!block || block.locked) return;
-  // Select on mousedown if not already selected
   if (!editor.value.selectedBlockIds.value.has(blockId)) {
     editor.value.selectBlock(blockId, e.shiftKey);
   }
@@ -158,9 +169,12 @@ defineExpose({ canvas, blockInteractions, canvasInnerRef });
         v-if="editor.currentScene.value"
         :scene="editor.currentScene.value"
         :selected-block-ids="editor.selectedBlockIds.value"
+        :editing-block-id="editor.editingBlockId.value"
         :block-interactions="blockInteractions"
         @block-click="handleBlockClick"
+        @block-dblclick="handleBlockDblClick"
         @block-mousedown="handleBlockMouseDown"
+        @stop-editing="handleStopEditing"
       />
 
       <!-- Smart guide lines -->

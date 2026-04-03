@@ -28,6 +28,11 @@
     <StoryToolbar @toggle-timeline="showTimeline = !showTimeline" @present="presenter.startPresentation()" />
     <StoryPreview v-model:open="showPreview" @start-presentation="showPreview = false; presenter.startPresentation()" />
     <StoryPresenter :presenter="presenter" />
+    <StoryAIPrompt
+      v-model:open="showAIPrompt"
+      @generated="handleAIGenerated"
+      @skip="showAIPrompt = false"
+    />
   </div>
 </template>
 
@@ -45,11 +50,14 @@ import StorySidebar from '@/components/story/StorySidebar.vue';
 import StoryTimeline from '@/components/story/StoryTimeline.vue';
 import StoryPreview from '@/components/story/StoryPreview.vue';
 import StoryPresenter from '@/components/story/StoryPresenter.vue';
+import StoryAIPrompt from '@/components/story/StoryAIPrompt.vue';
 
 // Store & Composables
 import { useStoryStore } from '@/store/story';
 import { useStoryAnimations } from '@/composables/useStoryAnimations';
 import { useStoryPresenter } from '@/composables/useStoryPresenter';
+import type { AIGenerateStoryResponse } from '@/services/ai';
+import { createDefaultScene, createDefaultBlock, type StoryDocument } from '@/types/story';
 
 const route = useRoute();
 const router = useRouter();
@@ -77,6 +85,7 @@ const presenter = useStoryPresenter({
 // UI state
 const showTimeline = ref(false);
 const showPreview = ref(false);
+const showAIPrompt = ref(false);
 
 // Provide store, animations, and canvas for child components
 provide('storyStore', storyStore);
@@ -123,6 +132,33 @@ async function handleShare() {
   } else {
     toast.info('Save the story first to get a share link');
   }
+}
+
+// AI generation
+function handleAIGenerated(data: AIGenerateStoryResponse) {
+  // Convert AI response to StoryDocument scenes
+  const scenes = data.scenes.map((sceneData, idx) => {
+    const scene = createDefaultScene(sceneData.name || `Scene ${idx + 1}`);
+    scene.background = sceneData.background || scene.background;
+    scene.blocks = sceneData.blocks.map((blockData) => {
+      const block = createDefaultBlock(blockData.type as any);
+      Object.assign(block.content, blockData.content || {});
+      Object.assign(block.position, blockData.position || {});
+      Object.assign(block.style, blockData.style || {});
+      return block;
+    });
+    return scene;
+  });
+
+  // Replace the editor document with generated scenes
+  const doc: StoryDocument = {
+    ...storyStore.editor.document.value,
+    title: data.title,
+    scenes,
+  };
+  storyStore.editor.setDocument(doc);
+  storyStore.setTitle(data.title);
+  toast.success(`Generated "${data.title}" with ${scenes.length} scenes`);
 }
 
 // Undo / Redo
@@ -251,6 +287,8 @@ onMounted(async () => {
     await storyStore.loadStory(storyId);
   } else {
     storyStore.initializeNewStory();
+    // Show AI prompt for new stories
+    showAIPrompt.value = true;
   }
 
   window.addEventListener('keydown', handleKeydown);

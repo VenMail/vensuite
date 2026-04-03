@@ -35,6 +35,7 @@ export function useStoryEditor(options: UseStoryEditorOptions = {}) {
   const selectedBlockIds = ref<Set<string>>(new Set());
   const clipboard = ref<StoryBlock[]>([]);
   const mode = ref<'edit' | 'preview'>('edit');
+  const editingBlockId = ref<string | null>(null);
 
   // ─── Undo/Redo (Snapshot-based) ──────────────────────────────────
   const history = ref<string[]>([]);
@@ -63,12 +64,16 @@ export function useStoryEditor(options: UseStoryEditorOptions = {}) {
     if (historyIndex.value <= 0) return;
     historyIndex.value--;
     document.value = JSON.parse(history.value[historyIndex.value]);
+    selectedBlockIds.value.clear();
+    editingBlockId.value = null;
   }
 
   function redo() {
     if (historyIndex.value >= history.value.length - 1) return;
     historyIndex.value++;
     document.value = JSON.parse(history.value[historyIndex.value]);
+    selectedBlockIds.value.clear();
+    editingBlockId.value = null;
   }
 
   const canUndo = computed(() => historyIndex.value > 0);
@@ -273,6 +278,22 @@ export function useStoryEditor(options: UseStoryEditorOptions = {}) {
     notifyChange();
   }
 
+  // ─── Inline Editing ──────────────────────────────────────────────
+  function startEditing(blockId: string) {
+    // Only allow editing text/heading blocks
+    const block = getBlock(blockId);
+    if (!block || (block.type !== 'text' && block.type !== 'heading')) return;
+    editingBlockId.value = blockId;
+    // Ensure the block is also selected
+    if (!selectedBlockIds.value.has(blockId)) {
+      selectBlock(blockId);
+    }
+  }
+
+  function stopEditing() {
+    editingBlockId.value = null;
+  }
+
   // ─── Selection ───────────────────────────────────────────────────
   function selectBlock(blockId: string, addToSelection = false) {
     if (!addToSelection) {
@@ -413,6 +434,7 @@ export function useStoryEditor(options: UseStoryEditorOptions = {}) {
     selectedBlockIds,
     clipboard,
     mode,
+    editingBlockId,
 
     // Computed
     currentScene,
@@ -447,6 +469,10 @@ export function useStoryEditor(options: UseStoryEditorOptions = {}) {
     updateBlockVisibility,
     updateBlockLock,
     updateBlockName,
+
+    // Inline editing
+    startEditing,
+    stopEditing,
 
     // Selection
     selectBlock,

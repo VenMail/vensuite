@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch, onBeforeUnmount } from 'vue';
+import { computed, watch, nextTick, onBeforeUnmount } from 'vue';
 import type { StoryTextContent } from '@/types/story';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
@@ -17,6 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:content': [payload: Partial<StoryTextContent>];
+  'stop-editing': [];
 }>();
 
 const textStyles = computed(() => ({
@@ -57,8 +58,22 @@ watch(
   () => props.isEditing,
   (editing) => {
     editor.value?.setEditable(editing);
+    if (editing) {
+      // Focus the Tiptap editor when entering edit mode
+      nextTick(() => {
+        editor.value?.commands.focus('end');
+      });
+    }
   },
 );
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    emit('stop-editing');
+  }
+}
 
 watch(
   () => props.content.html,
@@ -77,7 +92,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="story-text-block w-full h-full">
+  <div class="story-text-block w-full h-full" @keydown="handleKeydown">
     <!-- Static render when not editing -->
     <div
       v-if="!isEditing"

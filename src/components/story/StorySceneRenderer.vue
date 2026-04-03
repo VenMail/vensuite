@@ -11,12 +11,15 @@ import StoryBlockRenderer from './StoryBlockRenderer.vue';
 const props = defineProps<{
   scene: StoryScene;
   selectedBlockIds: Set<string>;
+  editingBlockId: string | null;
   blockInteractions: StoryBlocksReturn;
 }>();
 
 const emit = defineEmits<{
   'block-click': [blockId: string, event: MouseEvent];
   'block-mousedown': [blockId: string, event: MouseEvent];
+  'block-dblclick': [blockId: string, event: MouseEvent];
+  'stop-editing': [];
 }>();
 
 // ── Sorted blocks by zIndex for freeform mode ────────────────────────────
@@ -86,6 +89,10 @@ function getBlockWrapperStyle(block: StoryBlock): Record<string, string | number
 function isSelected(blockId: string): boolean {
   return props.selectedBlockIds.has(blockId);
 }
+
+function isBlockEditing(blockId: string): boolean {
+  return props.editingBlockId === blockId;
+}
 </script>
 
 <template>
@@ -105,12 +112,14 @@ function isSelected(blockId: string): boolean {
       class="story-block-wrapper relative"
       :style="getBlockWrapperStyle(block)"
       @click="emit('block-click', block.id, $event)"
+      @dblclick="emit('block-dblclick', block.id, $event)"
       @mousedown="emit('block-mousedown', block.id, $event)"
     >
       <StoryBlockRenderer
         :block="block"
         :is-selected="isSelected(block.id)"
-        :is-editing="false"
+        :is-editing="isBlockEditing(block.id)"
+        @stop-editing="emit('stop-editing')"
       />
     </div>
   </div>
@@ -127,12 +136,14 @@ function isSelected(blockId: string): boolean {
       class="story-block-wrapper"
       :style="getBlockWrapperStyle(block)"
       @click="emit('block-click', block.id, $event)"
+      @dblclick="emit('block-dblclick', block.id, $event)"
       @mousedown="emit('block-mousedown', block.id, $event)"
     >
       <StoryBlockRenderer
         :block="block"
         :is-selected="isSelected(block.id)"
-        :is-editing="false"
+        :is-editing="isBlockEditing(block.id)"
+        @stop-editing="emit('stop-editing')"
       />
     </div>
   </div>
