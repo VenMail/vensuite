@@ -93,7 +93,7 @@ export interface AIGenerateStoryResponse {
   theme: string;
   scenes: Array<{
     name: string;
-    background: { type: string; value: string };
+    background: { type: 'solid' | 'gradient' | 'image' | 'video'; value: string };
     blocks: Array<{
       type: string;
       content: Record<string, unknown>;

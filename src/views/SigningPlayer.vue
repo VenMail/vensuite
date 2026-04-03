@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSigningPlayerStore } from '@/store/signingPlayer';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
@@ -13,6 +13,7 @@ const pdf = usePdfRenderer();
 const token = computed(() => route.params.token as string);
 const containerWidth = ref(700);
 const containerRef = ref<HTMLElement | null>(null);
+let resizeObserver: ResizeObserver | null = null;
 
 onMounted(async () => {
   await store.loadSession(token.value);
@@ -22,11 +23,15 @@ onMounted(async () => {
   }
 
   if (containerRef.value) {
-    const obs = new ResizeObserver(entries => {
+    resizeObserver = new ResizeObserver(entries => {
       containerWidth.value = entries[0]?.contentRect.width || 700;
     });
-    obs.observe(containerRef.value);
+    resizeObserver.observe(containerRef.value);
   }
+});
+
+onUnmounted(() => {
+  resizeObserver?.disconnect();
 });
 
 async function handleSubmit() {

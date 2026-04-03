@@ -14,7 +14,12 @@ const emit = defineEmits<{
 
 type CaptureMode = 'draw' | 'type';
 const mode = ref<CaptureMode>('draw');
-const signaturePad = ref<InstanceType<typeof VueSignaturePad> | null>(null);
+interface SignaturePadInstance {
+  clearSignature(): void;
+  saveSignature(type?: string): { isEmpty: boolean; data: string };
+  resizeCanvas(): void;
+}
+const signaturePad = ref<SignaturePadInstance | null>(null);
 const typedName = ref(props.signerName || '');
 
 function close() {

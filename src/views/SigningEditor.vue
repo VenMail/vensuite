@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSigningEditorStore } from '@/store/signingEditor';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
@@ -20,6 +20,7 @@ const isSaving = ref(false);
 const saveError = ref<string | null>(null);
 const containerWidth = ref(700);
 const containerRef = ref<HTMLElement | null>(null);
+let resizeObserver: ResizeObserver | null = null;
 
 // Field counts per signer for the signer list
 const fieldCounts = computed(() => {
@@ -52,11 +53,15 @@ onMounted(async () => {
 
   // Measure container width
   if (containerRef.value) {
-    const obs = new ResizeObserver(entries => {
+    resizeObserver = new ResizeObserver(entries => {
       containerWidth.value = entries[0]?.contentRect.width || 700;
     });
-    obs.observe(containerRef.value);
+    resizeObserver.observe(containerRef.value);
   }
+});
+
+onUnmounted(() => {
+  resizeObserver?.disconnect();
 });
 
 // Handle dropping a field from the palette onto a PDF page
@@ -110,7 +115,7 @@ async function handleSave() {
         signingRequestId: signingRequestId.value,
         fieldCount: store.fields.length,
         signerCount: store.signers.length,
-      }, '*');
+      }, window.location.origin);
       window.close();
     } else {
       saveError.value = null;

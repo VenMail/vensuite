@@ -8,7 +8,7 @@ import { Sparkles, Wand2, FileText, X, Loader2 } from 'lucide-vue-next';
 import { generateStory, type AIGenerateStoryResponse } from '@/services/ai';
 import { Button } from '@/components/ui/button';
 
-const props = defineProps<{
+defineProps<{
   open: boolean;
 }>();
 
