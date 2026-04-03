@@ -13,7 +13,6 @@ import {
 } from 'lucide-vue-next';
 import type { StoryStoreReturn } from '@/store/story';
 import type {
-  StoryBlock,
   StoryBlockPosition,
   StoryBlockStyle,
   StoryTextContent,

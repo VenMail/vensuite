@@ -155,7 +155,6 @@ export function useStoryPersistence(options: UseStoryPersistenceOptions) {
       const result = await fileStore.saveDocument(filePayload as any);
 
       if (result.document?.id) {
-        const oldStoryId = storyId.value;
         storyId.value = result.document.id;
 
         if (result.shouldRedirect && result.redirectId) {

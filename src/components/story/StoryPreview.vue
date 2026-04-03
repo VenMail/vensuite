@@ -6,7 +6,6 @@
 import { ref, computed, inject, watch, onBeforeUnmount, nextTick } from 'vue';
 import {
   Play,
-  Pause,
   ChevronLeft,
   ChevronRight,
   Presentation,

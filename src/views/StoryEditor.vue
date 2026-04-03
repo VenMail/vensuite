@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col h-screen bg-gray-50 dark:bg-gray-950">
-    <!-- Top Title Bar -->
     <StoryTitleBar
       :title="storyStore.storyTitle"
       :is-saving="storyStore.isSaving"
@@ -14,48 +13,20 @@
       @undo="handleUndo"
       @redo="handleRedo"
       @preview="showPreview = true"
-      @present="presenter.startPresentation()"
       @share="handleShare"
     />
-
-    <!-- Main Content Area -->
     <div class="flex-1 flex flex-col overflow-hidden min-h-0">
       <div class="flex-1 flex overflow-hidden min-h-0">
-        <!-- Scene Thumbnails (left sidebar) -->
         <StorySceneThumbnails />
-
-        <!-- Main Canvas (center) -->
         <div class="flex-1 flex flex-col min-w-0 min-h-0">
-          <StoryCanvas
-            ref="canvasComponentRef"
-            @update:scene="handleSceneUpdate"
-          />
+          <StoryCanvas ref="canvasComponentRef" @update:scene="handleSceneUpdate" />
         </div>
-
-        <!-- Right Sidebar (properties / layers / theme / animate) -->
         <StorySidebar />
       </div>
-
-      <!-- Bottom Timeline (collapsible) -->
-      <StoryTimeline
-        v-if="showTimeline"
-        @close="showTimeline = false"
-      />
+      <StoryTimeline v-if="showTimeline" @close="showTimeline = false" />
     </div>
-
-    <!-- Bottom Toolbar -->
-    <StoryToolbar
-      @toggle-timeline="showTimeline = !showTimeline"
-      @present="presenter.startPresentation()"
-    />
-
-    <!-- Preview Dialog -->
-    <StoryPreview
-      v-model:open="showPreview"
-      @start-presentation="showPreview = false; presenter.startPresentation()"
-    />
-
-    <!-- Full-screen Presenter -->
+    <StoryToolbar @toggle-timeline="showTimeline = !showTimeline" @present="presenter.startPresentation()" />
+    <StoryPreview v-model:open="showPreview" @start-presentation="showPreview = false; presenter.startPresentation()" />
     <StoryPresenter :presenter="presenter" />
   </div>
 </template>
@@ -87,7 +58,6 @@ const storyStore = useStoryStore();
 // Canvas ref for animation targeting
 const canvasComponentRef = ref<InstanceType<typeof StoryCanvas> | null>(null);
 const canvasInnerRef = computed<HTMLElement | null>(() => {
-  // StoryCanvas exposes { canvas, blockInteractions, canvasInnerRef } via defineExpose
   return (canvasComponentRef.value as any)?.canvasInnerRef ?? null;
 });
 const canvasViewport = computed(() => (canvasComponentRef.value as any)?.canvas ?? null);
@@ -117,42 +87,6 @@ provide('storyCanvas', canvasViewport);
 // Undo / Redo state (wired to editor history)
 const canUndo = computed(() => storyStore.editor.canUndo.value);
 const canRedo = computed(() => storyStore.editor.canRedo.value);
-
-// ---------------------------------------------------------------------------
-// Scene operations
-// ---------------------------------------------------------------------------
-function handleAddScene() {
-  storyStore.addScene();
-}
-
-function handleDuplicateScene(index: number) {
-  storyStore.duplicateScene(index);
-}
-
-function handleDeleteScene(index: number) {
-  const result = storyStore.deleteScene(index);
-  if (!result) {
-    toast.warning('Cannot delete the last scene');
-  }
-}
-
-function handleMoveScene(from: number, to: number) {
-  storyStore.moveScene(from, to);
-}
-
-function handlePreviousScene() {
-  const idx = storyStore.currentSceneIndex;
-  if (idx > 0) {
-    storyStore.selectScene(idx - 1);
-  }
-}
-
-function handleNextScene() {
-  const idx = storyStore.currentSceneIndex;
-  if (idx < storyStore.totalScenes - 1) {
-    storyStore.selectScene(idx + 1);
-  }
-}
 
 function handleSceneUpdate(_payload: unknown) {
   storyStore.markDirty();

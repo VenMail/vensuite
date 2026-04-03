@@ -5,7 +5,7 @@
  * Sets data-block-id on each wrapper for GSAP animation targeting.
  */
 import { computed } from 'vue';
-import type { StoryScene, StoryBlock, StoryBlockStyle } from '@/types/story';
+import type { StoryScene, StoryBlock } from '@/types/story';
 import StoryBlockRenderer from './StoryBlockRenderer.vue';
 
 const props = defineProps<{

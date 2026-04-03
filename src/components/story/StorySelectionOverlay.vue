@@ -3,7 +3,7 @@
  * StorySelectionOverlay — Renders resize handles, rotation controls,
  * and dimension labels over all selected blocks.
  */
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import type { StoryBlock } from '@/types/story';
 import type { StoryBlocksReturn, ResizeHandle } from '@/composables/useStoryBlocks';
 import type { StoryCanvasReturn } from '@/composables/useStoryCanvas';

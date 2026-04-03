@@ -3,7 +3,7 @@
  * Provides built-in theme presets, CSS variable injection scoped
  * to the canvas container, and theme editing utilities.
  */
-import { computed, watch, type Ref } from 'vue';
+import { computed, type Ref } from 'vue';
 import type { StoryTheme } from '@/types/story';
 import { createDefaultTheme } from '@/types/story';
 

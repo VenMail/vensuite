@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed, inject, type Ref } from 'vue';
 import { useStoryStore } from '@/store/story';
 import type { StoryBlockType, StoryLayoutMode } from '@/types/story';
 import type { StoryCanvasReturn } from '@/composables/useStoryCanvas';
@@ -22,9 +22,9 @@ const emit = defineEmits<{
 }>();
 
 const store = useStoryStore();
-const canvas = inject<StoryCanvasReturn>('storyCanvas');
+const canvasRef = inject<Ref<StoryCanvasReturn | null>>('storyCanvas');
 
-const zoomPercent = computed(() => canvas?.zoomPercent.value ?? 100);
+const zoomPercent = computed(() => canvasRef?.value?.zoomPercent.value ?? 100);
 
 interface BlockOption {
   type: StoryBlockType;
@@ -54,15 +54,15 @@ function toggleLayout() {
 }
 
 function handleZoomIn() {
-  canvas?.zoomIn();
+  canvasRef?.value?.zoomIn();
 }
 
 function handleZoomOut() {
-  canvas?.zoomOut();
+  canvasRef?.value?.zoomOut();
 }
 
 function fitToScreen() {
-  canvas?.zoomToFit();
+  canvasRef?.value?.zoomToFit();
 }
 </script>
 

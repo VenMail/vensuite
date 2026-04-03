@@ -4,8 +4,7 @@
  * for the DOM-based freeform canvas editor.
  */
 import { ref, computed, reactive, onMounted, onBeforeUnmount, type Ref } from 'vue';
-import { useMousePressed, useMouse } from '@vueuse/core';
-import type { StorySettings, StoryBlock, StoryBlockPosition } from '@/types/story';
+import type { StorySettings, StoryBlock } from '@/types/story';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -60,7 +59,7 @@ const DEFAULT_GRID_SIZE = 16;
 // ─── Composable ─────────────────────────────────────────────────────────
 
 export function useStoryCanvas(options: UseStoryCanvasOptions) {
-  const { containerRef, canvasRef, settings, blocks } = options;
+  const { containerRef, settings, blocks } = options;
 
   // ── Viewport state ──────────────────────────────────────────────────
 
@@ -467,7 +466,7 @@ export function useStoryCanvas(options: UseStoryCanvasOptions) {
     }
   }
 
-  function handleMouseUp(e: MouseEvent) {
+  function handleMouseUp(_e: MouseEvent) {
     if (isPanning.value) {
       endPan();
     }

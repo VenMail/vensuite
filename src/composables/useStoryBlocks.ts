@@ -74,7 +74,7 @@ const MIN_BLOCK_SIZE = 16;
 // ─── Composable ─────────────────────────────────────────────────────────
 
 export function useStoryBlocks(options: UseStoryBlocksOptions) {
-  const { canvas, getBlock, updateBlockPosition, blocks } = options;
+  const { canvas, getBlock, updateBlockPosition, blocks: _blocks } = options;
 
   // ── Drag state ──────────────────────────────────────────────────────
 
@@ -185,7 +185,7 @@ export function useStoryBlocks(options: UseStoryBlocksOptions) {
     updateDrag(e);
   }
 
-  function handleDragEnd(e: MouseEvent) {
+  function handleDragEnd(_e: MouseEvent) {
     endDrag();
   }
 
@@ -333,7 +333,7 @@ export function useStoryBlocks(options: UseStoryBlocksOptions) {
     updateResize(e);
   }
 
-  function handleResizeEnd(e: MouseEvent) {
+  function handleResizeEnd(_e: MouseEvent) {
     endResize();
   }
 

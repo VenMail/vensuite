@@ -6,7 +6,7 @@ const props = defineProps<{
   content: StoryShapeContent;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   'update:content': [payload: Partial<StoryShapeContent>];
 }>();
 

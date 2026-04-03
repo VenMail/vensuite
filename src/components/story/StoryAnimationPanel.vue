@@ -151,7 +151,7 @@ function toggleExpand(animId: string) {
         <!-- Animation list -->
         <div v-if="blockAnimations.length > 0" class="space-y-1.5">
           <div
-            v-for="(anim, idx) in blockAnimations"
+            v-for="anim in blockAnimations"
             :key="anim.id"
             class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
           >

@@ -2,7 +2,7 @@
 /**
  * StorySidebar — Right panel with tab switching between Layers, Properties, and Theme.
  */
-import { ref, inject, computed, watch } from 'vue';
+import { ref, inject, watch } from 'vue';
 import { Layers, Settings2, Palette, Sparkles } from 'lucide-vue-next';
 import type { StoryStoreReturn } from '@/store/story';
 import StoryLayersPanel from './StoryLayersPanel.vue';

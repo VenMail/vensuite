@@ -19,6 +19,9 @@ export interface DocumentMetadata {
   // Slide-specific metadata
   theme?: string;
   slide_count?: number;
+  // Story-specific metadata
+  scene_count?: number;
+  theme_id?: string;
 }
 
 export interface FileData {

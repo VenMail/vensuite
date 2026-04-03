@@ -4,7 +4,7 @@
  * Supports two layout modes: auto-stack (flex column) and freeform (absolute positioning).
  */
 import { computed } from 'vue';
-import type { StoryScene, StoryBlock, StoryBlockStyle } from '@/types/story';
+import type { StoryScene, StoryBlock } from '@/types/story';
 import type { StoryBlocksReturn } from '@/composables/useStoryBlocks';
 import StoryBlockRenderer from './StoryBlockRenderer.vue';
 

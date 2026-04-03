@@ -2,7 +2,7 @@
  * Core StoryTeller editor composable
  * Manages document state, scene/block CRUD, selection, and snapshot undo/redo
  */
-import { ref, computed, type Ref } from 'vue';
+import { ref, computed } from 'vue';
 import {
   type StoryDocument,
   type StoryScene,

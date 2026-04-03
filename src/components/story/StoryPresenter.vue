@@ -24,8 +24,8 @@ import {
 } from 'lucide-vue-next';
 import type { StoryStoreReturn } from '@/store/story';
 import type { StoryPresenterReturn, DrawingPoint, DrawingStroke } from '@/composables/useStoryPresenter';
-import { useStoryAnimations } from '@/composables/useStoryAnimations';
-import type { StoryScene } from '@/types/story';
+import { useStoryAnimations, ANIMATION_PRESETS } from '@/composables/useStoryAnimations';
+import type { StoryScene, StoryAnimation } from '@/types/story';
 import gsap from 'gsap';
 import StorySceneRendererReadonly from './StorySceneRendererReadonly.vue';
 
@@ -223,7 +223,7 @@ function triggerScrollSceneAnimation(idx: number) {
   // Build a one-off GSAP timeline for this scene
   const tl = gsap.timeline({ paused: true });
 
-  const allAnimations: { animation: any; blockId: string }[] = [];
+  const allAnimations: { animation: StoryAnimation; blockId: string }[] = [];
   for (const block of targetScene.blocks) {
     for (const anim of block.animations) {
       allAnimations.push({ animation: anim, blockId: block.id });
@@ -235,7 +235,7 @@ function triggerScrollSceneAnimation(idx: number) {
     const el = container.querySelector<HTMLElement>(`[data-block-id="${blockId}"]`);
     if (!el) continue;
 
-    const preset = presenterAnimations.ANIMATION_PRESETS[animation.preset];
+    const preset = ANIMATION_PRESETS[animation.preset];
     if (!preset || animation.preset === 'none') continue;
 
     const ease = animation.easing || 'power2.out';
