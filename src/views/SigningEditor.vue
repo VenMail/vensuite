@@ -110,12 +110,21 @@ async function handleSave() {
 
     // Notify the opener window (mailer_web composer)
     if (window.opener) {
+      let openerOrigin = '*';
+      try {
+        if (document.referrer) {
+          openerOrigin = new URL(document.referrer).origin;
+        }
+      } catch {
+        openerOrigin = '*';
+      }
+
       window.opener.postMessage({
         type: 'signing-editor-done',
         signingRequestId: signingRequestId.value,
         fieldCount: store.fields.length,
         signerCount: store.signers.length,
-      }, window.location.origin);
+      }, openerOrigin);
       window.close();
     } else {
       saveError.value = null;
