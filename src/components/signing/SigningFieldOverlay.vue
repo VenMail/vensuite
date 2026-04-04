@@ -111,7 +111,7 @@ function onResizeEnd() {
 
 <template>
   <div
-    class="signing-field-overlay absolute flex items-center justify-center border-2 rounded cursor-move select-none text-xs font-medium transition-shadow"
+    class="signing-field-overlay absolute flex items-center justify-center rounded-xl border-2 cursor-move select-none text-xs font-medium transition-shadow"
     :class="{
       'ring-2 ring-offset-1 ring-blue-500 shadow-lg': isSelected,
       'hover:shadow-md': !readonly,
@@ -121,7 +121,7 @@ function onResizeEnd() {
     @mousedown="onMouseDown"
   >
     <span
-      class="inline-flex items-center gap-1 px-1 truncate"
+      class="inline-flex max-w-full items-center gap-1 rounded-lg bg-white/85 px-2 py-1 truncate shadow-sm"
       :style="{ color: signer?.color || '#3B82F6' }"
     >
       <span class="font-bold">{{ fieldIcon }}</span>

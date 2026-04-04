@@ -15,7 +15,7 @@ const displayHeight = computed(() => props.containerWidth * aspectRatio.value);
 
 <template>
   <div
-    class="pdf-page relative bg-white shadow-lg"
+    class="pdf-page relative overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]"
     :style="{
       width: containerWidth + 'px',
       height: displayHeight + 'px',

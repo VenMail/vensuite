@@ -7,6 +7,7 @@ import type {
 } from '@/types/signing';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+const EDITOR_TOKEN_HEADER = 'X-Signing-Editor-Token';
 
 // Signing API calls go to the mailer_web backend (not the VenSuite API)
 // The base URL may differ from VenSuite's own API
@@ -18,7 +19,7 @@ async function fetchEditorSession(
 ): Promise<SigningTemplate> {
   const response = await apiClient.get(
     `${SIGNING_API_BASE}/api/signing/editor/${signingRequestId}`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers: { [EDITOR_TOKEN_HEADER]: token } }
   );
   return response.data;
 }
@@ -32,7 +33,7 @@ async function saveFields(
   await apiClient.post(
     `${SIGNING_API_BASE}/api/composer/signing/${signingRequestId}/save-template`,
     { signing_fields: fields, signers },
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers: { [EDITOR_TOKEN_HEADER]: token } }
   );
 }
 

@@ -1,4 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
+import { getActivePinia } from "pinia";
+import { useAuthStore } from "@/auth/index";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
@@ -40,8 +42,34 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response) {
+      try {
+        const pinia = getActivePinia();
+        if (pinia) {
+          const authStore = useAuthStore(pinia);
+          const status = error.response.status;
+          const responseData = error.response.data;
+          const requestUrl = String(error.config?.url || "");
+          const isPublicSigningRequest =
+            requestUrl.includes("/api/signing/session/") ||
+            requestUrl.includes("/api/signing/complete/");
+          const isTokenIssue =
+            !isPublicSigningRequest &&
+            (status === 401 ||
+              status === 419 ||
+              (status === 403 &&
+                typeof responseData?.message === "string" &&
+                /token|unauthorized|unauthenticated/i.test(responseData.message)));
+
+          if (isTokenIssue && authStore.isAuthenticated && authStore.getToken()) {
+            await authStore.handleTokenExpiration();
+          }
+        }
+      } catch {
+        // Keep the original request failure if auth cleanup cannot run.
+      }
+
       return Promise.reject({
         status: error.response.status,
         data: error.response.data,

@@ -53,14 +53,26 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     fields?: SigningField[];
     signers?: SigningSigner[];
   }) {
+    const providedSigners = data.signers || [];
+    const inferredSigners = providedSigners.length > 0
+      ? providedSigners
+      : Array.from(new Set((data.fields || []).map((field) => field.signerEmail).filter(Boolean)))
+          .map((email, index) => ({
+            email,
+            name: email.split('@')[0],
+            color: SIGNER_COLORS[index % SIGNER_COLORS.length],
+          }));
+
     signingRequestId.value = data.signingRequestId;
     documentUrl.value = data.documentUrl;
     documentName.value = data.documentName;
     fields.value = data.fields || [];
-    signers.value = data.signers || [];
+    signers.value = inferredSigners;
     isDirty.value = false;
     selectedFieldId.value = null;
+    activeSignerEmail.value = inferredSigners[0]?.email || null;
     currentPage.value = 0;
+    zoom.value = 1;
   }
 
   function addSigner(email: string, name: string) {

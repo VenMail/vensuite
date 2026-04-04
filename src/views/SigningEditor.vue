@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useSigningEditorStore } from '@/store/signingEditor';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
 import { signingApi } from '@/services/signing';
@@ -11,6 +11,7 @@ import SignerList from '@/components/signing/SignerList.vue';
 import type { SigningFieldType } from '@/types/signing';
 
 const route = useRoute();
+const router = useRouter();
 const store = useSigningEditorStore();
 const pdf = usePdfRenderer();
 
@@ -21,6 +22,20 @@ const saveError = ref<string | null>(null);
 const containerWidth = ref(700);
 const containerRef = ref<HTMLElement | null>(null);
 let resizeObserver: ResizeObserver | null = null;
+
+function redirectToLogin() {
+  router.replace({
+    name: 'login',
+    query: {
+      instant: 'true',
+      redirect: route.fullPath,
+    },
+  });
+}
+
+function isAuthFailure(error: any): boolean {
+  return error?.status === 401 || error?.status === 419 || error?.status === 403;
+}
 
 // Field counts per signer for the signer list
 const fieldCounts = computed(() => {
@@ -35,6 +50,14 @@ const activeSigner = computed(() =>
   store.signers.find(s => s.email === store.activeSignerEmail)
 );
 
+const activeSignerLabel = computed(() => {
+  if (!activeSigner.value) {
+    return 'No signer selected';
+  }
+
+  return `${activeSigner.value.name} - ${activeSigner.value.email}`;
+});
+
 // Load signing session on mount
 onMounted(async () => {
   try {
@@ -47,7 +70,15 @@ onMounted(async () => {
       signers: data.signers || [],
     });
     await pdf.loadPdf(data.documentUrl);
+    if (pdf.error.value) {
+      saveError.value = pdf.error.value;
+    }
   } catch (e: any) {
+    if (isAuthFailure(e)) {
+      saveError.value = 'Your session expired. Redirecting to sign in...';
+      redirectToLogin();
+      return;
+    }
     saveError.value = e?.data?.error || 'Failed to load document';
   }
 
@@ -131,6 +162,11 @@ async function handleSave() {
       alert('Template saved successfully! You can close this tab.');
     }
   } catch (e: any) {
+    if (isAuthFailure(e)) {
+      saveError.value = 'Your session expired. Redirecting to sign in...';
+      redirectToLogin();
+      return;
+    }
     saveError.value = e?.data?.error || 'Failed to save template';
   } finally {
     isSaving.value = false;
@@ -139,27 +175,52 @@ async function handleSave() {
 </script>
 
 <template>
-  <div class="signing-editor h-screen flex flex-col bg-gray-100">
+  <div class="signing-editor h-screen flex flex-col bg-[#f3efe6] text-slate-900">
     <!-- Top bar -->
-    <header class="flex items-center justify-between px-4 py-2 bg-white border-b shadow-sm shrink-0">
-      <div class="flex items-center gap-3">
-        <h1 class="text-sm font-semibold text-gray-800 truncate max-w-xs">
+    <header class="flex items-center justify-between gap-4 border-b border-stone-200 bg-white/90 px-4 py-3 shadow-sm backdrop-blur shrink-0">
+      <div class="min-w-0">
+        <div class="flex items-center gap-3">
+          <h1 class="truncate text-base font-semibold text-slate-900">
           {{ store.documentName || 'Prepare Document' }}
-        </h1>
-        <span class="text-xs text-gray-400">{{ store.fields.length }} field(s)</span>
+          </h1>
+          <span class="rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-600">
+            {{ store.fields.length }} field(s)
+          </span>
+        </div>
+        <p class="mt-1 text-xs text-stone-500">
+          Place fields for each signer, then finish to send signing invitations.
+        </p>
       </div>
 
-      <div class="flex items-center gap-2">
-        <!-- Zoom -->
-        <button class="px-2 py-1 text-xs border rounded hover:bg-gray-50" @click="store.setZoom(store.zoom - 0.1)">-</button>
-        <span class="text-xs text-gray-500 w-12 text-center">{{ Math.round(store.zoom * 100) }}%</span>
-        <button class="px-2 py-1 text-xs border rounded hover:bg-gray-50" @click="store.setZoom(store.zoom + 0.1)">+</button>
+      <div class="flex items-center gap-3 text-slate-700">
+        <div class="hidden rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-medium text-stone-600 md:block">
+          {{ activeSignerLabel }}
+        </div>
 
-        <div class="w-px h-6 bg-gray-200 mx-2" />
+        <!-- Zoom -->
+        <button
+          type="button"
+          class="flex h-9 w-9 items-center justify-center rounded-lg border border-stone-300 bg-white text-lg font-semibold leading-none text-slate-700 transition hover:border-stone-400 hover:bg-stone-50"
+          aria-label="Zoom out"
+          @click="store.setZoom(store.zoom - 0.1)"
+        >
+          -
+        </button>
+        <span class="w-14 text-center text-sm font-medium text-stone-600">{{ Math.round(store.zoom * 100) }}%</span>
+        <button
+          type="button"
+          class="flex h-9 w-9 items-center justify-center rounded-lg border border-stone-300 bg-white text-lg font-semibold leading-none text-slate-700 transition hover:border-stone-400 hover:bg-stone-50"
+          aria-label="Zoom in"
+          @click="store.setZoom(store.zoom + 0.1)"
+        >
+          +
+        </button>
+
+        <div class="mx-2 h-7 w-px bg-stone-200" />
 
         <!-- Save -->
         <button
-          class="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          class="inline-flex items-center rounded-xl bg-[#2d6a4f] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#25563f] disabled:cursor-not-allowed disabled:opacity-50"
           :disabled="isSaving || store.fields.length === 0"
           @click="handleSave"
         >
@@ -170,7 +231,7 @@ async function handleSave() {
 
     <div class="flex flex-1 min-h-0">
       <!-- Left sidebar -->
-      <aside class="w-56 bg-white border-r p-3 overflow-y-auto shrink-0 space-y-6">
+      <aside class="w-72 shrink-0 overflow-y-auto border-r border-stone-200 bg-[#fcfaf6] p-4 space-y-6">
         <SignerList
           :signers="store.signers"
           :active-signer-email="store.activeSignerEmail"
@@ -189,20 +250,20 @@ async function handleSave() {
       <!-- PDF area -->
       <main ref="containerRef" class="flex-1 overflow-auto p-6">
         <!-- Error -->
-        <div v-if="saveError" class="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg">
+        <div v-if="saveError" class="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-sm">
           {{ saveError }}
         </div>
 
         <!-- Loading -->
         <div v-if="pdf.isLoading.value" class="flex items-center justify-center h-64">
           <div class="text-center">
-            <div class="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            <p class="text-sm text-gray-500">Loading document...</p>
+            <div class="mx-auto mb-3 h-10 w-10 rounded-full border-2 border-[#2d6a4f] border-t-transparent animate-spin" />
+            <p class="text-sm font-medium text-stone-600">Loading document...</p>
           </div>
         </div>
 
         <!-- PDF Pages -->
-        <div v-else class="space-y-6 flex flex-col items-center">
+        <div v-else-if="pdf.pages.value.length > 0" class="flex flex-col items-center space-y-6">
           <div
             v-for="page in pdf.pages.value"
             :key="page.pageIndex"
@@ -235,10 +296,17 @@ async function handleSave() {
             </PdfPageCanvas>
 
             <!-- Page number -->
-            <div class="text-center text-xs text-gray-400 mt-1">
+            <div class="mt-2 text-center text-xs font-medium text-stone-500">
               Page {{ page.pageIndex + 1 }} of {{ pdf.pageCount.value }}
             </div>
           </div>
+        </div>
+
+        <div v-else class="mx-auto mt-10 max-w-xl rounded-3xl border border-stone-200 bg-white/80 p-8 text-center shadow-sm">
+          <p class="text-lg font-semibold text-slate-900">Your document is ready for field placement</p>
+          <p class="mt-2 text-sm leading-6 text-stone-600">
+            If the PDF preview does not appear, confirm your Venmail session is active and reload the editor.
+          </p>
         </div>
       </main>
     </div>
