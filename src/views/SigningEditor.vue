@@ -16,7 +16,7 @@ const store = useSigningEditorStore();
 const pdf = usePdfRenderer();
 
 const signingRequestId = computed(() => route.params.signingRequestId as string);
-const token = computed(() => (route.query.token as string) || '');
+const token = computed(() => (route.query.token as string) || undefined);
 const isSaving = ref(false);
 const saveError = ref<string | null>(null);
 const containerWidth = ref(700);

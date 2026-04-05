@@ -15,11 +15,15 @@ const SIGNING_API_BASE = import.meta.env.VITE_SIGNING_API_BASE_URL || API_BASE.r
 
 async function fetchEditorSession(
   signingRequestId: string,
-  token: string
+  token?: string
 ): Promise<SigningTemplate> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers[EDITOR_TOKEN_HEADER] = token;
+  }
   const response = await apiClient.get(
     `${SIGNING_API_BASE}/api/signing/editor/${signingRequestId}`,
-    { headers: { [EDITOR_TOKEN_HEADER]: token } }
+    { headers }
   );
   return response.data;
 }
@@ -28,12 +32,16 @@ async function saveFields(
   signingRequestId: string,
   fields: SigningField[],
   signers: Array<{ email: string; name: string }>,
-  token: string
+  token?: string
 ): Promise<void> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers[EDITOR_TOKEN_HEADER] = token;
+  }
   await apiClient.post(
     `${SIGNING_API_BASE}/api/composer/signing/${signingRequestId}/save-template`,
     { signing_fields: fields, signers },
-    { headers: { [EDITOR_TOKEN_HEADER]: token } }
+    { headers }
   );
 }
 
