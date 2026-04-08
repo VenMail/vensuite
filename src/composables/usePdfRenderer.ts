@@ -1,11 +1,11 @@
 import { ref, shallowRef, onUnmounted } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure pdf.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Configure pdf.js worker using Vite's ?url import for reliable asset resolution.
+// The ?url suffix ensures Vite copies the worker file to the build output
+// and resolves the correct hashed URL at runtime (avoids stale-hash 404s).
+import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
 
 export interface PdfPage {
   pageIndex: number;

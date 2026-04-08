@@ -51,11 +51,13 @@ apiClient.interceptors.response.use(
           const status = error.response.status;
           const responseData = error.response.data;
           const requestUrl = String(error.config?.url || "");
-          const isPublicSigningRequest =
+          const isSigningRequest =
             requestUrl.includes("/api/signing/session/") ||
-            requestUrl.includes("/api/signing/complete/");
+            requestUrl.includes("/api/signing/complete/") ||
+            requestUrl.includes("/api/signing/editor/") ||
+            requestUrl.includes("/api/composer/signing/");
           const isTokenIssue =
-            !isPublicSigningRequest &&
+            !isSigningRequest &&
             (status === 401 ||
               status === 419 ||
               (status === 403 &&
