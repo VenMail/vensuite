@@ -2,9 +2,13 @@ import { ref, shallowRef, onUnmounted } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// pdfjs-dist 5.x uses Uint8Array.prototype.toHex() which is only natively
-// available in Chrome 140+. Polyfill it in the main thread.
-if (!Uint8Array.prototype.toHex) {
+// ---------------------------------------------------------------------------
+// pdfjs-dist 5.x uses Uint8Array.prototype.toHex() (Chrome 140+, Firefox 133+,
+// Safari 18.2+). Older browsers crash with "n.toHex is not a function".
+// ---------------------------------------------------------------------------
+
+// 1) Main-thread polyfill
+if (typeof (Uint8Array.prototype as any).toHex !== 'function') {
   (Uint8Array.prototype as any).toHex = function (): string {
     return Array.from(this as Uint8Array)
       .map((b: number) => b.toString(16).padStart(2, '0'))
@@ -12,25 +16,23 @@ if (!Uint8Array.prototype.toHex) {
   };
 }
 
-// The polyfill above only covers the main thread. The PDF worker runs in a
-// separate thread and needs its own copy. We also need to serve the worker
-// as application/javascript (venia.cloud CDN sends application/octet-stream
-// for .mjs files, which browsers reject for module scripts). Both problems
-// are solved by fetching the worker source, prepending the polyfill, and
-// creating a blob: URL with the correct MIME type.
-const TOHEX_POLYFILL = `if(!Uint8Array.prototype.toHex){Uint8Array.prototype.toHex=function(){return Array.from(this).map(b=>b.toString(16).padStart(2,'0')).join('');};}`;
+// 2) Worker-thread polyfill via a tiny wrapper module.
+//    We cannot simply fetch the worker and create a blob URL from its full
+//    source because the worker uses `import.meta.url` for WASM (JBig2) which
+//    breaks under blob: origins.  Instead we create a small wrapper module
+//    that polyfills toHex, then `await import()`s the real worker URL.
+//    This is the same pattern pdf.js itself uses for CDN workers.
+//    The Vite build renames .mjs → .js (via rollupOptions.assetFileNames) so
+//    servers that don't know about .mjs still serve the correct MIME type.
+const workerAbsoluteUrl = new URL(pdfjsWorkerUrl, window.location.href).href;
+const workerWrapper = [
+  `if(!Uint8Array.prototype.toHex){Uint8Array.prototype.toHex=function(){return Array.from(this).map(b=>b.toString(16).padStart(2,'0')).join('');};}`,
+  `await import("${workerAbsoluteUrl}");`,
+].join('\n');
 
-const workerReady: Promise<void> = fetch(pdfjsWorkerUrl)
-  .then(r => r.text())
-  .then(code => {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
-      new Blob([TOHEX_POLYFILL + '\n' + code], { type: 'application/javascript' })
-    );
-  })
-  .catch(() => {
-    // Fallback to direct URL (works in dev where MIME types are correct)
-    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
-  });
+pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+  new Blob([workerWrapper], { type: 'text/javascript' })
+);
 
 export interface PdfPage {
   pageIndex: number;
@@ -52,7 +54,6 @@ export function usePdfRenderer() {
     pages.value = [];
 
     try {
-      await workerReady;
       const loadingTask = pdfjsLib.getDocument(
         typeof source === 'string' ? { url: source } : { data: source }
       );

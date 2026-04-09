@@ -43,6 +43,19 @@ export default defineConfig(({ mode }) => {
           passes: 1
         }
       },
+      // Rename .mjs assets to .js so servers (including venia.cloud CDN) serve
+      // them with application/javascript instead of application/octet-stream.
+      // Module workers enforce strict MIME checking; .js universally works.
+      rollupOptions: {
+        output: {
+          assetFileNames(assetInfo) {
+            if (assetInfo.names?.some((n: string) => n.endsWith('.mjs'))) {
+              return 'assets/[name]-[hash].js';
+            }
+            return 'assets/[name]-[hash].[ext]';
+          },
+        },
+      },
       // Split chunks more intelligently based on app structure
       // rollupOptions: {
       //   output: {
