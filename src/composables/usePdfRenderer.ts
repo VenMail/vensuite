@@ -2,20 +2,33 @@ import { ref, shallowRef, onUnmounted } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// The production CDN (venia.cloud) serves .mjs files with Content-Type:
-// application/octet-stream, which browsers reject for module scripts.
-// Fix: fetch the worker (MIME checking doesn't apply to fetch()) and re-wrap it
-// as a blob: URL with an explicit application/javascript type. This bypasses
-// the server misconfiguration without requiring any server-side changes.
+// pdfjs-dist 5.x uses Uint8Array.prototype.toHex() which is only natively
+// available in Chrome 140+. Polyfill it in the main thread.
+if (!Uint8Array.prototype.toHex) {
+  (Uint8Array.prototype as any).toHex = function (): string {
+    return Array.from(this as Uint8Array)
+      .map((b: number) => b.toString(16).padStart(2, '0'))
+      .join('');
+  };
+}
+
+// The polyfill above only covers the main thread. The PDF worker runs in a
+// separate thread and needs its own copy. We also need to serve the worker
+// as application/javascript (venia.cloud CDN sends application/octet-stream
+// for .mjs files, which browsers reject for module scripts). Both problems
+// are solved by fetching the worker source, prepending the polyfill, and
+// creating a blob: URL with the correct MIME type.
+const TOHEX_POLYFILL = `if(!Uint8Array.prototype.toHex){Uint8Array.prototype.toHex=function(){return Array.from(this).map(b=>b.toString(16).padStart(2,'0')).join('');};}`;
+
 const workerReady: Promise<void> = fetch(pdfjsWorkerUrl)
-  .then(r => r.blob())
-  .then(blob => {
+  .then(r => r.text())
+  .then(code => {
     pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
-      new Blob([blob], { type: 'application/javascript' })
+      new Blob([TOHEX_POLYFILL + '\n' + code], { type: 'application/javascript' })
     );
   })
   .catch(() => {
-    // Fallback to direct URL (works in dev where the dev server has correct MIME types)
+    // Fallback to direct URL (works in dev where MIME types are correct)
     pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
   });
 
