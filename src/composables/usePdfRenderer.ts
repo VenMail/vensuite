@@ -1,38 +1,14 @@
 import { ref, shallowRef, onUnmounted } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
+
+// Configure pdf.js worker.
+// Vite's ?url suffix copies the worker file into the build output and resolves
+// the correct hashed URL at runtime. The vite.config.ts assetFileNames rule
+// renames .mjs → .js so CDN servers serve it with application/javascript
+// (venia.cloud serves .mjs as application/octet-stream which browsers reject
+// for module scripts).
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-
-// ---------------------------------------------------------------------------
-// pdfjs-dist 5.x uses Uint8Array.prototype.toHex() (Chrome 140+, Firefox 133+,
-// Safari 18.2+). Older browsers crash with "n.toHex is not a function".
-// ---------------------------------------------------------------------------
-
-// 1) Main-thread polyfill
-if (typeof (Uint8Array.prototype as any).toHex !== 'function') {
-  (Uint8Array.prototype as any).toHex = function (): string {
-    return Array.from(this as Uint8Array)
-      .map((b: number) => b.toString(16).padStart(2, '0'))
-      .join('');
-  };
-}
-
-// 2) Worker-thread polyfill via a tiny wrapper module.
-//    We cannot simply fetch the worker and create a blob URL from its full
-//    source because the worker uses `import.meta.url` for WASM (JBig2) which
-//    breaks under blob: origins.  Instead we create a small wrapper module
-//    that polyfills toHex, then `await import()`s the real worker URL.
-//    This is the same pattern pdf.js itself uses for CDN workers.
-//    The Vite build renames .mjs → .js (via rollupOptions.assetFileNames) so
-//    servers that don't know about .mjs still serve the correct MIME type.
-const workerAbsoluteUrl = new URL(pdfjsWorkerUrl, window.location.href).href;
-const workerWrapper = [
-  `if(!Uint8Array.prototype.toHex){Uint8Array.prototype.toHex=function(){return Array.from(this).map(b=>b.toString(16).padStart(2,'0')).join('');};}`,
-  `await import("${workerAbsoluteUrl}");`,
-].join('\n');
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
-  new Blob([workerWrapper], { type: 'text/javascript' })
-);
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
 
 export interface PdfPage {
   pageIndex: number;
@@ -71,7 +47,7 @@ export function usePdfRenderer() {
         canvas.height = viewport.height;
 
         const ctx = canvas.getContext('2d')!;
-        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        await page.render({ canvasContext: ctx, viewport }).promise;
 
         const originalViewport = page.getViewport({ scale: 1 });
         rendered.push({
