@@ -1,11 +1,23 @@
 import { ref, shallowRef, onUnmounted } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
-
-// Configure pdf.js worker using Vite's ?url import for reliable asset resolution.
-// The ?url suffix ensures Vite copies the worker file to the build output
-// and resolves the correct hashed URL at runtime (avoids stale-hash 404s).
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+
+// The production CDN (venia.cloud) serves .mjs files with Content-Type:
+// application/octet-stream, which browsers reject for module scripts.
+// Fix: fetch the worker (MIME checking doesn't apply to fetch()) and re-wrap it
+// as a blob: URL with an explicit application/javascript type. This bypasses
+// the server misconfiguration without requiring any server-side changes.
+const workerReady: Promise<void> = fetch(pdfjsWorkerUrl)
+  .then(r => r.blob())
+  .then(blob => {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+      new Blob([blob], { type: 'application/javascript' })
+    );
+  })
+  .catch(() => {
+    // Fallback to direct URL (works in dev where the dev server has correct MIME types)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+  });
 
 export interface PdfPage {
   pageIndex: number;
@@ -27,6 +39,7 @@ export function usePdfRenderer() {
     pages.value = [];
 
     try {
+      await workerReady;
       const loadingTask = pdfjsLib.getDocument(
         typeof source === 'string' ? { url: source } : { data: source }
       );
