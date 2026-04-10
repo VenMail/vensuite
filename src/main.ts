@@ -34,6 +34,7 @@ import Login from './views/Login.vue'
 import SlidesEditor from './views/SlidesEditor.vue'
 import StoryEditor from './views/StoryEditor.vue'
 import Media from './views/Media.vue'
+import ImportView from './views/ImportView.vue'
 
 const routes = [
   // Root route with authentication handling
@@ -131,7 +132,7 @@ const routes = [
       { path: 'media', name: 'media', component: Media },
       { path: 'bin', name: 'bin-view', component: Bin },
       { path: 'picker', name: 'file-picker', component: FilePicker, meta: { hideLayout: true } },
-      { path: 'import/:id', name: 'import', component: Home },
+      { path: 'import/:id', name: 'import', component: ImportView, meta: { hideLayout: true } },
       { path: 'files/:id', name: 'file', component: MediaViewer, meta: { hideLayout: true, public: true } },
     ],
   },
