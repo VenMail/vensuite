@@ -6,7 +6,6 @@ declare module '*.vue' {
   export default component
 }
 /// <reference types="vite/client" />
-/// <reference types="@univerjs/vite-plugin/types" />
 
 import 'vue'
 

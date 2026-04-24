@@ -26,8 +26,6 @@ import {
   RefreshCw,
 } from "lucide-vue-next";
 import { fetchSlideDecks, slideDecks, getDeckThumbnail, createSlideDeck } from "@/services/slideDecks";
-import SlideThumbnailRenderer from "@/components/slides/SlideThumbnailRenderer.vue";
-import { vIntersection } from "@/directives/intersection";
 import { t } from '@/i18n';
 
 const SLIDES_VIEW_DEBUG = Boolean(import.meta.env.DEV);
@@ -234,8 +232,13 @@ const slideTemplates: SlideTemplate[] = [
 
 // Mock slide decks data - in real app this would come from a store
 // Now using the slideDecks service
-const thumbnailUrls = ref<Record<string, string>>({});
-const loadingThumbnails = ref<Set<string>>(new Set());
+const thumbnailUrls = computed<Record<string, string>>(() => {
+  const result: Record<string, string> = {}
+  for (const deck of slideDecks.value) {
+    result[deck.id] = getDeckThumbnail(deck)
+  }
+  return result
+});
 
 const filteredSlideDecks = computed(() => {
   logSlidesViewDebug('🔄 filteredSlideDecks computed, slideDecks.value:', slideDecks.value);
@@ -338,50 +341,18 @@ onMounted(async () => {
   logSlidesViewDebug('📊 fetchSlideDecks returned:', fetchedDecks.length, 'decks');
   logSlidesViewDebug('📊 slideDecks.value after fetch:', slideDecks.value.length);
   
-  // Preload thumbnails for first few decks
-  const decksToPreload = slideDecks.value.slice(0, 5);
-  logSlidesViewDebug('🖼️ Preloading thumbnails for', decksToPreload.length, 'decks');
-  await Promise.allSettled(
-    decksToPreload.map(deck => loadThumbnail(deck.id))
-  );
+  logSlidesViewDebug('� thumbnails generated synchronously for', slideDecks.value.length, 'decks');
 });
-
-// Load thumbnail for a specific deck
-async function loadThumbnail(deckId: string) {
-  if (thumbnailUrls.value[deckId] || loadingThumbnails.value.has(deckId)) {
-    return thumbnailUrls.value[deckId];
-  }
-
-  loadingThumbnails.value.add(deckId);
-  
-  try {
-    const deck = slideDecks.value.find(d => d.id === deckId);
-    if (deck) {
-      const thumbnail = await getDeckThumbnail(deck);
-      thumbnailUrls.value[deckId] = thumbnail;
-    }
-  } catch (error) {
-    console.warn('Failed to load thumbnail for deck:', deckId, error);
-  } finally {
-    loadingThumbnails.value.delete(deckId);
-  }
-}
 
 // Create new presentation with template
 async function createNewPresentation(template?: SlideTemplate) {
   const title = template ? `${template.name} Presentation` : 'New Presentation';
-  const theme = template?.slug || 'venmail-pitch';
   
-  const newDeck = await createSlideDeck(title, theme);
+  const newDeck = await createSlideDeck(title);
   if (newDeck) {
     router.push(`/slides/${newDeck.id}`);
   } else {
-    // Fallback to router navigation
-    if (template?.slug && template.slug !== 'blank') {
-      router.push(`/slides/t/${template.slug}`);
-    } else {
-      router.push('/slides/new');
-    }
+    router.push('/slides/new');
   }
 }
 
@@ -614,15 +585,6 @@ async function refreshSlideDecks() {
                       :alt="deck.title"
                       class="w-full h-full object-cover"
                       loading="lazy"
-                    />
-                    <SlideThumbnailRenderer
-                      v-else-if="deck.slides.length > 0"
-                      :slide="deck.slides[0]"
-                      :width="400"
-                      :height="225"
-                      :scale="0.6"
-                      class="w-full h-full"
-                      v-intersection="() => loadThumbnail(deck.id)"
                     />
                     <div 
                       v-else

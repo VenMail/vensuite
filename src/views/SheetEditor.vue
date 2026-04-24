@@ -1,24 +1,27 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
-import type { Ref } from 'vue'
-import type { IWorkbookData } from '@univerjs/core'
-import { FUniver } from '@univerjs/core/facade'
-import { debounce } from '@univerjs/core'
+import type { IVTableSheetOptions } from '@visactor/vtable-sheet'
+import { ContextMenuPlugin, DEFAULT_BODY_MENU_ITEMS } from '@visactor/vtable-plugins'
 
 import '@/assets/index.css'
 import { MessageSquareIcon, XIcon, ArrowLeft, Share2, FileTextIcon } from 'lucide-vue-next'
 
 import UnifiedMenubar from '@/components/menu/UnifiedMenubar.vue'
-import UniverSheet from '@/components/UniverSheet.vue'
+import VTableSheet from '@/components/VTableSheet.vue'
 import UserProfile from '@/components/layout/UserProfile.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import IntegrationDialog from '@/components/forms/IntegrationDialog.vue'
 import ShareCard from '@/components/ShareCard.vue'
 import SheetVersionHistory from '@/components/sheets/SheetVersionHistory.vue'
+import ChartDialog from '@/components/charts/ChartDialog.vue'
+import ChartRenderer from '@/components/charts/ChartRenderer.vue'
+import DataValidationDialog from '@/components/dialogs/DataValidationDialog.vue'
+import ConditionalFormatDialog from '@/components/dialogs/ConditionalFormatDialog.vue'
+import NumberFormatDialog from '@/components/dialogs/NumberFormatDialog.vue'
 import * as defaultIcons from '@iconify-prerendered/vue-file-icons'
-import { useFavicon } from '@vueuse/core'
+import { useFavicon, useDebounceFn } from '@vueuse/core'
 
 import {
   DEFAULT_WORKBOOK_DATA,
@@ -40,6 +43,10 @@ import { useSheetFormatting } from '@/composables/useSheetFormatting'
 import { useSheetDataTools } from '@/composables/useSheetDataTools'
 import { useSheetCollaboration } from '@/composables/useSheetCollaboration'
 import { useSheetExport } from '@/composables/useSheetExport'
+import { useSheetYjsBinding } from '@/composables/useSheetYjsBinding'
+import { useSheetHistory } from '@/composables/useSheetHistory'
+import { useSheetClipboard } from '@/composables/useSheetClipboard'
+import { useSheetCharts } from '@/composables/useSheetCharts'
 
 const route = useRoute()
 const router = useRouter()
@@ -101,25 +108,27 @@ const {
   restoreCursorPosition,
 } = sheetData
 
-// Debounced title save (from old implementation)
-// Pass exitEditMode=false so user isn't kicked out of edit mode mid-typing
-const debouncedHandleTitleChange = debounce(() => {
-  if (univerRef.value && isUniverReady.value) {
-    saveTitle(univerRef.value, false)
+// Debounced title save
+const debouncedHandleTitleChange = useDebounceFn(() => {
+  if (vtableRef.value && isVTableReady.value) {
+    saveTitle(vtableRef.value, false)
   }
 }, 300)
 
-// Univer refs
-const univerRef: Ref<InstanceType<typeof UniverSheet> | null> = ref(null)
-const univerCoreRef = ref<FUniver | null>(null)
+// VTable refs
+const vtableRef = ref<InstanceType<typeof VTableSheet> | null>(null)
+const vtableInstance = ref<any>(null)
 
-// Initialize composables that need univerRef
-const formatting = useSheetFormatting(univerRef)
-const dataTools = useSheetDataTools(univerRef)
-const exportComposable = useSheetExport(univerCoreRef)
+// Initialize composables that need vtableRef
+const formatting = useSheetFormatting(vtableRef)
+const dataTools = useSheetDataTools(vtableRef)
+const exportComposable = useSheetExport(vtableRef)
+const history = useSheetHistory(vtableRef)
+const clipboard = useSheetClipboard(vtableRef)
+const charts = useSheetCharts(vtableRef)
 
 // Collaboration
-const collaboration = useSheetCollaboration(univerCoreRef)
+const collaboration = useSheetCollaboration(vtableInstance)
 const {
   wsService,
   chatMessages,
@@ -213,7 +222,7 @@ async function selectVersion(version: VersionHistoryItem) {
   }
 }
 
-function parseWorkbookSnapshot(raw: unknown): Partial<IWorkbookData> | null {
+function parseWorkbookSnapshot(raw: unknown): any | null {
   if (!raw) return null
   if (typeof raw === 'string') {
     try {
@@ -223,7 +232,7 @@ function parseWorkbookSnapshot(raw: unknown): Partial<IWorkbookData> | null {
     }
   }
   if (typeof raw === 'object') {
-    return raw as Partial<IWorkbookData>
+    return raw
   }
   return null
 }
@@ -355,6 +364,22 @@ const isUpdatingSheetPublicApi = ref(false)
 const generatedFormQuestions = ref<any[]>([])
 const isConvertingToForm = ref(false)
 
+// Format color dialogs
+const fontColorOpen = ref(false)
+const fillColorOpen = ref(false)
+const selectedFontColor = ref('#000000')
+const selectedFillColor = ref('#ffffff')
+
+// Common color palette for quick selection
+const commonColors = [
+  '#000000', '#ffffff', '#ef4444', '#f97316', '#f59e0b',
+  '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#0ea5e9',
+  '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
+  '#ec4899', '#f43f5e', '#78716c', '#9ca3af', '#d1d5db',
+  '#374151', '#1f2937', '#111827', '#7c2d12', '#991b1b',
+  '#1e3a8a', '#312e81', '#581c87',
+]
+
 // Sharing state
 const shareMembers = ref<ShareMember[]>([])
 const isUpdatingSharing = ref(false)
@@ -364,7 +389,7 @@ const isUpdatingSharing = ref(false)
 // Computed properties
 const extractedSheetFields = computed(() => {
   if (!data.value) return []
-  return extractSheetFields(data.value as IWorkbookData)
+  return extractSheetFields(data.value as any)
 })
 
 const shareLinkSheet = computed(() => {
@@ -386,21 +411,104 @@ const shareMembersForCard = computed(() => {
 //   tasks: TASKS_TEMPLATE_DATA,
 // }
 
-// Univer ready state
-const isUniverReady = ref(false)
+// VTable ready state
+const isVTableReady = ref(false)
 
-// Univer event handlers
-function onUniverReady(event: { univer: any, workbook: any, univerAPI: any }) {
-  univerCoreRef.value = event.univerAPI
-  isUniverReady.value = true
-  
-  // Initialize collaboration if ready
+// Chart context menu children (stable reference — defined once)
+const chartMenuChildren = [
+  { text: 'Bar Chart',     menuKey: 'chart_bar' },
+  { text: 'Line Chart',    menuKey: 'chart_line' },
+  { text: 'Pie Chart',     menuKey: 'chart_pie' },
+  { text: 'Scatter Chart', menuKey: 'chart_scatter' },
+  '-',
+  { text: 'Configure Chart...', menuKey: 'chart_configure' },
+]
+
+// Computed config that extends loaded workbook data with chart context menu
+const vtableInitialConfig = computed(() => {
+  if (!data.value) return null
+  return {
+    ...data.value,
+    VTablePluginModules: [
+      {
+        module: ContextMenuPlugin,
+        moduleOptions: {
+          bodyCellMenuItems: [
+            ...DEFAULT_BODY_MENU_ITEMS,
+            { text: '启用首行表头', menuKey: 'enable_first_row_as_header' },
+            '-',
+            { text: 'Visualize Selection', menuKey: 'visualize_selection', children: chartMenuChildren },
+          ],
+          // menuClickCallback and beforeShowAdjustMenuItems intentionally omitted
+          // → vtable-sheet's internal defaults handle set_filter / enable_first_row_as_header
+        },
+      },
+    ],
+  }
+})
+
+// Patch ContextMenuPlugin on a WorkSheet table instance to handle chart actions.
+// VTable's ContextMenuPlugin uses `menuClickCallback` (object or function) directly —
+// the `dropdown_menu_click` VTable event is NOT fired for plugin-based menus.
+function patchChartActionsOnTableInstance(tableInstance: any) {
+  const plugin = tableInstance?.pluginManager?.getPlugin?.('context-menu')
+  if (!plugin) return
+  const cb = plugin.pluginOptions?.menuClickCallback
+  if (typeof cb !== 'object' || cb === null) return
+  cb.chart_bar       = () => onChartAction('chart_bar')
+  cb.chart_line      = () => onChartAction('chart_line')
+  cb.chart_pie       = () => onChartAction('chart_pie')
+  cb.chart_scatter   = () => onChartAction('chart_scatter')
+  cb.chart_configure = () => onChartAction('chart_configure')
+}
+
+// VTable ready handler
+function onSheetReady(event: { instance: any }) {
+  vtableInstance.value = event.instance
+  isVTableReady.value = true
+
+  history.initializeHistoryMonitoring()
+
+  // Load persisted charts from workbook data
+  if ((data.value as any)?.charts?.length) {
+    charts.loadCharts((data.value as any).charts)
+  }
+
+  // Wrap saveToConfig to inject chart serialization on every save
+  if (vtableRef.value) {
+    const originalSave = (vtableRef.value as any).saveToConfig.bind(vtableRef.value)
+    ;(vtableRef.value as any).saveToConfig = () => {
+      const config = originalSave()
+      if (charts.hasCharts()) {
+        (config as any).charts = charts.serializeCharts()
+      }
+      return config
+    }
+  }
+
+  // Patch chart actions into all loaded sheets' ContextMenuPlugin instances
+  const inst = event.instance as any
+  for (const sheet of inst.workSheetInstances?.values?.() ?? []) {
+    if (sheet?.tableInstance) patchChartActionsOnTableInstance(sheet.tableInstance)
+  }
+  inst.on?.('sheet_added', (e: any) => {
+    const sheet = inst.workSheetInstances?.get(e.sheetKey) as any
+    if (sheet?.tableInstance) patchChartActionsOnTableInstance(sheet.tableInstance)
+  })
+
   if (canJoinRealtime.value) {
     initializeWebSocketAndJoinSheet()
   }
-  
-  // Don't set data here - it's already set during initialization
-  // This prevents the duplicate unit ID error
+
+  const routeId = route.params.id as string
+  if (routeId) {
+    useSheetYjsBinding({
+      vtableInstance: event.instance,
+      routeId,
+      userId: collaboration.userId.value,
+      userName: collaboration.userName.value,
+    })
+  }
 }
 
 // Local title update function (from old implementation)
@@ -434,16 +542,34 @@ function handleTitleUpdate(event: Event) {
 }
 
 // Menu event handlers
-function handleMenuAction(action: string) {
+function handleMenuAction(action: string, payload?: string) {
   switch (action) {
     case 'save':
-      saveData(univerRef.value)
+      saveData(vtableRef.value)
+      break
+    case 'undo':
+      history.handleUndo()
+      break
+    case 'redo':
+      history.handleRedo()
       break
     case 'export':
       // Handle export
       break
     case 'toggle-chat':
       toggleChat()
+      break
+    case 'cut':
+      clipboard.handleCut()
+      break
+    case 'copy':
+      clipboard.handleCopy()
+      break
+    case 'paste':
+      clipboard.handlePaste()
+      break
+    case 'delete':
+      clipboard.handleDelete()
       break
     case 'print':
       dataTools.handlePrint()
@@ -460,6 +586,36 @@ function handleMenuAction(action: string) {
       break
     case 'format-strike':
       formatting.handleFormatStrike()
+      break
+    case 'font-color':
+      fontColorOpen.value = true
+      break
+    case 'fill-color':
+      fillColorOpen.value = true
+      break
+    case 'align-left':
+      formatting.handleAlign('left')
+      break
+    case 'align-center':
+      formatting.handleAlign('center')
+      break
+    case 'align-right':
+      formatting.handleAlign('right')
+      break
+    case 'valign-top':
+      formatting.handleVerticalAlign('top')
+      break
+    case 'valign-middle':
+      formatting.handleVerticalAlign('middle')
+      break
+    case 'valign-bottom':
+      formatting.handleVerticalAlign('bottom')
+      break
+    case 'border-all':
+      formatting.handleBorder('all')
+      break
+    case 'border-none':
+      formatting.handleBorder('none')
       break
     // Data tools actions
     case 'freeze-top-row':
@@ -514,8 +670,63 @@ function handleMenuAction(action: string) {
       integrationsOpen.value = true
       break
     case 'navigate-to-collaborator':
-      // Navigate to collaborator's cursor/selection
-      // This would need collaborator ID and position data
+      if (payload) {
+        collaboration.navigateToCollaborator(payload)
+      }
+      break
+    case 'insert-chart':
+      charts.openChartDialogFromSelection()
+      break
+    case 'insert-bar-chart':
+      charts.createQuickChartFromSelection('bar')
+      break
+    case 'insert-line-chart':
+      charts.createQuickChartFromSelection('line')
+      break
+    case 'insert-pie-chart':
+      charts.createQuickChartFromSelection('pie')
+      break
+    case 'import-file':
+      exportComposable.handleImport({ clearExisting: false })
+      break
+    case 'export-all':
+      exportComposable.handleExportAll()
+      break
+    case 'insert-row-above':
+      dataTools.insertRow('above')
+      break
+    case 'insert-row-below':
+      dataTools.insertRow('below')
+      break
+    case 'insert-column-left':
+      dataTools.insertColumn('left')
+      break
+    case 'insert-column-right':
+      dataTools.insertColumn('right')
+      break
+    case 'delete-row':
+      dataTools.deleteSelectedRows()
+      break
+    case 'delete-column':
+      dataTools.deleteSelectedColumns()
+      break
+    case 'merge-cells':
+      dataTools.handleMergeCells()
+      break
+    case 'unmerge-cells':
+      dataTools.handleUnmergeCells()
+      break
+    case 'toggle-first-row-header':
+      dataTools.handleToggleFirstRowHeader()
+      break
+    case 'toggle-wrap-text':
+      dataTools.handleWrapText()
+      break
+    case 'open-help':
+      window.open('https://visactor.io/vtable', '_blank', 'noopener')
+      break
+    case 'open-about':
+      toast.info('VenSuite Sheets — powered by VTable')
       break
   }
 }
@@ -734,12 +945,11 @@ async function handleRotateSheetPublicApiKey() {
 }
 
 // Template loading function
-async function loadTemplate(templateSlug: string): Promise<IWorkbookData | null> {
+async function loadTemplate(templateSlug: string): Promise<{ name: string; data: IVTableSheetOptions } | null> {
   try {
     const template = spreadsheetTemplateMap[templateSlug as keyof typeof spreadsheetTemplateMap]
     if (template) {
-      // Return a deep copy of the template data to prevent mutations
-      return JSON.parse(JSON.stringify(template.workbookData))
+      return { name: template.workbookTitle || template.name, data: JSON.parse(JSON.stringify(template.workbookData)) }
     }
     return null
   } catch (error) {
@@ -754,7 +964,7 @@ async function handleConvertToForm() {
   
   isConvertingToForm.value = true
   try {
-    const questions = convertSheetToForm(data.value as IWorkbookData, {
+    const questions = convertSheetToForm(data.value as any, {
       titleRow: 0,
       dataStartRow: 1,
       maxRowsToAnalyze: 10,
@@ -941,54 +1151,41 @@ onMounted(async () => {
     // Special case: "new" template means create new document
     if (template === 'new') {
       const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
-      
+
       if (!newDoc || !newDoc.id) {
         console.error('Failed to create document - invalid response:', newDoc)
-        data.value = DEFAULT_WORKBOOK_DATA
+        data.value = { ...DEFAULT_WORKBOOK_DATA }
         document.title = 'New Spreadsheet'
         title.value = document.title
         return
       }
-      
-      const newDocData = {
-        ...DEFAULT_WORKBOOK_DATA,
-        id: newDoc.id,
-        name: 'New Spreadsheet',
-      }
-      
-      data.value = newDocData
+
+      data.value = { ...DEFAULT_WORKBOOK_DATA }
       document.title = 'New Spreadsheet'
       title.value = document.title
-      
+
       await router.replace(`/sheets/${newDoc.id}`)
       return
     }
     
     // Normal template loading
-    const templateData = await loadTemplate(template)
-    if (templateData) {
+    const templateResult = await loadTemplate(template)
+    if (templateResult) {
+      const { name: templateName, data: templateData } = templateResult
       const templateContent = JSON.stringify(templateData)
-      const newDoc = await fileStore.createNewDocument('xlsx', templateData.name || 'New Spreadsheet', templateContent)
-      
+      const newDoc = await fileStore.createNewDocument('xlsx', templateName, templateContent)
+
       if (!newDoc || !newDoc.id) {
         console.error('Failed to create document - invalid response:', newDoc)
         data.value = templateData
-        title.value = templateData.name || title.value
+        title.value = templateName
         return
       }
-      
-      // Use template data but with real document ID
-      const newDocData = {
-        ...templateData,
-        id: newDoc.id,
-        name: templateData.name || 'New Spreadsheet',
-      }
-      
-      data.value = newDocData
-      document.title = templateData.name || 'New Spreadsheet'
+
+      data.value = templateData
+      document.title = templateName
       title.value = document.title
       
-      // Wait for next tick to ensure route is updated before navigation
       await nextTick()
       await router.replace(`/sheets/${newDoc.id}`)
     } else {
@@ -1001,7 +1198,6 @@ onMounted(async () => {
     const loaded = await loadData(route.params.id as string)
     if (loaded) {
       data.value = loaded
-      title.value = loaded.name || title.value
     }
   } else {
     // Create new sheet (match old implementation exactly)
@@ -1016,13 +1212,7 @@ onMounted(async () => {
       return
     }
     
-    const newDocData = {
-      ...DEFAULT_WORKBOOK_DATA,
-      id: newDoc.id,
-      name: 'New Spreadsheet',
-    }
-    
-    data.value = newDocData
+    data.value = { ...DEFAULT_WORKBOOK_DATA }
     document.title = 'New Spreadsheet'
     title.value = document.title
     
@@ -1041,6 +1231,16 @@ onMounted(async () => {
       const iconDataURL = `data:image/svg+xml,${encodeURIComponent(iconHTML.replace(/currentColor/g, '#38a169'))}`
       useFavicon(iconDataURL)
     }
+    
+    // Setup keyboard shortcuts for history and clipboard
+    const cleanupHistory = history.setupKeyboardShortcuts()
+    const cleanupClipboard = clipboard.setupKeyboardShortcuts()
+    
+    // Store cleanup functions for onUnmounted
+    ;(window as any).__sheetKeyboardCleanup = () => {
+      cleanupHistory?.()
+      cleanupClipboard?.()
+    }
   })
 
   // Load sharing data for existing sheets
@@ -1054,51 +1254,17 @@ onUnmounted(() => {
   // Cleanup auto-save timeouts
   if (saveTimeout) clearTimeout(saveTimeout)
   if (maxWaitTimeout) clearTimeout(maxWaitTimeout)
+  // Cleanup keyboard shortcuts
+  ;(window as any).__sheetKeyboardCleanup?.()
+  delete (window as any).__sheetKeyboardCleanup
 })
 
 onBeforeRouteLeave(async (_to, _from, next) => {
-  // Check if there are unsaved changes before leaving
-  if (canEditSheet.value && univerRef.value && router.currentRoute.value.params.id) {
+  if (canEditSheet.value && vtableRef.value && router.currentRoute.value.params.id) {
     try {
-      // Force save data before leaving - bypass the normal saveData queueing logic
-      const routeId = router.currentRoute.value.params.id
-      const name = title.value || 'New Spreadsheet'
-      
-      // Get complete data directly from Univer
-      const completeData = await univerRef.value.getData()
-      if (!completeData) {
-        console.warn('Failed to capture spreadsheet data before navigation')
-        next()
-        return
-      }
-      
-      // Prepare document data
-      completeData.id = routeId as string
-      completeData.name = name
-      
-      // Set name in Univer if possible
-      try {
-        univerRef.value.setName(name)
-      } catch {}
-      
-      const doc = {
-        id: routeId as string,
-        title: name,
-        content: JSON.stringify(completeData),
-        file_type: 'xlsx',
-        is_folder: false,
-        file_name: `${name.toLowerCase().replace(/\s+/g, '-')}.xlsx`,
-        last_viewed: new Date(),
-      } as any
-      
-      // Save directly using fileStore to avoid queuing
-      const fileStore = useFileStore()
-      await fileStore.saveDocument(doc)
-      
-      console.log('Document saved successfully before navigation')
+      await saveData(vtableRef.value)
     } catch (error) {
       console.warn('Failed to save before route leave:', error)
-      // Continue anyway - don't block navigation
     }
   }
   next()
@@ -1109,17 +1275,6 @@ watch(title, (newTitle) => {
   document.title = newTitle
 })
 
-// Watch for data changes to save to Univer
-watch(data, (newData) => {
-  if (newData && univerRef.value) {
-    try {
-      univerRef.value.setData(newData as unknown as IWorkbookData)
-    } catch (error) {
-      console.error('Failed to set data in Univer:', error)
-    }
-  }
-})
-
 // Auto-save functionality
 let saveTimeout: ReturnType<typeof setTimeout> | null = null
 let maxWaitTimeout: ReturnType<typeof setTimeout> | null = null
@@ -1128,37 +1283,40 @@ const autoSaveMaxWait = 30000 // 30 seconds max
 
 // Schedule auto-save
 function scheduleAutoSave() {
-  if (!canEditSheet.value || !univerRef.value || !isUniverReady.value) {
-    return
-  }
-  
-  // Clear existing timeouts
+  if (!canEditSheet.value || !vtableRef.value || !isVTableReady.value) return
+
   if (saveTimeout) clearTimeout(saveTimeout)
-  
-  // Schedule save after idle delay
+
   saveTimeout = setTimeout(() => {
-    if (univerRef.value) {
-      saveData(univerRef.value)
-    }
+    if (vtableRef.value) saveData(vtableRef.value)
   }, autoSaveIdleDelay)
-  
-  // Ensure we save within max wait regardless of activity
+
   if (!maxWaitTimeout) {
     maxWaitTimeout = setTimeout(() => {
-      if (univerRef.value) {
-        saveData(univerRef.value)
-      }
+      if (vtableRef.value) saveData(vtableRef.value)
       maxWaitTimeout = null
     }, autoSaveMaxWait)
   }
 }
 
-// Watch for Univer changes to trigger auto-save
-function onUniverChange() {
+// VTable change handler — triggers auto-save and chart refresh
+const debouncedRefreshCharts = useDebounceFn(() => {
+  if (charts.hasCharts()) charts.refreshAllCharts()
+}, 500)
+
+function onSheetChange() {
   scheduleAutoSave()
-  // Broadcast changes to collaborators
-  if (wsService.value && route.params.id) {
-    // This would broadcast the change via WebSocket
+  debouncedRefreshCharts()
+}
+
+// Handle chart visualization actions from context menu
+function onChartAction(key: string) {
+  switch (key) {
+    case 'chart_bar':       charts.createQuickChartFromSelection('bar');    break
+    case 'chart_line':      charts.createQuickChartFromSelection('line');   break
+    case 'chart_pie':       charts.createQuickChartFromSelection('pie');    break
+    case 'chart_scatter':   charts.createQuickChartFromSelection('scatter'); break
+    case 'chart_configure': charts.openChartDialogFromSelection();          break
   }
 }
 
@@ -1192,7 +1350,7 @@ function onUniverChange() {
             v-else
             contenteditable="true"
             @input="handleTitleUpdate"
-            @blur="saveTitle(univerRef)"
+            @blur="saveTitle(vtableRef)"
             @keydown.enter.prevent="($event.target as HTMLElement)?.blur()"
             class="text-lg font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500"
             ref="titleRef"
@@ -1253,12 +1411,22 @@ function onUniverChange() {
       @export="(format) => exportComposable?.handleExport(format)"
       @open-dialog="() => {}"
       @open-integrations="() => handleMenuAction('open-integrations')"
-      @undo="() => {}"
-      @redo="() => {}"
+      @undo="() => handleMenuAction('undo')"
+      @redo="() => handleMenuAction('redo')"
       @format-bold="() => handleMenuAction('format-bold')"
       @format-italic="() => handleMenuAction('format-italic')"
       @format-underline="() => handleMenuAction('format-underline')"
       @format-strike="() => handleMenuAction('format-strike')"
+      @font-color="() => handleMenuAction('font-color')"
+      @fill-color="() => handleMenuAction('fill-color')"
+      @align-left="() => handleMenuAction('align-left')"
+      @align-center="() => handleMenuAction('align-center')"
+      @align-right="() => handleMenuAction('align-right')"
+      @valign-top="() => handleMenuAction('valign-top')"
+      @valign-middle="() => handleMenuAction('valign-middle')"
+      @valign-bottom="() => handleMenuAction('valign-bottom')"
+      @border-all="() => handleMenuAction('border-all')"
+      @border-none="() => handleMenuAction('border-none')"
       @freeze-top-row="() => handleMenuAction('freeze-top-row')"
       @freeze-first-column="() => handleMenuAction('freeze-first-column')"
       @freeze-panes="() => handleMenuAction('freeze-panes')"
@@ -1276,7 +1444,22 @@ function onUniverChange() {
       @conditional-format="() => handleMenuAction('conditional-format')"
       @convert-to-form="() => handleMenuAction('convert-to-form')"
       @print="() => handleMenuAction('print')"
-      @navigate-to-collaborator="() => handleMenuAction('navigate-to-collaborator')"
+      @navigate-to-collaborator="(uid: any) => handleMenuAction('navigate-to-collaborator', uid)"
+      @import-file="() => handleMenuAction('import-file')"
+      @export-all="() => handleMenuAction('export-all')"
+      @insert-row-above="() => handleMenuAction('insert-row-above')"
+      @insert-row-below="() => handleMenuAction('insert-row-below')"
+      @insert-column-left="() => handleMenuAction('insert-column-left')"
+      @insert-column-right="() => handleMenuAction('insert-column-right')"
+      @delete-row="() => handleMenuAction('delete-row')"
+      @delete-column="() => handleMenuAction('delete-column')"
+      @merge-cells="() => handleMenuAction('merge-cells')"
+      @unmerge-cells="() => handleMenuAction('unmerge-cells')"
+      @insert-chart="() => handleMenuAction('insert-chart')"
+      @toggle-first-row-header="() => handleMenuAction('toggle-first-row-header')"
+      @toggle-wrap-text="() => handleMenuAction('toggle-wrap-text')"
+      @open-help="() => handleMenuAction('open-help')"
+      @open-about="() => handleMenuAction('open-about')"
     />
 
     <!-- Main Content -->
@@ -1315,13 +1498,14 @@ function onUniverChange() {
         </div>
       </div>
 
-      <!-- Univer Sheet -->
-      <UniverSheet
-        v-else
-        ref="univerRef"
-        :data="data as IWorkbookData"
-        @ready="onUniverReady"
-        @change="onUniverChange"
+      <!-- VTable Sheet -->
+      <VTableSheet
+        v-else-if="vtableInitialConfig"
+        ref="vtableRef"
+        :initial-config="vtableInitialConfig"
+        @ready="onSheetReady"
+        @change="onSheetChange"
+        @chart-action="onChartAction"
         class="w-full h-full"
       />
     </div>
@@ -1445,7 +1629,7 @@ function onUniverChange() {
     </Dialog>
 
     <!-- Data Validation Dialog -->
-    <Dialog v-model:open="formatting.dataValidationOpen.value">
+    <Dialog v-model:open="formatting.dataValidationOpen">
       <DialogContent class="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Data Validation</DialogTitle>
@@ -1456,7 +1640,7 @@ function onUniverChange() {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Validation Type
             </label>
-            <select v-model="formatting.validationType.value" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+            <select v-model="formatting.validationType" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
               <option value="list">List</option>
               <option value="whole">Whole Number</option>
               <option value="decimal">Decimal</option>
@@ -1470,7 +1654,7 @@ function onUniverChange() {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Operator
             </label>
-            <select v-model="formatting.validationOperator.value" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+            <select v-model="formatting.validationOperator" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
               <option value="between">Between</option>
               <option value="notBetween">Not Between</option>
               <option value="equal">Equal To</option>
@@ -1484,21 +1668,21 @@ function onUniverChange() {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Value 1
             </label>
-            <input v-model="formatting.validationValue1.value" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
+            <input v-model="formatting.validationValue1" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
-          <div v-if="formatting.validationOperator.value === 'between' || formatting.validationOperator.value === 'notBetween'">
+          <div v-if="formatting.validationOperator === 'between' || formatting.validationOperator === 'notBetween'">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Value 2
             </label>
-            <input v-model="formatting.validationValue2.value" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
+            <input v-model="formatting.validationValue2" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div class="flex gap-2">
             <Button @click="formatting.applyDataValidation" variant="default">
               Apply
             </Button>
-            <Button @click="formatting.dataValidationOpen.value = false" variant="outline">
+            <Button @click="formatting.dataValidationOpen = false" variant="outline">
               Cancel
             </Button>
           </div>
@@ -1507,7 +1691,7 @@ function onUniverChange() {
     </Dialog>
 
     <!-- Find & Replace Dialog -->
-    <Dialog v-model:open="dataTools.findReplaceOpen.value">
+    <Dialog v-model:open="dataTools.findReplaceOpen">
       <DialogContent class="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Find & Replace</DialogTitle>
@@ -1518,29 +1702,29 @@ function onUniverChange() {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Find
             </label>
-            <input v-model="dataTools.findText.value" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
+            <input v-model="dataTools.findText" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Replace With
             </label>
-            <input v-model="dataTools.replaceText.value" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
+            <input v-model="dataTools.replaceText" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div class="space-y-2">
             <label class="flex items-center gap-2">
-              <input v-model="dataTools.matchCase.value" type="checkbox" class="rounded" />
+              <input v-model="dataTools.matchCase" type="checkbox" class="rounded" />
               <span class="text-sm">Match Case</span>
             </label>
             
             <label class="flex items-center gap-2">
-              <input v-model="dataTools.matchWholeWord.value" type="checkbox" class="rounded" />
+              <input v-model="dataTools.matchWholeWord" type="checkbox" class="rounded" />
               <span class="text-sm">Match Whole Word</span>
             </label>
             
             <label class="flex items-center gap-2">
-              <input v-model="dataTools.useRegex.value" type="checkbox" class="rounded" />
+              <input v-model="dataTools.useRegex" type="checkbox" class="rounded" />
               <span class="text-sm">Use Regular Expression</span>
             </label>
           </div>
@@ -1561,7 +1745,7 @@ function onUniverChange() {
     </Dialog>
 
     <!-- Number Format Dialog -->
-    <Dialog v-model:open="formatting.numberFormatOpen.value">
+    <Dialog v-model:open="formatting.numberFormatOpen">
       <DialogContent class="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Number Format</DialogTitle>
@@ -1624,7 +1808,7 @@ function onUniverChange() {
     </Dialog>
 
     <!-- Advanced Sort Dialog -->
-    <Dialog v-model:open="dataTools.advancedSortOpen.value">
+    <Dialog v-model:open="dataTools.advancedSortOpen">
       <DialogContent class="w-[calc(100vw-2rem)] sm:w-full sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Advanced Sort</DialogTitle>
@@ -1693,8 +1877,102 @@ function onUniverChange() {
       </DialogContent>
     </Dialog>
 
+    <!-- Font Color Dialog -->
+    <Dialog v-model:open="fontColorOpen">
+      <DialogContent class="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Font Color</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-4">
+          <div class="grid grid-cols-6 gap-2">
+            <button
+              v-for="color in commonColors"
+              :key="color"
+              @click="selectedFontColor = color"
+              class="w-8 h-8 rounded-full border-2 transition-all"
+              :class="selectedFontColor === color ? 'border-blue-500 scale-110' : 'border-gray-300'"
+              :style="{ backgroundColor: color }"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Custom Color
+            </label>
+            <div class="flex gap-2">
+              <input
+                v-model="selectedFontColor"
+                type="color"
+                class="h-10 w-16 rounded cursor-pointer"
+              />
+              <input
+                v-model="selectedFontColor"
+                type="text"
+                class="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                placeholder="#000000"
+              />
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <Button @click="formatting.handleFontColor(selectedFontColor); fontColorOpen = false" variant="default">
+              Apply
+            </Button>
+            <Button @click="fontColorOpen = false" variant="outline">
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Fill Color Dialog -->
+    <Dialog v-model:open="fillColorOpen">
+      <DialogContent class="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Fill Color</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-4">
+          <div class="grid grid-cols-6 gap-2">
+            <button
+              v-for="color in commonColors"
+              :key="color"
+              @click="selectedFillColor = color"
+              class="w-8 h-8 rounded-full border-2 transition-all"
+              :class="selectedFillColor === color ? 'border-blue-500 scale-110' : 'border-gray-300'"
+              :style="{ backgroundColor: color }"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Custom Color
+            </label>
+            <div class="flex gap-2">
+              <input
+                v-model="selectedFillColor"
+                type="color"
+                class="h-10 w-16 rounded cursor-pointer"
+              />
+              <input
+                v-model="selectedFillColor"
+                type="text"
+                class="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                placeholder="#ffffff"
+              />
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <Button @click="formatting.handleFillColor(selectedFillColor); fillColorOpen = false" variant="default">
+              Apply
+            </Button>
+            <Button @click="fillColorOpen = false" variant="outline">
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
     <!-- Conditional Formatting Dialog -->
-    <Dialog v-model:open="formatting.conditionalFormatOpen.value">
+    <Dialog v-model:open="formatting.conditionalFormatOpen">
       <DialogContent class="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Conditional Formatting</DialogTitle>
@@ -1718,15 +1996,15 @@ function onUniverChange() {
             <div class="grid grid-cols-3 gap-3">
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Min Color</label>
-                <input v-model="formatting.conditionalFormatRule.value.colorScale.minColor" type="color" class="w-full h-10 rounded" />
+                <input v-model="formatting.conditionalFormatRule.colorScale.minColor" type="color" class="w-full h-10 rounded" />
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mid Color</label>
-                <input v-model="formatting.conditionalFormatRule.value.colorScale.midColor" type="color" class="w-full h-10 rounded" />
+                <input v-model="formatting.conditionalFormatRule.colorScale.midColor" type="color" class="w-full h-10 rounded" />
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Max Color</label>
-                <input v-model="formatting.conditionalFormatRule.value.colorScale.maxColor" type="color" class="w-full h-10 rounded" />
+                <input v-model="formatting.conditionalFormatRule.colorScale.maxColor" type="color" class="w-full h-10 rounded" />
               </div>
             </div>
           </div>
@@ -1735,10 +2013,10 @@ function onUniverChange() {
           <div v-if="formatting.conditionalFormatType.value === 'dataBar'" class="space-y-3">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bar Color</label>
-              <input v-model="formatting.conditionalFormatRule.value.dataBar.color" type="color" class="w-full h-10 rounded" />
+              <input v-model="formatting.conditionalFormatRule.dataBar.color" type="color" class="w-full h-10 rounded" />
             </div>
             <label class="flex items-center gap-2">
-              <input v-model="formatting.conditionalFormatRule.value.dataBar.showBarOnly" type="checkbox" class="rounded" />
+              <input v-model="formatting.conditionalFormatRule.dataBar.showBarOnly" type="checkbox" class="rounded" />
               <span class="text-sm">Show Bar Only</span>
             </label>
           </div>
@@ -1747,7 +2025,7 @@ function onUniverChange() {
           <div v-if="formatting.conditionalFormatType.value === 'iconSet'" class="space-y-3">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Icon Style</label>
-              <select v-model="formatting.conditionalFormatRule.value.iconSet.style" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+              <select v-model="formatting.conditionalFormatRule.iconSet.style" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
                 <option value="3TrafficLights1">3 Traffic Lights</option>
                 <option value="3Arrows">3 Arrows</option>
                 <option value="3Symbols">3 Symbols</option>
@@ -1756,7 +2034,7 @@ function onUniverChange() {
               </select>
             </div>
             <label class="flex items-center gap-2">
-              <input v-model="formatting.conditionalFormatRule.value.iconSet.reverse" type="checkbox" class="rounded" />
+              <input v-model="formatting.conditionalFormatRule.iconSet.reverse" type="checkbox" class="rounded" />
               <span class="text-sm">Reverse Icon Order</span>
             </label>
           </div>
@@ -1765,11 +2043,11 @@ function onUniverChange() {
           <div v-if="formatting.conditionalFormatType.value === 'formula'" class="space-y-3">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Formula</label>
-              <input v-model="formatting.conditionalFormatRule.value.formula.formula" type="text" placeholder="e.g., =A1>100" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
+              <input v-model="formatting.conditionalFormatRule.formula.formula" type="text" placeholder="e.g., =A1>100" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Format</label>
-              <input v-model="formatting.conditionalFormatRule.value.formula.format" type="color" class="w-full h-10 rounded" />
+              <input v-model="formatting.conditionalFormatRule.formula.format" type="color" class="w-full h-10 rounded" />
             </div>
           </div>
           
@@ -1923,6 +2201,51 @@ function onUniverChange() {
       @close="showVersionHistoryDialog = false"
       @select="selectVersion"
     />
+
+    <!-- Chart Dialog -->
+    <ChartDialog
+      v-model:is-open="charts.isChartDialogOpen"
+      :editing-chart="charts.editingChart"
+      :sheet-data="charts.getSheetData()"
+      :initial-range="charts.pendingRange"
+      @save="charts.handleChartSave"
+    />
+
+    <!-- Data Validation Dialog -->
+    <DataValidationDialog
+      v-model:is-open="formatting.dataValidationOpen"
+      @apply="formatting.applyDataValidation"
+    />
+
+    <!-- Conditional Format Dialog -->
+    <ConditionalFormatDialog
+      v-model:is-open="formatting.conditionalFormatOpen"
+      @apply="formatting.applyConditionalFormat"
+    />
+
+    <!-- Number Format Dialog -->
+    <NumberFormatDialog
+      v-model:is-open="formatting.numberFormatOpen"
+      @apply="formatting.applyNumberFormat"
+    />
+
+    <!-- Chart Renderers -->
+    <div class="charts-layer absolute inset-0 pointer-events-none">
+      <ChartRenderer
+        v-for="chart in charts.chartList"
+        :key="chart.id"
+        :config="chart"
+        :is-selected="charts.selectedChartId === chart.id"
+        @edit="charts.openChartDialog"
+        @delete="charts.deleteChart"
+        @resize="charts.resizeChart"
+        @move="charts.moveChart"
+        @select="charts.selectChart"
+        @register-canvas="charts.registerCanvas"
+        @unregister-canvas="charts.unregisterCanvas"
+        class="pointer-events-auto"
+      />
+    </div>
   </div>
 </template>
 
@@ -1930,5 +2253,156 @@ function onUniverChange() {
 /* Custom styles for the sheet editor */
 .slide-preview-content {
   transform-origin: top left;
+}
+</style>
+
+<style>
+html.dark .vtable-sheet-container,
+body.dark .vtable-sheet-container,
+.dark .vtable-sheet-container {
+  --bg-default: #0f172a;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1f2937;
+  --bg-hover: #1e293b;
+  --border-color: #334155;
+  --text-primary: #e5e7eb;
+  --text-secondary: #cbd5e1;
+  --gray-text: #94a3b8;
+  --light-gray: #111827;
+}
+
+html.dark .vtable-sheet-top-container,
+html.dark .vtable-sheet-main-menu,
+html.dark .vtable-sheet-undo-redo,
+html.dark .vtable-sheet-formula-bar,
+html.dark .vtable-sheet-tab-bar,
+html.dark .vtable-sheet-nav-buttons,
+html.dark .vtable-sheet-menu-list,
+html.dark .vtable-sheet-add-button,
+html.dark .vtable-sheet-menu-button,
+html.dark .vtable-sheet-scroll-button,
+body.dark .vtable-sheet-top-container,
+body.dark .vtable-sheet-main-menu,
+body.dark .vtable-sheet-undo-redo,
+body.dark .vtable-sheet-formula-bar,
+body.dark .vtable-sheet-tab-bar,
+body.dark .vtable-sheet-nav-buttons,
+body.dark .vtable-sheet-menu-list,
+body.dark .vtable-sheet-add-button,
+body.dark .vtable-sheet-menu-button,
+body.dark .vtable-sheet-scroll-button,
+.dark .vtable-sheet-top-container,
+.dark .vtable-sheet-main-menu,
+.dark .vtable-sheet-undo-redo,
+.dark .vtable-sheet-formula-bar,
+.dark .vtable-sheet-tab-bar,
+.dark .vtable-sheet-nav-buttons,
+.dark .vtable-sheet-menu-list,
+.dark .vtable-sheet-add-button,
+.dark .vtable-sheet-menu-button,
+.dark .vtable-sheet-scroll-button {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+  border-color: #334155 !important;
+}
+
+html.dark .vtable-sheet-cell-address,
+html.dark .vtable-sheet-formula-input,
+html.dark .vtable-sheet-formula-button,
+html.dark .vtable-sheet-main-menu-action,
+html.dark .vtable-sheet-main-menu-button,
+html.dark .vtable-sheet-main-menu-item,
+html.dark .vtable-sheet-submenu-item,
+html.dark .vtable-sheet-tab,
+html.dark .vtable-sheet-tab[contenteditable='true'],
+html.dark .vtable-sheet-menu-item,
+html.dark .vtable-sheet-menu-item-title,
+html.dark .vtable-sheet-formula-icon,
+html.dark .vtable-sheet-submenu-container,
+html.dark .vtable-sheet-main-menu-container,
+html.dark .vtable-formula-autocomplete,
+html.dark .vtable-formula-autocomplete-item,
+html.dark .vtable-formula-autocomplete-empty,
+html.dark .vtable-formula-autocomplete-group,
+html.dark .vtable-formula-autocomplete-footer,
+html.dark .vtable-formula-autocomplete-footer .key,
+body.dark .vtable-sheet-cell-address,
+body.dark .vtable-sheet-formula-input,
+body.dark .vtable-sheet-formula-button,
+body.dark .vtable-sheet-main-menu-action,
+body.dark .vtable-sheet-main-menu-button,
+body.dark .vtable-sheet-main-menu-item,
+body.dark .vtable-sheet-submenu-item,
+body.dark .vtable-sheet-tab,
+body.dark .vtable-sheet-tab[contenteditable='true'],
+body.dark .vtable-sheet-menu-item,
+body.dark .vtable-sheet-menu-item-title,
+body.dark .vtable-sheet-formula-icon,
+body.dark .vtable-sheet-submenu-container,
+body.dark .vtable-sheet-main-menu-container,
+body.dark .vtable-formula-autocomplete,
+body.dark .vtable-formula-autocomplete-item,
+body.dark .vtable-formula-autocomplete-empty,
+body.dark .vtable-formula-autocomplete-group,
+body.dark .vtable-formula-autocomplete-footer,
+body.dark .vtable-formula-autocomplete-footer .key,
+.dark .vtable-sheet-cell-address,
+.dark .vtable-sheet-formula-input,
+.dark .vtable-sheet-formula-button,
+.dark .vtable-sheet-main-menu-action,
+.dark .vtable-sheet-main-menu-button,
+.dark .vtable-sheet-main-menu-item,
+.dark .vtable-sheet-submenu-item,
+.dark .vtable-sheet-tab,
+.dark .vtable-sheet-tab[contenteditable='true'],
+.dark .vtable-sheet-menu-item,
+.dark .vtable-sheet-menu-item-title,
+.dark .vtable-sheet-formula-icon,
+.dark .vtable-sheet-submenu-container,
+.dark .vtable-sheet-main-menu-container,
+.dark .vtable-formula-autocomplete,
+.dark .vtable-formula-autocomplete-item,
+.dark .vtable-formula-autocomplete-empty,
+.dark .vtable-formula-autocomplete-group,
+.dark .vtable-formula-autocomplete-footer,
+.dark .vtable-formula-autocomplete-footer .key {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+  border-color: #334155 !important;
+}
+
+html.dark .vtable-sheet-main-menu-item:hover,
+html.dark .vtable-sheet-submenu-item:hover,
+html.dark .vtable-sheet-menu-item:hover,
+html.dark .vtable-sheet-tab:hover,
+html.dark .vtable-sheet-main-menu-action:hover:not(:disabled),
+html.dark .vtable-formula-autocomplete-item:hover,
+body.dark .vtable-sheet-main-menu-item:hover,
+body.dark .vtable-sheet-submenu-item:hover,
+body.dark .vtable-sheet-menu-item:hover,
+body.dark .vtable-sheet-tab:hover,
+body.dark .vtable-sheet-main-menu-action:hover:not(:disabled),
+body.dark .vtable-formula-autocomplete-item:hover,
+.dark .vtable-sheet-main-menu-item:hover,
+.dark .vtable-sheet-submenu-item:hover,
+.dark .vtable-sheet-menu-item:hover,
+.dark .vtable-sheet-tab:hover,
+.dark .vtable-sheet-main-menu-action:hover:not(:disabled),
+.dark .vtable-formula-autocomplete-item:hover {
+  background: #1e293b !important;
+}
+
+html.dark .vtable-sheet-tab.active,
+body.dark .vtable-sheet-tab.active,
+.dark .vtable-sheet-tab.active {
+  background: #172554 !important;
+  color: #93c5fd !important;
+  border-top-color: #3b82f6 !important;
+}
+
+html.dark .vtable-sheet-formula-input::placeholder,
+body.dark .vtable-sheet-formula-input::placeholder,
+.dark .vtable-sheet-formula-input::placeholder {
+  color: #94a3b8 !important;
 }
 </style>

@@ -23,3 +23,12 @@ node_modules/
 *.njsproj
 *.sln
 *.sw?
+
+# Claude / IDE scratch
+.claude/
+
+# Local agent/test scratch
+artifacts/
+playwright-report/
+test-results/
+DocExCore/

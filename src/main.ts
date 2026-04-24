@@ -10,7 +10,8 @@ import './assets/css/presets.css'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - vite url import
 import mammothUrl from 'mammoth/mammoth.browser.min.js?url'
-import { t } from '@/i18n'
+import PPTistDirective from '@pptist/directive'
+import { i18n as pptistI18n } from '@pptist/i18n'
 import App from './App.vue'
 import { useAuthStore } from './auth/index'
 import { createAuthGuard } from './auth/router-guard'
@@ -151,9 +152,8 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
-
-// Bridge vue templates' $t helper to the custom i18n implementation
-;(app.config.globalProperties as any).$t = t
+app.use(PPTistDirective)
+app.use(pptistI18n)
 
 const authStore = useAuthStore(pinia)
 authStore.setRouter(router)

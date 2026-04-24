@@ -966,24 +966,29 @@ const exportToSheet = async () => {
         }),
       ];
 
-      // Build Univer workbook from DEFAULT_WORKBOOK_DATA
+      // Build VTable workbook from DEFAULT_WORKBOOK_DATA
       const workbook: any = JSON.parse(JSON.stringify(DEFAULT_WORKBOOK_DATA));
-      const firstSheetId = workbook.sheetOrder?.[0] || 'sheet-01';
       workbook.id = workbook.id || 'ven-wkbook-strt-01';
       workbook.name = formTitle.value || 'Responses';
-      if (!workbook.sheets[firstSheetId]) {
-        workbook.sheets[firstSheetId] = { type: 1, id: firstSheetId, name: 'Sheet1', cellData: {} };
+      if (!Array.isArray(workbook.sheets) || !workbook.sheets[0]) {
+        workbook.sheets = [{
+          sheetKey: 'sheet-01',
+          sheetTitle: 'Sheet1',
+          columnCount: 26,
+          rowCount: 1000,
+          data: [],
+          active: true,
+        }];
       }
-      const cellData: Record<number, Record<number, any>> = {};
-      matrix.forEach((row, rIdx) => {
-        cellData[rIdx] = {} as any;
-        row.forEach((val, cIdx) => {
-          const asNum = Number(val);
-          const isNum = !Number.isNaN(asNum) && val.trim() !== '' && /^-?\d+(\.\d+)?$/.test(val);
-          cellData[rIdx][cIdx] = { v: isNum ? asNum : val, t: isNum ? 2 : 1 };
-        });
-      });
-      workbook.sheets[firstSheetId].cellData = cellData;
+      const data = matrix.map((row) => row.map((val) => {
+        const asNum = Number(val);
+        const isNum = !Number.isNaN(asNum) && val.trim() !== '' && /^-?\d+(\.\d+)?$/.test(val);
+        return isNum ? asNum : val;
+      }));
+      workbook.sheets[0].data = data;
+      workbook.sheets[0].sheetTitle = workbook.name;
+      workbook.sheets[0].rowCount = Math.max(data.length, workbook.sheets[0].rowCount ?? 1000);
+      workbook.sheets[0].columnCount = Math.max(data[0]?.length ?? 0, workbook.sheets[0].columnCount ?? 26);
 
       const mapKey = `${SHEET_MAP_PREFIX}${formId.value}`;
       const lsId = localStorage.getItem(mapKey);

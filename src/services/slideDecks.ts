@@ -1,502 +1,144 @@
-/**
- * Slide Decks Service
- * Manages fetching and caching of slide deck data from the API
+﻿/**
+ * Slide Decks Service â€” PPTist-backed
+ * Fetches SlideDeckSummary list from /api/v1/app-files (file_type: pptx).
+ * Persistence (create/save) is handled directly by SlidesEditor via fileStore.
  */
 
-import { ref, computed } from 'vue';
-import { apiClient } from './apiClient';
-import type { SlidevSlide } from '@/utils/slidevMarkdown';
-import { generateDeckThumbnail, createPlaceholderThumbnail } from '@/utils/thumbnailGenerator';
+import { ref, computed } from 'vue'
+import { apiClient } from './apiClient'
+import type { SlideDeckSummary, PPTistDeckPayload } from '@/types/slides'
 
-const SLIDE_DECKS_DEBUG = Boolean(import.meta.env.DEV);
-const logSlideDecksDebug = (...args: unknown[]) => {
-  if (!SLIDE_DECKS_DEBUG) return;
-  console.log(...args);
-};
+const slideDecksCache = ref<Map<string, SlideDeckSummary>>(new Map())
+const isLoadingList = ref(false)
 
-export interface SlideDeck {
-  id: string;
-  title: string;
-  theme: string;
-  slides: SlidevSlide[];
-  thumbnail?: string;
-  slideCount: number;
-  lastModified: string;
-  shared: boolean;
-  privacyType: number;
-  shareLink?: string;
+function parseSummaryFromApiItem(item: any): SlideDeckSummary {
+  let slideCount = 0
+  let firstSlide
+
+  if (item.content) {
+    try {
+      const payload: PPTistDeckPayload = typeof item.content === 'string'
+        ? JSON.parse(item.content)
+        : item.content
+      if (payload?.version === 2 && Array.isArray(payload.slides)) {
+        slideCount = payload.slides.length
+        firstSlide = payload.slides[0]
+      }
+    } catch { /* non-fatal */ }
+  }
+
+  const shareBase = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin
+  const shared = Boolean(item.sharing?.share_slug)
+
+  return {
+    id: item.id,
+    title: item.name || item.title || 'Untitled Presentation',
+    slideCount,
+    lastModified: item.updated_at || item.created_at || '',
+    privacyType: item.privacy_type ?? 1,
+    shared,
+    shareLink: shared ? `${shareBase}/slides/${item.id}` : undefined,
+    thumbnail: item.thumbnail_url || undefined,
+    firstSlide,
+  }
 }
 
-export interface SlideDeckListResponse {
-  data: SlideDeck[];
-  meta: {
-    current_page: number;
-    per_page: number;
-    total: number;
-  };
-}
+/** Fetch all slide decks for the current user */
+export async function fetchSlideDecks(): Promise<SlideDeckSummary[]> {
+  if (isLoadingList.value) return Array.from(slideDecksCache.value.values())
 
-// Cache for slide decks
-const slideDecksCache = ref<Map<string, SlideDeck>>(new Map());
-const loadingDecks = ref<Set<string>>(new Set());
-const isLoadingList = ref(false);
-
-/**
- * Fetch all slide decks for the current user
- */
-export async function fetchSlideDecks(): Promise<SlideDeck[]> {
-  if (isLoadingList.value) return [];
-  
-  isLoadingList.value = true;
-  
+  isLoadingList.value = true
   try {
-    logSlideDecksDebug('🔍 Fetching slide decks - trying multiple approaches...');
-    
-    // Try multiple approaches to find slide decks
-    let allItems: any[] = [];
-    let fetchMethods: string[] = [];
-    
-    // Method 1: Try file_type: 'slides'
-    try {
-      logSlideDecksDebug('🔄 Trying file_type: slides');
-      const response1 = await apiClient.get('/app-files', {
-        params: {
-          file_type: 'slides',
-          sort: 'updated_at',
-          order: 'desc'
-        }
-      });
-      if (response1.data.data?.length > 0) {
-        allItems.push(...response1.data.data);
-        fetchMethods.push('file_type: slides');
-      }
-    } catch (error) {
-      logSlideDecksDebug('❌ file_type: slides failed');
-    }
-    
-    // Method 2: Try file_type: 'pptx' (since slides are being saved as pptx)
-    try {
-      logSlideDecksDebug('🔄 Trying file_type: pptx');
-      const response2 = await apiClient.get('/app-files', {
-        params: {
-          file_type: 'pptx',
-          sort: 'updated_at',
-          order: 'desc'
-        }
-      });
-      if (response2.data.data?.length > 0) {
-        allItems.push(...response2.data.data);
-        fetchMethods.push('file_type: pptx');
-      }
-    } catch (error) {
-      logSlideDecksDebug('❌ file_type: pptx failed');
-    }
-    
-    // Method 3: Try type: 'slides'
-    try {
-      logSlideDecksDebug('🔄 Trying type: slides');
-      const response3 = await apiClient.get('/app-files', {
-        params: {
-          type: 'slides',
-          sort: 'updated_at',
-          order: 'desc'
-        }
-      });
-      if (response3.data.data?.length > 0) {
-        allItems.push(...response3.data.data);
-        fetchMethods.push('type: slides');
-      }
-    } catch (error) {
-      logSlideDecksDebug('❌ type: slides failed');
-    }
-    
-    // Method 4: Try type: 'pptx'
-    try {
-      logSlideDecksDebug('🔄 Trying type: pptx');
-      const response4 = await apiClient.get('/app-files', {
-        params: {
-          type: 'pptx',
-          sort: 'updated_at',
-          order: 'desc'
-        }
-      });
-      if (response4.data.data?.length > 0) {
-        allItems.push(...response4.data.data);
-        fetchMethods.push('type: pptx');
-      }
-    } catch (error) {
-      logSlideDecksDebug('❌ type: pptx failed');
-    }
+    const response = await apiClient.get('/app-files', {
+      params: { file_type: 'pptx', sort: 'updated_at', order: 'desc' },
+    })
 
-    // Remove duplicates by ID
-    const uniqueItems = allItems.filter((item, index, self) => 
-      index === self.findIndex((t) => t.id === item.id)
-    );
+    const items: any[] = response.data?.data ?? response.data ?? []
+    const decks = items.map(parseSummaryFromApiItem)
 
-    logSlideDecksDebug('📄 Combined results from methods:', fetchMethods.join(', '));
-    logSlideDecksDebug('📄 Total unique items found:', uniqueItems.length);
-    logSlideDecksDebug('📄 Items:', uniqueItems.map(item => ({
-      id: item.id,
-      title: item.title,
-      file_type: item.file_type,
-      hasContent: !!item.content,
-      hasMetadata: !!item.metadata
-    })));
-
-    const decks: SlideDeck[] = uniqueItems.map((item: any) => {
-      logSlideDecksDebug('🔍 Processing item:', {
-        id: item.id,
-        title: item.title,
-        file_type: item.file_type,
-        hasContent: !!item.content,
-        hasMetadata: !!item.metadata,
-        metadataKeys: item.metadata ? Object.keys(item.metadata) : []
-      });
-      
-      const slides = parseSlidesFromMetadata(item.metadata, item.content);
-      logSlideDecksDebug('📊 Parsed slides count:', slides.length, 'for item:', item.id);
-      
-      return {
-        id: item.id,
-        title: item.title || 'Untitled Presentation',
-        theme: item.metadata?.theme || 'venmail-pitch',
-        slides: slides,
-        slideCount: slides.length,
-        lastModified: item.updated_at,
-        shared: item.sharing?.share_slug ? true : false,
-        privacyType: item.privacy_type || 7,
-        shareLink: item.sharing?.share_slug ? `${window.location.origin}/slides/${item.sharing.share_slug}` : undefined
-      };
-    });
-
-    logSlideDecksDebug('🎯 Final decks array:', decks);
-    logSlideDecksDebug('🎯 Number of decks processed:', decks.length);
-
-    // Clear cache and update with fresh data
-    slideDecksCache.value.clear();
-    decks.forEach(deck => {
-      slideDecksCache.value.set(deck.id, deck);
-    });
-    logSlideDecksDebug('🗑️ Cache cleared and updated with', decks.length, 'decks');
-
-    return decks;
-  } catch (error) {
-    console.error('Failed to fetch slide decks:', error);
-    return [];
+    slideDecksCache.value.clear()
+    decks.forEach(d => slideDecksCache.value.set(d.id, d))
+    return decks
+  } catch (err) {
+    console.error('[slideDecks] fetchSlideDecks failed:', err)
+    return Array.from(slideDecksCache.value.values())
   } finally {
-    isLoadingList.value = false;
+    isLoadingList.value = false
   }
 }
 
-/**
- * Fetch a single slide deck by ID
- */
-export async function fetchSlideDeck(deckId: string): Promise<SlideDeck | null> {
-  if (slideDecksCache.value.has(deckId)) {
-    return slideDecksCache.value.get(deckId)!;
-  }
-
-  if (loadingDecks.value.has(deckId)) {
-    return null; // Skip for now, will be available later
-  }
-
-  loadingDecks.value.add(deckId);
+/** Get a single deck summary (from cache or API) */
+export async function fetchSlideDeck(deckId: string): Promise<SlideDeckSummary | null> {
+  if (slideDecksCache.value.has(deckId)) return slideDecksCache.value.get(deckId)!
 
   try {
-    const response = await apiClient.get(`/app-files/${deckId}`);
-
-    const item = response.data.data;
-    const slides = parseSlidesFromMetadata(item.metadata, item.content);
-    const deck: SlideDeck = {
-      id: item.id,
-      title: item.title || 'Untitled Presentation',
-      theme: item.metadata?.theme || 'venmail-pitch',
-      slides: slides,
-      slideCount: slides.length,
-      lastModified: item.updated_at,
-      shared: item.sharing?.share_slug ? true : false,
-      privacyType: item.privacy_type || 7,
-      shareLink: item.sharing?.share_slug ? `${window.location.origin}/slides/${item.sharing.share_slug}` : undefined
-    };
-
-    // Cache the result
-    slideDecksCache.value.set(deckId, deck);
-
-    return deck;
-  } catch (error) {
-    console.error(`Failed to fetch slide deck ${deckId}:`, error);
-    return null;
-  } finally {
-    loadingDecks.value.delete(deckId);
+    const response = await apiClient.get(`/app-files/${deckId}`)
+    const item = response.data?.data ?? response.data
+    const deck = parseSummaryFromApiItem(item)
+    slideDecksCache.value.set(deck.id, deck)
+    return deck
+  } catch (err) {
+    console.error(`[slideDecks] fetchSlideDeck(${deckId}) failed:`, err)
+    return null
   }
 }
 
-/**
- * Generate or get cached thumbnail for a slide deck
- */
-export async function getDeckThumbnail(deck: SlideDeck): Promise<string> {
-  // If deck already has a thumbnail URL, return it
-  if (deck.thumbnail) {
-    return deck.thumbnail;
-  }
-
-  // Try to generate a thumbnail from the first slide
-  if (deck.slides.length > 0) {
-    try {
-      const thumbnail = await generateDeckThumbnail(deck.slides, deck.title, {
-        width: 400,
-        height: 300,
-        scale: 0.5
-      });
-
-      if (thumbnail) {
-        // Update deck with generated thumbnail
-        deck.thumbnail = thumbnail;
-        return thumbnail;
-      }
-    } catch (error) {
-      console.warn('Failed to generate thumbnail for deck:', deck.id, error);
-    }
-  }
-
-  // Fallback to placeholder
-  return createPlaceholderThumbnail(deck.title, {
-    width: 400,
-    height: 300,
-    color: '#3b82f6'
-  });
-}
-
-/**
- * Parse slides from metadata or content
- */
-function parseSlidesFromMetadata(metadata: any, content?: string): SlidevSlide[] {
-  logSlideDecksDebug('🔧 parseSlidesFromMetadata called with:', {
-    hasMetadata: !!metadata,
-    hasContent: !!content,
-    metadataSlides: metadata?.slides,
-    contentType: typeof content,
-    contentPreview: content ? (content.length > 100 ? content.substring(0, 100) + '...' : content) : null
-  });
-  
-  // First try to get from content (where persistence saves it)
-  if (content) {
-    try {
-      const data: any = JSON.parse(content);
-      logSlideDecksDebug('📖 Parsed content data:', {
-        hasSlides: !!data.slides,
-        slidesType: typeof data.slides,
-        slidesIsArray: Array.isArray(data.slides),
-        slidesLength: data.slides?.length || 0,
-        dataKeys: Object.keys(data)
-      });
-      
-      if (data.slides && Array.isArray(data.slides)) {
-        logSlideDecksDebug('✅ Returning slides from content:', data.slides.length);
-        return data.slides;
-      }
-    } catch (error) {
-      console.warn('Failed to parse slides from content:', error);
-    }
-  }
-  
-  // For PPTX files, check if content contains slide data in different format
-  if (content) {
-    try {
-      const data: any = JSON.parse(content);
-      // Check if it's a slide deck structure (from persistence)
-      if (data.title && data.theme && data.slides) {
-        logSlideDecksDebug('✅ Found slide deck structure in content:', data.slides.length);
-        return data.slides;
-      }
-    } catch (error) {
-      console.warn('Content is not JSON, checking for other formats...');
-    }
-  }
-  
-  // Fallback to metadata.slides
-  if (!metadata || !metadata.slides) {
-    logSlideDecksDebug('❌ No metadata.slides found, checking for PPTX indicators...');
-    
-    // For PPTX files, create a default slide if we can't find any
-    if (content && (content.includes('pptx') || content.includes('presentation'))) {
-      logSlideDecksDebug('🔄 PPTX file detected but no slides found, creating default slide');
-      return [{
-        id: 'slide-1-default',
-        content: '# Untitled Presentation\n\nYour presentation content here',
-        notes: '',
-        frontmatter: {
-          layout: 'default'
-        }
-      }];
-    }
-    
-    return [];
-  }
-
-  logSlideDecksDebug('🔄 Trying metadata.slides fallback:', {
-    metadataSlidesType: typeof metadata.slides,
-    metadataSlidesIsString: typeof metadata.slides === 'string',
-    metadataSlidesIsArray: Array.isArray(metadata.slides)
-  });
-
+/** Create a new empty deck via the API and return its summary */
+export async function createSlideDeck(title: string = 'New Presentation'): Promise<SlideDeckSummary | null> {
   try {
-    if (typeof metadata.slides === 'string') {
-      // Parse from JSON string
-      const parsed = JSON.parse(metadata.slides);
-      logSlideDecksDebug('✅ Parsed metadata.slides from string:', parsed.length);
-      return parsed;
-    } else if (Array.isArray(metadata.slides)) {
-      // Already parsed
-      logSlideDecksDebug('✅ Using metadata.slides array directly:', metadata.slides.length);
-      return metadata.slides;
-    }
-  } catch (error) {
-    console.warn('Failed to parse slides from metadata:', error);
-  }
-
-  logSlideDecksDebug('❌ All parsing attempts failed, returning empty array');
-  return [];
-}
-
-/**
- * Create a new slide deck
- */
-export async function createSlideDeck(title: string, theme: string = 'venmail-pitch'): Promise<SlideDeck | null> {
-  try {
-    const response = await apiClient.post('/app-files', {
+    const payload: PPTistDeckPayload = {
+      version: 2,
       title,
-      type: 'slides',
-      metadata: {
-        theme,
-        slides: createDefaultSlides(),
-        slide_count: 1
-      },
-      privacy_type: 7
-    });
-
-    const item = response.data.data;
-    const slides = parseSlidesFromMetadata(item.metadata, item.content);
-    const deck: SlideDeck = {
-      id: item.id,
-      title: item.title || title,
-      theme: item.metadata?.theme || theme,
-      slides: slides,
-      slideCount: slides.length,
-      lastModified: item.updated_at,
-      shared: false,
-      privacyType: item.privacy_type || 7,
-      shareLink: undefined
-    };
-
-    // Cache the result
-    slideDecksCache.value.set(deck.id, deck);
-
-    return deck;
-  } catch (error) {
-    console.error('Failed to create slide deck:', error);
-    return null;
-  }
-}
-
-/**
- * Create default slides for a new presentation
- */
-function createDefaultSlides(): SlidevSlide[] {
-  return [
-    {
-      id: 'slide-1-default',
-      content: '# Welcome\n\nStart creating your presentation',
-      notes: '',
-      frontmatter: {
-        layout: 'default'
-      }
+      slides: [],
     }
-  ];
-}
-
-/**
- * Update a slide deck
- */
-export async function updateSlideDeck(deckId: string, updates: Partial<SlideDeck>): Promise<boolean> {
-  try {
-    const existingDeck = slideDecksCache.value.get(deckId);
-    if (!existingDeck) return false;
-
-    const payload: any = {
-      title: updates.title || existingDeck.title,
-      metadata: {
-        theme: updates.theme || existingDeck.theme,
-        slides: updates.slides || existingDeck.slides,
-        slide_count: updates.slideCount || existingDeck.slideCount
-      }
-    };
-
-    if (updates.privacyType !== undefined) {
-      payload.privacy_type = updates.privacyType;
-    }
-
-    await apiClient.put(`/app-files/${deckId}`, payload);
-
-    // Update cache
-    const updatedDeck = { ...existingDeck, ...updates };
-    slideDecksCache.value.set(deckId, updatedDeck);
-
-    return true;
-  } catch (error) {
-    console.error(`Failed to update slide deck ${deckId}:`, error);
-    return false;
+    const response = await apiClient.post('/app-files', {
+      name: title,
+      file_type: 'pptx',
+      content: JSON.stringify(payload),
+      privacy_type: 1,
+    })
+    const item = response.data?.data ?? response.data
+    const deck = parseSummaryFromApiItem(item)
+    slideDecksCache.value.set(deck.id, deck)
+    return deck
+  } catch (err) {
+    console.error('[slideDecks] createSlideDeck failed:', err)
+    return null
   }
 }
 
-/**
- * Delete a slide deck
- */
-export async function deleteSlideDeck(deckId: string): Promise<boolean> {
-  try {
-    await apiClient.delete(`/app-files/${deckId}`);
+/** Generate a simple thumbnail data-URL from the deck title (placeholder) */
+export function getDeckThumbnail(deck: SlideDeckSummary): string {
+  if (deck.thumbnail) return deck.thumbnail
 
-    // Remove from cache
-    slideDecksCache.value.delete(deckId);
+  const colors = ['#d14424', '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444']
+  const color = colors[deck.id.charCodeAt(0) % colors.length]
+  const initials = deck.title
+    .split(' ')
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase() ?? '')
+    .join('')
 
-    return true;
-  } catch (error) {
-    console.error(`Failed to delete slide deck ${deckId}:`, error);
-    return false;
-  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="225" viewBox="0 0 400 225">
+    <rect width="400" height="225" fill="${color}"/>
+    <text x="200" y="130" font-family="system-ui" font-size="72" font-weight="700" fill="white" text-anchor="middle" opacity="0.9">${initials}</text>
+    <text x="200" y="185" font-family="system-ui" font-size="14" fill="white" text-anchor="middle" opacity="0.7">${deck.slideCount} slide${deck.slideCount !== 1 ? 's' : ''}</text>
+  </svg>`
+
+  return `data:image/svg+xml;base64,${btoa(svg)}`
 }
 
-/**
- * Get slide decks from cache
- */
-export function getCachedSlideDecks(): SlideDeck[] {
-  return Array.from(slideDecksCache.value.values());
-}
+/** Reactive list of all cached decks */
+export const slideDecks = computed(() => Array.from(slideDecksCache.value.values()))
 
-/**
- * Get a specific slide deck from cache
- */
-export function getCachedSlideDeck(deckId: string): SlideDeck | null {
-  return slideDecksCache.value.get(deckId) || null;
-}
+/** Whether the list is currently loading */
+export const isLoading = computed(() => isLoadingList.value)
 
-/**
- * Clear slide decks cache
- */
+/** Clear the in-memory cache */
 export function clearSlideDecksCache(): void {
-  slideDecksCache.value.clear();
+  slideDecksCache.value.clear()
 }
 
-/**
- * Computed properties for reactive access
- */
-export const slideDecks = computed(() => getCachedSlideDecks());
-export const isLoading = computed(() => isLoadingList.value);
-
-/**
- * Preload thumbnails for multiple decks
- */
-export async function preloadDeckThumbnails(decks: SlideDeck[]): Promise<void> {
-  const promises = decks.slice(0, 10).map(deck => getDeckThumbnail(deck));
-  await Promise.allSettled(promises);
+export function getCachedSlideDecks(): SlideDeckSummary[] {
+  return Array.from(slideDecksCache.value.values())
 }

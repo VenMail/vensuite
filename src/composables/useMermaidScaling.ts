@@ -4,7 +4,7 @@
  */
 
 import { ref, computed, nextTick, type Ref } from 'vue';
-import { debounce } from '@univerjs/core';
+import { useDebounceFn } from '@vueuse/core';
 
 export interface MermaidDiagramConfig {
   type: 'pie' | 'bar' | 'line' | 'flowchart' | 'sequence' | 'gantt' | 'gitgraph' | 'journey' | 'mindmap';
@@ -337,7 +337,7 @@ export function useMermaidScaling(
   }
 
   // Auto-scale diagram
-  const autoScaleDiagram = debounce(async (mermaidCode: string) => {
+  const autoScaleDiagram = useDebounceFn(async (mermaidCode: string) => {
     if (!containerRef.value || !autoScale) return;
 
     isAnalyzing.value = true;

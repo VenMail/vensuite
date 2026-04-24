@@ -1,4 +1,4 @@
-import type { IWorkbookData } from '@univerjs/core'
+import type { IVTableSheetOptions } from '@visactor/vtable-sheet'
 import type { FormQuestionType, FormFieldCategory, Option, TextValidation } from '@/types'
 
 /**
@@ -53,12 +53,10 @@ export interface FormQuestionWithMetadata {
  * Convert sheet data to form questions
  */
 export function convertSheetToForm(
-  workbookData: IWorkbookData | null,
+  workbookData: IVTableSheetOptions | null,
   options: SheetToFormOptions = {}
 ): FormQuestionWithMetadata[] {
-  if (!workbookData?.sheets || Object.entries(workbookData.sheets).length === 0) {
-    return []
-  }
+  if (!workbookData?.sheets?.length) return []
 
   const {
     titleRow = 0,
@@ -68,30 +66,22 @@ export function convertSheetToForm(
   } = options
 
   try {
-    // Get the first sheet
     const firstSheet = workbookData.sheets[0]
-    if (!firstSheet?.cellData) {
-      return []
-    }
+    const sheetData: any[][] = (firstSheet?.data as any[][] | undefined) ?? []
+    if (!sheetData.length) return []
 
     // Extract column headers from title row
-    const headers = extractRowData(firstSheet.cellData, titleRow)
-    if (headers.length === 0) {
-      return []
-    }
+    const headers = extractRowData(sheetData, titleRow)
+    if (headers.length === 0) return []
 
     // Extract sample data from subsequent rows
     const sampleDataByColumn: string[][] = []
     for (let col = 0; col < headers.length; col++) {
       const columnData: string[] = []
-      
-      for (let row = dataStartRow; row < Math.min(dataStartRow + maxRowsToAnalyze, 100); row++) {
-        const rowData = extractRowData(firstSheet.cellData, row)
-        if (rowData[col] && rowData[col].trim()) {
-          columnData.push(rowData[col].trim())
-        }
+      for (let row = dataStartRow; row < Math.min(dataStartRow + maxRowsToAnalyze, sheetData.length); row++) {
+        const rowData = extractRowData(sheetData, row)
+        if (rowData[col]?.trim()) columnData.push(rowData[col].trim())
       }
-      
       sampleDataByColumn.push(columnData)
     }
 
@@ -122,21 +112,12 @@ export function convertSheetToForm(
 }
 
 /**
- * Extract data from a specific row
+ * Extract data from a specific row of a 2D array
  */
-function extractRowData(cellData: Record<number, Record<number, any>>, rowIndex: number): string[] {
-  const rowData = cellData[rowIndex]
-  if (!rowData) return []
-
-  const cols = Object.keys(rowData)
-    .map(colNum => parseInt(colNum))
-    .filter(colNum => !isNaN(colNum))
-    .sort((a, b) => a - b)
-
-  return cols.map(col => {
-    const cell = rowData[col]
-    return cell?.v ? String(cell.v).trim() : ''
-  })
+function extractRowData(data: any[][], rowIndex: number): string[] {
+  const row = data[rowIndex]
+  if (!row) return []
+  return row.map(cell => (cell !== null && cell !== undefined) ? String(cell).trim() : '')
 }
 
 /**

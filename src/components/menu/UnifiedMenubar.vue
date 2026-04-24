@@ -31,6 +31,23 @@ import {
   CheckSquareIcon,
   DollarSignIcon,
   FileTextIcon,
+  TypeIcon,
+  PaletteIcon,
+  AlignLeftIcon,
+  AlignCenterIcon,
+  AlignRightIcon,
+  AlignVerticalJustifyCenterIcon,
+  AlignStartVerticalIcon,
+  AlignEndVerticalIcon,
+  Grid3x3Icon,
+  MinusIcon,
+  PlusIcon,
+  UploadIcon,
+  BarChart3Icon,
+  ImageIcon,
+  WrapTextIcon,
+  Trash2Icon,
+  TableCellsMergeIcon,
 } from 'lucide-vue-next'
 import {
   Menubar,
@@ -69,6 +86,16 @@ const emit = defineEmits([
   'format-italic',
   'format-underline',
   'format-strike',
+  'font-color',
+  'fill-color',
+  'align-left',
+  'align-center',
+  'align-right',
+  'valign-top',
+  'valign-middle',
+  'valign-bottom',
+  'border-all',
+  'border-none',
   'freeze-top-row',
   'freeze-first-column',
   'freeze-panes',
@@ -87,6 +114,22 @@ const emit = defineEmits([
   'print',
   'convert-to-form',
   'navigate-to-collaborator',
+  // insert actions
+  'import-file',
+  'export-all',
+  'insert-row-above',
+  'insert-row-below',
+  'insert-column-left',
+  'insert-column-right',
+  'delete-row',
+  'delete-column',
+  'merge-cells',
+  'unmerge-cells',
+  'insert-chart',
+  'toggle-first-row-header',
+  'toggle-wrap-text',
+  'open-help',
+  'open-about',
 ])
 
 const router = useRouter()
@@ -195,11 +238,15 @@ function formatSelectionLabel(selection: any): string {
       <MenubarContent>
         <MenubarItem @click="handleNew">
           <FileIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.view')}}
+          New
         </MenubarItem>
         <MenubarItem @click="handleOpenDialog">
           <FolderIcon class="h-4 w-4 mr-2" />
           {{$t('Commons.button.open')}}
+        </MenubarItem>
+        <MenubarItem v-if="mode==='sheet'" @click="emit('import-file')">
+          <UploadIcon class="h-4 w-4 mr-2" />
+          Import (XLSX/CSV)
         </MenubarItem>
         <MenubarItem @click="handleSave">
           <SaveIcon class="h-4 w-4 mr-2" />
@@ -212,7 +259,8 @@ function formatSelectionLabel(selection: any): string {
           </MenubarSubTrigger>
           <MenubarSubContent>
             <MenubarItem @click="handleExport('pdf')">PDF</MenubarItem>
-            <MenubarItem v-if="mode==='sheet'" @click="handleExport('xlsx')">XLSX</MenubarItem>
+            <MenubarItem v-if="mode==='sheet'" @click="handleExport('xlsx')">XLSX (current sheet)</MenubarItem>
+            <MenubarItem v-if="mode==='sheet'" @click="emit('export-all')">XLSX (all sheets)</MenubarItem>
             <MenubarItem v-if="mode==='sheet'" @click="handleExport('csv')">CSV</MenubarItem>
             <MenubarItem @click="handleExport('html')">HTML</MenubarItem>
           </MenubarSubContent>
@@ -321,11 +369,123 @@ function formatSelectionLabel(selection: any): string {
             <StrikethroughIcon class="h-4 w-4 mr-2" />
             {{$t('Commons.text.strikethrough')}}
           </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem @click="emit('font-color')">
+            <TypeIcon class="h-4 w-4 mr-2" />
+            Font Color
+          </MenubarItem>
+          <MenubarItem @click="emit('fill-color')">
+            <PaletteIcon class="h-4 w-4 mr-2" />
+            Fill Color
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarSub>
+            <MenubarSubTrigger>
+              <AlignCenterIcon class="h-4 w-4 mr-2" />
+              Alignment
+            </MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarItem @click="emit('align-left')">
+                <AlignLeftIcon class="h-4 w-4 mr-2" />
+                Align Left
+              </MenubarItem>
+              <MenubarItem @click="emit('align-center')">
+                <AlignCenterIcon class="h-4 w-4 mr-2" />
+                Center
+              </MenubarItem>
+              <MenubarItem @click="emit('align-right')">
+                <AlignRightIcon class="h-4 w-4 mr-2" />
+                Align Right
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem @click="emit('valign-top')">
+                <AlignStartVerticalIcon class="h-4 w-4 mr-2" />
+                Top
+              </MenubarItem>
+              <MenubarItem @click="emit('valign-middle')">
+                <AlignVerticalJustifyCenterIcon class="h-4 w-4 mr-2" />
+                Middle
+              </MenubarItem>
+              <MenubarItem @click="emit('valign-bottom')">
+                <AlignEndVerticalIcon class="h-4 w-4 mr-2" />
+                Bottom
+              </MenubarItem>
+            </MenubarSubContent>
+          </MenubarSub>
+          <MenubarSub>
+            <MenubarSubTrigger>
+              <Grid3x3Icon class="h-4 w-4 mr-2" />
+              Borders
+            </MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarItem @click="emit('border-all')">
+                <Grid3x3Icon class="h-4 w-4 mr-2" />
+                All Borders
+              </MenubarItem>
+              <MenubarItem @click="emit('border-none')">
+                <MinusIcon class="h-4 w-4 mr-2" />
+                No Border
+              </MenubarItem>
+            </MenubarSubContent>
+          </MenubarSub>
+          <MenubarSeparator />
+          <MenubarItem @click="emit('toggle-wrap-text')">
+            <WrapTextIcon class="h-4 w-4 mr-2" />
+            Wrap Text
+          </MenubarItem>
+          <MenubarItem @click="emit('merge-cells')">
+            <TableCellsMergeIcon class="h-4 w-4 mr-2" />
+            Merge Cells
+          </MenubarItem>
+          <MenubarItem @click="emit('unmerge-cells')">
+            <MinusIcon class="h-4 w-4 mr-2" />
+            Unmerge Cells
+          </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
 
       <MenubarMenu>
-        <MenubarTrigger>{{$t('Commons.text.date')}}</MenubarTrigger>
+        <MenubarTrigger>Insert</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem @click="emit('insert-row-above')">
+            <RowsIcon class="h-4 w-4 mr-2" />
+            Row Above
+          </MenubarItem>
+          <MenubarItem @click="emit('insert-row-below')">
+            <RowsIcon class="h-4 w-4 mr-2" />
+            Row Below
+          </MenubarItem>
+          <MenubarItem @click="emit('insert-column-left')">
+            <ColumnsIcon class="h-4 w-4 mr-2" />
+            Column Left
+          </MenubarItem>
+          <MenubarItem @click="emit('insert-column-right')">
+            <ColumnsIcon class="h-4 w-4 mr-2" />
+            Column Right
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem @click="emit('delete-row')">
+            <Trash2Icon class="h-4 w-4 mr-2" />
+            Delete Row
+          </MenubarItem>
+          <MenubarItem @click="emit('delete-column')">
+            <Trash2Icon class="h-4 w-4 mr-2" />
+            Delete Column
+          </MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem @click="emit('insert-chart')">
+            <BarChart3Icon class="h-4 w-4 mr-2" />
+            Chart
+          </MenubarItem>
+          <MenubarItem @click="emit('toggle-first-row-header')">
+            <PlusIcon class="h-4 w-4 mr-2" />
+            Use First Row as Header
+          </MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+
+      <MenubarMenu>
+        <MenubarTrigger>Data</MenubarTrigger>
         <MenubarContent>
           <MenubarSub>
             <MenubarSubTrigger>
@@ -415,13 +575,13 @@ function formatSelectionLabel(selection: any): string {
     <MenubarMenu>
       <MenubarTrigger>{{$t('Commons.text.help')}}</MenubarTrigger>
       <MenubarContent>
-        <MenubarItem>
+        <MenubarItem @click="emit('open-help')">
           <HelpCircleIcon class="h-4 w-4 mr-2" />
           {{$t('Commons.text.help_center')}}
         </MenubarItem>
-        <MenubarItem>
+        <MenubarItem @click="emit('open-about')">
           <InfoIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.amount')}}
+          About
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>

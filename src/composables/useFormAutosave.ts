@@ -4,7 +4,7 @@ import { useFormEditorStore } from "@/store/formEditor";
 import { useFormSettingsStore } from "@/store/formSettings";
 import { toast } from "@/composables/useToast";
 import type { FormDefinition } from "@/types";
-import { debounce } from "@univerjs/core";
+import debounce from "lodash/debounce";
 import { t } from '@/i18n';
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;

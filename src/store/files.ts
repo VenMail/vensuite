@@ -179,7 +179,7 @@ export const useFileStore = defineStore("files", {
     },
     inferDocumentFormat(fileType?: string | null): DocumentFormat {
       const normalized = (fileType || "").toString().trim().toLowerCase();
-      if (["xlsx", "xls", "sheet", "spreadsheet"].includes(normalized)) return "univer";
+      if (["xlsx", "xls", "sheet", "spreadsheet"].includes(normalized)) return "vtable";
       if (["html", "htm", "umodoc"].includes(normalized)) return "umodoc";
       return "tiptap";
     },
@@ -340,7 +340,7 @@ export const useFileStore = defineStore("files", {
      * Convert an uploaded file (DOCX/XLSX) into app content usable by editors.
      * Fully client-side:
      *  - DOCX → HTML via Mammoth (mammoth.browser, exposed as window.mammoth)
-     *  - XLSX → Univer workbook JSON via LuckyExcel (from @mertdeveci55/univer-import-export)
+     *  - XLSX → VTable workbook JSON via ExcelJS
      *
      * The source binary is downloaded from the file's /download endpoint or a direct URL,
      * then parsed and saved back via saveToAPI. No backend /app-files/convert calls.
@@ -408,43 +408,55 @@ export const useFileStore = defineStore("files", {
             }
           } else if (target === 'xlsx') {
             try {
-              // Prefer community univer import-export package LuckyExcel for full-fidelity import
-              // @ts-ignore - dynamic import; module may not exist until installed
-              const impMod: any = await import(/* @vite-ignore */ '@mertdeveci55/univer-import-export').catch(() => null);
-              if (impMod && impMod.LuckyExcel && typeof impMod.LuckyExcel.transformExcelToUniver === 'function') {
-                const mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-                const blob = new Blob([loaded.buf], { type: mime });
-                const name = (meta?.file_name && meta.file_name.toLowerCase().endsWith('.xlsx')) ? meta.file_name : (meta?.file_name || 'workbook.xlsx');
-                const file = new File([blob], name, { type: mime });
-                const workbookData: any = await new Promise((resolve, reject) => {
-                  try {
-                    impMod.LuckyExcel.transformExcelToUniver(
-                      file,
-                      (univerData: any) => resolve(univerData),
-                      (error: any) => reject(error)
-                    );
-                  } catch (err) {
-                    reject(err);
-                  }
+              const ExcelJS = await import('exceljs');
+              const wb = new ExcelJS.Workbook();
+              await wb.xlsx.load(loaded.buf);
+              const sheetDefs = wb.worksheets.map((ws: any, idx: number) => {
+                const data: any[][] = [];
+                const formulas: Record<string, string> = {};
+                ws.eachRow((row: any) => {
+                  const rowData: any[] = [];
+                  row.eachCell({ includeEmpty: true }, (cell: any) => {
+                    const f = cell.formula || cell.sharedFormula;
+                    if (f) {
+                      formulas[cell.address] = f.startsWith('=') ? f : `=${f}`;
+                      rowData.push(cell.result ?? '');
+                    } else {
+                      rowData.push(cell.value ?? '');
+                    }
+                  });
+                  data.push(rowData);
                 });
-                if (workbookData) {
-                  if (!workbookData.id) workbookData.id = meta?.id || options.appFileId || (Math.random().toString(36).slice(2));
-                  if (!workbookData.name) workbookData.name = meta?.title || 'Sheet';
-                  const base: FileData = meta || ({
-                    id: options.appFileId,
-                    file_type: 'xlsx',
-                    file_name: name,
-                    title: workbookData.name,
-                    is_folder: false,
-                  } as unknown as FileData);
-                  const saved = await this.saveToAPI({ ...base, content: JSON.stringify(workbookData), file_type: 'xlsx', is_folder: false } as FileData);
-                  if (saved) return saved;
-                }
-              } else {
-                throw new Error('univer-import-export (LuckyExcel) not available');
-              }
+                return {
+                  sheetKey: ws.name,
+                  sheetTitle: ws.name,
+                  columnCount: ws.columnCount || 26,
+                  rowCount: (ws.rowCount || 0) + 100,
+                  data,
+                  ...(Object.keys(formulas).length ? { formulas } : {}),
+                  active: idx === 0,
+                };
+              });
+              const vtableConfig = {
+                sheets: sheetDefs,
+                showFormulaBar: true,
+                showSheetTab: true,
+                defaultRowHeight: 25,
+                defaultColWidth: 100,
+              };
+              const name = meta?.file_name || 'workbook.xlsx';
+              const docTitle = meta?.title || wb.worksheets[0]?.name || 'Sheet';
+              const base: FileData = meta || ({
+                id: options.appFileId,
+                file_type: 'xlsx',
+                file_name: name,
+                title: docTitle,
+                is_folder: false,
+              } as unknown as FileData);
+              const saved = await this.saveToAPI({ ...base, content: JSON.stringify(vtableConfig), file_type: 'xlsx', is_folder: false } as FileData);
+              if (saved) return saved;
             } catch (xlsxErr) {
-              console.warn('Client-side XLSX conversion (LuckyExcel) failed:', xlsxErr);
+              console.warn('Client-side XLSX conversion (exceljs) failed:', xlsxErr);
             }
           }
         }

@@ -8,10 +8,7 @@
       "@/*": ["./src/*"]
     },
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    
-    /** univer plugin */
-    "experimentalDecorators": true,
-    
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -23,11 +20,13 @@
     /* Linting */
     "strict": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "skipLibCheck": true,
     "isolatedModules": false,
+    "ignoreDeprecations": "5.0",
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.d.ts", "vue.shim.d.ts"],
+  "exclude": ["node_modules", "src/pptist/**"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -1,6 +1,6 @@
 import { watch, type WatchStopHandle } from 'vue';
 import { useFormPlayerStore } from '@/store/formPlayer';
-import { debounce } from '@univerjs/core';
+import { useDebounceFn } from '@vueuse/core';
 
 const STORAGE_PREFIX = 'VENX_FORM_PROGRESS_';
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -73,7 +73,7 @@ export const useFormProgressCache = () => {
     }
   };
 
-  const debouncedSave = debounce(saveProgress, SAVE_DEBOUNCE_MS);
+  const debouncedSave = useDebounceFn(saveProgress, SAVE_DEBOUNCE_MS);
 
   const loadProgress = (): CachedFormProgress | null => {
     const identifier = getFormIdentifier();
@@ -181,7 +181,7 @@ export const useFormProgressCache = () => {
   const stopWatching = () => {
     stopHandles.forEach((stop) => stop());
     stopHandles.length = 0;
-    debouncedSave.cancel();
+    ;(debouncedSave as any).cancel?.();
   };
 
   return {

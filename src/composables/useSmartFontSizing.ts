@@ -4,7 +4,7 @@
  */
 
 import { ref, computed, nextTick, type Ref } from 'vue';
-import { debounce } from '@univerjs/core';
+import { useDebounceFn } from '@vueuse/core';
 
 export interface FontSizingConstraints {
   minFontSize: number;
@@ -330,7 +330,7 @@ export function useSmartFontSizing(
   }
 
   // Main analysis function
-  const analyzeAndOptimize = debounce(async (content: string) => {
+  const analyzeAndOptimize = useDebounceFn(async (content: string) => {
     if (!containerRef.value) return;
 
     isAnalyzing.value = true;

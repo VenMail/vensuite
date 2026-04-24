@@ -1,55 +1,29 @@
-export interface SlideScene {
-  elements: any[];
-  appState?: Record<string, any>;
-  files?: Record<string, any>;
+export type { Slide, SlideTheme, PPTElement, SlideBackground } from '@pptist/types/slides'
+
+/** Payload stored in the backend `content` field (version 2 = PPTist JSON) */
+export interface PPTistDeckPayload {
+  version: 2
+  title: string
+  theme?: import('@pptist/types/slides').SlideTheme
+  slides: import('@pptist/types/slides').Slide[]
 }
 
-export interface SlidePage {
-  id: string;
-  name: string;
-  scene: SlideScene;
-  thumbnail?: string;
-}
-
-export interface SnapSettings {
-  showGrid: boolean;
-  gridSize: number;
-  showGuides: boolean;
-  smartSnapping: boolean;
-}
-
-export interface SlideDeckTemplatePage {
-  name?: string;
-  scene?: SlideScene;
-}
-
-export interface SlideTemplateSummary {
-  slug: string;
-  title: string;
-  description?: string;
-  isDefault: boolean;
-}
-
-export interface SlideTemplateManifest extends Partial<SlideTemplateSummary> {
-  default?: boolean;
-  pages?: SlideDeckTemplatePage[];
-}
-
-export interface SlideDeckTemplate {
-  title?: string;
-  pages: SlideDeckTemplatePage[];
-}
-
-export interface SlideDeckData {
-  id?: string;
-  title: string;
-  pages: SlidePage[];
-  snapSettings: SnapSettings;
-  version: number;
+/** Summary object used in the slide deck list view */
+export interface SlideDeckSummary {
+  id: string
+  title: string
+  slideCount: number
+  lastModified: string
+  privacyType: number
+  shared: boolean
+  shareLink?: string
+  thumbnail?: string
+  /** Raw first-slide data for thumbnail generation */
+  firstSlide?: import('@pptist/types/slides').Slide
 }
 
 export interface SlideImportStatus {
-  isImporting: boolean;
-  lastError: string | null;
-  source?: 'pptx' | 'html';
+  isImporting: boolean
+  lastError: string | null
+  source?: 'pptx' | 'file'
 }

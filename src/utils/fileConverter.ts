@@ -1,7 +1,6 @@
 // src/utils/fileConverter.ts
-import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
-import { LocaleType, SheetTypes, type IWorkbookData } from '@univerjs/core';
+import type { IVTableSheetOptions } from '@visactor/vtable-sheet';
 import { Editor, generateJSON } from '@tiptap/core';
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
@@ -845,6 +844,7 @@ async function convertHtmlToTiptap(file: File): Promise<string> {
 
 async function convertDocxToTiptap(file: File): Promise<string> {
   const buf = await file.arrayBuffer();
+  const mammoth = (await import('mammoth')).default ?? (await import('mammoth'));
   const result: any = await (mammoth as any).convertToHtml({ arrayBuffer: buf });
   const html: string = result?.value || '';
   const cleaned = cleanHtmlForEditor(html);
@@ -917,44 +917,28 @@ async function convertPdfToTiptap(file: File): Promise<string> {
   return htmlToTiptapJson(cleaned, { forceLayoutCapture: true });
 }
 
-function buildUniverWorkbookFromGrid(values: any[][], opts?: { title?: string; sheetName?: string }): IWorkbookData {
-  const sheetId = 'sheet-01';
-  const title = (opts?.title || 'New Spreadsheet').toString();
-  const sheetName = (opts?.sheetName || 'Sheet1').toString();
-
-  const cellData: Record<number, Record<number, any>> = {};
-  for (let r = 0; r < values.length; r++) {
-    const row = values[r] || [];
-    for (let c = 0; c < row.length; c++) {
-      const v = row[c];
-      if (v == null || v === '') continue;
-      if (!cellData[r]) cellData[r] = {};
-      cellData[r][c] = {
-        v,
-        t: typeof v === 'number' ? 2 : 1,
-      };
-    }
-  }
+function buildVTableWorkbookFromGrid(values: any[][], opts?: { title?: string; sheetName?: string }): IVTableSheetOptions {
+  const sheetKey = 'sheet-01';
+  const sheetTitle = (opts?.sheetName || 'Sheet1').toString();
+  const maxCol = values.reduce((m, row) => Math.max(m, (row || []).length), 0);
 
   return {
-    id: `wk_${Math.random().toString(36).slice(2)}`,
-    locale: LocaleType.EN_US,
-    name: title,
-    sheetOrder: [sheetId],
-    appVersion: '3.0.0-alpha',
-    styles: {},
-    sheets: {
-      [sheetId]: {
-        type: SheetTypes.GRID,
-        id: sheetId,
-        name: sheetName,
-        cellData,
-      },
-    },
-  } as unknown as IWorkbookData;
+    sheets: [{
+      sheetKey,
+      sheetTitle,
+      rowCount: Math.max(values.length, 100),
+      columnCount: Math.max(maxCol, 26),
+      data: values,
+      active: true,
+    }],
+    showFormulaBar: true,
+    showSheetTab: true,
+    defaultRowHeight: 25,
+    defaultColWidth: 100,
+  };
 }
 
-async function convertXlsxToUniver(file: File): Promise<IWorkbookData> {
+async function convertXlsxToVTable(file: File): Promise<IVTableSheetOptions> {
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: 'array' });
   const firstName = wb.SheetNames?.[0] || 'Sheet1';
@@ -962,7 +946,7 @@ async function convertXlsxToUniver(file: File): Promise<IWorkbookData> {
   const grid = sheet
     ? (XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true }) as any[][])
     : [];
-  return buildUniverWorkbookFromGrid(grid, { title: file.name.replace(/\.[^/.]+$/, '') || 'New Spreadsheet', sheetName: firstName });
+  return buildVTableWorkbookFromGrid(grid, { title: file.name.replace(/\.[^/.]+$/, '') || 'New Spreadsheet', sheetName: firstName });
 }
 
 function parseCsvToGrid(input: string): string[][] {
@@ -1023,10 +1007,10 @@ function parseCsvToGrid(input: string): string[][] {
   return rows;
 }
 
-async function convertCsvToUniver(file: File): Promise<IWorkbookData> {
+async function convertCsvToVTable(file: File): Promise<IVTableSheetOptions> {
   const text = await file.text();
   const grid = parseCsvToGrid(text);
-  return buildUniverWorkbookFromGrid(grid, { title: file.name.replace(/\.[^/.]+$/, '') || 'New Spreadsheet', sheetName: 'Sheet1' });
+  return buildVTableWorkbookFromGrid(grid, { title: file.name.replace(/\.[^/.]+$/, '') || 'New Spreadsheet', sheetName: 'Sheet1' });
 }
 
 
@@ -1035,7 +1019,7 @@ async function convertCsvToUniver(file: File): Promise<IWorkbookData> {
 // ============================================
 
 export interface ConversionResult {
-  content: string | IWorkbookData;
+  content: string | IVTableSheetOptions;
   fileType: 'docx' | 'xlsx';
   metadata?: {
     originalFormat: string;
@@ -1100,7 +1084,7 @@ export async function convertFileForEditor(file: File): Promise<ConversionResult
     fileName.endsWith('.xls') ||
     fileType.includes('spreadsheet')
   ) {
-    const content = await convertXlsxToUniver(file);
+    const content = await convertXlsxToVTable(file);
     return {
       content,
       fileType: 'xlsx',
@@ -1112,7 +1096,7 @@ export async function convertFileForEditor(file: File): Promise<ConversionResult
   }
 
   if (fileName.endsWith('.csv') || fileType.includes('csv')) {
-    const content = await convertCsvToUniver(file);
+    const content = await convertCsvToVTable(file);
     return {
       content,
       fileType: 'xlsx',

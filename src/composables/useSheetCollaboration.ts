@@ -1,10 +1,11 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import type { Ref } from 'vue'
 import type { IWebsocketService, Message } from '@/lib/wsService'
 import { useWebSocket, WebSocketService } from '@/lib/wsService'
 import { useAuthStore } from '@/store/auth'
 
-export function useSheetCollaboration(univerCoreRef: any) {
+export function useSheetCollaboration(vtableInstanceRef: Ref<any>) {
   const route = useRoute()
   const authStore = useAuthStore()
   const { initializeWebSocket } = useWebSocket()
@@ -72,7 +73,6 @@ export function useSheetCollaboration(univerCoreRef: any) {
     if (wsService.value && route.params.id) {
       try {
         isJoined.value = wsService.value.joinSheet(route.params.id as string, handleIncomingMessage)
-        // Start presence heartbeat after joining
         startPresenceHeartbeat()
       } catch (error) {
         console.error('Error joining sheet:', error)
@@ -90,18 +90,6 @@ export function useSheetCollaboration(univerCoreRef: any) {
     switch (message.type) {
       case 'chat':
         handleChatMessage(message)
-        break
-      case 'change':
-        if (message.user?.id === userId.value) {
-          break
-        }
-        changesPending.value = true
-        univerCoreRef.value?.executeCommand(message.content.command.id, message.content.command.params)
-        setTimeout(() => {
-          requestAnimationFrame(() => {
-            changesPending.value = false
-          })
-        }, 10)
         break
       case 'cursor':
         if (message.user?.id && message.user?.name) {
@@ -121,7 +109,6 @@ export function useSheetCollaboration(univerCoreRef: any) {
   function handleChatMessage(messageInfo: Message) {
     chatMessages.value.push(messageInfo)
     scrollToBottom()
-    // Play notification sound and increment unread count if chat is closed and message is from another user
     if (!isChatOpen.value && messageInfo.user?.id !== userId.value) {
       unreadCount.value++
       try {
@@ -213,53 +200,45 @@ export function useSheetCollaboration(univerCoreRef: any) {
 
   function navigateToCollaborator(uid: string) {
     const collab = collaborators.value[uid]
-    if (!collab?.selection || !univerCoreRef.value) return
+    if (!collab?.selection || !vtableInstanceRef.value) return
     try {
       const sel = collab.selection
-      const range = sel?.range || sel?.primaryRange || sel
-      const data = range?.rangeData || range
-      const startRow = data?.startRow ?? data?.startRowIndex ?? data?.rowStart
-      const startCol = data?.startColumn ?? data?.startColumnIndex ?? data?.colStart
-      if (typeof startRow === 'number' && typeof startCol === 'number') {
-        const workbook = univerCoreRef.value?.getActiveWorkbook()
-        const sheet = workbook?.getActiveSheet()
-        if (sheet) {
-          // Navigate to the cell by setting selection
-          const targetRange = sheet.getRange(startRow, startCol, 1, 1)
-          targetRange?.activate()
-        }
+      const sheetKey = sel?.worksheetId
+      if (sheetKey) {
+        vtableInstanceRef.value.activateSheet(sheetKey)
       }
+      const ws = vtableInstanceRef.value.getActiveSheet() as any
+      const row = sel?.row ?? 0
+      const col = sel?.col ?? 0
+      ws?.tableInstance?.selectCells?.({ col, row })
     } catch (error) {
       console.warn('Failed to navigate to collaborator cell:', error)
     }
   }
 
   function broadcastPresence() {
-    if (!univerCoreRef.value || !wsService.value || !route.params.id) return
+    if (!vtableInstanceRef.value || !wsService.value || !route.params.id) return
     try {
-      const workbook = univerCoreRef.value?.getActiveWorkbook()
-      const sheet = workbook?.getActiveSheet()
-      const selection = sheet?.getSelection()?.getActiveRange()
+      const sheet = vtableInstanceRef.value.getActiveSheet() as any
+      const selection = sheet?.getSelection()
       if (selection) {
         const data = {
-          row: selection.getRow(),
-          column: selection.getColumn(),
-          worksheetId: sheet?.getSheetId(),
+          row: selection.startRow,
+          col: selection.startCol,
+          worksheetId: sheet.sheetKey,
         }
-        wsService.value?.sendMessage(route.params.id as string, 'cursor', data, userId.value, userName.value)
+        wsService.value.sendMessage(route.params.id as string, 'cursor', data, userId.value, userName.value)
       }
     } catch (error) {
       console.error('Error broadcasting presence:', error)
     }
   }
 
-  // Periodic presence heartbeat (every 5 seconds)
   let presenceInterval: ReturnType<typeof setInterval> | null = null
 
   function startPresenceHeartbeat() {
     stopPresenceHeartbeat()
     presenceInterval = setInterval(broadcastPresence, 5000)
-    // Send initial presence
     broadcastPresence()
   }
 
@@ -278,21 +257,6 @@ export function useSheetCollaboration(univerCoreRef: any) {
     stopPresenceHeartbeat()
   }
 
-  function broadcastChange(command: any) {
-    if (!wsService.value || !route.params.id || !command) return
-    try {
-      wsService.value.sendMessage(
-        route.params.id as string,
-        'change',
-        { command },
-        userId.value,
-        userName.value,
-      )
-    } catch (error) {
-      console.error('Error broadcasting sheet change:', error)
-    }
-  }
-
   function broadcastTitle(title: string) {
     if (!wsService.value || !route.params.id || !title) return
     try {
@@ -308,7 +272,6 @@ export function useSheetCollaboration(univerCoreRef: any) {
     }
   }
 
-  // Watch for connection status changes
   watch(isConnected, (newIsConnected) => {
     if (newIsConnected) {
       if (canJoinRealtime.value) joinSheet()
@@ -325,7 +288,6 @@ export function useSheetCollaboration(univerCoreRef: any) {
     }
   })
 
-  // Clean up old collaborators
   watch(
     () => collaborators.value,
     () => {
@@ -358,12 +320,11 @@ export function useSheetCollaboration(univerCoreRef: any) {
     collaborators,
     privacyType,
     canJoinRealtime,
-    
+
     // Methods
     initializeWebSocketAndJoinSheet,
     joinSheet,
     leaveSheet,
-    broadcastChange,
     broadcastTitle,
     handleIncomingMessage,
     sendChatMessage,

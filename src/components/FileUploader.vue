@@ -731,7 +731,7 @@ const createDocumentFromConvertedFile = async (file: FileData): Promise<any | nu
         ? conversionResult.content
         : JSON.stringify(conversionResult.content);
     } else {
-      // xlsx/univer workbook JSON
+      // xlsx workbook JSON
       content = typeof conversionResult.content === 'string'
         ? conversionResult.content
         : JSON.stringify(conversionResult.content as any);

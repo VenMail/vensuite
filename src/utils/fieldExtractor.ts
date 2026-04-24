@@ -1,62 +1,34 @@
-import type { IWorkbookData } from '@univerjs/core'
+import type { IVTableSheetOptions } from '@visactor/vtable-sheet'
 
 /**
- * Extract field names from sheet data based on first row headers
+ * Extract field names from first-row headers of a VTable sheet
  */
-export function extractSheetFields(workbookData: IWorkbookData | null | undefined): string[] {
-  if (!workbookData?.sheets || Object.entries(workbookData.sheets).length === 0) {
-    return ['Column A', 'Column B', 'Column C']
-  }
+export function extractSheetFields(workbookData: IVTableSheetOptions | null | undefined): string[] {
+  const fallback = ['Column A', 'Column B', 'Column C']
+  if (!workbookData?.sheets?.length) return fallback
 
   try {
-    // Get the first sheet
     const firstSheet = workbookData.sheets[0]
-    if (!firstSheet?.cellData) {
-      return ['Column A', 'Column B', 'Column C']
-    }
+    const data = firstSheet?.data
+    if (!data?.length || !data[0]?.length) return fallback
 
-    // Find the first row with data (typically headers)
-    const rows = Object.keys(firstSheet.cellData)
-      .map(rowNum => parseInt(rowNum))
-      .filter(rowNum => !isNaN(rowNum))
-      .sort((a, b) => a - b)
-
-    if (rows.length === 0) {
-      return ['Column A', 'Column B', 'Column C']
-    }
-
-    const firstRow = rows[0]
-    const rowData = firstSheet.cellData[firstRow]
-    if (!rowData) {
-      return ['Column A', 'Column B', 'Column C']
-    }
-
-    // Extract cell values from the first row
+    const headerRow = data[0]
     const fields: string[] = []
-    const cols = Object.keys(rowData)
-      .map(colNum => parseInt(colNum))
-      .filter(colNum => !isNaN(colNum))
-      .sort((a, b) => a - b)
 
-    for (const col of cols) {
-      const cell = rowData[col]
-      if (cell?.v) {
-        const value = String(cell.v).trim()
-        if (value) {
-          fields.push(value)
-        }
+    for (let col = 0; col < headerRow.length; col++) {
+      const val = headerRow[col]
+      if (val !== null && val !== undefined && val !== '') {
+        fields.push(String(val).trim())
       }
     }
 
-    // If no fields found, use column letters
     if (fields.length === 0) {
-      return cols.map(col => `Column ${String.fromCharCode(65 + col)}`)
+      return headerRow.map((_, i) => `Column ${String.fromCharCode(65 + i)}`)
     }
 
-    return fields.length > 0 ? fields : ['Column A', 'Column B', 'Column C']
-  } catch (error) {
-    console.warn('Error extracting sheet fields:', error)
-    return ['Column A', 'Column B', 'Column C']
+    return fields
+  } catch {
+    return fallback
   }
 }
 
