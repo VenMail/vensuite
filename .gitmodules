@@ -1,0 +1,3 @@
+[submodule "src/pptist"]
+	path = src/pptist
+	url = https://github.com/pipipi-pikachu/PPTist
