@@ -51,9 +51,9 @@ const slidesStore = useSlidesStore()
 const snapshotStore = useSnapshotStore()
 const screenStore = useScreenStore()
 
-const { databaseId } = storeToRefs(mainStore)
-const { slides } = storeToRefs(slidesStore)
-const { screening } = storeToRefs(screenStore)
+const { databaseId } = storeToRefs(mainStore) as any
+const { slides } = storeToRefs(slidesStore) as any
+const { screening } = storeToRefs(screenStore) as any
 
 const ready = ref(false)
 let changeTimer: ReturnType<typeof setTimeout> | null = null

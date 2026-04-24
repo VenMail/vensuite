@@ -120,8 +120,8 @@ const vtableRef = ref<InstanceType<typeof VTableSheet> | null>(null)
 const vtableInstance = ref<any>(null)
 
 // Initialize composables that need vtableRef
-const formatting = useSheetFormatting(vtableRef)
-const dataTools = useSheetDataTools(vtableRef)
+const formatting = useSheetFormatting(vtableRef) as any
+const dataTools = useSheetDataTools(vtableRef) as any
 const exportComposable = useSheetExport(vtableRef)
 const history = useSheetHistory(vtableRef)
 const clipboard = useSheetClipboard(vtableRef)

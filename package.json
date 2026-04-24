@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=8192 vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "build-prod": "cross-env NODE_OPTIONS=--max_old_space_size=8192 vite build --mode production",
+    "build-prod": "cross-env NODE_OPTIONS=--max_old_space_size=8192 vue-tsc --noEmit && cross-env NODE_OPTIONS=--max_old_space_size=8192 vite build --mode production",
     "i18n:extract": "node ./scripts/extract-i18n.js",
     "i18n:rewrite": "node ./scripts/replace-i18n.js",
     "i18n:sync": "node ./scripts/sync-i18n.js",
