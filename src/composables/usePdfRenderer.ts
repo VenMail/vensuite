@@ -1,20 +1,26 @@
 import { ref, shallowRef, onUnmounted } from 'vue';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Configure pdf.js worker.
-// Vite's ?url suffix copies the worker file into the build output and resolves
-// the correct hashed URL at runtime. The vite.config.ts assetFileNames rule
-// renames .mjs → .js so CDN servers serve it with application/javascript
-// (venia.cloud serves .mjs as application/octet-stream which browsers reject
-// for module scripts).
+import type * as PdfjsLib from 'pdfjs-dist';
+// Static ?url import — Vite replaces this with a hashed asset URL at build time.
+// Only the URL string is included in the main bundle, not the worker code itself.
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
 
 export interface PdfPage {
   pageIndex: number;
-  width: number;    // PDF points
-  height: number;   // PDF points
-  imageUrl: string; // data URL of rendered page
+  width: number;
+  height: number;
+  imageUrl: string;
+}
+
+let pdfjsPromise: Promise<typeof PdfjsLib> | null = null;
+
+async function getPdfjs(): Promise<typeof PdfjsLib> {
+  if (!pdfjsPromise) {
+    pdfjsPromise = import('pdfjs-dist').then((lib) => {
+      lib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+      return lib;
+    });
+  }
+  return pdfjsPromise;
 }
 
 export function usePdfRenderer() {
@@ -22,7 +28,7 @@ export function usePdfRenderer() {
   const pageCount = ref(0);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
-  const pdfDoc = shallowRef<pdfjsLib.PDFDocumentProxy | null>(null);
+  const pdfDoc = shallowRef<PdfjsLib.PDFDocumentProxy | null>(null);
 
   async function loadPdf(source: string | ArrayBuffer, scale = 1.5): Promise<void> {
     isLoading.value = true;
@@ -30,6 +36,7 @@ export function usePdfRenderer() {
     pages.value = [];
 
     try {
+      const pdfjsLib = await getPdfjs();
       const loadingTask = pdfjsLib.getDocument(
         typeof source === 'string' ? { url: source } : { data: source }
       );

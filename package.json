@@ -23,7 +23,6 @@
   "dependencies": {
     "@aarkue/tiptap-math-extension": "^1.3.6",
     "@akira1ce/html2pdf": "^1.0.1",
-    "@excalidraw/excalidraw": "^0.18.0",
     "@floating-ui/dom": "1.6.0",
     "@fluentui-vue/file-type-icons": "^2.1.0",
     "@hocuspocus/provider": "^2.15.2",

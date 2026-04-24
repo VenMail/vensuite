@@ -150,6 +150,12 @@ export default defineConfig(({ mode }) => {
             if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender')) {
               return 'vendor-echarts';
             }
+            if (id.includes('node_modules/mermaid') || id.includes('node_modules/@mermaid-js')) {
+              return 'vendor-mermaid';
+            }
+            if (id.includes('node_modules/pdfjs-dist')) {
+              return 'vendor-pdfjs';
+            }
             if (id.includes('node_modules/pptxtojson')) {
               return 'vendor-pptxtojson';
             }
