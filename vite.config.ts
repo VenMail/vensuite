@@ -172,6 +172,7 @@ export default defineConfig(({ mode }) => {
     css: {
       preprocessorOptions: {
         scss: {
+          silenceDeprecations: ['import', 'legacy-js-api', 'global-builtin'],
           additionalData: `
             @use 'sass:math';
             @import '${path.resolve(__dirname, 'src/pptist/src/assets/styles/variable.scss').replace(/\\/g, '/')}';
