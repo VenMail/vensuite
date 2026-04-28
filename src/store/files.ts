@@ -980,6 +980,7 @@ export const useFileStore = defineStore("files", {
         isDirty: true,
         url: false,
         thumbnail_url: undefined,
+        privacy_type: 1, // Public so guests can access
       };
 
       this.saveToLocalCache(localDoc);
