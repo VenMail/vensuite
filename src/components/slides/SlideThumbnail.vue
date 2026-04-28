@@ -60,10 +60,11 @@ async function renderPreview() {
   const v = ++renderVersion
   try {
     const { renderAvnacDocumentPreviewDataUrl } = await import('@avnac/lib/avnac-document-preview')
+    const dpr = Math.ceil(window.devicePixelRatio || 1)
     const url = await renderAvnacDocumentPreviewDataUrl(
       props.doc,
       props.persistId ?? 'preview',
-      { maxCssPx: 160 },
+      { maxCssPx: 160 * dpr },
     )
     if (v === renderVersion) dataUrl.value = url
   } catch {

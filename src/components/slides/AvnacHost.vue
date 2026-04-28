@@ -200,6 +200,7 @@ import { useCanvasStore } from '@avnac/stores/canvas'
 import { emptyVectorBoardDocument } from '@avnac/lib/avnac-vector-board-document'
 import { exportDocumentsToPptx } from '@avnac/pptx/export'
 import { importPptxFromInput } from '@avnac/pptx/import'
+import { loadCanvasGoogleFontsAndRelayout } from '@avnac/lib/avnac-canvas-google-fonts'
 
 interface Props {
   initialSlides?: AvnacDocumentV1[]
@@ -292,10 +293,21 @@ function redo() {
   }
 }
 
+async function ensureFonts() {
+  const canvas = editorRef.value?.fabricCanvas
+  const fc = (canvas as any)?.value ?? canvas
+  if (!fc) return
+  const mod = await import('fabric')
+  await loadCanvasGoogleFontsAndRelayout(fc, mod as any)
+}
+
 function onEditorReady() {
   ready.value = true
   emit('ready')
-  setTimeout(() => editorRef.value?.fitToViewport(), 50)
+  setTimeout(() => {
+    editorRef.value?.fitToViewport()
+    void ensureFonts()
+  }, 50)
 }
 
 function onDocumentChange(doc: AvnacDocumentV1) {
@@ -312,7 +324,10 @@ async function switchSlide(index: number) {
   const next = slides.value[index]
   if (next && editorRef.value) {
     await editorRef.value.setDocument(next)
-    setTimeout(() => editorRef.value?.fitToViewport(), 60)
+    setTimeout(() => {
+      editorRef.value?.fitToViewport()
+      void ensureFonts()
+    }, 60)
   }
 }
 
