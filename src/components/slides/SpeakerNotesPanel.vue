@@ -34,7 +34,9 @@ defineEmits<{
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  min-height: 120px;
   height: 160px;
+  max-height: 30vh;
   border-top: 1px solid var(--border, #e4e4e7);
   background: #fff;
 }

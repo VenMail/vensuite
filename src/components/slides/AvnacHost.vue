@@ -274,7 +274,9 @@ function undo() {
     deckRedoStack.push({ slides: JSON.parse(JSON.stringify(slides.value)), index: currentIndex.value })
     const snap = deckUndoStack.pop()!
     restoreSnapshot(snap)
-    lastOpType = deckUndoStack.length ? 'deck' : 'canvas'
+    // Keep lastOpType = 'deck' so that redo() (which guards on deckRedoStack.length)
+    // can still fire deck redo even when undo stack is now empty.
+    lastOpType = 'deck'
   } else {
     editorRef.value?.undo()
   }
@@ -324,9 +326,9 @@ async function switchSlide(index: number) {
   const next = slides.value[index]
   if (next && editorRef.value) {
     await editorRef.value.setDocument(next)
-    setTimeout(() => {
+    setTimeout(async () => {
       editorRef.value?.fitToViewport()
-      void ensureFonts()
+      await ensureFonts()   // await so canvas re-renders after fonts ready (prevents reflow jump)
     }, 60)
   }
 }
@@ -759,8 +761,12 @@ function onInsertInfographic(data: AvnacInfographicData) {
         children.push(new (mod as any).Textbox(s.text, { left: s.left, top: s.top, width: s.width, fontSize: s.fontSize ?? 12, fontWeight: s.fontWeight ?? 'normal', textAlign: s.textAlign ?? 'left', fill: s.fill ?? '#262626', selectable: true, evented: true }))
       }
     }
+    const doc = editorRef.value?.getDocument()
+    const artW = doc?.artboard.width ?? 4000
+    const artH = doc?.artboard.height ?? 2250
     const group = new (mod as any).Group(children, {
-      left: 200, top: 200,
+      left: artW / 2, top: artH / 2,
+      originX: 'center', originY: 'center',
       subTargetCheck: true,   // allow clicking through to textbox children
       avnacShape: { kind: 'infographic', template: data.template },
       avnacInfographic: data,
@@ -789,8 +795,12 @@ function onInsertDiagram(data: AvnacDiagramData) {
         children.push(new (mod as any).Line([s.x1, s.y1!, s.x2!, s.y2!], { stroke: s.stroke ?? '#888', strokeWidth: s.strokeWidth ?? 1.5, selectable: false, evented: false }))
       }
     }
+    const doc2 = editorRef.value?.getDocument()
+    const artW2 = doc2?.artboard.width ?? 4000
+    const artH2 = doc2?.artboard.height ?? 2250
     const group = new (mod as any).Group(children, {
-      left: 150, top: 150,
+      left: artW2 / 2, top: artH2 / 2,
+      originX: 'center', originY: 'center',
       subTargetCheck: true,   // allow clicking through to textbox children
       avnacShape: { kind: 'diagram' },
       avnacDiagram: data,
@@ -947,7 +957,7 @@ defineExpose({
   color: #71717a;
   font-size: 14px;
   background: var(--bg-canvas, #f4f4f5);
-  z-index: 10;
+  z-index: 100;
 }
 
 .avnac-host__spinner {

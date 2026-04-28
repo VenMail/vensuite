@@ -52,6 +52,9 @@ const menuOpen = ref(false)
 const menuX = ref(0)
 const menuY = ref(0)
 
+// Instance-scoped counter — was module-level which caused all instances to share
+// the same counter, invalidating each other's in-flight renders when multiple
+// thumbnails updated simultaneously.
 let renderVersion = 0
 let debTimer: ReturnType<typeof setTimeout> | null = null
 
