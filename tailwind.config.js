@@ -12,6 +12,7 @@ module.exports = {
     './components/**/*.{ts,tsx,vue}',
     './app/**/*.{ts,tsx,vue}',
     './src/**/*.{ts,tsx,vue}',
+    '../../../../dev/avnac-vue/src/**/*.{ts,vue}',
   ],
   theme: {
   	container: {

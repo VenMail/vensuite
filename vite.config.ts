@@ -74,6 +74,35 @@ const pptistImportRewriter = {
   },
 }
 
+// avnac-vue source lives at C:\dev\avnac-vue (also published as @venmail/avnac-vue on npm).
+// Local path is used so Vite processes .vue/.ts files through its own plugin pipeline
+// (the npm package requires a pre-built library step before Vite can consume it cleanly).
+// Rewrite #/ and @/ imports inside avnac-vue source to @avnac/ so they resolve
+// via the @avnac alias below, not vensuite's own src.
+const AVNAC_SRC = path.resolve(__dirname, 'node_modules/@venmail/avnac-vue/src')
+const AVNAC_SRC_NORM = AVNAC_SRC.replace(/\\/g, '/')
+const avnacImportRewriter = {
+  name: 'avnac-import-rewriter',
+  enforce: 'pre' as const,
+  transform(code: string, id: string) {
+    const normalized = id.replace(/\\/g, '/')
+    // Match local dev path, npm path (symlink-resolved via pnpm .pnpm dir), and direct node_modules path.
+    const isAvnac =
+      normalized.includes(AVNAC_SRC_NORM) ||
+      normalized.includes('@venmail/avnac-vue/src/') ||
+      normalized.includes('@venmail+avnac-vue') ||
+      normalized.includes('/dev/avnac-vue/src/')
+    if (isAvnac) {
+      return {
+        code: code
+          .replace(/(['"])#\//g, '$1@avnac/')
+          .replace(/(['"])\@\//g, '$1@avnac/'),
+        map: null,
+      }
+    }
+  },
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const shareBaseUrl = env.VITE_SHARE_BASE_URL || 'https://venia.cloud';
@@ -81,6 +110,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       pptistImportRewriter,
+      avnacImportRewriter,
       pptistStaticAssets(),
       vue(),
       Components({
@@ -102,6 +132,36 @@ export default defineConfig(({ mode }) => {
         defaultClass: 'i-icon',
       }),
     ],
+    optimizeDeps: {
+      // Exclude both the package name and the @avnac alias so esbuild never
+      // pre-bundles avnac-vue source files. avnacImportRewriter handles #/ at serve time.
+      exclude: ['@venmail/avnac-vue', '@avnac'],
+      // jszip is CJS and imported by avnac-vue (which is excluded above).
+      // Explicitly include it so esbuild pre-bundles it as ESM.
+      include: ['jszip'],
+      esbuildOptions: {
+        plugins: [
+          {
+            name: 'avnac-dep-scan-resolver',
+            setup(build: any) {
+              // Mark #/ and @/ internal imports from avnac-vue as external so esbuild
+              // dep-scan doesn't crash. avnacImportRewriter handles them at transform time.
+              // pnpm resolves symlinks, so importers may use the .pnpm real path.
+              build.onResolve({ filter: /^[#@]\// }, (args: any) => {
+                const importer = (args.importer || '').replace(/\\/g, '/')
+                if (
+                  importer.includes('/node_modules/@venmail/avnac-vue/src/') ||
+                  importer.includes('@venmail+avnac-vue') ||
+                  importer.includes(AVNAC_SRC_NORM)
+                ) {
+                  return { external: true }
+                }
+              })
+            },
+          },
+        ],
+      },
+    },
     server: {
       hmr: {
         overlay: false,
@@ -191,6 +251,8 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
         "@pptist": path.resolve(__dirname, "./src/pptist/src"),
+        "@avnac": AVNAC_SRC,
+        "#": AVNAC_SRC,
       },
     },
   };
