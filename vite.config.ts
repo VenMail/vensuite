@@ -166,6 +166,19 @@ export default defineConfig(({ mode }) => {
       hmr: {
         overlay: false,
       },
+      watch: {
+        // Vite ignores node_modules by default; explicitly watch avnac-vue source
+        // so HMR picks up changes without a full dev server restart.
+        ignored: (path: string) => {
+          const norm = path.replace(/\\/g, '/')
+          if (
+            norm.includes('@venmail/avnac-vue/src') ||
+            norm.includes('@venmail+avnac-vue') ||
+            norm.includes('/dev/avnac-vue/src')
+          ) return false
+          return norm.includes('node_modules')
+        },
+      },
       proxy: {
         // Proxy all API calls to backend
         "/api": {
