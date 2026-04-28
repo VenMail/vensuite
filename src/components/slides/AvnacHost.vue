@@ -737,6 +737,8 @@ async function onImportPptx() {
 }
 
 // ─── Insert infographic / diagram ───────────────────────────────────────────
+// Helpers to create child objects. Shape children are non-interactive (structural).
+// Textbox children are selectable+evented so they can be double-clicked to edit text.
 function onInsertInfographic(data: AvnacInfographicData) {
   const canvas = getCanvas()
   if (!canvas) return
@@ -753,11 +755,13 @@ function onInsertInfographic(data: AvnacInfographicData) {
       } else if (s.type === 'Circle') {
         children.push(new (mod as any).Circle({ left: s.left, top: s.top, radius: s.radius ?? 10, fill: s.fill ?? '#ccc', strokeWidth: 0, selectable: false, evented: false }))
       } else if (s.type === 'Textbox' && s.text) {
-        children.push(new (mod as any).Textbox(s.text, { left: s.left, top: s.top, width: s.width, fontSize: s.fontSize ?? 12, fontWeight: s.fontWeight ?? 'normal', textAlign: s.textAlign ?? 'left', fill: s.fill ?? '#262626', selectable: false, evented: false }))
+        // Textbox children are editable — selectable + evented so double-click enters editing
+        children.push(new (mod as any).Textbox(s.text, { left: s.left, top: s.top, width: s.width, fontSize: s.fontSize ?? 12, fontWeight: s.fontWeight ?? 'normal', textAlign: s.textAlign ?? 'left', fill: s.fill ?? '#262626', selectable: true, evented: true }))
       }
     }
     const group = new (mod as any).Group(children, {
       left: 200, top: 200,
+      subTargetCheck: true,   // allow clicking through to textbox children
       avnacShape: { kind: 'infographic', template: data.template },
       avnacInfographic: data,
     })
@@ -779,13 +783,15 @@ function onInsertDiagram(data: AvnacDiagramData) {
       } else if (s.type === 'Polygon' && s.points) {
         children.push(new (mod as any).Polygon(s.points, { fill: s.fill ?? '#ccc', strokeWidth: 0, selectable: false, evented: false }))
       } else if (s.type === 'Textbox' && s.text) {
-        children.push(new (mod as any).Textbox(s.text, { left: s.left, top: s.top, width: s.width, fontSize: s.fontSize ?? 12, fontWeight: s.fontWeight ?? 'bold', textAlign: s.textAlign ?? 'center', fill: s.fill ?? '#ffffff', selectable: false, evented: false }))
+        // Textbox children are editable
+        children.push(new (mod as any).Textbox(s.text, { left: s.left, top: s.top, width: s.width, fontSize: s.fontSize ?? 12, fontWeight: s.fontWeight ?? 'bold', textAlign: s.textAlign ?? 'center', fill: s.fill ?? '#ffffff', selectable: true, evented: true }))
       } else if (s.type === 'Line' && s.x1 !== undefined) {
         children.push(new (mod as any).Line([s.x1, s.y1!, s.x2!, s.y2!], { stroke: s.stroke ?? '#888', strokeWidth: s.strokeWidth ?? 1.5, selectable: false, evented: false }))
       }
     }
     const group = new (mod as any).Group(children, {
       left: 150, top: 150,
+      subTargetCheck: true,   // allow clicking through to textbox children
       avnacShape: { kind: 'diagram' },
       avnacDiagram: data,
     })
