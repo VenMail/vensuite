@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted, provide } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import type { IVTableSheetOptions } from '@visactor/vtable-sheet'
 import { ContextMenuPlugin, DEFAULT_BODY_MENU_ITEMS } from '@visactor/vtable-plugins'
 
 import '@/assets/index.css'
-import { MessageSquareIcon, XIcon, ArrowLeft, Share2, FileTextIcon } from 'lucide-vue-next'
+import { MessageSquareIcon, XIcon, ArrowLeft, Share2, FileTextIcon, Moon, Sun } from 'lucide-vue-next'
 
 import UnifiedMenubar from '@/components/menu/UnifiedMenubar.vue'
 import VTableSheet from '@/components/VTableSheet.vue'
@@ -50,6 +50,46 @@ import { useSheetCharts } from '@/composables/useSheetCharts'
 
 const route = useRoute()
 const router = useRouter()
+
+// Theme handling
+const THEME_STORAGE_KEY = 'theme'
+const THEME_EVENT = 'theme-change'
+const isDarkMode = ref(false)
+
+function syncThemeFromStorage() {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY)
+  if (stored === 'light' || stored === 'dark') {
+    applyTheme(stored)
+  } else {
+    applyTheme('light')
+  }
+}
+
+function applyTheme(mode: 'light' | 'dark') {
+  const isDark = mode === 'dark'
+  isDarkMode.value = isDark
+  document.documentElement.classList.toggle('dark', isDark)
+}
+
+function toggleTheme() {
+  const mode: 'light' | 'dark' = isDarkMode.value ? 'light' : 'dark'
+  applyTheme(mode)
+  localStorage.setItem(THEME_STORAGE_KEY, mode)
+  window.dispatchEvent(new CustomEvent<'light' | 'dark'>(THEME_EVENT, { detail: mode }))
+}
+
+// Provide theme context for child components (UserProfile)
+provide('theme', {
+  isDark: computed(() => isDarkMode.value),
+  toggleTheme,
+})
+
+function handleExternalTheme(event: Event) {
+  const detail = (event as CustomEvent<'light' | 'dark'>).detail
+  if (detail === 'light' || detail === 'dark') {
+    applyTheme(detail)
+  }
+}
 
 type VersionHistoryItem = {
   id: string;
@@ -1143,6 +1183,10 @@ async function createFormFromQuestions() {
 
 // Lifecycle hooks
 onMounted(async () => {
+  // Sync theme from localStorage before loading data
+  syncThemeFromStorage()
+  window.addEventListener(THEME_EVENT, handleExternalTheme as EventListener)
+  
   // Load data based on route
   if (route.params.template) {
     // Handle template route
@@ -1257,6 +1301,8 @@ onUnmounted(() => {
   // Cleanup keyboard shortcuts
   ;(window as any).__sheetKeyboardCleanup?.()
   delete (window as any).__sheetKeyboardCleanup
+  // Cleanup theme event listener
+  window.removeEventListener(THEME_EVENT, handleExternalTheme as EventListener)
 })
 
 onBeforeRouteLeave(async (_to, _from, next) => {
@@ -1395,6 +1441,18 @@ function onChartAction(key: string) {
             {{ unreadCount }}
           </span>
         </Button>
+
+        <!-- Theme Toggle -->
+        <button
+          @click="toggleTheme"
+          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <component 
+            :is="isDarkMode ? Sun : Moon" 
+            class="h-5 w-5"
+            :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" 
+          />
+        </button>
 
         <UserProfile :is-mobile="false" />
       </div>

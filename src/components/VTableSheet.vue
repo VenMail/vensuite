@@ -56,11 +56,49 @@ function resolveTheme(theme?: IVTableSheetOptions['theme']): IVTableSheetOptions
   } as IVTableSheetOptions['theme']
 }
 
-function syncRuntimeTheme() {
+async function syncRuntimeTheme() {
   if (!instance) return
+  
+  // Save current active sheet to restore after theme change
+  const activeSheetKey = (instance as any).getActiveSheet?.()
+  
+  // Apply theme update
   instance.updateOption({
     theme: resolveTheme(props.initialConfig.theme),
   })
+  
+  // Wait for VTable to finish internal updates
+  await nextTick()
+  
+  // Delay restoration to ensure VTable has processed the theme change
+  setTimeout(() => {
+    // Restore active sheet if the method exists
+    if (activeSheetKey && typeof (instance as any).setActiveSheet === 'function') {
+      try {
+        (instance as any).setActiveSheet(activeSheetKey)
+      } catch (e) {
+        console.warn('Failed to restore active sheet:', e)
+      }
+    }
+    
+    // Force a re-render if the instance supports it (helps with canvas redraw)
+    if (typeof (instance as any).render === 'function') {
+      try {
+        (instance as any).render()
+      } catch (e) {
+        console.warn('Failed to render:', e)
+      }
+    }
+    
+    // If the VTable has a refresh or redraw method, call it
+    if (typeof (instance as any).refresh === 'function') {
+      try {
+        (instance as any).refresh()
+      } catch (e) {
+        // Ignore - refresh is optional
+      }
+    }
+  }, 100)
 }
 
 function attachSheetListeners(sheet: WorkSheet, sheetKey: string) {
