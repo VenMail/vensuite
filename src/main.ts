@@ -10,8 +10,6 @@ import './assets/css/presets.css'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - vite url import
 import mammothUrl from 'mammoth/mammoth.browser.min.js?url'
-import PPTistDirective from '@pptist/directive'
-import { i18n as pptistI18n } from '@pptist/i18n'
 import App from './App.vue'
 import { useAuthStore } from './auth/index'
 import { createAuthGuard } from './auth/router-guard'
@@ -32,7 +30,7 @@ import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
 import FilePicker from './views/FilePicker.vue'
 import DocsEditor from './views/DocsEditor.vue'
 import Login from './views/Login.vue'
-import SlidesEditor from './views/SlidesEditor.vue'
+import SlidesEditorV2 from './views/SlidesEditorV2.vue'
 import StoryEditor from './views/StoryEditor.vue'
 import Media from './views/Media.vue'
 import ImportView from './views/ImportView.vue'
@@ -112,9 +110,11 @@ const routes = [
       { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true, public: true } },
       { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true, allowGuest: true } },
       { path: 'slides', name: 'slides', component: () => import('./views/Slides.vue') },
-      { path: 'slides/new', name: 'slides-new', component: SlidesEditor, meta: { hideLayout: true } },
-      { path: 'slides/:deckId', name: 'slides-edit', component: SlidesEditor, meta: { hideLayout: true } },
-      { path: 'slides/t/:template', name: 'slides-template', component: SlidesEditor, meta: { hideLayout: true } },
+      { path: 'slides/new', redirect: '/slides-v2/new' },
+      { path: 'slides/:deckId', redirect: (to: any) => `/slides-v2/${to.params.deckId}` },
+      { path: 'slides/t/:template', redirect: '/slides-v2/new' },
+      { path: 'slides-v2/new', name: 'slides-v2-new', component: SlidesEditorV2, meta: { hideLayout: true } },
+      { path: 'slides-v2/:deckId', name: 'slides-v2-edit', component: SlidesEditorV2, meta: { hideLayout: true } },
       { path: 'stories', name: 'stories', component: () => import('./views/Stories.vue') },
       { path: 'stories/new', name: 'stories-new', component: StoryEditor, meta: { hideLayout: true } },
       { path: 'stories/:storyId', name: 'stories-edit', component: StoryEditor, meta: { hideLayout: true, public: true } },
@@ -152,8 +152,6 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
-app.use(PPTistDirective)
-app.use(pptistI18n)
 
 const authStore = useAuthStore(pinia)
 authStore.setRouter(router)
