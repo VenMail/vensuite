@@ -61,6 +61,7 @@ import {
   MenubarTrigger,
 } from '@/components/ui/menubar'
 import { useFileStore } from '@/store/files'
+import { t } from '@/i18n'
 
 interface Collaborator { name: string; selection?: any; ts?: number }
 interface Props {
@@ -234,7 +235,7 @@ function formatSelectionLabel(selection: any): string {
   <Menubar class="border-none ml-0 pl-0 flex items-center gap-2 w-full rounded-none">
     <!-- File Menu -->
     <MenubarMenu>
-      <MenubarTrigger>{{$t('Commons.text.file')}}</MenubarTrigger>
+      <MenubarTrigger>{{t('Commons.text.file')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="handleNew">
           <FileIcon class="h-4 w-4 mr-2" />
@@ -242,7 +243,7 @@ function formatSelectionLabel(selection: any): string {
         </MenubarItem>
         <MenubarItem @click="handleOpenDialog">
           <FolderIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.button.open')}}
+          {{t('Commons.button.open')}}
         </MenubarItem>
         <MenubarItem v-if="mode==='sheet'" @click="emit('import-file')">
           <UploadIcon class="h-4 w-4 mr-2" />
@@ -250,12 +251,12 @@ function formatSelectionLabel(selection: any): string {
         </MenubarItem>
         <MenubarItem @click="handleSave">
           <SaveIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.button.save')}}
+          {{t('Commons.button.save')}}
         </MenubarItem>
         <MenubarSub>
           <MenubarSubTrigger>
             <DownloadIcon class="h-4 w-4 mr-2" />
-            {{$t('Components.Menu.UnifiedMenubar.text.export_as')}}
+            {{t('Components.Menu.UnifiedMenubar.text.export_as')}}
           </MenubarSubTrigger>
           <MenubarSubContent>
             <MenubarItem @click="handleExport('pdf')">PDF</MenubarItem>
@@ -268,12 +269,12 @@ function formatSelectionLabel(selection: any): string {
         <MenubarSeparator />
         <MenubarItem @click="emit('print')">
           <PrinterIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.print')}}
+          {{t('Commons.text.print')}}
         </MenubarItem>
         <MenubarSub>
           <MenubarSubTrigger>
             <DownloadIcon class="h-4 w-4 mr-2" />
-            {{ $t('Commons.heading.recent_files') }}
+            {{ t('Commons.heading.recent_files') }}
           </MenubarSubTrigger>
           <MenubarSubContent>
             <MenubarItem v-for="file in recentFiles" :key="file.id || file.title" @click="handleOpenRecent(file.id)">
@@ -286,15 +287,15 @@ function formatSelectionLabel(selection: any): string {
 
     <!-- Edit Menu -->
     <MenubarMenu>
-      <MenubarTrigger>{{$t('Commons.heading.edit')}}</MenubarTrigger>
+      <MenubarTrigger>{{t('Commons.heading.edit')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="handleUndo">
           <UndoIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.undo')}}
+          {{t('Commons.text.undo')}}
         </MenubarItem>
         <MenubarItem @click="handleRedo">
           <RedoIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.redo')}}
+          {{t('Commons.text.redo')}}
         </MenubarItem>
         <MenubarSeparator />
         <MenubarItem @click="emit('find-replace')">
@@ -307,7 +308,7 @@ function formatSelectionLabel(selection: any): string {
     <!-- Sheet-only menus -->
     <template v-if="mode==='sheet'">
       <MenubarMenu>
-        <MenubarTrigger>{{$t('Commons.text.view')}}</MenubarTrigger>
+        <MenubarTrigger>{{t('Commons.text.view')}}</MenubarTrigger>
         <MenubarContent>
           <MenubarSub>
             <MenubarSubTrigger>
@@ -337,15 +338,15 @@ function formatSelectionLabel(selection: any): string {
           <MenubarSeparator />
           <MenubarItem @click="emit('view-zoom-in')">
             <ZoomInIcon class="h-4 w-4 mr-2" />
-            {{$t('Commons.text.zoom_in')}}
+            {{t('Commons.text.zoom_in')}}
           </MenubarItem>
           <MenubarItem @click="emit('view-zoom-out')">
             <ZoomOutIcon class="h-4 w-4 mr-2" />
-            {{$t('Commons.text.zoom_out')}}
+            {{t('Commons.text.zoom_out')}}
           </MenubarItem>
           <MenubarItem @click="emit('view-zoom-reset')">
             <RefreshCcwIcon class="h-4 w-4 mr-2" />
-            {{$t('Commons.text.reset_zoom')}}
+            {{t('Commons.text.reset_zoom')}}
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
@@ -355,19 +356,19 @@ function formatSelectionLabel(selection: any): string {
         <MenubarContent>
           <MenubarItem @click="emit('format-bold')">
             <BoldIcon class="h-4 w-4 mr-2" />
-            {{$t('Commons.text.bold')}}
+            {{t('Commons.text.bold')}}
           </MenubarItem>
           <MenubarItem @click="emit('format-italic')">
             <ItalicIcon class="h-4 w-4 mr-2" />
-            {{$t('Commons.text.italic')}}
+            {{t('Commons.text.italic')}}
           </MenubarItem>
           <MenubarItem @click="emit('format-underline')">
             <UnderlineIcon class="h-4 w-4 mr-2" />
-            {{$t('Commons.text.underline')}}
+            {{t('Commons.text.underline')}}
           </MenubarItem>
           <MenubarItem @click="emit('format-strike')">
             <StrikethroughIcon class="h-4 w-4 mr-2" />
-            {{$t('Commons.text.strikethrough')}}
+            {{t('Commons.text.strikethrough')}}
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem @click="emit('font-color')">
@@ -490,7 +491,7 @@ function formatSelectionLabel(selection: any): string {
           <MenubarSub>
             <MenubarSubTrigger>
               <SortAscIcon class="h-4 w-4 mr-2" />
-              {{$t('Commons.button.sort')}}
+              {{t('Commons.button.sort')}}
             </MenubarSubTrigger>
             <MenubarSubContent>
               <MenubarItem @click="emit('data-sort')">
@@ -505,7 +506,7 @@ function formatSelectionLabel(selection: any): string {
           </MenubarSub>
           <MenubarItem @click="emit('data-filter')">
             <FilterIcon class="h-4 w-4 mr-2" />
-            {{$t('Commons.text.filter')}}
+            {{t('Commons.text.filter')}}
           </MenubarItem>
           <MenubarItem @click="emit('data-group')">
             <GroupIcon class="h-4 w-4 mr-2" />
@@ -533,11 +534,11 @@ function formatSelectionLabel(selection: any): string {
       </MenubarMenu>
 
       <MenubarMenu>
-        <MenubarTrigger>{{$t('Commons.button.integrations')}}</MenubarTrigger>
+        <MenubarTrigger>{{t('Commons.button.integrations')}}</MenubarTrigger>
         <MenubarContent>
           <MenubarItem @click="openIntegrations">
             <PlugIcon class="h-4 w-4 mr-2" />
-            {{$t('Menu.UnifiedMenubar.text.integrate_this_sheet')}}
+            {{t('Menu.UnifiedMenubar.text.integrate_this_sheet')}}
           </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
@@ -563,21 +564,21 @@ function formatSelectionLabel(selection: any): string {
 
     <!-- Collaboration/Help -->
     <MenubarMenu>
-      <MenubarTrigger class="text-sm font-medium text-gray-700 hover:text-gray-900">{{$t('Commons.text.collaboration')}}</MenubarTrigger>
+      <MenubarTrigger class="text-sm font-medium text-gray-700 hover:text-gray-900">{{t('Commons.text.collaboration')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="toggleChat">
           <MessageCircleIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.toggle_chat')}}
+          {{t('Commons.text.toggle_chat')}}
         </MenubarItem>
       </MenubarContent>
     </MenubarMenu>
 
     <MenubarMenu>
-      <MenubarTrigger>{{$t('Commons.text.help')}}</MenubarTrigger>
+      <MenubarTrigger>{{t('Commons.text.help')}}</MenubarTrigger>
       <MenubarContent>
         <MenubarItem @click="emit('open-help')">
           <HelpCircleIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.text.help_center')}}
+          {{t('Commons.text.help_center')}}
         </MenubarItem>
         <MenubarItem @click="emit('open-about')">
           <InfoIcon class="h-4 w-4 mr-2" />
