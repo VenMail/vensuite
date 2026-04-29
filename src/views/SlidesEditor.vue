@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="slides-editor-shell">
     <!-- Title bar -->
     <header class="slides-editor-header">
@@ -31,12 +31,11 @@
       </div>
     </header>
 
-    <!-- PPTist editor fills remaining space -->
+    <!-- Avnac editor fills remaining space -->
     <main class="slides-editor-body">
-      <PPTistHost
-        ref="pptistRef"
+      <AvnacHost
+        ref="avnacRef"
         :initial-slides="initialSlides"
-        :initial-theme="initialTheme"
         @ready="onEditorReady"
         @change="onSlidesChange"
       />
@@ -75,18 +74,17 @@ import { useRoute, useRouter } from 'vue-router'
 import { useFileStore } from '@/store/files'
 import { toast } from '@/composables/useToast'
 import ShareCard from '@/components/ShareCard.vue'
-import PPTistHost from '@/components/slides/PPTistHost.vue'
-import type { Slide, SlideTheme } from '@pptist/types/slides'
+import AvnacHost from '@/components/slides/AvnacHost.vue'
+import type { AvnacDocumentV1 } from '@avnac/lib/avnac-document'
 import type { ShareMember, ShareLevel } from '@/utils/sharing'
-import { nanoid } from 'nanoid'
 
 const route = useRoute()
 const router = useRouter()
 const fileStore = useFileStore()
 
-// â”€â”€â”€ Refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Refs ─────────────────────────────────────────────────────────────────────
 
-const pptistRef = ref<InstanceType<typeof PPTistHost> | null>(null)
+const avnacRef = ref<InstanceType<typeof AvnacHost> | null>(null)
 const titleEl = ref<HTMLElement | null>(null)
 
 const title = ref('Untitled Presentation')
@@ -99,10 +97,9 @@ const shareMembers = ref<ShareMember[]>([])
 const shareOpen = ref(false)
 const editorReady = ref(false)
 
-const initialSlides = ref<Slide[]>([])
-const initialTheme = ref<Partial<SlideTheme>>({})
+const initialSlides = ref<AvnacDocumentV1[]>([])
 
-// â”€â”€â”€ Computed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Computed ─────────────────────────────────────────────────────────────────
 
 const shareLink = computed(() => {
   const id = deckId.value || (route.params.deckId as string)
@@ -111,7 +108,7 @@ const shareLink = computed(() => {
   return `${base}/slides/${id}`
 })
 
-// â”€â”€â”€ Autosave â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Autosave ─────────────────────────────────────────────────────────────────
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -126,12 +123,10 @@ async function persistDeck() {
   isSaving.value = true
 
   try {
-    const slides = pptistRef.value?.getSlides() ?? []
-    const theme = pptistRef.value?.getTheme()
+    const slides = avnacRef.value?.getSlides() ?? []
     const payload = {
-      version: 2 as const,
+      version: 3 as const,
       title: title.value,
-      theme,
       slides,
     }
     const content = JSON.stringify(payload)
@@ -163,17 +158,17 @@ async function handleManualSave() {
   toast.success('Saved')
 }
 
-// â”€â”€â”€ Editor events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Editor events ────────────────────────────────────────────────────────────
 
 function onEditorReady() {
   editorReady.value = true
 }
 
-function onSlidesChange(_slides: Slide[]) {
+function onSlidesChange(_slides: AvnacDocumentV1[]) {
   scheduleSave()
 }
 
-// â”€â”€â”€ Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Title ────────────────────────────────────────────────────────────────────
 
 function onTitleBlur(e: Event) {
   const newTitle = (e.target as HTMLElement).innerText.trim() || 'Untitled Presentation'
@@ -184,14 +179,14 @@ function onTitleBlur(e: Event) {
   }
 }
 
-// â”€â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Navigation ───────────────────────────────────────────────────────────────
 
 function goBack() {
   if (hasUnsaved.value) persistDeck()
   router.push('/slides')
 }
 
-// â”€â”€â”€ Sharing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Sharing ──────────────────────────────────────────────────────────────────
 
 async function copyShareLink() {
   if (shareLink.value) {
@@ -248,7 +243,7 @@ async function _persistSharing() {
   }
 }
 
-// â”€â”€â”€ Load on mount â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Load on mount ────────────────────────────────────────────────────────────
 
 async function loadDeck(id: string) {
   try {
@@ -263,14 +258,12 @@ async function loadDeck(id: string) {
     if (raw) {
       try {
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
-        if (parsed?.version === 2 && Array.isArray(parsed.slides)) {
+        if (parsed?.version === 3 && Array.isArray(parsed.slides)) {
           initialSlides.value = parsed.slides
-          if (parsed.theme) initialTheme.value = parsed.theme
         }
       } catch { /* ignore malformed */ }
     }
 
-    // Load sharing members
     const sharingInfo = (doc as any).sharing_info ?? (doc as any).sharing
     if (typeof sharingInfo === 'string' && sharingInfo) {
       shareMembers.value = sharingInfo.split(',').map((entry: string) => {
@@ -283,27 +276,14 @@ async function loadDeck(id: string) {
   }
 }
 
-async function createNewDeck(_templateSlug?: string) {
-  const defaultSlide: Slide = {
-    id: nanoid(10),
-    elements: [],
-    background: { type: 'solid', color: '#ffffff' },
-  }
-  initialSlides.value = [defaultSlide]
-}
-
 onMounted(async () => {
   const id = route.params.deckId as string | undefined
-  const template = route.params.template as string | undefined
 
   if (id) {
     await loadDeck(id)
     deckId.value = id
-  } else if (template) {
-    await createNewDeck(template)
-  } else {
-    await createNewDeck()
   }
+  // AvnacHost creates a default slide when initialSlides is empty
 })
 
 onBeforeUnmount(() => {

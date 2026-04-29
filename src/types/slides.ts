@@ -1,11 +1,12 @@
-export type { Slide, SlideTheme, PPTElement, SlideBackground } from '@pptist/types/slides'
+import type { AvnacDocumentV1 } from '@avnac/lib/avnac-document'
 
-/** Payload stored in the backend `content` field (version 2 = PPTist JSON) */
-export interface PPTistDeckPayload {
-  version: 2
+export type { AvnacDocumentV1 }
+
+/** Payload stored in the backend content field (version 3 = avnac JSON) */
+export interface AvnacDeckPayload {
+  version: 3
   title: string
-  theme?: import('@pptist/types/slides').SlideTheme
-  slides: import('@pptist/types/slides').Slide[]
+  slides: AvnacDocumentV1[]
 }
 
 /** Summary object used in the slide deck list view */
@@ -18,8 +19,6 @@ export interface SlideDeckSummary {
   shared: boolean
   shareLink?: string
   thumbnail?: string
-  /** Raw first-slide data for thumbnail generation */
-  firstSlide?: import('@pptist/types/slides').Slide
 }
 
 export interface SlideImportStatus {

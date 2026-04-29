@@ -27,6 +27,6 @@
     "ignoreDeprecations": "5.0",
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.d.ts", "vue.shim.d.ts"],
-  "exclude": ["node_modules", "src/pptist/**"],
+  "exclude": ["node_modules"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

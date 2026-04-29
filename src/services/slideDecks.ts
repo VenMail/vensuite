@@ -1,28 +1,26 @@
-﻿/**
- * Slide Decks Service â€” PPTist-backed
+/**
+ * Slide Decks Service — avnac-backed
  * Fetches SlideDeckSummary list from /api/v1/app-files (file_type: pptx).
  * Persistence (create/save) is handled directly by SlidesEditor via fileStore.
  */
 
 import { ref, computed } from 'vue'
 import { apiClient } from './apiClient'
-import type { SlideDeckSummary, PPTistDeckPayload } from '@/types/slides'
+import type { SlideDeckSummary, AvnacDeckPayload } from '@/types/slides'
 
 const slideDecksCache = ref<Map<string, SlideDeckSummary>>(new Map())
 const isLoadingList = ref(false)
 
 function parseSummaryFromApiItem(item: any): SlideDeckSummary {
   let slideCount = 0
-  let firstSlide
 
   if (item.content) {
     try {
-      const payload: PPTistDeckPayload = typeof item.content === 'string'
+      const payload: AvnacDeckPayload = typeof item.content === 'string'
         ? JSON.parse(item.content)
         : item.content
-      if (payload?.version === 2 && Array.isArray(payload.slides)) {
+      if (payload?.version === 3 && Array.isArray(payload.slides)) {
         slideCount = payload.slides.length
-        firstSlide = payload.slides[0]
       }
     } catch { /* non-fatal */ }
   }
@@ -39,7 +37,6 @@ function parseSummaryFromApiItem(item: any): SlideDeckSummary {
     shared,
     shareLink: shared ? `${shareBase}/slides/${item.id}` : undefined,
     thumbnail: item.thumbnail_url || undefined,
-    firstSlide,
   }
 }
 
@@ -86,8 +83,8 @@ export async function fetchSlideDeck(deckId: string): Promise<SlideDeckSummary |
 /** Create a new empty deck via the API and return its summary */
 export async function createSlideDeck(title: string = 'New Presentation'): Promise<SlideDeckSummary | null> {
   try {
-    const payload: PPTistDeckPayload = {
-      version: 2,
+    const payload: AvnacDeckPayload = {
+      version: 3,
       title,
       slides: [],
     }
