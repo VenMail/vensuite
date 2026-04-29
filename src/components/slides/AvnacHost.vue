@@ -61,6 +61,8 @@
             @opacity-change="onOpacityChange"
             @shadow-change="onShadowChange"
             @shadow-toggle="onShadowToggle"
+            @open-animation-panel="activePanel = 'animations'"
+            @edit-chart-data="onEditChartData"
             @delete="onDeleteSelected"
           />
         </template>
@@ -93,6 +95,10 @@
               :open="activePanel === 'apps'"
               @close="activePanel = null"
               @template-insert="onTemplateInsert"
+            />
+            <EditorAnimationPanel
+              v-if="activePanel === 'animations'"
+              @close="activePanel = null"
             />
             <div v-if="activePanel === 'charts'" class="avnac-side-panel">
               <ChartDataPanel />
@@ -138,6 +144,9 @@
               @change="(v: number) => editorRef?.setZoom(v)"
               @fit-request="() => editorRef?.fitToViewport()"
             />
+            <button class="avnac-icon-btn" title="Present (F5)" @click="presentModeOpen = true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
             <button class="avnac-icon-btn" title="Export PPTX" @click="onExportPptx">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
@@ -152,7 +161,17 @@
         </template>
       </CanvasEditor>
 
-      <div v-if="!ready" class="avnac-host__loading">
+      <!-- Chart data dialog — teleported to body, visible when chartsStore.editingChartId set -->
+    <ChartDataDialog />
+
+    <!-- Presentation mode — full screen, teleported to body -->
+    <PresentMode
+      v-model="presentModeOpen"
+      :slides="slides"
+      :start-index="currentIndex"
+    />
+
+    <div v-if="!ready" class="avnac-host__loading">
         <div class="avnac-host__spinner" />
         <span>Loading editor…</span>
       </div>
@@ -179,7 +198,10 @@ import EditorLayersPanel from '@avnac/components/panels/EditorLayersPanel.vue'
 import EditorImagesPanel from '@avnac/components/panels/EditorImagesPanel.vue'
 import EditorUploadsPanel from '@avnac/components/panels/EditorUploadsPanel.vue'
 import EditorAppsPanel from '@avnac/components/panels/EditorAppsPanel.vue'
+import EditorAnimationPanel from '@avnac/components/panels/EditorAnimationPanel.vue'
 import ChartDataPanel from '@avnac/components/charts/ChartDataPanel.vue'
+import ChartDataDialog from '@avnac/components/charts/ChartDataDialog.vue'
+import PresentMode from '@avnac/components/present/PresentMode.vue'
 import InfographicPanel from '@avnac/components/infographics/InfographicPanel.vue'
 import DiagramPanel from '@avnac/components/diagrams/DiagramPanel.vue'
 import VectorBoardWorkspace from '@avnac/components/panels/VectorBoardWorkspace.vue'
@@ -195,8 +217,10 @@ import type { FabricShadowUi } from '@avnac/lib/avnac-fabric-shadow'
 import type { TextFormatToolbarValues } from '@avnac/stores/canvas'
 import type { AvnacInfographicData } from '@avnac/lib/avnac-infographic'
 import type { AvnacDiagramData } from '@avnac/lib/avnac-diagram'
+import { ulidGroupId } from '@avnac/lib/avnac-logical-group'
 import type { VectorBoardDocument } from '@avnac/lib/avnac-vector-board-document'
 import { useCanvasStore } from '@avnac/stores/canvas'
+import { useChartsStore } from '@avnac/stores/charts'
 import { emptyVectorBoardDocument } from '@avnac/lib/avnac-vector-board-document'
 import { exportDocumentsToPptx } from '@avnac/pptx/export'
 import { importPptxFromInput } from '@avnac/pptx/import'
@@ -224,12 +248,14 @@ const emit = defineEmits<{
 
 const editorRef = ref<InstanceType<typeof CanvasEditor> | null>(null)
 const ready = ref(false)
+const chartsStore = useChartsStore()
 const slides = ref<AvnacDocumentV1[]>([])
 const currentIndex = ref(0)
 const initialDoc = ref<AvnacDocumentV1 | undefined>(undefined)
 const activePanel = ref<EditorSidebarPanelId | null>(null)
 const canvasStore = useCanvasStore()
 const vectorBoardDoc = ref<VectorBoardDocument>(emptyVectorBoardDocument())
+const presentModeOpen = ref(false)
 
 const currentNotes = computed(() => props.notes?.[currentIndex.value] ?? '')
 
@@ -678,6 +704,24 @@ function onShadowToggle() {
   })
 }
 
+function onEditChartData() {
+  const canvas = getCanvas()
+  if (!canvas) return
+  const active = canvas.getActiveObject() as any
+  if (!active) return
+  // Find first group member with avnacChartData
+  const groupId = active.avnacGroupId
+  if (groupId) {
+    import('@avnac/lib/avnac-logical-group').then(({ findGroupMembers }) => {
+      const members = findGroupMembers(canvas, groupId)
+      const source = members.find((m: any) => m.avnacChartData)
+      if (source) chartsStore.openChartEditor(groupId, (source as any).avnacChartData)
+    })
+  } else if (active.avnacChartData) {
+    chartsStore.openChartEditor(active.avnacLayerId ?? 'chart', active.avnacChartData)
+  }
+}
+
 function onDeleteSelected() {
   const canvas = getCanvas()
   if (!canvas) return
@@ -738,41 +782,91 @@ async function onImportPptx() {
   }
 }
 
+// ─── Flat spec → Fabric object ──────────────────────────────────────────────
+// Build a single Fabric object from a flat spec, applying all group-tag fields.
+function specToFabricObject(s: any, mod: any): any | null {
+  const commonTag = {
+    avnacGroupId: s.avnacGroupId,
+    avnacGroupKind: s.avnacGroupKind,
+    avnacGroupRole: s.avnacGroupRole,
+    avnacGroupItemIndex: s.avnacGroupItemIndex,
+  }
+  // Textbox children are selectable + evented (double-click enters editing)
+  const textSelectable = { selectable: true, evented: true }
+  // Shape/decoration children are non-interactive
+  const shapeSelectable = { selectable: false, evented: false }
+
+  if (s.type === 'Rect') {
+    return new mod.Rect({ left: s.left, top: s.top, width: s.width, height: s.height, fill: s.fill ?? '#ccc', rx: s.rx ?? 0, ry: s.ry ?? 0, stroke: s.stroke, strokeWidth: s.strokeWidth ?? 0, ...shapeSelectable, ...commonTag })
+  }
+  if (s.type === 'Polygon' && s.points) {
+    return new mod.Polygon(s.points, { fill: s.fill ?? '#ccc', stroke: s.stroke, strokeWidth: s.strokeWidth ?? 0, ...shapeSelectable, ...commonTag })
+  }
+  if (s.type === 'Ellipse') {
+    return new mod.Ellipse({ left: s.left, top: s.top, rx: s.rx ?? s.width / 2, ry: s.ry ?? s.height / 2, fill: s.fill ?? '#ccc', stroke: s.stroke, strokeWidth: s.strokeWidth ?? 0, ...shapeSelectable, ...commonTag })
+  }
+  if (s.type === 'Circle') {
+    return new mod.Circle({ left: s.left, top: s.top, radius: s.radius ?? 10, fill: s.fill ?? '#ccc', strokeWidth: 0, ...shapeSelectable, ...commonTag })
+  }
+  if (s.type === 'Textbox' && s.text) {
+    return new mod.Textbox(s.text, { left: s.left, top: s.top, width: s.width, fontSize: s.fontSize ?? 12, fontWeight: s.fontWeight ?? 'normal', textAlign: s.textAlign ?? 'left', fill: s.fill ?? '#262626', padding: 0, ...textSelectable, ...commonTag })
+  }
+  if (s.type === 'Line' && s.x1 !== undefined) {
+    return new mod.Line([s.x1, s.y1, s.x2, s.y2], { stroke: s.stroke ?? '#888', strokeWidth: s.strokeWidth ?? 1.5, ...shapeSelectable, ...commonTag })
+  }
+  return null
+}
+
+// Center flat group members so the group's bounding box lands at artboard center.
+function centerFlatGroup(objects: any[], artW: number, artH: number): void {
+  if (!objects.length) return
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const o of objects) {
+    const l = o.left ?? 0, t = o.top ?? 0
+    const w = o.width ?? 0, h = o.height ?? 0
+    minX = Math.min(minX, l)
+    minY = Math.min(minY, t)
+    maxX = Math.max(maxX, l + w)
+    maxY = Math.max(maxY, t + h)
+  }
+  const gw = maxX - minX, gh = maxY - minY
+  const dx = artW / 2 - minX - gw / 2
+  const dy = artH / 2 - minY - gh / 2
+  for (const o of objects) {
+    o.set({ left: (o.left ?? 0) + dx, top: (o.top ?? 0) + dy })
+    o.setCoords?.()
+  }
+}
+
 // ─── Insert infographic / diagram ───────────────────────────────────────────
-// Helpers to create child objects. Shape children are non-interactive (structural).
-// Textbox children are selectable+evented so they can be double-clicked to edit text.
 function onInsertInfographic(data: AvnacInfographicData) {
   const canvas = getCanvas()
   if (!canvas) return
+  const groupId = ulidGroupId()
   Promise.all([import('@avnac/lib/avnac-infographic-render'), import('fabric')]).then(([{ renderInfographic }, mod]) => {
-    const specs = renderInfographic(data)
-    const children: any[] = []
+    const specs = renderInfographic(data, groupId)
+    const objects: any[] = []
     for (const s of specs) {
-      if (s.type === 'Rect') {
-        children.push(new (mod as any).Rect({ left: s.left, top: s.top, width: s.width, height: s.height, fill: s.fill ?? '#ccc', rx: s.rx ?? 0, ry: s.ry ?? 0, strokeWidth: 0, selectable: false, evented: false }))
-      } else if (s.type === 'Polygon' && s.points) {
-        children.push(new (mod as any).Polygon(s.points, { fill: s.fill ?? '#ccc', strokeWidth: 0, selectable: false, evented: false }))
-      } else if (s.type === 'Ellipse') {
-        children.push(new (mod as any).Ellipse({ left: s.left, top: s.top, rx: s.rx ?? s.width / 2, ry: s.ry ?? s.height / 2, fill: s.fill ?? '#ccc', strokeWidth: 0, selectable: false, evented: false }))
-      } else if (s.type === 'Circle') {
-        children.push(new (mod as any).Circle({ left: s.left, top: s.top, radius: s.radius ?? 10, fill: s.fill ?? '#ccc', strokeWidth: 0, selectable: false, evented: false }))
-      } else if (s.type === 'Textbox' && s.text) {
-        // Textbox children are editable — selectable + evented so double-click enters editing
-        children.push(new (mod as any).Textbox(s.text, { left: s.left, top: s.top, width: s.width, fontSize: s.fontSize ?? 12, fontWeight: s.fontWeight ?? 'normal', textAlign: s.textAlign ?? 'left', fill: s.fill ?? '#262626', selectable: true, evented: true }))
-      }
+      const obj = specToFabricObject(s, mod)
+      if (obj) objects.push(obj)
     }
     const doc = editorRef.value?.getDocument()
     const artW = doc?.artboard.width ?? 4000
     const artH = doc?.artboard.height ?? 2250
-    const group = new (mod as any).Group(children, {
-      left: artW / 2, top: artH / 2,
-      originX: 'center', originY: 'center',
-      subTargetCheck: true,   // allow clicking through to textbox children
-      avnacShape: { kind: 'infographic', template: data.template },
-      avnacInfographic: data,
-    })
-    canvas.add(group)
-    canvas.setActiveObject(group)
+    centerFlatGroup(objects, artW, artH)
+
+    // First member carries the source-of-truth data for re-renders
+    if (objects[0]) objects[0].avnacInfographicData = data
+
+    for (const obj of objects) canvas.add(obj)
+
+    // Select all members as a logical group
+    if (objects.length > 1) {
+      const sel = new (mod as any).ActiveSelection(objects, { canvas })
+      canvas.setActiveObject(sel)
+    } else if (objects[0]) {
+      canvas.setActiveObject(objects[0])
+    }
     canvas.requestRenderAll()
   })
 }
@@ -780,33 +874,30 @@ function onInsertInfographic(data: AvnacInfographicData) {
 function onInsertDiagram(data: AvnacDiagramData) {
   const canvas = getCanvas()
   if (!canvas) return
+  const groupId = ulidGroupId()
   Promise.all([import('@avnac/lib/avnac-diagram-render'), import('fabric')]).then(([{ renderDiagram }, mod]) => {
-    const specs = renderDiagram(data)
-    const children: any[] = []
+    const specs = renderDiagram(data, groupId)
+    const objects: any[] = []
     for (const s of specs) {
-      if (s.type === 'Rect') {
-        children.push(new (mod as any).Rect({ left: s.left, top: s.top, width: s.width, height: s.height, fill: s.fill ?? '#4472c4', rx: s.rx ?? 0, ry: s.ry ?? 0, strokeWidth: 0, selectable: false, evented: false }))
-      } else if (s.type === 'Polygon' && s.points) {
-        children.push(new (mod as any).Polygon(s.points, { fill: s.fill ?? '#ccc', strokeWidth: 0, selectable: false, evented: false }))
-      } else if (s.type === 'Textbox' && s.text) {
-        // Textbox children are editable
-        children.push(new (mod as any).Textbox(s.text, { left: s.left, top: s.top, width: s.width, fontSize: s.fontSize ?? 12, fontWeight: s.fontWeight ?? 'bold', textAlign: s.textAlign ?? 'center', fill: s.fill ?? '#ffffff', selectable: true, evented: true }))
-      } else if (s.type === 'Line' && s.x1 !== undefined) {
-        children.push(new (mod as any).Line([s.x1, s.y1!, s.x2!, s.y2!], { stroke: s.stroke ?? '#888', strokeWidth: s.strokeWidth ?? 1.5, selectable: false, evented: false }))
-      }
+      const obj = specToFabricObject(s, mod)
+      if (obj) objects.push(obj)
     }
-    const doc2 = editorRef.value?.getDocument()
-    const artW2 = doc2?.artboard.width ?? 4000
-    const artH2 = doc2?.artboard.height ?? 2250
-    const group = new (mod as any).Group(children, {
-      left: artW2 / 2, top: artH2 / 2,
-      originX: 'center', originY: 'center',
-      subTargetCheck: true,   // allow clicking through to textbox children
-      avnacShape: { kind: 'diagram' },
-      avnacDiagram: data,
-    })
-    canvas.add(group)
-    canvas.setActiveObject(group)
+    const doc = editorRef.value?.getDocument()
+    const artW = doc?.artboard.width ?? 4000
+    const artH = doc?.artboard.height ?? 2250
+    centerFlatGroup(objects, artW, artH)
+
+    // First member carries source-of-truth data
+    if (objects[0]) objects[0].avnacDiagramData = data
+
+    for (const obj of objects) canvas.add(obj)
+
+    if (objects.length > 1) {
+      const sel = new (mod as any).ActiveSelection(objects, { canvas })
+      canvas.setActiveObject(sel)
+    } else if (objects[0]) {
+      canvas.setActiveObject(objects[0])
+    }
     canvas.requestRenderAll()
   })
 }
