@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft, BookOpen } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useRouter, useRoute } from 'vue-router'
+import { t } from '@/i18n'
 import {
   Dialog,
   DialogContent,
@@ -144,7 +145,7 @@ function createNewFile(type: string, template?: string) {
             v-if="isMobile"
             class="relative inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
             @click="goToVenmail"
-            :aria-label="$t('Views.Home.link.back_to_venmail')"
+            :aria-label="t('Views.Home.link.back_to_venmail')"
           >
             <img src="/manifest-icon-512.maskable.png" alt="VenMail" class="w-6 h-6 rounded-sm" />
             <div class="absolute -top-1 -left-1 w-4 h-4 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-sm">
@@ -159,7 +160,7 @@ function createNewFile(type: string, template?: string) {
             @click="goToVenmail"
           >
             <ArrowLeft class="h-4 w-4" />
-            {{$t('Views.Home.link.back_to_venmail')}}
+            {{t('Views.Home.link.back_to_venmail')}}
           </button>
         </div>
 
@@ -172,12 +173,12 @@ function createNewFile(type: string, template?: string) {
                 :class="props.isCollapsed ? 'w-8' : 'flex-1'"
               >
                 <Plus class="h-5 w-5" :class="props.isCollapsed ? '' : 'mr-2'" />
-                <span v-if="!props.isCollapsed">{{$t('Commons.button.new')}}</span>
+                <span v-if="!props.isCollapsed">{{t('Commons.button.new')}}</span>
               </button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{{$t('Views.Sidebar.heading.choose_a_template')}}</DialogTitle>
+                <DialogTitle>{{t('Views.Sidebar.heading.choose_a_template')}}</DialogTitle>
               </DialogHeader>
               <Tabs default-value="Documents">
                 <TabsList>

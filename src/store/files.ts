@@ -1001,17 +1001,22 @@ export const useFileStore = defineStore("files", {
       if (!id || typeof id !== 'string' || id.trim() === '') {
         return false;
       }
-      
+
+      // Reject placeholder IDs
+      if (id === 'new') {
+        return false;
+      }
+
       // Check if it's a valid UUID
       if (this.isLocalDocument(id)) {
         return true;
       }
-      
+
       // Server IDs should be numeric or alphanumeric without special patterns like "1-251209-2255-177110-247"
       // Valid server IDs are typically just numbers or simple alphanumeric strings
       const validServerIdRegex = /^[a-zA-Z0-9_-]+$/;
       const invalidPatternRegex = /^\d+-\d+-\d+-\d+-\d+$/; // Matches malformed IDs like "1-251209-2255-177110-247"
-      
+
       return validServerIdRegex.test(id) && !invalidPatternRegex.test(id);
     },
 

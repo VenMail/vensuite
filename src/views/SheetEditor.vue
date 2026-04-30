@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick, onMounted, onUnmounted, provide } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import type { IVTableSheetOptions } from '@visactor/vtable-sheet'
 import { ContextMenuPlugin, DEFAULT_BODY_MENU_ITEMS } from '@visactor/vtable-plugins'
 
 import '@/assets/index.css'
-import { MessageSquareIcon, XIcon, ArrowLeft, Share2, FileTextIcon, Moon, Sun } from 'lucide-vue-next'
+import { MessageSquareIcon, XIcon, ArrowLeft, Share2, FileTextIcon } from 'lucide-vue-next'
 
 import UnifiedMenubar from '@/components/menu/UnifiedMenubar.vue'
 import VTableSheet from '@/components/VTableSheet.vue'
@@ -50,46 +50,6 @@ import { useSheetCharts } from '@/composables/useSheetCharts'
 
 const route = useRoute()
 const router = useRouter()
-
-// Theme handling
-const THEME_STORAGE_KEY = 'theme'
-const THEME_EVENT = 'theme-change'
-const isDarkMode = ref(false)
-
-function syncThemeFromStorage() {
-  const stored = localStorage.getItem(THEME_STORAGE_KEY)
-  if (stored === 'light' || stored === 'dark') {
-    applyTheme(stored)
-  } else {
-    applyTheme('light')
-  }
-}
-
-function applyTheme(mode: 'light' | 'dark') {
-  const isDark = mode === 'dark'
-  isDarkMode.value = isDark
-  document.documentElement.classList.toggle('dark', isDark)
-}
-
-function toggleTheme() {
-  const mode: 'light' | 'dark' = isDarkMode.value ? 'light' : 'dark'
-  applyTheme(mode)
-  localStorage.setItem(THEME_STORAGE_KEY, mode)
-  window.dispatchEvent(new CustomEvent<'light' | 'dark'>(THEME_EVENT, { detail: mode }))
-}
-
-// Provide theme context for child components (UserProfile)
-provide('theme', {
-  isDark: computed(() => isDarkMode.value),
-  toggleTheme,
-})
-
-function handleExternalTheme(event: Event) {
-  const detail = (event as CustomEvent<'light' | 'dark'>).detail
-  if (detail === 'light' || detail === 'dark') {
-    applyTheme(detail)
-  }
-}
 
 type VersionHistoryItem = {
   id: string;
@@ -158,6 +118,9 @@ const debouncedHandleTitleChange = useDebounceFn(() => {
 // VTable refs
 const vtableRef = ref<InstanceType<typeof VTableSheet> | null>(null)
 const vtableInstance = ref<any>(null)
+
+// Yjs cleanup function
+let yjsDestroyFn: (() => void) | null = null
 
 // Initialize composables that need vtableRef
 const formatting = useSheetFormatting(vtableRef) as any
@@ -542,12 +505,18 @@ function onSheetReady(event: { instance: any }) {
 
   const routeId = route.params.id as string
   if (routeId) {
-    useSheetYjsBinding({
+    // Clean up previous Yjs binding if exists
+    if (yjsDestroyFn) {
+      yjsDestroyFn()
+      yjsDestroyFn = null
+    }
+    const binding = useSheetYjsBinding({
       vtableInstance: event.instance,
       routeId,
       userId: collaboration.userId.value,
       userName: collaboration.userName.value,
     })
+    yjsDestroyFn = binding.destroy
   }
 }
 
@@ -1183,10 +1152,6 @@ async function createFormFromQuestions() {
 
 // Lifecycle hooks
 onMounted(async () => {
-  // Sync theme from localStorage before loading data
-  syncThemeFromStorage()
-  window.addEventListener(THEME_EVENT, handleExternalTheme as EventListener)
-  
   // Load data based on route
   if (route.params.template) {
     // Handle template route
@@ -1194,7 +1159,8 @@ onMounted(async () => {
     
     // Special case: "new" template means create new document
     if (template === 'new') {
-      const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
+      const initialContent = JSON.stringify(DEFAULT_WORKBOOK_DATA)
+      const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet', initialContent)
 
       if (!newDoc || !newDoc.id) {
         console.error('Failed to create document - invalid response:', newDoc)
@@ -1244,8 +1210,9 @@ onMounted(async () => {
       data.value = loaded
     }
   } else {
-    // Create new sheet (match old implementation exactly)
-    const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
+    // Create new sheet with initial content so backend saves it properly
+    const initialContent = JSON.stringify(DEFAULT_WORKBOOK_DATA)
+    const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet', initialContent)
     
     if (!newDoc || !newDoc.id) {
       console.error('Failed to create document - invalid response:', newDoc)
@@ -1301,8 +1268,11 @@ onUnmounted(() => {
   // Cleanup keyboard shortcuts
   ;(window as any).__sheetKeyboardCleanup?.()
   delete (window as any).__sheetKeyboardCleanup
-  // Cleanup theme event listener
-  window.removeEventListener(THEME_EVENT, handleExternalTheme as EventListener)
+  // Cleanup Yjs binding
+  if (yjsDestroyFn) {
+    yjsDestroyFn()
+    yjsDestroyFn = null
+  }
 })
 
 onBeforeRouteLeave(async (_to, _from, next) => {
@@ -1442,18 +1412,6 @@ function onChartAction(key: string) {
           </span>
         </Button>
 
-        <!-- Theme Toggle -->
-        <button
-          @click="toggleTheme"
-          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
-          <component 
-            :is="isDarkMode ? Sun : Moon" 
-            class="h-5 w-5"
-            :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'" 
-          />
-        </button>
-
         <UserProfile :is-mobile="false" />
       </div>
     </div>
@@ -1521,7 +1479,7 @@ function onChartAction(key: string) {
     />
 
     <!-- Main Content -->
-    <div class="flex-1 relative overflow-hidden">
+    <div class="flex-1 overflow-hidden">
       <!-- Loading State -->
       <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-10">
         <div class="text-center">
@@ -1564,7 +1522,7 @@ function onChartAction(key: string) {
         @ready="onSheetReady"
         @change="onSheetChange"
         @chart-action="onChartAction"
-        class="w-full h-full"
+        class="w-full h-full bg-white dark:bg-gray-900"
       />
     </div>
 
@@ -1698,7 +1656,7 @@ function onChartAction(key: string) {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Validation Type
             </label>
-            <select v-model="formatting.validationType" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <select v-model="formatting.validationType" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
               <option value="list">List</option>
               <option value="whole">Whole Number</option>
               <option value="decimal">Decimal</option>
@@ -1712,7 +1670,7 @@ function onChartAction(key: string) {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Operator
             </label>
-            <select v-model="formatting.validationOperator" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <select v-model="formatting.validationOperator" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
               <option value="between">Between</option>
               <option value="notBetween">Not Between</option>
               <option value="equal">Equal To</option>
@@ -1726,14 +1684,14 @@ function onChartAction(key: string) {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Value 1
             </label>
-            <input v-model="formatting.validationValue1" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+            <input v-model="formatting.validationValue1" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div v-if="formatting.validationOperator === 'between' || formatting.validationOperator === 'notBetween'">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Value 2
             </label>
-            <input v-model="formatting.validationValue2" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+            <input v-model="formatting.validationValue2" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div class="flex gap-2">
@@ -1760,30 +1718,30 @@ function onChartAction(key: string) {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Find
             </label>
-            <input v-model="dataTools.findText" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+            <input v-model="dataTools.findText" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Replace With
             </label>
-            <input v-model="dataTools.replaceText" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+            <input v-model="dataTools.replaceText" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div class="space-y-2">
             <label class="flex items-center gap-2">
               <input v-model="dataTools.matchCase" type="checkbox" class="rounded" />
-              <span class="text-sm text-gray-900 dark:text-gray-100">Match Case</span>
+              <span class="text-sm">Match Case</span>
             </label>
             
             <label class="flex items-center gap-2">
               <input v-model="dataTools.matchWholeWord" type="checkbox" class="rounded" />
-              <span class="text-sm text-gray-900 dark:text-gray-100">Match Whole Word</span>
+              <span class="text-sm">Match Whole Word</span>
             </label>
             
             <label class="flex items-center gap-2">
               <input v-model="dataTools.useRegex" type="checkbox" class="rounded" />
-              <span class="text-sm text-gray-900 dark:text-gray-100">Use Regular Expression</span>
+              <span class="text-sm">Use Regular Expression</span>
             </label>
           </div>
           
@@ -1814,7 +1772,7 @@ function onChartAction(key: string) {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Format Type
             </label>
-            <select v-model="formatting.numberFormatType" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <select v-model="formatting.numberFormatType" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
               <option value="general">General</option>
               <option value="number">Number</option>
               <option value="currency">Currency</option>
@@ -1831,14 +1789,14 @@ function onChartAction(key: string) {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Decimal Places
             </label>
-            <input v-model.number="formatting.numberFormatDecimals" type="number" min="0" max="10" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+            <input v-model.number="formatting.numberFormatDecimals" type="number" min="0" max="10" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div v-if="formatting.numberFormatType.value === 'currency' || formatting.numberFormatType.value === 'accounting'">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Currency Symbol
             </label>
-            <select v-model="formatting.numberFormatSymbol" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <select v-model="formatting.numberFormatSymbol" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
               <option value="$">$</option>
               <option value="€">€</option>
               <option value="£">£</option>
@@ -1850,7 +1808,7 @@ function onChartAction(key: string) {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Custom Format Code
             </label>
-            <input v-model="formatting.numberFormatCustomCode" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+            <input v-model="formatting.numberFormatCustomCode" type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
           </div>
           
           <div class="flex gap-2">
@@ -1876,13 +1834,13 @@ function onChartAction(key: string) {
           <div>
             <label class="flex items-center gap-2">
               <input v-model="dataTools.sortHasHeaders" type="checkbox" class="rounded" />
-              <span class="text-sm text-gray-900 dark:text-gray-100">My data has headers</span>
+              <span class="text-sm">My data has headers</span>
             </label>
           </div>
           
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="text-sm font-medium text-gray-900 dark:text-gray-100">Sort by</label>
+              <label class="text-sm font-medium">Sort by</label>
               <Button
                 v-if="dataTools.sortColumns.value.length < 5"
                 @click="dataTools.addSortColumn"
@@ -1899,14 +1857,14 @@ function onChartAction(key: string) {
                 :key="index"
                 class="flex gap-2 items-center"
               >
-                <select v-model="col.column" class="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100">
+                <select v-model="col.column" class="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm">
                   <option value="">Select Column</option>
                   <option v-for="i in 26" :key="i" :value="String.fromCharCode(64 + i)">
                     {{ String.fromCharCode(64 + i) }}
                   </option>
                 </select>
                 
-                <select v-model="col.order" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100">
+                <select v-model="col.order" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm">
                   <option value="asc">A to Z</option>
                   <option value="desc">Z to A</option>
                 </select>
@@ -2041,7 +1999,7 @@ function onChartAction(key: string) {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Format Type
             </label>
-            <select v-model="formatting.conditionalFormatType" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <select v-model="formatting.conditionalFormatType" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
               <option value="colorScale">Color Scale</option>
               <option value="dataBar">Data Bar</option>
               <option value="iconSet">Icon Set</option>
@@ -2075,7 +2033,7 @@ function onChartAction(key: string) {
             </div>
             <label class="flex items-center gap-2">
               <input v-model="formatting.conditionalFormatRule.dataBar.showBarOnly" type="checkbox" class="rounded" />
-              <span class="text-sm text-gray-900 dark:text-gray-100">Show Bar Only</span>
+              <span class="text-sm">Show Bar Only</span>
             </label>
           </div>
           
@@ -2083,7 +2041,7 @@ function onChartAction(key: string) {
           <div v-if="formatting.conditionalFormatType.value === 'iconSet'" class="space-y-3">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Icon Style</label>
-              <select v-model="formatting.conditionalFormatRule.iconSet.style" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+              <select v-model="formatting.conditionalFormatRule.iconSet.style" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
                 <option value="3TrafficLights1">3 Traffic Lights</option>
                 <option value="3Arrows">3 Arrows</option>
                 <option value="3Symbols">3 Symbols</option>
@@ -2093,7 +2051,7 @@ function onChartAction(key: string) {
             </div>
             <label class="flex items-center gap-2">
               <input v-model="formatting.conditionalFormatRule.iconSet.reverse" type="checkbox" class="rounded" />
-              <span class="text-sm text-gray-900 dark:text-gray-100">Reverse Icon Order</span>
+              <span class="text-sm">Reverse Icon Order</span>
             </label>
           </div>
           
@@ -2101,7 +2059,7 @@ function onChartAction(key: string) {
           <div v-if="formatting.conditionalFormatType.value === 'formula'" class="space-y-3">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Formula</label>
-              <input v-model="formatting.conditionalFormatRule.formula.formula" type="text" placeholder="e.g., =A1>100" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+              <input v-model="formatting.conditionalFormatRule.formula.formula" type="text" placeholder="e.g., =A1>100" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Format</label>
@@ -2167,28 +2125,28 @@ function onChartAction(key: string) {
                     
                     <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                       <span class="capitalize">{{ question.type.replace('_', ' ') }}</span>
-                      <span v-if="question.confidence" class="text-xs text-gray-500 dark:text-gray-400">
+                      <span v-if="question.confidence" class="text-xs">
                         Confidence: {{ Math.round(question.confidence * 100) }}%
                       </span>
-                      <span v-if="question.columnName" class="text-xs text-gray-500 dark:text-gray-400">
+                      <span v-if="question.columnName" class="text-xs text-gray-500">
                         Column: {{ question.columnName }}
                       </span>
                     </div>
 
                     <!-- Show sample data if available -->
                     <div v-if="question.sampleData && question.sampleData.length > 0" class="mt-2">
-                      <span class="text-xs text-gray-500 dark:text-gray-400">Sample data:</span>
+                      <span class="text-xs text-gray-500">Sample data:</span>
                       <div class="flex flex-wrap gap-1 mt-1">
                         <span
                           v-for="sample in question.sampleData.slice(0, 3)"
                           :key="sample"
-                          class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded"
+                          class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded"
                         >
                           {{ sample }}
                         </span>
                         <span
                           v-if="question.sampleData.length > 3"
-                          class="text-xs text-gray-500 dark:text-gray-400"
+                          class="text-xs text-gray-500"
                         >
                           +{{ question.sampleData.length - 3 }} more
                         </span>
@@ -2197,18 +2155,18 @@ function onChartAction(key: string) {
 
                     <!-- Show options for select/radio fields -->
                     <div v-if="question.options && question.options.length > 0" class="mt-2">
-                      <span class="text-xs text-gray-500 dark:text-gray-400">Options:</span>
+                      <span class="text-xs text-gray-500">Options:</span>
                       <div class="flex flex-wrap gap-1 mt-1">
                         <span
                           v-for="option in question.options.slice(0, 5)"
                           :key="option.value"
-                          class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded"
+                          class="text-xs bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded"
                         >
                           {{ option.label }}
                         </span>
                         <span
                           v-if="question.options.length > 5"
-                          class="text-xs text-gray-500 dark:text-gray-400"
+                          class="text-xs text-gray-500"
                         >
                           +{{ question.options.length - 5 }} more
                         </span>

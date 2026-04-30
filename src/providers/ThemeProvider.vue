@@ -3,20 +3,34 @@ import { ref, provide, onMounted } from 'vue'
 
 const isDark = ref(false)
 
+function setDarkMode(value: boolean) {
+  isDark.value = value
+  document.documentElement.classList.toggle('dark', value)
+  localStorage.setItem('theme', value ? 'dark' : 'light')
+}
+
 // Provide theme state and toggle function
 provide('theme', {
   isDark,
   toggleTheme: () => {
-    isDark.value = !isDark.value
-    document.documentElement.classList.toggle('dark', isDark.value)
+    setDarkMode(!isDark.value)
   }
 })
 
-// Check system preference on mount
+// Initialize theme on mount
 onMounted(() => {
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    isDark.value = true
-    document.documentElement.classList.add('dark')
+  // Check for saved preference first
+  const savedTheme = localStorage.getItem('theme')
+  
+  if (savedTheme === 'dark') {
+    setDarkMode(true)
+  } else if (savedTheme === 'light') {
+    setDarkMode(false)
+  } else {
+    // No saved preference, check system preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setDarkMode(true)
+    }
   }
 })
 </script>

@@ -246,8 +246,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       '@venmail/avnac-vue':
-        specifier: file:../../../../dev/avnac-vue
-        version: file:../../../../dev/avnac-vue(fabric@6.9.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))
+        specifier: ^0.1.5
+        version: 0.1.5(fabric@6.9.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))
       '@visactor/vtable-plugins':
         specifier: ^1.26.0
         version: 1.26.0(@visactor/vtable@1.26.0)
@@ -374,9 +374,6 @@ importers:
       pptxgenjs:
         specifier: ^3.12.0
         version: 3.12.0
-      pptxtojson:
-        specifier: ^2.0.2
-        version: 2.0.2
       print-js:
         specifier: ^1.6.0
         version: 1.6.0
@@ -2571,8 +2568,8 @@ packages:
   '@types/web-bluetooth@0.0.21':
     resolution: {integrity: sha512-oIQLCGWtcFZy2JW77j9k8nHzAOpqMHLQejDA48XXMWH6tjCQHz5RCFz1bzsmROyL6PUm+LLnUiI4BCn221inxA==}
 
-  '@venmail/avnac-vue@file:../../../../dev/avnac-vue':
-    resolution: {directory: ../../../../dev/avnac-vue, type: directory}
+  '@venmail/avnac-vue@0.1.5':
+    resolution: {integrity: sha512-knTXHXfJnmzjop8YnHn0bh23LtayqNq+18upLkB58f7jp3HzM5oy0k2TNamQvctjGW18LkXdLtr1Ii0++tNrAA==}
     peerDependencies:
       fabric: ^6.6.1
       pinia: ^2.0.0
@@ -4041,6 +4038,20 @@ packages:
   fraction.js@4.3.7:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
 
+  framer-motion@11.18.2:
+    resolution: {integrity: sha512-5F5Och7wrvtLVElIpclDT0CBzMVg3dL22B64aZwHtsIY8RB4mXICLrkajK4G9R+ieSAGcgrLeae2SeUTg2pr6w==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   fresh@2.0.0:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
     engines: {node: '>= 0.8'}
@@ -5014,6 +5025,26 @@ packages:
   mlly@1.8.0:
     resolution: {integrity: sha512-l8D9ODSRWLe2KHJSifWGwBqpTZXIXTeo8mlKjY+E2HAakaTeNpqAyBZ8GSqLzHgw4XmHmC8whvpjJNMbFZN7/g==}
 
+  motion-dom@11.18.1:
+    resolution: {integrity: sha512-g76KvA001z+atjfxczdRtw/RXOM3OMSdd1f4DL77qCTF/+avrRJiawSG4yDibEQ215sr9kpinSlX2pCTJ9zbhw==}
+
+  motion-utils@11.18.1:
+    resolution: {integrity: sha512-49Kt+HKjtbJKLtgO/LKj9Ld+6vw9BjH5d9sc40R/kVyH8GLAXgT42M2NnuPcJNuA3s9ZfZBUcwIgpmZWGEE+hA==}
+
+  motion@11.18.2:
+    resolution: {integrity: sha512-JLjvFDuFr42NFtcVoMAyC2sEjnpA8xpy6qWPyzQvCloznAyQ8FIXioxWfHiLtgYhoVpfUqSWpn1h9++skj9+Wg==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
@@ -5435,9 +5466,6 @@ packages:
 
   pptxgenjs@3.12.0:
     resolution: {integrity: sha512-ZozkYKWb1MoPR4ucw3/aFYlHkVIJxo9czikEclcUVnS4Iw/M+r+TEwdlB3fyAWO9JY1USxJDt0Y0/r15IR/RUA==}
-
-  pptxtojson@2.0.2:
-    resolution: {integrity: sha512-WOczc85a0doZ1V1hKetaclXixaGn8P7t2ZIVnPjBBwJX85ZKqRKjciTXC3Guxgaw61aFDIWjB3tb9TrUsjMnTA==}
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -6140,9 +6168,6 @@ packages:
   thenify@3.3.1:
     resolution: {integrity: sha512-RVZSIV5IG10Hk3enotrhvz0T9em6cyHBLkH/YAZuKqd8hRkKhSfCGIcP2KUY0EPxndzANBmNllzWPwak+bheSw==}
 
-  through2@3.0.2:
-    resolution: {integrity: sha512-enaDQ4MUyP2W6ZyT6EsMzqBPZaM/avg8iuo+l2d3QCs0J+6RaqkHV/2/lOwDTueBHeJ/2LG9lrLW3d5rWPucuQ==}
-
   tiny-emitter@2.1.0:
     resolution: {integrity: sha512-NB6Dk1A9xgQPMoGqC5CVXn123gWyte215ONT5Pp5a0yt4nlEoO1ZWeCwpncaekPHXO60i47ihFnZPiRPjRMq4Q==}
 
@@ -6276,9 +6301,6 @@ packages:
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
-
-  txml@5.2.1:
-    resolution: {integrity: sha512-MGKvU6UjehglVhfQAtW/sxeqAky64fJGHAkaxXROh13quYOgKE71C1VPKhKGR8M+AhMWEdz/aaPL/rxpJ9fmKw==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -8799,11 +8821,12 @@ snapshots:
 
   '@types/web-bluetooth@0.0.21': {}
 
-  '@venmail/avnac-vue@file:../../../../dev/avnac-vue(fabric@6.9.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))':
+  '@venmail/avnac-vue@0.1.5(fabric@6.9.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))':
     dependencies:
       chart.js: 4.5.1
       fabric: 6.9.1
       jszip: 3.10.1
+      motion: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       pinia: 2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3))
       pptxgenjs: 3.12.0
       qrcode: 1.5.4
@@ -8812,6 +8835,9 @@ snapshots:
       vue-router: 4.5.1(vue@3.5.13(typescript@5.8.3))
       zod: 3.24.4
     transitivePeerDependencies:
+      - '@emotion/is-prop-valid'
+      - react
+      - react-dom
       - sortablejs
 
   '@visactor/vdataset@1.0.23':
@@ -10546,6 +10572,15 @@ snapshots:
 
   fraction.js@4.3.7: {}
 
+  framer-motion@11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      motion-dom: 11.18.1
+      motion-utils: 11.18.1
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
   fresh@2.0.0: {}
 
   fs-constants@1.0.0: {}
@@ -11542,6 +11577,20 @@ snapshots:
       pkg-types: 1.3.1
       ufo: 1.6.1
 
+  motion-dom@11.18.1:
+    dependencies:
+      motion-utils: 11.18.1
+
+  motion-utils@11.18.1: {}
+
+  motion@11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      framer-motion: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
   ms@2.1.3: {}
 
   muggle-string@0.4.1: {}
@@ -11962,12 +12011,6 @@ snapshots:
       https: 1.0.0
       image-size: 1.2.1
       jszip: 3.10.1
-
-  pptxtojson@2.0.2:
-    dependencies:
-      jszip: 3.10.1
-      tinycolor2: 1.6.0
-      txml: 5.2.1
 
   prelude-ls@1.2.1: {}
 
@@ -12859,11 +12902,6 @@ snapshots:
     dependencies:
       any-promise: 1.3.0
 
-  through2@3.0.2:
-    dependencies:
-      inherits: 2.0.4
-      readable-stream: 3.6.2
-
   tiny-emitter@2.1.0: {}
 
   tinycolor2@1.6.0: {}
@@ -12988,10 +13026,6 @@ snapshots:
   tslib@2.3.0: {}
 
   tslib@2.8.1: {}
-
-  txml@5.2.1:
-    dependencies:
-      through2: 3.0.2
 
   type-check@0.4.0:
     dependencies:

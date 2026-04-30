@@ -1,5 +1,5 @@
 <template>
-  <div ref="container" class="vtable-sheet-container" />
+  <div ref="container" class="vtable-sheet-container" :class="$attrs.class" style="width: 100%; height: 100%;" />
 </template>
 
 <script setup lang="ts">
@@ -7,6 +7,10 @@ import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import { VTableSheet } from '@visactor/vtable-sheet'
 import type { IVTableSheetOptions } from '@visactor/vtable-sheet'
 import { patchVTableSheetLocale } from '@/utils/vtableI18n'
+
+defineOptions({
+  inheritAttrs: false,
+})
 
 type WorkSheet = {
   tableInstance?: { on: (event: string, cb: (...args: any[]) => void) => void }
@@ -27,78 +31,13 @@ const container = ref<HTMLElement>()
 let instance: VTableSheet | null = null
 let cleanupLocale: (() => void) | null = null
 let readyFired = false
-let themeObserver: MutationObserver | null = null
+let resizeObserver: ResizeObserver | null = null
 
 const CHANGE_EVENTS = ['change_cell_value', 'add_record', 'delete_record', 'add_column', 'delete_column'] as const
 
-function isDarkMode() {
-  return document.documentElement.classList.contains('dark') || document.body.classList.contains('dark')
-}
-
 function resolveTheme(theme?: IVTableSheetOptions['theme']): IVTableSheetOptions['theme'] {
-  if (!isDarkMode()) return theme
-  return {
-    ...theme,
-    menuStyle: {
-      ...theme?.menuStyle,
-      color: '#E5E7EB',
-      bgColor: '#111827',
-    },
-    rowSeriesNumberCellStyle: {
-      ...theme?.rowSeriesNumberCellStyle,
-      bgColor: '#111827',
-    },
-    colSeriesNumberCellStyle: {
-      ...theme?.colSeriesNumberCellStyle,
-      bgColor: '#111827',
-    },
-    tableTheme: 'DARK' as any,
-  } as IVTableSheetOptions['theme']
-}
-
-async function syncRuntimeTheme() {
-  if (!instance) return
-  
-  // Save current active sheet to restore after theme change
-  const activeSheetKey = (instance as any).getActiveSheet?.()
-  
-  // Apply theme update
-  instance.updateOption({
-    theme: resolveTheme(props.initialConfig.theme),
-  })
-  
-  // Wait for VTable to finish internal updates
-  await nextTick()
-  
-  // Delay restoration to ensure VTable has processed the theme change
-  setTimeout(() => {
-    // Restore active sheet if the method exists
-    if (activeSheetKey && typeof (instance as any).setActiveSheet === 'function') {
-      try {
-        (instance as any).setActiveSheet(activeSheetKey)
-      } catch (e) {
-        console.warn('Failed to restore active sheet:', e)
-      }
-    }
-    
-    // Force a re-render if the instance supports it (helps with canvas redraw)
-    if (typeof (instance as any).render === 'function') {
-      try {
-        (instance as any).render()
-      } catch (e) {
-        console.warn('Failed to render:', e)
-      }
-    }
-    
-    // If the VTable has a refresh or redraw method, call it
-    if (typeof (instance as any).refresh === 'function') {
-      try {
-        (instance as any).refresh()
-      } catch (e) {
-        // Ignore - refresh is optional
-      }
-    }
-  }, 100)
+  // Pass theme through unchanged to avoid interfering with VTable's internal positioning
+  return theme
 }
 
 function attachSheetListeners(sheet: WorkSheet, sheetKey: string) {
@@ -140,22 +79,19 @@ function onReady() {
 
 onMounted(async () => {
   if (!container.value) return
-  instance = new VTableSheet(container.value, {
-    ...props.initialConfig,
-    theme: resolveTheme(props.initialConfig.theme),
-  })
+
+  instance = new VTableSheet(container.value, props.initialConfig)
+
   // Subscribe in case the library starts emitting this event in future versions
   instance.on('spreadsheet_ready' as any, onReady)
+
   // Fallback: constructor is synchronous — DOM is ready after nextTick
   await nextTick()
-  themeObserver = new MutationObserver(() => syncRuntimeTheme())
-  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+
   onReady()
 })
 
 onBeforeUnmount(() => {
-  themeObserver?.disconnect()
-  themeObserver = null
   cleanupLocale?.()
   cleanupLocale = null
   instance?.release()
@@ -179,6 +115,98 @@ defineExpose({
 .vtable-sheet-container {
   width: 100%;
   height: 100%;
+  background-color: #ffffff;
+}
+
+/* Dark mode container background */
+:global(.dark) .vtable-sheet-container,
+:global(html.dark) .vtable-sheet-container {
+  background-color: #111827;
+}
+
+/* Ensure VTable canvas renders properly */
+.vtable-sheet-container :deep(canvas) {
+  display: block;
+}
+
+/* Sheet tabs dark mode */
+.vtable-sheet-container :deep(.vtable-sheet-tab-item) {
+  color: #374151;
+}
+
+:global(.dark) .vtable-sheet-container :deep(.vtable-sheet-tab-item),
+:global(html.dark) .vtable-sheet-container :deep(.vtable-sheet-tab-item) {
+  color: #d1d5db;
+  background-color: #1f2937;
+}
+
+:global(.dark) .vtable-sheet-container :deep(.vtable-sheet-tab-item.active),
+:global(html.dark) .vtable-sheet-container :deep(.vtable-sheet-tab-item.active) {
+  color: #f3f4f6;
+  background-color: #111827;
+}
+
+/* Formula bar dark mode */
+.vtable-sheet-container :deep(.vtable-formula-bar) {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+:global(.dark) .vtable-sheet-container :deep(.vtable-formula-bar),
+:global(html.dark) .vtable-sheet-container :deep(.vtable-formula-bar) {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+
+/* Toolbar dark mode */
+.vtable-sheet-container :deep(.vtable-toolbar) {
+  background-color: #ffffff;
+  border-color: #e5e7eb;
+}
+
+:global(.dark) .vtable-sheet-container :deep(.vtable-toolbar),
+:global(html.dark) .vtable-sheet-container :deep(.vtable-toolbar) {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+:global(.dark) .vtable-sheet-container :deep(.vtable-toolbar button),
+:global(html.dark) .vtable-sheet-container :deep(.vtable-toolbar button) {
+  color: #d1d5db;
+}
+
+:global(.dark) .vtable-sheet-container :deep(.vtable-toolbar button:hover),
+:global(html.dark) .vtable-sheet-container :deep(.vtable-toolbar button:hover) {
+  background-color: #374151;
+}
+
+/* Grid lines - ensure visibility */
+.vtable-sheet-container :deep(.vtable-grid-line) {
+  border-color: #e5e7eb;
+}
+
+:global(.dark) .vtable-sheet-container :deep(.vtable-grid-line),
+:global(html.dark) .vtable-sheet-container :deep(.vtable-grid-line) {
+  border-color: #374151;
+}
+
+/* Cell text in dark mode */
+:global(.dark) .vtable-sheet-container :deep(.vtable-cell),
+:global(html.dark) .vtable-sheet-container :deep(.vtable-cell) {
+  color: #e5e7eb;
+}
+
+/* Header cells */
+.vtable-sheet-container :deep(.vtable-header-cell) {
+  background-color: #f9fafb;
+  color: #374151;
+}
+
+:global(.dark) .vtable-sheet-container :deep(.vtable-header-cell),
+:global(html.dark) .vtable-sheet-container :deep(.vtable-header-cell) {
+  background-color: #1f2937;
+  color: #e5e7eb;
 }
 
 /* VTable Context Menu Dark Mode Overrides */
@@ -261,5 +289,18 @@ html.dark .vtable-context-menu-container .vtable-context-menu-line {
 .dark .vtable-context-menu-container .vtable-context-menu-item-arrow,
 html.dark .vtable-context-menu-container .vtable-context-menu-item-arrow {
   border-left-color: #9ca3af !important;
+}
+
+/* Cell editor input - ensure text is visible on white background */
+.vtable-sheet-container input[type="text"],
+.vtable-sheet-container input[type="number"] {
+  color: #111827 !important;
+}
+
+.dark .vtable-sheet-container input[type="text"],
+html.dark .vtable-sheet-container input[type="text"],
+.dark .vtable-sheet-container input[type="number"],
+html.dark .vtable-sheet-container input[type="number"] {
+  color: #111827 !important;
 }
 </style>

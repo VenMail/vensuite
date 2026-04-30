@@ -4,6 +4,7 @@ import { createPinia } from 'pinia'
 
 // Import preset styling CSS
 import './assets/css/presets.css'
+import { t } from './i18n'
 
 // Load mammoth browser build as a script asset (works reliably with Umo Editor v8)
 // Vite will emit a URL for the browser build; we inject it before initializing the editor
@@ -149,6 +150,9 @@ let appInstance: ReturnType<typeof createApp> | null = null
 
 const app = createApp(App)
 const pinia = createPinia()
+// Add global $t for i18n in templates
+app.config.globalProperties.$t = t
+
 
 app.use(pinia)
 app.use(router)

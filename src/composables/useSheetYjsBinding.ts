@@ -127,8 +127,6 @@ export function useSheetYjsBinding(options: Options) {
     ydoc.destroy()
   }
 
-  onUnmounted(destroy)
-
   return {
     ydoc,
     isYjsConnected,
