@@ -98,6 +98,7 @@
             />
             <EditorAnimationPanel
               v-if="activePanel === 'animations'"
+              :canvas="getCanvas()"
               @close="activePanel = null"
             />
             <div v-if="activePanel === 'charts'" class="avnac-side-panel">
@@ -109,16 +110,6 @@
             <div v-if="activePanel === 'diagrams'" class="avnac-side-panel">
               <DiagramPanel @insert="onInsertDiagram" />
             </div>
-            <VectorBoardWorkspace
-              v-if="activePanel === 'vector-board'"
-              :open="true"
-              board-name="Vector Board"
-              :document="vectorBoardDoc"
-              :on-save="onVectorBoardSave"
-              :on-save-and-place="onVectorBoardSaveAndPlace"
-              @close="activePanel = null"
-              @change="onVectorBoardChange"
-            />
             <EditorFloatingSidebar
               :active-panel="activePanel"
               @select-panel="togglePanel"
@@ -204,7 +195,6 @@ import ChartDataDialog from '@avnac/components/charts/ChartDataDialog.vue'
 import PresentMode from '@avnac/components/present/PresentMode.vue'
 import InfographicPanel from '@avnac/components/infographics/InfographicPanel.vue'
 import DiagramPanel from '@avnac/components/diagrams/DiagramPanel.vue'
-import VectorBoardWorkspace from '@avnac/components/panels/VectorBoardWorkspace.vue'
 import ShapesPopover from '@avnac/components/toolbar/ShapesPopover.vue'
 import CanvasZoomSlider from '@avnac/components/toolbar/CanvasZoomSlider.vue'
 import PaintPopoverControl from '@avnac/components/shared/PaintPopoverControl.vue'
@@ -218,10 +208,8 @@ import type { TextFormatToolbarValues } from '@avnac/stores/canvas'
 import type { AvnacInfographicData } from '@avnac/lib/avnac-infographic'
 import type { AvnacDiagramData } from '@avnac/lib/avnac-diagram'
 import { ulidGroupId } from '@avnac/lib/avnac-logical-group'
-import type { VectorBoardDocument } from '@avnac/lib/avnac-vector-board-document'
 import { useCanvasStore } from '@avnac/stores/canvas'
 import { useChartsStore } from '@avnac/stores/charts'
-import { emptyVectorBoardDocument } from '@avnac/lib/avnac-vector-board-document'
 import { exportDocumentsToPptx } from '@avnac/pptx/export'
 import { importPptxFromInput } from '@avnac/pptx/import'
 import { loadCanvasGoogleFontsAndRelayout } from '@avnac/lib/avnac-canvas-google-fonts'
@@ -254,7 +242,6 @@ const currentIndex = ref(0)
 const initialDoc = ref<AvnacDocumentV1 | undefined>(undefined)
 const activePanel = ref<EditorSidebarPanelId | null>(null)
 const canvasStore = useCanvasStore()
-const vectorBoardDoc = ref<VectorBoardDocument>(emptyVectorBoardDocument())
 const presentModeOpen = ref(false)
 
 const currentNotes = computed(() => props.notes?.[currentIndex.value] ?? '')
@@ -476,6 +463,11 @@ function selectAll() {
 
 // ─── Sidebar / panels ───────────────────────────────────────────────────────
 function togglePanel(id: EditorSidebarPanelId) {
+  if (id === 'vector-board') {
+    activePanel.value = null
+    editorRef.value?.shapeTools.startPenDrawMode()
+    return
+  }
   activePanel.value = activePanel.value === id ? null : id
 }
 
@@ -491,8 +483,9 @@ const layerRows = computed<EditorLayerRow[]>(() => {
   }))
 })
 
-function onAddImageFromUrl(opts: { url: string; onLoad?: () => void }) {
-  return editorRef.value?.shapeTools.addImageFromUrl(opts) ?? Promise.resolve(null)
+async function onAddImageFromUrl(opts: { url: string; origin: 'center'; width: number; height: number }) {
+  const image = await (editorRef.value?.shapeTools.addImageFromUrl(opts) ?? Promise.resolve(null))
+  return image ? true : null
 }
 
 function onAddImageFromFile(file: File) {
@@ -503,19 +496,6 @@ function onTemplateInsert(doc: AvnacDocumentV1) {
   if (!editorRef.value) return
   editorRef.value.setDocument(doc)
   setTimeout(() => editorRef.value?.fitToViewport(), 60)
-}
-
-function onVectorBoardChange(doc: VectorBoardDocument) {
-  vectorBoardDoc.value = doc
-}
-
-function onVectorBoardSave(doc: VectorBoardDocument) {
-  vectorBoardDoc.value = doc
-}
-
-function onVectorBoardSaveAndPlace(doc: VectorBoardDocument) {
-  vectorBoardDoc.value = doc
-  activePanel.value = null
 }
 
 // ─── Bottom bar / shape insertion ───────────────────────────────────────────
