@@ -8,11 +8,8 @@
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="stb-logo" title="Vensuite">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <rect x="3" y="3" width="18" height="18" rx="4" fill="#6366f1"/>
-            <path d="M7 8l5 8 5-8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+        <div class="stb-logo" title="VenMail">
+          <img src="/manifest-icon-512.maskable.png" alt="VenMail" class="stb-logo__img" />
         </div>
         <div class="stb-title-block">
           <span
@@ -397,6 +394,13 @@ function handleAction(id: string) {
   width: 30px;
   height: 30px;
   flex-shrink: 0;
+}
+
+.stb-logo__img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
 }
 
 .stb-title-block {

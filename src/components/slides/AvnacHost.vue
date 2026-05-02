@@ -56,6 +56,8 @@
             @shape-paint-change="onShapePaintChange"
             @corner-radius-change="onCornerRadiusChange"
             @image-corner-radius-change="onImageCornerRadiusChange"
+            @image-mask-change="onImageMaskChange"
+            @crop-image="onCropImage"
             @stroke-width-change="onStrokeWidthChange"
             @stroke-paint-change="onStrokePaintChange"
             @blur-change="onBlurChange"
@@ -85,6 +87,7 @@
             <EditorImagesPanel
               :open="activePanel === 'images'"
               :on-add-image-from-url="onAddImageFromUrl"
+              :on-add-image-from-file="onAddImageFromFile"
               @close="activePanel = null"
             />
             <EditorUploadsPanel
@@ -150,7 +153,13 @@
       </CanvasEditor>
 
       <!-- Chart data dialog — teleported to body, visible when chartsStore.editingChartId set -->
-    <ChartDataDialog />
+    <ImageCropModal
+      :open="cropModalOpen"
+      :image-src="cropImageSrc"
+      :initial-crop="cropInitial"
+      @cancel="cropModalOpen = false"
+      @apply="onApplyImageCrop"
+    />
 
     <!-- Presentation mode — full screen, teleported to body -->
     <PresentMode
@@ -188,7 +197,7 @@ import EditorUploadsPanel from '@avnac/components/panels/EditorUploadsPanel.vue'
 import EditorAppsPanel from '@avnac/components/panels/EditorAppsPanel.vue'
 import EditorAnimationPanel from '@avnac/components/panels/EditorAnimationPanel.vue'
 import ChartDataPanel from '@avnac/components/charts/ChartDataPanel.vue'
-import ChartDataDialog from '@avnac/components/charts/ChartDataDialog.vue'
+import ImageCropModal from '@avnac/components/modals/ImageCropModal.vue'
 import PresentMode from '@avnac/components/present/PresentMode.vue'
 import InfographicPanel from '@avnac/components/infographics/InfographicPanel.vue'
 import DiagramPanel from '@avnac/components/diagrams/DiagramPanel.vue'
@@ -211,6 +220,8 @@ import { exportDocumentsToPptx } from '@avnac/pptx/export'
 import { importPptxFromInput } from '@avnac/pptx/import'
 import { loadCanvasGoogleFontsAndRelayout } from '@avnac/lib/avnac-canvas-google-fonts'
 import { applyTextFormatChange } from '@avnac/lib/apply-text-format'
+import { applyFabricImageMask, type ImageMaskKind } from '@avnac/lib/fabric-image-mask'
+import { applyFabricImageSourceCrop, getFabricImageSourceCrop } from '@avnac/lib/avnac-fabric-image-crop'
 
 interface Props {
   initialSlides?: AvnacDocumentV1[]
@@ -241,6 +252,9 @@ const initialDoc = ref<AvnacDocumentV1 | undefined>(undefined)
 const activePanel = ref<EditorSidebarPanelId | null>(null)
 const canvasStore = useCanvasStore()
 const presentModeOpen = ref(false)
+const cropModalOpen = ref(false)
+const cropImageSrc = ref('')
+const cropInitial = ref({ x: 0, y: 0, w: 1, h: 1 })
 
 const currentNotes = computed(() => props.notes?.[currentIndex.value] ?? '')
 
@@ -668,6 +682,44 @@ function onImageCornerRadiusChange(v: number) {
     setSceneCornerRadiusOnImage(active, v, mod)
     canvas.requestRenderAll()
   })
+}
+
+function onImageMaskChange(kind: ImageMaskKind) {
+  const canvas = getCanvas()
+  if (!canvas || !kind) return
+  const active = canvas.getActiveObject() as any
+  if (!active) return
+  import('fabric').then((mod) => {
+    if (!(active instanceof mod.FabricImage)) return
+    applyFabricImageMask(active, mod, kind)
+    canvas.requestRenderAll()
+    scheduleChange()
+  })
+}
+
+function onCropImage() {
+  const canvas = getCanvas()
+  if (!canvas) return
+  const active = canvas.getActiveObject() as any
+  if (!active?.getSrc) return
+  const crop = getFabricImageSourceCrop(active)
+  cropImageSrc.value = active.getSrc()
+  cropInitial.value = { x: crop.cropX, y: crop.cropY, w: crop.width, h: crop.height }
+  cropModalOpen.value = true
+}
+
+function onApplyImageCrop(rect: { cropX: number; cropY: number; width: number; height: number }) {
+  const canvas = getCanvas()
+  const active = canvas?.getActiveObject() as any
+  if (!canvas || !active) return
+  import('fabric').then((mod) => {
+    if (!(active instanceof mod.FabricImage)) return
+    const radius = canvasStore.imageCornerToolbar?.radius ?? 0
+    applyFabricImageSourceCrop(active, rect, mod, radius)
+    canvas.requestRenderAll()
+    scheduleChange()
+  })
+  cropModalOpen.value = false
 }
 
 function onStrokeWidthChange(v: number) {
