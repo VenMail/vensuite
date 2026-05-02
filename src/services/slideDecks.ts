@@ -6,7 +6,7 @@
 
 import { ref, computed } from 'vue'
 import { apiClient } from './apiClient'
-import type { SlideDeckSummary, AvnacDeckPayload } from '@/types/slides'
+import type { SlideDeckSummary, AvnacDeckPayload, AvnacDocumentV1 } from '@/types/slides'
 
 const slideDecksCache = ref<Map<string, SlideDeckSummary>>(new Map())
 const isLoadingList = ref(false)
@@ -19,7 +19,7 @@ function parseSummaryFromApiItem(item: any): SlideDeckSummary {
       const payload: AvnacDeckPayload = typeof item.content === 'string'
         ? JSON.parse(item.content)
         : item.content
-      if (payload?.version === 3 && Array.isArray(payload.slides)) {
+      if ((payload?.version === 3 || (payload as any)?.version === 'avnac-v1') && Array.isArray(payload.slides)) {
         slideCount = payload.slides.length
       }
     } catch { /* non-fatal */ }
@@ -81,12 +81,18 @@ export async function fetchSlideDeck(deckId: string): Promise<SlideDeckSummary |
 }
 
 /** Create a new empty deck via the API and return its summary */
-export async function createSlideDeck(title: string = 'New Presentation'): Promise<SlideDeckSummary | null> {
+export async function createSlideDeck(
+  title: string = 'New Presentation',
+  slides: AvnacDocumentV1[] = [],
+  theme?: string,
+): Promise<SlideDeckSummary | null> {
   try {
     const payload: AvnacDeckPayload = {
       version: 3,
       title,
-      slides: [],
+      slides,
+      notes: slides.map(() => ''),
+      theme,
     }
     const response = await apiClient.post('/app-files', {
       name: title,

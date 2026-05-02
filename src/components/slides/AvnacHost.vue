@@ -44,6 +44,7 @@
       <CanvasEditor
         ref="editorRef"
         :initial-document="initialDoc"
+        :persist-id="persistId"
         @change="onDocumentChange"
         @ready="onEditorReady"
       >
@@ -113,6 +114,10 @@
             <EditorFloatingSidebar
               :active-panel="activePanel"
               @select-panel="togglePanel"
+              @insert-text="onAddText"
+              @insert-shape="onShapePick"
+              @insert-line="onLinePick"
+              @start-pen="editorRef?.shapeTools.startPenDrawMode()"
             />
           </div>
         </template>
@@ -120,14 +125,6 @@
         <!-- #bottom-bar — shape tools + zoom + bg + export/import -->
         <template #bottom-bar>
           <div class="avnac-bottom-bar-content">
-            <ShapesPopover @pick="onShapePick" />
-            <button class="avnac-icon-btn" title="Add text" @click="onAddText">T</button>
-            <button class="avnac-icon-btn" title="Add image" @click="onAddImage">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-            </button>
             <PaintPopoverControl :value="canvasStore.bgValue" title="Background" @change="onBgChange" />
             <CanvasZoomSlider
               :value="canvasStore.zoomPercent ?? 100"
@@ -195,7 +192,6 @@ import ChartDataDialog from '@avnac/components/charts/ChartDataDialog.vue'
 import PresentMode from '@avnac/components/present/PresentMode.vue'
 import InfographicPanel from '@avnac/components/infographics/InfographicPanel.vue'
 import DiagramPanel from '@avnac/components/diagrams/DiagramPanel.vue'
-import ShapesPopover from '@avnac/components/toolbar/ShapesPopover.vue'
 import CanvasZoomSlider from '@avnac/components/toolbar/CanvasZoomSlider.vue'
 import PaintPopoverControl from '@avnac/components/shared/PaintPopoverControl.vue'
 
@@ -205,7 +201,7 @@ import type { AvnacDocumentV1 } from '@avnac/lib/avnac-document'
 import type { BgValue } from '@avnac/lib/bg-value'
 import type { FabricShadowUi } from '@avnac/lib/avnac-fabric-shadow'
 import type { TextFormatToolbarValues } from '@avnac/stores/canvas'
-import type { AvnacInfographicData } from '@avnac/lib/avnac-infographic'
+import type { AvnacInfographicData, InfographicTemplate } from '@avnac/lib/avnac-infographic'
 import type { AvnacDiagramData } from '@avnac/lib/avnac-diagram'
 import { ulidGroupId } from '@avnac/lib/avnac-logical-group'
 import { useCanvasStore } from '@avnac/stores/canvas'
@@ -245,6 +241,18 @@ const canvasStore = useCanvasStore()
 const presentModeOpen = ref(false)
 
 const currentNotes = computed(() => props.notes?.[currentIndex.value] ?? '')
+
+const INFOGRAPHIC_SMART_OBJECTS: InfographicTemplate[] = [
+  'pyramid',
+  'funnel',
+  'timeline-h',
+  'timeline-v',
+  'chevron',
+  'cycle',
+  'venn',
+  'accordion',
+  'matrix-2x2',
+]
 
 let changeTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -348,7 +356,7 @@ async function switchSlide(index: number) {
 
 function createDefaultSlide(): AvnacDocumentV1 {
   return {
-    v: 1,
+    v: 2,
     artboard: { width: 4000, height: 2250 },
     bg: { type: 'solid', color: '#ffffff' } as any,
     fabric: {
@@ -500,7 +508,15 @@ function onTemplateInsert(doc: AvnacDocumentV1) {
 
 // ─── Bottom bar / shape insertion ───────────────────────────────────────────
 function onShapePick(kind: string) {
+  if (kind === 'line' || kind === 'arrow') {
+    editorRef.value?.shapeTools.startLineDrawMode(kind)
+    return
+  }
   editorRef.value?.shapeTools.addShapeByKind(kind)
+}
+
+function onLinePick(kind: 'line' | 'connector') {
+  editorRef.value?.shapeTools.startLineDrawMode(kind as any)
 }
 
 function onAddText() {
@@ -528,6 +544,68 @@ function onBgChange(v: BgValue) {
     canvas.backgroundColor = v.color
   }
   canvas.requestRenderAll()
+}
+
+function scaleObjectForCanvasSize(obj: any, scaleX: number, scaleY: number) {
+  if (typeof obj.left === 'number') obj.left *= scaleX
+  if (typeof obj.top === 'number') obj.top *= scaleY
+  if (typeof obj.width === 'number') obj.width *= scaleX
+  if (typeof obj.height === 'number') obj.height *= scaleY
+  if (typeof obj.rx === 'number') obj.rx *= scaleX
+  if (typeof obj.ry === 'number') obj.ry *= scaleY
+  if (typeof obj.radius === 'number') obj.radius *= Math.min(scaleX, scaleY)
+  if (typeof obj.fontSize === 'number') obj.fontSize *= Math.min(scaleX, scaleY)
+  if (typeof obj.scaleX === 'number') obj.scaleX *= scaleX
+  if (typeof obj.scaleY === 'number') obj.scaleY *= scaleY
+  if (Array.isArray(obj.points)) {
+    obj.points = obj.points.map((point: any) => ({
+      ...point,
+      x: typeof point.x === 'number' ? point.x * scaleX : point.x,
+      y: typeof point.y === 'number' ? point.y * scaleY : point.y,
+    }))
+  }
+}
+
+async function setCanvasSize(size: { width: number; height: number; label?: string }, scaleContent = true) {
+  const current = editorRef.value?.getDocument() ?? slides.value[currentIndex.value]
+  if (!current) return
+  const prevW = current.artboard.width || size.width
+  const prevH = current.artboard.height || size.height
+  const next: AvnacDocumentV1 = JSON.parse(JSON.stringify(current))
+  next.artboard = { width: size.width, height: size.height }
+
+  if (scaleContent) {
+    const sx = size.width / prevW
+    const sy = size.height / prevH
+    const objects = (next.fabric as { objects?: any[] }).objects ?? []
+    objects.forEach(obj => scaleObjectForCanvasSize(obj, sx, sy))
+  }
+
+  slides.value[currentIndex.value] = next
+  if (editorRef.value) {
+    await editorRef.value.setDocument(next)
+    setTimeout(() => editorRef.value?.fitToViewport(), 60)
+  }
+  scheduleChange()
+}
+
+async function insertSmartObject(kind: string) {
+  if ((INFOGRAPHIC_SMART_OBJECTS as string[]).includes(kind)) {
+    const { defaultInfographicData } = await import('@avnac/lib/avnac-infographic')
+    onInsertInfographic(defaultInfographicData(kind as InfographicTemplate))
+    return
+  }
+
+  if (kind === 'flowchart') {
+    const { defaultFlowchart } = await import('@avnac/lib/avnac-diagram')
+    onInsertDiagram(defaultFlowchart())
+    return
+  }
+
+  if (kind === 'organogram') {
+    const { defaultOrganogram } = await import('@avnac/lib/avnac-diagram')
+    onInsertDiagram(defaultOrganogram())
+  }
 }
 
 // ─── Toolbar event handlers ─────────────────────────────────────────────────
@@ -848,6 +926,7 @@ function onInsertInfographic(data: AvnacInfographicData) {
       canvas.setActiveObject(objects[0])
     }
     canvas.requestRenderAll()
+    scheduleChange()
   })
 }
 
@@ -879,6 +958,7 @@ function onInsertDiagram(data: AvnacDiagramData) {
       canvas.setActiveObject(objects[0])
     }
     canvas.requestRenderAll()
+    scheduleChange()
   })
 }
 
@@ -932,12 +1012,15 @@ defineExpose({
   deleteCurrentSlide: deleteSlide,
   exportPptx: onExportPptx,
   importPptx: onImportPptx,
+  present: () => { presentModeOpen.value = true },
   addText: onAddText,
   addImage: onAddImage,
   addShape: onShapePick,
+  insertSmartObject,
   selectAll,
   setZoom: (pct: number) => editorRef.value?.setZoom(pct),
   fitToViewport: () => editorRef.value?.fitToViewport(),
+  setCanvasSize,
   undo,
   redo,
 })
@@ -1015,6 +1098,9 @@ defineExpose({
   min-width: 0;
   overflow: hidden;
   position: relative;
+  padding-top: 14px;
+  box-sizing: border-box;
+  background: var(--bg-canvas, #f4f4f5);
 }
 
 .avnac-host__loading {

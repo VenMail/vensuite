@@ -17,7 +17,9 @@
       @add-text="avnacRef?.addText()"
       @add-image="avnacRef?.addImage()"
       @add-shape="(kind) => avnacRef?.addShape(kind)"
+      @insert-smart-object="(kind) => avnacRef?.insertSmartObject(kind)"
       @add-slide="avnacRef?.addSlide()"
+      @canvas-size="(size) => avnacRef?.setCanvasSize(size)"
       @duplicate-slide="avnacRef?.duplicateCurrentSlide()"
       @delete-slide="avnacRef?.deleteCurrentSlide()"
       @toggle-notes="showNotes = !showNotes"
@@ -47,6 +49,11 @@ import { useFileStore } from '@/store/files'
 import { toast } from '@/composables/useToast'
 import AvnacHost from '@/components/slides/AvnacHost.vue'
 import SlidesTopBar from '@/components/slides/SlidesTopBar.vue'
+import {
+  createAvnacSlidesForTheme,
+  getAvnacDeckThemeTitle,
+  resolveAvnacDeckTheme,
+} from '@/utils/avnacSlideTemplates'
 import type { AvnacDocumentV1 } from '@avnac/lib/avnac-document'
 
 const route = useRoute()
@@ -64,6 +71,7 @@ const editorReady = ref(false)
 const initialSlides = ref<AvnacDocumentV1[]>([])
 const notes = ref<string[]>([])
 const showNotes = ref(false)
+const shouldCreateTemplateDeck = ref(false)
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -78,18 +86,26 @@ async function persistDeck() {
   isSaving.value = true
   try {
     const slides = avnacRef.value?.getSlides() ?? []
-    const payload = { version: 'avnac-v1', title: title.value, slides, notes: notes.value }
+    const payload = { version: 3, title: title.value, slides, notes: notes.value }
     const content = JSON.stringify(payload)
     const routeId = route.params.deckId as string
     const id = deckId.value || (routeId && routeId !== 'new' ? routeId : null)
     if (id) {
-      const existing = await fileStore.loadDocument(id, 'avnac') as any
-      await fileStore.saveDocument({ ...(existing ?? {}), id, content, name: title.value, file_type: 'avnac' } as any)
+      const existing = await fileStore.loadDocument(id, 'pptx') as any
+      await fileStore.saveDocument({
+        ...(existing ?? {}),
+        id,
+        content,
+        title: title.value,
+        name: title.value,
+        file_name: `${title.value}.pptx`,
+        file_type: 'pptx',
+      } as any)
     } else {
-      const doc = await fileStore.createNewDocument('avnac', title.value, content)
+      const doc = await fileStore.createNewDocument('pptx', title.value, content)
       if (doc?.id) {
         deckId.value = doc.id
-        await router.replace(`/slides-v2/${doc.id}`)
+        await router.replace(`/slides/${doc.id}`)
       }
     }
     hasUnsaved.value = false
@@ -109,6 +125,10 @@ async function handleManualSave() {
 
 function onEditorReady() {
   editorReady.value = true
+  if (shouldCreateTemplateDeck.value) {
+    shouldCreateTemplateDeck.value = false
+    void persistDeck()
+  }
 }
 
 function onSlidesChange(slides: AvnacDocumentV1[]) {
@@ -135,13 +155,11 @@ function goBack() {
 }
 
 function onNewDeck() {
-  router.push('/slides-v2/new')
+  router.push('/slides/new')
 }
 
 function onPresent() {
-  if (deckId.value) {
-    window.open(`/slides-v2/${deckId.value}/present`, '_blank')
-  }
+  avnacRef.value?.present()
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -153,11 +171,23 @@ function onKeydown(e: KeyboardEvent) {
 
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
+  const template = route.params.template as string | undefined
+  if (template) {
+    const theme = resolveAvnacDeckTheme(template)
+    const slides = createAvnacSlidesForTheme(theme)
+    initialSlides.value = slides
+    notes.value = slides.map(() => '')
+    title.value = getAvnacDeckThemeTitle(theme)
+    document.title = title.value
+    shouldCreateTemplateDeck.value = true
+    return
+  }
+
   const id = route.params.deckId as string | undefined
   if (id && id !== 'new') {
     deckId.value = id
     try {
-      const raw = await fileStore.loadDocument(id, 'avnac') as any
+      const raw = await fileStore.loadDocument(id, 'pptx') as any
       if (raw?.content) {
         const parsed = JSON.parse(raw.content)
         if (parsed?.slides?.length) initialSlides.value = parsed.slides
@@ -193,5 +223,6 @@ onBeforeUnmount(() => {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  background: var(--bg-canvas, #f4f4f5);
 }
 </style>

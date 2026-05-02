@@ -26,6 +26,7 @@ import {
   RefreshCw,
 } from "lucide-vue-next";
 import { fetchSlideDecks, slideDecks, getDeckThumbnail, createSlideDeck } from "@/services/slideDecks";
+import { createAvnacSlidesForTheme, type AvnacDeckTheme } from "@/utils/avnacSlideTemplates";
 import { t } from '@/i18n';
 
 const SLIDES_VIEW_DEBUG = Boolean(import.meta.env.DEV);
@@ -75,7 +76,7 @@ const viewMode = ref<"grid" | "list">("grid");
 const selectedSlideDeck = ref<string | null>(null);
 type SlideTemplate = {
   name: string;
-  slug: string;
+  slug: AvnacDeckTheme;
   subtitle: string;
   badge: string;
   icon: any;
@@ -87,137 +88,137 @@ const slideTemplates: SlideTemplate[] = [
   {
     name: "Default Theme",
     slug: "default",
-    subtitle: "Clean and minimalist default theme",
+    subtitle: "Clean AVNAC slide with title and content placeholders",
     badge: "Default",
     icon: Presentation,
-    previewStyle: "background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);",
-    description: "The default Slidev theme with clean, minimalist design"
+    previewStyle: "background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);",
+    description: "A clean presentation canvas that opens directly in the AVNAC editor"
   },
   {
-    name: "Seriph Theme",
-    slug: "seriph",
-    subtitle: "Professional serif fonts theme",
-    badge: "Serif",
+    name: "Professional",
+    slug: "professional",
+    subtitle: "Business presentation with calm executive styling",
+    badge: "Business",
     icon: FileText,
-    previewStyle: "background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);",
-    description: t('Views.text.an_official_theme_using')
+    previewStyle: "background: linear-gradient(135deg, #f8fafc 0%, #ccfbf1 100%);",
+    description: "A polished business deck with structured content slides"
   },
   {
-    name: "Apple Basic",
-    slug: "apple-basic",
-    subtitle: "Apple Keynote inspired theme",
-    badge: "Apple",
-    icon: Image,
-    previewStyle: "background: linear-gradient(135deg, #10b981 0%, #34d399 100%);",
-    description: t('Views.text.inspired_by_the_basic')
+    name: "Pitch Deck",
+    slug: "pitch",
+    subtitle: "Dark, high-contrast investor presentation",
+    badge: "Pitch",
+    icon: TrendingUp,
+    previewStyle: "background: linear-gradient(135deg, #111827 0%, #1f2937 70%, #f97316 100%);",
+    description: "A focused pitch deck with strong contrast and accent color"
   },
   {
-    name: "Bricks Theme",
-    slug: "bricks",
-    subtitle: "Modern brick-based design",
-    badge: "Bricks",
-    icon: BarChart,
-    previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);",
-    description: t('Views.text.modern_theme_with_brick')
-  },
-  {
-    name: "Shibainu Theme",
-    slug: "shibainu",
-    subtitle: "Playful dog-inspired theme",
-    badge: "Shibainu",
-    icon: Users,
-    previewStyle: "background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);",
-    description: t('Views.text.playful_theme_inspired_by')
-  },
-  {
-    name: "Academic Theme",
+    name: "Academic",
     slug: "academic",
-    subtitle: "Academic presentations made simple",
+    subtitle: "Research presentation with warm publication styling",
     badge: "Academic",
-    icon: TrendingUp,
-    previewStyle: "background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);",
-    description: t('Views.text.simplifies_creating_academic_presentations')
-  },
-  {
-    name: "Purplin Theme",
-    slug: "purplin",
-    subtitle: "Modern purple gradient theme",
-    badge: "Purplin",
-    icon: PieChart,
-    previewStyle: "background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%);",
-    description: t('Views.text.a_modern_theme_with')
-  },
-  {
-    name: "Neversink Theme",
-    slug: "neversink",
-    subtitle: "Education/academic oriented theme",
-    badge: "Neversink",
-    icon: Settings,
-    previewStyle: "background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);",
-    description: t('Views.text.an_education_academia_oriented')
-  },
-  {
-    name: "Vuetiful Theme",
-    slug: "vuetiful",
-    subtitle: "Vue-inspired modern theme",
-    badge: "Vue",
-    icon: Presentation,
-    previewStyle: "background: linear-gradient(135deg, #10b981 0%, #34d399 100%);",
-    description: t('Views.text.a_modern_theme_inspired')
-  },
-  {
-    name: "Envek Theme",
-    slug: "envek",
-    subtitle: "Personal presentation theme",
-    badge: "Personal",
     icon: FileText,
-    previewStyle: "background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);",
-    description: t('Views.text.a_personal_theme_for')
+    previewStyle: "background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);",
+    description: "A readable research deck for findings, methods, and conclusions"
   },
   {
-    name: "Vuestorefront Theme",
-    slug: "vuestorefront",
-    subtitle: "E-commerce focused theme",
-    badge: "Commerce",
-    icon: BarChart,
-    previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);",
-    description: t('Views.text.theme_designed_for_e')
-  },
-  {
-    name: "Nearform Theme",
-    slug: "nearform",
-    subtitle: "Nearform company theme",
-    badge: "Nearform",
+    name: "Product Roadmap",
+    slug: "product",
+    subtitle: "Product planning deck for milestones and launches",
+    badge: "Product",
     icon: TrendingUp,
-    previewStyle: "background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);",
-    description: t('Views.text.professional_theme_for_nearform')
+    previewStyle: "background: linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%);",
+    description: "A roadmap deck for priorities, milestones, and product direction"
   },
   {
-    name: "IODigital Theme",
-    slug: "iodigital",
-    subtitle: "Digital agency theme",
-    badge: "Digital",
-    icon: PieChart,
-    previewStyle: "background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);",
-    description: t('Views.text.modern_theme_for_digital')
+    name: "Quarterly Report",
+    slug: "report",
+    subtitle: "Performance report with measured visual hierarchy",
+    badge: "Report",
+    icon: BarChart,
+    previewStyle: "background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);",
+    description: "A report deck for highlights, metrics, and recommendations"
   },
   {
-    name: "Foamscience Theme",
-    slug: "foamscience",
-    subtitle: "Scientific research theme",
-    badge: "Science",
+    name: "Sales Proposal",
+    slug: "sales",
+    subtitle: "Value, proof, pricing, and next steps",
+    badge: "Sales",
+    icon: Users,
+    previewStyle: "background: linear-gradient(135deg, #fefce8 0%, #fef3c7 64%, #16a34a 100%);",
+    description: "A client-ready sales narrative with metrics and closing slides"
+  },
+  {
+    name: "Strategy Brief",
+    slug: "strategy",
+    subtitle: "Choices, trade-offs, and execution plan",
+    badge: "Strategy",
     icon: Settings,
-    previewStyle: "background: linear-gradient(135deg, #10b981 0%, #34d399 100%);",
-    description: t('Views.text.theme_designed_for_scientific')
+    previewStyle: "background: linear-gradient(135deg, #f7fee7 0%, #d9f99d 58%, #0284c7 100%);",
+    description: "A leadership strategy deck with process and comparison layouts"
   },
   {
-    name: "Venmail Pitch",
-    slug: "venmail-pitch",
-    subtitle: "Cinematic pitch deck with motion support",
-    badge: "Venmail",
+    name: "Training Module",
+    slug: "training",
+    subtitle: "Learning flow, practice, and recap",
+    badge: "Training",
+    icon: FileText,
+    previewStyle: "background: linear-gradient(135deg, #fdf2f8 0%, #fbcfe8 65%, #4f46e5 100%);",
+    description: "A facilitator-friendly deck for classes and internal enablement"
+  },
+  {
+    name: "Portfolio Review",
+    slug: "portfolio",
+    subtitle: "Case studies, decisions, and outcomes",
+    badge: "Portfolio",
+    icon: Image,
+    previewStyle: "background: linear-gradient(135deg, #fafaf9 0%, #e7e5e4 60%, #0ea5e9 100%);",
+    description: "A structured portfolio deck for showcasing work and impact"
+  },
+  {
+    name: "Financial Review",
+    slug: "financial",
+    subtitle: "KPIs, forecast, risks, and decisions",
+    badge: "Finance",
+    icon: PieChart,
+    previewStyle: "background: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 62%, #0369a1 100%);",
+    description: "A finance deck tuned for executive review and board updates"
+  },
+  {
+    name: "Marketing Plan",
+    slug: "marketing",
+    subtitle: "Audience, channels, campaign, and results",
+    badge: "Marketing",
+    icon: TrendingUp,
+    previewStyle: "background: linear-gradient(135deg, #fff1f2 0%, #fecdd3 62%, #7c3aed 100%);",
+    description: "A campaign planning deck with channel and metric layouts"
+  },
+  {
+    name: "Operations Plan",
+    slug: "operations",
+    subtitle: "Processes, owners, and improvement plan",
+    badge: "Ops",
+    icon: Settings,
+    previewStyle: "background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 62%, #ea580c 100%);",
+    description: "An operations deck for processes, cadence, and decisions"
+  },
+  {
+    name: "Lesson Deck",
+    slug: "education",
+    subtitle: "Concepts, activities, and review",
+    badge: "Lesson",
+    icon: FileText,
+    previewStyle: "background: linear-gradient(135deg, #eef2ff 0%, #c7d2fe 65%, #0891b2 100%);",
+    description: "A classroom-ready deck with sections and activity prompts"
+  },
+  {
+    name: "Minimal Deck",
+    slug: "minimal",
+    subtitle: "Quiet executive layouts with strong hierarchy",
+    badge: "Minimal",
     icon: Presentation,
-    previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #6b21a8 50%, #4c1d95 100%);",
-    description: "Professional pitch deck with cinematic styling and smooth animations"
+    previewStyle: "background: linear-gradient(135deg, #ffffff 0%, #f4f4f5 70%, #18181b 100%);",
+    description: "A restrained template for focused internal storytelling"
   },
   {
     name: "Blank Canvas",
@@ -226,7 +227,7 @@ const slideTemplates: SlideTemplate[] = [
     badge: "Blank",
     icon: FileText,
     previewStyle: "background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);",
-    description: t('Views.text.a_blank_canvas_to')
+    description: "A blank AVNAC canvas with no pre-filled objects"
   }
 ];
 
@@ -347,8 +348,9 @@ onMounted(async () => {
 // Create new presentation with template
 async function createNewPresentation(template?: SlideTemplate) {
   const title = template ? `${template.name} Presentation` : 'New Presentation';
+  const slides = createAvnacSlidesForTheme(template?.slug ?? 'default')
   
-  const newDeck = await createSlideDeck(title);
+  const newDeck = await createSlideDeck(title, slides, template?.slug ?? 'default');
   if (newDeck) {
     router.push(`/slides/${newDeck.id}`);
   } else {
@@ -410,7 +412,7 @@ async function refreshSlideDecks() {
           </DialogTrigger>
           <DialogContent
             :class="[
-              'rounded-lg shadow-2xl border',
+              'rounded-lg shadow-2xl border max-h-[82vh] overflow-y-auto',
               'bg-white border-gray-200',
               'dark:bg-gray-800 dark:border-gray-700'
             ]"
@@ -481,7 +483,7 @@ async function refreshSlideDecks() {
                   {{ template.badge }}
                 </div>
                 <div class="absolute top-3 right-3 text-xs text-white/90 font-semibold bg-primary-600/80 px-2 py-1 rounded">
-                  {{$t('Commons.text.slidev')}}
+                  AVNAC
                 </div>
               </div>
               <div class="px-3 py-3 space-y-1">

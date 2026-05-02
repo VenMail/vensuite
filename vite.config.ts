@@ -1,14 +1,18 @@
 import path from "node:path";
+import fs from "node:fs";
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import IconsResolver from 'unplugin-icons/resolver';
 import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
 
-// avnac-vue ships source files (TypeScript + Vue). Rewrite #/ and @/ imports
-// inside avnac-vue to @avnac/ so they resolve via the alias below.
-const AVNAC_SRC = path.resolve(__dirname, 'node_modules/@venmail/avnac-vue/src')
+// avnac-vue ships source files (TypeScript + Vue). Prefer the local sibling
+// checkout while developing, then fall back to the installed package.
+const LOCAL_AVNAC_SRC = path.resolve('C:/dev/avnac-vue/src')
+const PACKAGE_AVNAC_SRC = path.resolve(__dirname, 'node_modules/@venmail/avnac-vue/src')
+const AVNAC_SRC = fs.existsSync(LOCAL_AVNAC_SRC) ? LOCAL_AVNAC_SRC : PACKAGE_AVNAC_SRC
 const AVNAC_SRC_NORM = AVNAC_SRC.replace(/\\/g, '/')
+const PACKAGE_AVNAC_SRC_NORM = PACKAGE_AVNAC_SRC.replace(/\\/g, '/')
 const avnacImportRewriter = {
   name: 'avnac-import-rewriter',
   enforce: 'pre' as const,
@@ -16,6 +20,7 @@ const avnacImportRewriter = {
     const normalized = id.replace(/\\/g, '/')
     const isAvnac =
       normalized.includes(AVNAC_SRC_NORM) ||
+      normalized.includes(PACKAGE_AVNAC_SRC_NORM) ||
       normalized.includes('@venmail/avnac-vue/src/') ||
       normalized.includes('@venmail+avnac-vue')
     if (isAvnac) {
@@ -65,7 +70,8 @@ export default defineConfig(({ mode }) => {
                 if (
                   importer.includes('/node_modules/@venmail/avnac-vue/src/') ||
                   importer.includes('@venmail+avnac-vue') ||
-                  importer.includes(AVNAC_SRC_NORM)
+                  importer.includes(AVNAC_SRC_NORM) ||
+                  importer.includes(PACKAGE_AVNAC_SRC_NORM)
                 ) {
                   return { external: true }
                 }

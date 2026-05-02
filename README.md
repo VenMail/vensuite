@@ -34,11 +34,11 @@ Vensuite is a complete productivity suite that you can self-host or use via our 
 - Response analytics
 
 ### 🎨 Slides
-- Slidev compatible
-- PPTX export
-- PDF rendering
-- Templates library
-- Smart snapping & guides
+- AVNAC canvas editor
+- PPTX import/export
+- Slide previews
+- Professional template library
+- Smart objects, pen, shapes, snapping, and guides
 
 ## 🚀 Quick Start
 
@@ -141,7 +141,7 @@ Vensuite is built upon these essential open-source projects that make our produc
 - **[Univer](https://univer.ai/)** - Spreadsheet engine bringing Excel functionality to web
 
 ### 🎨 Slides
-- **[Slidev](https://sli.dev/)** - Modern presentation slides for developers
+- **AVNAC Vue** - Canvas-first presentation editor with PowerPoint-style slide tooling
 
 ### 🔄 Real-time Collaboration
 - **[Y.js](https://github.com/yjs/yjs)** - CRDT for real-time collaboration
@@ -171,45 +171,43 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 
 ---
 
-## 🎨 Slides (Slidev)
+## 🎨 Slides (AVNAC)
 
-The slide editor provides a modern presentation experience powered by [Slidev](https://sli.dev/). Core routes:
+The slide editor provides a canvas-first presentation experience powered by AVNAC. Core routes:
 
 - `slides/new` to create a fresh deck.
 - `slides/:deckId` to open an existing deck.
-- `slides/t/:template` to start from a template file in `src/assets/templates/`.
+- `slides/t/:template` redirects to the AVNAC editor flow.
 
 ### Features:
 - **Real-time collaboration** - Edit slides together with Y.js CRDT synchronization
-- **Markdown-based** - Write slides in Markdown with Vue components
-- **PPTX export** - Export presentations to PowerPoint format
-- **PDF rendering** - Generate PDFs for sharing and printing
-- **Templates library** - Professional templates for various use cases
-- **Smart snapping & guides** - Precise element alignment
-- **Theme customization** - Dark/light modes and custom styling
+- **Canvas editing** - Edit text, shapes, images, pen strokes, diagrams, and infographics directly
+- **PPTX import/export** - Import and export PowerPoint files from the AVNAC editor
+- **Slide previews** - Generate deck thumbnails from AVNAC slide documents
+- **Templates library** - Professional AVNAC document templates for common use cases
+- **Smart objects** - Insert timelines, funnels, pyramids, cycles, matrices, flowcharts, and org charts
+- **Canvas sizing** - Switch between 16:9, 4:3, 1:1, portrait, and A4 slide sizes
 
 ### Key Components
 
-- `src/views/SlidesEditor.vue` - Main slide editor orchestrating the layout
-- `src/store/slides.ts` - Pinia store handling deck state, autosave, and import/export
-- `src/components/slides/SlidevCanvas.vue` - Slidev canvas wrapper for real-time editing
-- `src/components/slides/SlidesToolbar.vue` - Toolbar with slide actions and formatting
-- `src/components/slides/SlidesOutline.vue` - Slide thumbnails and navigation
-- `src/components/slides/SlidesInspector.vue` - Settings panel for templates and imports
+- `src/views/SlidesEditorV2.vue` - Main AVNAC editor route and autosave shell
+- `src/components/slides/AvnacHost.vue` - AVNAC canvas host, slide strip, tools, import/export, and presenter
+- `src/components/slides/SlidesTopBar.vue` - PowerPoint-style menu bar and deck actions
+- `src/components/slides/SlideThumbnail.vue` - AVNAC slide preview renderer
+- `src/utils/avnacSlideTemplates.ts` - AVNAC-native deck template generator
 
 ### Import & Export
 
-- **PowerPoint Import** - Upload `.pptx` files to convert into Slidev slide decks
-- **HTML Import** - Parse HTML files client-side into slide content
-- **Export Options** - Generate `pdf`, `pptx`, and slide thumbnails via the export service
-- **Template System** - Use JSON templates from `src/assets/templates/` for quick starts
+- **PowerPoint Import** - Upload `.pptx` files into the AVNAC editor
+- **PowerPoint Export** - Download AVNAC decks as `.pptx`
+- **Template System** - Generate editable AVNAC slide documents from template presets
 
 ### Validation Checklist
 
 - **Create**: Visit `slides/new`, add slides, and confirm autosave updates the deck title
-- **Templates**: Open `slides/t/<template>` and ensure default slides load correctly
-- **Import**: Use toolbar to import HTML/PPTX files; confirm slide content converts properly
-- **Real-time Collaboration**: Test multi-user editing with WebSocket connections
+- **Templates**: Create a deck from the Slides page template picker and ensure editable AVNAC slides load
+- **Import**: Use the File menu to import PPTX files; confirm slide content converts properly
+- **Smart Objects**: Use the Insert menu or right rail to insert diagrams and infographics
 - **Export**: Trigger PDF and PPTX exports; verify file downloads
-- **Thumbnails**: Confirm outline shows slide previews after edits
+- **Thumbnails**: Confirm slide strip and deck list previews update after edits
 - **Responsive**: Test slide editor on different screen sizes

@@ -165,7 +165,7 @@ src/
 - **UI**: Tailwind CSS, DaisyUI, Radix Vue
 - **Documents**: TipTap, ProseMirror
 - **Sheets**: Univer
-- **Slides**: Slidev
+- **Slides**: AVNAC Vue
 - **Real-time**: Y.js, WebSocket
 - **Build**: Vite, Docker
 

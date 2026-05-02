@@ -212,7 +212,7 @@ export function useSmartBlockEditing() {
     
     markdown = markdown.trim();
     
-    // Handle font size with Slidev/UnoCSS classes
+    // Handle font size utility classes
     let sizeClass = '';
     if (styles.fontSize) {
       const fontSize = parseInt(styles.fontSize);

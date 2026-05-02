@@ -7,6 +7,8 @@ export interface AvnacDeckPayload {
   version: 3
   title: string
   slides: AvnacDocumentV1[]
+  notes?: string[]
+  theme?: string
 }
 
 /** Summary object used in the slide deck list view */

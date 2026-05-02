@@ -104,9 +104,11 @@ const emit = defineEmits<{
   (e: 'select-all'): void
   (e: 'zoom', pct: number): void
   (e: 'fit'): void
+  (e: 'canvas-size', size: { width: number; height: number; label: string }): void
   (e: 'add-text'): void
   (e: 'add-image'): void
   (e: 'add-shape', kind: string): void
+  (e: 'insert-smart-object', kind: string): void
   (e: 'add-slide'): void
   (e: 'duplicate-slide'): void
   (e: 'delete-slide'): void
@@ -199,6 +201,17 @@ const MENUS: Array<{ id: string; label: string; items: MenuItem[] }> = [
     ],
   },
   {
+    id: 'design',
+    label: 'Design',
+    items: [
+      { id: 'size-wide', label: 'Widescreen 16:9' },
+      { id: 'size-standard', label: 'Standard 4:3' },
+      { id: 'size-square', label: 'Square 1:1' },
+      { id: 'size-portrait', label: 'Portrait 9:16' },
+      { id: 'size-a4', label: 'A4 landscape' },
+    ],
+  },
+  {
     id: 'insert',
     label: 'Insert',
     items: [
@@ -211,6 +224,14 @@ const MENUS: Array<{ id: string; label: string; items: MenuItem[] }> = [
       { id: 'add-star', label: 'Star' },
       { id: 'add-line', label: 'Line' },
       { id: 'add-arrow', label: 'Arrow' },
+      { sep: true },
+      { id: 'smart-pyramid', label: 'Smart object: Pyramid' },
+      { id: 'smart-funnel', label: 'Smart object: Funnel' },
+      { id: 'smart-timeline-h', label: 'Smart object: Timeline' },
+      { id: 'smart-cycle', label: 'Smart object: Cycle' },
+      { id: 'smart-matrix-2x2', label: 'Smart object: 2x2 matrix' },
+      { id: 'smart-flowchart', label: 'Smart object: Flowchart' },
+      { id: 'smart-organogram', label: 'Smart object: Org chart' },
       { sep: true },
       { id: 'add-slide', label: 'New slide' },
     ],
@@ -300,6 +321,11 @@ function handleAction(id: string) {
     case 'zoom-125':    emit('zoom', 125); break
     case 'zoom-150':    emit('zoom', 150); break
     case 'fit':          emit('fit'); break
+    case 'size-wide':     emit('canvas-size', { width: 4000, height: 2250, label: 'Widescreen 16:9' }); break
+    case 'size-standard': emit('canvas-size', { width: 4000, height: 3000, label: 'Standard 4:3' }); break
+    case 'size-square':   emit('canvas-size', { width: 3000, height: 3000, label: 'Square 1:1' }); break
+    case 'size-portrait': emit('canvas-size', { width: 2250, height: 4000, label: 'Portrait 9:16' }); break
+    case 'size-a4':       emit('canvas-size', { width: 3508, height: 2480, label: 'A4 landscape' }); break
     case 'toggle-notes': emit('toggle-notes'); break
     case 'add-text':    emit('add-text'); break
     case 'add-image':   emit('add-image'); break
@@ -309,6 +335,13 @@ function handleAction(id: string) {
     case 'add-star':    emit('add-shape', 'star'); break
     case 'add-line':    emit('add-shape', 'line'); break
     case 'add-arrow':   emit('add-shape', 'arrow'); break
+    case 'smart-pyramid':    emit('insert-smart-object', 'pyramid'); break
+    case 'smart-funnel':     emit('insert-smart-object', 'funnel'); break
+    case 'smart-timeline-h': emit('insert-smart-object', 'timeline-h'); break
+    case 'smart-cycle':      emit('insert-smart-object', 'cycle'); break
+    case 'smart-matrix-2x2': emit('insert-smart-object', 'matrix-2x2'); break
+    case 'smart-flowchart':  emit('insert-smart-object', 'flowchart'); break
+    case 'smart-organogram': emit('insert-smart-object', 'organogram'); break
     case 'add-slide':   emit('add-slide'); break
     case 'dup-slide':   emit('duplicate-slide'); break
     case 'del-slide':   emit('delete-slide'); break

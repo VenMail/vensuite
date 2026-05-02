@@ -31,7 +31,6 @@ import AuthenticatedLayout from './layouts/AuthenticatedLayout.vue'
 import FilePicker from './views/FilePicker.vue'
 import DocsEditor from './views/DocsEditor.vue'
 import Login from './views/Login.vue'
-// Note: SlidesEditorV2 removed - AVNAC modules not available
 import StoryEditor from './views/StoryEditor.vue'
 import Media from './views/Media.vue'
 import ImportView from './views/ImportView.vue'
@@ -111,12 +110,9 @@ const routes = [
       { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true, public: true } },
       { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true, allowGuest: true } },
       { path: 'slides', name: 'slides', component: () => import('./views/Slides.vue') },
-      // Note: slides editor routes disabled - AVNAC modules not available
-      // { path: 'slides/new', redirect: '/slides-v2/new' },
-      // { path: 'slides/:deckId', redirect: (to: any) => `/slides-v2/${to.params.deckId}` },
-      // { path: 'slides/t/:template', redirect: '/slides-v2/new' },
-      // { path: 'slides-v2/new', name: 'slides-v2-new', component: SlidesEditorV2, meta: { hideLayout: true } },
-      // { path: 'slides-v2/:deckId', name: 'slides-v2-edit', component: SlidesEditorV2, meta: { hideLayout: true } },
+      { path: 'slides/new', name: 'slides-new', component: () => import('./views/SlidesEditorV2.vue'), meta: { hideLayout: true } },
+      { path: 'slides/t/:template', name: 'slides-template', component: () => import('./views/SlidesEditorV2.vue'), meta: { hideLayout: true } },
+      { path: 'slides/:deckId', name: 'slides-edit', component: () => import('./views/SlidesEditorV2.vue'), meta: { hideLayout: true, public: true } },
       { path: 'stories', name: 'stories', component: () => import('./views/Stories.vue') },
       { path: 'stories/new', name: 'stories-new', component: StoryEditor, meta: { hideLayout: true } },
       { path: 'stories/:storyId', name: 'stories-edit', component: StoryEditor, meta: { hideLayout: true, public: true } },
