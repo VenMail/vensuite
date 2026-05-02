@@ -39,6 +39,91 @@ const THEME_LABELS: Record<AvnacDeckTheme, string> = {
   minimal: 'Minimal Deck Presentation',
 }
 
+export type AvnacDeckTemplateOption = {
+  theme: AvnacDeckTheme
+  title: string
+  description: string
+  accent: string
+  surface: string
+  text: string
+  slides: string
+}
+
+export const AVNAC_DECK_TEMPLATE_OPTIONS: AvnacDeckTemplateOption[] = [
+  {
+    theme: 'blank',
+    title: 'Blank canvas',
+    description: 'Start from a clean widescreen slide with no layout decisions baked in.',
+    accent: '#18181b',
+    surface: '#ffffff',
+    text: '#111827',
+    slides: '1 slide',
+  },
+  {
+    theme: 'pitch',
+    title: 'Investor pitch',
+    description: 'A high-contrast venture narrative with traction, market, roadmap, and close.',
+    accent: '#f97316',
+    surface: '#111827',
+    text: '#f9fafb',
+    slides: '8 slides',
+  },
+  {
+    theme: 'professional',
+    title: 'Executive brief',
+    description: 'Quiet boardroom styling for decisions, recommendations, and next steps.',
+    accent: '#0f766e',
+    surface: '#f8fafc',
+    text: '#0f172a',
+    slides: '8 slides',
+  },
+  {
+    theme: 'product',
+    title: 'Product roadmap',
+    description: 'Launch-ready structure for priorities, milestones, feature tradeoffs, and release plans.',
+    accent: '#7c3aed',
+    surface: '#f5f3ff',
+    text: '#18181b',
+    slides: '8 slides',
+  },
+  {
+    theme: 'report',
+    title: 'Quarterly report',
+    description: 'Metric-forward pages for performance, risks, observations, and leadership asks.',
+    accent: '#0891b2',
+    surface: '#ecfeff',
+    text: '#164e63',
+    slides: '8 slides',
+  },
+  {
+    theme: 'sales',
+    title: 'Sales proposal',
+    description: 'Customer-facing proposal flow with value, proof, commercial impact, and close.',
+    accent: '#ca8a04',
+    surface: '#fefce8',
+    text: '#1f2937',
+    slides: '8 slides',
+  },
+  {
+    theme: 'strategy',
+    title: 'Strategy offsite',
+    description: 'A structured strategy deck for choices, operating model, roadmap, and owners.',
+    accent: '#65a30d',
+    surface: '#f7fee7',
+    text: '#1a2e05',
+    slides: '8 slides',
+  },
+  {
+    theme: 'portfolio',
+    title: 'Portfolio review',
+    description: 'A polished showcase for selected work, case studies, outcomes, and recommendations.',
+    accent: '#0ea5e9',
+    surface: '#fafaf9',
+    text: '#1c1917',
+    slides: '8 slides',
+  },
+]
+
 const THEME_ALIASES: Record<string, AvnacDeckTheme> = {
   blank: 'blank',
   'blank-canvas': 'blank',
