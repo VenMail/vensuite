@@ -246,8 +246,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       '@venmail/avnac-vue':
-        specifier: ^0.1.10
-        version: 0.1.10(fabric@6.9.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))
+        specifier: ^0.1.11
+        version: 0.1.11(fabric@6.9.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))
       '@visactor/vtable-plugins':
         specifier: ^1.26.0
         version: 1.26.0(@visactor/vtable@1.26.0)
@@ -2568,8 +2568,8 @@ packages:
   '@types/web-bluetooth@0.0.21':
     resolution: {integrity: sha512-oIQLCGWtcFZy2JW77j9k8nHzAOpqMHLQejDA48XXMWH6tjCQHz5RCFz1bzsmROyL6PUm+LLnUiI4BCn221inxA==}
 
-  '@venmail/avnac-vue@0.1.10':
-    resolution: {integrity: sha512-51Ve/UDwvCcu1nptmSNkk+B14dNdySUtB88MbdsM9YgywkXh8sLfa4v7mNiZDhGUwO26qBAO1TxjjhtdafooeQ==}
+  '@venmail/avnac-vue@0.1.11':
+    resolution: {integrity: sha512-Z8VigpzdsLkT6epwl1whHMXhXZsTEN82WGyoFYclZaZro0VDJT0GAm80ZdWK4o1rpKDVWnEuhZ7myzHcme8cWw==}
     peerDependencies:
       fabric: ^6.6.1
       pinia: ^2.0.0
@@ -8787,7 +8787,7 @@ snapshots:
 
   '@types/web-bluetooth@0.0.21': {}
 
-  '@venmail/avnac-vue@0.1.10(fabric@6.9.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))':
+  '@venmail/avnac-vue@0.1.11(fabric@6.9.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))':
     dependencies:
       chart.js: 4.5.1
       fabric: 6.9.1
