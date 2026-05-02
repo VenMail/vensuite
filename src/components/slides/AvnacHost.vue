@@ -210,7 +210,7 @@ import { useChartsStore } from '@avnac/stores/charts'
 import { exportDocumentsToPptx } from '@avnac/pptx/export'
 import { importPptxFromInput } from '@avnac/pptx/import'
 import { loadCanvasGoogleFontsAndRelayout } from '@avnac/lib/avnac-canvas-google-fonts'
-import { ensureGoogleFontFamilyReady } from '@avnac/lib/load-google-font'
+import { applyTextFormatChange } from '@avnac/lib/apply-text-format'
 
 interface Props {
   initialSlides?: AvnacDocumentV1[]
@@ -479,6 +479,7 @@ function togglePanel(id: EditorSidebarPanelId) {
     return
   }
   activePanel.value = activePanel.value === id ? null : id
+  if (activePanel.value === 'charts') openSelectedChartInPanel()
 }
 
 const layerRows = computed<EditorLayerRow[]>(() => {
@@ -517,7 +518,7 @@ function onShapePick(kind: string) {
   editorRef.value?.shapeTools.addShapeByKind(kind)
 }
 
-function onLinePick(kind: 'line' | 'connector') {
+function onLinePick(kind: 'line' | 'curved-line' | 'connector') {
   editorRef.value?.shapeTools.startLineDrawMode(kind as any)
 }
 
@@ -635,33 +636,12 @@ function onTextFormatChange(partial: Partial<TextFormatToolbarValues>) {
   const active = canvas.getActiveObject() as any
   if (!active) return
 
-  if (partial.fontFamily !== undefined) {
-    active.set('fontFamily', partial.fontFamily)
-    void ensureGoogleFontFamilyReady(partial.fontFamily).then(() => {
-      active.initDimensions?.()
-      active.setCoords?.()
-      canvas.requestRenderAll()
-    })
-  }
-  if (partial.fontSize !== undefined) active.set('fontSize', partial.fontSize)
-  if (partial.bold !== undefined) active.set('fontWeight', partial.bold ? 'bold' : 'normal')
-  if (partial.italic !== undefined) active.set('fontStyle', partial.italic ? 'italic' : 'normal')
-  if (partial.underline !== undefined) active.set('underline', partial.underline)
-  if (partial.textAlign !== undefined) active.set('textAlign', partial.textAlign)
-  if (partial.lineHeight !== undefined) active.set('lineHeight', partial.lineHeight)
   if (canvasStore.textToolbarValues) {
     canvasStore.textToolbarValues = { ...canvasStore.textToolbarValues, ...partial }
   }
-  if (partial.fillStyle !== undefined) {
-    Promise.all([import('@avnac/lib/avnac-fill-paint'), import('fabric')]).then(([{ applyBgValueToFill }, mod]) => {
-      applyBgValueToFill(mod, active, partial.fillStyle!)
-      canvas.requestRenderAll()
-    })
-    return
-  }
-  active.initDimensions?.()
-  active.setCoords?.()
-  canvas.requestRenderAll()
+  import('fabric').then((mod) => {
+    void applyTextFormatChange(mod, canvas, active, partial).then(() => scheduleChange())
+  })
 }
 
 function onShapePaintChange(v: BgValue) {
@@ -802,11 +782,12 @@ async function onInsertChart(data: AvnacChartData) {
     avnacGroupKind: 'chart',
     avnacLayerName: 'Chart',
   } as any)
-  ensureAvnacLayerId(img)
+  const id = ensureAvnacLayerId(img)
   canvas.add(img)
   canvas.setActiveObject(img)
   canvas.requestRenderAll()
-  activePanel.value = null
+  chartsStore.openChartEditor(id, structuredClone(data))
+  activePanel.value = 'charts'
   scheduleChange()
 }
 
@@ -817,6 +798,14 @@ function findChartObject(id: string | null | undefined): any | null {
   if (active?.avnacChart && (!id || active.avnacLayerId === id || active.avnacGroupId === id)) return active
   const objects = canvas.getObjects?.() ?? []
   return objects.find((obj: any) => obj?.avnacChart && (!id || obj.avnacLayerId === id || obj.avnacGroupId === id)) ?? null
+}
+
+function openSelectedChartInPanel() {
+  const canvas = getCanvas()
+  if (!canvas) return
+  const active = canvas.getActiveObject() as any
+  if (!active?.avnacChart) return
+  chartsStore.openChartEditor(active.avnacLayerId ?? 'chart', active.avnacChart)
 }
 
 watch(() => chartsStore.renderRev, async () => {
@@ -848,6 +837,7 @@ function onEditChartData() {
   if (!active) return
   if (active.avnacChart) {
     chartsStore.openChartEditor(active.avnacLayerId ?? 'chart', active.avnacChart)
+    activePanel.value = 'charts'
     return
   }
   // Find first group member with chart metadata for imported/grouped charts.
@@ -856,10 +846,14 @@ function onEditChartData() {
     import('@avnac/lib/avnac-logical-group').then(({ findGroupMembers }) => {
       const members = findGroupMembers(canvas, groupId)
       const source = members.find((m: any) => m.avnacChart || m.avnacChartData)
-      if (source) chartsStore.openChartEditor(groupId, (source as any).avnacChart ?? (source as any).avnacChartData)
+      if (source) {
+        chartsStore.openChartEditor(groupId, (source as any).avnacChart ?? (source as any).avnacChartData)
+        activePanel.value = 'charts'
+      }
     })
   } else if (active.avnacChartData) {
     chartsStore.openChartEditor(active.avnacLayerId ?? 'chart', active.avnacChartData)
+    activePanel.value = 'charts'
   }
 }
 
