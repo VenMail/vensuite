@@ -1012,12 +1012,10 @@ export const useFileStore = defineStore("files", {
         return true;
       }
 
-      // Server IDs should be numeric or alphanumeric without special patterns like "1-251209-2255-177110-247"
-      // Valid server IDs are typically just numbers or simple alphanumeric strings
+      // Server IDs can be numeric, alphanumeric, or dash-separated numeric segments
+      // e.g. "30-260503-1327-836523-351"
       const validServerIdRegex = /^[a-zA-Z0-9_-]+$/;
-      const invalidPatternRegex = /^\d+-\d+-\d+-\d+-\d+$/; // Matches malformed IDs like "1-251209-2255-177110-247"
-
-      return validServerIdRegex.test(id) && !invalidPatternRegex.test(id);
+      return validServerIdRegex.test(id);
     },
 
     /** Delete a local document from storage */
