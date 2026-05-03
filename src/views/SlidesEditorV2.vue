@@ -283,6 +283,8 @@ onBeforeUnmount(() => {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-canvas, #f4f4f5);
+  color: #18181b;
+  color-scheme: light;
 }
 
 .slides-editor-body {
@@ -290,12 +292,15 @@ onBeforeUnmount(() => {
   min-height: 0;
   overflow: hidden;
   background: var(--bg-canvas, #f4f4f5);
+  color-scheme: light;
 }
 
 .template-dialog {
   position: fixed;
   inset: 0;
   z-index: 80;
+  color: #111827;
+  color-scheme: light;
 }
 
 .template-dialog__backdrop {
@@ -379,9 +384,10 @@ onBeforeUnmount(() => {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #ffffff;
-  color: inherit;
+  color: #111827;
   text-align: left;
   cursor: pointer;
+  color-scheme: light;
 }
 
 .template-card:hover {

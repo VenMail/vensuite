@@ -36,8 +36,18 @@ export interface SpreadsheetTemplateDefinition {
   workbookData: IVTableSheetOptions;
 }
 
-function cloneWorkbookData(data: IVTableSheetOptions): IVTableSheetOptions {
+export function cloneSpreadsheetWorkbookData(data: IVTableSheetOptions): IVTableSheetOptions {
   return JSON.parse(JSON.stringify(data));
+}
+
+function toTemplateLookupKey(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
@@ -49,7 +59,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);",
     workbookTitle: "New Spreadsheet",
-    workbookData: cloneWorkbookData(DEFAULT_WORKBOOK_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(DEFAULT_WORKBOOK_DATA),
   },
   {
     name: "Monthly Budget",
@@ -59,7 +69,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #16a34a 0%, #4ade80 100%);",
     workbookTitle: "Monthly Budget",
-    workbookData: cloneWorkbookData(BUDGET_TEMPLATE_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(BUDGET_TEMPLATE_DATA),
   },
   {
     name: "Expense Tracker",
@@ -69,7 +79,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);",
     workbookTitle: "Expense Tracker",
-    workbookData: cloneWorkbookData(EXPENSE_TRACKER_TEMPLATE_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(EXPENSE_TRACKER_TEMPLATE_DATA),
   },
   {
     name: "Project Timeline",
@@ -79,7 +89,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);",
     workbookTitle: "Project Timeline",
-    workbookData: cloneWorkbookData(PROJECT_TIMELINE_TEMPLATE_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(PROJECT_TIMELINE_TEMPLATE_DATA),
   },
   {
     name: "Sales CRM",
@@ -89,7 +99,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);",
     workbookTitle: "Sales CRM",
-    workbookData: cloneWorkbookData(SALES_CRM_TEMPLATE_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(SALES_CRM_TEMPLATE_DATA),
   },
   {
     name: "Inventory Tracker",
@@ -99,7 +109,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);",
     workbookTitle: "Inventory Tracker",
-    workbookData: cloneWorkbookData(INVENTORY_TRACKER_TEMPLATE_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(INVENTORY_TRACKER_TEMPLATE_DATA),
   },
   {
     name: "Content Calendar",
@@ -109,7 +119,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);",
     workbookTitle: "Content Calendar",
-    workbookData: cloneWorkbookData(CONTENT_CALENDAR_TEMPLATE_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(CONTENT_CALENDAR_TEMPLATE_DATA),
   },
   {
     name: "Invoice",
@@ -119,7 +129,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #0f172a 0%, #334155 100%);",
     workbookTitle: "Invoice",
-    workbookData: cloneWorkbookData(INVOICE_TEMPLATE_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(INVOICE_TEMPLATE_DATA),
   },
   {
     name: "OKR Tracker",
@@ -129,7 +139,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);",
     workbookTitle: "OKR Tracker",
-    workbookData: cloneWorkbookData(OKR_TEMPLATE_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(OKR_TEMPLATE_DATA),
   },
   {
     name: "Task Tracker",
@@ -139,7 +149,7 @@ export const spreadsheetTemplateDefinitions: SpreadsheetTemplateDefinition[] = [
     icon: defaultIcons.IconMicrosoftExcel,
     previewStyle: "background: linear-gradient(135deg, #0f172a 0%, #475569 100%);",
     workbookTitle: "Task Tracker",
-    workbookData: cloneWorkbookData(TASKS_TEMPLATE_DATA),
+    workbookData: cloneSpreadsheetWorkbookData(TASKS_TEMPLATE_DATA),
   },
 ];
 
@@ -150,3 +160,29 @@ export const spreadsheetTemplateMap = spreadsheetTemplateDefinitions.reduce(
   },
   {} as Record<SpreadsheetTemplateSlug, SpreadsheetTemplateDefinition>,
 );
+
+const spreadsheetTemplateAliases = spreadsheetTemplateDefinitions.reduce(
+  (acc, template) => {
+    acc.set(template.slug, template.slug);
+    acc.set(toTemplateLookupKey(template.slug), template.slug);
+    acc.set(toTemplateLookupKey(template.name), template.slug);
+    acc.set(toTemplateLookupKey(template.workbookTitle), template.slug);
+    acc.set(toTemplateLookupKey(template.badge), template.slug);
+    return acc;
+  },
+  new Map<string, SpreadsheetTemplateSlug>(),
+);
+
+spreadsheetTemplateAliases.set("budget", "budget");
+spreadsheetTemplateAliases.set("monthly-budget", "budget");
+spreadsheetTemplateAliases.set("invoice", "invoice");
+spreadsheetTemplateAliases.set("blank-spreadsheet", "blank");
+
+export function resolveSpreadsheetTemplateSlug(value?: string | null): SpreadsheetTemplateSlug {
+  if (!value) return "blank";
+  return spreadsheetTemplateAliases.get(toTemplateLookupKey(value)) ?? "blank";
+}
+
+export function resolveSpreadsheetTemplateDefinition(value?: string | null): SpreadsheetTemplateDefinition {
+  return spreadsheetTemplateMap[resolveSpreadsheetTemplateSlug(value)];
+}

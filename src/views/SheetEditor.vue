@@ -26,7 +26,10 @@ import { useFavicon, useDebounceFn } from '@vueuse/core'
 import {
   DEFAULT_WORKBOOK_DATA,
 } from '@/assets/default-workbook-data'
-import { spreadsheetTemplateMap } from '@/constants/sheetTemplates'
+import {
+  cloneSpreadsheetWorkbookData,
+  resolveSpreadsheetTemplateDefinition,
+} from '@/constants/sheetTemplates'
 
 import { extractSheetFields } from '@/utils/fieldExtractor'
 import { convertSheetToForm } from '@/utils/sheetToFormConverter'
@@ -956,11 +959,11 @@ async function handleRotateSheetPublicApiKey() {
 // Template loading function
 async function loadTemplate(templateSlug: string): Promise<{ name: string; data: IVTableSheetOptions } | null> {
   try {
-    const template = spreadsheetTemplateMap[templateSlug as keyof typeof spreadsheetTemplateMap]
-    if (template) {
-      return { name: template.workbookTitle || template.name, data: JSON.parse(JSON.stringify(template.workbookData)) }
+    const template = resolveSpreadsheetTemplateDefinition(templateSlug)
+    return {
+      name: template.workbookTitle || template.name,
+      data: cloneSpreadsheetWorkbookData(template.workbookData),
     }
-    return null
   } catch (error) {
     console.error('Error loading template:', error)
     return null
@@ -1159,18 +1162,19 @@ onMounted(async () => {
     
     // Special case: "new" template means create new document
     if (template === 'new') {
-      const initialContent = JSON.stringify(DEFAULT_WORKBOOK_DATA)
+      const initialData = cloneSpreadsheetWorkbookData(DEFAULT_WORKBOOK_DATA)
+      const initialContent = JSON.stringify(initialData)
       const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet', initialContent)
 
       if (!newDoc || !newDoc.id) {
         console.error('Failed to create document - invalid response:', newDoc)
-        data.value = { ...DEFAULT_WORKBOOK_DATA }
+        data.value = initialData
         document.title = 'New Spreadsheet'
         title.value = document.title
         return
       }
 
-      data.value = { ...DEFAULT_WORKBOOK_DATA }
+      data.value = initialData
       document.title = 'New Spreadsheet'
       title.value = document.title
 
@@ -1200,7 +1204,7 @@ onMounted(async () => {
       await router.replace(`/sheets/${newDoc.id}`)
     } else {
       // Fallback to default if template not found
-      data.value = DEFAULT_WORKBOOK_DATA
+      data.value = cloneSpreadsheetWorkbookData(DEFAULT_WORKBOOK_DATA)
       title.value = 'New Spreadsheet'
     }
   } else if (route.params.id) {
@@ -1211,19 +1215,20 @@ onMounted(async () => {
     }
   } else {
     // Create new sheet with initial content so backend saves it properly
-    const initialContent = JSON.stringify(DEFAULT_WORKBOOK_DATA)
+    const initialData = cloneSpreadsheetWorkbookData(DEFAULT_WORKBOOK_DATA)
+    const initialContent = JSON.stringify(initialData)
     const newDoc = await fileStore.createNewDocument('xlsx', 'New Spreadsheet', initialContent)
     
     if (!newDoc || !newDoc.id) {
       console.error('Failed to create document - invalid response:', newDoc)
       // Fallback to default data
-      data.value = DEFAULT_WORKBOOK_DATA
+      data.value = initialData
       document.title = 'New Spreadsheet'
       title.value = document.title
       return
     }
     
-    data.value = { ...DEFAULT_WORKBOOK_DATA }
+    data.value = initialData
     document.title = 'New Spreadsheet'
     title.value = document.title
     

@@ -1302,6 +1302,8 @@ defineExpose({
   display: flex;
   overflow: hidden;
   background: var(--bg-canvas, #f4f4f5);
+  color: var(--fg, #18181b);
+  color-scheme: light;
 }
 
 .avnac-slide-strip {
@@ -1420,6 +1422,16 @@ defineExpose({
   --fg-muted: #71717a;
   --fg-subtle: #a1a1aa;
   --hover: #f5f5f5;
+  color: var(--fg, #18181b);
+  color-scheme: light;
+}
+
+.avnac-host *,
+.avnac-host input,
+.avnac-host textarea,
+.avnac-host select,
+.avnac-host button {
+  color-scheme: light;
 }
 
 .avnac-sidebar-stack {

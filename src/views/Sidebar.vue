@@ -14,6 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import * as defaultIcons from '@iconify-prerendered/vue-file-icons'
 import { useMobileDetection } from '@/composables/useMobileDetection'
+import { resolveSpreadsheetTemplateSlug } from '@/constants/sheetTemplates'
 
 const props = defineProps({
   isVisible: {
@@ -112,10 +113,11 @@ function handleTemplateClick(category: string, templateName: string) {
 
 function createNewFile(type: string, template?: string) {
   if (type === "Spreadsheets") {
-    if (template?.toLowerCase().includes("blank")) {
+    const slug = resolveSpreadsheetTemplateSlug(template)
+    if (slug === "blank") {
       router.push("/sheets/new")
     } else {
-      router.push("/sheets/t/" + template)
+      router.push("/sheets/t/" + slug)
     }
   } else if (type === "Documents") {
     if (template?.toLowerCase().includes("blank")) {
