@@ -1265,6 +1265,20 @@ onMounted(() => {
   window.addEventListener('keydown', onGlobalKeydown, true)
 })
 
+// When parent loads initialSlides asynchronously (e.g. fetched deck),
+// apply them to the canvas after the editor is ready.
+watch(() => props.initialSlides, (next) => {
+  if (!next || !next.length) return
+  const cloned = cloneAvnacPlain(next)
+  slides.value = cloned
+  currentIndex.value = 0
+  initialDoc.value = cloned[0]
+  if (ready.value && editorRef.value) {
+    void editorRef.value.setDocument(cloned[0])
+    setTimeout(() => editorRef.value?.fitToViewport(), 60)
+  }
+}, { deep: false })
+
 onBeforeUnmount(() => {
   if (changeTimer) clearTimeout(changeTimer)
   window.removeEventListener('keydown', onGlobalKeydown, true)
