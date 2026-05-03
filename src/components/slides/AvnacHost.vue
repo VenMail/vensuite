@@ -285,6 +285,20 @@ const INFOGRAPHIC_SMART_OBJECTS: InfographicTemplate[] = [
   'matrix-2x2',
 ]
 
+type ArrowHeadType = 'none' | 'triangle' | 'open' | 'circle' | 'diamond'
+
+function avnacStrokeLineHeadType(meta: { kind?: string; arrowHead?: number; arrowHeadType?: string }): ArrowHeadType {
+  if (['none', 'triangle', 'open', 'circle', 'diamond'].includes(meta.arrowHeadType ?? '')) {
+    return meta.arrowHeadType as ArrowHeadType
+  }
+  if (meta.kind === 'arrow' || (meta.arrowHead ?? 0) > 0) return 'triangle'
+  return 'none'
+}
+
+function isArrowHeadVisible(type: ArrowHeadType | undefined, head = 0): boolean {
+  return (type ?? (head > 0 ? 'triangle' : 'none')) !== 'none'
+}
+
 let changeTimer: ReturnType<typeof setTimeout> | null = null
 
 function scheduleChange() {
@@ -776,6 +790,7 @@ function onApplyImageCrop(rect: { cropX: number; cropY: number; width: number; h
 function updateActiveLine(partial: {
   arrowPathType?: ArrowPathType
   arrowHead?: number
+  arrowHeadType?: ArrowHeadType
   arrowLineStyle?: ArrowLineStyle
 }) {
   const canvas = getCanvas()
@@ -785,25 +800,28 @@ function updateActiveLine(partial: {
     if (!(active instanceof mod.Group)) return
     const meta = getAvnacShapeMeta(active)
     if (!meta?.arrowEndpoints || (meta.kind !== 'line' && meta.kind !== 'arrow')) return
-    const nextHead = partial.arrowHead ?? (meta.kind === 'arrow' ? (meta.arrowHead ?? 1) : 0)
+    const nextHeadType = partial.arrowHeadType ?? avnacStrokeLineHeadType(meta)
+    const nextHead = partial.arrowHead ?? (isArrowHeadVisible(nextHeadType, meta.arrowHead) ? (meta.arrowHead ?? 1) || 1 : 0)
     const nextMeta = {
       ...meta,
       ...partial,
-      kind: nextHead > 0 ? 'arrow' as const : 'line' as const,
+      kind: isArrowHeadVisible(nextHeadType, nextHead) ? 'arrow' as const : 'line' as const,
       arrowHead: nextHead,
+      arrowHeadType: nextHeadType,
     }
     const stroke = getAvnacStroke(active)
     const color = stroke?.type === 'solid' ? stroke.color : arrowDisplayColor(active)
     layoutArrowGroup(active, meta.arrowEndpoints.x1, meta.arrowEndpoints.y1, meta.arrowEndpoints.x2, meta.arrowEndpoints.y2, {
       strokeWidth: nextMeta.arrowStrokeWidth ?? 6,
       headFrac: nextHead,
+      headType: nextHeadType,
       color,
       lineStyle: nextMeta.arrowLineStyle,
       roundedEnds: nextMeta.arrowRoundedEnds,
       pathType: nextMeta.arrowPathType,
       curveBulge: nextMeta.arrowCurveBulge,
       curveT: nextMeta.arrowCurveT,
-    })
+    } as any)
     setAvnacShapeMeta(active, nextMeta)
     canvas.requestRenderAll()
     commitObjectModified(canvas, active)
@@ -815,8 +833,9 @@ function onLinePathTypeChange(v: ArrowPathType) {
   updateActiveLine({ arrowPathType: v })
 }
 
-function onLineArrowHeadChange(v: 'none' | 'arrow') {
-  updateActiveLine({ arrowHead: v === 'arrow' ? 1 : 0 })
+function onLineArrowHeadChange(v: ArrowHeadType | 'arrow') {
+  const headType = v === 'arrow' ? 'triangle' : v
+  updateActiveLine({ arrowHead: headType === 'none' ? 0 : 1, arrowHeadType: headType })
 }
 
 function onLineStyleChange(v: ArrowLineStyle) {
