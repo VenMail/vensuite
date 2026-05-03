@@ -99,7 +99,7 @@ import {
   resolveAvnacDeckTheme,
   type AvnacDeckTheme,
 } from '@/utils/avnacSlideTemplates'
-import type { AvnacDocumentV1 } from '@avnac/lib/avnac-document'
+import { cloneAvnacPlain, type AvnacDocumentV1 } from '@avnac/lib/avnac-document'
 
 const route = useRoute()
 const router = useRouter()
@@ -131,7 +131,7 @@ async function persistDeck() {
   if (!editorReady.value || isSaving.value) return
   isSaving.value = true
   try {
-    const slides = avnacRef.value?.getSlides() ?? []
+    const slides = cloneAvnacPlain(avnacRef.value?.getSlides() ?? [])
     const payload = { version: 3, title: title.value, slides, notes: notes.value }
     const content = JSON.stringify(payload)
     const routeId = route.params.deckId as string
@@ -256,7 +256,7 @@ onMounted(async () => {
       const raw = await fileStore.loadDocument(id, 'pptx') as any
       if (raw?.content) {
         const parsed = JSON.parse(raw.content)
-        if (parsed?.slides?.length) initialSlides.value = parsed.slides
+        if (parsed?.slides?.length) initialSlides.value = cloneAvnacPlain(parsed.slides)
         if (Array.isArray(parsed?.notes)) notes.value = parsed.notes
         if (parsed?.title) {
           title.value = parsed.title

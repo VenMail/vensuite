@@ -103,6 +103,13 @@
               @close="activePanel = null"
               @template-insert="onTemplateInsert"
             />
+            <EditorAiPanel
+              v-if="activePanel === 'ai'"
+              :open="activePanel === 'ai'"
+              api-url="/api/v1/ai/generate-slides"
+              @close="activePanel = null"
+              @generate="onAiGenerate"
+            />
             <EditorAnimationPanel
               v-if="activePanel === 'animations'"
               :canvas="getCanvas()"
@@ -199,6 +206,7 @@ import EditorLayersPanel from '@avnac/components/panels/EditorLayersPanel.vue'
 import EditorImagesPanel from '@avnac/components/panels/EditorImagesPanel.vue'
 import EditorUploadsPanel from '@avnac/components/panels/EditorUploadsPanel.vue'
 import EditorAppsPanel from '@avnac/components/panels/EditorAppsPanel.vue'
+import EditorAiPanel from '@avnac/components/panels/EditorAiPanel.vue'
 import EditorAnimationPanel from '@avnac/components/panels/EditorAnimationPanel.vue'
 import ChartDataPanel from '@avnac/components/charts/ChartDataPanel.vue'
 import ImageCropModal from '@avnac/components/modals/ImageCropModal.vue'
@@ -210,7 +218,7 @@ import PaintPopoverControl from '@avnac/components/shared/PaintPopoverControl.vu
 
 import type { EditorLayerRow } from '@avnac/components/panels/EditorLayersPanel.vue'
 import type { EditorSidebarPanelId } from '@avnac/lib/editor-sidebar-panel-layout'
-import type { AvnacDocumentV1 } from '@avnac/lib/avnac-document'
+import { cloneAvnacPlain, type AvnacDocumentV1 } from '@avnac/lib/avnac-document'
 import type { BgValue } from '@avnac/lib/bg-value'
 import type { FabricShadowUi } from '@avnac/lib/avnac-fabric-shadow'
 import type { TextFormatToolbarValues } from '@avnac/stores/canvas'
@@ -282,7 +290,7 @@ let changeTimer: ReturnType<typeof setTimeout> | null = null
 function scheduleChange() {
   if (changeTimer) clearTimeout(changeTimer)
   changeTimer = setTimeout(() => {
-    emit('change', JSON.parse(JSON.stringify(slides.value)) as AvnacDocumentV1[])
+    emit('change', cloneAvnacPlain(slides.value))
   }, 2000)
 }
 
@@ -295,7 +303,7 @@ let lastOpType: 'deck' | 'canvas' = 'canvas'
 function pushDeckSnapshot() {
   const current = editorRef.value?.getDocument()
   if (current) slides.value[currentIndex.value] = current
-  deckUndoStack.push({ slides: JSON.parse(JSON.stringify(slides.value)), index: currentIndex.value })
+  deckUndoStack.push({ slides: cloneAvnacPlain(slides.value), index: currentIndex.value })
   if (deckUndoStack.length > 50) deckUndoStack.shift()
   deckRedoStack.length = 0
   lastOpType = 'deck'
@@ -315,7 +323,7 @@ function undo() {
   if (lastOpType === 'deck' && deckUndoStack.length) {
     const current = editorRef.value?.getDocument()
     if (current) slides.value[currentIndex.value] = current
-    deckRedoStack.push({ slides: JSON.parse(JSON.stringify(slides.value)), index: currentIndex.value })
+    deckRedoStack.push({ slides: cloneAvnacPlain(slides.value), index: currentIndex.value })
     const snap = deckUndoStack.pop()!
     restoreSnapshot(snap)
     // Keep lastOpType = 'deck' so that redo() (which guards on deckRedoStack.length)
@@ -330,7 +338,7 @@ function redo() {
   if (deckRedoStack.length) {
     const current = editorRef.value?.getDocument()
     if (current) slides.value[currentIndex.value] = current
-    deckUndoStack.push({ slides: JSON.parse(JSON.stringify(slides.value)), index: currentIndex.value })
+    deckUndoStack.push({ slides: cloneAvnacPlain(slides.value), index: currentIndex.value })
     const snap = deckRedoStack.pop()!
     restoreSnapshot(snap)
     lastOpType = 'deck'
@@ -454,7 +462,7 @@ function deleteSlideAt(i: number) {
 
 function duplicateSlideAt(i: number) {
   pushDeckSnapshot()
-  const dup: AvnacDocumentV1 = JSON.parse(JSON.stringify(slides.value[i]))
+  const dup: AvnacDocumentV1 = cloneAvnacPlain(slides.value[i])
   const insertAt = i + 1
   slides.value.splice(insertAt, 0, dup)
   if (i >= currentIndex.value) {
@@ -526,8 +534,30 @@ function onAddImageFromFile(file: File) {
 
 function onTemplateInsert(doc: AvnacDocumentV1) {
   if (!editorRef.value) return
-  editorRef.value.setDocument(doc)
+  editorRef.value.setDocument(cloneAvnacPlain(doc))
   setTimeout(() => editorRef.value?.fitToViewport(), 60)
+}
+
+async function onAiGenerate(docs: AvnacDocumentV1[]) {
+  const generated = cloneAvnacPlain(docs).filter((doc) =>
+    !!doc?.artboard &&
+    typeof doc.artboard.width === 'number' &&
+    typeof doc.artboard.height === 'number' &&
+    !!doc.fabric &&
+    typeof doc.fabric === 'object',
+  )
+  if (!generated.length) return
+
+  pushDeckSnapshot()
+  slides.value = generated
+  currentIndex.value = 0
+  initialDoc.value = generated[0]
+  if (editorRef.value) {
+    await editorRef.value.setDocument(generated[0])
+    setTimeout(() => editorRef.value?.fitToViewport(), 60)
+  }
+  activePanel.value = null
+  scheduleChange()
 }
 
 // ─── Bottom bar / shape insertion ───────────────────────────────────────────
@@ -595,7 +625,7 @@ async function setCanvasSize(size: { width: number; height: number; label?: stri
   if (!current) return
   const prevW = current.artboard.width || size.width
   const prevH = current.artboard.height || size.height
-  const next: AvnacDocumentV1 = JSON.parse(JSON.stringify(current))
+  const next: AvnacDocumentV1 = cloneAvnacPlain(current)
   next.artboard = { width: size.width, height: size.height }
 
   if (scaleContent) {
@@ -920,7 +950,7 @@ async function onInsertChart(data: AvnacChartData) {
     originY: 'center',
     scaleX: targetW / (img.width ?? targetW),
     scaleY: targetH / (img.height ?? targetH),
-    avnacChart: structuredClone(data),
+    avnacChart: cloneAvnacPlain(data),
     avnacGroupKind: 'chart',
     avnacLayerName: 'Chart',
   } as any)
@@ -928,7 +958,7 @@ async function onInsertChart(data: AvnacChartData) {
   canvas.add(img)
   canvas.setActiveObject(img)
   canvas.requestRenderAll()
-  chartsStore.openChartEditor(id, structuredClone(data))
+  chartsStore.openChartEditor(id, cloneAvnacPlain(data))
   activePanel.value = 'charts'
   scheduleChange()
 }
@@ -956,7 +986,7 @@ watch(() => chartsStore.renderRev, async () => {
   if (!canvas || !data) return
   const chart = findChartObject(chartsStore.editingChartId)
   if (!chart) return
-  chart.avnacChart = structuredClone(data)
+  chart.avnacChart = cloneAvnacPlain(data)
   const w = Math.max(200, Math.round((chart.width ?? 400) * (chart.scaleX ?? 1)))
   const h = Math.max(150, Math.round((chart.height ?? 300) * (chart.scaleY ?? 1)))
   const { renderChartToDataUrl } = await import('@avnac/composables/useChartRenderer')
@@ -1040,14 +1070,14 @@ async function onExportPptx() {
   // Persist current first
   const current = editorRef.value?.getDocument()
   if (current) slides.value[currentIndex.value] = current
-  await exportDocumentsToPptx(JSON.parse(JSON.stringify(slides.value)))
+  await exportDocumentsToPptx(cloneAvnacPlain(slides.value))
 }
 
 async function onImportPptx() {
   try {
     const docs = await importPptxFromInput()
     if (!docs.length) return
-    slides.value = JSON.parse(JSON.stringify(docs))
+    slides.value = cloneAvnacPlain(docs)
     currentIndex.value = 0
     initialDoc.value = slides.value[0]
     if (editorRef.value) {
@@ -1198,7 +1228,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
 onMounted(() => {
   const initial = props.initialSlides?.length ? props.initialSlides : []
   if (initial.length > 0) {
-    slides.value = JSON.parse(JSON.stringify(initial))
+    slides.value = cloneAvnacPlain(initial)
     initialDoc.value = slides.value[0]
   } else {
     const def = createDefaultSlide()
@@ -1217,11 +1247,11 @@ defineExpose({
   getSlides(): AvnacDocumentV1[] {
     const current = editorRef.value?.getDocument()
     if (current) slides.value[currentIndex.value] = current
-    return JSON.parse(JSON.stringify(slides.value))
+    return cloneAvnacPlain(slides.value)
   },
   setSlides(docs: AvnacDocumentV1[]) {
     if (!docs.length) return
-    slides.value = JSON.parse(JSON.stringify(docs))
+    slides.value = cloneAvnacPlain(docs)
     currentIndex.value = 0
     initialDoc.value = slides.value[0]
     editorRef.value?.setDocument(slides.value[0])
