@@ -256,6 +256,8 @@ const emit = defineEmits<{
   (e: 'change', slides: AvnacDocumentV1[]): void
   (e: 'ready'): void
   (e: 'notes-change', index: number, text: string): void
+  (e: 'slide-change', index: number, doc: AvnacDocumentV1): void
+  (e: 'slides-mutate', op: { type: 'delete' | 'duplicate' | 'move' | 'add'; from?: number; to?: number; index?: number }): void
 }>()
 
 const editorRef = ref<InstanceType<typeof CanvasEditor> | null>(null)
@@ -381,6 +383,7 @@ function onEditorReady() {
 function onDocumentChange(doc: AvnacDocumentV1) {
   slides.value[currentIndex.value] = doc
   lastOpType = 'canvas'
+  emit('slide-change', currentIndex.value, doc)
   scheduleChange()
 }
 
@@ -447,7 +450,9 @@ function createDefaultSlide(): AvnacDocumentV1 {
 function addSlide() {
   pushDeckSnapshot()
   slides.value.push(createDefaultSlide())
-  switchSlide(slides.value.length - 1)
+  const newIndex = slides.value.length - 1
+  emit('slides-mutate', { type: 'add', index: newIndex })
+  switchSlide(newIndex)
   scheduleChange()
 }
 
@@ -459,6 +464,7 @@ function deleteSlideAt(i: number) {
   if (slides.value.length <= 1) return
   pushDeckSnapshot()
   slides.value.splice(i, 1)
+  emit('slides-mutate', { type: 'delete', index: i })
   let nextIdx = currentIndex.value
   if (i === currentIndex.value) {
     nextIdx = Math.min(i, slides.value.length - 1)
@@ -479,6 +485,7 @@ function duplicateSlideAt(i: number) {
   const dup: AvnacDocumentV1 = cloneAvnacPlain(slides.value[i])
   const insertAt = i + 1
   slides.value.splice(insertAt, 0, dup)
+  emit('slides-mutate', { type: 'duplicate', from: i, to: insertAt })
   if (i >= currentIndex.value) {
     switchSlide(insertAt)
   } else {
@@ -492,6 +499,7 @@ function moveSlide(from: number, to: number) {
   pushDeckSnapshot()
   const [moved] = slides.value.splice(from, 1)
   slides.value.splice(to, 0, moved)
+  emit('slides-mutate', { type: 'move', from, to })
   if (from === currentIndex.value) {
     currentIndex.value = to
   } else if (from < currentIndex.value && to >= currentIndex.value) {
@@ -1275,6 +1283,17 @@ defineExpose({
     initialDoc.value = slides.value[0]
     editorRef.value?.setDocument(slides.value[0])
     setTimeout(() => editorRef.value?.fitToViewport(), 60)
+  },
+  setSlideAt(index: number, doc: AvnacDocumentV1) {
+    if (index < 0 || !doc) return
+    while (slides.value.length <= index) slides.value.push(createDefaultSlide())
+    slides.value[index] = cloneAvnacPlain(doc)
+    if (index === currentIndex.value && editorRef.value) {
+      void editorRef.value.setDocument(slides.value[index])
+    }
+  },
+  getCurrentIndex(): number {
+    return currentIndex.value
   },
   addSlide,
   duplicateCurrentSlide: () => duplicateSlideAt(currentIndex.value),

@@ -15,7 +15,7 @@ export function useDocsCollaboration(
   const { initializeWebSocket } = useWebSocket();
 
   const wsService = ref<IWebsocketService | null>(null);
-  const randomUserToken = Math.random().toString(36).substr(2, 9);
+  const randomUserToken = Math.random().toString(36).slice(2, 11);
   const userId = ref(
     authStore.isAuthenticated && authStore.userId
       ? authStore.userId

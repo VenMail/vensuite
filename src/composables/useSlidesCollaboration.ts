@@ -5,18 +5,20 @@ import type { IWebsocketService, Message } from '@/lib/wsService'
 import { useWebSocket } from '@/lib/wsService'
 import { useAuthStore } from '@/store/auth'
 
-export interface SheetCollaborationOptions {
+export interface SlideCollaborationOptions {
+  deckId: Ref<string | null>
   privacyType?: Ref<number>
+  onRemoteSlideChange?: (operation: any) => void
   onRemoteTitleChange?: (title: string) => void
+  onRemoteNotesChange?: (notes: Record<string, string>) => void
 }
 
-export function useSheetCollaboration(
-  vtableInstanceRef: Ref<any>,
-  options: SheetCollaborationOptions = {},
-) {
+export function useSlidesCollaboration(options: SlideCollaborationOptions) {
   const route = useRoute()
   const authStore = useAuthStore()
   const { initializeWebSocket } = useWebSocket()
+  const { deckId, onRemoteSlideChange, onRemoteTitleChange } = options
+  void route
 
   // User identification
   const randomUserToken = Math.random().toString(36).slice(2, 11)
@@ -48,7 +50,7 @@ export function useSheetCollaboration(
   const replyingTo = ref<Message | null>(null)
 
   // Collaborators
-  const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({})
+  const collaborators = ref<Record<string, { name: string; slideIndex?: number; ts: number }>>({})
 
   // Notification sound
   const notificationSound = typeof Audio !== 'undefined'
@@ -60,39 +62,45 @@ export function useSheetCollaboration(
   const privacyType = options.privacyType ?? localPrivacyType
   const guestAccessiblePrivacyTypes = new Set<number>([1, 2, 3, 4])
   const canJoinRealtime = computed(() => {
-    if (!route.params.id) return false
+    if (!deckId.value) return false
     if (privacyType.value === 7) return false // Private
     if (authStore.isAuthenticated) return true
     return guestAccessiblePrivacyTypes.has(privacyType.value)
   })
 
+  const canEdit = computed(() => {
+    if (!authStore.isAuthenticated) return false
+    // Edit permission depends on sharing member level
+    return true // Simplified - actual check done via sharing API
+  })
+
   const SOCKET_URI = import.meta.env.VITE_SOCKET_BASE_URL || 'wss://w.venmail.io:8443'
 
-  function initializeWebSocketAndJoinSheet() {
-    if (!canJoinRealtime.value || !route.params.id) {
+  function initializeWebSocketAndJoinDeck() {
+    if (!canJoinRealtime.value || !deckId.value) {
       return
     }
     if (!wsService.value) {
-      const wsUrl = `${SOCKET_URI}?sheetId=${route.params.id}&userName=${userName.value}&userId=${userId.value}`
+      const wsUrl = `${SOCKET_URI}?slideId=${deckId.value}&userName=${userName.value}&userId=${userId.value}`
       wsService.value = initializeWebSocket(wsUrl)
     }
-    joinSheet()
+    joinDeck()
   }
 
-  function joinSheet() {
+  function joinDeck() {
     if (isJoined.value || !canJoinRealtime.value) return
-    if (wsService.value && route.params.id) {
+    if (wsService.value && deckId.value) {
       try {
-        isJoined.value = wsService.value.joinSheet(route.params.id as string, handleIncomingMessage)
-        startPresenceHeartbeat()
+        isJoined.value = wsService.value.joinSheet(deckId.value, handleIncomingMessage)
+        if (getCurrentSlideIndex) startPresenceHeartbeat()
       } catch (error) {
-        console.error('Error joining sheet:', error)
+        console.error('Error joining slide deck:', error)
       }
     }
   }
 
   function handleIncomingMessage(message: Message) {
-    if (message.sheetId !== route.params.id) return
+    if (message.slideId !== deckId.value) return
 
     if (message.messages) {
       return message.messages?.forEach(handleIncomingMessage)
@@ -103,17 +111,22 @@ export function useSheetCollaboration(
         handleChatMessage(message)
         break
       case 'cursor':
-        if (message.user?.id && message.user?.name && message.user.id !== userId.value) {
+        if (message.user?.id && message.user?.name) {
           collaborators.value[message.user.id] = {
             name: message.user.name,
-            selection: (message as any).content,
+            slideIndex: (message as any).content?.slideIndex,
             ts: Date.now(),
           }
         }
         break
       case 'title':
         if (message.user?.id !== userId.value && message.content?.title) {
-          options.onRemoteTitleChange?.(message.content.title)
+          onRemoteTitleChange?.(message.content.title)
+        }
+        break
+      case 'slide_operation':
+        if (message.user?.id !== userId.value && onRemoteSlideChange) {
+          onRemoteSlideChange(message.content)
         }
         break
     }
@@ -134,11 +147,11 @@ export function useSheetCollaboration(
   }
 
   function sendChatMessage() {
-    if (route.params.id) {
+    if (deckId.value) {
       const message = newChatMessage.value
       if (message.trim()) {
         wsService.value?.sendMessage(
-          route.params.id as string,
+          deckId.value,
           'chat',
           { message },
           userId.value,
@@ -213,48 +226,43 @@ export function useSheetCollaboration(
     }
   }
 
-  function navigateToCollaborator(uid: string) {
-    const collab = collaborators.value[uid]
-    if (!collab?.selection || !vtableInstanceRef.value) return
+  function broadcastPresence(currentSlideIndex: number) {
+    if (!wsService.value || !deckId.value) return
     try {
-      const sel = collab.selection
-      const sheetKey = sel?.worksheetId
-      if (sheetKey) {
-        vtableInstanceRef.value.activateSheet(sheetKey)
-      }
-      const ws = vtableInstanceRef.value.getActiveSheet() as any
-      const row = sel?.row ?? 0
-      const col = sel?.col ?? 0
-      ws?.tableInstance?.selectCells?.({ col, row })
+      wsService.value.sendMessage(
+        deckId.value,
+        'cursor',
+        { slideIndex: currentSlideIndex },
+        userId.value,
+        userName.value
+      )
     } catch (error) {
-      console.warn('Failed to navigate to collaborator cell:', error)
-    }
-  }
-
-  function broadcastPresence() {
-    if (!vtableInstanceRef.value || !wsService.value || !route.params.id) return
-    try {
-      const sheet = vtableInstanceRef.value.getActiveSheet() as any
-      const selection = sheet?.getSelection()
-      if (selection) {
-        const data = {
-          row: selection.startRow,
-          col: selection.startCol,
-          worksheetId: sheet.sheetKey,
-        }
-        wsService.value.sendMessage(route.params.id as string, 'cursor', data, userId.value, userName.value)
-      }
-    } catch (error) {
-      console.error('Error broadcasting presence:', error)
+      console.error('Error broadcasting slide presence:', error)
     }
   }
 
   let presenceInterval: ReturnType<typeof setInterval> | null = null
+  let getCurrentSlideIndex: (() => number) | null = null
 
-  function startPresenceHeartbeat() {
+  function startPresenceHeartbeat(currentSlideIndex?: () => number) {
+    if (currentSlideIndex) {
+      getCurrentSlideIndex = currentSlideIndex
+    }
+    const slideIndexFn = getCurrentSlideIndex
+    if (!slideIndexFn) return
     stopPresenceHeartbeat()
-    presenceInterval = setInterval(broadcastPresence, 5000)
-    broadcastPresence()
+    presenceInterval = setInterval(() => {
+      if (getCurrentSlideIndex) {
+        broadcastPresence(getCurrentSlideIndex())
+      }
+    }, 5000)
+    broadcastPresence(slideIndexFn())
+  }
+
+  function updateSlideIndex(currentSlideIndex: number) {
+    if (wsService.value && deckId.value) {
+      broadcastPresence(currentSlideIndex)
+    }
   }
 
   function stopPresenceHeartbeat() {
@@ -264,32 +272,47 @@ export function useSheetCollaboration(
     }
   }
 
-  function leaveSheet() {
-    if (wsService.value && route.params.id) {
-      wsService.value.leaveSheet(route.params.id as string)
+  function leaveDeck() {
+    if (wsService.value && deckId.value) {
+      wsService.value.leaveSheet(deckId.value)
     }
     isJoined.value = false
     stopPresenceHeartbeat()
   }
 
   function broadcastTitle(title: string) {
-    if (!wsService.value || !route.params.id || !title) return
+    if (!wsService.value || !deckId.value || !title) return
     try {
       wsService.value.sendMessage(
-        route.params.id as string,
+        deckId.value,
         'title',
         { title },
         userId.value,
         userName.value,
       )
     } catch (error) {
-      console.error('Error broadcasting sheet title:', error)
+      console.error('Error broadcasting slide title:', error)
+    }
+  }
+
+  function broadcastSlideOperation(operation: { type: string; data: any }) {
+    if (!wsService.value || !deckId.value) return
+    try {
+      wsService.value.sendMessage(
+        deckId.value,
+        'slide_operation',
+        operation,
+        userId.value,
+        userName.value,
+      )
+    } catch (error) {
+      console.error('Error broadcasting slide operation:', error)
     }
   }
 
   watch(isConnected, (newIsConnected) => {
     if (newIsConnected) {
-      if (canJoinRealtime.value) joinSheet()
+      if (canJoinRealtime.value) joinDeck()
     } else {
       isJoined.value = false
     }
@@ -297,9 +320,9 @@ export function useSheetCollaboration(
 
   watch(canJoinRealtime, canJoin => {
     if (canJoin) {
-      initializeWebSocketAndJoinSheet()
-    } else if (wsService.value && route.params.id && isJoined.value) {
-      leaveSheet()
+      initializeWebSocketAndJoinDeck()
+    } else if (wsService.value && deckId.value && isJoined.value) {
+      leaveDeck()
     }
   })
 
@@ -335,12 +358,15 @@ export function useSheetCollaboration(
     collaborators,
     privacyType,
     canJoinRealtime,
+    canEdit,
 
     // Methods
-    initializeWebSocketAndJoinSheet,
-    joinSheet,
-    leaveSheet,
+    initializeWebSocketAndJoinDeck,
+    joinDeck,
+    leaveDeck,
     broadcastTitle,
+    broadcastSlideOperation,
+    broadcastPresence,
     handleIncomingMessage,
     sendChatMessage,
     handleChatEnterKey,
@@ -352,9 +378,8 @@ export function useSheetCollaboration(
     getReplyUserName,
     getReplyContent,
     toggleChat,
-    navigateToCollaborator,
-    broadcastPresence,
     startPresenceHeartbeat,
     stopPresenceHeartbeat,
+    updateSlideIndex,
   }
 }

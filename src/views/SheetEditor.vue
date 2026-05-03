@@ -134,7 +134,15 @@ const clipboard = useSheetClipboard(vtableRef)
 const charts = useSheetCharts(vtableRef)
 
 // Collaboration
-const collaboration = useSheetCollaboration(vtableInstance)
+const collaboration = useSheetCollaboration(vtableInstance, {
+  privacyType,
+  onRemoteTitleChange: (newTitle: string) => {
+    if (!newTitle || sheetData.title.value === newTitle) return
+    sheetData.title.value = newTitle
+    sheetData.editableTitle.value = newTitle
+    document.title = newTitle
+  },
+})
 const {
   wsService,
   chatMessages,

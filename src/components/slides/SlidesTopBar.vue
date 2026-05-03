@@ -24,7 +24,26 @@
         </div>
       </div>
       <div class="stb-main__right">
-        <button class="stb-btn stb-btn--outline" :disabled="isSaving" @click="$emit('save')">
+        <button v-if="props.showShare" class="stb-btn stb-btn--outline" @click="$emit('share')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"/>
+            <circle cx="6" cy="12" r="3"/>
+            <circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          Share
+        </button>
+        <button v-if="props.showChat" class="stb-btn stb-btn--outline relative" @click="$emit('toggle-chat')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+          </svg>
+          Chat
+          <span v-if="(props.unreadCount ?? 0) > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+            {{ props.unreadCount }}
+          </span>
+        </button>
+        <button class="stb-btn stb-btn--outline" :disabled="props.isSaving" @click="$emit('save')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
             <polyline points="17 21 17 13 7 13 7 21"/>
@@ -88,6 +107,9 @@ const props = defineProps<{
   title: string
   isSaving?: boolean
   hasUnsaved?: boolean
+  showShare?: boolean
+  showChat?: boolean
+  unreadCount?: number
 }>()
 
 const emit = defineEmits<{
@@ -95,6 +117,8 @@ const emit = defineEmits<{
   (e: 'title-change', title: string): void
   (e: 'save'): void
   (e: 'present'): void
+  (e: 'share'): void
+  (e: 'toggle-chat'): void
   (e: 'new-deck'): void
   (e: 'import-pptx'): void
   (e: 'export-pptx'): void

@@ -521,7 +521,7 @@ function syncEditorEditability() {
 // ── WebSocket collaboration ──────────────────────────────────────────────────
 const { initializeWebSocket } = useWebSocket();
 const wsService   = ref<IWebsocketService | null>(null);
-const randomToken = Math.random().toString(36).substr(2, 9);
+const randomToken = Math.random().toString(36).slice(2, 11);
 const userId  = ref(authStore.isAuthenticated && authStore.userId ? authStore.userId : `guest-${randomToken}`);
 const userName = ref(
   authStore.isAuthenticated
