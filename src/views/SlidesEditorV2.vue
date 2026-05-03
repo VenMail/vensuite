@@ -131,7 +131,7 @@
           :share-link="shareLink"
           :privacy-type="privacyType"
           :members="shareMembersForCard"
-          :can-edit-privacy="true"
+          :can-edit-privacy="authStore.isAuthenticated"
           @close="shareOpen = false"
           @copy-link="copyShareLink"
           @change-privacy="handleChangePrivacy"

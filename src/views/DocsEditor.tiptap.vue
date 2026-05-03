@@ -2630,28 +2630,33 @@ type ShareCardPayload = {
 };
 
 async function handleInviteMember(payload: ShareCardPayload) {
+  const id = route.params.appFileId as string;
+  if (!id) return;
+  const resolvedLevel = (() => {
+    if (payload.shareLevel) return payload.shareLevel;
+    if (payload.permission) {
+      const mapped = payload.permission === 'owner' ? 'edit' : payload.permission;
+      return labelToShareLevel(mapped as ShareLevelLabel);
+    }
+    return labelToShareLevel(payload.label);
+  })();
+  const previous = [...shareMembers.value];
+  const newMembers: ShareMember[] = [
+    ...shareMembers.value.filter((member) => member.email !== payload.email),
+    { email: payload.email, shareLevel: resolvedLevel },
+  ];
+  shareMembers.value = newMembers;
   try {
-    const id = route.params.appFileId as string;
-    if (!id) return;
-    const resolvedLevel = (() => {
-      if (payload.shareLevel) return payload.shareLevel;
-      if (payload.permission) {
-        const mapped = payload.permission === 'owner' ? 'edit' : payload.permission;
-        return labelToShareLevel(mapped as ShareLevelLabel);
-      }
-      return labelToShareLevel(payload.label);
-    })();
-    const newMembers: ShareMember[] = [
-      ...shareMembers.value.filter((member) => member.email !== payload.email),
-      { email: payload.email, shareLevel: resolvedLevel },
-    ];
     const sharingInfo = serializeSharingInfoString(newMembers);
     await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo }, {
       headers: buildAuthHeaders({ 'Content-Type': 'application/json' }),
     });
     await fetchSharingInfo();
     toast.success('Member invited');
-  } catch {}
+  } catch {
+    shareMembers.value = previous;
+    toast.error('Failed to invite member');
+  }
 }
 
 async function handleUpdateMember(payload: ShareCardPayload) {
@@ -2659,30 +2664,38 @@ async function handleUpdateMember(payload: ShareCardPayload) {
 }
 
 async function handleRemoveMember(payload: { email: string }) {
+  const id = route.params.appFileId as string;
+  if (!id) return;
+  const previous = [...shareMembers.value];
+  shareMembers.value = shareMembers.value.filter(m => m.email !== payload.email);
   try {
-    const id = route.params.appFileId as string;
-    if (!id) return;
-    const newMembers: ShareMember[] = shareMembers.value.filter(m => m.email !== payload.email);
-    const sharingInfo = serializeSharingInfoString(newMembers);
+    const sharingInfo = serializeSharingInfoString(shareMembers.value);
     await axios.patch(`${FILES_ENDPOINT}/${id}`, { sharing_info: sharingInfo }, {
       headers: buildAuthHeaders({ 'Content-Type': 'application/json' }),
     });
     await fetchSharingInfo();
     toast.success('Member removed');
-  } catch {}
+  } catch {
+    shareMembers.value = previous;
+    toast.error('Failed to remove member');
+  }
 }
 
 async function updateVisibility(value: number) {
+  const id = route.params.appFileId as string;
+  if (!id) return;
+  const previous = privacyType.value;
+  privacyType.value = value;
   try {
-    const id = route.params.appFileId as string;
-    if (!id) return;
-    
     await axios.patch(`${FILES_ENDPOINT}/${id}`, { privacy_type: value }, {
       headers: buildAuthHeaders({ 'Content-Type': 'application/json' }),
     });
     await fetchSharingInfo();
     toast.success(t('Commons.toast.visibility_updated'));
-  } catch {}
+  } catch {
+    privacyType.value = previous;
+    toast.error(t('Commons.toast.failed_to_update') || 'Failed to update visibility');
+  }
 }
 
 // Helper to get Pagination configuration based on current page settings

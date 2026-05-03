@@ -41,6 +41,7 @@ import type { ShareMember, ShareLevel } from '@/utils/sharing'
 // import { t } from '@/i18n'
 
 // Import composables
+import axios from 'axios'
 import { useSheetData } from '@/composables/useSheetData'
 import { useSheetFormatting } from '@/composables/useSheetFormatting'
 import { useSheetDataTools } from '@/composables/useSheetDataTools'
@@ -751,6 +752,19 @@ function handleMenuAction(action: string, payload?: string) {
   }
 }
 
+const _FILES_ENDPOINT = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/app-files`
+function _buildSheetAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { ...extra }
+  const token = fileStore.getToken()
+  if (token) headers.Authorization = `Bearer ${token}`
+  return headers
+}
+async function patchSharingData(id: string, body: Record<string, unknown>) {
+  await axios.patch(`${_FILES_ENDPOINT}/${id}`, body, {
+    headers: _buildSheetAuthHeaders({ 'Content-Type': 'application/json' }),
+  })
+}
+
 // Sharing and API functions (simplified for now)
 function openShareDialog() {
   shareOpen.value = true
@@ -776,23 +790,15 @@ async function handleChangePrivacy(newPrivacyType: number) {
   if (!id) return
   
   isUpdatingSharing.value = true
+  const prevPrivacy = privacyType.value
+  privacyType.value = newPrivacyType
   try {
-    // Update local state immediately for responsive UI
-    privacyType.value = newPrivacyType
-    
-    // Load current document and update privacy
-    const currentDoc = await fileStore.loadDocument(id, 'xlsx')
-    if (currentDoc) {
-      const updatedDoc = { ...currentDoc, privacy_type: newPrivacyType }
-      await fileStore.saveToAPI(updatedDoc)
-    }
-    
+    await patchSharingData(id, { privacy_type: newPrivacyType })
     toast.success('Privacy settings updated')
   } catch (error) {
     console.error('Failed to update privacy:', error)
     toast.error('Failed to update privacy settings')
-    // Revert on error
-    privacyType.value = sheetData.privacyType.value
+    privacyType.value = prevPrivacy
   } finally {
     isUpdatingSharing.value = false
   }
@@ -800,32 +806,24 @@ async function handleChangePrivacy(newPrivacyType: number) {
 
 async function handleUpdateMember(payload: { email: string; shareLevel: ShareLevel; label: string }) {
   if (isUpdatingSharing.value) return
-  
+
   const id = route.params.id as string
   if (!id) return
-  
+
   isUpdatingSharing.value = true
+  const previous = [...shareMembers.value]
+  const memberIndex = shareMembers.value.findIndex(m => m.email === payload.email)
+  if (memberIndex !== -1) {
+    shareMembers.value[memberIndex].shareLevel = payload.shareLevel
+  }
   try {
-    // Update local members list
-    const memberIndex = shareMembers.value.findIndex(m => m.email === payload.email)
-    if (memberIndex !== -1) {
-      shareMembers.value[memberIndex].shareLevel = payload.shareLevel
-    }
-    
-    // Load current document and update sharing
-    const currentDoc = await fileStore.loadDocument(id, 'xlsx')
-    if (currentDoc) {
-      const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
-      const updatedDoc = { ...currentDoc, sharing_info: updatedSharing }
-      await fileStore.saveToAPI(updatedDoc)
-    }
-    
+    const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
+    await patchSharingData(id, { sharing_info: updatedSharing })
     toast.success(`Updated ${payload.email}'s access`)
   } catch (error) {
     console.error('Failed to update member:', error)
     toast.error('Failed to update member access')
-    // Revert on error by reloading
-    await loadSharingData()
+    shareMembers.value = previous
   } finally {
     isUpdatingSharing.value = false
   }
@@ -833,29 +831,21 @@ async function handleUpdateMember(payload: { email: string; shareLevel: ShareLev
 
 async function handleRemoveMember(payload: { email: string }) {
   if (isUpdatingSharing.value) return
-  
+
   const id = route.params.id as string
   if (!id) return
-  
+
   isUpdatingSharing.value = true
+  const previous = [...shareMembers.value]
+  shareMembers.value = shareMembers.value.filter(m => m.email !== payload.email)
   try {
-    // Update local members list
-    shareMembers.value = shareMembers.value.filter(m => m.email !== payload.email)
-    
-    // Load current document and update sharing
-    const currentDoc = await fileStore.loadDocument(id, 'xlsx')
-    if (currentDoc) {
-      const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
-      const updatedDoc = { ...currentDoc, sharing_info: updatedSharing }
-      await fileStore.saveToAPI(updatedDoc)
-    }
-    
+    const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
+    await patchSharingData(id, { sharing_info: updatedSharing })
     toast.success(`Removed ${payload.email}`)
   } catch (error) {
     console.error('Failed to remove member:', error)
     toast.error('Failed to remove member')
-    // Revert on error by reloading
-    await loadSharingData()
+    shareMembers.value = previous
   } finally {
     isUpdatingSharing.value = false
   }
@@ -863,40 +853,32 @@ async function handleRemoveMember(payload: { email: string }) {
 
 async function handleInvite(payload: { email: string; shareLevel: ShareLevel; label: string; note?: string }) {
   if (isUpdatingSharing.value) return
-  
+
   const id = route.params.id as string
   if (!id) return
-  
+
   isUpdatingSharing.value = true
+
+  if (shareMembers.value.some(m => m.email === payload.email)) {
+    toast.error('This person already has access')
+    isUpdatingSharing.value = false
+    return
+  }
+
+  const newMember: ShareMember = {
+    email: payload.email,
+    shareLevel: payload.shareLevel,
+    status: 'pending',
+  }
+  shareMembers.value.push(newMember)
   try {
-    // Check if member already exists
-    if (shareMembers.value.some(m => m.email === payload.email)) {
-      toast.error('This person already has access')
-      return
-    }
-    
-    // Add to local members list
-    const newMember: ShareMember = {
-      email: payload.email,
-      shareLevel: payload.shareLevel,
-      status: 'pending'
-    }
-    shareMembers.value.push(newMember)
-    
-    // Load current document and update sharing
-    const currentDoc = await fileStore.loadDocument(id, 'xlsx')
-    if (currentDoc) {
-      const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
-      const updatedDoc = { ...currentDoc, sharing_info: updatedSharing }
-      await fileStore.saveToAPI(updatedDoc)
-    }
-    
+    const updatedSharing = shareMembers.value.map(m => `${m.email}:${m.shareLevel}`).join(',')
+    await patchSharingData(id, { sharing_info: updatedSharing })
     toast.success(`Invited ${payload.email}`)
   } catch (error) {
     console.error('Failed to invite member:', error)
     toast.error('Failed to send invitation')
-    // Revert on error by reloading
-    await loadSharingData()
+    shareMembers.value = shareMembers.value.filter(m => m.email !== payload.email)
   } finally {
     isUpdatingSharing.value = false
   }

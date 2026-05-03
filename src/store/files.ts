@@ -1145,14 +1145,14 @@ export const useFileStore = defineStore("files", {
         const url = isUpdate ? `${FILES_ENDPOINT}/${document.id}` : FILES_ENDPOINT;
         const method = isUpdate ? 'put' : 'post';
 
+        const _token = this.getToken();
+        const _headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (_token) _headers.Authorization = `Bearer ${_token}`;
         const response = await axios({
           method,
           url,
           data: payload,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.getToken()}`,
-          },
+          headers: _headers,
         });
 
         if (response.status === 200 || response.status === 201) {
