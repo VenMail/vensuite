@@ -577,6 +577,7 @@ async function refreshSlideDecks() {
                     : 'border-gray-200 dark:border-gray-700'
                 ]"
                 @click="selectSlideDeck(deck.id)"
+                @dblclick="editSlideDeck(deck.id)"
               >
                 <!-- Grid view -->
                 <template v-if="viewMode === 'grid'">
