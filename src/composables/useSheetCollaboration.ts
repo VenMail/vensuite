@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth'
 export interface SheetCollaborationOptions {
   privacyType?: Ref<number>
   onRemoteTitleChange?: (title: string) => void
+  onRemoteChange?: (config: any) => void
 }
 
 export function useSheetCollaboration(
@@ -49,6 +50,9 @@ export function useSheetCollaboration(
 
   // Collaborators
   const collaborators = ref<Record<string, { name: string; selection: any; ts: number }>>({})
+
+  // Guard flag — prevent re-broadcasting changes triggered by applying remote data
+  const isApplyingRemote = ref(false)
 
   // Notification sound
   const notificationSound = typeof Audio !== 'undefined'
@@ -116,6 +120,34 @@ export function useSheetCollaboration(
           options.onRemoteTitleChange?.(message.content.title)
         }
         break
+      case 'change':
+        if (message.user?.id !== userId.value && options.onRemoteChange) {
+          isApplyingRemote.value = true
+          try {
+            options.onRemoteChange(message.content)
+          } catch (error) {
+            console.error('Error applying remote sheet change:', error)
+          } finally {
+            // Reset after current synchronous events have fired
+            nextTick(() => { isApplyingRemote.value = false })
+          }
+        }
+        break
+    }
+  }
+
+  function broadcastChange(config: any) {
+    if (!wsService.value || !route.params.id || isApplyingRemote.value) return
+    try {
+      wsService.value.sendMessage(
+        route.params.id as string,
+        'change',
+        config,
+        userId.value,
+        userName.value,
+      )
+    } catch (error) {
+      console.error('Error broadcasting sheet change:', error)
     }
   }
 
@@ -335,12 +367,14 @@ export function useSheetCollaboration(
     collaborators,
     privacyType,
     canJoinRealtime,
+    isApplyingRemote,
 
     // Methods
     initializeWebSocketAndJoinSheet,
     joinSheet,
     leaveSheet,
     broadcastTitle,
+    broadcastChange,
     handleIncomingMessage,
     sendChatMessage,
     handleChatEnterKey,

@@ -143,6 +143,21 @@ const collaboration = useSheetCollaboration(vtableInstance, {
     sheetData.editableTitle.value = newTitle
     document.title = newTitle
   },
+  onRemoteChange: (config: any) => {
+    // Apply received workbook config to live VTable instance sheet-by-sheet
+    if (!vtableInstance.value) return
+    const wsMap = (vtableInstance.value as any).workSheetInstances as Map<string, any> | undefined
+    if (!wsMap) return
+    for (const sheetDef of (config?.sheets ?? [])) {
+      const ws = wsMap.get(sheetDef.sheetKey)
+      if (!ws || !Array.isArray(sheetDef.data)) continue
+      try {
+        ws.updateSheetOption({ data: sheetDef.data })
+      } catch (err) {
+        console.warn('[collab] Failed to apply remote sheet data for', sheetDef.sheetKey, err)
+      }
+    }
+  },
 })
 const {
   wsService,
@@ -155,7 +170,9 @@ const {
   replyingTo,
   collaborators,
   canJoinRealtime,
+  isApplyingRemote,
   broadcastTitle,
+  broadcastChange,
   sendChatMessage,
   handleChatEnterKey,
   adjustTextareaHeight,
@@ -1318,6 +1335,14 @@ const debouncedRefreshCharts = useDebounceFn(() => {
 function onSheetChange() {
   scheduleAutoSave()
   debouncedRefreshCharts()
+  // Broadcast workbook state to collaborators (skip when we're applying a remote change)
+  if (!isApplyingRemote.value && collaboration.isJoined.value && vtableRef.value) {
+    try {
+      broadcastChange(vtableRef.value.saveToConfig())
+    } catch (err) {
+      console.warn('[collab] Failed to broadcast sheet change:', err)
+    }
+  }
 }
 
 // Handle chart visualization actions from context menu

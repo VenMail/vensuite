@@ -838,8 +838,7 @@ function cleanHtmlForEditor(html: string, opts?: { keepStyleBlocks?: boolean }):
 
 async function convertHtmlToTiptap(file: File): Promise<string> {
   const html = await file.text();
-  const cleaned = cleanHtmlForEditor(html, { keepStyleBlocks: true });
-  return htmlToTiptapJson(cleaned, { forceLayoutCapture: true });
+  return cleanHtmlForEditor(html, { keepStyleBlocks: true });
 }
 
 async function convertDocxToTiptap(file: File): Promise<string> {
@@ -847,8 +846,7 @@ async function convertDocxToTiptap(file: File): Promise<string> {
   const mammoth = (await import('mammoth')).default ?? (await import('mammoth'));
   const result: any = await (mammoth as any).convertToHtml({ arrayBuffer: buf });
   const html: string = result?.value || '';
-  const cleaned = cleanHtmlForEditor(html);
-  return htmlToTiptapJson(cleaned);
+  return cleanHtmlForEditor(html);
 }
 
 async function convertPdfToTiptap(file: File): Promise<string> {

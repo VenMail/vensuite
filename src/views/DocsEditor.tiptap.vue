@@ -99,6 +99,21 @@
         </span>
         <span class="max-w-[120px] truncate text-gray-700 dark:text-gray-200" :title="c.name">{{ c.name }}</span>
       </button>
+      <!-- Cursor position toggle -->
+      <button
+        type="button"
+        @click="showCursorPositions = !showCursorPositions"
+        :title="showCursorPositions ? 'Hide cursor positions' : 'Show cursor positions'"
+        class="ml-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 shadow-sm transition-colors"
+        :class="showCursorPositions
+          ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/50'
+          : 'border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/90 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+      >
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
+        </svg>
+        <span>{{ showCursorPositions ? 'Cursors on' : 'Cursors off' }}</span>
+      </button>
     </div>
 
      
@@ -598,6 +613,9 @@
 import { ref, onMounted, onUnmounted, watch, computed, nextTick, reactive } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router';
 import { Editor, EditorContent, BubbleMenu } from '@tiptap/vue-3';
+import { Extension } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 import {
@@ -783,12 +801,79 @@ function handleRulerMarginChange(marginType: 'marginLeft' | 'marginRight' | 'mar
   updatePaginationSettings(settings);
 }
 
-const collaborators = ref<Record<string, { name: string; ts: number }>>({});
+const collaborators = ref<Record<string, { name: string; ts: number; cursorFrom?: number }>>({});
 const collaboratorList = computed(() =>
   Object.entries(collaborators.value)
     .filter(([id]) => id !== userId.value)
-    .map(([id, info]) => ({ id, name: info.name, ts: info.ts })),
+    .map(([id, info]) => ({ id, name: info.name, ts: info.ts, cursorFrom: info.cursorFrom })),
 );
+
+// ── Remote cursor decorations ──────────────────────────────────────────────
+
+const showCursorPositions = ref(true);
+
+// Mutable store read inside the ProseMirror plugin (avoids Vue reactivity overhead)
+const _remoteCursorStore: { cursors: Array<{ id: string; name: string; color: string; pos: number }> } = { cursors: [] };
+
+const _cursorPluginKey = new PluginKey<DecorationSet>('remoteCursors');
+
+const RemoteCursorsExtension = Extension.create({
+  name: 'remoteCursors',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: _cursorPluginKey,
+        state: {
+          init: () => DecorationSet.empty,
+          apply(tr, old) {
+            if (!showCursorPositions.value || !_remoteCursorStore.cursors.length) {
+              return DecorationSet.empty;
+            }
+            const decos: Decoration[] = [];
+            const docSize = tr.doc.content.size;
+            for (const c of _remoteCursorStore.cursors) {
+              const pos = Math.max(1, Math.min(c.pos, docSize - 1));
+              decos.push(
+                Decoration.widget(
+                  pos,
+                  () => {
+                    const wrap = document.createElement('span');
+                    wrap.style.cssText = 'display:inline-block;width:2px;height:1.2em;background:' + c.color + ';position:relative;vertical-align:text-bottom;margin-left:-1px;pointer-events:none;';
+                    const label = document.createElement('span');
+                    label.style.cssText = 'position:absolute;bottom:100%;left:0;background:' + c.color + ';color:#fff;font-size:10px;padding:1px 4px;border-radius:3px;white-space:nowrap;pointer-events:none;line-height:1.4;';
+                    label.textContent = c.name;
+                    wrap.appendChild(label);
+                    return wrap;
+                  },
+                  { key: c.id, side: 1 },
+                ),
+              );
+            }
+            return DecorationSet.create(tr.doc, decos);
+          },
+        },
+        props: {
+          decorations(state) { return this.getState(state); },
+        },
+      }),
+    ];
+  },
+});
+
+function _refreshCursorDecorations() {
+  if (!editor.value) return;
+  _remoteCursorStore.cursors = collaboratorList.value
+    .filter(c => c.cursorFrom !== undefined)
+    .map(c => ({ id: c.id, name: c.name, color: colorForUser(c.id), pos: c.cursorFrom! }));
+  // Dispatch a no-op transaction to trigger plugin re-evaluation
+  editor.value.view.dispatch(editor.value.view.state.tr.setMeta(_cursorPluginKey, true));
+}
+
+watch(showCursorPositions, () => {
+  if (editor.value) {
+    editor.value.view.dispatch(editor.value.view.state.tr.setMeta(_cursorPluginKey, true));
+  }
+});
 
 let detachEditorListeners: (() => void) | null = null;
 
@@ -970,10 +1055,11 @@ function handleIncomingMessage(message: Message) {
       const uid = message.user?.id;
       const name = message.user?.name;
       if (uid && name) {
-        collaborators.value[uid] = {
-          name,
-          ts: Date.now(),
-        };
+        const cursorFrom = typeof (message.content as any)?.from === 'number'
+          ? (message.content as any).from
+          : undefined;
+        collaborators.value[uid] = { name, ts: Date.now(), cursorFrom };
+        _refreshCursorDecorations();
       }
       break;
     }
@@ -1124,7 +1210,8 @@ function broadcastCursorPresence() {
   if (!docId || docId === 'new') return;
 
   try {
-    wsService.value.sendMessage(docId, 'cursor', {}, userId.value, userName.value);
+    const { from } = editor.value.state.selection;
+    wsService.value.sendMessage(docId, 'cursor', { from }, userId.value, userName.value);
   } catch (error) {
     console.error('Error broadcasting cursor presence:', error);
   }
@@ -2807,6 +2894,8 @@ function initializeEditor(contentOverride?: any) {
       PageBreak,
       // Add Pagination extension (replaces PaginationPlus)
       ...(shouldEnablePagination ? [Pagination.configure(paginationConfig as any)] : []),
+      // Remote collaborator cursor decorations
+      RemoteCursorsExtension,
     ],
     content: contentOverride ?? (existingContent || ''),
     editable: canEditDoc.value && !isViewMode.value,

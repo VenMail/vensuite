@@ -369,13 +369,16 @@ function onEditorReady(instance: any) {
   }
 }
 
+let tocRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
+
 function onContentChange() {
   if (!isJustLoaded.value && authStore.isAuthenticated && currentDoc.value) {
     hasUnsavedChanges.value = true;
     scheduleSave();
   }
   broadcastChange();
-  void refreshTocFromCatalog();
+  if (tocRefreshTimeout) clearTimeout(tocRefreshTimeout);
+  tocRefreshTimeout = setTimeout(() => void refreshTocFromCatalog(), 300);
 }
 
 function onEditorSaved(_value: any) {
@@ -1348,6 +1351,7 @@ onUnmounted(() => {
   if (wsService.value && docId && docId !== 'new') wsService.value.leaveSheet(docId);
   if (saveTimeout)      clearTimeout(saveTimeout);
   if (maxWaitTimeout)   clearTimeout(maxWaitTimeout);
+  if (tocRefreshTimeout) clearTimeout(tocRefreshTimeout);
   if (presenceInterval) clearInterval(presenceInterval);
   if (authStore.isAuthenticated) window.removeEventListener('beforeunload', handleBeforeUnload);
   window.removeEventListener('online',   handleOnline);

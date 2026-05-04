@@ -100,7 +100,7 @@ export function useSlidesCollaboration(options: SlideCollaborationOptions) {
   }
 
   function handleIncomingMessage(message: Message) {
-    if (message.slideId !== deckId.value) return
+    if ((message.slideId ?? message.sheetId) !== deckId.value) return
 
     if (message.messages) {
       return message.messages?.forEach(handleIncomingMessage)
