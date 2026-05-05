@@ -968,15 +968,15 @@ async function onInsertChart(data: AvnacChartData) {
     import('@avnac/composables/useChartRenderer'),
     import('@avnac/lib/ensure-avnac-layer-id'),
   ])
-  const url = await renderChartToDataUrl(data, Math.round(targetW), Math.round(targetH))
+  const { url, pngW, pngH } = await renderChartToDataUrl(data, Math.round(targetW), Math.round(targetH))
   const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
   img.set({
     left: artW / 2,
     top: artH / 2,
     originX: 'center',
     originY: 'center',
-    scaleX: targetW / (img.width ?? targetW),
-    scaleY: targetH / (img.height ?? targetH),
+    scaleX: targetW / pngW,
+    scaleY: targetH / pngH,
     avnacChart: cloneAvnacPlain(data),
     avnacGroupKind: 'chart',
     avnacLayerName: 'Chart',
@@ -1017,13 +1017,17 @@ watch(() => chartsStore.renderRev, async () => {
   const w = Math.max(200, Math.round((chart.width ?? 400) * (chart.scaleX ?? 1)))
   const h = Math.max(150, Math.round((chart.height ?? 300) * (chart.scaleY ?? 1)))
   const { renderChartToDataUrl } = await import('@avnac/composables/useChartRenderer')
-  const url = await renderChartToDataUrl(data, w, h)
+  const { url, pngW, pngH } = await renderChartToDataUrl(data, w, h)
   try {
     await chart.setSrc?.(url, { crossOrigin: 'anonymous' })
   } catch {
     chart.set?.('src', url)
   }
-  chart.set?.('dirty', true)
+  chart.set?.({
+    scaleX: w / pngW,
+    scaleY: h / pngH,
+    dirty: true,
+  })
   chart.setCoords?.()
   canvas.requestRenderAll()
   commitObjectModified(canvas, chart)
