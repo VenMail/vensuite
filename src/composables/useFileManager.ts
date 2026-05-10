@@ -221,7 +221,8 @@ export function useFileManager() {
 
   async function deleteFile(fileId: string) {
     try {
-      await fileStore.moveToTrash(fileId)
+      const moved = await fileStore.moveToTrash(fileId)
+      if (!moved) throw new Error('Failed to move file to trash')
       selectedFiles.value.delete(fileId)
       toast.success(t('Composables.UseFileManager.toast.file_moved_to_trash'))
     } catch (error) {
@@ -297,7 +298,8 @@ export function useFileManager() {
       const deletePromises = Array.from(selectedFiles.value).map(fileId => 
         fileStore.moveToTrash(fileId)
       )
-      await Promise.all(deletePromises)
+      const results = await Promise.all(deletePromises)
+      if (results.some(result => !result)) throw new Error('Failed to move one or more files to trash')
       toast.success(`${selectedFiles.value.size} files moved to trash`)
       clearSelection()
     } catch (error) {

@@ -13,6 +13,7 @@ const isLoadingList = ref(false)
 
 function parseSummaryFromApiItem(item: any): SlideDeckSummary {
   let slideCount = 0
+  let firstSlide: AvnacDocumentV1 | undefined
 
   if (item.content) {
     try {
@@ -21,22 +22,24 @@ function parseSummaryFromApiItem(item: any): SlideDeckSummary {
         : item.content
       if ((payload?.version === 3 || (payload as any)?.version === 'avnac-v1') && Array.isArray(payload.slides)) {
         slideCount = payload.slides.length
+        firstSlide = payload.slides[0]
       }
     } catch { /* non-fatal */ }
   }
 
   const shareBase = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin
-  const shared = Boolean(item.sharing?.share_slug)
+  const shared = [1, 2, 3, 4].includes(Number(item.privacy_type)) || Boolean(item.sharing?.share_slug || item.sharing_info)
 
   return {
     id: item.id,
     title: item.name || item.title || 'Untitled Presentation',
     slideCount,
     lastModified: item.updated_at || item.created_at || '',
-    privacyType: item.privacy_type ?? 1,
+    privacyType: item.privacy_type ?? 7,
     shared,
-    shareLink: shared ? `${shareBase}/slides/${item.id}` : undefined,
+    shareLink: shared ? `${shareBase}/share/slide/${item.id}` : undefined,
     thumbnail: item.thumbnail_url || undefined,
+    firstSlide,
   }
 }
 
@@ -95,10 +98,11 @@ export async function createSlideDeck(
       theme,
     }
     const response = await apiClient.post('/app-files', {
-      name: title,
+      title,
+      file_name: `${title}.pptx`,
       file_type: 'pptx',
       content: JSON.stringify(payload),
-      privacy_type: 1,
+      privacy_type: 7,
     })
     const item = response.data?.data ?? response.data
     const deck = parseSummaryFromApiItem(item)
@@ -110,9 +114,21 @@ export async function createSlideDeck(
   }
 }
 
-/** Generate a simple thumbnail data-URL from the deck title (placeholder) */
-export function getDeckThumbnail(deck: SlideDeckSummary): string {
+/** Render a first-slide thumbnail, falling back only when a preview cannot be produced. */
+export async function getDeckThumbnail(deck: SlideDeckSummary): Promise<string> {
   if (deck.thumbnail) return deck.thumbnail
+  if (deck.firstSlide) {
+    try {
+      const { renderAvnacDocumentPreviewDataUrl } = await import('@avnac/lib/avnac-document-preview')
+      const preview = await renderAvnacDocumentPreviewDataUrl(deck.firstSlide, deck.id, {
+        maxCssPx: 400,
+        cacheKey: `${deck.id}:${deck.lastModified || deck.slideCount}`,
+      })
+      if (preview) return preview
+    } catch (error) {
+      console.warn('[slideDecks] failed to render first-slide thumbnail:', error)
+    }
+  }
 
   const colors = ['#d14424', '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444']
   const color = colors[deck.id.charCodeAt(0) % colors.length]

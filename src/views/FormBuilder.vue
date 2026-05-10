@@ -2587,29 +2587,8 @@ const handlePublish = async () => {
     await saveForm();
     const definition = await ensurePublishedShareSlug();
     if (definition) {
-      let effectiveDefinition: any = definition;
-      let autoMadePublic = false;
-
-      // Ensure the form is public on publish so anyone with the link can respond
-      if (!definition.sharing?.is_public) {
-        try {
-          const updatedSharing = await formStore.updateFormSharing(formId.value, {
-            is_public: true,
-          });
-          if (updatedSharing) {
-            effectiveDefinition = {
-              ...definition,
-              sharing: {
-                ...(definition.sharing ?? {}),
-                ...updatedSharing,
-              },
-            };
-            autoMadePublic = Boolean(updatedSharing.is_public);
-          }
-        } catch (error) {
-          console.error("Failed to auto-set form visibility to public on publish:", error);
-        }
-      }
+      const effectiveDefinition: any = definition;
+      const autoMadePublic = effectiveDefinition.visibility === "public";
 
       const shareSlug = effectiveDefinition.sharing?.share_slug;
       toast.success(

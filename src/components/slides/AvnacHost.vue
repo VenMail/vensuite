@@ -10,7 +10,7 @@
           :index="i"
           :active="i === currentIndex"
           :persist-id="persistId"
-          :can-delete="slides.length > 1"
+          :can-delete="!props.readOnly && slides.length > 1"
           :is-last="i === slides.length - 1"
           @click="switchSlide(i)"
           @duplicate="duplicateSlideAt(i)"
@@ -28,7 +28,7 @@
         <button
           class="avnac-slide-action-btn"
           title="Delete slide"
-          :disabled="slides.length <= 1"
+          :disabled="props.readOnly || slides.length <= 1"
           @click="deleteSlide"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -51,6 +51,7 @@
         <!-- #toolbar — floating selection toolbar -->
         <template #toolbar>
           <CanvasElementToolbar
+            v-if="!props.readOnly"
             @paint-change="onPaintChange"
             @text-format-change="onTextFormatChange"
             @shape-paint-change="onShapePaintChange"
@@ -162,6 +163,7 @@
           </div>
         </template>
       </CanvasEditor>
+      <div v-if="props.readOnly" class="avnac-readonly-shield" aria-hidden="true" />
 
       <!-- Chart data dialog — teleported to body, visible when chartsStore.editingChartId set -->
     <ImageCropModal
@@ -187,7 +189,7 @@
 
     <SpeakerNotesPanel
       :model-value="currentNotes"
-      :open="props.showNotes"
+      :open="props.showNotes && !props.readOnly"
       @update:model-value="emit('notes-change', currentIndex, $event)"
       @close="emit('notes-change', currentIndex, currentNotes)"
     />
@@ -243,6 +245,7 @@ interface Props {
   persistId?: string
   notes?: string[]
   showNotes?: boolean
+  readOnly?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -250,6 +253,7 @@ const props = withDefaults(defineProps<Props>(), {
   persistId: 'preview',
   notes: () => [],
   showNotes: false,
+  readOnly: false,
 })
 
 const emit = defineEmits<{
@@ -274,6 +278,17 @@ const cropImageSrc = ref('')
 const cropInitial = ref({ x: 0, y: 0, w: 1, h: 1 })
 
 const currentNotes = computed(() => props.notes?.[currentIndex.value] ?? '')
+
+function normalizeChartRenderResult(result: string | { url: string; pngW?: number; pngH?: number }, fallbackW: number, fallbackH: number) {
+  if (typeof result === 'string') {
+    return { url: result, pngW: fallbackW, pngH: fallbackH }
+  }
+  return {
+    url: result.url,
+    pngW: result.pngW ?? fallbackW,
+    pngH: result.pngH ?? fallbackH,
+  }
+}
 
 const INFOGRAPHIC_SMART_OBJECTS: InfographicTemplate[] = [
   'pyramid',
@@ -304,6 +319,7 @@ function isArrowHeadVisible(type: ArrowHeadType | undefined, head = 0): boolean 
 let changeTimer: ReturnType<typeof setTimeout> | null = null
 
 function scheduleChange() {
+  if (props.readOnly) return
   if (changeTimer) clearTimeout(changeTimer)
   changeTimer = setTimeout(() => {
     emit('change', cloneAvnacPlain(slides.value))
@@ -317,6 +333,7 @@ const deckRedoStack: DeckSnapshot[] = []
 let lastOpType: 'deck' | 'canvas' = 'canvas'
 
 function pushDeckSnapshot() {
+  if (props.readOnly) return
   const current = editorRef.value?.getDocument()
   if (current) slides.value[currentIndex.value] = current
   deckUndoStack.push({ slides: cloneAvnacPlain(slides.value), index: currentIndex.value })
@@ -336,6 +353,7 @@ function restoreSnapshot(snap: DeckSnapshot) {
 }
 
 function undo() {
+  if (props.readOnly) return
   if (lastOpType === 'deck' && deckUndoStack.length) {
     const current = editorRef.value?.getDocument()
     if (current) slides.value[currentIndex.value] = current
@@ -351,6 +369,7 @@ function undo() {
 }
 
 function redo() {
+  if (props.readOnly) return
   if (deckRedoStack.length) {
     const current = editorRef.value?.getDocument()
     if (current) slides.value[currentIndex.value] = current
@@ -381,6 +400,7 @@ function onEditorReady() {
 }
 
 function onDocumentChange(doc: AvnacDocumentV1) {
+  if (props.readOnly) return
   slides.value[currentIndex.value] = doc
   lastOpType = 'canvas'
   emit('slide-change', currentIndex.value, doc)
@@ -448,6 +468,7 @@ function createDefaultSlide(): AvnacDocumentV1 {
 }
 
 function addSlide() {
+  if (props.readOnly) return
   pushDeckSnapshot()
   slides.value.push(createDefaultSlide())
   const newIndex = slides.value.length - 1
@@ -461,6 +482,7 @@ function deleteSlide() {
 }
 
 function deleteSlideAt(i: number) {
+  if (props.readOnly) return
   if (slides.value.length <= 1) return
   pushDeckSnapshot()
   slides.value.splice(i, 1)
@@ -481,6 +503,7 @@ function deleteSlideAt(i: number) {
 }
 
 function duplicateSlideAt(i: number) {
+  if (props.readOnly) return
   pushDeckSnapshot()
   const dup: AvnacDocumentV1 = cloneAvnacPlain(slides.value[i])
   const insertAt = i + 1
@@ -495,6 +518,7 @@ function duplicateSlideAt(i: number) {
 }
 
 function moveSlide(from: number, to: number) {
+  if (props.readOnly) return
   if (to < 0 || to >= slides.value.length || from === to) return
   pushDeckSnapshot()
   const [moved] = slides.value.splice(from, 1)
@@ -511,6 +535,7 @@ function moveSlide(from: number, to: number) {
 }
 
 function selectAll() {
+  if (props.readOnly) return
   const canvas = getCanvas()
   if (!canvas) return
   import('fabric').then((mod: any) => {
@@ -524,6 +549,7 @@ function selectAll() {
 
 // ─── Sidebar / panels ───────────────────────────────────────────────────────
 function togglePanel(id: EditorSidebarPanelId) {
+  if (props.readOnly) return
   if (id === 'vector-board') {
     activePanel.value = null
     editorRef.value?.shapeTools.startPenDrawMode()
@@ -546,21 +572,25 @@ const layerRows = computed<EditorLayerRow[]>(() => {
 })
 
 async function onAddImageFromUrl(opts: { url: string; origin: 'center'; width: number; height: number }) {
+  if (props.readOnly) return null
   const image = await (editorRef.value?.shapeTools.addImageFromUrl(opts) ?? Promise.resolve(null))
   return image ? true : null
 }
 
 function onAddImageFromFile(file: File) {
+  if (props.readOnly) return null
   return editorRef.value?.shapeTools.addImageFromFile(file)
 }
 
 function onTemplateInsert(doc: AvnacDocumentV1) {
+  if (props.readOnly) return
   if (!editorRef.value) return
   editorRef.value.setDocument(cloneAvnacPlain(doc))
   setTimeout(() => editorRef.value?.fitToViewport(), 60)
 }
 
 async function onAiGenerate(docs: AvnacDocumentV1[]) {
+  if (props.readOnly) return
   const generated = cloneAvnacPlain(docs).filter((doc) =>
     !!doc?.artboard &&
     typeof doc.artboard.width === 'number' &&
@@ -584,6 +614,7 @@ async function onAiGenerate(docs: AvnacDocumentV1[]) {
 
 // ─── Bottom bar / shape insertion ───────────────────────────────────────────
 function onShapePick(kind: string) {
+  if (props.readOnly) return
   if (kind === 'line' || kind === 'arrow') {
     editorRef.value?.shapeTools.startLineDrawMode(kind)
     return
@@ -592,14 +623,17 @@ function onShapePick(kind: string) {
 }
 
 function onLinePick(kind: 'line' | 'curved-line' | 'connector') {
+  if (props.readOnly) return
   editorRef.value?.shapeTools.startLineDrawMode(kind as any)
 }
 
 function onAddText() {
+  if (props.readOnly) return
   editorRef.value?.shapeTools.addText()
 }
 
 function onAddImage() {
+  if (props.readOnly) return
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
@@ -612,6 +646,7 @@ function onAddImage() {
 }
 
 function onBgChange(v: BgValue) {
+  if (props.readOnly) return
   canvasStore.bgValue = v
   // Apply to fabric canvas live
   const canvas = getCanvas()
@@ -643,6 +678,7 @@ function scaleObjectForCanvasSize(obj: any, scaleX: number, scaleY: number) {
 }
 
 async function setCanvasSize(size: { width: number; height: number; label?: string }, scaleContent = true) {
+  if (props.readOnly) return
   const current = editorRef.value?.getDocument() ?? slides.value[currentIndex.value]
   if (!current) return
   const prevW = current.artboard.width || size.width
@@ -666,6 +702,7 @@ async function setCanvasSize(size: { width: number; height: number; label?: stri
 }
 
 async function insertSmartObject(kind: string) {
+  if (props.readOnly) return
   if ((INFOGRAPHIC_SMART_OBJECTS as string[]).includes(kind)) {
     const { defaultInfographicData } = await import('@avnac/lib/avnac-infographic')
     onInsertInfographic(defaultInfographicData(kind as InfographicTemplate))
@@ -698,6 +735,7 @@ function commitObjectModified(canvas: any, obj: any) {
 }
 
 function onPaintChange(v: BgValue) {
+  if (props.readOnly) return
   const canvas = getCanvas()
   if (!canvas) return
   const active = canvas.getActiveObject()
@@ -968,7 +1006,9 @@ async function onInsertChart(data: AvnacChartData) {
     import('@avnac/composables/useChartRenderer'),
     import('@avnac/lib/ensure-avnac-layer-id'),
   ])
-  const { url, pngW, pngH } = await renderChartToDataUrl(data, Math.round(targetW), Math.round(targetH))
+  const renderW = Math.round(targetW)
+  const renderH = Math.round(targetH)
+  const { url, pngW, pngH } = normalizeChartRenderResult(await renderChartToDataUrl(data, renderW, renderH), renderW, renderH)
   const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
   img.set({
     left: artW / 2,
@@ -1017,7 +1057,7 @@ watch(() => chartsStore.renderRev, async () => {
   const w = Math.max(200, Math.round((chart.width ?? 400) * (chart.scaleX ?? 1)))
   const h = Math.max(150, Math.round((chart.height ?? 300) * (chart.scaleY ?? 1)))
   const { renderChartToDataUrl } = await import('@avnac/composables/useChartRenderer')
-  const { url, pngW, pngH } = await renderChartToDataUrl(data, w, h)
+  const { url, pngW, pngH } = normalizeChartRenderResult(await renderChartToDataUrl(data, w, h), w, h)
   try {
     await chart.setSrc?.(url, { crossOrigin: 'anonymous' })
   } catch {
@@ -1076,6 +1116,7 @@ function onSelectLayer(stackIndex: number) {
   editorRef.value?.layerPanel.selectByIndex(stackIndex)
 }
 function onToggleVisible(stackIndex: number) {
+  if (props.readOnly) return
   editorRef.value?.layerPanel.toggleVisible(stackIndex)
 }
 function onBringForward(stackIndex: number) {
@@ -1085,6 +1126,7 @@ function onSendBackward(stackIndex: number) {
   editorRef.value?.layerPanel.sendBackward(stackIndex)
 }
 function onReorderLayers(fromIndex: number, toIndex: number) {
+  if (props.readOnly) return
   const lp = editorRef.value?.layerPanel
   if (!lp) return
   const rows = [...lp.layers.value]
@@ -1105,6 +1147,7 @@ async function onExportPptx() {
 }
 
 async function onImportPptx() {
+  if (props.readOnly) return
   try {
     const docs = await importPptxFromInput()
     if (!docs.length) return
@@ -1245,6 +1288,7 @@ function onInsertDiagram(data: AvnacDiagramData) {
 
 // ─── Lifecycle ──────────────────────────────────────────────────────────────
 function onGlobalKeydown(e: KeyboardEvent) {
+  if (props.readOnly) return
   if (!(e.ctrlKey || e.metaKey)) return
   const target = e.target as HTMLElement
   // Don't intercept text inputs
@@ -1409,6 +1453,13 @@ defineExpose({
   padding-top: 24px;
   box-sizing: border-box;
   background: var(--bg-canvas, #f4f4f5);
+}
+
+.avnac-readonly-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  cursor: default;
 }
 
 .avnac-host__loading {

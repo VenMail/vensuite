@@ -15,7 +15,7 @@
           <span
             ref="titleEl"
             class="stb-title"
-            contenteditable="true"
+            :contenteditable="!props.readOnly"
             spellcheck="false"
             @blur="onTitleBlur"
             @keydown.enter.prevent="(titleEl as HTMLElement)?.blur()"
@@ -43,7 +43,7 @@
             {{ props.unreadCount }}
           </span>
         </button>
-        <button class="stb-btn stb-btn--outline" :disabled="props.isSaving" @click="$emit('save')">
+        <button class="stb-btn stb-btn--outline" :disabled="props.isSaving || props.readOnly" @click="$emit('save')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
             <polyline points="17 21 17 13 7 13 7 21"/>
@@ -110,6 +110,7 @@ const props = defineProps<{
   showShare?: boolean
   showChat?: boolean
   unreadCount?: number
+  readOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -150,6 +151,7 @@ watch(() => props.title, (v) => {
 })
 
 function onTitleBlur() {
+  if (props.readOnly) return
   const v = titleEl.value?.innerText.trim() || 'Untitled Presentation'
   emit('title-change', v)
 }
@@ -328,6 +330,31 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 // ─── Action dispatch ─────────────────────────────────────────────────────────
 function handleAction(id: string) {
   closeMenu()
+  const mutatingActions = new Set([
+    'undo',
+    'redo',
+    'import-pptx',
+    'rename',
+    'add-text',
+    'add-image',
+    'add-slide',
+    'duplicate-slide',
+    'delete-slide',
+    'shape-rect',
+    'shape-circle',
+    'shape-triangle',
+    'shape-line',
+    'shape-arrow',
+    'smart-table',
+    'smart-chart',
+    'smart-icon',
+    'smart-diagram',
+    'smart-mockup',
+    'canvas-16-9',
+    'canvas-4-3',
+    'canvas-a4',
+  ])
+  if (props.readOnly && mutatingActions.has(id)) return
   switch (id) {
     case 'undo':        emit('undo'); break
     case 'redo':        emit('redo'); break

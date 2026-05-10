@@ -516,7 +516,8 @@
       "zoom_out": "Zoom Out"
     },
     "toast": {
-      "visibility_updated": "Visibility updated"
+      "visibility_updated": "Visibility updated",
+      "failed_to_update": "Failed to update visibility"
     }
   }
 }

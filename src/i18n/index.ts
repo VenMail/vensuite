@@ -61,9 +61,6 @@ function flattenMessages(input: unknown, prefix = ''): Messages {
 // Auto-load i18n JSON files from src/i18n/locales if they exist
 const messageModules = import.meta.glob('./locales/**/*.json', { eager: true });
 const resourceModules = import.meta.glob('../../resources/js/i18n/auto/**/*.json', { eager: true });
-const testModule = import.meta.glob('../../resources/js/i18n/auto/en/views.json', { eager: true });
-
-console.log('testModule:', testModule);
 
 const autoMessagesByLocale: MessagesByLocale = {};
 
@@ -94,7 +91,6 @@ for (const [path, mod] of Object.entries(resourceModules)) {
 }
 
 if (Object.keys(autoMessagesByLocale).length > 0) {
-  console.log('autoMessagesByLocale:', autoMessagesByLocale);
   let defaultLocale = autoMessagesByLocale.en ? 'en' : Object.keys(autoMessagesByLocale)[0];
   if (typeof window !== 'undefined') {
     try {
@@ -106,6 +102,5 @@ if (Object.keys(autoMessagesByLocale).length > 0) {
       // ignore storage errors
     }
   }
-  console.log('initI18n with', defaultLocale);
   initI18n(defaultLocale, autoMessagesByLocale);
 }

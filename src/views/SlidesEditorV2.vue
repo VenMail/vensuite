@@ -6,6 +6,7 @@
       :has-unsaved="hasUnsaved"
       :show-share="!!deckId"
       :show-chat="!!deckId && canJoinRealtime"
+      :read-only="!canEditDeck"
       :unread-count="unreadCount"
       @back="goBack"
       @title-change="onTitleChange"
@@ -39,6 +40,7 @@
         :persist-id="deckId ?? 'new'"
         :notes="notes"
         :show-notes="showNotes"
+        :read-only="!canEditDeck"
         @ready="onEditorReady"
         @change="onSlidesChange"
         @notes-change="onNotesChange"
@@ -131,7 +133,7 @@
           :share-link="shareLink"
           :privacy-type="privacyType"
           :members="shareMembersForCard"
-          :can-edit-privacy="authStore.isAuthenticated"
+          :can-edit-privacy="canEditDeck"
           @close="shareOpen = false"
           @copy-link="copyShareLink"
           @change-privacy="handleChangePrivacy"
@@ -245,6 +247,15 @@ const accessDenied = ref(false)
 const privacyType = ref<number>(7)
 const shareMembers = ref<Array<{id: string, name: string, email: string, level: string}>>([])
 const currentDoc = ref<any | null>(null)
+const backendCanEdit = ref<boolean | null>(null)
+
+const canEditDeck = computed(() => {
+  if (!deckId.value) return true
+  if (backendCanEdit.value !== null) return backendCanEdit.value
+  if (typeof currentDoc.value?.can_edit === 'boolean') return currentDoc.value.can_edit
+  if (typeof currentDoc.value?.is_owner === 'boolean') return currentDoc.value.is_owner
+  return authStore.isAuthenticated
+})
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 let pendingSaveAfterFlight = false
@@ -252,6 +263,13 @@ const applyingRemote = ref(false)
 
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`
+function applyLoadedDeckDoc(doc: any) {
+  if (!doc) return
+  currentDoc.value = doc
+  if (typeof doc.can_edit === 'boolean') backendCanEdit.value = doc.can_edit
+  if (typeof doc.privacy_type === 'number') privacyType.value = doc.privacy_type
+}
+
 function buildAuthHeaders(extra: Record<string, string> = {}) {
   const headers: Record<string, string> = { ...extra }
   const token = (fileStore as any).getToken?.() || authStore?.getToken?.() || (typeof localStorage !== 'undefined' ? localStorage.getItem('venAuthToken') : null)
@@ -263,6 +281,7 @@ function buildAuthHeaders(extra: Record<string, string> = {}) {
 const collaboration = useSlidesCollaboration({
   deckId: computed(() => deckId.value),
   privacyType,
+  canEdit: canEditDeck,
   onRemoteTitleChange: (newTitle) => {
     title.value = newTitle
     document.title = newTitle
@@ -326,8 +345,8 @@ const {
 
 const shareLink = computed(() => {
   if (!deckId.value) return ''
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  return `${origin}/s/${deckId.value}`
+  const origin = import.meta.env.VITE_SHARE_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '')
+  return `${origin}/share/slide/${deckId.value}`
 })
 
 const shareMembersForCard = computed<ShareMember[]>(() => {
@@ -343,6 +362,7 @@ function getCurrentSlideIndex() {
 }
 
 function scheduleSave() {
+  if (!canEditDeck.value) return
   hasUnsaved.value = true
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => persistDeck(), 4000)
@@ -350,6 +370,10 @@ function scheduleSave() {
 
 async function persistDeck(): Promise<boolean> {
   if (!editorReady.value) return false
+  if (!canEditDeck.value) {
+    hasUnsaved.value = false
+    return false
+  }
   if (isSaving.value) {
     pendingSaveAfterFlight = true
     return false
@@ -371,12 +395,12 @@ async function persistDeck(): Promise<boolean> {
         file_name: `${title.value}.pptx`,
         file_type: 'pptx',
       } as any)
-      if (result?.document) currentDoc.value = result.document
+      if (result?.document) applyLoadedDeckDoc(result.document)
     } else {
       const doc = await fileStore.createNewDocument('pptx', title.value, content)
       if (doc?.id) {
         deckId.value = doc.id
-        currentDoc.value = doc
+        applyLoadedDeckDoc(doc)
         await router.replace(`/slides/${doc.id}`)
       }
     }
@@ -424,7 +448,7 @@ function onSlidesChange(slides: AvnacDocumentV1[]) {
   if (currentSlideIndex.value >= slides.length) {
     currentSlideIndex.value = Math.max(0, slides.length - 1)
   }
-  if (!applyingRemote.value) scheduleSave()
+  if (!applyingRemote.value && canEditDeck.value) scheduleSave()
 }
 
 function onLocalSlideChange(index: number, doc: AvnacDocumentV1) {
@@ -433,13 +457,14 @@ function onLocalSlideChange(index: number, doc: AvnacDocumentV1) {
     currentSlideIndex.value = index
     updateSlideIndex(index)
   }
-  if (canJoinRealtime.value && isJoined.value) {
+  if (canEditDeck.value && canJoinRealtime.value && isJoined.value) {
     broadcastSlideOperation({ type: 'slide_change', data: { slideIndex: index, doc: cloneAvnacPlain(doc) } })
   }
 }
 
 function onLocalSlidesMutate(op: { type: string; from?: number; to?: number; index?: number }) {
   if (applyingRemote.value) return
+  if (!canEditDeck.value) return
   if (op.type === 'delete' && typeof op.index === 'number') {
     if (op.index < notes.value.length) notes.value.splice(op.index, 1)
   } else if (op.type === 'duplicate' && typeof op.from === 'number' && typeof op.to === 'number') {
@@ -468,6 +493,7 @@ function onLocalSlidesMutate(op: { type: string; from?: number; to?: number; ind
 }
 
 function onNotesChange(index: number, text: string) {
+  if (!canEditDeck.value) return
   while (notes.value.length <= index) notes.value.push('')
   notes.value[index] = text
   if (!applyingRemote.value) {
@@ -479,6 +505,7 @@ function onNotesChange(index: number, text: string) {
 }
 
 function onTitleChange(newTitle: string) {
+  if (!canEditDeck.value) return
   title.value = newTitle
   document.title = newTitle
   scheduleSave()
@@ -507,8 +534,7 @@ async function loadSharingData() {
   if (!deckId.value) return
   try {
     const doc = await fileStore.loadDocument(deckId.value, 'pptx') as any
-    if (doc) currentDoc.value = doc
-    if (typeof doc?.privacy_type === 'number') privacyType.value = doc.privacy_type
+    applyLoadedDeckDoc(doc)
     const sharingRaw = doc?.sharing_info ?? doc?.sharing
     if (typeof sharingRaw === 'string') {
       const parsed = parseSharingInfoString(sharingRaw)
@@ -536,6 +562,7 @@ async function patchFile(body: Record<string, any>) {
 }
 
 async function handleChangePrivacy(newPrivacy: number) {
+  if (!canEditDeck.value) return
   if (!deckId.value) return
   const prev = privacyType.value
   privacyType.value = newPrivacy
@@ -549,6 +576,7 @@ async function handleChangePrivacy(newPrivacy: number) {
 }
 
 async function handleUpdateMember(payload: {email: string, shareLevel: ShareLevel, label: ShareLevelLabel}) {
+  if (!canEditDeck.value) return
   const member = shareMembers.value.find(m => m.email === payload.email)
   if (member) {
     member.level = shareLevelToLevel(payload.shareLevel)
@@ -565,6 +593,7 @@ async function handleUpdateMember(payload: {email: string, shareLevel: ShareLeve
 }
 
 async function handleRemoveMember(payload: {email: string}) {
+  if (!canEditDeck.value) return
   const previous = [...shareMembers.value]
   shareMembers.value = shareMembers.value.filter(m => m.email !== payload.email)
   try {
@@ -577,6 +606,7 @@ async function handleRemoveMember(payload: {email: string}) {
 }
 
 async function handleInvite(payload: {email: string, shareLevel: ShareLevel, label: ShareLevelLabel, note?: string}) {
+  if (!canEditDeck.value) return
   if (shareMembers.value.some(m => m.email === payload.email)) {
     toast.error('This person already has access')
     return
@@ -661,7 +691,7 @@ onMounted(async () => {
     deckId.value = id
     try {
       const raw = await fileStore.loadDocument(id, 'pptx') as any
-      if (raw) currentDoc.value = raw
+      applyLoadedDeckDoc(raw)
       const migrated = migrateDeckPayload(raw?.content)
       if (migrated.slides.length) initialSlides.value = migrated.slides
       if (migrated.notes.length || migrated.slides.length) notes.value = migrated.notes
@@ -669,7 +699,6 @@ onMounted(async () => {
         title.value = migrated.title
         document.title = migrated.title
       }
-      if (typeof raw?.privacy_type === 'number') privacyType.value = raw.privacy_type
       const sharingRaw = raw?.sharing_info ?? raw?.sharing
       if (typeof sharingRaw === 'string') {
         const parsed = parseSharingInfoString(sharingRaw)

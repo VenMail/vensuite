@@ -1,7 +1,7 @@
 <template>
   <div :class="containerClass">
     <div :class="labelWrapperClass">
-      <label :for="inputId" class="flex items-baseline gap-1.5 text-sm font-semibold text-slate-900 dark:text-white">
+      <label :for="inputId" class="flex items-baseline gap-1.5 text-base font-semibold leading-tight text-slate-950 dark:text-white">
         <span>{{ label }}</span>
         <span v-if="required" class="text-rose-500" aria-label="required">*</span>
       </label>
@@ -17,7 +17,7 @@
       v-if="isShortInput"
       :id="inputId"
       :type="inputType"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-1 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-[var(--player-accent)] dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
+      class="form-control w-full"
       :placeholder="placeholder"
       :value="stringValue"
       :disabled="disabled"
@@ -31,7 +31,7 @@
       <textarea
       v-else-if="isLongInput"
       :id="inputId"
-      class="min-h-[140px] w-full resize-y rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-1 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-[var(--player-accent)] dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
+      class="form-control min-h-[150px] w-full resize-y"
       :placeholder="placeholder"
       :value="stringValue"
       :disabled="disabled"
@@ -45,7 +45,7 @@
         <label
         v-for="(option, idx) in options"
         :key="option.value"
-        class="flex items-center gap-3 cursor-pointer group"
+        :class="choiceOptionClass(modelValue === option.value)"
       >
         <span v-if="showShortcutLabels" class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] font-semibold transition-colors" :class="modelValue === option.value ? 'shortcut-badge--active text-white' : 'border-slate-300 bg-white text-slate-500 group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'">
           {{ getOptionShortcutLabel(idx) }}
@@ -61,7 +61,7 @@
           :class="{ 'sr-only': showShortcutLabels }"
           @change="updateValue(option.value)"
         />
-          <span class="text-sm text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
+          <span class="text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-950 dark:text-slate-300 dark:group-hover:text-white">
           {{ option.label }}
         </span>
       </label>
@@ -71,7 +71,7 @@
       <select
       v-else-if="type === 'select'"
       :id="inputId"
-      class="form-input w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-1 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
+      class="form-control w-full cursor-pointer"
       :value="(modelValue as string) ?? ''"
       :disabled="disabled"
       :required="required"
@@ -88,7 +88,7 @@
         <label
         v-for="(option, idx) in options"
         :key="option.value"
-        class="flex items-center gap-3 cursor-pointer group"
+        :class="choiceOptionClass(arrayValue.includes(option.value))"
       >
         <span v-if="showShortcutLabels" class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] font-semibold transition-colors" :class="arrayValue.includes(option.value) ? 'shortcut-badge--active text-white' : 'border-slate-300 bg-white text-slate-500 group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'">
           {{ getOptionShortcutLabel(idx) }}
@@ -103,7 +103,7 @@
           :class="{ 'sr-only': showShortcutLabels }"
           @change="toggleCheckbox(option.value, ($event.target as HTMLInputElement).checked)"
         />
-          <span class="text-sm text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">
+          <span class="text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-950 dark:text-slate-300 dark:group-hover:text-white">
           {{ option.label }}
         </span>
       </label>
@@ -114,7 +114,7 @@
         <button
           type="button"
           :class="[
-            'inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50 yesno-btn',
+            'yesno-btn inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50',
             booleanValue === true
               ? 'yesno-btn--active text-white'
               : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
@@ -128,7 +128,7 @@
         <button
           type="button"
           :class="[
-            'inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50 yesno-btn',
+            'yesno-btn inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50',
             booleanValue === false && modelValue != null
               ? 'yesno-btn--active text-white'
               : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
@@ -183,7 +183,7 @@
        
       <div 
       v-else-if="type === 'statement'"
-      class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300" 
+      class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300"
       v-html="statementHtml"
     />
 
@@ -213,7 +213,7 @@
       v-else
       :id="inputId"
       type="text"
-      class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-1 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-[var(--player-accent)] dark:disabled:bg-slate-900 dark:disabled:text-slate-600"
+      class="form-control w-full"
       :placeholder="placeholder"
       :value="stringValue"
       :disabled="disabled"
@@ -387,6 +387,13 @@ const fieldWrapperClass = computed(() => {
   return classes.join(' ');
 });
 
+const choiceOptionClass = (selected: boolean) => [
+  'choice-option group flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-all',
+  selected
+    ? 'choice-option--active'
+    : 'border-slate-200 bg-white/85 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/55 dark:hover:border-slate-600',
+];
+
 // Validation and hints
 const activeValidation = computed<TextValidation | undefined>(() => {
   const t = type.value as keyof typeof defaultValidations;
@@ -435,6 +442,48 @@ const lengthHint = computed(() => {
 :deep(select:focus) {
   --tw-ring-color: var(--player-accent, #3b82f6);
   border-color: var(--player-accent, #3b82f6);
+}
+
+.form-control {
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--player-text-color, #0f172a) 18%, transparent);
+  background: color-mix(in srgb, var(--player-surface, #fff) 92%, white);
+  padding: 0.85rem 1rem;
+  color: #0f172a;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.form-control::placeholder {
+  color: #94a3b8;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--player-accent, #3b82f6);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--player-accent, #3b82f6) 16%, transparent);
+}
+
+.form-control:disabled {
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.choice-option {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.choice-option--active {
+  border-color: color-mix(in srgb, var(--player-accent, #3b82f6) 62%, white);
+  background: color-mix(in srgb, var(--player-accent, #3b82f6) 9%, white);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--player-accent, #3b82f6) 12%, transparent);
+}
+
+.choice-option--active span:last-child {
+  color: #0f172a;
 }
 
 :deep(input[type="radio"]:checked),
@@ -490,5 +539,25 @@ const lengthHint = computed(() => {
 
 .file-input-themed:hover::file-selector-button {
   background-color: color-mix(in srgb, var(--player-accent, #3b82f6) 25%, transparent);
+}
+
+:global(.dark) .form-control {
+  border-color: rgba(71, 85, 105, 0.85);
+  background: rgba(15, 23, 42, 0.78);
+  color: #f8fafc;
+  box-shadow: none;
+}
+
+:global(.dark) .form-control::placeholder {
+  color: #64748b;
+}
+
+:global(.dark) .choice-option--active {
+  border-color: color-mix(in srgb, var(--player-accent, #3b82f6) 68%, #1e293b);
+  background: color-mix(in srgb, var(--player-accent, #3b82f6) 18%, #0f172a);
+}
+
+:global(.dark) .choice-option--active span:last-child {
+  color: #f8fafc;
 }
 </style>

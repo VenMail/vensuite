@@ -613,7 +613,8 @@ async function openFile(id: string) {
 
 async function handleBulkDelete() {
   try {
-    await Promise.all(Array.from(selectedFiles.value).map((id) => fileStore.moveToTrash(id)))
+    const results = await Promise.all(Array.from(selectedFiles.value).map((id) => fileStore.moveToTrash(id)))
+    if (results.some((success) => !success)) throw new Error('Failed to move one or more items to trash')
     clearSelection()
     await refresh()
     toast.success('Items moved to trash')

@@ -59,6 +59,10 @@ export interface FileData {
   privacy_type?: number;
   // sharing_info: 'email1:v,email2:e' where v=view, e=edit, c=comment
   sharing_info?: string | null;
+  can_view?: boolean;
+  can_comment?: boolean;
+  can_edit?: boolean;
+  is_owner?: boolean;
 }
 
 export interface AppForm {

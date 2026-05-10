@@ -76,18 +76,10 @@ export async function exportDocument(
 
 /**
  * Convert DOCX blob to PDF
- * This would typically use a server-side conversion service
- * For now, we'll return the DOCX blob as a placeholder
+ * This must be backed by a real conversion service before exposing PDF downloads.
  */
-async function convertDocxToPdf(docxBlob: Blob, _fileName: string): Promise<Blob> {
-  // In a real implementation, this would:
-  // 1. Upload DOCX to conversion service
-  // 2. Get PDF back
-  // 3. Return PDF blob
-  
-  // For now, return DOCX as placeholder
-  console.warn('PDF conversion not implemented yet, returning DOCX');
-  return docxBlob;
+async function convertDocxToPdf(_docxBlob: Blob, _fileName: string): Promise<Blob> {
+  throw new Error('PDF export is not available until the backend conversion endpoint is connected.');
 }
 
 /**

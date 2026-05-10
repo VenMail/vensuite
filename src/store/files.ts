@@ -755,10 +755,10 @@ export const useFileStore = defineStore("files", {
       const failed: { id: string; error: any }[] = [];
       results.forEach((result, index) => {
         const id = ids[index];
-        if (result.status === 'fulfilled') {
+        if (result.status === 'fulfilled' && result.value) {
           deleted.push(id);
         } else {
-          failed.push({ id, error: result.reason });
+          failed.push({ id, error: result.status === 'rejected' ? result.reason : 'Delete failed' });
         }
       });
       return { deleted, failed };
@@ -938,6 +938,7 @@ export const useFileStore = defineStore("files", {
         content: defaultContent,
         last_viewed: new Date(),
         employee_id: auth?.employeeId || undefined,
+        privacy_type: 7,
       };
 
       // Try to create online first
@@ -980,7 +981,7 @@ export const useFileStore = defineStore("files", {
         isDirty: true,
         url: false,
         thumbnail_url: undefined,
-        privacy_type: 1, // Public so guests can access
+        privacy_type: 7,
       };
 
       this.saveToLocalCache(localDoc);
@@ -1249,6 +1250,9 @@ export const useFileStore = defineStore("files", {
         return doc;
       } catch (error) {
         console.error("Error loading from API:", error);
+        if (axios.isAxiosError(error) && error.response && [401, 403, 404].includes(error.response.status)) {
+          throw error;
+        }
         return null;
       }
     },
@@ -1556,7 +1560,7 @@ export const useFileStore = defineStore("files", {
     /** Restore a file from trash */
     async restoreFile(id: string): Promise<boolean> {
       try {
-        const response = await axios.post(
+        const response = await axios.patch(
           `${FILES_ENDPOINT}/${id}/restore`,
           {},
           {
@@ -1619,7 +1623,7 @@ export const useFileStore = defineStore("files", {
     /** Fetch files within a specific folder */
     async fetchFiles(folderId: string): Promise<FileData[]> {
       try {
-        const response = await axios.get(`${FILES_ENDPOINT}?folder_id=${folderId}`, {
+        const response = await axios.get(`${FILES_ENDPOINT}/${folderId}/files`, {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const docs = response.data.data as FileData[];

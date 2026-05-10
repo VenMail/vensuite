@@ -821,7 +821,8 @@ const confirmDelete = async () => {
   try {
     for (const file of filesToDelete.value) {
       if (file.id) {
-        await fileStore.moveToTrash(file.id)
+        const moved = await fileStore.moveToTrash(file.id)
+        if (!moved) throw new Error('Failed to move file to trash')
         selectedFiles.value.delete(file.id)
       }
     }

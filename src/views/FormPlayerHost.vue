@@ -20,6 +20,24 @@
         <p>{{$t('Views.FormPlayerHost.text.we_will_ask_for')}}</p>
       </div>
 
+      <aside v-if="stage === 'playing'" class="player-host__context" aria-label="Form summary">
+        <div>
+          <p class="player-host__eyebrow">{{ formContextLabel }}</p>
+          <h1>{{ formTitle }}</h1>
+          <p v-if="formDescription">{{ formDescription }}</p>
+        </div>
+        <dl class="player-host__meta">
+          <div>
+            <dt>Questions</dt>
+            <dd>{{ questionCountText }}</dd>
+          </div>
+          <div>
+            <dt>Time</dt>
+            <dd>{{ estimatedTimeText }}</dd>
+          </div>
+        </dl>
+      </aside>
+
       <div
         v-if="showPaymentReminder"
         class="player-host__callout player-host__callout--payment border border-emerald-200/60 bg-emerald-50/70 text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100"
@@ -32,7 +50,7 @@
         :class="[
           'player-host__body',
           isClassicMode
-            ? 'player-host__body--classic rounded-3xl border border-slate-200/70 bg-white/90 shadow-2xl shadow-slate-900/10 dark:border-slate-800/80 dark:bg-slate-900/70 dark:shadow-black/40'
+            ? 'player-host__body--classic'
             : 'player-host__body--focus'
         ]"
       >
@@ -47,7 +65,7 @@
 
         <section v-else-if="stage === 'welcome' && showResumePrompt" class="player-host__welcome">
           <div
-            class="welcome-card rounded-3xl border border-slate-200/70 bg-white/90 text-slate-900 shadow-2xl shadow-slate-900/10 dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-100 dark:shadow-black/40"
+            class="welcome-card"
           >
             <div class="resume-icon mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--player-accent)]/10">
               <svg class="h-8 w-8 text-[var(--player-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -77,7 +95,7 @@
 
         <section v-else-if="stage === 'welcome'" class="player-host__welcome">
           <div
-            class="welcome-card rounded-3xl border border-slate-200/70 bg-white/90 text-slate-900 shadow-2xl shadow-slate-900/10 dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-100 dark:shadow-black/40"
+            class="welcome-card"
           >
             <h2>{{ welcomeScreen?.title ?? $t('Commons.heading.welcome') }}</h2>
             <p v-if="welcomeScreen?.subtitle" class="text-slate-600 dark:text-slate-300">{{ welcomeScreen?.subtitle }}</p>
@@ -122,7 +140,7 @@
         <section v-else-if="stage === 'completed'" class="player-host__completion">
           <div
             :class="[
-              'completion-card rounded-3xl border border-slate-200/70 bg-white/90 text-slate-900 shadow-2xl shadow-slate-900/10 dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-100 dark:shadow-black/40',
+              'completion-card',
               isClassicMode ? 'completion-card--classic' : 'completion-card--focus'
             ]"
           >
@@ -207,6 +225,15 @@ const completionScreen = computed<FormCompletionScreen | null>(() => {
 const completionTitle = computed(() => completionScreen.value?.title ?? 'Thank you!');
 const completionMessage = computed(() => completionScreen.value?.message ?? 'Your response has been recorded.');
 const completionButtonText = computed(() => completionScreen.value?.button_text ?? null);
+const formTitle = computed(() => formDefinition.value?.title || 'Untitled form');
+const formDescription = computed(() => formDefinition.value?.description || '');
+const formContextLabel = computed(() => formIdParam.value ? 'Preview' : 'Secure form');
+const questionCount = computed(() => formDefinition.value?.questions?.length ?? 0);
+const questionCountText = computed(() => `${questionCount.value || 0}`);
+const estimatedTimeText = computed(() => {
+  const minutes = Math.max(1, Math.ceil((questionCount.value || 1) * 0.45));
+  return `${minutes} min`;
+});
 
 const theme = computed(() => formDefinition.value?.theme);
 const typography = computed(() => formDefinition.value?.typography);
@@ -285,13 +312,13 @@ const resolveAssetUrl = (value?: string | null): string => {
 const rootStyle = computed(() => {
   const backgroundColor = theme.value?.background_color ?? '#f4f5f9';
   const textColor = theme.value?.text_color ?? '#0f172a';
-  const surfaceColor = theme.value?.surface_color ?? 'rgba(255, 255, 255, 0.95)';
-  const surfaceBorder = (theme.value as any)?.surface_border_color ?? 'rgba(148, 163, 184, 0.35)';
-  const mutedSurface = (theme.value as any)?.muted_surface_color ?? 'rgba(248, 250, 252, 0.85)';
-  const mutedBorder = (theme.value as any)?.muted_border_color ?? 'rgba(203, 213, 225, 0.6)';
+  const surfaceColor = theme.value?.surface_color ?? 'rgba(255, 255, 255, 0.96)';
+  const surfaceBorder = (theme.value as any)?.surface_border_color ?? 'rgba(100, 116, 139, 0.26)';
+  const mutedSurface = (theme.value as any)?.muted_surface_color ?? 'rgba(248, 250, 252, 0.88)';
+  const mutedBorder = (theme.value as any)?.muted_border_color ?? 'rgba(148, 163, 184, 0.36)';
   const progressTrack = (theme.value as any)?.progress_track_color ?? 'rgba(226, 232, 240, 0.95)';
-  const elevation = (theme.value as any)?.elevation ?? '0 25px 60px rgba(15, 23, 42, 0.12)';
-  const mutedElevation = (theme.value as any)?.muted_elevation ?? '0 12px 32px rgba(15, 23, 42, 0.08)';
+  const elevation = (theme.value as any)?.elevation ?? '0 24px 70px rgba(15, 23, 42, 0.13)';
+  const mutedElevation = (theme.value as any)?.muted_elevation ?? '0 14px 36px rgba(15, 23, 42, 0.08)';
 
   const styles: Record<string, string> = {
     '--player-bg': backgroundColor,
@@ -305,6 +332,7 @@ const rootStyle = computed(() => {
     '--player-progress-track': progressTrack,
     '--player-elevation': elevation,
     '--player-muted-elevation': mutedElevation,
+    '--player-accent-soft': adjustColor(accentColor.value, 42) || '#dbeafe',
   };
 
   if (typography.value?.body_font_family) {
@@ -749,10 +777,31 @@ watch(
   padding: clamp(2rem, 4vw, 3.5rem) clamp(1rem, 4vw, 3rem);
   display: flex;
   justify-content: center;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--player-accent, #2563eb) 7%, transparent), transparent 38%),
+    linear-gradient(180deg, color-mix(in srgb, var(--player-accent-strong, #1d4ed8) 5%, transparent), transparent 62%),
+    var(--player-bg);
+}
+
+.player-host::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--player-text-color, #0f172a) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--player-text-color, #0f172a) 8%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.38), transparent 72%);
+  opacity: 0.28;
 }
 
 .player-host__shell {
-  width: min(960px, 100%);
+  width: min(1040px, 100%);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -825,6 +874,71 @@ watch(
   color: var(--player-text-color, #0f172a);
 }
 
+.player-host__context {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: clamp(1rem, 2vw, 1.4rem);
+  border: 1px solid var(--player-surface-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--player-surface) 82%, transparent);
+  box-shadow: var(--player-muted-elevation);
+  backdrop-filter: blur(18px);
+}
+
+.player-host__context h1 {
+  margin: 0.25rem 0 0;
+  font-family: var(--player-heading-font, inherit);
+  font-size: clamp(1.65rem, 4vw, 3.2rem);
+  font-weight: 750;
+  letter-spacing: 0;
+  line-height: 0.98;
+}
+
+.player-host__context p {
+  max-width: 650px;
+  margin-top: 0.75rem;
+  color: color-mix(in srgb, var(--player-text-color) 68%, transparent);
+}
+
+.player-host__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--player-accent);
+}
+
+.player-host__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(74px, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.player-host__meta div {
+  padding: 0.75rem;
+  border: 1px solid var(--player-muted-border);
+  border-radius: 8px;
+  background: var(--player-muted-surface);
+}
+
+.player-host__meta dt {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--player-text-color) 52%, transparent);
+}
+
+.player-host__meta dd {
+  margin: 0.2rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
 .player-host__body {
   width: 100%;
   display: flex;
@@ -834,8 +948,12 @@ watch(
 }
 
 .player-host__body--classic {
-  border-radius: 1.75rem;
+  border: 1px solid var(--player-surface-border);
+  border-radius: 12px;
   padding: clamp(1.5rem, 4vw, 3rem);
+  background: var(--player-surface);
+  box-shadow: var(--player-elevation);
+  backdrop-filter: blur(18px);
 }
 
 .player-host__body--focus {
@@ -922,9 +1040,14 @@ watch(
   width: min(480px, 100%);
   text-align: center;
   padding: 2.5rem 2rem;
-  border-radius: 1.5rem;
+  border: 1px solid var(--player-surface-border);
+  border-radius: 12px;
   display: grid;
   gap: 2rem;
+  background: var(--player-surface);
+  color: var(--player-text-color);
+  box-shadow: var(--player-elevation);
+  backdrop-filter: blur(18px);
 }
 
 .welcome-card h2,
@@ -999,12 +1122,26 @@ watch(
 }
 
 .completion-card--classic {
-  background: radial-gradient(circle at top, color-mix(in srgb, var(--player-accent, #2563eb) 8%, transparent), transparent 60%), white;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--player-accent, #2563eb) 8%, var(--player-surface)), var(--player-surface) 44%);
   border: 1px solid color-mix(in srgb, var(--player-accent, #2563eb) 18%, transparent);
 }
 
 .completion-card--focus {
-  background: white;
+  background: var(--player-surface);
   border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+@media (max-width: 720px) {
+  .player-host {
+    padding: 1rem;
+  }
+
+  .player-host__context {
+    flex-direction: column;
+  }
+
+  .player-host__meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>

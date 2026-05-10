@@ -456,9 +456,11 @@ const canJoinRealtime = computed(() => {
   return guestAccessiblePrivacyTypes.has(privacyType.value);
 });
 
-const canEditDoc = computed(() =>
-  authStore.isAuthenticated || editablePrivacyTypes.has(privacyType.value),
-);
+const canEditDoc = computed(() => {
+  const explicit = (currentDoc.value as any)?.can_edit;
+  if (typeof explicit === 'boolean') return explicit;
+  return authStore.isAuthenticated || editablePrivacyTypes.has(privacyType.value);
+});
 
 const editorMode = ref<'editing' | 'viewing'>('editing');
 const isViewMode = computed(() => !canEditDoc.value || editorMode.value === 'viewing');

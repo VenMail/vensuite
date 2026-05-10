@@ -70,6 +70,12 @@ const routes = [
     meta: { public: true },
   },
   {
+    path: '/f/by-id/:id',
+    name: 'form-player-by-id',
+    component: () => import('./views/FormPlayerHost.vue'),
+    meta: { public: true, allowGuest: true },
+  },
+  {
     path: '/f/:slug(.*)',
     name: 'form-player',
     component: () => import('./views/FormPlayerHost.vue'),
@@ -88,12 +94,6 @@ const routes = [
     component: () => import('./views/SigningPlayer.vue'),
     meta: { public: true },
   },
-  {
-    path: '/f/by-id/:id',
-    name: 'form-player-by-id',
-    component: () => import('./views/FormPlayerHost.vue'),
-    meta: { public: true, allowGuest: true },
-  },
   
   // Authenticated routes with layout
   {
@@ -103,20 +103,20 @@ const routes = [
       { path: 'home', name: 'home', component: Home, meta: { allowGuest: true } },
       { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'docs/new', name: 'docs-new', component: DocsEditor, meta: { hideLayout: true } },
-      { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true, public: true } },
       { path: 'docs/t/:template', name: 'docs-template', component: DocsEditor, meta: { hideLayout: true } },
+      { path: 'docs/:appFileId', name: 'docs-edit', component: DocsEditor, meta: { hideLayout: true, public: true } },
       { path: 'sheets', name: 'sheets-view', component: Sheets, meta: { allowGuest: true } },
       { path: 'sheets/new', name: 'sheets', component: RunSheet, meta: { hideLayout: true, allowGuest: true } },
-      { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true, public: true } },
       { path: 'sheets/t/:template', name: 'sheet-template', component: RunSheet, meta: { hideLayout: true, allowGuest: true } },
+      { path: 'sheets/:id', name: 'sheet', component: RunSheet, meta: { hideLayout: true, public: true } },
       { path: 'slides', name: 'slides', component: () => import('./views/Slides.vue') },
       { path: 'slides/new', name: 'slides-new', component: () => import('./views/SlidesEditorV2.vue'), meta: { hideLayout: true } },
       { path: 'slides/t/:template', name: 'slides-template', component: () => import('./views/SlidesEditorV2.vue'), meta: { hideLayout: true } },
       { path: 'slides/:deckId', name: 'slides-edit', component: () => import('./views/SlidesEditorV2.vue'), meta: { hideLayout: true, public: true } },
       { path: 'stories', name: 'stories', component: () => import('./views/Stories.vue') },
       { path: 'stories/new', name: 'stories-new', component: StoryEditor, meta: { hideLayout: true } },
-      { path: 'stories/:storyId', name: 'stories-edit', component: StoryEditor, meta: { hideLayout: true, public: true } },
       { path: 'stories/t/:template', name: 'stories-template', component: StoryEditor, meta: { hideLayout: true } },
+      { path: 'stories/:storyId', name: 'stories-edit', component: StoryEditor, meta: { hideLayout: true, public: true } },
       { path: 'forms', name: 'forms', component: Forms },
       { path: 'forms/t/:template', name: 'form-template', component: () => import('./views/FormTemplateHandler.vue'), meta: { hideLayout: true } },
       {

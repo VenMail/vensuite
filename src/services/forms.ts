@@ -198,9 +198,13 @@ export const listForms = async (
   params: ListFormsParams = {},
   options?: RequestOptions,
 ): Promise<AppForm[]> => {
+  const { perPage, ...rest } = params;
   const response = await apiClient.get(BASE_PATH, {
     ...(withRequestOptions(options) ?? {}),
-    params,
+    params: {
+      ...rest,
+      ...(perPage !== undefined ? { per_page: perPage } : {}),
+    },
   });
   return response.data?.data ?? [];
 };
@@ -289,11 +293,15 @@ export const updateSharingSettings = async (
   sharing: Partial<FormSharingSettings>,
   options?: RequestOptions,
 ): Promise<FormSharingSettings> => {
+  const { is_public, ...sharingRest } = sharing as Partial<FormSharingSettings> & { is_public?: boolean };
   const form = await updateForm(
     id,
     {
+      ...(typeof is_public === 'boolean'
+        ? { visibility: is_public ? 'public' : 'private' }
+        : {}),
       settings: {
-        sharing,
+        sharing: sharingRest,
       } as any,
     },
     options,

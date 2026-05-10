@@ -801,7 +801,8 @@ async function handleBulkDelete() {
     const promises = Array.from(selectedFiles.value).map((id) =>
       fileStore.moveToTrash(id)
     );
-    await Promise.all(promises);
+    const results = await Promise.all(promises);
+    if (results.some((success) => !success)) throw new Error("Failed to move one or more spreadsheets to trash");
     clearSelection();
     await refresh();
     toast.success(

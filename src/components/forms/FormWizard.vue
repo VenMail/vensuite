@@ -40,6 +40,9 @@
                 class="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs">Ctrl+Enter</kbd>
               {{$t('Commons.text.to_generate')}}
             </p>
+            <p v-if="generationError" class="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+              {{ generationError }}
+            </p>
           </div>
 
            
@@ -227,6 +230,7 @@ import {
 } from "lucide-vue-next";
 import type { FormBlock } from "./blocks/types";
 import { t } from '@/i18n';
+import { generateCompleteForm } from "@/services/ai";
 
 const props = defineProps<{
   initialDescription?: string
@@ -241,6 +245,7 @@ const emit = defineEmits<{
 const currentStep = ref<"describe" | "generating" | "preview">("describe");
 const description = ref("");
 const descriptionInput = ref<HTMLTextAreaElement | null>(null);
+const generationError = ref("");
 
 const generatedForm = ref<{
   title: string;
@@ -328,6 +333,7 @@ const useTemplate = (template: typeof quickTemplates[0]) => {
 const handleGenerate = async () => {
   if (!description.value.trim()) return;
 
+  generationError.value = "";
   currentStep.value = "generating";
 
   try {
@@ -341,21 +347,10 @@ const handleGenerate = async () => {
     currentStep.value = "preview";
   } catch (error) {
     console.error("Failed to generate form:", error);
-    // Fallback to a basic form
-    generatedForm.value = {
-      title: "New Form",
-      description: description.value,
-      blocks: [
-        {
-          id: crypto.randomUUID(),
-          type: "short",
-          category: "text",
-          question: "Question 1",
-          required: false,
-        },
-      ],
-    };
-    currentStep.value = "preview";
+    generationError.value = error instanceof Error && error.message
+      ? error.message
+      : "AI form generation failed. Please try again or create a blank form.";
+    currentStep.value = "describe";
   }
 };
 
@@ -377,16 +372,17 @@ async function generateFormFromDescription(description: string): Promise<{
   description: string;
   blocks: FormBlock[];
 }> {
-  // Call the real backend API
-  const { generateCompleteForm } = await import("@/services/ai");
-
   try {
     const result = await generateCompleteForm(description);
     return result;
   } catch (error) {
-    console.error("AI generation failed, using fallback:", error);
-    // Fallback to mock if API fails
-    return mockGenerateForm(description);
+    console.error("AI generation failed:", error);
+    if (import.meta.env.DEV) {
+      return mockGenerateForm(description);
+    }
+    throw error instanceof Error
+      ? error
+      : new Error("AI form generation is unavailable.");
   }
 }
 

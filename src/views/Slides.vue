@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import WorkspaceTopBar from "@/components/layout/WorkspaceTopBar.vue";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -231,15 +231,14 @@ const slideTemplates: SlideTemplate[] = [
   }
 ];
 
-// Mock slide decks data - in real app this would come from a store
-// Now using the slideDecks service
-const thumbnailUrls = computed<Record<string, string>>(() => {
-  const result: Record<string, string> = {}
-  for (const deck of slideDecks.value) {
-    result[deck.id] = getDeckThumbnail(deck)
-  }
-  return result
-});
+const thumbnailUrls = ref<Record<string, string>>({});
+
+watch(slideDecks, async (decks) => {
+  const entries = await Promise.all(
+    decks.map(async deck => [deck.id, await getDeckThumbnail(deck)] as const),
+  );
+  thumbnailUrls.value = Object.fromEntries(entries);
+}, { immediate: true });
 
 const filteredSlideDecks = computed(() => {
   logSlidesViewDebug('🔄 filteredSlideDecks computed, slideDecks.value:', slideDecks.value);
@@ -342,7 +341,7 @@ onMounted(async () => {
   logSlidesViewDebug('📊 fetchSlideDecks returned:', fetchedDecks.length, 'decks');
   logSlidesViewDebug('📊 slideDecks.value after fetch:', slideDecks.value.length);
   
-  logSlidesViewDebug('� thumbnails generated synchronously for', slideDecks.value.length, 'decks');
+  logSlidesViewDebug('Slide thumbnails queued for', slideDecks.value.length, 'decks');
 });
 
 // Create new presentation with template

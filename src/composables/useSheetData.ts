@@ -32,6 +32,7 @@ export function useSheetData() {
 
   const accessDenied = ref(false)
   const privacyType = ref<number>(7)
+  const backendCanEdit = ref<boolean | null>(null)
 
   const SHEET_EDITOR_DEBUG = Boolean(import.meta.env.DEV)
   const logDebug = (...args: unknown[]) => {
@@ -53,6 +54,7 @@ export function useSheetData() {
 
   const canEditSheet = computed(() => {
     const editablePrivacyTypes = new Set<number>([2, 4])
+    if (backendCanEdit.value !== null) return backendCanEdit.value
     return authStore.isAuthenticated || editablePrivacyTypes.has(privacyType.value)
   })
 
@@ -94,6 +96,7 @@ export function useSheetData() {
       // Privacy / access
       const priv = Number((loadedData as any)?.privacy_type ?? (loadedData as any)?.privacyType)
       if (!Number.isNaN(priv)) privacyType.value = priv
+      backendCanEdit.value = typeof (loadedData as any)?.can_edit === 'boolean' ? Boolean((loadedData as any).can_edit) : null
 
       if (!authStore.isAuthenticated) {
         const effectivePriv = Number.isNaN(priv) ? 7 : priv

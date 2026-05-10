@@ -278,6 +278,14 @@ const generateSampleData = () => {
 }
 
 const sampleData = computed(() => generateSampleData())
+const endpointUrl = computed(() => {
+  const fallback = typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+  try {
+    return new URL(props.endpoint || '/', fallback)
+  } catch {
+    return new URL('/', fallback)
+  }
+})
 
 // JavaScript Examples
 const javascriptExample = computed(() => {
@@ -321,15 +329,19 @@ const response = await axios.post('${props.endpoint}', {
 
 console.log('Success:', response.data)`
   } else {
+    const url = endpointUrl.value
+    const transport = url.protocol === 'http:' ? 'http' : 'https'
     return `// Submit data using Node.js
-const https = require('https')
+const ${transport} = require('${transport}')
 const data = JSON.stringify({
   row: [${data.map(d => `'${d}'`).join(', ')}]
 })
 
 const options = {
-  hostname: 'your-domain.com',
-  path: '/api/forms/${props.id}/responses',
+  protocol: '${url.protocol}',
+  hostname: '${url.hostname}',
+  port: '${url.port}',
+  path: '${url.pathname}${url.search}',
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -338,7 +350,7 @@ const options = {
   }
 }
 
-const req = https.request(options, (res) => {
+const req = ${transport}.request(options, (res) => {
   console.log('Status:', res.statusCode)
   res.on('data', (chunk) => console.log('Response:', chunk.toString()))
 })
@@ -451,8 +463,8 @@ const postmanCollection = computed(() => {
           },
           url: {
             raw: props.endpoint,
-            host: [new URL(props.endpoint).hostname],
-            path: new URL(props.endpoint).pathname.split('/').filter(Boolean)
+            host: [endpointUrl.value.hostname],
+            path: endpointUrl.value.pathname.split('/').filter(Boolean)
           }
         }
       }
@@ -473,12 +485,12 @@ const openApiSpec = computed(() => {
     },
     servers: [
       {
-        url: new URL(props.endpoint).origin,
+        url: endpointUrl.value.origin,
         description: t('Commons.text.api_server')
       }
     ],
     paths: {
-      [new URL(props.endpoint).pathname]: {
+      [endpointUrl.value.pathname]: {
         post: {
           summary: "Submit response",
           description: t('Components.Forms.IntegrationDialog.text.submit_a_new_response'),

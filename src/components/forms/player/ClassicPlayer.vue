@@ -1,12 +1,12 @@
 <template>
-  <div v-if="questionSections.length" class="mx-auto my-4 w-full max-w-4xl px-3 sm:px-5 lg:px-6">
+  <div v-if="questionSections.length" class="classic-player mx-auto my-4 w-full max-w-4xl px-3 sm:px-5 lg:px-6">
     <header class="flex flex-col gap-4 border-b pb-5" style="border-color: var(--player-surface-border, rgba(203,213,225,0.5));">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div class="flex flex-col gap-2.5">
           <span class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-gray-500 dark:text-gray-400">
             {{ definition?.organization_id ? $t('Commons.text.form_preview') : $t('Commons.text.form_responses') }}
           </span>
-          <h1 class="font-serif text-[2.25rem] font-semibold leading-tight text-gray-900 sm:text-[2.6rem] dark:text-gray-100">
+          <h1 class="text-[2.25rem] font-semibold leading-tight text-gray-950 sm:text-[2.6rem] dark:text-gray-100" style="font-family: var(--player-heading-font, inherit);">
             {{ definition?.title || $t('Commons.heading.untitled_form') }}
           </h1>
           <p v-if="definition?.description" class="max-w-3xl text-sm text-gray-600 dark:text-gray-400">
@@ -35,7 +35,7 @@
           v-for="(section, idx) in sectionSummaries"
           :key="section.id"
           :class="[
-            'flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm text-gray-600 transition section-nav-item dark:text-gray-300',
+            'flex items-center gap-3 rounded-lg border border-transparent px-4 py-3 text-sm text-gray-600 transition section-nav-item dark:text-gray-300',
             section.hasErrors ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-500 dark:bg-rose-900/30 dark:text-rose-300' : ''
           ]"
         >
@@ -184,7 +184,7 @@ const questionGridClass = computed(() => {
 });
 
 const questionCardClass = computed(() => {
-  const base = ['rounded-2xl shadow-sm transition hover:-translate-y-0.5 question-card--themed'];
+  const base = ['rounded-lg transition hover:-translate-y-0.5 question-card--themed'];
   if (resolvedDensity.value === 'compact') {
     base.push('px-4 py-3');
   } else {
@@ -632,12 +632,18 @@ const emitSubmit = () => {
 }
 
 .question-card--themed {
-  border: 1px solid var(--player-surface-border, rgba(203, 213, 225, 0.5));
-  background: var(--player-surface, rgba(255, 255, 255, 0.95));
+  border: 1px solid var(--player-muted-border, rgba(203, 213, 225, 0.6));
+  background: color-mix(in srgb, var(--player-surface, #fff) 94%, transparent);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.055);
 }
 
 .question-card--themed:hover {
   border-color: color-mix(in srgb, var(--player-accent) 30%, var(--player-surface-border, rgba(203, 213, 225, 0.5)));
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.085);
+}
+
+.section-nav-item {
+  background: color-mix(in srgb, var(--player-muted-surface, #f8fafc) 78%, transparent);
 }
 
 .section-nav-item:hover {

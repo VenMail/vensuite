@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth'
 export interface SlideCollaborationOptions {
   deckId: Ref<string | null>
   privacyType?: Ref<number>
+  canEdit?: Ref<boolean>
   onRemoteSlideChange?: (operation: any) => void
   onRemoteTitleChange?: (title: string) => void
   onRemoteNotesChange?: (notes: Record<string, string>) => void
@@ -63,6 +64,7 @@ export function useSlidesCollaboration(options: SlideCollaborationOptions) {
   const guestAccessiblePrivacyTypes = new Set<number>([1, 2, 3, 4])
   const canJoinRealtime = computed(() => {
     if (!deckId.value) return false
+    if (options.canEdit && !options.canEdit.value) return false
     if (privacyType.value === 7) return false // Private
     if (authStore.isAuthenticated) return true
     return guestAccessiblePrivacyTypes.has(privacyType.value)

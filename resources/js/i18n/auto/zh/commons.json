@@ -516,6 +516,7 @@
       "zoom_out": "缩小"
     },
     "toast": {
+      "failed_to_update": "更新可见性失败",
       "visibility_updated": "Visibility updated"
     }
   }

@@ -1,18 +1,21 @@
 <template>
   <div
     v-if="currentQuestion"
-    class="relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 rounded-3xl border px-6 py-8 transition shadow-xl"
+    class="focus-player relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 border px-6 py-8 transition"
     style="background: var(--player-surface, rgba(255,255,255,0.95)); border-color: var(--player-surface-border, rgba(203,213,225,0.5));"
   >
     <div class="space-y-6">
       <div v-if="showProgress" class="space-y-4">
         <div class="flex flex-col items-center gap-2 text-center">
-          <span class="text-sm font-semibold uppercase tracking-[0.32em] text-gray-400 dark:text-gray-500">
+          <span class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400 dark:text-gray-500">
             Step {{ currentStep }} of {{ totalSteps }}
           </span>
-          <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+          <h2 class="text-3xl font-semibold leading-tight text-gray-950 dark:text-gray-100">
             {{ encouragementMessage }}
           </h2>
+          <p v-if="formTitle" class="max-w-xl text-sm font-medium text-gray-600 dark:text-gray-300">
+            {{ formTitle }}
+          </p>
           <p class="text-sm text-gray-500 dark:text-gray-400">
             {{ Math.round(progressPercent) }}% complete
           </p>
@@ -42,7 +45,7 @@
       </Transition>
     </div>
 
-    <div class="mt-auto flex flex-col gap-4 rounded-2xl border px-6 py-5 transition shadow" style="background: var(--player-muted-surface, rgba(248,250,252,0.85)); border-color: var(--player-muted-border, rgba(203,213,225,0.6));">
+    <div class="mt-auto flex flex-col gap-4 rounded-lg border px-6 py-5 transition" style="background: var(--player-muted-surface, rgba(248,250,252,0.85)); border-color: var(--player-muted-border, rgba(203,213,225,0.6)); box-shadow: var(--player-muted-elevation, 0 12px 32px rgba(15,23,42,0.08));">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-gray-500 dark:text-gray-400">
           {{ footerMessage }}
@@ -160,6 +163,7 @@ const progressPercent = computed(() => {
 });
 
 const totalSteps = computed(() => questionOrder.value.length || (currentQuestion.value ? 1 : 0));
+const formTitle = computed(() => playerState.value.formDefinition?.title ?? '');
 
 const currentStep = computed(() => {
   if (!currentQuestion.value) return 0;
@@ -356,4 +360,26 @@ useFormKeyboard({
 </script>
 
 <style scoped>
+.focus-player {
+  border-radius: 12px;
+  background: var(--player-surface, rgba(255,255,255,0.95));
+  border-color: var(--player-surface-border, rgba(203,213,225,0.5));
+  box-shadow: var(--player-elevation, 0 24px 70px rgba(15,23,42,0.13));
+  backdrop-filter: blur(18px);
+}
+
+.focus-slide-enter-active,
+.focus-slide-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.focus-slide-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.focus-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
 </style>

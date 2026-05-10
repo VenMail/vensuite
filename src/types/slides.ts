@@ -21,6 +21,7 @@ export interface SlideDeckSummary {
   shared: boolean
   shareLink?: string
   thumbnail?: string
+  firstSlide?: AvnacDocumentV1
 }
 
 export interface SlideImportStatus {

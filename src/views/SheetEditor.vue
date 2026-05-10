@@ -395,6 +395,7 @@ const sheetPublicApiEnabled = ref<boolean>(false)
 const isUpdatingSheetPublicApi = ref(false)
 const generatedFormQuestions = ref<any[]>([])
 const isConvertingToForm = ref(false)
+const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 
 // Format color dialogs
 const fontColorOpen = ref(false)
@@ -429,6 +430,11 @@ const shareLinkSheet = computed(() => {
   if (!id) return ''
   const SHARE_BASE_URL = import.meta.env.VITE_SHARE_BASE_URL || getWindowOrigin()
   return `${SHARE_BASE_URL}/share/sheet/${id}`
+})
+
+const sheetIntegrationEndpoint = computed(() => {
+  if (!sheetPublicApiKey.value) return ''
+  return `${API_BASE_URI}/public/sheets/${sheetPublicApiKey.value}/rows`
 })
 
 const shareMembersForCard = computed(() => {
@@ -907,6 +913,8 @@ async function loadSharingData() {
   
   try {
     const document = await fileStore.loadDocument(id, 'xlsx')
+    sheetPublicApiEnabled.value = Boolean((document as any)?.public_api_enabled)
+    sheetPublicApiKey.value = ((document as any)?.public_api_key || '') as string
     const sharingData = (document as any)?.sharing_info ?? (document as any)?.sharing
     if (document && sharingData) {
       // Parse sharing data into members
@@ -938,10 +946,15 @@ async function handleSetSheetPublicApiEnabled(enabled: boolean) {
   
   isUpdatingSheetPublicApi.value = true
   try {
-    // API call would go here
-    sheetPublicApiEnabled.value = enabled
+    const response = await axios.put(`${_FILES_ENDPOINT}/${id}/public-api`, { enabled }, {
+      headers: _buildSheetAuthHeaders({ 'Content-Type': 'application/json' }),
+    })
+    const payload = response.data?.data ?? response.data ?? {}
+    sheetPublicApiEnabled.value = Boolean(payload.public_api_enabled ?? enabled)
+    sheetPublicApiKey.value = (payload.public_api_key || sheetPublicApiKey.value || '') as string
   } catch (error) {
     console.error('Failed to update public API status:', error)
+    toast.error('Failed to update API access')
   } finally {
     isUpdatingSheetPublicApi.value = false
   }
@@ -954,10 +967,15 @@ async function handleRotateSheetPublicApiKey() {
   
   isUpdatingSheetPublicApi.value = true
   try {
-    // API call would go here to generate new key
-    sheetPublicApiKey.value = 'new-api-key-' + Date.now()
+    const response = await axios.post(`${_FILES_ENDPOINT}/${id}/public-api/key`, {}, {
+      headers: _buildSheetAuthHeaders({ 'Content-Type': 'application/json' }),
+    })
+    const payload = response.data?.data ?? response.data ?? {}
+    sheetPublicApiEnabled.value = Boolean(payload.public_api_enabled ?? sheetPublicApiEnabled.value)
+    sheetPublicApiKey.value = (payload.public_api_key || payload.publicApiKey || '') as string
   } catch (error) {
     console.error('Failed to rotate API key:', error)
+    toast.error('Failed to rotate API key')
   } finally {
     isUpdatingSheetPublicApi.value = false
   }
@@ -1654,8 +1672,8 @@ function onChartAction(key: string) {
           :api-enabled="sheetPublicApiEnabled"
           :api-key="sheetPublicApiKey"
           :is-updating-api="isUpdatingSheetPublicApi"
-          :public-url="`${getWindowOrigin()}/s/${Array.isArray(route.params.id) ? route.params.id[0] : route.params.id as string}`"
-          endpoint="/api/v1/sheets"
+          :public-url="shareLinkSheet"
+          :endpoint="sheetIntegrationEndpoint"
           :fields="extractedSheetFields"
           @close="integrationsOpen = false"
           @rotate-api-key="handleRotateSheetPublicApiKey"
