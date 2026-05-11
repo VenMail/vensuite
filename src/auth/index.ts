@@ -6,6 +6,54 @@ import axios from 'axios'
 import { Router } from 'vue-router'
 
 const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/auth/oauth'
+const ACCOUNTS_STORAGE_KEY = 'venAuthenticatedAccounts'
+const SELECTED_ACCOUNT_STORAGE_KEY = 'venSelectedAccountId'
+
+export interface VenmailAccount {
+  id: string | number
+  account_id?: string | number
+  type?: string
+  name?: string
+  email?: string
+  organization_id?: string | number
+  is_shared?: boolean
+  is_external?: boolean
+  external_account_id?: string | number
+  provider?: string
+  unread_count?: number
+  last_synced_at?: string
+  picture_url?: string
+  profile_photo_url?: string
+  can_manage?: boolean
+}
+
+function normalizeAccounts(raw: unknown): VenmailAccount[] {
+  const values = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === 'object'
+      ? Object.values(raw as Record<string, unknown>)
+      : []
+
+  return values
+    .filter((account): account is Record<string, unknown> => Boolean(account) && typeof account === 'object')
+    .map((account) => {
+      const id = account.id ?? account.account_id
+      return {
+        ...(account as unknown as VenmailAccount),
+        id: (id ?? '') as string | number,
+        account_id: (account.account_id ?? id ?? '') as string | number,
+      }
+    })
+    .filter((account) => String(account.id || account.account_id || '').length > 0)
+}
+
+function loadAccounts(): VenmailAccount[] {
+  try {
+    return normalizeAccounts(JSON.parse(localStorage.getItem(ACCOUNTS_STORAGE_KEY) || '[]'))
+  } catch {
+    return []
+  }
+}
 
 // Export auth store separately
 export const useAuthStore = defineStore('auth', {
@@ -17,6 +65,8 @@ export const useAuthStore = defineStore('auth', {
     employeeId: localStorage.getItem('venEmployeeId') || "",
     isAuthenticated: !!localStorage.getItem('venAuthToken'),
     token: localStorage.getItem('venAuthToken') || null,
+    authenticatedAccounts: loadAccounts(),
+    selectedAccountId: localStorage.getItem(SELECTED_ACCOUNT_STORAGE_KEY) || "",
     hasLinkedAccounts: true,
     _isLoggingOut: false,
     router: null as Router | any,
@@ -49,6 +99,33 @@ export const useAuthStore = defineStore('auth', {
       if (this.userId) localStorage.setItem('venUserId', this.userId);
       if (this.employeeId) localStorage.setItem('venEmployeeId', this.employeeId);
     },
+    setAuthenticatedAccounts(accounts: unknown) {
+      const normalized = normalizeAccounts(accounts)
+      this.authenticatedAccounts = normalized
+      try {
+        localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(normalized))
+      } catch {}
+
+      const selectedExists = normalized.some((account) => String(account.account_id ?? account.id) === this.selectedAccountId)
+      if (!this.selectedAccountId || !selectedExists) {
+        const currentAccount = normalized.find((account) =>
+          (this.email && account.email?.toLowerCase() === this.email.toLowerCase()) ||
+          (this.employeeId && String(account.id) === this.employeeId) ||
+          (this.userId && String(account.id) === this.userId)
+        )
+        this.setSelectedAccount(currentAccount?.account_id ?? currentAccount?.id ?? normalized[0]?.account_id ?? normalized[0]?.id ?? "")
+      }
+    },
+    setSelectedAccount(accountId: string | number | null | undefined) {
+      this.selectedAccountId = accountId == null ? "" : String(accountId)
+      try {
+        if (this.selectedAccountId) {
+          localStorage.setItem(SELECTED_ACCOUNT_STORAGE_KEY, this.selectedAccountId)
+        } else {
+          localStorage.removeItem(SELECTED_ACCOUNT_STORAGE_KEY)
+        }
+      } catch {}
+    },
     hydrate() {
       this.token = localStorage.getItem('venAuthToken');
       this.isAuthenticated = !!this.token;
@@ -57,6 +134,8 @@ export const useAuthStore = defineStore('auth', {
       this.email = localStorage.getItem('venUserEmail') || this.email;
       this.userId = localStorage.getItem('venUserId') || this.userId;
       this.employeeId = localStorage.getItem('venEmployeeId') || this.employeeId;
+      this.authenticatedAccounts = loadAccounts();
+      this.selectedAccountId = localStorage.getItem(SELECTED_ACCOUNT_STORAGE_KEY) || this.selectedAccountId;
     },
     async getUserInfo() {
       return {
@@ -91,6 +170,8 @@ export const useAuthStore = defineStore('auth', {
         this.email = "";
         this.userId = "";
         this.employeeId = "";
+        this.authenticatedAccounts = [];
+        this.selectedAccountId = "";
 
         try { localStorage.removeItem('venAuthToken'); } catch {}
         try { localStorage.removeItem('venUserFirstName'); } catch {}
@@ -98,6 +179,8 @@ export const useAuthStore = defineStore('auth', {
         try { localStorage.removeItem('venUserEmail'); } catch {}
         try { localStorage.removeItem('venUserId'); } catch {}
         try { localStorage.removeItem('venEmployeeId'); } catch {}
+        try { localStorage.removeItem(ACCOUNTS_STORAGE_KEY); } catch {}
+        try { localStorage.removeItem(SELECTED_ACCOUNT_STORAGE_KEY); } catch {}
         try { document.cookie = 'venAuthToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
         try { document.cookie = 'vn_auth_sessid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
 
@@ -145,6 +228,8 @@ export const useAuthStore = defineStore('auth', {
         this.email = "";
         this.userId = "";
         this.employeeId = "";
+        this.authenticatedAccounts = [];
+        this.selectedAccountId = "";
 
         try { localStorage.removeItem('venAuthToken'); } catch {}
         try { localStorage.removeItem('venUserFirstName'); } catch {}
@@ -152,6 +237,8 @@ export const useAuthStore = defineStore('auth', {
         try { localStorage.removeItem('venUserEmail'); } catch {}
         try { localStorage.removeItem('venUserId'); } catch {}
         try { localStorage.removeItem('venEmployeeId'); } catch {}
+        try { localStorage.removeItem(ACCOUNTS_STORAGE_KEY); } catch {}
+        try { localStorage.removeItem(SELECTED_ACCOUNT_STORAGE_KEY); } catch {}
         try { document.cookie = 'venAuthToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
         try { document.cookie = 'vn_auth_sessid=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; } catch {}
 

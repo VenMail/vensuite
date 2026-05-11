@@ -33,6 +33,22 @@ function loginWithVenmail() {
   window.location.href = oauthUrl.toString()
 }
 
+function parseAuthenticatedAccounts(raw: unknown): unknown[] {
+  if (typeof raw !== 'string' || !raw) return []
+
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed)
+      ? parsed
+      : parsed && typeof parsed === 'object'
+        ? Object.values(parsed)
+        : []
+  } catch (err) {
+    console.warn('Unable to parse authenticated accounts:', err)
+    return []
+  }
+}
+
 onMounted(async () => {
   // Show a minimal toast if we arrived here because the session expired
   const reason = route.query.reason as string | undefined
@@ -55,6 +71,10 @@ onMounted(async () => {
     if (!token) return
 
     await authStore.login(token)
+    const accounts = parseAuthenticatedAccounts(route.query.authenticated_accounts)
+    if (accounts.length > 0) {
+      authStore.setAuthenticatedAccounts(accounts)
+    }
     const redirect = route.query.redirect as string || localStorage.getItem('loginRedirect') || '/'
     localStorage.removeItem('loginRedirect')
     await router.push(redirect)

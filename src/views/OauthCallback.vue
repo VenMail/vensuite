@@ -38,6 +38,34 @@ function getIntendedRedirect(): string {
   return '/';
 }
 
+function getAuthenticatedAccountsFromCallback(): unknown[] {
+  const raw = new URLSearchParams(window.location.search).get("authenticated_accounts");
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed
+      : parsed && typeof parsed === "object"
+        ? Object.values(parsed)
+        : [];
+  } catch (error) {
+    console.warn("Unable to parse authenticated accounts from OAuth callback:", error);
+    return [];
+  }
+}
+
+function syncAuthenticatedAccounts(accounts: unknown) {
+  const values = accounts || getAuthenticatedAccountsFromCallback();
+  const hasAccounts = Array.isArray(values)
+    ? values.length > 0
+    : Boolean(values && typeof values === "object" && Object.keys(values as Record<string, unknown>).length > 0);
+
+  if (hasAccounts) {
+    authStore.setAuthenticatedAccounts(values);
+  }
+}
+
 // Function to authenticate using a cookie
 function authenticateWithCookie(authCookie: string) {
   fetch(`${API_BASE_URI}/login`, {
@@ -51,6 +79,7 @@ function authenticateWithCookie(authCookie: string) {
       if (data.success) {
         authStore.login(data.token);
         authStore.setUserInfo(data.user);
+        syncAuthenticatedAccounts(data.authenticated_accounts);
         const redirectPath = getIntendedRedirect();
         router.push(redirectPath);
       } else {
@@ -80,6 +109,7 @@ function authenticateWithCode(code: string) {
         document.cookie = `venAuthToken=${data.token}; path=/`;
         authStore.login(data.token);
         authStore.setUserInfo(data.user);
+        syncAuthenticatedAccounts(data.authenticated_accounts);
         const redirectPath = getIntendedRedirect();
         router.push(redirectPath);
       } else {
