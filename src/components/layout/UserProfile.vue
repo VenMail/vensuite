@@ -138,7 +138,7 @@ const switchAccount = (account: Account) => {
 }
 
 const addAccount = () => {
-  window.location.href = `${venmailOrigin()}/add-account`
+  window.location.href = `${venmailOrigin()}/account-switcher`
 }
 </script>
 
