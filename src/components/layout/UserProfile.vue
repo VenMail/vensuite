@@ -138,7 +138,13 @@ const switchAccount = (account: Account) => {
 }
 
 const addAccount = () => {
-  window.location.href = `${venmailOrigin()}/account-switcher`
+  const redirectPath = router.currentRoute.value.fullPath || '/'
+  localStorage.setItem('loginRedirect', redirectPath)
+
+  const switcherUrl = new URL(`${venmailOrigin()}/account-switcher`)
+  switcherUrl.searchParams.set('redirect_uri', `${window.location.origin}/oauth/callback`)
+  switcherUrl.searchParams.set('redirect', redirectPath)
+  window.location.href = switcherUrl.toString()
 }
 </script>
 
