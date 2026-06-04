@@ -10,7 +10,6 @@ import type { AppForm } from '@/types';
 interface Props {
   forms: AppForm[];
   viewMode: 'grid' | 'list';
-  selectedForm: string | null;
   loading: boolean;
   hasMore: boolean;
   computeFieldCount: (form: AppForm) => number | null;
@@ -18,7 +17,6 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'select-form', id: string): void;
   (e: 'view-responses', form: AppForm): void;
   (e: 'share', form: AppForm): void;
   (e: 'create-blank'): void;
@@ -43,10 +41,6 @@ const handleQuickViewShare = (form: AppForm) => {
   emit('share', form);
 };
 
-const handleSelectForm = (id: string) => {
-  emit('select-form', id);
-};
-
 const handleCreateBlank = () => {
   emit('create-blank');
 };
@@ -64,59 +58,14 @@ const handleCreateTemplate = () => {
     ]"
   >
     <div v-if="forms.length > 0">
-      <!-- Select All header for list view -->
       <div
-        v-if="viewMode === 'list'"
-        :class="[
-          'flex items-center gap-3 px-4 py-3 border-b',
-          'border-gray-200 dark:border-gray-700'
-        ]"
-      >
-        <input
-          type="checkbox"
-          :checked="selectedForm !== null"
-          @change="selectedForm ? handleSelectForm('') : handleSelectForm(forms[0]?.id || '')"
-          class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-        />
-        <span
-          class="text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          {{ selectedForm ? $t('Commons.text.selected_form') : $t('Commons.label.select_all') }}
-        </span>
-      </div>
-
-      <!-- Select All button for grid view -->
-      <div
-        v-else-if="viewMode === 'grid'"
         :class="[
           'flex items-center justify-between px-4 py-3 border-b',
           'border-gray-200 dark:border-gray-700'
         ]"
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          @click="selectedForm ? handleSelectForm('') : handleSelectForm(forms[0]?.id || '')"
-          class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-        >
-          <input
-            type="checkbox"
-            :checked="selectedForm !== null"
-            @click.stop
-            class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
-          />
-          <span
-            :class="[
-              'text-sm font-medium text-gray-700 dark:text-gray-300',
-            ]"
-          >
-            {{ selectedForm ? $t('Commons.text.selected_form') : $t('Commons.label.select_all') }}
-          </span>
-        </Button>
-
-        <!-- Optional: Show count of total forms -->
         <span
-          :class="['text-xs text-gray-500 dark:text-gray-400']"
+          :class="['text-sm font-medium text-gray-700 dark:text-gray-300']"
         >
           {{ forms.length }} form{{ forms.length !== 1 ? 's' : '' }}
         </span>
@@ -131,10 +80,8 @@ const handleCreateTemplate = () => {
             :view-mode="viewMode"
             :field-count="computeFieldCount(form) ?? undefined"
             :response-count="computeResponseCount(form) ?? undefined"
-            :is-selected="selectedForm === form.id"
             @view-responses="handleQuickViewResponses"
             @share="handleQuickViewShare"
-            @select="handleSelectForm"
           />
         </div>
       </div>

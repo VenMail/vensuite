@@ -539,62 +539,26 @@ async function refreshSlideDecks() {
         ]"
       >
         <div v-if="sortedSlideDecks.length > 0">
-          <!-- Select All header for list view -->
           <div
-            v-if="viewMode === 'list'"
-            :class="[
-              'flex items-center gap-3 px-4 py-3 border-b',
-              'border-gray-200 dark:border-gray-700'
-            ]"
-          >
-            <input
-              type="checkbox"
-              :checked="selectedSlideDeck !== null"
-              @change="selectedSlideDeck = selectedSlideDeck ? null : sortedSlideDecks[0]?.id || null"
-              class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-            />
-            <span
-              class="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              {{ selectedSlideDeck ? $t('Commons.text.selected_presentation') : $t('Commons.label.select_all') }}
-            </span>
-          </div>
-
-          <!-- Select All button for grid view -->
-          <div
-            v-else-if="viewMode === 'grid'"
             :class="[
               'flex items-center justify-between px-4 py-3 border-b',
               'border-gray-200 dark:border-gray-700'
             ]"
           >
-            <Button
-              variant="ghost"
-              size="sm"
-              @click="selectedSlideDeck = selectedSlideDeck ? null : sortedSlideDecks[0]?.id || null"
-              class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <input
-                type="checkbox"
-                :checked="selectedSlideDeck !== null"
-                @click.stop
-                class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
-              />
-              <span
-                :class="[
-                  'text-sm font-medium text-gray-700 dark:text-gray-300',
-                ]"
-              >
-                {{ selectedSlideDeck ? $t('Commons.text.selected_presentation') : $t('Commons.label.select_all') }}
-              </span>
-            </Button>
-
-            <!-- Optional: Show count of total presentations -->
             <span
-              :class="['text-xs text-gray-500 dark:text-gray-400']"
+              :class="['text-sm font-medium text-gray-700 dark:text-gray-300']"
             >
               {{ sortedSlideDecks.length }} presentation{{ sortedSlideDecks.length !== 1 ? "s" : "" }}
             </span>
+            <Button
+              v-if="selectedSlideDeck"
+              variant="ghost"
+              size="sm"
+              class="text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+              @click="selectedSlideDeck = null"
+            >
+              Clear selection
+            </Button>
           </div>
 
           <div class="p-2 sm:p-4 lg:p-6">
@@ -637,6 +601,7 @@ async function refreshSlideDecks() {
                         type="checkbox"
                         :checked="selectedSlideDeck === deck.id"
                         @click.stop
+                        @change="selectSlideDeck(deck.id)"
                         class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
                     </div>
@@ -674,6 +639,7 @@ async function refreshSlideDecks() {
                       type="checkbox"
                       :checked="selectedSlideDeck === deck.id"
                       @click.stop
+                      @change="selectSlideDeck(deck.id)"
                       class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                   </div>

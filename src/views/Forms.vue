@@ -4,10 +4,9 @@ import { useFormStore } from "@/store/forms";
 import { useFormTemplates } from "@/composables/useFormTemplates";
 import { useFormFilters } from "@/composables/useFormFilters";
 import { useFormWizard } from "@/composables/useFormWizard";
-import { Plus } from "lucide-vue-next";
+import { FileText, Grid, List, MessageSquare, Plus, UserPlus } from "lucide-vue-next";
 import FormWizard from "@/components/forms/FormWizard.vue";
 import Button from "@/components/ui/button/Button.vue";
-import { Dialog } from "@/components/ui/dialog";
 import { router } from "@/main";
 import WorkspaceTopBar from "@/components/layout/WorkspaceTopBar.vue";
 import ShareModal from "@/components/forms/ShareModal.vue";
@@ -25,7 +24,6 @@ type GlobalSearchPayload = {
 };
 
 const viewMode = ref<"grid" | "list">("grid");
-const selectedForm = ref<string | null>(null);
 const showShareModal = ref(false);
 const shareTarget = ref<AppForm | null>(null);
 const showTemplateDialog = ref(false);
@@ -40,6 +38,7 @@ const {
   computeFieldCount, 
   computeResponseCount,
   searchValue,
+  currentFilter,
   setFilter
 } = useFormFilters(formsSource);
 const { 
@@ -90,10 +89,6 @@ const createNewFormFromTemplate = (template: FormTemplate) => {
   createNewForm(template.preset || "");
 };
 
-const handleSelectForm = (id: string) => {
-  selectedForm.value = id === '' ? null : id;
-};
-
 const handleViewChange = (mode: "grid" | "list") => {
   viewMode.value = mode;
 };
@@ -101,10 +96,28 @@ const handleViewChange = (mode: "grid" | "list") => {
 const currentTitle = computed(() => "Forms");
 const breadcrumbs = computed(() => [{ id: null, title: "Forms" }]);
 const canNavigateUp = computed(() => false);
-const topBarActions = computed(() => []);
-const stats = computed(() => []);
-const filterOptions = computed(() => []);
-const viewOptions = computed(() => []);
+const topBarActions = computed(() => [
+  {
+    key: "new-form",
+    component: "div",
+    slot: "new-form",
+    requiresSelection: false,
+  },
+]);
+const stats = computed(() => [
+  { value: sortedForms.value.length, label: sortedForms.value.length === 1 ? "form" : "forms" },
+]);
+const filterOptions = computed(() => [
+  { key: "all", label: "All", value: "all", icon: FileText, active: currentFilter.value === "all" },
+  { key: "contact", label: "Contact", value: "contact", icon: UserPlus, active: currentFilter.value === "contact" },
+  { key: "feedback", label: "Feedback", value: "feedback", icon: MessageSquare, active: currentFilter.value === "feedback" },
+  { key: "registration", label: "Registration", value: "registration", icon: FileText, active: currentFilter.value === "registration" },
+  { key: "survey", label: "Survey", value: "survey", icon: FileText, active: currentFilter.value === "survey" },
+]);
+const viewOptions = computed(() => [
+  { value: "grid", icon: Grid, label: "Grid", active: viewMode.value === "grid" },
+  { value: "list", icon: List, label: "List", active: viewMode.value === "list" },
+]);
 const handleFilter = (filter: string) => {
   setFilter(filter);
 };
@@ -121,7 +134,6 @@ function handleGlobalSearch(event: Event) {
 
   searchValue.value = detail.query || "";
   setFilter(validFilters.has(filter) ? filter : "all");
-  selectedForm.value = null;
 }
 
 onMounted(() => {
@@ -158,18 +170,15 @@ onBeforeUnmount(() => {
       @view-change="handleViewChange"
     >
       <template #action-new-form>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              :class="actionIconClass"
-              @click="showTemplateDialog = true"
-            >
-              <Plus class="h-5 w-5 text-primary-600" />
-            </Button>
-          </DialogTrigger>
-        </Dialog>
+        <Button
+          variant="ghost"
+          size="icon"
+          :class="actionIconClass"
+          title="Create form"
+          @click="showTemplateDialog = true"
+        >
+          <Plus class="h-5 w-5 text-primary-600" />
+        </Button>
       </template>
     </WorkspaceTopBar>
 
@@ -186,12 +195,10 @@ onBeforeUnmount(() => {
       <FormsList
         :forms="sortedForms"
         :view-mode="viewMode"
-        :selected-form="selectedForm"
         :loading="loading"
         :has-more="hasMore"
         :compute-field-count="computeFieldCount"
         :compute-response-count="computeResponseCount"
-        @select-form="handleSelectForm"
         @view-responses="handleQuickViewResponses"
         @share="handleQuickViewShare"
         @create-blank="createNewForm"
