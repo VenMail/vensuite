@@ -29,12 +29,6 @@ import { fetchSlideDecks, slideDecks, getDeckThumbnail, createSlideDeck } from "
 import { createAvnacSlidesForTheme, type AvnacDeckTheme } from "@/utils/avnacSlideTemplates";
 import { t } from '@/i18n';
 
-const SLIDES_VIEW_DEBUG = Boolean(import.meta.env.DEV);
-const logSlidesViewDebug = (...args: unknown[]) => {
-  if (!SLIDES_VIEW_DEBUG) return;
-  console.debug(...args);
-};
-
 // Define types locally since they're not exported from WorkspaceTopBar
 interface BreadcrumbItem {
   id?: string | null
@@ -248,8 +242,6 @@ watch(slideDecks, async (decks) => {
 }, { immediate: true });
 
 const filteredSlideDecks = computed(() => {
-  logSlidesViewDebug('🔄 filteredSlideDecks computed, slideDecks.value:', slideDecks.value);
-  logSlidesViewDebug('🔄 slideDecks.value length:', slideDecks.value.length);
   let decks = [...slideDecks.value];
 
   if (activeFilter.value === "shared") {
@@ -369,12 +361,7 @@ function handleGlobalSearch(event: Event) {
 // Load slide decks on mount
 onMounted(async () => {
   window.addEventListener("global-search", handleGlobalSearch);
-  logSlidesViewDebug('🚀 Slides.vue mounted, calling fetchSlideDecks()');
-  const fetchedDecks = await fetchSlideDecks();
-  logSlidesViewDebug('📊 fetchSlideDecks returned:', fetchedDecks.length, 'decks');
-  logSlidesViewDebug('📊 slideDecks.value after fetch:', slideDecks.value.length);
-  
-  logSlidesViewDebug('Slide thumbnails queued for', slideDecks.value.length, 'decks');
+  await fetchSlideDecks();
 });
 
 onUnmounted(() => {
@@ -406,11 +393,8 @@ function selectSlideDeck(deckId: string) {
   selectedSlideDeck.value = selectedSlideDeck.value === deckId ? null : deckId;
 }
 
-// Manual refresh function for debugging
 async function refreshSlideDecks() {
-  logSlidesViewDebug('🔄 Manual refresh triggered');
-  const fetchedDecks = await fetchSlideDecks();
-  logSlidesViewDebug('📊 Manual refresh result:', fetchedDecks.length, 'decks');
+  await fetchSlideDecks();
 }
 </script>
 
