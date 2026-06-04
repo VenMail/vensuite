@@ -3,6 +3,14 @@ import { detectAbsoluteLayoutHtml } from './dom-normalizer';
 import { buildAbsPageModels } from './model';
 import { buildAnnotatedAbsoluteHtml } from './build-annotated-html';
 
+const absDebugEnabled = () => {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem('absDebug') === '1';
+  } catch {
+    return false;
+  }
+};
+
 export function maybeConvertHtmlToAnnotatedAbsoluteHtml(html: string, opts: ConvertOptions = {}): string | null {
   if (!detectAbsoluteLayoutHtml(html) && !opts.forceLayoutCapture) return null;
 
@@ -22,6 +30,8 @@ export function maybeConvertHtmlToAnnotatedAbsoluteHtml(html: string, opts: Conv
     const tableCount = pages.reduce((acc, p) => acc + (p.tables?.length ?? 0), 0);
     const firstPage = pages[0];
     const sampleLine = firstPage?.lines?.[0];
+    if (!absDebugEnabled()) return buildAnnotatedAbsoluteHtml(pages);
+
     console.info('[abs-convert] built models', {
       pages: pages.length,
       fragments: fragmentCount,

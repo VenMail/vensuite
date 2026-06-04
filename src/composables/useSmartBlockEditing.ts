@@ -1,5 +1,10 @@
 import { ref, computed } from 'vue';
 
+const SMART_BLOCK_DEBUG = Boolean(import.meta.env.DEV);
+const debugLog = (...args: unknown[]) => {
+  if (SMART_BLOCK_DEBUG) console.debug(...args);
+};
+
 export interface EditingState {
   element: HTMLElement | null;
   elementType: string;
@@ -107,9 +112,9 @@ export function useSmartBlockEditing() {
         selectedElement.value = null;
       }
       
-      console.log('Smart block editing activated on:', elementType, elementContent);
+      debugLog('Smart block editing activated on:', elementType, elementContent);
     } else {
-      console.log('No editable element found for smart block editing');
+      debugLog('No editable element found for smart block editing');
     }
   }
 
@@ -335,7 +340,7 @@ export function useSmartBlockEditing() {
       });
     });
     
-    console.log(`Setup ${editableElements.length} editable elements for smart block editing`);
+    debugLog(`Setup ${editableElements.length} editable elements for smart block editing`);
   }
 
   // Clear editing state

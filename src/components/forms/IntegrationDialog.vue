@@ -208,7 +208,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -613,22 +613,4 @@ const copyToClipboard = async (value: string, successMessage: string) => {
   }
 }
 
-// Watch for prop changes to ensure dialog reflects latest state
-watch(
-  () => props.apiEnabled,
-  (newEnabled) => {
-    // Force reactivity update when apiEnabled prop changes
-    console.log('API enabled changed:', newEnabled)
-  },
-  { immediate: true }
-)
-
-watch(
-  () => props.apiKey,
-  (newKey) => {
-    // Force reactivity update when apiKey prop changes
-    console.log('API key changed:', newKey ? '***updated***' : '***empty***')
-  },
-  { immediate: true }
-)
 </script>

@@ -3,6 +3,11 @@
  * A browser-level pagination solution that works with any Tiptap editor
  * Covers 95% of use cases with perfect accuracy
  */
+const PAGINATION_DEBUG = false;
+const debugLog = (...args) => {
+  if (PAGINATION_DEBUG) console.debug(...args);
+};
+
 class TiptapPaginationManager {
   constructor() {
     this.editors = new Map();
@@ -63,7 +68,7 @@ class TiptapPaginationManager {
       this.enablePagination(editorId);
     }
 
-    console.log(`TiptapPagination: Editor "${editorId}" registered`);
+    debugLog(`TiptapPagination: Editor "${editorId}" registered`);
     return true;
   }
 
@@ -117,7 +122,7 @@ class TiptapPaginationManager {
     await new Promise(resolve => requestAnimationFrame(resolve));
     await this.calculatePagination(editorId);
 
-    console.log(`TiptapPagination: Pagination enabled for "${editorId}"`);
+    debugLog(`TiptapPagination: Pagination enabled for "${editorId}"`);
     return true;
   }
 
@@ -133,7 +138,7 @@ class TiptapPaginationManager {
     this.clearPagination(editorId);
     this.saveEditorConfig(editorId);
 
-    console.log(`TiptapPagination: Pagination disabled for "${editorId}"`);
+    debugLog(`TiptapPagination: Pagination disabled for "${editorId}"`);
     return true;
   }
 
@@ -219,7 +224,7 @@ class TiptapPaginationManager {
     // Update overlay dimensions
     overlay.style.height = `${contentHeight}px`;
 
-    console.log(`TiptapPagination: Calculated ${pageNumber - 1} pages for "${editorId}"`);
+    debugLog(`TiptapPagination: Calculated ${pageNumber - 1} pages for "${editorId}"`);
   }
 
   /**
@@ -402,7 +407,7 @@ class TiptapPaginationManager {
     const printWindow = window.open('', '_blank');
     
     if (!printWindow) {
-      alert('Please allow popups for PDF export');
+      console.warn('PDF export blocked because popups are disabled.');
       return false;
     }
 
@@ -519,7 +524,7 @@ class TiptapPaginationManager {
     this.configs.delete(editorId);
     this.overlays.delete(editorId);
 
-    console.log(`TiptapPagination: Editor "${editorId}" unregistered`);
+    debugLog(`TiptapPagination: Editor "${editorId}" unregistered`);
   }
 
   /**
@@ -532,7 +537,7 @@ class TiptapPaginationManager {
     });
     
     this.isInitialized = false;
-    console.log('TiptapPagination: Manager destroyed');
+    debugLog('TiptapPagination: Manager destroyed');
   }
 }
 

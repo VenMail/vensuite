@@ -3,6 +3,11 @@
  * A browser-level pagination solution that works with any Tiptap editor
  * Covers 95% of use cases with perfect accuracy
  */
+const PAGINATION_DEBUG = Boolean(import.meta.env.DEV);
+const debugLog = (...args: unknown[]) => {
+  if (PAGINATION_DEBUG) console.debug(...args);
+};
+
 export interface PaginationConfig {
   pageHeight: number;
   pageWidth: number;
@@ -113,7 +118,6 @@ export class TiptapPaginationManager {
       this.enablePagination(editorId);
     }
 
-    // console.log(`TiptapPagination: Editor "${editorId}" registered`);
     return true;
   }
 
@@ -195,7 +199,6 @@ export class TiptapPaginationManager {
     await new Promise(resolve => requestAnimationFrame(resolve));
     await this.calculatePagination(editorId);
 
-    // console.log(`TiptapPagination: Pagination enabled for "${editorId}"`);
     return true;
   }
 
@@ -211,7 +214,6 @@ export class TiptapPaginationManager {
     this.clearPagination(editorId);
     this.saveEditorConfig(editorId);
 
-    // console.log(`TiptapPagination: Pagination disabled for "${editorId}"`);
     return true;
   }
 
@@ -286,7 +288,6 @@ export class TiptapPaginationManager {
     const overlay = this.overlays.get(editorId);
 
     if (!editor || !config || !config.enabled || !overlay) {
-      // console.log(`TiptapPagination: Skipping calculation for "${editorId}" - missing requirements`);
       return;
     }
 
@@ -295,7 +296,7 @@ export class TiptapPaginationManager {
     await new Promise(resolve => setTimeout(resolve, 50));
 
     const editorElement = editor.view.dom;
-    console.log(`TiptapPagination: Starting calculation for "${editorId}"`, {
+    debugLog(`TiptapPagination: Starting calculation for "${editorId}"`, {
       orientation: config.orientation,
       pageWidth: config.pageWidth,
       pageHeight: config.pageHeight,
@@ -313,7 +314,7 @@ export class TiptapPaginationManager {
       // Horizontal pagination - use width for page breaks
       contentSize = editorElement.scrollWidth;
       effectivePageSize = config.pageWidth - config.marginLeft - config.marginRight;
-      console.log(`TiptapPagination: Landscape mode calculation`, {
+      debugLog(`TiptapPagination: Landscape mode calculation`, {
         contentSize,
         effectivePageSize,
         scrollWidth: editorElement.scrollWidth,
@@ -325,7 +326,7 @@ export class TiptapPaginationManager {
       // Vertical pagination (default) - use height for page breaks
       contentSize = editorElement.scrollHeight;
       effectivePageSize = config.pageHeight - config.marginTop - config.marginBottom;
-      console.log(`TiptapPagination: Portrait mode calculation`, {
+      debugLog(`TiptapPagination: Portrait mode calculation`, {
         contentSize,
         effectivePageSize,
         scrollWidth: editorElement.scrollWidth,
@@ -342,9 +343,7 @@ export class TiptapPaginationManager {
     let currentPos = 0;
     let pageNumber = 1;
 
-    // console.log(`TiptapPagination: Calculating page breaks...`);
     while (currentPos < contentSize) {
-      // console.log(`TiptapPagination: Creating page ${pageNumber} at position ${currentPos}`);
       this.createPageIndicator(editorId, pageNumber, currentPos, effectivePageSize);
       currentPos += effectivePageSize;
       pageNumber++;
@@ -354,20 +353,15 @@ export class TiptapPaginationManager {
     if (config.orientation === 'landscape') {
       overlay.style.width = `${contentSize}px`;
       overlay.style.height = `${config.pageHeight}px`;
-      console.log(`TiptapPagination: Landscape overlay dimensions`, {
+      debugLog(`TiptapPagination: Landscape overlay dimensions`, {
         width: contentSize,
         height: config.pageHeight
       });
     } else {
       overlay.style.height = `${contentSize}px`;
       overlay.style.width = `${config.pageWidth}px`;
-      // console.log(`TiptapPagination: Portrait overlay dimensions`, {
-      //   height: contentSize,
-      //   width: config.pageWidth
-      // });
     }
 
-    // console.log(`TiptapPagination: Calculated ${pageNumber - 1} pages for "${editorId}"`);
 
     // After calculation, update visible pages/masks
     this.updateVisiblePages(editorId);
@@ -492,7 +486,6 @@ export class TiptapPaginationManager {
     const overlay = this.overlays.get(editorId);
     const editor = this.editors.get(editorId);
     if (!config || !overlay || !editor) {
-      // console.log(`TiptapPagination: Cannot create page indicator ${pageNumber} - missing requirements`);
       return;
     }
 
@@ -514,29 +507,19 @@ export class TiptapPaginationManager {
       boxSizing: 'border-box'
     };
 
-    // console.log(`TiptapPagination: Creating page indicator ${pageNumber}`, {
-    //   top,
-    //   height,
-    //   editorLeft,
-    //   editorTop,
-    //   editorWidth,
-    //   orientation: config.orientation
-    // });
-
     if (config.orientation === 'landscape') {
       // Horizontal pagination
       styles.left = `${editorLeft + config.marginLeft + top}px`;
       styles.top = `${editorTop}px`;
       styles.width = `${height}px`;
       styles.height = `${config.pageHeight}px`;
-      console.log(`TiptapPagination: Landscape page indicator ${pageNumber} styles`, styles);
+      debugLog(`TiptapPagination: Landscape page indicator ${pageNumber} styles`, styles);
     } else {
       // Vertical pagination (default)
       styles.top = `${editorTop + config.marginTop + top}px`;
       styles.left = `${editorLeft}px`;
       styles.width = `${editorWidth}px`;
       styles.height = `${height}px`;
-      // console.log(`TiptapPagination: Portrait page indicator ${pageNumber} styles`, styles);
     }
 
     if (config.pageBorder) {
@@ -555,7 +538,6 @@ export class TiptapPaginationManager {
     }
 
     overlay.appendChild(pageElement);
-    // console.log(`TiptapPagination: Added page indicator ${pageNumber} to overlay`);
   }
 
   /**
@@ -729,7 +711,7 @@ export class TiptapPaginationManager {
     const printWindow = window.open('', '_blank');
 
     if (!printWindow) {
-      alert('Please allow popups for PDF export');
+      console.warn('PDF export blocked because popups are disabled.');
       return false;
     }
 
@@ -852,7 +834,7 @@ export class TiptapPaginationManager {
     this.configs.delete(editorId);
     this.overlays.delete(editorId);
 
-    console.log(`TiptapPagination: Editor "${editorId}" unregistered`);
+    debugLog(`TiptapPagination: Editor "${editorId}" unregistered`);
   }
 
   /**
@@ -867,7 +849,7 @@ export class TiptapPaginationManager {
     // Clean up local storage
     localStorage.removeItem('tiptap-pagination-config');
 
-    console.log('TiptapPagination: Manager destroyed');
+    debugLog('TiptapPagination: Manager destroyed');
   }
 }
 

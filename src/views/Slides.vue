@@ -32,7 +32,7 @@ import { t } from '@/i18n';
 const SLIDES_VIEW_DEBUG = Boolean(import.meta.env.DEV);
 const logSlidesViewDebug = (...args: unknown[]) => {
   if (!SLIDES_VIEW_DEBUG) return;
-  console.log(...args);
+  console.debug(...args);
 };
 
 // Define types locally since they're not exported from WorkspaceTopBar

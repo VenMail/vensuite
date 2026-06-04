@@ -2,6 +2,11 @@ import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { useAuthStore } from '@/store/auth'
 
+const WS_DEBUG = Boolean(import.meta.env.DEV)
+const debugLog = (...args: unknown[]) => {
+  if (WS_DEBUG) console.debug(...args)
+}
+
 export interface User {
   id: string
   name: string
@@ -72,7 +77,7 @@ export class WebSocketService implements IWebsocketService {
   }
 
   private onOpen() {
-    console.log('WebSocket connected', this.url)
+    debugLog('WebSocket connected', this.url)
     this.isConnected.value = true
     WebSocketService.recomputeAggregateConnected()
     this.reconnectAttempts = 0
@@ -112,7 +117,7 @@ export class WebSocketService implements IWebsocketService {
   }
 
   private onClose(event: CloseEvent) {
-    console.log('WebSocket disconnected', event.code, event.reason, this.url)
+    debugLog('WebSocket disconnected', event.code, event.reason, this.url)
     this.isConnected.value = false
     WebSocketService.recomputeAggregateConnected()
     if (this.socket) {
@@ -157,7 +162,7 @@ export class WebSocketService implements IWebsocketService {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++
       const delay = Math.min(30000, this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1))
-      console.log(`Attempting to reconnect in ${delay}ms (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`)
+      debugLog(`Attempting to reconnect in ${delay}ms (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`)
       this.reconnectTimeoutId = window.setTimeout(() => this.connect(), delay)
     } else {
       console.error('Max reconnection attempts reached')

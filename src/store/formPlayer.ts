@@ -256,11 +256,6 @@ export const useFormPlayerStore = defineStore("form-player", () => {
   };
 
   const setLogicResult = (logic: LogicRule | null, nextQuestionId: string | null) => {
-    // Placeholder: actual logic evaluation occurs elsewhere
-    if (logic) {
-      // eslint-disable-next-line no-console
-      console.debug("Applied logic rule", logic.id);
-    }
     advanceToQuestion(nextQuestionId);
   };
 

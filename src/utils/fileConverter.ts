@@ -36,6 +36,16 @@ import { preprocessHtmlEmbeds } from '@/utils/html-preprocess';
 /**
  * Converts various file formats to editor-compatible formats
  */
+const CONVERTER_DEBUG = (() => {
+  try {
+    return Boolean(import.meta.env.DEV) && localStorage.getItem('converter_debug') === '1';
+  } catch {
+    return false;
+  }
+})();
+const debugInfo = (...args: unknown[]) => {
+  if (CONVERTER_DEBUG) console.info(...args);
+};
 
 // Use AdvancedTable extensions for enhanced table support
 const TableExtensions = { AdvancedTable, AdvancedTableRow, AdvancedTableCell, AdvancedTableHeader };
@@ -114,7 +124,7 @@ function validateTiptapJsonCanLoad(json: any): boolean {
     
     // Try to convert JSON back to HTML - if this works, the JSON is valid
     const html = generateHTML(json, extensions);
-    console.info('[convert] generateHTML success', { htmlLength: html?.length ?? 0 });
+    debugInfo('[convert] generateHTML success', { htmlLength: html?.length ?? 0 });
     
     // Basic validation: HTML should not be empty (unless JSON is intentionally empty)
     // For empty docs, we allow empty HTML
@@ -548,7 +558,7 @@ function sanitizeDocForEditor(doc: any): any {
 function htmlToTiptapJson(html: string, opts?: { forceLayoutCapture?: boolean }): string {
   try {
     const extensions = getTiptapExtensions();
-    console.info('[convert] starting htmlToTiptapJson', { htmlLength: html?.length ?? 0 });
+    debugInfo('[convert] starting htmlToTiptapJson', { htmlLength: html?.length ?? 0 });
     
     // NEW: Log problematic HTML before conversion
     if (html.includes('</html>') && !html.includes('<body>')) {
@@ -583,7 +593,7 @@ function htmlToTiptapJson(html: string, opts?: { forceLayoutCapture?: boolean })
       };
     };
 
-    console.info('[convert] generateJSON produced', { 
+    debugInfo('[convert] generateJSON produced', { 
       hasContent: !!json?.content, 
       contentLength: Array.isArray(json?.content) ? json.content.length : 0,
       jsonPreview: JSON.stringify(json).substring(0, 200),
@@ -591,7 +601,7 @@ function htmlToTiptapJson(html: string, opts?: { forceLayoutCapture?: boolean })
     });
 
     try {
-      console.info('[convert] generateJSON stats', {
+      debugInfo('[convert] generateJSON stats', {
         usedConverted: !!converted,
         inputLength: inputHtml.length,
         annotatedMarkers: {
@@ -631,7 +641,7 @@ function htmlToTiptapJson(html: string, opts?: { forceLayoutCapture?: boolean })
     try {
       const roundtripHtml = generateHTML(json, extensions);
       const normalizedJson = generateJSON(roundtripHtml, extensions);
-      console.info('[convert] normalized JSON via HTML roundtrip', {
+      debugInfo('[convert] normalized JSON via HTML roundtrip', {
         hasContent: !!normalizedJson?.content,
         contentLength: Array.isArray(normalizedJson?.content) ? normalizedJson.content.length : 0,
       });
@@ -653,7 +663,7 @@ function htmlToTiptapJson(html: string, opts?: { forceLayoutCapture?: boolean })
     // complex node patterns that may cause editor position errors
     finalJson = sanitizeDocForEditor(finalJson);
     try {
-      console.info('[convert] after sanitizeDocForEditor', { docStats: getDocStats(finalJson) });
+      debugInfo('[convert] after sanitizeDocForEditor', { docStats: getDocStats(finalJson) });
     } catch {
       // ignore
     }
@@ -725,7 +735,7 @@ function cleanHtmlForEditor(html: string, opts?: { keepStyleBlocks?: boolean }):
   }
 
   // Log original HTML for debugging
-  console.info('[cleanHtml] Original HTML', { length: html.length, startsWith: html.substring(0, 100) });
+  debugInfo('[cleanHtml] Original HTML', { length: html.length, startsWith: html.substring(0, 100) });
 
   // Extract body content if full HTML document
   let clean = html;
@@ -781,7 +791,7 @@ function cleanHtmlForEditor(html: string, opts?: { keepStyleBlocks?: boolean }):
   }
   
   // Log cleaned HTML for debugging
-  console.info('[cleanHtml] Cleaned HTML', { length: clean.length, startsWith: clean.substring(0, 100) });
+  debugInfo('[cleanHtml] Cleaned HTML', { length: clean.length, startsWith: clean.substring(0, 100) });
   
   // Ensure we have valid content structure
   if (!clean || clean === '') {
@@ -875,20 +885,20 @@ async function convertPdfToTiptap(file: File): Promise<string> {
       wasmMemoryLimit: 512 * 1024 * 1024 // 512MB WASM memory limit
     });
 
-    console.info('[PDF] Starting conversion with pdf2html-client', { 
+    debugInfo('[PDF] Starting conversion with pdf2html-client', { 
       fileName: file.name, 
       fileSize: file.size 
     });
 
     // Convert PDF to HTML with progress callback
     const result = await converter.convert(file, (progress) => {
-      console.info(`[PDF] Conversion progress: ${progress.stage} - ${progress.progress}%`);
+      debugInfo(`[PDF] Conversion progress: ${progress.stage} - ${progress.progress}%`);
     });
 
     html = result.html || '';
     
     // Log conversion metadata
-    console.info('[PDF] Conversion completed', {
+    debugInfo('[PDF] Conversion completed', {
       pageCount: result.metadata?.pageCount,
       processingTime: result.metadata?.processingTime,
       ocrUsed: result.metadata?.ocrUsed,

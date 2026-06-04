@@ -36,7 +36,7 @@ export function useSheetData() {
 
   const SHEET_EDITOR_DEBUG = Boolean(import.meta.env.DEV)
   const logDebug = (...args: unknown[]) => {
-    if (SHEET_EDITOR_DEBUG) console.log(...args)
+    if (SHEET_EDITOR_DEBUG) console.debug(...args)
   }
 
   const lastSavedText = computed(() => {

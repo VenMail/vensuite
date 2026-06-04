@@ -11,6 +11,11 @@ export interface ElementAttributes {
   id?: string;
 }
 
+const MARKDOWN_POSITION_DEBUG = Boolean(import.meta.env.DEV);
+const debugLog = (...args: unknown[]) => {
+  if (MARKDOWN_POSITION_DEBUG) console.debug(...args);
+};
+
 /**
  * Inject position and size attributes into markdown line
  */
@@ -20,7 +25,7 @@ export function injectAttributesToMarkdown(
   lineEnd: number,
   attrs: ElementAttributes
 ): string {
-  console.log('📝 injectAttributesToMarkdown:', { lineStart, lineEnd, attrs });
+  debugLog('📝 injectAttributesToMarkdown:', { lineStart, lineEnd, attrs });
   
   const lines = markdown.split('\n');
   
@@ -32,7 +37,7 @@ export function injectAttributesToMarkdown(
   const targetLineIndex = lineStart;
   let targetLine = lines[targetLineIndex];
   
-  console.log('📝 Target line before:', targetLine);
+  debugLog('📝 Target line before:', targetLine);
   
   // Build attribute string
   const attrParts: string[] = [];
@@ -74,12 +79,12 @@ export function injectAttributesToMarkdown(
   }
   
   if (attrParts.length === 0) {
-    console.log('📝 No attributes to inject');
+    debugLog('📝 No attributes to inject');
     return markdown;
   }
   
   const attrString = `{${attrParts.join(' ')}}`;
-  console.log('📝 Attribute string:', attrString);
+  debugLog('📝 Attribute string:', attrString);
   
   // Remove existing attributes if present
   // Match: {anything} at end of line
@@ -88,7 +93,7 @@ export function injectAttributesToMarkdown(
   // Add new attributes
   targetLine = `${targetLine} ${attrString}`;
   
-  console.log('📝 Target line after:', targetLine);
+  debugLog('📝 Target line after:', targetLine);
   
   lines[targetLineIndex] = targetLine;
   
@@ -206,11 +211,11 @@ export function updateElementPosition(
   top: string,
   left: string
 ): string {
-  console.log('📝 updateElementPosition called:', { lineStart, lineEnd, top, left });
+  debugLog('📝 updateElementPosition called:', { lineStart, lineEnd, top, left });
   
   // Extract existing attributes
   const existingAttrs = extractAttributesFromMarkdown(markdown, lineStart) || {};
-  console.log('📝 Existing attributes:', existingAttrs);
+  debugLog('📝 Existing attributes:', existingAttrs);
   
   // Update position
   const updatedAttrs: ElementAttributes = {
@@ -218,11 +223,11 @@ export function updateElementPosition(
     position: { top, left }
   };
   
-  console.log('📝 Updated attributes:', updatedAttrs);
+  debugLog('📝 Updated attributes:', updatedAttrs);
   
   const result = injectAttributesToMarkdown(markdown, lineStart, lineEnd, updatedAttrs);
   
-  console.log('📝 Markdown updated:', markdown !== result);
+  debugLog('📝 Markdown updated:', markdown !== result);
   if (markdown === result) {
     console.warn('📝 WARNING: Markdown did not change!');
   }
