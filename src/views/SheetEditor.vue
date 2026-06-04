@@ -766,11 +766,8 @@ function handleMenuAction(action: string, payload?: string) {
     case 'toggle-wrap-text':
       dataTools.handleWrapText()
       break
-    case 'open-help':
-      window.open('https://visactor.io/vtable', '_blank', 'noopener')
-      break
     case 'open-about':
-      toast.info('VenSuite Sheets — powered by VTable')
+      toast.info('Venmail Sheets - spreadsheet editor')
       break
   }
 }
@@ -1510,7 +1507,6 @@ function onChartAction(key: string) {
       @insert-chart="() => handleMenuAction('insert-chart')"
       @toggle-first-row-header="() => handleMenuAction('toggle-first-row-header')"
       @toggle-wrap-text="() => handleMenuAction('toggle-wrap-text')"
-      @open-help="() => handleMenuAction('open-help')"
       @open-about="() => handleMenuAction('open-about')"
     />
 

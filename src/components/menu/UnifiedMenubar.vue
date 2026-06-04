@@ -10,7 +10,6 @@ import {
   UndoIcon,
   RedoIcon,
   MessageCircleIcon,
-  HelpCircleIcon,
   InfoIcon,
   PlugIcon,
   BoldIcon,
@@ -128,7 +127,6 @@ const emit = defineEmits([
   'insert-chart',
   'toggle-first-row-header',
   'toggle-wrap-text',
-  'open-help',
   'open-about',
 ])
 
@@ -575,10 +573,6 @@ function formatSelectionLabel(selection: any): string {
     <MenubarMenu>
       <MenubarTrigger>{{t('Commons.text.help')}}</MenubarTrigger>
       <MenubarContent>
-        <MenubarItem @click="emit('open-help')">
-          <HelpCircleIcon class="h-4 w-4 mr-2" />
-          {{t('Commons.text.help_center')}}
-        </MenubarItem>
         <MenubarItem @click="emit('open-about')">
           <InfoIcon class="h-4 w-4 mr-2" />
           About
