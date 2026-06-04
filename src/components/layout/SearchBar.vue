@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Search, Filter, X, FileText, Image, FileSpreadsheet, Trash2 } from 'lucide-vue-next'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { cn } from '@/lib/utils'
 import {
@@ -138,7 +138,7 @@ watch(searchValue, () => {
 // Clear filters when route changes
 watch(() => route.path, () => {
   selectedFilters.value = []
-  emitSearch()
+  void nextTick(() => emitSearch())
 })
 </script>
 
