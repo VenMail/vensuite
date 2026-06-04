@@ -17,9 +17,9 @@
         @navigate-breadcrumb="handleBreadcrumbNavigate"
       >
         <template #stats>
-          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-200">
+          <div class="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
             <span>{{ sortedItems.length }} items</span>
-            <span v-if="selectedFiles.size > 0">• {{ selectedFiles.size }} selected</span>
+            <span v-if="selectedFiles.size > 0">&middot; {{ selectedFiles.size }} selected</span>
           </div>
         </template>
 
@@ -27,7 +27,7 @@
           <div class="flex flex-col sm:flex-row md:flex-row lg:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto md:w-auto lg:w-auto">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="border-gray-300 dark:border-gray-600 dark:text-gray-100">
+                <Button variant="outline" class="border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800">
                   <ArrowUpDown class="h-4 w-4 mr-2" />
                   Sort: {{ sortLabel }}
                   <ChevronDown class="h-4 w-4 ml-2" />
@@ -45,13 +45,13 @@
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <div class="flex items-center gap-1 rounded-[0.65rem] border border-slate-200/80 bg-slate-100/80 p-1 dark:border-slate-700/70 dark:bg-slate-800/70">
               <Button
                 v-for="option in viewControls"
                 :key="option.value"
                 variant="ghost"
                 size="sm"
-                :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+                :class="option.active ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'"
                 @click="handleViewChange(option.value)"
               >
                 <component v-if="option.icon" :is="option.icon" class="h-4 w-4" />
@@ -99,10 +99,70 @@
         </template>
       </WorkspaceTopBar>
 
+      <section class="workspace-command-panel">
+        <div class="ai-briefing">
+          <div class="flex items-start gap-3">
+            <div class="ai-briefing-icon">
+              <BrainCircuit class="h-6 w-6" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="text-xs font-extrabold uppercase text-cyan-700 dark:text-cyan-300">
+                  Venmail AI
+                </p>
+                <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
+                  {{ fileStore.isOnline ? 'Synced' : 'Offline ready' }}
+                </span>
+              </div>
+              <h1 class="workspace-title mt-2 text-slate-950 dark:text-white">
+                Your workspace is ready for the next move.
+              </h1>
+              <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Create, analyze, summarize, and organize office work from the same command surface.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-5 grid gap-2 sm:grid-cols-2">
+            <button
+              v-for="suggestion in aiSuggestions"
+              :key="suggestion"
+              type="button"
+              class="ai-suggestion"
+            >
+              <Sparkles class="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+              <span>{{ suggestion }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="workspace-side-panel">
+          <div class="grid grid-cols-3 gap-2">
+            <div v-for="stat in workspaceStats" :key="stat.label" class="workspace-stat">
+              <span class="block text-xl font-extrabold text-slate-950 dark:text-white">{{ stat.value }}</span>
+              <span class="mt-1 block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">{{ stat.label }}</span>
+            </div>
+          </div>
+
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <Button
+              v-for="action in quickCreateActions"
+              :key="action.label"
+              variant="outline"
+              class="quick-create-button"
+              @click="action.onClick"
+            >
+              <component :is="action.icon" class="h-4 w-4" />
+              <span>{{ action.label }}</span>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <ScrollArea
         :class="[
-          'flex-1 min-h-0 rounded-lg shadow-sm border',
-          'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
+          'flex-1 min-h-0 rounded-lg border overflow-hidden',
+          'bg-white/90 border-slate-200/80 dark:bg-slate-900/80 dark:border-slate-700/80'
         ]"
       >
         <div v-if="sortedItems.length > 0">
@@ -243,6 +303,7 @@ import {
   Upload,
   FolderPlus as FolderPlusIcon,
   FileText,
+  FolderKanban,
   ChevronDown,
   ArrowUpDown,
   Grid,
@@ -254,7 +315,10 @@ import {
   Share2,
   Trash2,
   X,
-  TableIcon
+  TableIcon,
+  BrainCircuit,
+  Sparkles,
+  Presentation
 } from 'lucide-vue-next'
 import Button from '@/components/ui/button/Button.vue'
 import {
@@ -343,6 +407,37 @@ const sortedItems = computed(() => {
   }
   return list.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
 })
+
+const workspaceStats = computed(() => {
+  const files = fileStore.allFiles
+  const folders = files.filter((file: FileData) => file.is_folder).length
+  const docs = files.filter((file: FileData) =>
+    ['doc', 'docx', 'txt', 'rtf', 'pdf'].includes((file.file_type || '').toLowerCase())
+  ).length
+  const sheets = files.filter((file: FileData) =>
+    ['xls', 'xlsx', 'csv', 'ods'].includes((file.file_type || '').toLowerCase())
+  ).length
+
+  return [
+    { label: 'Files', value: files.length },
+    { label: 'Docs', value: docs },
+    { label: 'Sheets', value: sheets || folders }
+  ]
+})
+
+const aiSuggestions = [
+  'Summarize selected files',
+  'Turn uploads into a client deck',
+  'Find stale documents',
+  'Create a project brief'
+]
+
+const quickCreateActions = computed(() => [
+  { label: 'Doc', icon: FileText, onClick: createNewDocument },
+  { label: 'Sheet', icon: TableIcon, onClick: createNewSpreadsheet },
+  { label: 'Slides', icon: Presentation, onClick: () => router.push('/slides/new') },
+  { label: 'Form', icon: FolderKanban, onClick: () => router.push('/forms') }
+])
 
 function buildContextMenuActions({
   selectedIds,
@@ -522,8 +617,8 @@ const topBarActions = computed(() => {
 
 const homeContainerClass = computed(() => [
   'h-screen text-gray-900 transition-colors duration-200',
-  'bg-gradient-to-br from-gray-50 to-gray-100',
-  'dark:bg-gradient-to-br dark:from-gray-900 to-gray-800',
+  'bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.13),transparent_32%),linear-gradient(135deg,#f8fafc,#eef7f2_48%,#f7f3ea)]',
+  'dark:bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_30%),linear-gradient(135deg,#0f172a,#111827_54%,#172033)]',
   'flex flex-col'
 ])
 
@@ -803,6 +898,137 @@ onUnmounted(() => {
   justify-content: center;
   padding: 2rem;
   text-align: center;
+}
+
+.workspace-command-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1rem;
+}
+
+.workspace-title {
+  font-family: Onest, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 720;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.ai-briefing,
+.workspace-side-panel {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.ai-briefing {
+  padding: 1rem;
+}
+
+.workspace-side-panel {
+  padding: 0.85rem;
+}
+
+.dark .ai-briefing,
+.dark .workspace-side-panel {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.76);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+
+.ai-briefing-icon {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: #0f172a;
+  color: #67e8f9;
+}
+
+.ai-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.65rem;
+  background: rgba(248, 250, 252, 0.9);
+  padding: 0.65rem 0.8rem;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.25rem;
+  color: #334155;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.ai-suggestion:hover {
+  border-color: rgba(8, 145, 178, 0.36);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.dark .ai-suggestion {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(30, 41, 59, 0.72);
+  color: #e2e8f0;
+}
+
+.workspace-stat {
+  min-height: 4.25rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.65rem;
+  background: rgba(248, 250, 252, 0.92);
+  padding: 0.75rem;
+}
+
+.dark .workspace-stat {
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(30, 41, 59, 0.66);
+}
+
+.quick-create-button {
+  display: inline-flex;
+  height: 2.65rem;
+  justify-content: center;
+  gap: 0.45rem;
+  border-color: rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.78);
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dark .quick-create-button {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.64);
+  color: #f8fafc;
+}
+
+@media (max-width: 1180px) {
+  .workspace-command-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .workspace-command-panel {
+    gap: 0.75rem;
+  }
+
+  .workspace-title {
+    font-size: 1.375rem;
+    line-height: 1.25;
+  }
+
+  .ai-briefing,
+  .workspace-side-panel {
+    border-radius: 0.65rem;
+  }
 }
 @media (min-width: 640px) {
   .empty-state {

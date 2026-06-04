@@ -1,12 +1,12 @@
 <template>
-  <header class="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 border-b transition-colors duration-200 bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800">
+  <header class="workspace-topbar">
     <!-- Mobile Header: Title + Actions -->
     <div class="flex items-center justify-between gap-2 sm:gap-3 mb-2 sm:mb-3 md:hidden">
       <div class="min-w-0 flex-1">
-        <h2 class="truncate text-lg font-semibold text-gray-800 dark:text-gray-100">
+        <h2 class="workspace-topbar-title truncate text-slate-950 dark:text-white">
           {{ title }}
         </h2>
-        <p v-if="subtitle" class="text-xs text-gray-500 dark:text-gray-400 truncate">
+        <p v-if="subtitle" class="workspace-topbar-subtitle truncate text-slate-500 dark:text-slate-400">
           {{ subtitle }}
         </p>
       </div>
@@ -14,7 +14,7 @@
       <!-- Mobile Actions -->
       <div v-if="hasSelection && actions?.length" class="flex items-center gap-1 shrink-0">
         <!-- Selection Badge -->
-        <div class="bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-md text-xs font-medium border border-primary-200 dark:border-primary-700">
+        <div class="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-400/10 dark:text-cyan-200">
           {{ selectedCount }} selected
         </div>
         
@@ -74,11 +74,11 @@
     <!-- Mobile Stats & Filters -->
     <div class="flex flex-col gap-2 sm:gap-3 md:hidden">
       <!-- Mobile Stats -->
-      <div v-if="stats?.length" class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+      <div v-if="stats?.length" class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
         <template v-for="(stat, index) in stats" :key="stat.label">
-          <span class="font-medium">{{ stat.value }}</span>
+          <span class="font-bold text-slate-800 dark:text-slate-200">{{ stat.value }}</span>
           <span>{{ stat.label }}</span>
-          <span v-if="index < stats.length - 1" class="text-gray-400">•</span>
+          <span v-if="index < stats.length - 1" class="text-slate-300 dark:text-slate-600">&middot;</span>
         </template>
       </div>
 
@@ -106,13 +106,13 @@
       </div>
 
       <!-- Mobile View Options -->
-      <div v-if="viewOptions?.length" class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+      <div v-if="viewOptions?.length" class="workspace-view-toggle">
         <Button
           v-for="option in viewOptions"
           :key="option.value"
           variant="ghost"
           size="sm"
-          :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+          :class="option.active ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400'"
           @click="$emit('view-change', option.value)"
         >
           <component v-if="option.icon" :is="option.icon" class="h-3 w-3" />
@@ -236,10 +236,10 @@
           </div>
 
           <div class="min-w-0">
-            <h2 class="truncate text-lg font-semibold text-gray-800 dark:text-gray-100">
+            <h2 class="workspace-topbar-title truncate text-slate-950 dark:text-white">
               {{ title }}
             </h2>
-            <p v-if="subtitle" class="text-xs text-gray-500 dark:text-gray-400 truncate">
+            <p v-if="subtitle" class="workspace-topbar-subtitle truncate text-slate-500 dark:text-slate-400">
               {{ subtitle }}
             </p>
           </div>
@@ -279,10 +279,10 @@
       <!-- Second Row: Stats + Filters + View Options -->
       <div class="flex flex-row items-center gap-3 flex-wrap">
         <slot name="stats">
-          <div v-if="stats?.length" class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+          <div v-if="stats?.length" class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <template v-for="(stat, index) in stats" :key="stat.label">
               <span>{{ stat.value }} {{ stat.label }}</span>
-              <span v-if="index < stats.length - 1">•</span>
+              <span v-if="index < stats.length - 1">&middot;</span>
             </template>
           </div>
         </slot>
@@ -309,13 +309,13 @@
           </Button>
         </div>
 
-        <div v-if="viewOptions?.length" class="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div v-if="viewOptions?.length" class="workspace-view-toggle">
           <Button
             v-for="option in viewOptions"
             :key="option.value"
             variant="ghost"
             size="sm"
-            :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+            :class="option.active ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400'"
             @click="$emit('view-change', option.value)"
           >
             <component v-if="option.icon" :is="option.icon" class="h-3 w-3" />
@@ -359,10 +359,10 @@
         </div>
 
         <div class="min-w-0">
-          <h2 class="truncate text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100">
+          <h2 class="workspace-topbar-title truncate text-slate-950 dark:text-white">
             {{ title }}
           </h2>
-          <p v-if="subtitle" class="text-sm text-gray-500 dark:text-gray-400 truncate">
+          <p v-if="subtitle" class="workspace-topbar-subtitle truncate text-slate-500 dark:text-slate-400">
             {{ subtitle }}
           </p>
         </div>
@@ -393,10 +393,10 @@
 
       <div class="flex flex-row items-center gap-4">
         <slot name="stats">
-          <div v-if="stats?.length" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <div v-if="stats?.length" class="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
             <template v-for="(stat, index) in stats" :key="stat.label">
               <span>{{ stat.value }} {{ stat.label }}</span>
-              <span v-if="index < stats.length - 1">•</span>
+              <span v-if="index < stats.length - 1">&middot;</span>
             </template>
           </div>
         </slot>
@@ -415,13 +415,13 @@
           </Button>
         </div>
 
-        <div v-if="viewOptions?.length" class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div v-if="viewOptions?.length" class="workspace-view-toggle">
           <Button
             v-for="option in viewOptions"
             :key="option.value"
             variant="ghost"
             size="sm"
-            :class="option.active ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+            :class="option.active ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400'"
             @click="$emit('view-change', option.value)"
           >
             <component v-if="option.icon" :is="option.icon" class="h-4 w-4" />
@@ -547,7 +547,7 @@ const getVisibleActions = () => {
 }
 
 const navigationButtonClass = computed(() => [
-  'bg-white border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700',
+  'bg-white/85 border-slate-200 hover:bg-slate-50 dark:bg-slate-900/80 dark:border-slate-700 dark:hover:bg-slate-800',
   props.canNavigateUp ? 'opacity-100' : 'opacity-50 cursor-not-allowed'
 ])
 
@@ -558,3 +558,63 @@ const emitAction = (action: ActionItem) => {
   emit('action', action)
 }
 </script>
+
+<style scoped>
+.workspace-topbar {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.84);
+  padding: 0.8rem 0.9rem;
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.07);
+  backdrop-filter: blur(18px);
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.dark .workspace-topbar {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.78);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.2);
+}
+
+.workspace-topbar-title {
+  font-family: Onest, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.375rem;
+  font-weight: 720;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.workspace-topbar-subtitle {
+  margin-top: 0.15rem;
+  font-size: 0.875rem;
+  font-weight: 450;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+.workspace-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.65rem;
+  background: rgba(241, 245, 249, 0.82);
+  padding: 0.2rem;
+}
+
+.dark .workspace-view-toggle {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(30, 41, 59, 0.72);
+}
+
+@media (max-width: 640px) {
+  .workspace-topbar {
+    border-radius: 0.65rem;
+    padding: 0.75rem;
+  }
+
+  .workspace-topbar-title {
+    font-size: 1.125rem;
+  }
+}
+</style>

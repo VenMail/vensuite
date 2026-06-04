@@ -1,6 +1,8 @@
 <script setup lang="ts">
   import {
-    Menu
+    Bot,
+    Menu,
+    Sparkles
   } from 'lucide-vue-next'
   import {
     inject
@@ -31,9 +33,9 @@
   <nav :class="cn(
       'w-full items-center gap-2 sm:gap-4 border-b py-3',
       'px-2 sm:px-6',
-      'bg-white dark:bg-gray-900',
-      'border-gray-200 dark:border-gray-800',
-      'transition-all duration-200',
+      'bg-white/[0.82] dark:bg-slate-950/[0.82] backdrop-blur-xl',
+      'border-slate-200/80 dark:border-slate-800/80',
+      'transition-all duration-200 shadow-sm',
       props.isMobile ? 'h-16' : 'h-20',
     )">
     <div :class="cn(
@@ -59,7 +61,7 @@
 
         <div :class="cn(
           'flex items-center',
-          props.isMobile ? '!ml-[-4px] scale-90' : 'mr-[158px]'
+          props.isMobile ? '!ml-[-4px] scale-90' : 'mr-4'
         )">
           <img v-if="props.isMobile" src="/manifest-icon-512.maskable.png" alt="VenMail Logo" class="h-6 w-6 rounded-sm ml-3" />
           <img v-else :src="theme.isDark.value ? '/logo-white.png' : '/logo-black.png'" alt="VenMail Logo"
@@ -71,6 +73,12 @@
 
       <!-- Right section: Language switcher + User Profile -->
       <div class="flex items-center space-x-3">
+        <div v-if="!props.isMobile" class="hidden items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-bold text-cyan-800 dark:border-cyan-400/20 dark:bg-cyan-400/10 dark:text-cyan-200 lg:flex">
+          <Bot class="h-4 w-4" />
+          <span>AI ready</span>
+          <Sparkles class="h-3.5 w-3.5" />
+        </div>
+
         <LanguageSwitcher :isMobile="props.isMobile" />
 
         <UserProfile :isMobile="props.isMobile" />

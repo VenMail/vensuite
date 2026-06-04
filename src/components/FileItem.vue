@@ -145,7 +145,7 @@
       <div class="p-4">
         <div v-if="isRenaming" class="flex items-center space-x-2">
           <span
-            class="text-xs font-medium text-amber-600 dark:text-amber-400 flex-shrink-0"
+            class="flex-shrink-0 text-xs font-semibold text-amber-600 dark:text-amber-400"
           >
             Renaming...
           </span>
@@ -155,7 +155,7 @@
         <div v-else>
           <!-- File Title -->
           <h3
-            class="font-semibold text-sm mb-1 text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200 truncate"
+            class="mb-1 truncate text-sm font-semibold leading-5 text-slate-900 transition-colors duration-200 group-hover:text-cyan-700 dark:text-slate-100 dark:group-hover:text-cyan-300"
           >
             {{ file.title }}
           </h3>
@@ -191,8 +191,8 @@
         />
         <span
           v-if="!isLoading"
-          class="ml-2 px-2 py-0.5 text-[10px] font-medium rounded border bg-amber-50 text-amber-700 border-amber-200"
-          >Renaming…</span
+          class="ml-2 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700"
+          >Renaming...</span
         >
         <Loader
           v-if="isLoading"
@@ -200,11 +200,11 @@
         />
       </div>
 
-      <div class="flex items-center gap-4" v-show="!isRenaming">
+      <div class="flex items-center gap-3" v-show="!isRenaming">
         <!-- File Icon and Title/Date Section -->
         <div
           v-if="showCheckbox || isSelected"
-          class="w-5 h-5 z-10 bg-white border border-gray-300 dark:border-primary-400 rounded-sm flex items-center justify-center transition-all duration-200 cursor-pointer"
+          class="z-10 flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-slate-300 bg-white transition-all duration-200 dark:border-cyan-400"
           @click.stop="$emit('select-file', file.id, $event)"
         >
           <CheckIcon v-if="isSelected" class="w-3 h-3 text-primary-600" />
@@ -214,19 +214,19 @@
           <FileIcon
             :fileType="fileType"
             :fileData="file"
-            class="w-12 h-12 text-gray-600 dark:text-gray-300"
+            class="h-11 w-11 text-slate-600 dark:text-slate-300"
           />
         </div>
-        <div class="flex flex-col flex-grow">
-          <h3 class="text-sm font-medium truncate text-gray-800">{{ file.title }}</h3>
-          <p class="text-xs text-gray-500">{{ formattedDate }}</p>
+        <div class="flex flex-grow flex-col min-w-0">
+          <h3 class="truncate text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">{{ file.title }}</h3>
+          <p class="text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">{{ formattedDate }}</p>
         </div>
       </div>
 
       <!-- File Type Ribbon (Top Right) -->
       <div
         v-if="!file.is_folder"
-        class="absolute top-2 right-2 bg-slate-500 text-white text-xs px-2 py-0.5 rounded-lg shadow"
+        class="absolute right-2 top-2 rounded-full bg-slate-900/75 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm dark:bg-slate-200/15"
       >
         {{ file.file_type?.toUpperCase() }}
       </div>
@@ -269,8 +269,8 @@
           />
           <span
             v-if="!isLoading"
-            class="ml-3 px-2 py-1 text-xs font-medium rounded-md bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap"
-            >Renaming…</span
+            class="ml-3 whitespace-nowrap rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700"
+            >Renaming...</span
           >
           <Loader
             v-if="isLoading"
@@ -281,24 +281,24 @@
           <!-- Title and Date - 5 columns -->
           <div class="col-span-5 min-w-0">
             <h3
-              class="font-semibold text-sm text-gray-800 dark:text-gray-100 truncate mb-1"
+              class="mb-1 truncate text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100"
             >
               {{ file.title }}
             </h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ formattedDate }}</p>
+            <p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ formattedDate }}</p>
           </div>
 
           <!-- File Type Badge - 2 columns -->
           <div class="col-span-2 flex justify-center">
             <span
               v-if="!file.is_folder && file.file_type"
-              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+              class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
               {{ file.file_type.toUpperCase() }}
             </span>
             <span
               v-else-if="file.is_folder"
-              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+              class="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 text-xs font-bold text-cyan-800 dark:bg-cyan-400/10 dark:text-cyan-200"
             >
               FOLDER
             </span>
@@ -449,19 +449,19 @@ const isTouchDevice = computed(() => {
 const fileItemClass = computed(() => {
   const baseClass = 'transition-all duration-200 cursor-pointer';
   const selectedClass = props.isSelected
-    ? "ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/20"
-    : "hover:bg-gray-50 dark:hover:bg-gray-700";
+    ? "ring-2 ring-cyan-400/70 bg-cyan-50/70 dark:bg-cyan-400/10"
+    : "hover:bg-slate-50/80 dark:hover:bg-slate-800/70";
   const dropTargetClass = props.file.is_folder ? "drop-zone" : "";
 
   switch (props.viewMode) {
     case "thumbnail":
-      return `${baseClass} ${dropTargetClass} relative group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:scale-105 hover:shadow-xl ${
+      return `${baseClass} ${dropTargetClass} relative group overflow-hidden rounded-lg border border-slate-200/90 bg-white/92 shadow-sm dark:border-slate-700 dark:bg-slate-900/80 ${
         props.isSelected
-          ? "ring-1 ring-primary-400 shadow-lg scale-105"
-          : "hover:shadow-md"
+          ? "ring-2 ring-cyan-400/70 shadow-md"
+          : "hover:border-cyan-300/70 hover:shadow-md"
       }`;
     case "grid":
-      return `${baseClass} ${selectedClass} ${dropTargetClass} w-full rounded-md m-2 flex flex-col p-1`;
+      return `${baseClass} ${selectedClass} ${dropTargetClass} w-full rounded-lg flex flex-col`;
     default:
       // list view
       return `${baseClass} ${selectedClass} ${dropTargetClass} w-full`;
@@ -671,14 +671,29 @@ onMounted(() => {
 .file-item-wrapper {
   position: relative;
   width: 100%;
+  min-height: 5.8rem;
   padding: 1rem;
-  border: 1px solid #d1d5db;
-  background-color: white;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.88);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  backdrop-filter: blur(12px);
+}
+
+.dark .file-item-wrapper {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+
+.file-item-wrapper:hover {
+  border-color: rgba(8, 145, 178, 0.28);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.09);
+  transform: translateY(-1px);
 }
 
 /* List View Styles - Full Width Rectangular Cards */
@@ -686,24 +701,27 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 1.5rem;
+  min-height: 4.75rem;
+  padding: 0.9rem 1.15rem;
   width: 100%;
-  background-color: white;
-  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease-in-out;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
   margin-bottom: 0.5rem;
+  backdrop-filter: blur(12px);
 }
 
 /* Dark mode styles for list view cards */
 .dark .list-view-card {
-  background-color: #1f2937;
-  border-color: #374151;
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(148, 163, 184, 0.14);
 }
 
 .list-view-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: rgba(8, 145, 178, 0.28);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
   transform: translateY(-1px);
 }
 
@@ -721,18 +739,4 @@ onMounted(() => {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Custom animations */
-@keyframes subtle-bounce {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
-
-.group:hover .thumbnail-wrapper {
-  animation: subtle-bounce 0.3s ease-in-out;
-}
 </style>

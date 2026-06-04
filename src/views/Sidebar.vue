@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft, BookOpen } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft, BookOpen, Bot, Sparkles } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useRouter, useRoute } from 'vue-router'
 import { t } from '@/i18n'
@@ -79,10 +79,10 @@ const setActiveItem = (item: string, route: string) => {
 const sidebarClasses = computed(() =>
   cn(
     'h-full transition-all duration-200',
-    props.isVisible ? 'border-r bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800' : '',
+    isMobile.value ? 'fixed inset-y-0 left-0 z-40 h-dvh shadow-2xl' : '',
+    props.isVisible ? 'border-r bg-white/[0.88] dark:bg-slate-950/[0.88] backdrop-blur-xl border-slate-200/80 dark:border-slate-800/80 shadow-sm' : '',
     props.isVisible ? 'translate-x-0' : '-translate-x-full',
-    props.isVisible ? (props.isCollapsed ? 'w-16' : (isTablet.value ? 'w-56' : 'w-64')) : 'w-0',
-    // Remove fixed positioning on mobile to integrate with layout
+    props.isVisible ? (isMobile.value ? 'w-64' : (props.isCollapsed ? 'w-16' : (isTablet.value ? 'w-56' : 'w-64'))) : 'w-0',
   )
 )
 
@@ -137,6 +137,14 @@ function createNewFile(type: string, template?: string) {
 
 <template>
   <div>
+    <button
+      v-if="isMobile && props.isVisible"
+      type="button"
+      class="fixed inset-0 z-30 bg-slate-950/20 backdrop-blur-[1px]"
+      aria-label="Close navigation"
+      @click="closeSidebar"
+    />
+
     <!-- Sidebar -->
     <div v-if="props.isVisible" :class="sidebarClasses">
       <div class="flex flex-col h-full">
@@ -158,7 +166,7 @@ function createNewFile(type: string, template?: string) {
           <!-- Desktop: Text button -->
           <button
             v-else
-            class="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-500"
+            class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200 hover:text-slate-950 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
             @click="goToVenmail"
           >
             <ArrowLeft class="h-4 w-4" />
@@ -171,7 +179,7 @@ function createNewFile(type: string, template?: string) {
           <Dialog v-model:open="isDialogOpen" ref="dialogRef">
             <DialogTrigger asChild>
               <button
-                class="flex items-center justify-center rounded-sm bg-primary-600 text-white hover:bg-primary-700 transition-colors py-2"
+                class="flex items-center justify-center rounded-lg bg-slate-950 text-white shadow-sm transition-colors hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400 py-2"
                 :class="props.isCollapsed ? 'w-8' : 'flex-1'"
               >
                 <Plus class="h-5 w-5" :class="props.isCollapsed ? '' : 'mr-2'" />
@@ -223,17 +231,31 @@ function createNewFile(type: string, template?: string) {
               :href="item.route"
               @click.prevent="setActiveItem(item.name, item.route)"
               :class="cn(
-                'flex items-center rounded-sm transition-colors',
+                'flex items-center rounded-lg font-semibold transition-colors',
                 props.isCollapsed ? 'justify-center py-3 px-2' : 'px-3 py-2',
                 activeItem === item.name
-                  ? 'bg-gray-100 dark:bg-gray-800 text-primary-600 dark:text-primary-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'
+                  ? 'bg-cyan-50 text-cyan-800 dark:bg-cyan-400/10 dark:text-cyan-200'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-100'
               )"
             >
               <component :is="item.icon" class="h-5 w-5" :class="props.isCollapsed ? '' : 'mr-3'" />
               <span v-if="!props.isCollapsed">{{ item.name }}</span>
             </a>
           </nav>
+        </div>
+
+        <div v-if="!props.isCollapsed" class="m-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+          <div class="flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-white">
+            <Bot class="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+            Workspace AI
+          </div>
+          <p class="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+            Context follows your files, forms, decks, and sheets.
+          </p>
+          <div class="mt-3 flex items-center gap-1.5 text-xs font-bold text-cyan-700 dark:text-cyan-300">
+            <Sparkles class="h-3.5 w-3.5" />
+            Ready for commands
+          </div>
         </div>
       </div>
     </div>

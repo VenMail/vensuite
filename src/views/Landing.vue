@@ -1,51 +1,65 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { 
-  Calendar, 
-  FileText, 
-  Users, 
-  TrendingUp, 
-  Shield, 
+import {
   ArrowRight,
+  Bot,
+  BrainCircuit,
   Check,
-  Star,
-  Zap,
+  FileText,
+  FolderKanban,
+  Github,
+  Globe2,
+  LockKeyhole,
+  Presentation,
+  Sparkles,
+  Table2,
+  WandSparkles,
 } from 'lucide-vue-next'
-import { GithubLogoIcon } from '@radix-icons/vue'
-import { t } from '@/i18n';
 
-const features = [
+const productPillars = [
   {
     icon: FileText,
-    title: 'Documents',
-    description: t('Views.text.rich_text_editor_with')
+    title: 'Docs',
+    description: 'Structured writing, rich layouts, comments, PDF import, and AI drafting in one canvas.',
+    accent: 'bg-sky-500',
   },
   {
-    icon: TrendingUp,
+    icon: Table2,
     title: 'Sheets',
-    description: 'Powerful spreadsheets with formulas, charts, and data analysis'
+    description: 'Fast workbooks with formulas, charts, analysis, and data-ready collaboration.',
+    accent: 'bg-emerald-500',
   },
   {
-    icon: Calendar,
+    icon: Presentation,
+    title: 'Slides',
+    description: 'Turn ideas into polished decks with themes, speaker flow, and reusable visual systems.',
+    accent: 'bg-violet-500',
+  },
+  {
+    icon: FolderKanban,
     title: 'Forms',
-    description: t('Views.text.build_surveys_and_collect')
+    description: 'Collect responses, payments, signatures, and approvals without sending work elsewhere.',
+    accent: 'bg-amber-500',
   },
-  {
-    icon: Users,
-    title: t('Commons.heading.slides'),
-    description: t('Views.text.create_presentations_with_templates')
-  }
 ]
 
-const benefits = [
-  '100% open source',
-  'Self-hosted option',
-  'No vendor lock-in',
-  'Privacy-focused',
-  'Community driven',
-  'Free forever option'
+const aiActions = [
+  'Draft launch memo from last week files',
+  'Build a dashboard from Q2 sheets',
+  'Summarize contract risks before signing',
+  'Create a client-ready proposal deck',
+]
+
+const workspaceSignals = [
+  { label: 'Live docs', value: '38' },
+  { label: 'AI tasks done', value: '126' },
+  { label: 'Shared rooms', value: '12' },
+]
+
+const securityNotes = [
+  'Open source foundation',
+  'Self-host or managed cloud',
+  'Workspace-aware permissions',
 ]
 
 const goToApp = () => {
@@ -57,335 +71,424 @@ const goToLogin = () => {
 }
 
 const goToGithub = () => {
-  window.open('https://github.com/venmail/vensuite', '_blank')
+  window.open('https://github.com/venmail/vensuite', '_blank', 'noopener,noreferrer')
 }
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-primary-50 to-orange-100 dark:from-gray-900 dark:to-gray-800 transition-colors">
-    <!-- Header -->
-    <header class="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-900/80 dark:border-gray-700 transition-colors">
-      <div class="container mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-              <FileText class="w-5 h-5 text-white" />
-            </div>
-            <span class="text-xl font-bold text-gray-900 dark:text-white transition-colors">{{$t('Commons.text.venmail_drive')}}</span>
-            <Badge variant="secondary" class="text-xs">
-              <GithubLogoIcon class="w-3 h-3 mr-1" />
-              {{$t('Commons.text.open_source')}}
-            </Badge>
+  <main class="landing-shell min-h-screen overflow-hidden bg-[#f7f8f4] text-slate-950">
+    <header class="sticky top-0 z-40 border-b border-slate-900/10 bg-[rgba(247,248,244,0.82)] backdrop-blur-xl">
+      <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <button class="flex items-center gap-3" type="button" @click="goToApp">
+          <img src="/manifest-icon-512.maskable.png" alt="Venmail" class="h-9 w-9 rounded-lg" />
+          <div class="text-left leading-tight">
+            <span class="block text-sm font-semibold text-slate-500">VENMAIL</span>
+            <span class="block text-lg font-bold text-slate-950">Office Suite</span>
           </div>
-          <div class="flex items-center space-x-4">
-            <Button @click="goToLogin" class="bg-primary-600 hover:bg-primary-700 px-6">
-              {{$t('Commons.button.login')}}
-              <ArrowRight class="w-4 h-4 ml-2" />
-            </Button>
-          </div>
+        </button>
+
+        <nav class="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex" aria-label="Primary">
+          <a href="#workspace" class="transition hover:text-slate-950">Workspace</a>
+          <a href="#suite" class="transition hover:text-slate-950">Suite</a>
+          <a href="#security" class="transition hover:text-slate-950">Trust</a>
+        </nav>
+
+        <div class="flex items-center gap-2">
+          <Button variant="ghost" class="hidden text-slate-700 hover:bg-white/70 sm:inline-flex" @click="goToGithub">
+            <Github class="mr-2 h-4 w-4" />
+            GitHub
+          </Button>
+          <Button class="bg-slate-950 text-white hover:bg-slate-800" @click="goToLogin">
+            Open Suite
+            <ArrowRight class="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="py-20 px-4">
-      <div class="container mx-auto text-center">
-        <div class="inline-flex items-center space-x-2 bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 px-4 py-2 rounded-full text-sm font-medium mb-6 transition-colors">
-          <Shield class="w-4 h-4" />
-          <span>{{$t('Views.text.privacy_first_productivity_suite')}}</span>
+    <section class="relative mx-auto flex max-w-7xl flex-col px-4 pb-14 pt-8 sm:px-6 lg:min-h-[820px] lg:px-8 lg:pt-10">
+      <div class="hero-grid" aria-hidden="true"></div>
+
+      <div class="relative z-10 mx-auto max-w-4xl text-center">
+        <div class="hero-eyebrow mb-5 inline-flex items-center gap-2 rounded-full border border-slate-900/10 bg-white/80 px-3 py-2 text-slate-700 shadow-sm">
+          <Sparkles class="h-4 w-4 text-cyan-600" />
+          AI-first office, built for private teams
         </div>
-        
-        <h1 class="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 transition-colors">
-          {{$t('Commons.heading.your_workspace')}}
-          <br />
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-600">
-            {{$t('Commons.text.your_rules')}}
-          </span>
+
+        <h1 class="landing-title mx-auto max-w-4xl text-slate-950">
+          Your AI office suite.
         </h1>
-        
-        <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto transition-colors">
-          Complete open-source productivity suite with documents, spreadsheets, forms, and presentations. 
-          Self-hosted or use our managed service. No tracking, no ads, just pure productivity.
+
+        <p class="hero-copy mx-auto mt-5 max-w-2xl text-slate-650">
+          Documents, sheets, slides, forms, signing, media, and file rooms in one intelligent workspace where AI understands context and helps work move faster.
         </p>
-        
-        <div class="flex flex-col sm:flex-row gap-6 justify-center mb-12">
-          <Button size="lg" @click="goToLogin" class="text-lg px-8 py-4 bg-primary-600 hover:bg-primary-700 shadow-lg hover:shadow-xl transition-all duration-200">
-            <Zap class="w-6 h-6 mr-3" />
-            {{$t('Views.button.try_it_on_venmail')}}
+
+        <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+          <Button size="lg" class="h-12 bg-cyan-600 px-6 text-base font-semibold text-white hover:bg-cyan-700" @click="goToLogin">
+            <WandSparkles class="mr-2 h-5 w-5" />
+            Start in Venmail
           </Button>
-          <Button size="lg" variant="outline" @click="goToGithub" class="text-lg px-8 py-4 border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200">
-            <GithubLogoIcon class="w-6 h-6 mr-3" />
-            {{$t('Commons.button.self_host')}}
+          <Button size="lg" variant="outline" class="h-12 border-slate-300 bg-white/75 px-6 text-base font-semibold text-slate-900 hover:bg-white" @click="goToGithub">
+            <Github class="mr-2 h-5 w-5" />
+            Self-host
           </Button>
         </div>
 
-        <div class="flex items-center justify-center space-x-8 text-sm text-gray-500 dark:text-gray-400 transition-colors">
-          <div class="flex items-center">
-            <Star class="w-4 h-4 text-yellow-500 mr-1" />
-            <span>10,000+ GitHub stars</span>
-          </div>
-          <div class="flex items-center">
-            <Users class="w-4 h-4 text-green-500 mr-1" />
-            <span>5,000+ active users</span>
-          </div>
-          <div class="flex items-center">
-            <Shield class="w-4 h-4 text-blue-500 mr-1" />
-            <span>{{$t('Views.text.100_open_source')}}</span>
+        <div class="mx-auto mt-8 grid max-w-xl grid-cols-3 gap-3">
+          <div v-for="signal in workspaceSignals" :key="signal.label" class="rounded-lg border border-slate-900/10 bg-white/70 p-4 shadow-sm">
+            <div class="text-2xl font-extrabold text-slate-950">{{ signal.value }}</div>
+            <div class="mt-1 text-xs font-semibold uppercase text-slate-500">{{ signal.label }}</div>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- Features Grid -->
-    <section class="py-20 px-4 bg-white dark:bg-gray-800 transition-colors">
-      <div class="container mx-auto">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-colors">
-            {{$t('Views.heading.everything_you_need_to')}}
-          </h2>
-          <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto transition-colors">
-            All the essential productivity tools, built with privacy and collaboration in mind
-          </p>
-        </div>
-        
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card v-for="feature in features" :key="feature.title" class="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div class="w-12 h-12 bg-gradient-to-br from-primary-100 to-orange-100 dark:from-primary-900/30 dark:to-primary-800/30 rounded-lg flex items-center justify-center mb-4 transition-colors">
-                <component :is="feature.icon" class="w-6 h-6 text-primary-600 dark:text-primary-400 transition-colors" />
-              </div>
-              <CardTitle class="text-lg">{{ feature.title }}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription class="text-gray-600 dark:text-gray-300 transition-colors">
-                {{ feature.description }}
-              </CardDescription>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </section>
-
-    <!-- Screenshot Showcase -->
-    <section class="py-20 px-4 bg-gray-50 dark:bg-gray-900 transition-colors">
-      <div class="container mx-auto">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 transition-colors">
-            See It in Action
-          </h2>
-          <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto transition-colors">
-            Experience the power of modern productivity tools with AI-powered features and beautiful interfaces
-          </p>
-        </div>
-        
-        <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <!-- AI Form Creation -->
-          <div class="group relative">
-            <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
-              <!-- <div class="absolute top-4 left-4 z-10">
-                <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                  AI Powered
-                </div>
-              </div> -->
-              <div class="p-4">
-                <img 
-                  src="/form-ai.png" 
-                  alt="AI Form Creation" 
-                  class="w-full h-64 object-cover rounded-lg"
-                />
-                <div class="mt-4">
-                  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">AI Form Builder</h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-300">Create beautiful forms instantly with AI. Just describe what you need and watch the magic happen.</p>
-                </div>
-              </div>
+      <div id="workspace" class="relative z-10 mx-auto mt-12 w-full max-w-6xl">
+        <div class="office-frame">
+          <div class="office-topbar">
+            <div class="flex items-center gap-2">
+              <span class="h-3 w-3 rounded-full bg-rose-400"></span>
+              <span class="h-3 w-3 rounded-full bg-amber-400"></span>
+              <span class="h-3 w-3 rounded-full bg-emerald-400"></span>
+            </div>
+            <div class="hidden rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-slate-500 shadow-sm sm:block">
+              venmail.office/boardroom
             </div>
           </div>
 
-          <!-- Document Editor -->
-          <div class="group relative">
-            <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
-                <!-- <div class="absolute top-4 left-4 z-10">
-                  <div class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                    Rich Editor
+          <div class="office-body">
+            <aside class="office-sidebar">
+              <div class="mb-5 flex items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white">
+                <Bot class="h-4 w-4 text-cyan-300" />
+                AI Command
+              </div>
+              <div class="space-y-2">
+                <button v-for="action in aiActions" :key="action" class="ai-action" type="button">
+                  <Sparkles class="h-4 w-4 text-cyan-600" />
+                  <span>{{ action }}</span>
+                </button>
+              </div>
+            </aside>
+
+            <section class="office-canvas">
+              <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p class="text-xs font-bold uppercase text-cyan-700">Today workspace</p>
+                  <h2 class="mt-1 text-2xl font-extrabold text-slate-950">Launch room</h2>
+                </div>
+                <div class="flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm">
+                  <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                  7 collaborators live
+                </div>
+              </div>
+
+              <div class="grid gap-3 lg:grid-cols-[1.35fr_0.65fr]">
+                <div class="rounded-lg border border-slate-900/10 bg-white p-4 shadow-sm">
+                  <div class="mb-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2 font-bold text-slate-800">
+                      <FileText class="h-5 w-5 text-sky-600" />
+                      Investor memo
+                    </div>
+                    <span class="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-700">AI drafted</span>
                   </div>
-                </div> -->
-              <div class="p-4">
-                <img 
-                  src="/docs-editor.png" 
-                  alt="Document Editor" 
-                  class="w-full h-64 object-cover rounded-lg"
-                />
-                <div class="mt-4">
-                  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Document Editor</h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-300">Professional document editing with real-time collaboration and beautiful formatting.</p>
+                  <div class="space-y-2">
+                    <span class="block h-3 w-11/12 rounded-full bg-slate-200"></span>
+                    <span class="block h-3 w-10/12 rounded-full bg-slate-200"></span>
+                    <span class="block h-3 w-8/12 rounded-full bg-slate-200"></span>
+                  </div>
+                  <div class="mt-5 grid grid-cols-3 gap-2">
+                    <div class="h-16 rounded-lg bg-cyan-50 p-3">
+                      <span class="block h-2 w-10 rounded-full bg-cyan-500"></span>
+                      <span class="mt-3 block h-2 w-16 rounded-full bg-cyan-200"></span>
+                    </div>
+                    <div class="h-16 rounded-lg bg-amber-50 p-3">
+                      <span class="block h-2 w-12 rounded-full bg-amber-500"></span>
+                      <span class="mt-3 block h-2 w-14 rounded-full bg-amber-200"></span>
+                    </div>
+                    <div class="h-16 rounded-lg bg-violet-50 p-3">
+                      <span class="block h-2 w-8 rounded-full bg-violet-500"></span>
+                      <span class="mt-3 block h-2 w-16 rounded-full bg-violet-200"></span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Workspace Dashboard -->
-          <div class="group relative">
-            <div class="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
-            <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
-              <!-- <div class="absolute top-4 left-4 z-10">
-                <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                  Workspace
-                </div>
-              </div> -->
-              <div class="p-4">
-                <img 
-                  src="/drive_home.png" 
-                  alt="Workspace Dashboard" 
-                  class="w-full h-64 object-cover rounded-lg"
-                />
-                <div class="mt-4">
-                  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Unified Workspace</h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-300">All your documents, forms, and files in one beautiful, organized workspace.</p>
+                <div class="grid gap-3">
+                  <div class="rounded-lg border border-slate-900/10 bg-[#10212b] p-4 text-white shadow-sm">
+                    <div class="flex items-center gap-2 text-sm font-bold">
+                      <BrainCircuit class="h-5 w-5 text-cyan-300" />
+                      Agent brief
+                    </div>
+                    <p class="mt-3 text-sm leading-6 text-slate-200">Summarized 14 docs, found 3 open tasks, prepared a review deck.</p>
+                  </div>
+                  <div class="rounded-lg border border-slate-900/10 bg-white p-4 shadow-sm">
+                    <div class="flex items-center gap-2 text-sm font-bold text-slate-800">
+                      <Table2 class="h-5 w-5 text-emerald-600" />
+                      Growth model
+                    </div>
+                    <div class="mt-4 flex items-end gap-2">
+                      <span class="h-10 w-8 rounded-t-md bg-emerald-200"></span>
+                      <span class="h-16 w-8 rounded-t-md bg-emerald-400"></span>
+                      <span class="h-12 w-8 rounded-t-md bg-cyan-300"></span>
+                      <span class="h-20 w-8 rounded-t-md bg-slate-800"></span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            </section>
           </div>
-        </div>
-        
-        <div class="text-center mt-12">
-          <Button size="lg" @click="goToLogin" class="bg-primary-600 hover:bg-primary-700 shadow-lg hover:shadow-xl transition-all duration-200">
-            <Zap class="w-5 h-5 mr-2" />
-            Try Now
-            <ArrowRight class="w-5 h-5 ml-2" />
-          </Button>
         </div>
       </div>
     </section>
 
-    <!-- Benefits -->
-    <section class="py-20 px-4 dark:bg-gray-900/50 transition-colors">
-      <div class="container mx-auto">
-        <div class="grid lg:grid-cols-2 gap-12 items-center">
+    <section id="suite" class="border-y border-slate-900/10 bg-white py-16">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 transition-colors">
-              {{$t('Views.heading.why_choose_venmail_drive')}}
+            <p class="text-sm font-extrabold uppercase text-cyan-700">One suite</p>
+            <h2 class="section-title mt-3 max-w-2xl text-slate-950">
+              Every work surface gets an AI-native upgrade.
             </h2>
-            <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 transition-colors">
-              {{$t('Views.text.take_control_of_your')}}
-            </p>
-            
-            <div class="space-y-4">
-              <div v-for="benefit in benefits" :key="benefit" class="flex items-center space-x-3">
-                <div class="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0 transition-colors">
-                  <Check class="w-4 h-4 text-green-600 dark:text-green-400 transition-colors" />
-                </div>
-                <span class="text-gray-700 dark:text-gray-200 font-medium transition-colors">{{ benefit }}</span>
-              </div>
-            </div>
           </div>
-          
-          <div class="bg-gradient-to-br from-primary-50 to-orange-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 transition-colors">
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors">
-              <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6 transition-colors">{{$t('Views.heading.choose_your_path')}}</h3>
-              
-              <div class="space-y-6">
-                <div class="border-l-4 border-primary-500 pl-6 py-3 bg-primary-50 dark:bg-primary-900/20 rounded-r-lg">
-                  <div class="flex items-center mb-2">
-                    <Zap class="w-5 h-5 text-primary-600 mr-2" />
-                    <h4 class="font-semibold text-gray-900 dark:text-white text-lg">{{$t('Views.heading.try_it_on_venmail')}}</h4>
-                  </div>
-                  <p class="text-gray-600 dark:text-gray-300 text-sm mb-3 transition-colors">Managed service with automatic updates, support, and enterprise features</p>
-                  <Button @click="goToLogin" class="bg-primary-600 hover:bg-primary-700 text-white" size="sm">
-                    {{$t('Commons.button.get_started')}}
-                  </Button>
-                </div>
-                
-                <div class="border-l-4 border-gray-400 pl-6 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-r-lg">
-                  <div class="flex items-center mb-2">
-                    <GithubLogoIcon class="w-5 h-5 text-gray-600 mr-2" />
-                    <h4 class="font-semibold text-gray-900 dark:text-white text-lg">{{$t('Commons.heading.self_host')}}</h4>
-                  </div>
-                  <p class="text-gray-600 dark:text-gray-300 text-sm mb-3 transition-colors">{{$t('Views.text.deploy_on_your_own')}}</p>
-                  <Button @click="goToGithub" variant="outline" class="border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" size="sm">
-                    {{$t('Commons.button.deploy_now')}}
-                  </Button>
-                </div>
+          <p class="max-w-xl text-base leading-7 text-slate-600">
+            A modern office suite should feel unified: files, canvases, data, media, and approvals move through the same intelligent layer.
+          </p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <article v-for="pillar in productPillars" :key="pillar.title" class="suite-card">
+            <div class="mb-6 flex items-center justify-between">
+              <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100">
+                <component :is="pillar.icon" class="h-6 w-6 text-slate-900" />
               </div>
+              <span :class="['h-3 w-3 rounded-full', pillar.accent]"></span>
             </div>
+            <h3 class="text-xl font-extrabold text-slate-950">{{ pillar.title }}</h3>
+            <p class="mt-3 text-sm leading-6 text-slate-600">{{ pillar.description }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="security" class="bg-[#eef5f1] py-16">
+      <div class="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+        <div>
+          <p class="text-sm font-extrabold uppercase text-emerald-700">Trust model</p>
+          <h2 class="section-title mt-3 text-slate-950">AI should make the office faster, not leakier.</h2>
+          <p class="mt-5 text-base leading-7 text-slate-650">
+            Venmail Office keeps the AI experience tied to workspace permissions and deployment choice, so teams can move fast without giving up control.
+          </p>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div v-for="note in securityNotes" :key="note" class="rounded-lg border border-slate-900/10 bg-white p-5 shadow-sm">
+            <div class="mb-5 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
+              <Check class="h-5 w-5 text-emerald-700" />
+            </div>
+            <p class="font-bold leading-6 text-slate-850">{{ note }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- CTA -->
-    <section class="py-20 px-4 bg-gradient-to-r from-primary-500 to-primary-600">
-      <div class="container mx-auto text-center">
-        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
-          {{$t('Views.heading.ready_to_take_control')}}
-        </h2>
-        <p class="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-          {{$t('Views.text.join_thousands_of_users')}}
-        </p>
-        
-        <div class="flex flex-col sm:flex-row gap-6 justify-center">
-          <Button size="lg" variant="secondary" @click="goToLogin" class="text-lg px-8 py-4 bg-white text-primary-600 hover:bg-gray-50 shadow-lg">
-            {{$t('Views.button.try_it_on_venmail')}}
-            <span class="ml-2 text-sm opacity-75">Managed</span>
+    <section class="bg-slate-950 px-4 py-16 text-white sm:px-6 lg:px-8">
+      <div class="mx-auto grid max-w-7xl items-center gap-8 md:grid-cols-[1fr_auto]">
+        <div>
+          <div class="mb-5 flex items-center gap-3 text-sm font-bold text-cyan-300">
+            <LockKeyhole class="h-5 w-5" />
+            <span>Private by default, dazzling by design</span>
+          </div>
+          <h2 class="section-title max-w-3xl">Bring the Venmail office suite into the era of contextual AI.</h2>
+        </div>
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <Button size="lg" class="h-12 bg-cyan-500 px-6 text-base font-semibold text-slate-950 hover:bg-cyan-400" @click="goToLogin">
+            Open Suite
+            <ArrowRight class="ml-2 h-5 w-5" />
           </Button>
-          <Button size="lg" variant="outline" @click="goToGithub" class="text-lg px-8 py-4 border-2 border-white text-white hover:bg-white hover:text-primary-600 transition-all duration-200">
-            <GithubLogoIcon class="w-5 h-5 mr-2" />
-            {{$t('Commons.button.self_host')}}
-            <span class="ml-2 text-sm opacity-75">{{$t('Commons.text.free')}}</span>
+          <Button size="lg" variant="outline" class="h-12 border-white/25 bg-white/10 px-6 text-base font-semibold text-white hover:bg-white hover:text-slate-950" @click="goToGithub">
+            <Globe2 class="mr-2 h-5 w-5" />
+            Deploy your way
           </Button>
         </div>
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-gray-900 dark:bg-gray-950 text-white py-12 px-4 transition-colors">
-      <div class="container mx-auto">
-        <div class="grid md:grid-cols-4 gap-8">
-          <div>
-            <div class="flex items-center space-x-2 mb-4">
-              <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-                <FileText class="w-5 h-5 text-white" />
-              </div>
-              <span class="text-xl font-bold dark:text-white">{{$t('Commons.text.venmail_drive')}}</span>
-            </div>
-            <p class="text-gray-400 dark:text-gray-300 text-sm transition-colors">
-              {{$t('Views.text.open_source_productivity_suite')}}
-            </p>
-          </div>
-          
-          <div>
-            <h4 class="font-semibold mb-4">{{$t('Commons.heading.product')}}</h4>
-            <ul class="space-y-2 text-gray-400 dark:text-gray-300 text-sm transition-colors">
-              <li><a href="#" @click="goToApp" class="hover:text-white">{{$t('Commons.link.managed_service')}}</a></li>
-              <li><a href="#" @click="goToGithub" class="hover:text-white">Self-Hosting</a></li>
-              <li><a href="#" @click="goToGithub" class="hover:text-white">{{$t('Commons.link.documentation')}}</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 class="font-semibold mb-4">Resources</h4>
-            <ul class="space-y-2 text-gray-400 dark:text-gray-300 text-sm transition-colors">
-              <li><a href="#" @click="goToGithub" class="hover:text-white">GitHub</a></li>
-              <li><a href="#" @click="goToGithub" class="hover:text-white">{{$t('Commons.link.community')}}</a></li>
-              <li><a href="#" @click="goToLogin" class="hover:text-white">{{$t('Commons.link.support')}}</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 class="font-semibold mb-4">Company</h4>
-            <ul class="space-y-2 text-gray-400 dark:text-gray-300 text-sm transition-colors">
-              <li><a href="https://venia.cloud" class="hover:text-white">{{$t('Commons.link.about')}}</a></li>
-              <li><a href="https://venia.cloud" class="hover:text-white">{{$t('Commons.link.blog')}}</a></li>
-              <li><a href="https://venia.cloud" class="hover:text-white">{{$t('Commons.link.contact')}}</a></li>
-            </ul>
-          </div>
-        </div>
-        
-        <div class="border-t border-gray-800 dark:border-gray-700 mt-8 pt-8 text-center text-gray-400 dark:text-gray-300 text-sm transition-colors">
-          <p>&copy; 2026 Venmail Drive. Licensed under MIT.</p>
+    <footer class="bg-slate-950 px-4 pb-10 text-white sm:px-6 lg:px-8">
+      <div class="mx-auto flex max-w-7xl flex-col justify-between gap-4 border-t border-white/10 pt-8 text-sm text-slate-400 md:flex-row md:items-center">
+        <p>Copyright 2026 Venmail Office Suite.</p>
+        <div class="flex flex-wrap gap-5">
+          <a href="#workspace" class="hover:text-white">Workspace</a>
+          <a href="#suite" class="hover:text-white">Suite</a>
+          <button type="button" class="hover:text-white" @click="goToGithub">Open source</button>
         </div>
       </div>
     </footer>
-  </div>
+  </main>
 </template>
+
+<style scoped>
+.landing-shell {
+  --grid-line: rgba(15, 23, 42, 0.08);
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+.text-slate-650 {
+  color: #475569;
+}
+
+.text-slate-850 {
+  color: #172033;
+}
+
+.landing-title,
+.section-title {
+  font-family: Onest, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 720;
+  letter-spacing: 0;
+}
+
+.landing-title {
+  font-size: 2.75rem;
+  line-height: 1.08;
+}
+
+.section-title {
+  font-size: 2rem;
+  line-height: 1.18;
+}
+
+.hero-eyebrow {
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.25rem;
+}
+
+.hero-copy {
+  font-size: 1.0625rem;
+  line-height: 1.75rem;
+  font-weight: 400;
+}
+
+.office-frame {
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.18);
+}
+
+.office-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(248, 250, 252, 0.85);
+  padding: 0.85rem 1rem;
+}
+
+.office-body {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 430px;
+}
+
+.office-sidebar {
+  border-right: 1px solid rgba(15, 23, 42, 0.1);
+  background: #f8fafc;
+  padding: 1rem;
+}
+
+.ai-action {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 0.65rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.65rem;
+  background: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #334155;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.ai-action:hover {
+  border-color: rgba(8, 145, 178, 0.35);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.office-canvas {
+  min-width: 0;
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.1), transparent 34%),
+    linear-gradient(225deg, rgba(245, 158, 11, 0.12), transparent 30%),
+    #f3f6f4;
+  padding: 1rem;
+}
+
+.suite-card {
+  min-height: 240px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 0.75rem;
+  background: #ffffff;
+  padding: 1.25rem;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.suite-card:hover {
+  border-color: rgba(8, 145, 178, 0.28);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.1);
+  transform: translateY(-3px);
+}
+
+@media (max-width: 900px) {
+  .office-body {
+    grid-template-columns: 1fr;
+  }
+
+  .office-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+  }
+}
+
+@media (max-width: 640px) {
+  .office-frame {
+    border-radius: 14px;
+  }
+
+  .office-body {
+    min-height: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-title {
+    font-size: 4rem;
+    line-height: 1;
+  }
+
+  .section-title {
+    font-size: 2.75rem;
+    line-height: 1.18;
+  }
+
+  .hero-copy {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+}
+</style>

@@ -38,8 +38,19 @@ watch(() => route.name, (newRouteName) => {
     newRouteName === 'sheets-view' ||
     newRouteName === 'bin-view' // Add bin-view to keep sidebar visible
   )
-  sidebarStore.setVisible(show)
+  sidebarStore.setVisible(show && !isMobile.value)
+  if (isMobile.value) {
+    sidebarStore.setCollapsed(true)
+  }
 })
+
+watch(isMobile, (mobile) => {
+  if (mobile) {
+    sidebarStore.enforceMobileDefaults()
+  } else if (!hideLayout.value) {
+    sidebarStore.enforceDesktopDefaults()
+  }
+}, { immediate: true })
 
 const toggleSidebar = () => {
   sidebarStore.toggleVisible()
@@ -113,7 +124,7 @@ watch(isAuthenticated, async (newValue) => {
 const mainContentClasses = computed(() =>
   cn(
     'flex-1 overflow-auto',
-    'bg-gray-50 dark:bg-gray-950',
+    'bg-slate-50 dark:bg-slate-950',
     'transition-all duration-200',
     hideLayout.value ? 'w-full' : ''
   )
@@ -121,7 +132,7 @@ const mainContentClasses = computed(() =>
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
     <TopNav 
       v-if="!hideLayout"
       :isMobile="isMobile"
