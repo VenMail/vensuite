@@ -1462,7 +1462,6 @@ function onChartAction(key: string) {
       @save="() => handleMenuAction('save')"
       @toggle-chat="() => handleMenuAction('toggle-chat')"
       @export="(format) => exportComposable?.handleExport(format)"
-      @open-dialog="() => {}"
       @open-integrations="() => handleMenuAction('open-integrations')"
       @undo="() => handleMenuAction('undo')"
       @redo="() => handleMenuAction('redo')"

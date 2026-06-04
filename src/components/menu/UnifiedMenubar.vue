@@ -75,7 +75,6 @@ const emit = defineEmits([
   'save',
   'toggleChat',
   'export',
-  'open-dialog',
   'open-integrations',
   'undo',
   'redo',
@@ -159,8 +158,8 @@ async function handleNew() {
   }
 }
 
-function handleOpenDialog() {
-  emit('open-dialog')
+function handleOpenList() {
+  router.push(props.mode === 'sheet' ? '/sheets' : '/docs')
 }
 
 function handleOpenRecent(id?: string) {
@@ -241,7 +240,7 @@ function formatSelectionLabel(selection: any): string {
           <FileIcon class="h-4 w-4 mr-2" />
           New
         </MenubarItem>
-        <MenubarItem @click="handleOpenDialog">
+        <MenubarItem @click="handleOpenList">
           <FolderIcon class="h-4 w-4 mr-2" />
           {{t('Commons.button.open')}}
         </MenubarItem>
