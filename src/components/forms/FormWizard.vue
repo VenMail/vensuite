@@ -154,10 +154,10 @@
               <Lightbulb class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  {{$t('Forms.FormWizard.text.ai_generated_form_ready')}}
+                  Form draft ready
                 </p>
                 <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                  {{$t('Components.Forms.FormWizard.text.you_can_edit_any')}}
+                  You can edit any question after creating the form.
                 </p>
               </div>
             </div>
@@ -257,30 +257,74 @@ const generatedForm = ref<{
   blocks: [],
 });
 
+const makeBlock = (block: Omit<FormBlock, "id">): FormBlock => ({
+  id: crypto.randomUUID(),
+  ...block,
+});
+
 const quickTemplates = [
   {
     name: "Contact Form",
     description: "Name, email, phone, message",
     icon: FileText,
-    prompt: "A contact form with fields for full name, email address, phone number, and a message textarea",
+    form: {
+      title: "Contact Form",
+      description: t('Forms.FormWizard.text.get_in_touch_with'),
+      blocks: [
+        makeBlock({ type: "short", category: "text", question: "Full Name", placeholder: "John Doe", required: true }),
+        makeBlock({ type: "email", category: "text", question: "Email Address", placeholder: "john@example.com", required: true }),
+        makeBlock({ type: "phone", category: "text", question: "Phone Number", placeholder: "+1 (555) 000-0000", required: false }),
+        makeBlock({ type: "long", category: "text", question: "Message", placeholder: "How can we help you?", required: true }),
+      ],
+    },
   },
   {
     name: "Feedback Survey",
     description: t('Forms.FormWizard.text.rating_and_comments'),
     icon: MessageSquare,
-    prompt: "A customer feedback survey with overall rating (1-5 stars), what did you like, what could be improved, and would you recommend us (yes/no)",
+    form: {
+      title: "Feedback Survey",
+      description: t('Forms.FormWizard.text.help_us_improve_by'),
+      blocks: [
+        makeBlock({ type: "rating", category: "rating", question: "How would you rate your overall experience?", required: true, max: 5 }),
+        makeBlock({ type: "long", category: "text", question: "What did you like most?", required: false }),
+        makeBlock({ type: "long", category: "text", question: "What could we improve?", required: false }),
+        makeBlock({ type: "yesno", category: "switch", question: "Would you recommend us to others?", required: true }),
+      ],
+    },
   },
   {
     name: "Registration",
     description: t('Forms.FormWizard.text.user_signup_details'),
     icon: UserCheck,
-    prompt: "A registration form with first name, last name, email, phone number, company name, and job title",
+    form: {
+      title: "Registration Form",
+      description: t('Forms.FormWizard.text.create_your_account'),
+      blocks: [
+        makeBlock({ type: "short", category: "text", question: "First Name", required: true }),
+        makeBlock({ type: "short", category: "text", question: "Last Name", required: true }),
+        makeBlock({ type: "email", category: "text", question: "Email Address", required: true }),
+        makeBlock({ type: "phone", category: "text", question: "Phone Number", required: false }),
+        makeBlock({ type: "short", category: "text", question: "Company Name", required: false }),
+      ],
+    },
   },
   {
     name: "Order Form",
     description: t('Forms.FormWizard.text.product_and_shipping_info'),
     icon: ShoppingCart,
-    prompt: "An order form with customer name, email, shipping address, product selection dropdown, quantity, and special instructions",
+    form: {
+      title: "Order Form",
+      description: t('Forms.FormWizard.text.product_and_shipping_info'),
+      blocks: [
+        makeBlock({ type: "short", category: "text", question: "Customer Name", required: true }),
+        makeBlock({ type: "email", category: "text", question: "Email Address", required: true }),
+        makeBlock({ type: "long", category: "text", question: "Shipping Address", required: true }),
+        makeBlock({ type: "select", category: "choice", question: "Product", options: ["Product A", "Product B", "Product C"], required: true }),
+        makeBlock({ type: "short", category: "text", question: "Quantity", placeholder: "1", required: true }),
+        makeBlock({ type: "long", category: "text", question: "Special Instructions", required: false }),
+      ],
+    },
   },
 ];
 
@@ -293,7 +337,7 @@ const iconMap: Record<string, any> = {
   time: Calendar,
   radio: CheckSquare,
   checkbox: CheckSquare,
-  dropdown: ChevronDown,
+  select: ChevronDown,
   rating: Star,
   slider: Star,
   file: Upload,
@@ -314,7 +358,7 @@ const getBlockTypeLabel = (type: string): string => {
     time: "Time",
     radio: "Multiple Choice",
     checkbox: "Checkboxes",
-    dropdown: "Dropdown",
+    select: "Dropdown",
     rating: "Rating",
     slider: "Slider",
     file: "File Upload",
@@ -324,10 +368,16 @@ const getBlockTypeLabel = (type: string): string => {
 };
 
 const useTemplate = (template: typeof quickTemplates[0]) => {
-  description.value = template.prompt;
-  nextTick(() => {
-    handleGenerate();
-  });
+  generatedForm.value = {
+    title: template.form.title,
+    description: template.form.description,
+    blocks: template.form.blocks.map((block) => ({
+      ...block,
+      id: crypto.randomUUID(),
+    })),
+  };
+  generationError.value = "";
+  currentStep.value = "preview";
 };
 
 const handleGenerate = async () => {
@@ -337,13 +387,8 @@ const handleGenerate = async () => {
   currentStep.value = "generating";
 
   try {
-    // Call AI service to generate form structure
     const result = await generateFormFromDescription(description.value);
     generatedForm.value = result;
-
-    // Simulate AI processing time for better UX
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
     currentStep.value = "preview";
   } catch (error) {
     console.error("Failed to generate form:", error);
@@ -366,182 +411,12 @@ const createBlankForm = () => {
   emit("create-blank");
 };
 
-// AI Form Generation Function
 async function generateFormFromDescription(description: string): Promise<{
   title: string;
   description: string;
   blocks: FormBlock[];
 }> {
-  try {
-    const result = await generateCompleteForm(description);
-    return result;
-  } catch (error) {
-    console.error("AI generation failed:", error);
-    if (import.meta.env.DEV) {
-      return mockGenerateForm(description);
-    }
-    throw error instanceof Error
-      ? error
-      : new Error("AI form generation is unavailable.");
-  }
-}
-
-// Mock function - replace with actual AI call
-function mockGenerateForm(description: string): {
-  title: string;
-  description: string;
-  blocks: FormBlock[];
-} {
-  const lowerDesc = description.toLowerCase();
-
-  // Detect form type and generate appropriate structure
-  if (lowerDesc.includes("contact") || lowerDesc.includes("get in touch")) {
-    return {
-      title: "Contact Form",
-      description: t('Forms.FormWizard.text.get_in_touch_with'),
-      blocks: [
-        {
-          id: crypto.randomUUID(),
-          type: "short",
-          category: "text",
-          question: "Full Name",
-          placeholder: "John Doe",
-          required: true,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "email",
-          category: "text",
-          question: "Email Address",
-          placeholder: "john@example.com",
-          required: true,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "phone",
-          category: "text",
-          question: "Phone Number",
-          placeholder: "+1 (555) 000-0000",
-          required: false,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "long",
-          category: "text",
-          question: "Message",
-          placeholder: "How can we help you?",
-          required: true,
-        },
-      ],
-    };
-  } else if (lowerDesc.includes("feedback") || lowerDesc.includes("survey")) {
-    return {
-      title: "Feedback Survey",
-      description: t('Forms.FormWizard.text.help_us_improve_by'),
-      blocks: [
-        {
-          id: crypto.randomUUID(),
-          type: "rating",
-          category: "rating",
-          question: "How would you rate your overall experience?",
-          required: true,
-          max: 5,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "long",
-          category: "text",
-          question: "What did you like most?",
-          required: false,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "long",
-          category: "text",
-          question: "What could we improve?",
-          required: false,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "yesno",
-          category: "switch",
-          question: "Would you recommend us to others?",
-          required: true,
-        },
-      ],
-    };
-  } else if (lowerDesc.includes("registration") || lowerDesc.includes("signup") || lowerDesc.includes("sign up")) {
-    return {
-      title: "Registration Form",
-      description: t('Forms.FormWizard.text.create_your_account'),
-      blocks: [
-        {
-          id: crypto.randomUUID(),
-          type: "short",
-          category: "text",
-          question: "First Name",
-          required: true,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "short",
-          category: "text",
-          question: "Last Name",
-          required: true,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "email",
-          category: "text",
-          question: "Email Address",
-          required: true,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "phone",
-          category: "text",
-          question: "Phone Number",
-          required: false,
-        },
-        {
-          id: crypto.randomUUID(),
-          type: "short",
-          category: "text",
-          question: "Company Name",
-          required: false,
-        },
-      ],
-    };
-  }
-
-  // Default generic form
-  return {
-    title: "New Form",
-    description: description,
-    blocks: [
-      {
-        id: crypto.randomUUID(),
-        type: "short",
-        category: "text",
-        question: "Name",
-        required: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        type: "email",
-        category: "text",
-        question: "Email",
-        required: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        type: "long",
-        category: "text",
-        question: "Additional Information",
-        required: false,
-      },
-    ],
-  };
+  return generateCompleteForm(description);
 }
 
 onMounted(() => {

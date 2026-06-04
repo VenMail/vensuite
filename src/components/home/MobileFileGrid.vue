@@ -122,14 +122,6 @@
             variant="outline"
             size="sm"
             class="swipe-action-btn"
-            @click="handleSwipeAction('share')"
-          >
-            <Share2 class="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            class="swipe-action-btn"
             @click="handleSwipeAction('open')"
           >
             <FolderOpen class="h-4 w-4" />
@@ -142,7 +134,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Loader, FileText, Upload, FolderOpen, Share2, Trash2, FolderIcon, Search } from 'lucide-vue-next'
+import { Loader, FileText, Upload, FolderOpen, Trash2, FolderIcon, Search } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { FileData } from '@/types'
 import MobileFileItem from './MobileFileItem.vue'
@@ -184,7 +176,7 @@ const emit = defineEmits<{
   'upload-file': []
   'load-more': []
   'refresh': []
-  'swipe-action': [action: { fileId: string; action: 'delete' | 'share' | 'open' }]
+  'swipe-action': [action: { fileId: string; action: 'delete' | 'open' }]
 }>()
 
 const { isTouchDevice } = useMobileFirst()
@@ -358,7 +350,7 @@ const clearSwipeActions = () => {
   swipeActions.value.visible = false
 }
 
-const handleSwipeAction = (action: 'delete' | 'share' | 'open') => {
+const handleSwipeAction = (action: 'delete' | 'open') => {
   if (swipeActions.value.fileId) {
     emit('swipe-action', {
       fileId: swipeActions.value.fileId,

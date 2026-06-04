@@ -154,16 +154,6 @@
             variant="ghost"
             size="sm"
             class="selection-action-btn"
-            @click="$emit('share-selected')"
-          >
-            <Share2 class="h-5 w-5" />
-            <span>{{$t('Commons.button.share')}}</span>
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            class="selection-action-btn"
             @click="$emit('download-selected')"
           >
             <Download class="h-5 w-5" />
@@ -186,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, FileText, Grid3x3, Presentation, FolderPlus, Upload, Files, Clock, Search, Settings, X, FolderOpen, Share2, Download, Trash2, Expand } from 'lucide-vue-next'
+import { Plus, FileText, Grid3x3, Presentation, FolderPlus, Upload, Files, Clock, Search, Settings, X, FolderOpen, Download, Trash2, Expand } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 
@@ -207,7 +197,6 @@ defineEmits<{
   'expand-all': []
   'clear-selection': []
   'open-selected': []
-  'share-selected': []
   'download-selected': []
   'delete-selected': []
 }>()

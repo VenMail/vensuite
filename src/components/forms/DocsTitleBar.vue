@@ -358,13 +358,11 @@ function toggleDarkMode() {
 
 // Version history methods
 async function loadVersionHistory() {
-  console.log("Attempt", props.currentFileId)
   if (!props.currentFileId) return;
 
   isLoadingVersions.value = true;
   try {
     const fileStore = useFileStore();
-    console.log("loading version for ", props.currentFileId)
     const response = await fileStore.listVersions(props.currentFileId);
     if (response) {
       versionHistory.value = response.versions || [];

@@ -26,7 +26,6 @@ export async function ensureSlidesMediaFolder(): Promise<string | null> {
     );
 
     if (slidesMediaFolder && slidesMediaFolder.id) {
-      console.log('slides-media folder already exists:', slidesMediaFolder.id);
       return slidesMediaFolder.id;
     }
 
@@ -40,7 +39,6 @@ export async function ensureSlidesMediaFolder(): Promise<string | null> {
     } as FileData);
 
     if (newFolder && newFolder.id) {
-      console.log('Created slides-media folder:', newFolder.id);
       return newFolder.id;
     }
 
@@ -59,7 +57,6 @@ export async function ensureSlidesMediaFolder(): Promise<string | null> {
       } as FileData);
       
       if (newFolder && newFolder.id) {
-        console.log('Created slides-media folder (fallback):', newFolder.id);
         return newFolder.id;
       }
     } catch (fallbackError) {
@@ -100,7 +97,6 @@ export async function uploadImageToSlidesMedia(
     });
 
     if (uploadedFile) {
-      console.log('Successfully uploaded image:', uploadedFile.file_public_url);
       return uploadedFile;
     }
 

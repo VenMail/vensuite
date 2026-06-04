@@ -9,6 +9,7 @@ import SigningFieldOverlay from '@/components/signing/SigningFieldOverlay.vue';
 import FieldPalette from '@/components/signing/FieldPalette.vue';
 import SignerList from '@/components/signing/SignerList.vue';
 import type { SigningFieldType } from '@/types/signing';
+import { toast } from '@/composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
@@ -159,7 +160,7 @@ async function handleSave() {
       window.close();
     } else {
       saveError.value = null;
-      alert('Template saved successfully! You can close this tab.');
+      toast.success('Template saved successfully. You can close this tab.');
     }
   } catch (e: any) {
     if (isAuthFailure(e)) {

@@ -56,7 +56,6 @@ export function useHomeUIState() {
     const attachId = route.params?.id as string | undefined
     if (!attachId) return
 
-    console.log("importing..", attachId)
     isAttachmentDialogOpen.value = true
     attachmentDialogError.value = null
     attachmentDialogMessage.value = t('Views.Home.text.attachment_import_importing')

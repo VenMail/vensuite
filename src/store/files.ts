@@ -566,7 +566,6 @@ export const useFileStore = defineStore("files", {
               if (converted) return converted;
             } catch { }
           }
-          console.log('File uploaded successfully:', uploadedFile);
           return uploadedFile;
         }
 
@@ -965,7 +964,6 @@ export const useFileStore = defineStore("files", {
 
             this.cacheDocument(createdDoc);
             this.updateFiles(createdDoc);
-            console.log("Created new document online:", createdDoc.id);
             return createdDoc;
           }
         } catch (error) {
@@ -986,7 +984,6 @@ export const useFileStore = defineStore("files", {
 
       this.saveToLocalCache(localDoc);
       this.updateFiles(localDoc);
-      console.log("Created new document locally:", localDoc.id);
       return localDoc;
     },
 
@@ -1082,7 +1079,6 @@ export const useFileStore = defineStore("files", {
             // This was a local document that now has a server ID
             // Delete the local version and return redirect info
             this.deleteLocalDocument(document.id!);
-            console.log("Local document saved online, redirecting from", document.id, "to", saveResult.id);
 
             return {
               document: saveResult,
@@ -1742,7 +1738,6 @@ export const useFileStore = defineStore("files", {
           headers: { Authorization: `Bearer ${this.getToken()}` },
         });
         const raw = response.data?.data ?? response.data;
-        console.log("Imported attachment:", raw);
 
         if (!raw) {
           return null;

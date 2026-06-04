@@ -334,9 +334,7 @@ function copyLink() {
   emit('copy-link')
 }
 
-// FIXED: Just close the modal with debugging
 function handleDone() {
-  console.log('Done button clicked - emitting close event')
   emit('close')
 }
 

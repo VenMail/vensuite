@@ -576,11 +576,6 @@ const handleMouseLeave = () => {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
-.swipe-action-share {
-  background-color: rgb(59 130 246);
-  color: #fff;
-}
-
 .swipe-action-open {
   background-color: rgb(34 197 94);
   color: #fff;

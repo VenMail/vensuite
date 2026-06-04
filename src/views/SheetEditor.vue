@@ -1171,8 +1171,7 @@ async function createFormFromQuestions() {
     }
   } catch (error) {
     console.error('Error creating form:', error)
-    // TODO: Show user-friendly error message
-    alert('Failed to create form. Please try again.')
+    toast.error('Failed to create form. Please try again.')
   } finally {
     isConvertingToForm.value = false
   }
