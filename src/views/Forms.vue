@@ -18,6 +18,12 @@ import type { AppForm } from "@/types";
 import type { FormTemplate } from "@/composables/useFormTemplates";
 import { useMobileDetection } from '@/composables/useMobileDetection'
 
+type GlobalSearchPayload = {
+  query?: string;
+  filters?: string[];
+  context?: string;
+};
+
 const viewMode = ref<"grid" | "list">("grid");
 const selectedForm = ref<string | null>(null);
 const showShareModal = ref(false);
@@ -32,7 +38,9 @@ const {
   sortedForms, 
   formsSubtitle, 
   computeFieldCount, 
-  computeResponseCount 
+  computeResponseCount,
+  searchValue,
+  setFilter
 } = useFormFilters(formsSource);
 const { 
   showWizard, 
@@ -97,8 +105,8 @@ const topBarActions = computed(() => []);
 const stats = computed(() => []);
 const filterOptions = computed(() => []);
 const viewOptions = computed(() => []);
-const handleFilter = () => {
-  // Handle filter change
+const handleFilter = (filter: string) => {
+  setFilter(filter);
 };
 
 const actionIconClass = computed(
@@ -106,13 +114,25 @@ const actionIconClass = computed(
     "relative group rounded-full transition-all duration-200 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700",
 );
 
+function handleGlobalSearch(event: Event) {
+  const detail = (event as CustomEvent<GlobalSearchPayload>).detail || {};
+  const filter = detail.filters?.[0] || "all";
+  const validFilters = new Set(["contact", "feedback", "registration", "survey"]);
+
+  searchValue.value = detail.query || "";
+  setFilter(validFilters.has(filter) ? filter : "all");
+  selectedForm.value = null;
+}
+
 onMounted(() => {
   formStore.fetchForms(true);
   window.addEventListener("scroll", handleScroll);
+  window.addEventListener("global-search", handleGlobalSearch);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener("global-search", handleGlobalSearch);
 });
 </script>
 

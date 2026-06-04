@@ -27,6 +27,9 @@ const placeholder = computed(() => {
   const path = route.path
   if (path.includes('/docs')) return 'Search documents...'
   if (path.includes('/sheets')) return 'Search spreadsheets...'
+  if (path.includes('/forms')) return 'Search forms...'
+  if (path.includes('/slides')) return 'Search presentations...'
+  if (path.includes('/stories')) return 'Search stories...'
   if (path.includes('/media')) return 'Search media files...'
   if (path.includes('/bin')) return 'Search trash...'
   return 'Search files...'
@@ -57,6 +60,22 @@ const availableFilters = computed(() => {
       { value: 'images', label: 'Images', icon: Image },
       { value: 'videos', label: 'Videos', icon: Image },
       { value: 'audio', label: 'Audio', icon: Image },
+    ]
+  }
+
+  if (path.includes('/forms')) {
+    return [
+      { value: 'contact', label: 'Contact', icon: FileText },
+      { value: 'feedback', label: 'Feedback', icon: FileText },
+      { value: 'registration', label: 'Registration', icon: FileText },
+      { value: 'survey', label: 'Survey', icon: FileText },
+    ]
+  }
+
+  if (path.includes('/slides') || path.includes('/stories')) {
+    return [
+      { value: 'shared', label: 'Shared', icon: FileText },
+      { value: 'recent', label: 'Recent', icon: FileText },
     ]
   }
   

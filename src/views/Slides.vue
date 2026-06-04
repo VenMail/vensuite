@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import WorkspaceTopBar from "@/components/layout/WorkspaceTopBar.vue";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -70,10 +70,17 @@ interface ViewOption {
   icon?: any
   active?: boolean
 }
+type GlobalSearchPayload = {
+  query?: string;
+  filters?: string[];
+  context?: string;
+};
 
 const router = useRouter();
 const viewMode = ref<"grid" | "list">("grid");
 const selectedSlideDeck = ref<string | null>(null);
+const searchQuery = ref("");
+const activeFilter = ref("all");
 type SlideTemplate = {
   name: string;
   slug: AvnacDeckTheme;
@@ -243,7 +250,22 @@ watch(slideDecks, async (decks) => {
 const filteredSlideDecks = computed(() => {
   logSlidesViewDebug('🔄 filteredSlideDecks computed, slideDecks.value:', slideDecks.value);
   logSlidesViewDebug('🔄 slideDecks.value length:', slideDecks.value.length);
-  return slideDecks.value;
+  let decks = [...slideDecks.value];
+
+  if (activeFilter.value === "shared") {
+    decks = decks.filter(deck => deck.shared);
+  } else if (activeFilter.value === "recent") {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    decks = decks.filter(deck => new Date(deck.lastModified) >= sevenDaysAgo);
+  }
+
+  const query = searchQuery.value.trim().toLowerCase();
+  if (query) {
+    decks = decks.filter(deck => deck.title.toLowerCase().includes(query));
+  }
+
+  return decks;
 });
 
 const sortedSlideDecks = computed(() => {
@@ -271,9 +293,9 @@ const stats = computed<StatItem[]>(() => [
 ]);
 
 const filterOptions = computed<FilterItem[]>(() => [
-  { key: "all", label: "All", value: "all", icon: Presentation, active: true },
-  { key: "shared", label: "Shared", value: "shared", icon: Users, active: false },
-  { key: "recent", label: "Recent", value: "recent", icon: FileText, active: false },
+  { key: "all", label: "All", value: "all", icon: Presentation, active: activeFilter.value === "all" },
+  { key: "shared", label: "Shared", value: "shared", icon: Users, active: activeFilter.value === "shared" },
+  { key: "recent", label: "Recent", value: "recent", icon: FileText, active: activeFilter.value === "recent" },
 ]);
 
 const viewOptions = computed<ViewOption[]>(() => [
@@ -326,7 +348,7 @@ const topBarActions = computed<ActionItem[]>(() => {
 
 // Event handlers
 const handleFilter = (filter: string) => {
-  logSlidesViewDebug('Filter:', filter);
+  activeFilter.value = filter;
   selectedSlideDeck.value = null;
 };
 
@@ -334,14 +356,29 @@ const handleViewChange = (mode: "grid" | "list") => {
   viewMode.value = mode;
 };
 
+function handleGlobalSearch(event: Event) {
+  const detail = (event as CustomEvent<GlobalSearchPayload>).detail || {};
+  const filter = detail.filters?.[0] || "all";
+  const validFilters = new Set(["shared", "recent"]);
+
+  searchQuery.value = detail.query || "";
+  activeFilter.value = validFilters.has(filter) ? filter : "all";
+  selectedSlideDeck.value = null;
+}
+
 // Load slide decks on mount
 onMounted(async () => {
+  window.addEventListener("global-search", handleGlobalSearch);
   logSlidesViewDebug('🚀 Slides.vue mounted, calling fetchSlideDecks()');
   const fetchedDecks = await fetchSlideDecks();
   logSlidesViewDebug('📊 fetchSlideDecks returned:', fetchedDecks.length, 'decks');
   logSlidesViewDebug('📊 slideDecks.value after fetch:', slideDecks.value.length);
   
   logSlidesViewDebug('Slide thumbnails queued for', slideDecks.value.length, 'decks');
+});
+
+onUnmounted(() => {
+  window.removeEventListener("global-search", handleGlobalSearch);
 });
 
 // Create new presentation with template

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import WorkspaceTopBar from '@/components/layout/WorkspaceTopBar.vue';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -59,10 +59,16 @@ interface ViewOption {
   icon?: unknown;
   active?: boolean;
 }
+type GlobalSearchPayload = {
+  query?: string;
+  filters?: string[];
+  context?: string;
+};
 
 const router = useRouter();
 const viewMode = ref<'grid' | 'list'>('grid');
 const activeFilter = ref<string>('all');
+const searchQuery = ref('');
 const storyList = ref<StoryListItem[]>([]);
 const isLoading = ref(false);
 const isCreating = ref(false);
@@ -77,7 +83,14 @@ async function loadStories() {
   }
 }
 
-onMounted(loadStories);
+onMounted(() => {
+  window.addEventListener('global-search', handleGlobalSearch);
+  loadStories();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('global-search', handleGlobalSearch);
+});
 
 // ── Sorted & filtered ────────────────────────────────────────────────
 const sortedStories = computed(() => {
@@ -89,6 +102,11 @@ const sortedStories = computed(() => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     filtered = filtered.filter(s => new Date(s.lastModified) >= sevenDaysAgo);
+  }
+
+  const query = searchQuery.value.trim().toLowerCase();
+  if (query) {
+    filtered = filtered.filter(s => s.title.toLowerCase().includes(query));
   }
 
   return filtered.sort(
@@ -202,6 +220,15 @@ const handleFilter = (filter: string) => {
 const handleViewChange = (mode: 'grid' | 'list') => {
   viewMode.value = mode;
 };
+
+function handleGlobalSearch(event: Event) {
+  const detail = (event as CustomEvent<GlobalSearchPayload>).detail || {};
+  const filter = detail.filters?.[0] || 'all';
+  const validFilters = new Set(['shared', 'recent']);
+
+  searchQuery.value = detail.query || '';
+  activeFilter.value = validFilters.has(filter) ? filter : 'all';
+}
 </script>
 
 <template>
