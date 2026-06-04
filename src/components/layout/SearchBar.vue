@@ -119,6 +119,7 @@ watch(searchValue, () => {
 // Clear filters when route changes
 watch(() => route.path, () => {
   selectedFilters.value = []
+  emitSearch()
 })
 </script>
 

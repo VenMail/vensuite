@@ -355,9 +355,16 @@ type HomeSort = 'name' | 'date'
 
 type SortOption = { value: HomeSort; label: string }
 type ViewModeOption = { value: HomeViewMode; icon?: unknown; label: string; active: boolean }
+type GlobalSearchPayload = {
+  query?: string
+  filters?: string[]
+  context?: string
+}
 
 const viewMode = ref<HomeViewMode>('grid')
 const sortBy = ref<HomeSort>('date')
+const searchQuery = ref('')
+const globalTypeFilters = ref<string[]>([])
 const isUploadDialogOpen = ref(false)
 
 // Media viewer state
@@ -388,15 +395,54 @@ const itemsInCurrentFolder = computed(() => {
   )
 })
 
+const fileMatchesTypeFilter = (file: FileData, filter: string) => {
+  const type = (file.file_type || '').toLowerCase()
+
+  switch (filter) {
+    case 'documents':
+      return !file.is_folder && ['doc', 'docx', 'txt', 'rtf', 'pdf'].includes(type)
+    case 'spreadsheets':
+      return !file.is_folder && ['xls', 'xlsx', 'csv', 'ods'].includes(type)
+    case 'media':
+      return !file.is_folder && isMediaFile(type)
+    case 'folders':
+      return Boolean(file.is_folder)
+    default:
+      return !file.is_folder && type === filter
+  }
+}
+
+const filteredItems = computed(() => {
+  let files = [...itemsInCurrentFolder.value]
+  const query = searchQuery.value.trim().toLowerCase()
+
+  if (query) {
+    files = files.filter((file) => {
+      const title = (file.title || '').toLowerCase()
+      const name = (file.file_name || '').toLowerCase()
+      const type = (file.file_type || '').toLowerCase()
+      return title.includes(query) || name.includes(query) || type.includes(query)
+    })
+  }
+
+  if (globalTypeFilters.value.length > 0) {
+    files = files.filter((file) =>
+      globalTypeFilters.value.some((filter) => fileMatchesTypeFilter(file, filter))
+    )
+  }
+
+  return files
+})
+
 // Filter media files that can be viewed in the media viewer
 const viewableMediaFiles = computed(() => {
-  return itemsInCurrentFolder.value.filter(file => 
+  return filteredItems.value.filter(file => 
     !file.is_folder && isMediaFile(file.file_type) && isViewable(file.file_type)
   )
 })
 
 const sortedItems = computed(() => {
-  const list = [...itemsInCurrentFolder.value]
+  const list = [...filteredItems.value]
   if (sortBy.value === 'date') {
     return list.sort((a, b) => {
       const aTime = new Date(a.last_viewed || a.updated_at || a.created_at || 0).getTime()
@@ -761,6 +807,13 @@ function handleRename() {
   }
 }
 
+function handleGlobalSearch(event: Event) {
+  const detail = (event as CustomEvent<GlobalSearchPayload>).detail || {}
+  searchQuery.value = detail.query || ''
+  globalTypeFilters.value = Array.isArray(detail.filters) ? detail.filters : []
+  clearSelection()
+}
+
 // Media viewer handlers
 function closeMediaViewer() {
   isMediaViewerOpen.value = false
@@ -828,6 +881,7 @@ function handleOutsideClick(event: MouseEvent) {
 onMounted(async () => {
   document.title = currentTitle.value
   document.addEventListener('click', handleOutsideClick)
+  window.addEventListener('global-search', handleGlobalSearch)
   
   const offline = fileStore.loadOfflineDocuments()
   if (!fileStore.isOnline) {
@@ -851,6 +905,7 @@ watch(currentTitle, (t) => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick)
+  window.removeEventListener('global-search', handleGlobalSearch)
 })
 </script>
 

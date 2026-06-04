@@ -406,12 +406,18 @@ type ViewModeOption = {
   label: string;
   active: boolean;
 };
+type GlobalSearchPayload = {
+  query?: string;
+  filters?: string[];
+  context?: string;
+};
 
 const viewMode = ref<SheetViewMode>("grid");
 const sortBy = ref<SheetSort>("date");
 const isUploadDialogOpen = ref(false);
 const searchQuery = ref("");
 const currentFilter = ref<SheetFilter>("all");
+const globalTypeFilters = ref<string[]>([]);
 
 // Initialize explorer navigation
 const {
@@ -574,6 +580,13 @@ const filteredSpreadsheets = computed(() => {
 
   if (currentFilter.value !== "all") {
     files = files.filter(file => getSpreadsheetCategory(file.file_type) === currentFilter.value);
+  }
+
+  if (globalTypeFilters.value.length > 0) {
+    files = files.filter(file => {
+      const type = file.file_type?.toLowerCase() || "";
+      return globalTypeFilters.value.some(filter => type === filter);
+    });
   }
 
   if (searchQuery.value.trim()) {
@@ -865,10 +878,19 @@ function handleRename() {
   }
 }
 
+function handleGlobalSearch(event: Event) {
+  const detail = (event as CustomEvent<GlobalSearchPayload>).detail || {};
+  searchQuery.value = detail.query || "";
+  globalTypeFilters.value = Array.isArray(detail.filters) ? detail.filters : [];
+  if (globalTypeFilters.value.length > 0) currentFilter.value = "all";
+  clearSelection();
+}
+
 onMounted(async () => {
   document.title = currentTitle.value;
 
   document.addEventListener("click", handleOutsideClick);
+  window.addEventListener("global-search", handleGlobalSearch);
 
   await initialize();
 });
@@ -879,6 +901,7 @@ watch(currentTitle, (newTitle) => {
 
 onUnmounted(() => {
   document.removeEventListener("click", handleOutsideClick);
+  window.removeEventListener("global-search", handleGlobalSearch);
 });
 
 function handleOutsideClick(event: MouseEvent) {

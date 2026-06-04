@@ -409,12 +409,18 @@ type ViewModeOption = {
   label: string;
   active: boolean;
 };
+type GlobalSearchPayload = {
+  query?: string;
+  filters?: string[];
+  context?: string;
+};
 
 const viewMode = ref<DocumentViewMode>("grid");
 const sortBy = ref<DocumentSort>("date");
 const isUploadDialogOpen = ref(false);
 const searchQuery = ref("");
 const currentFilter = ref<DocumentFilter>("all");
+const globalTypeFilters = ref<string[]>([]);
 
 // Initialize explorer navigation
 const {
@@ -636,6 +642,17 @@ const filteredDocuments = computed(() => {
 
   if (currentFilter.value !== "all") {
     docs = docs.filter(file => getDocumentCategory(file.file_type) === currentFilter.value);
+  }
+
+  if (globalTypeFilters.value.length > 0) {
+    docs = docs.filter(file => {
+      const type = file.file_type?.toLowerCase() || "";
+      return globalTypeFilters.value.some(filter => {
+        if (filter === "docx") return documentTypeGroups.word.includes(type);
+        if (filter === "txt") return documentTypeGroups.text.includes(type);
+        return type === filter;
+      });
+    });
   }
 
   if (searchQuery.value.trim()) {
@@ -942,10 +959,19 @@ function handleRename() {
   }
 }
 
+function handleGlobalSearch(event: Event) {
+  const detail = (event as CustomEvent<GlobalSearchPayload>).detail || {};
+  searchQuery.value = detail.query || "";
+  globalTypeFilters.value = Array.isArray(detail.filters) ? detail.filters : [];
+  if (globalTypeFilters.value.length > 0) currentFilter.value = "all";
+  clearSelection();
+}
+
 onMounted(async () => {
   document.title = currentTitle.value;
 
   document.addEventListener("click", handleOutsideClick);
+  window.addEventListener("global-search", handleGlobalSearch);
 
   await initialize();
 });
@@ -956,6 +982,7 @@ watch(currentTitle, (newTitle) => {
 
 onUnmounted(() => {
   document.removeEventListener("click", handleOutsideClick);
+  window.removeEventListener("global-search", handleGlobalSearch);
 });
 
 function handleOutsideClick(event: MouseEvent) {

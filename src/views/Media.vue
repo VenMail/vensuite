@@ -315,11 +315,17 @@ type ViewModeOption = {
   label?: any
   active: boolean
 }
+type GlobalSearchPayload = {
+  query?: string
+  filters?: string[]
+  context?: string
+}
 
 const viewMode = ref<MediaViewMode>('thumbnail')
 const gridSize = ref<'small' | 'medium' | 'large'>('medium')
 const searchQuery = ref('')
 const currentFilter = ref<MediaFilter>('all')
+const globalTypeFilters = ref<string[]>([])
 const currentSort = ref<MediaSort>('date')
 
 // Initialize explorer navigation
@@ -477,6 +483,23 @@ const filteredMediaFiles = computed(() => {
           return true
       }
     })
+  }
+
+  if (globalTypeFilters.value.length > 0) {
+    files = files.filter(file =>
+      globalTypeFilters.value.some(filter => {
+        switch (filter) {
+          case 'images':
+            return isImage(file.file_type)
+          case 'videos':
+            return isVideo(file.file_type)
+          case 'audio':
+            return isAudio(file.file_type)
+          default:
+            return file.file_type?.toLowerCase() === filter
+        }
+      })
+    )
   }
 
   return files
@@ -652,6 +675,14 @@ const topBarActions = computed(() => {
 // Methods
 const handleFilter = (filter: MediaFilter) => {
   currentFilter.value = filter
+  clearSelection()
+}
+
+function handleGlobalSearch(event: Event) {
+  const detail = (event as CustomEvent<GlobalSearchPayload>).detail || {}
+  searchQuery.value = detail.query || ''
+  globalTypeFilters.value = Array.isArray(detail.filters) ? detail.filters : []
+  if (globalTypeFilters.value.length > 0) currentFilter.value = 'all'
   clearSelection()
 }
 
@@ -866,6 +897,7 @@ onMounted(async () => {
   }
 
   document.addEventListener("click", handleOutsideClick);
+  window.addEventListener("global-search", handleGlobalSearch);
 });
 
 watch(currentTitle, (newTitle) => {
@@ -874,6 +906,7 @@ watch(currentTitle, (newTitle) => {
 
 onUnmounted(() => {
   document.removeEventListener("click", handleOutsideClick);
+  window.removeEventListener("global-search", handleGlobalSearch);
 });
 
 function handleOutsideClick(event: MouseEvent) {
