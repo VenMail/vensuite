@@ -88,7 +88,7 @@ const slideTemplates: SlideTemplate[] = [
   {
     name: "Default Theme",
     slug: "default",
-    subtitle: "Clean AVNAC slide with title and content placeholders",
+    subtitle: "Clean AVNAC slide with a simple title and content layout",
     badge: "Default",
     icon: Presentation,
     previewStyle: "background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);",
