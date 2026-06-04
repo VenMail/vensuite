@@ -134,7 +134,7 @@
             </div>
             <div class="workspace-detail">
               <span class="workspace-detail-label">View</span>
-              <span class="workspace-detail-value">{{ viewMode }}</span>
+              <span class="workspace-detail-value">{{ activeViewLabel }}</span>
             </div>
           </div>
         </div>
@@ -315,7 +315,6 @@ import {
   Check,
   Edit,
   Download,
-  Share2,
   Trash2,
   X,
   TableIcon,
@@ -374,8 +373,7 @@ const {
   openFolder,
   navigateToBreadcrumb,
   navigateUp,
-  refresh,
-  initialize
+  refresh
 } = useExplorerNavigation({
   rootTitle: 'All Files',
   onNavigate: () => clearSelection()
@@ -409,9 +407,12 @@ const sortedItems = computed(() => {
   return list.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
 })
 
+const activeViewLabel = computed(() =>
+  viewControls.value.find((option) => option.value === viewMode.value)?.label || viewMode.value
+)
+
 const workspaceStats = computed(() => {
   const files = fileStore.allFiles
-  const folders = files.filter((file: FileData) => file.is_folder).length
   const docs = files.filter((file: FileData) =>
     ['doc', 'docx', 'txt', 'rtf', 'pdf'].includes((file.file_type || '').toLowerCase())
   ).length
@@ -422,7 +423,7 @@ const workspaceStats = computed(() => {
   return [
     { label: 'Files', value: files.length },
     { label: 'Docs', value: docs },
-    { label: 'Sheets', value: sheets || folders }
+    { label: 'Sheets', value: sheets }
   ]
 })
 
@@ -482,16 +483,6 @@ function buildContextMenuActions({
       close()
     }
   })
-
-  if (selectedIds.length === 1) {
-    actions.push({
-      label: 'Share',
-      icon: Share2,
-      action: () => {
-        close()
-      }
-    })
-  }
 
   return actions
 }
@@ -849,7 +840,9 @@ onMounted(async () => {
     online.forEach((d) => d.id && merged.set(d.id, d))
     fileStore.allFiles = Array.from(merged.values())
   }
-  await initialize()
+  currentFolderId.value = null
+  breadcrumbs.value = [{ id: null, title: 'All Files' }]
+  clearSelection()
 })
 
 watch(currentTitle, (t) => {

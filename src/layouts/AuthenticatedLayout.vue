@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/auth/index'
 import Sidebar from '@/views/Sidebar.vue'
-import { useFileStore } from '@/store/files'
 // import { ToastProvider } from '@/components/ui/toast'
 import TopNav from '@/components/layout/TopNav.vue'
 import { cn } from '@/lib/utils'
@@ -14,7 +13,6 @@ import { useMobileDetection } from '@/composables/useMobileDetection'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const fileStore = useFileStore()
 const { isAuthenticated } = storeToRefs(authStore)
 
 const { isMobile } = useMobileDetection({ breakpoint: 1024 })
@@ -71,7 +69,6 @@ const toggleCollapse = (collapsed: boolean) => {
 
 onMounted(async () => {
   // Handle authentication
-  console.log('hideLayout', hideLayout.value)
   const name = router.currentRoute.value.name as string | undefined
   const params: any = router.currentRoute.value.params
   const isPublicViewer = (
@@ -81,11 +78,9 @@ onMounted(async () => {
     (name === 'file' && typeof params.id === 'string')
   )
 
-  if (isAuthenticated.value) {
-    await fileStore.loadDocuments()
-  } else if (isPublicViewer) {
+  if (!isAuthenticated.value && isPublicViewer) {
     // Allow unauthenticated users to view public/link-access items without redirecting
-  } else {
+  } else if (!isAuthenticated.value) {
     await router.push({
       name: 'login',
       query: { redirect: router.currentRoute.value.fullPath }

@@ -103,7 +103,6 @@
             :alt="file.title"
             class="w-full h-full object-cover"
             @error="handleImageError"
-            @load="console.log('Image loaded:', getMediaUrl)"
           />
           
           <!-- Video Preview -->
@@ -441,9 +440,7 @@ const getMediaUrl = computed(() => {
 
 // Mobile detection - check for touch capability
 const isTouchDevice = computed(() => {
-  const touchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  console.log('FileItem isTouchDevice:', touchDevice, 'file:', props.file.title);
-  return touchDevice;
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 });
 
 const fileItemClass = computed(() => {
@@ -501,7 +498,6 @@ const handleClick = (event: MouseEvent) => {
 };
 
 const handleContextMenu = (event: MouseEvent) => {
-  console.log('FileItem handleContextMenu called for file:', props.file.title)
   // Emit context menu event with file ID and position
   emit('contextmenu-file', {
     id: props.file.id,
@@ -613,15 +609,13 @@ const onDragEnd = () => {
 };
 
 // Swipe handlers for mobile touch devices
-const handleSwipeLeft = (file: FileData) => {
-  console.log('Swipe left detected for file:', file.title);
+const handleSwipeLeft = (_file: FileData) => {
   // Swipe left typically triggers delete action
   deleteFile();
 };
 
-const handleSwipeRight = (file: FileData) => {
-  console.log('Swipe right detected for file:', file.title);
-  // Swipe right typically triggers open/share action
+const handleSwipeRight = (_file: FileData) => {
+  // Swipe right opens the item.
   openFile();
 };
 

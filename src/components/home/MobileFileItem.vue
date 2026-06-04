@@ -16,9 +16,6 @@
     <!-- Swipe Actions Background -->
     <div class="swipe-background" :class="swipeBackgroundClass">
       <div class="swipe-actions-left" v-if="swipeDirection === 'right'">
-        <div class="swipe-action swipe-action-share">
-          <Share2 class="h-5 w-5" />
-        </div>
         <div class="swipe-action swipe-action-open">
           <FolderOpen class="h-5 w-5" />
         </div>
@@ -52,7 +49,6 @@
           :alt="file.title"
           class="file-image"
           @error="handleImageError"
-          @load="handleImageLoad"
         />
         
         <!-- Video Preview -->
@@ -137,11 +133,6 @@
               <Edit class="h-4 w-4 mr-2" />
               {{$t('Commons.button.rename')}}
             </DropdownMenuItem>
-            <DropdownMenuItem @click="shareFile">
-              <Share2 class="h-4 w-4 mr-2" />
-              {{$t('Commons.button.share')}}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem @click="downloadFile" v-if="!file.is_folder">
               <Download class="h-4 w-4 mr-2" />
               {{$t('Commons.button.download')}}
@@ -167,7 +158,6 @@ import { ref, computed, nextTick, PropType } from 'vue'
 import { 
   CheckIcon, 
   Loader, 
-  Share2, 
   FolderOpen, 
   Trash2, 
   MoreVertical,
@@ -181,7 +171,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import FileIcon from '@/components/FileIcon.vue'
 import { FileData } from '@/types'
@@ -336,19 +325,14 @@ const handleClick = (event: MouseEvent) => {
   if (event.button !== 0) return
   if (target.closest('button, input')) return
   
-  // On mobile, open the file directly instead of just selecting it
-  console.log('MobileFileItem handleClick - isTouchDevice:', props.isTouchDevice, 'file:', props.file.title)
   if (props.isTouchDevice) {
-    console.log('Opening file directly on mobile')
     openFile()
   } else {
-    console.log('Selecting file on desktop')
     emit('select-file', props.file.id, event)
   }
 }
 
 const handleContextMenu = (event: MouseEvent) => {
-  console.log('MobileFileItem handleContextMenu called for file:', props.file.title)
   emit('contextmenu-file', {
     id: props.file.id,
     x: event.clientX,
@@ -506,11 +490,6 @@ const deleteFile = async () => {
   }
 }
 
-const shareFile = () => {
-  console.log('Share file:', props.file.title)
-  // Implement share functionality
-}
-
 const downloadFile = () => {
   if (props.file.file_url) {
     const link = document.createElement('a')
@@ -525,11 +504,6 @@ const downloadFile = () => {
 const handleImageError = () => {
   // Handle image loading error
   console.warn('Failed to load image:', props.file.title)
-}
-
-const handleImageLoad = () => {
-  // Handle successful image load
-  console.log('Image loaded:', props.file.title)
 }
 
 // Mouse events for desktop (when touch is not available)

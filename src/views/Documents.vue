@@ -29,7 +29,7 @@
             class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
           >
             <span>{{ sortedDocuments.length }} items</span>
-            <span v-if="selectedFiles.size > 0">• {{ selectedFiles.size }} selected</span>
+            <span v-if="selectedFiles.size > 0">&middot; {{ selectedFiles.size }} selected</span>
           </div>
         </template>
 
@@ -348,7 +348,6 @@ import {
   Trash2,
   Edit,
   Download,
-  Share2,
   Filter,
   Check,
   FileText,
@@ -516,16 +515,6 @@ function buildContextMenuActions({
       close();
     },
   });
-
-  if (numSelected === 1) {
-    actions.push({
-      label: "Share",
-      icon: Share2,
-      action: () => {
-        close();
-      },
-    });
-  }
 
   return actions;
 }
