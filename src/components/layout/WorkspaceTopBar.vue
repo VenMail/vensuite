@@ -12,9 +12,9 @@
       </div>
       
       <!-- Mobile Actions -->
-      <div v-if="hasSelection && actions?.length" class="flex items-center gap-1 shrink-0">
+      <div v-if="getVisibleActions().length" class="flex items-center gap-1 shrink-0">
         <!-- Selection Badge -->
-        <div class="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-400/10 dark:text-cyan-200">
+        <div v-if="hasSelection" class="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-800 dark:border-cyan-400/25 dark:bg-cyan-400/10 dark:text-cyan-200">
           {{ selectedCount }} selected
         </div>
         
@@ -27,8 +27,15 @@
           size="sm"
           @click="emitAction(action)"
         >
-          <component v-if="action.icon" :is="action.icon" class="h-4 w-4" />
-          <span v-if="action.mobileLabel || action.label" class="hidden sm:inline">{{ action.mobileLabel || action.label }}</span>
+          <slot
+            v-if="action.slot"
+            :name="`action-${action.slot}`"
+            :action="action"
+          />
+          <template v-else>
+            <component v-if="action.icon" :is="action.icon" class="h-4 w-4" />
+            <span v-if="action.mobileLabel || action.label" class="hidden sm:inline">{{ action.mobileLabel || action.label }}</span>
+          </template>
         </component>
         
         <!-- More Actions Button -->
@@ -129,7 +136,7 @@
       leave-from-class="transform opacity-100 scale-100"
       leave-to-class="transform opacity-0 scale-95"
     >
-      <div v-if="showMobileActions && actions?.length" class="sm:hidden mt-2">
+      <div v-if="showMobileActions && getVisibleActions().length" class="sm:hidden mt-2">
         <div class="relative">
           <!-- Dropdown Arrow -->
           <div class="absolute -top-2 right-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-gray-50 dark:border-b-gray-800"></div>
@@ -162,7 +169,12 @@
                   class="w-full justify-start px-3 py-2 h-auto hover:bg-gray-50 dark:hover:bg-gray-800 rounded-none border-0 text-left"
                   @click="emitAction(action); showMobileActions = false"
                 >
-                  <div class="flex items-center w-full">
+                  <slot
+                    v-if="action.slot"
+                    :name="`action-${action.slot}`"
+                    :action="action"
+                  />
+                  <div v-else class="flex items-center w-full">
                     <component v-if="action.icon" :is="action.icon" class="h-4 w-4 mr-3 flex-shrink-0 text-gray-500 dark:text-gray-400" />
                     <div class="flex-1 text-left">
                       <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ action.mobileLabel || action.label }}</div>
