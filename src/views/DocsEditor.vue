@@ -779,6 +779,36 @@ function handlePrint() {
   try { canvasInstance.command.executePrint(); } catch { window.print(); }
 }
 
+function normalizeDocxExportContent(root: HTMLElement) {
+  const supported = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'OL', 'UL', 'TABLE']);
+
+  if (!root.children.length && root.textContent?.trim()) {
+    const p = document.createElement('p');
+    p.textContent = root.textContent;
+    root.textContent = '';
+    root.appendChild(p);
+    return;
+  }
+
+  for (const child of Array.from(root.children)) {
+    if (supported.has(child.tagName)) continue;
+
+    const supportedDescendants = Array.from(child.children).filter((el) => supported.has(el.tagName));
+    if (supportedDescendants.length) {
+      child.replaceWith(...Array.from(child.childNodes));
+      continue;
+    }
+
+    if (child.textContent?.trim()) {
+      const p = document.createElement('p');
+      p.innerHTML = child.innerHTML;
+      child.replaceWith(p);
+    } else {
+      child.remove();
+    }
+  }
+}
+
 async function handleExport(format: string) {
   if (!canvasInstance) return;
   const title = documentTitle.value || 'document';
@@ -962,14 +992,48 @@ async function handleExport(format: string) {
 
   if (format === 'docx') {
     try {
-      toast.info('Exporting...');
+      toast.info('Exporting DOCX...');
       const html = canvasInstance.command.getHTML?.()?.main ?? '';
-      const blob = new Blob([`<!DOCTYPE html><html><body>${html}</body></html>`], { type: 'text/html' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a'); a.href = url; a.download = `${title}.html`; a.click();
-      URL.revokeObjectURL(url);
-      toast.success('Exported as HTML (open in Word to convert to DOCX)');
-    } catch { toast.error('Export failed'); }
+      if (!html.trim()) {
+        toast.error('No content to export');
+        return;
+      }
+
+      const pageTwips: Record<string, { width: number; height: number }> = {
+        a4: { width: 11907, height: 16838 },
+        a3: { width: 16838, height: 23811 },
+        letter: { width: 12240, height: 15840 },
+        legal: { width: 12240, height: 20160 },
+      };
+      const basePageSize = pageTwips[pageSettings.pageSize] ?? pageTwips.a4;
+      const pageSize = pageSettings.pageOrientation === 'landscape'
+        ? { width: basePageSize.height, height: basePageSize.width }
+        : basePageSize;
+
+      const container = document.createElement('div');
+      const body = document.createElement('div');
+      body.innerHTML = html;
+      normalizeDocxExportContent(body);
+      container.appendChild(body);
+
+      const { exportToDocx } = await import('@/export/export');
+      await exportToDocx(container, {
+        fileName: `${title}.docx`,
+        toDownload: true,
+        pageSize,
+        margins: {
+          top: Math.round(pageSettings.marginTop * 15),
+          right: Math.round(pageSettings.marginRight * 15),
+          bottom: Math.round(pageSettings.marginBottom * 15),
+          left: Math.round(pageSettings.marginLeft * 15),
+        },
+        orientation: pageSettings.pageOrientation,
+      });
+      toast.success('DOCX exported');
+    } catch (err) {
+      console.error('[docs] DOCX export error', err);
+      toast.error('Failed to export DOCX');
+    }
     return;
   }
 
