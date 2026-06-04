@@ -815,7 +815,7 @@ async function handleExport(format: string) {
 
   if (format === 'pdf') {
     try {
-      toast.info('Generating PDF…');
+      toast.info('Preparing print-ready PDF...');
 
       // ── Page size map (mm) for html2canvas/print ──────────────────────────
       const PAGE_MM: Record<string, [number, number]> = {
@@ -958,7 +958,7 @@ async function handleExport(format: string) {
 
         // Clean up after the dialog closes (browsers keep it open during print)
         setTimeout(() => { try { document.body.removeChild(iframe); } catch {} }, 3000);
-        toast.success('Print dialog opened — choose "Save as PDF" to download');
+        toast.success('Print dialog opened. Choose "Save as PDF" to download.');
 
       } else {
         // ── Fallback: image-based PDF (no text selection but always works) ──

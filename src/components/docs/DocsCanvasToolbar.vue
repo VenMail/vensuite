@@ -106,7 +106,7 @@
 
       <!-- Export -->
       <div class="flex items-center gap-0.5">
-        <button type="button" title="Export PDF" class="toolbar-btn" @click="emit('export', 'pdf')"><FileDown class="h-4 w-4" /></button>
+        <button type="button" title="Open print dialog to save as PDF" class="toolbar-btn" @click="emit('export', 'pdf')"><FileDown class="h-4 w-4" /></button>
         <button type="button" title="Export Word" class="toolbar-btn" @click="emit('export', 'docx')"><FileText class="h-4 w-4" /></button>
         <button type="button" title="Print" class="toolbar-btn" @click="emit('print')"><Printer class="h-4 w-4" /></button>
       </div>
