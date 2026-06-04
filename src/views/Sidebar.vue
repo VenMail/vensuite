@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft, BookOpen, Bot, Sparkles } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft, BookOpen } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useRouter, useRoute } from 'vue-router'
 import { t } from '@/i18n'
@@ -244,19 +244,6 @@ function createNewFile(type: string, template?: string) {
           </nav>
         </div>
 
-        <div v-if="!props.isCollapsed" class="m-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/70">
-          <div class="flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-white">
-            <Bot class="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
-            Workspace AI
-          </div>
-          <p class="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-            Context follows your files, forms, decks, and sheets.
-          </p>
-          <div class="mt-3 flex items-center gap-1.5 text-xs font-bold text-cyan-700 dark:text-cyan-300">
-            <Sparkles class="h-3.5 w-3.5" />
-            Ready for commands
-          </div>
-        </div>
       </div>
     </div>
 

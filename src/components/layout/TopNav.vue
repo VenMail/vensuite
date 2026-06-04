@@ -1,8 +1,6 @@
 <script setup lang="ts">
   import {
-    Bot,
-    Menu,
-    Sparkles
+    Menu
   } from 'lucide-vue-next'
   import {
     inject
@@ -73,12 +71,6 @@
 
       <!-- Right section: Language switcher + User Profile -->
       <div class="flex items-center space-x-3">
-        <div v-if="!props.isMobile" class="hidden items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-bold text-cyan-800 dark:border-cyan-400/20 dark:bg-cyan-400/10 dark:text-cyan-200 lg:flex">
-          <Bot class="h-4 w-4" />
-          <span>AI ready</span>
-          <Sparkles class="h-3.5 w-3.5" />
-        </div>
-
         <LanguageSwitcher :isMobile="props.isMobile" />
 
         <UserProfile :isMobile="props.isMobile" />

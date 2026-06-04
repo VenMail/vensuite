@@ -99,40 +99,43 @@
         </template>
       </WorkspaceTopBar>
 
-      <section class="workspace-command-panel">
-        <div class="ai-briefing">
+      <section class="workspace-overview-panel">
+        <div class="workspace-briefing">
           <div class="flex items-start gap-3">
-            <div class="ai-briefing-icon">
-              <BrainCircuit class="h-6 w-6" />
+            <div class="workspace-briefing-icon">
+              <FolderKanban class="h-6 w-6" />
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <p class="text-xs font-extrabold uppercase text-cyan-700 dark:text-cyan-300">
-                  Venmail AI
+                  Workspace
                 </p>
                 <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
                   {{ fileStore.isOnline ? 'Synced' : 'Offline ready' }}
                 </span>
               </div>
               <h1 class="workspace-title mt-2 text-slate-950 dark:text-white">
-                Your workspace is ready for the next move.
+                {{ currentTitle }}
               </h1>
               <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Create, analyze, summarize, and organize office work from the same command surface.
+                Browse, create, upload, sort, and organize documents, spreadsheets, slides, forms, media, and folders.
               </p>
             </div>
           </div>
 
-          <div class="mt-5 grid gap-2 sm:grid-cols-2">
-            <button
-              v-for="suggestion in aiSuggestions"
-              :key="suggestion"
-              type="button"
-              class="ai-suggestion"
-            >
-              <Sparkles class="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
-              <span>{{ suggestion }}</span>
-            </button>
+          <div class="mt-5 grid gap-2 sm:grid-cols-3">
+            <div class="workspace-detail">
+              <span class="workspace-detail-label">Current folder</span>
+              <span class="workspace-detail-value">{{ currentTitle }}</span>
+            </div>
+            <div class="workspace-detail">
+              <span class="workspace-detail-label">Selected</span>
+              <span class="workspace-detail-value">{{ selectedFiles.size }} items</span>
+            </div>
+            <div class="workspace-detail">
+              <span class="workspace-detail-label">View</span>
+              <span class="workspace-detail-value">{{ viewMode }}</span>
+            </div>
           </div>
         </div>
 
@@ -316,8 +319,6 @@ import {
   Trash2,
   X,
   TableIcon,
-  BrainCircuit,
-  Sparkles,
   Presentation
 } from 'lucide-vue-next'
 import Button from '@/components/ui/button/Button.vue'
@@ -424,13 +425,6 @@ const workspaceStats = computed(() => {
     { label: 'Sheets', value: sheets || folders }
   ]
 })
-
-const aiSuggestions = [
-  'Summarize selected files',
-  'Turn uploads into a client deck',
-  'Find stale documents',
-  'Create a project brief'
-]
 
 const quickCreateActions = computed(() => [
   { label: 'Doc', icon: FileText, onClick: createNewDocument },
@@ -900,7 +894,7 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.workspace-command-panel {
+.workspace-overview-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 22rem;
   gap: 1rem;
@@ -914,7 +908,7 @@ onUnmounted(() => {
   letter-spacing: 0;
 }
 
-.ai-briefing,
+.workspace-briefing,
 .workspace-side-panel {
   border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 0.75rem;
@@ -923,7 +917,7 @@ onUnmounted(() => {
   backdrop-filter: blur(18px);
 }
 
-.ai-briefing {
+.workspace-briefing {
   padding: 1rem;
 }
 
@@ -931,14 +925,14 @@ onUnmounted(() => {
   padding: 0.85rem;
 }
 
-.dark .ai-briefing,
+.dark .workspace-briefing,
 .dark .workspace-side-panel {
   border-color: rgba(148, 163, 184, 0.18);
   background: rgba(15, 23, 42, 0.76);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
 }
 
-.ai-briefing-icon {
+.workspace-briefing-icon {
   display: flex;
   height: 3rem;
   width: 3rem;
@@ -950,32 +944,48 @@ onUnmounted(() => {
   color: #67e8f9;
 }
 
-.ai-suggestion {
+.workspace-detail {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 2.75rem;
+  min-height: 3.1rem;
+  flex-direction: column;
+  justify-content: center;
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 0.65rem;
   background: rgba(248, 250, 252, 0.9);
   padding: 0.65rem 0.8rem;
   text-align: left;
-  font-size: 0.8125rem;
-  font-weight: 650;
-  line-height: 1.25rem;
   color: #334155;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
-.ai-suggestion:hover {
-  border-color: rgba(8, 145, 178, 0.36);
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
-  transform: translateY(-1px);
+.workspace-detail-label {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  line-height: 1rem;
+  color: #64748b;
+  text-transform: uppercase;
 }
 
-.dark .ai-suggestion {
+.workspace-detail-value {
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  color: #0f172a;
+}
+
+.dark .workspace-detail {
   border-color: rgba(148, 163, 184, 0.16);
   background: rgba(30, 41, 59, 0.72);
+}
+
+.dark .workspace-detail-label {
+  color: #94a3b8;
+}
+
+.dark .workspace-detail-value {
   color: #e2e8f0;
 }
 
@@ -1010,13 +1020,13 @@ onUnmounted(() => {
 }
 
 @media (max-width: 1180px) {
-  .workspace-command-panel {
+  .workspace-overview-panel {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
-  .workspace-command-panel {
+  .workspace-overview-panel {
     gap: 0.75rem;
   }
 
@@ -1025,7 +1035,7 @@ onUnmounted(() => {
     line-height: 1.25;
   }
 
-  .ai-briefing,
+  .workspace-briefing,
   .workspace-side-panel {
     border-radius: 0.65rem;
   }
