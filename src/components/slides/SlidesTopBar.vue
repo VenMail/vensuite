@@ -89,7 +89,6 @@
         <button
           v-else
           class="stb-dd__item"
-          :disabled="item.disabled"
           @click="handleAction(item.id)"
         >
           <span class="stb-dd__label">{{ item.label }}</span>
@@ -182,7 +181,7 @@ const statusClass = computed(() => ({
 
 // ─── Menu definitions ────────────────────────────────────────────────────────
 type MenuSep = { sep: true }
-type MenuAction = { id: string; label: string; shortcut?: string; disabled?: boolean }
+type MenuAction = { id: string; label: string; shortcut?: string }
 type MenuItem = MenuSep | MenuAction
 
 const MENUS: Array<{ id: string; label: string; items: MenuItem[] }> = [
@@ -268,20 +267,6 @@ const MENUS: Array<{ id: string; label: string; items: MenuItem[] }> = [
       { id: 'del-slide', label: 'Delete slide' },
     ],
   },
-  {
-    id: 'format',
-    label: 'Format',
-    items: [
-      { id: 'format-stub', label: 'Format options (coming soon)', disabled: true },
-    ],
-  },
-  {
-    id: 'tools',
-    label: 'Tools',
-    items: [
-      { id: 'tools-stub', label: 'Tools (coming soon)', disabled: true },
-    ],
-  },
 ]
 
 // ─── Dropdown state ──────────────────────────────────────────────────────────
@@ -333,26 +318,32 @@ function handleAction(id: string) {
   const mutatingActions = new Set([
     'undo',
     'redo',
+    'new-deck',
     'import-pptx',
     'rename',
+    'size-wide',
+    'size-standard',
+    'size-square',
+    'size-portrait',
+    'size-a4',
     'add-text',
     'add-image',
     'add-slide',
-    'duplicate-slide',
-    'delete-slide',
-    'shape-rect',
-    'shape-circle',
-    'shape-triangle',
-    'shape-line',
-    'shape-arrow',
-    'smart-table',
-    'smart-chart',
-    'smart-icon',
-    'smart-diagram',
-    'smart-mockup',
-    'canvas-16-9',
-    'canvas-4-3',
-    'canvas-a4',
+    'add-rect',
+    'add-ellipse',
+    'add-polygon',
+    'add-star',
+    'add-line',
+    'add-arrow',
+    'smart-pyramid',
+    'smart-funnel',
+    'smart-timeline-h',
+    'smart-cycle',
+    'smart-matrix-2x2',
+    'smart-flowchart',
+    'smart-organogram',
+    'dup-slide',
+    'del-slide',
   ])
   if (props.readOnly && mutatingActions.has(id)) return
   switch (id) {
@@ -587,8 +578,7 @@ function handleAction(id: string) {
   gap: 16px;
 }
 
-.stb-dd__item:hover:not(:disabled) { background: #f4f4f5; }
-.stb-dd__item:disabled { color: #a1a1aa; cursor: not-allowed; }
+.stb-dd__item:hover { background: #f4f4f5; }
 
 .stb-dd__label { flex: 1; }
 
