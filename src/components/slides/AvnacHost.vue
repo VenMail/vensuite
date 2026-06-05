@@ -127,6 +127,7 @@
             </div>
             <EditorFloatingSidebar
               :active-panel="activePanel"
+              :disabled="props.readOnly"
               @select-panel="togglePanel"
               @insert-text="onAddText"
               @insert-image="onAddImage"
