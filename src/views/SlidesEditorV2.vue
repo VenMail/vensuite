@@ -719,6 +719,7 @@ onBeforeRouteLeave(async () => {
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
   window.addEventListener('beforeunload', onBeforeUnload)
+  document.title = title.value
   const template = route.params.template as string | undefined
   if (template) {
     const theme = resolveAvnacDeckTheme(template)
