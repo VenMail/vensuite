@@ -216,7 +216,7 @@
             <span
               class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              {{ isAllSelected ? $t('Commons.text.select_file') : $t('Commons.label.select_all') }}
+              {{ isAllSelected ? $t('Commons.text.deselect_all') : $t('Commons.label.select_all') }}
             </span>
           </div>
 
@@ -246,7 +246,7 @@
                   'text-sm font-medium text-gray-700 dark:text-gray-300',
                 ]"
               >
-                {{ isAllSelected ? $t('Commons.text.select_file') : $t('Commons.label.select_all') }}
+                {{ isAllSelected ? $t('Commons.text.deselect_all') : $t('Commons.label.select_all') }}
               </span>
             </Button>
 
