@@ -1592,17 +1592,17 @@ defineExpose({
     padding: 8px 6px;
   }
 
-  .avnac-bottom-bar-content :deep(.avnac-zoom-bar) {
+  .avnac-bottom-bar-content .avnac-zoom-bar {
     gap: 4px;
     padding: 4px 6px;
   }
 
-  .avnac-bottom-bar-content :deep(.avnac-zoom-bar .w-24) {
+  .avnac-bottom-bar-content .avnac-zoom-bar .w-24 {
     width: 4.5rem;
   }
 
-  .avnac-bottom-bar-content :deep(.avnac-zoom-pct-btn),
-  .avnac-bottom-bar-content :deep(.avnac-zoom-pct-text) {
+  .avnac-bottom-bar-content .avnac-zoom-pct-btn,
+  .avnac-bottom-bar-content .avnac-zoom-pct-text {
     min-width: 2.5rem;
     padding-inline: 4px;
   }
