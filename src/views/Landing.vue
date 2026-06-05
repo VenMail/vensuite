@@ -16,25 +16,25 @@ const productPillars = [
   {
     icon: FileText,
     title: 'Docs',
-    description: 'Structured writing, rich layouts, comments, PDF import, and collaborative editing in one canvas.',
+    description: 'Create and edit documents with rich formatting, comments, and Venmail file storage.',
     accent: 'bg-sky-500',
   },
   {
     icon: Table2,
     title: 'Sheets',
-    description: 'Fast workbooks with formulas, charts, analysis views, and data-ready collaboration.',
+    description: 'Work with spreadsheets, formulas, charts, CSV files, and XLSX workbooks.',
     accent: 'bg-emerald-500',
   },
   {
     icon: Presentation,
     title: 'Slides',
-    description: 'Create polished decks with themes, speaker flow, and reusable visual systems.',
+    description: 'Build slide decks with themes, speaker notes, reusable layouts, and sharing.',
     accent: 'bg-violet-500',
   },
   {
     icon: FolderKanban,
     title: 'Forms',
-    description: 'Collect responses, payments, signatures, and approvals without sending work elsewhere.',
+    description: 'Build forms, collect responses, configure payments, and manage sharing.',
     accent: 'bg-amber-500',
   },
 ]
@@ -102,7 +102,7 @@ const goToGithub = () => {
         </h1>
 
         <p class="hero-copy mx-auto mt-5 max-w-2xl text-slate-650">
-          Documents, sheets, slides, forms, signing, media, and file rooms in one connected workspace for Venmail teams.
+          Documents, sheets, slides, forms, signing, media, stories, and files in one connected Venmail workspace.
         </p>
 
         <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
@@ -120,8 +120,8 @@ const goToGithub = () => {
       <div id="workspace" class="relative z-10 mx-auto mt-12 w-full max-w-6xl">
         <div class="suite-visual">
           <div class="suite-visual-header">
-            <span class="text-sm font-bold text-slate-700">Vensuite workspace</span>
-            <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Live workspace</span>
+            <span class="text-sm font-bold text-slate-700">Workspace modules</span>
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Actual product areas</span>
           </div>
 
           <div class="suite-visual-grid">
@@ -146,7 +146,7 @@ const goToGithub = () => {
             </h2>
           </div>
           <p class="max-w-xl text-base leading-7 text-slate-600">
-            A modern office suite should feel unified: files, canvases, data, media, and approvals move through the same workspace.
+            Files, canvases, data, media, and form responses stay close to the same Venmail account and navigation model.
           </p>
         </div>
 
@@ -171,7 +171,7 @@ const goToGithub = () => {
           <p class="text-sm font-extrabold uppercase text-emerald-700">Trust model</p>
           <h2 class="section-title mt-3 text-slate-950">The office suite should stay under your control.</h2>
           <p class="mt-5 text-base leading-7 text-slate-650">
-            Venmail Office keeps work tied to workspace permissions and deployment choice, so teams can move fast without giving up control.
+            Venmail Office keeps work tied to workspace access and deployment choice, so teams can move quickly without losing ownership of their tools.
           </p>
         </div>
 
