@@ -870,11 +870,9 @@ async function openFile(id: string) {
   }
 
   const ext = file.file_type?.toLowerCase();
-  const isPdf = ext === "pdf";
-  const fileUrl = file.file_public_url || file.file_url;
 
-  if (isPdf && fileUrl) {
-    window.open(fileUrl, "_blank", "noopener,noreferrer");
+  if (ext === "pdf") {
+    router.push({ name: "file", params: { id } });
     return;
   }
 
