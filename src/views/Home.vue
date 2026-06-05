@@ -64,7 +64,7 @@
         <template #action-new>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" :class="actionIconClass">
+              <Button variant="ghost" size="icon" :class="actionIconClass" title="Create item" aria-label="Create item">
                 <Plus class="h-5 w-5 text-primary-600" />
               </Button>
             </DialogTrigger>
@@ -580,6 +580,16 @@ const viewControls = computed<ViewModeOption[]>(() => [
 const actionIconClass =
   'relative group rounded-full transition-all duration-200 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700'
 
+function iconActionProps(label: string) {
+  return {
+    variant: 'ghost' as const,
+    size: 'icon' as const,
+    class: actionIconClass,
+    title: label,
+    'aria-label': label
+  }
+}
+
 const firstSelectedId = computed(() =>
   selectedFiles.value.size > 0 ? Array.from(selectedFiles.value)[0] : null
 )
@@ -590,7 +600,7 @@ const topBarActions = computed(() => {
       key: 'create-folder',
       icon: FolderPlusIcon,
       component: Button,
-      props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+      props: iconActionProps('Create folder'),
       onClick: createNewFolder,
       requiresSelection: false
     },
@@ -598,7 +608,7 @@ const topBarActions = computed(() => {
       key: 'upload',
       icon: Upload,
       component: Button,
-      props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+      props: iconActionProps('Upload files'),
       onClick: openUploadDialog,
       requiresSelection: false
     },
@@ -617,7 +627,7 @@ const topBarActions = computed(() => {
           key: 'open',
           icon: FolderOpen,
           component: Button,
-          props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+          props: iconActionProps('Open selected item'),
           onClick: () => openFile(firstSelectedId.value as string),
           requiresSelection: true
         },
@@ -625,7 +635,7 @@ const topBarActions = computed(() => {
           key: 'rename',
           icon: Edit,
           component: Button,
-          props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+          props: iconActionProps('Rename selected item'),
           onClick: handleRename,
           requiresSelection: true
         }
@@ -636,7 +646,7 @@ const topBarActions = computed(() => {
         key: 'download',
         icon: Download,
         component: Button,
-        props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+        props: iconActionProps('Download selected items'),
         onClick: handleBulkDownload,
         requiresSelection: true
       },
@@ -644,7 +654,7 @@ const topBarActions = computed(() => {
         key: 'delete',
         icon: Trash2,
         component: Button,
-        props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+        props: iconActionProps('Move selected items to trash'),
         onClick: handleBulkDelete,
         requiresSelection: true
       },
@@ -652,7 +662,7 @@ const topBarActions = computed(() => {
         key: 'clear',
         icon: X,
         component: Button,
-        props: { variant: 'ghost' as const, size: 'icon' as const, class: actionIconClass },
+        props: iconActionProps('Clear selection'),
         onClick: () => clearSelection(),
         requiresSelection: true
       }

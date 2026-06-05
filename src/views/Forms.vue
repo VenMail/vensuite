@@ -165,6 +165,7 @@ onBeforeUnmount(() => {
           size="icon"
           :class="actionIconClass"
           title="Create form"
+          aria-label="Create form"
           @click="showTemplateDialog = true"
         >
           <Plus class="h-5 w-5 text-primary-600" />

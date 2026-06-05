@@ -46,7 +46,7 @@
         props.isMobile ? 'space-x-2' : 'space-x-6'
       )">
         <!-- Hamburger menu button (mobile only) -->
-        <button v-if="props.isMobile" @click="emit('toggleSidebar')" :class="cn(
+        <button v-if="props.isMobile" @click="emit('toggleSidebar')" aria-label="Open navigation" title="Open navigation" :class="cn(
           'inline-flex items-center justify-center py-2 px-3 rounded-sm',
           'text-gray-600 dark:text-gray-300',
           'hover:text-gray-800 dark:hover:text-gray-100',

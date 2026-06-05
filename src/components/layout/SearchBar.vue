@@ -178,18 +178,23 @@ watch(() => route.path, () => {
           props.isMobile ? 'text-sm' : 'text-base'
         )"
       />
-      <X 
+      <button
         v-if="searchValue"
+        type="button"
+        aria-label="Clear search"
+        title="Clear search"
         @click="clearSearch"
         :class="cn(
-          'text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 flex-shrink-0',
+          'inline-flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex-shrink-0',
           props.isMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'
         )"
-      />
+      >
+        <X class="h-full w-full" />
+      </button>
       
       <DropdownMenu v-if="!props.isMobile">
         <DropdownMenuTrigger as-child>
-          <div class="relative cursor-pointer">
+          <button type="button" class="relative cursor-pointer" aria-label="Filter search results" title="Filter search results">
             <Filter 
               :class="cn(
                 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 flex-shrink-0',
@@ -203,7 +208,7 @@ watch(() => route.path, () => {
             >
               {{ selectedFilters.length }}
             </Badge>
-          </div>
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-56">
           <div class="px-2 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300">

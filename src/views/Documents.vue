@@ -104,6 +104,8 @@
                 variant="ghost"
                 size="icon"
                 :class="actionIconClass"
+                title="Create document"
+                aria-label="Create document"
               >
                 <Plus class="h-5 w-5 text-primary-600" />
               </Button>
@@ -714,6 +716,16 @@ const actionIconClass = computed(
     "relative group rounded-full transition-all duration-200 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700",
 );
 
+function iconActionProps(label: string) {
+  return {
+    variant: "ghost" as const,
+    size: "icon" as const,
+    class: actionIconClass.value,
+    title: label,
+    "aria-label": label,
+  };
+}
+
 const firstSelectedId = computed(() =>
   selectedFiles.value.size > 0 ? Array.from(selectedFiles.value)[0] : null,
 );
@@ -724,7 +736,7 @@ const topBarActions = computed(() => {
       key: "create-folder",
       icon: FolderPlusIcon,
       component: Button,
-      props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+      props: iconActionProps("Create folder"),
       onClick: createNewFolder,
       requiresSelection: false,
     },
@@ -732,7 +744,7 @@ const topBarActions = computed(() => {
       key: "upload",
       icon: Upload,
       component: Button,
-      props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+      props: iconActionProps("Upload documents"),
       onClick: openUploadDialog,
       requiresSelection: false,
     },
@@ -750,7 +762,7 @@ const topBarActions = computed(() => {
         key: "open",
         icon: FolderOpen,
         component: Button,
-        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        props: iconActionProps("Open selected document"),
         onClick: () => openFile(firstSelectedId.value as string),
         requiresSelection: true,
       });
@@ -759,7 +771,7 @@ const topBarActions = computed(() => {
         key: "rename",
         icon: Edit,
         component: Button,
-        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        props: iconActionProps("Rename selected document"),
         onClick: handleRename,
         requiresSelection: true,
       });
@@ -770,7 +782,7 @@ const topBarActions = computed(() => {
         key: "download",
         icon: Download,
         component: Button,
-        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        props: iconActionProps("Download selected documents"),
         onClick: handleBulkDownload,
         requiresSelection: true,
       },
@@ -778,7 +790,7 @@ const topBarActions = computed(() => {
         key: "delete",
         icon: Trash2,
         component: Button,
-        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        props: iconActionProps("Move selected documents to trash"),
         onClick: handleBulkDelete,
         requiresSelection: true,
       },
@@ -786,7 +798,7 @@ const topBarActions = computed(() => {
         key: "clear",
         icon: X,
         component: Button,
-        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        props: iconActionProps("Clear selection"),
         onClick: () => clearSelection(),
         requiresSelection: true,
       }

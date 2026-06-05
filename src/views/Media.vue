@@ -616,28 +616,30 @@ const actionClass = computed(() =>
   "relative group rounded-full transition-all duration-200 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700"
 )
 
+function iconActionProps(label: string) {
+  return {
+    variant: 'ghost' as const,
+    size: 'icon' as const,
+    class: actionClass.value,
+    title: label,
+    'aria-label': label
+  }
+}
+
 const topBarActions = computed(() => {
   const actions = [
     {
       key: 'create-folder',
       icon: FolderPlusIcon,
       component: Button,
-      props: {
-        variant: 'ghost',
-        size: 'icon',
-        class: actionClass.value
-      },
+      props: iconActionProps('Create folder'),
       onClick: handleCreateFolder
     },
     {
       key: 'upload-media',
       icon: Upload,
       component: Button,
-      props: {
-        variant: 'ghost',
-        size: 'icon',
-        class: actionClass.value
-      },
+      props: iconActionProps('Upload media'),
       onClick: openUploadDialog
     }
   ]
@@ -648,22 +650,14 @@ const topBarActions = computed(() => {
         key: 'bulk-download',
         icon: Download,
         component: Button,
-        props: {
-          variant: 'ghost',
-          size: 'icon',
-          class: actionClass.value
-        },
+        props: iconActionProps('Download selected media'),
         onClick: handleBulkDownload
       },
       {
         key: 'bulk-delete',
         icon: Trash2,
         component: Button,
-        props: {
-          variant: 'ghost',
-          size: 'icon',
-          class: actionClass.value
-        },
+        props: iconActionProps('Move selected media to trash'),
         onClick: handleBulkDelete
       }
     )

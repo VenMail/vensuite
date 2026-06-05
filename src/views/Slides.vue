@@ -300,6 +300,16 @@ const actionIconClass = computed(
     "relative group rounded-full transition-all duration-200 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700",
 );
 
+function iconActionProps(label: string) {
+  return {
+    variant: "ghost" as const,
+    size: "icon" as const,
+    class: actionIconClass.value,
+    title: label,
+    "aria-label": label,
+  };
+}
+
 const topBarActions = computed<ActionItem[]>(() => {
   const actions: ActionItem[] = [
     {
@@ -311,7 +321,7 @@ const topBarActions = computed<ActionItem[]>(() => {
       key: "refresh",
       icon: RefreshCw,
       component: Button,
-      props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+      props: iconActionProps("Refresh presentations"),
       onClick: () => refreshSlideDecks(),
     },
   ];
@@ -322,14 +332,14 @@ const topBarActions = computed<ActionItem[]>(() => {
         key: "edit",
         icon: Settings,
         component: Button,
-        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        props: iconActionProps("Edit selected presentation"),
         onClick: () => editSlideDeck(selectedSlideDeck.value!),
       },
       {
         key: "clear",
         icon: X,
         component: Button,
-        props: { variant: "ghost", size: "icon", class: actionIconClass.value },
+        props: iconActionProps("Clear selection"),
         onClick: () => { selectedSlideDeck.value = null; },
       },
     );
@@ -427,6 +437,8 @@ async function refreshSlideDecks() {
               variant="ghost"
               size="icon"
               :class="actionIconClass"
+              title="Create presentation"
+              aria-label="Create presentation"
             >
               <Plus class="h-5 w-5 text-primary-600" />
             </Button>

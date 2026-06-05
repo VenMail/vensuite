@@ -198,19 +198,29 @@ const viewOptions = computed<ViewOption[]>(() => [
 const actionIconClass =
   'relative group rounded-full transition-all duration-200 shrink-0 hover:bg-gray-100 dark:hover:bg-gray-700';
 
+function iconActionProps(label: string) {
+  return {
+    variant: 'ghost' as const,
+    size: 'icon' as const,
+    class: actionIconClass,
+    title: label,
+    'aria-label': label,
+  };
+}
+
 const topBarActions = computed<ActionItem[]>(() => [
   {
     key: 'new-story',
     icon: Plus,
     component: Button,
-    props: { variant: 'ghost', size: 'icon', class: actionIconClass },
+    props: iconActionProps('Create story'),
     onClick: handleCreateStory,
   },
   {
     key: 'refresh',
     icon: RefreshCw,
     component: Button,
-    props: { variant: 'ghost', size: 'icon', class: actionIconClass },
+    props: iconActionProps('Refresh stories'),
     onClick: loadStories,
   },
 ]);

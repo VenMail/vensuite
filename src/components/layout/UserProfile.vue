@@ -156,6 +156,8 @@ const addAccount = () => {
     <button
       v-if="!props.isMobile"
       @click="theme.toggleTheme"
+      :aria-label="theme.isDark.value ? 'Switch to light mode' : 'Switch to dark mode'"
+      :title="theme.isDark.value ? 'Switch to light mode' : 'Switch to dark mode'"
       :class="cn(
         'p-2 rounded-full',
         'hover:bg-gray-100 dark:hover:bg-gray-800',
@@ -172,7 +174,7 @@ const addAccount = () => {
     <!-- User Profile with Dropdown -->
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button class="focus:outline-none">
+        <button class="focus:outline-none" aria-label="Open account menu" title="Open account menu">
           <div class="h-8 w-8 rounded-full bg-primary-600 text-white flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors overflow-hidden">
             <img
               v-if="isImageUrl(accountImage(selectedAccount))"
