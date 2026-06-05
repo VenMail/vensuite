@@ -66,7 +66,7 @@ export function useSheetData() {
       if (!loadedData) {
         console.error('Failed to load document:', id)
         toast.error('Failed to load spreadsheet')
-        router.push('/')
+        router.push({ name: 'sheets-view' })
         return null
       }
 

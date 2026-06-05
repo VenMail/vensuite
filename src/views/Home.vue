@@ -754,10 +754,12 @@ async function openFile(id: string) {
     router.push(`/sheets/${id}`)
   } else if (['ppt', 'pptx'].includes(ext || '')) {
     router.push(`/slides/${id}`)
-  } else if (ext === 'pdf' && (file.file_public_url || file.file_url)) {
+  } else if (ext === 'pdf') {
+    router.push({ name: 'file', params: { id } })
+  } else if (file.file_public_url || file.file_url) {
     window.open(file.file_public_url || file.file_url || '', '_blank', 'noopener,noreferrer')
   } else {
-    router.push(`/docs/${id}`)
+    toast.error('This file cannot be opened yet')
   }
 }
 
