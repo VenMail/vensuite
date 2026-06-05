@@ -20,7 +20,7 @@
         />
       </div>
       <div class="avnac-slide-strip__actions">
-        <button class="avnac-slide-action-btn" title="Add slide" @click="addSlide">
+        <button class="avnac-slide-action-btn" title="Add slide" :disabled="props.readOnly" @click="addSlide">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
@@ -107,7 +107,7 @@
             <EditorAiPanel
               v-if="activePanel === 'ai'"
               :open="activePanel === 'ai'"
-              api-url="/api/v1/ai/generate-slides"
+              :api-url="slideAiApiUrl"
               @close="activePanel = null"
               @generate="onAiGenerate"
             />
@@ -183,7 +183,7 @@
 
     <div v-if="!ready" class="avnac-host__loading">
         <div class="avnac-host__spinner" />
-        <span>Loading editor…</span>
+        <span>Loading editor...</span>
       </div>
     </div>
 
@@ -276,6 +276,8 @@ const presentModeOpen = ref(false)
 const cropModalOpen = ref(false)
 const cropImageSrc = ref('')
 const cropInitial = ref({ x: 0, y: 0, w: 1, h: 1 })
+const apiBaseUrl = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8000/api/v1').replace(/\/$/, '')
+const slideAiApiUrl = `${apiBaseUrl}/ai/generate-slides`
 
 const currentNotes = computed(() => props.notes?.[currentIndex.value] ?? '')
 
@@ -1569,5 +1571,12 @@ defineExpose({
 }
 .avnac-icon-btn:hover {
   background: var(--bg-subtle, #f0f0f0);
+}
+
+@media (max-width: 640px) {
+  .avnac-ai-panel {
+    left: 0.75rem !important;
+    top: 0.75rem !important;
+  }
 }
 </style>

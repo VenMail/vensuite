@@ -168,7 +168,7 @@ function focusTitle() {
 
 // ─── Status ─────────────────────────────────────────────────────────────────
 const statusText = computed(() => {
-  if (props.isSaving) return 'Saving…'
+  if (props.isSaving) return 'Saving...'
   if (props.hasUnsaved) return 'Unsaved'
   return 'Saved'
 })
@@ -191,7 +191,7 @@ const MENUS: Array<{ id: string; label: string; items: MenuItem[] }> = [
     items: [
       { id: 'new-deck', label: 'New deck' },
       { sep: true },
-      { id: 'import-pptx', label: 'Import PPTX…' },
+      { id: 'import-pptx', label: 'Import PPTX...' },
       { id: 'export-pptx', label: 'Download PPTX' },
       { sep: true },
       { id: 'rename', label: 'Rename' },
@@ -404,6 +404,7 @@ function handleAction(id: string) {
   justify-content: space-between;
   height: 48px;
   padding: 0 10px;
+  min-width: 0;
 }
 
 .stb-main__left,
@@ -411,6 +412,15 @@ function handleAction(id: string) {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+}
+
+.stb-main__left {
+  flex: 1 1 auto;
+}
+
+.stb-main__right {
+  flex: 0 0 auto;
 }
 
 .stb-icon-btn {
@@ -449,6 +459,7 @@ function handleAction(id: string) {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .stb-title {
@@ -520,6 +531,12 @@ function handleAction(id: string) {
   height: 28px;
   border-top: 1px solid var(--border, #e4e4e7);
   gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.stb-menubar::-webkit-scrollbar {
+  display: none;
 }
 
 .stb-menubar__item {
@@ -538,6 +555,50 @@ function handleAction(id: string) {
 .stb-menubar__item:hover,
 .stb-menubar__item--active {
   background: var(--bg-subtle, #f4f4f5);
+}
+
+@media (max-width: 640px) {
+  .stb-main {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
+    height: auto;
+    min-height: 72px;
+    padding: 7px 8px;
+  }
+
+  .stb-main__left,
+  .stb-main__right {
+    width: 100%;
+  }
+
+  .stb-main__right {
+    overflow-x: auto;
+    padding-bottom: 1px;
+    scrollbar-width: none;
+  }
+
+  .stb-main__right::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stb-title-block {
+    flex: 1;
+  }
+
+  .stb-title {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .stb-status {
+    flex-shrink: 0;
+  }
+
+  .stb-btn {
+    flex: 0 0 auto;
+  }
 }
 </style>
 

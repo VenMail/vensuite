@@ -11,7 +11,7 @@
     <textarea
       class="snp__textarea"
       :value="modelValue"
-      placeholder="Add speaker notes for this slide…"
+      placeholder="Add speaker notes for this slide..."
       @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
     />
   </div>
