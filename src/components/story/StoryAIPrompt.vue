@@ -120,7 +120,7 @@ function handleKeydown(e: KeyboardEvent) {
                        placeholder-gray-400 dark:placeholder-gray-500
                        focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
                        resize-none transition-shadow"
-                placeholder="e.g., A pitch deck for our AI startup that highlights our unique technology, team, and market opportunity..."
+                placeholder="e.g., A quarterly team update with goals, progress, blockers, and next steps..."
                 autofocus
               />
             </div>

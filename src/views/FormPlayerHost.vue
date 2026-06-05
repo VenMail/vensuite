@@ -104,7 +104,7 @@
               class="player-host__button player-host__button--primary"
               @click="startForm"
             >
-              {{ welcomeScreen?.button_text ?? $t('Commons.button.share') }}
+              {{ welcomeScreen?.button_text ?? $t('Commons.text.start') }}
             </button>
           </div>
         </section>

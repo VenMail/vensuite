@@ -121,7 +121,7 @@ const goToGithub = () => {
         <div class="suite-visual">
           <div class="suite-visual-header">
             <span class="text-sm font-bold text-slate-700">Vensuite workspace</span>
-            <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Connected apps</span>
+            <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Live workspace</span>
           </div>
 
           <div class="suite-visual-grid">
@@ -191,7 +191,7 @@ const goToGithub = () => {
         <div>
           <div class="mb-5 flex items-center gap-3 text-sm font-bold text-cyan-300">
             <LockKeyhole class="h-5 w-5" />
-            <span>Private by default, dazzling by design</span>
+            <span>Private by default, built for daily work</span>
           </div>
           <h2 class="section-title max-w-3xl">Bring the Venmail office suite into one focused workspace.</h2>
         </div>
