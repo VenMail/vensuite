@@ -314,6 +314,14 @@ import DocsStatusBar from '@/components/docs/DocsStatusBar.vue';
 import CanvasEditorCore from '@/components/docs/CanvasEditorCore.vue';
 import DocsCanvasToolbar from '@/components/docs/DocsCanvasToolbar.vue';
 import DocsCanvasFindReplace from '@/components/docs/DocsCanvasFindReplace.vue';
+import blankTemplateHtml from '@/assets/docs/templates/blank.html?raw';
+import notesTemplateHtml from '@/assets/docs/templates/notes.html?raw';
+import proposalTemplateHtml from '@/assets/docs/templates/proposal.html?raw';
+import reportTemplateHtml from '@/assets/docs/templates/report.html?raw';
+import letterTemplateHtml from '@/assets/docs/templates/letter.html?raw';
+import resumeTemplateHtml from '@/assets/docs/templates/resume.html?raw';
+import caseStudyTemplateHtml from '@/assets/docs/templates/case-study.html?raw';
+import sopTemplateHtml from '@/assets/docs/templates/sop.html?raw';
 
 import { useFileStore } from '@/store/files';
 import { useAuthStore } from '@/store/auth';
@@ -341,6 +349,37 @@ const router    = useRouter();
 const { t }     = useTranslation();
 const fileStore = useFileStore();
 const authStore = useAuthStore();
+
+const documentTemplateMap: Record<string, { title: string; content: string }> = {
+  blank: { title: 'Untitled Document', content: blankTemplateHtml },
+  notes: { title: 'Meeting Notes', content: notesTemplateHtml },
+  proposal: { title: 'Project Proposal', content: proposalTemplateHtml },
+  report: { title: 'Progress Report', content: reportTemplateHtml },
+  letter: { title: 'Business Letter', content: letterTemplateHtml },
+  resume: { title: 'Resume', content: resumeTemplateHtml },
+  'case-study': { title: 'Case Study', content: caseStudyTemplateHtml },
+  sop: { title: 'SOP', content: sopTemplateHtml },
+};
+
+const documentTemplateAliases: Record<string, string> = {
+  'blank-document': 'blank',
+  'meeting-notes': 'notes',
+  'project-proposal': 'proposal',
+  'progress-report': 'report',
+  'business-letter': 'letter',
+  'standard-operating-procedure': 'sop',
+};
+
+function resolveDocumentTemplate(value?: string) {
+  const key = (value || 'blank')
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return documentTemplateMap[documentTemplateAliases[key] || key] || documentTemplateMap.blank;
+}
 
 // ── Canvas editor state ─────────────────────────────────────────────────────
 const {
@@ -1133,10 +1172,24 @@ async function initializeDocument() {
 
   if (template) {
     try {
-      const newDoc = await fileStore.createNewDocument('docx', 'Untitled Document');
+      const docTemplate = resolveDocumentTemplate(template);
+      const result = await fileStore.ensureDocument({
+        fileType: 'docx',
+        title: docTemplate.title,
+        template: {
+          title: docTemplate.title,
+          content: docTemplate.content,
+          format: 'docx',
+        },
+      });
+      const newDoc = result.document;
+      if (!newDoc) throw new Error('Template document was not created');
+
       currentDoc.value    = newDoc;
-      documentTitle.value = newDoc.title || 'Untitled Document';
+      documentTitle.value = newDoc.title || docTemplate.title;
       document.title      = documentTitle.value;
+      rawDocContent.value = newDoc.content || docTemplate.content;
+      lastSavedAt.value = new Date();
       await router.replace(`/docs/${newDoc.id}`);
       toast.success('Document created');
     } catch { toast.error('Failed to create document'); }

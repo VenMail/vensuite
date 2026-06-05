@@ -88,27 +88,28 @@ const sidebarClasses = computed(() =>
 
 const templates = {
   Documents: [
-    { name: "Blank Document", icon: defaultIcons.IconMicrosoftWord },
-    { name: "Resume", icon: defaultIcons.IconMicrosoftWord },
-    { name: "Letter", icon: defaultIcons.IconMicrosoftWord },
+    { name: "Blank Document", slug: "blank", icon: defaultIcons.IconMicrosoftWord },
+    { name: "Meeting Notes", slug: "notes", icon: defaultIcons.IconMicrosoftWord },
+    { name: "Project Proposal", slug: "proposal", icon: defaultIcons.IconMicrosoftWord },
+    { name: "Resume", slug: "resume", icon: defaultIcons.IconMicrosoftWord },
   ],
   Slides: [
-    { name: "Default Theme", icon: Presentation },
-    { name: "Seriph Theme", icon: Presentation },
-    { name: "Academic Theme", icon: Presentation },
-    { name: "Purplin Theme", icon: Presentation },
-    { name: "Neversink Theme", icon: Presentation },
+    { name: "Default Theme", slug: "default", icon: Presentation },
+    { name: "Professional", slug: "professional", icon: Presentation },
+    { name: "Pitch Deck", slug: "pitch", icon: Presentation },
+    { name: "Academic", slug: "academic", icon: Presentation },
+    { name: "Blank Canvas", slug: "blank", icon: Presentation },
   ],
   Spreadsheets: [
     { name: "Blank Spreadsheet", icon: defaultIcons.IconMicrosoftExcel },
-    { name: "Budget", icon: defaultIcons.IconMicrosoftExcel },
+    { name: "Monthly Budget", icon: defaultIcons.IconMicrosoftExcel },
     { name: "Invoice", icon: defaultIcons.IconMicrosoftExcel },
   ],
 }
 
-function handleTemplateClick(category: string, templateName: string) {
+function handleTemplateClick(category: string, template: { name: string; slug?: string }) {
   isDialogOpen.value = false
-  createNewFile(category, templateName)
+  createNewFile(category, template.slug || template.name)
 }
 
 function createNewFile(type: string, template?: string) {
@@ -200,7 +201,7 @@ function createNewFile(type: string, template?: string) {
                   <div class="grid grid-cols-2 gap-4">
                     <button v-for="template in items" :key="template.name"
                       class="h-24 flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 hover:border-primary-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      @click="handleTemplateClick(category, template.name)"
+                      @click="handleTemplateClick(category, template)"
                       type="button">
                       <component :is="template.icon" class="w-8 h-8 pointer-events-none" />
                       <span class="mt-2 text-sm pointer-events-none">{{ template.name }}</span>
