@@ -89,6 +89,9 @@
         <button
           v-else
           class="stb-dd__item"
+          :class="{ 'stb-dd__item--disabled': isActionDisabled(item.id) }"
+          :disabled="isActionDisabled(item.id)"
+          :aria-disabled="isActionDisabled(item.id)"
           @click="handleAction(item.id)"
         >
           <span class="stb-dd__label">{{ item.label }}</span>
@@ -281,6 +284,41 @@ const currentItems = computed<MenuItem[]>(() => {
   return MENUS.find(m => m.id === activeMenu.value)?.items ?? []
 })
 
+const mutatingActions = new Set([
+  'undo',
+  'redo',
+  'new-deck',
+  'import-pptx',
+  'rename',
+  'size-wide',
+  'size-standard',
+  'size-square',
+  'size-portrait',
+  'size-a4',
+  'add-text',
+  'add-image',
+  'add-slide',
+  'add-rect',
+  'add-ellipse',
+  'add-polygon',
+  'add-star',
+  'add-line',
+  'add-arrow',
+  'smart-pyramid',
+  'smart-funnel',
+  'smart-timeline-h',
+  'smart-cycle',
+  'smart-matrix-2x2',
+  'smart-flowchart',
+  'smart-organogram',
+  'dup-slide',
+  'del-slide',
+])
+
+function isActionDisabled(id: string): boolean {
+  return Boolean(props.readOnly && mutatingActions.has(id))
+}
+
 function openMenu(id: string, index: number) {
   const el = triggerEls[index]
   if (!el) return
@@ -314,38 +352,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 // ─── Action dispatch ─────────────────────────────────────────────────────────
 function handleAction(id: string) {
+  if (isActionDisabled(id)) return
   closeMenu()
-  const mutatingActions = new Set([
-    'undo',
-    'redo',
-    'new-deck',
-    'import-pptx',
-    'rename',
-    'size-wide',
-    'size-standard',
-    'size-square',
-    'size-portrait',
-    'size-a4',
-    'add-text',
-    'add-image',
-    'add-slide',
-    'add-rect',
-    'add-ellipse',
-    'add-polygon',
-    'add-star',
-    'add-line',
-    'add-arrow',
-    'smart-pyramid',
-    'smart-funnel',
-    'smart-timeline-h',
-    'smart-cycle',
-    'smart-matrix-2x2',
-    'smart-flowchart',
-    'smart-organogram',
-    'dup-slide',
-    'del-slide',
-  ])
-  if (props.readOnly && mutatingActions.has(id)) return
   switch (id) {
     case 'undo':        emit('undo'); break
     case 'redo':        emit('redo'); break
@@ -639,7 +647,14 @@ function handleAction(id: string) {
   gap: 16px;
 }
 
-.stb-dd__item:hover { background: #f4f4f5; }
+.stb-dd__item:hover:not(:disabled) { background: #f4f4f5; }
+
+.stb-dd__item:disabled,
+.stb-dd__item--disabled {
+  color: #a1a1aa;
+  cursor: not-allowed;
+  opacity: 0.58;
+}
 
 .stb-dd__label { flex: 1; }
 
