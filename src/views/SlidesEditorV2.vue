@@ -33,7 +33,15 @@
       @redo="avnacRef?.redo()"
     />
 
-    <main class="slides-editor-body">
+    <main v-if="accessDenied" class="slides-editor-body slides-editor-body--centered">
+      <section class="slides-access-state" role="alert">
+        <h2>Presentation unavailable</h2>
+        <p>We could not open this presentation. It may have been moved, deleted, or your access may have changed.</p>
+        <button type="button" @click="goBack">Back to presentations</button>
+      </section>
+    </main>
+
+    <main v-else class="slides-editor-body">
       <AvnacHost
         ref="avnacRef"
         :initial-slides="initialSlides"
@@ -256,6 +264,7 @@ const canEditDeck = computed(() => {
   if (backendCanEdit.value !== null) return backendCanEdit.value
   if (typeof currentDoc.value?.can_edit === 'boolean') return currentDoc.value.can_edit
   if (typeof currentDoc.value?.is_owner === 'boolean') return currentDoc.value.is_owner
+  if (!currentDoc.value) return false
   return authStore.isAuthenticated
 })
 
@@ -751,6 +760,7 @@ onMounted(async () => {
       }
     } catch (e) {
       console.warn('Failed to load deck:', e)
+      accessDenied.value = true
     }
 
     if (canJoinRealtime.value) {
@@ -788,6 +798,53 @@ onBeforeUnmount(() => {
   overflow: hidden;
   background: var(--bg-canvas, #f4f4f5);
   color-scheme: light;
+}
+
+.slides-editor-body--centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.slides-access-state {
+  width: min(420px, 100%);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  background: #fff;
+  padding: 24px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.slides-access-state h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 650;
+  color: #111827;
+}
+
+.slides-access-state p {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.slides-access-state button {
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: #6366f1;
+  color: #fff;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.slides-access-state button:hover {
+  background: #4f46e5;
 }
 
 .template-dialog {
