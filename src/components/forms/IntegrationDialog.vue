@@ -265,15 +265,15 @@ const integrationTabs = [
   { id: 'openapi', label: 'OpenAPI', icon: FileJson }
 ]
 
-// Generate sample data for examples
+// Generate neutral example data for integration snippets.
 const generateSampleData = () => {
   return props.fields.map((field, index) => {
-    if (field.toLowerCase().includes('email')) return 'john@example.com'
-    if (field.toLowerCase().includes('name')) return 'John Doe'
+    if (field.toLowerCase().includes('email')) return 'name@example.com'
+    if (field.toLowerCase().includes('name')) return 'Full name'
     if (field.toLowerCase().includes('date')) return new Date().toISOString().split('T')[0]
     if (field.toLowerCase().includes('phone')) return '+1-555-0123'
-    if (field.toLowerCase().includes('message') || field.toLowerCase().includes('comment')) return 'Sample message text'
-    return `Sample ${field} ${index + 1}`
+    if (field.toLowerCase().includes('message') || field.toLowerCase().includes('comment')) return 'Message text'
+    return `Example ${field} ${index + 1}`
   })
 }
 

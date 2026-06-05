@@ -87,27 +87,27 @@ export function extractFormFields(blocks: any[]): string[] {
 }
 
 /**
- * Get sample data for a field based on its name
+ * Get neutral example data for a field based on its name
  */
 export function getSampleDataForField(fieldName: string): string {
   const name = fieldName.toLowerCase()
   
-  if (name.includes('email')) return 'john@example.com'
-  if (name.includes('name')) return 'John Doe'
-  if (name.includes('first') && name.includes('name')) return 'John'
-  if (name.includes('last') && name.includes('name')) return 'Doe'
+  if (name.includes('email')) return 'name@example.com'
+  if (name.includes('first') && name.includes('name')) return 'First name'
+  if (name.includes('last') && name.includes('name')) return 'Last name'
+  if (name.includes('name')) return 'Full name'
   if (name.includes('phone')) return '+1-555-0123'
   if (name.includes('date')) return new Date().toISOString().split('T')[0]
   if (name.includes('time')) return new Date().toTimeString().split(' ')[0].substring(0, 5)
-  if (name.includes('address')) return '123 Main St, City, State'
-  if (name.includes('company')) return 'Acme Corporation'
+  if (name.includes('address')) return 'Street address'
+  if (name.includes('company')) return 'Company name'
   if (name.includes('website') || name.includes('url')) return 'https://example.com'
-  if (name.includes('message') || name.includes('comment') || name.includes('feedback')) return 'Sample message text'
+  if (name.includes('message') || name.includes('comment') || name.includes('feedback')) return 'Message text'
   if (name.includes('rating')) return '5'
   if (name.includes('price') || name.includes('amount')) return '99.99'
   if (name.includes('quantity')) return '1'
   if (name.includes('yes') || name.includes('no')) return 'Yes'
   if (name.includes('true') || name.includes('false')) return 'true'
   
-  return `Sample ${fieldName}`
+  return `Example ${fieldName}`
 }
