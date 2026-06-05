@@ -45,6 +45,7 @@
         @change="onSlidesChange"
         @notes-change="onNotesChange"
         @slide-change="onLocalSlideChange"
+        @slide-index-change="onLocalSlideIndexChange"
         @slides-mutate="onLocalSlidesMutate"
       />
     </main>
@@ -453,12 +454,17 @@ function onSlidesChange(slides: AvnacDocumentV1[]) {
 
 function onLocalSlideChange(index: number, doc: AvnacDocumentV1) {
   if (applyingRemote.value) return
+  onLocalSlideIndexChange(index)
+  if (canEditDeck.value && canJoinRealtime.value && isJoined.value) {
+    broadcastSlideOperation({ type: 'slide_change', data: { slideIndex: index, doc: cloneAvnacPlain(doc) } })
+  }
+}
+
+function onLocalSlideIndexChange(index: number) {
+  if (applyingRemote.value) return
   if (currentSlideIndex.value !== index) {
     currentSlideIndex.value = index
     updateSlideIndex(index)
-  }
-  if (canEditDeck.value && canJoinRealtime.value && isJoined.value) {
-    broadcastSlideOperation({ type: 'slide_change', data: { slideIndex: index, doc: cloneAvnacPlain(doc) } })
   }
 }
 
@@ -490,6 +496,7 @@ function onLocalSlidesMutate(op: { type: string; from?: number; to?: number; ind
       },
     })
   }
+  scheduleSave()
 }
 
 function onNotesChange(index: number, text: string) {

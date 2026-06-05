@@ -261,6 +261,7 @@ const emit = defineEmits<{
   (e: 'ready'): void
   (e: 'notes-change', index: number, text: string): void
   (e: 'slide-change', index: number, doc: AvnacDocumentV1): void
+  (e: 'slide-index-change', index: number): void
   (e: 'slides-mutate', op: { type: 'delete' | 'duplicate' | 'move' | 'add'; from?: number; to?: number; index?: number }): void
 }>()
 
@@ -280,6 +281,25 @@ const apiBaseUrl = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ??
 const slideAiApiUrl = `${apiBaseUrl}/ai/generate-slides`
 
 const currentNotes = computed(() => props.notes?.[currentIndex.value] ?? '')
+let deckMutationEventActive = false
+
+function syncCurrentSlideFromEditor() {
+  const current = editorRef.value?.getDocument()
+  if (current) slides.value[currentIndex.value] = current
+}
+
+function emitSlideIndexChange() {
+  emit('slide-index-change', currentIndex.value)
+}
+
+function emitSlidesMutate(op: { type: 'delete' | 'duplicate' | 'move' | 'add'; from?: number; to?: number; index?: number }) {
+  deckMutationEventActive = true
+  try {
+    emit('slides-mutate', op)
+  } finally {
+    deckMutationEventActive = false
+  }
+}
 
 function normalizeChartRenderResult(result: string | { url: string; pngW?: number; pngH?: number }, fallbackW: number, fallbackH: number) {
   if (typeof result === 'string') {
@@ -411,9 +431,9 @@ function onDocumentChange(doc: AvnacDocumentV1) {
 
 async function switchSlide(index: number) {
   if (index === currentIndex.value) return
-  const current = editorRef.value?.getDocument()
-  if (current) slides.value[currentIndex.value] = current
+  syncCurrentSlideFromEditor()
   currentIndex.value = index
+  emitSlideIndexChange()
   const next = slides.value[index]
   if (next && editorRef.value) {
     await editorRef.value.setDocument(next)
@@ -474,8 +494,14 @@ function addSlide() {
   pushDeckSnapshot()
   slides.value.push(createDefaultSlide())
   const newIndex = slides.value.length - 1
-  emit('slides-mutate', { type: 'add', index: newIndex })
-  switchSlide(newIndex)
+  currentIndex.value = newIndex
+  const next = slides.value[newIndex]
+  if (next && editorRef.value) {
+    editorRef.value.setDocument(next)
+    setTimeout(() => editorRef.value?.fitToViewport(), 60)
+  }
+  emitSlideIndexChange()
+  emitSlidesMutate({ type: 'add', index: newIndex })
   scheduleChange()
 }
 
@@ -488,7 +514,6 @@ function deleteSlideAt(i: number) {
   if (slides.value.length <= 1) return
   pushDeckSnapshot()
   slides.value.splice(i, 1)
-  emit('slides-mutate', { type: 'delete', index: i })
   let nextIdx = currentIndex.value
   if (i === currentIndex.value) {
     nextIdx = Math.min(i, slides.value.length - 1)
@@ -496,11 +521,13 @@ function deleteSlideAt(i: number) {
     nextIdx = currentIndex.value - 1
   }
   currentIndex.value = nextIdx
+  emitSlideIndexChange()
   const next = slides.value[nextIdx]
   if (next && editorRef.value) {
     editorRef.value.setDocument(next)
     setTimeout(() => editorRef.value?.fitToViewport(), 60)
   }
+  emitSlidesMutate({ type: 'delete', index: i })
   scheduleChange()
 }
 
@@ -510,12 +537,17 @@ function duplicateSlideAt(i: number) {
   const dup: AvnacDocumentV1 = cloneAvnacPlain(slides.value[i])
   const insertAt = i + 1
   slides.value.splice(insertAt, 0, dup)
-  emit('slides-mutate', { type: 'duplicate', from: i, to: insertAt })
   if (i >= currentIndex.value) {
-    switchSlide(insertAt)
+    currentIndex.value = insertAt
+    if (editorRef.value) {
+      editorRef.value.setDocument(slides.value[insertAt])
+      setTimeout(() => editorRef.value?.fitToViewport(), 60)
+    }
   } else {
     currentIndex.value = currentIndex.value + 1
   }
+  emitSlideIndexChange()
+  emitSlidesMutate({ type: 'duplicate', from: i, to: insertAt })
   scheduleChange()
 }
 
@@ -525,7 +557,6 @@ function moveSlide(from: number, to: number) {
   pushDeckSnapshot()
   const [moved] = slides.value.splice(from, 1)
   slides.value.splice(to, 0, moved)
-  emit('slides-mutate', { type: 'move', from, to })
   if (from === currentIndex.value) {
     currentIndex.value = to
   } else if (from < currentIndex.value && to >= currentIndex.value) {
@@ -533,6 +564,8 @@ function moveSlide(from: number, to: number) {
   } else if (from > currentIndex.value && to <= currentIndex.value) {
     currentIndex.value = currentIndex.value + 1
   }
+  emitSlideIndexChange()
+  emitSlidesMutate({ type: 'move', from, to })
   scheduleChange()
 }
 
@@ -1336,8 +1369,7 @@ onBeforeUnmount(() => {
 
 defineExpose({
   getSlides(): AvnacDocumentV1[] {
-    const current = editorRef.value?.getDocument()
-    if (current) slides.value[currentIndex.value] = current
+    if (!deckMutationEventActive) syncCurrentSlideFromEditor()
     return cloneAvnacPlain(slides.value)
   },
   setSlides(docs: AvnacDocumentV1[]) {
