@@ -418,6 +418,8 @@ async function persistDeck(): Promise<boolean> {
       if (!doc?.id) throw new Error('Presentation create returned no document id')
       deckId.value = doc.id
       applyLoadedDeckDoc(doc)
+      hasUnsaved.value = false
+      lastSavedAt.value = new Date()
       await router.replace(`/slides/${doc.id}`)
     }
     hasUnsaved.value = false
