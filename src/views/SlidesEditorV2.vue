@@ -51,6 +51,7 @@
         :read-only="!canEditDeck"
         @ready="onEditorReady"
         @change="onSlidesChange"
+        @generated-title="onGeneratedTitle"
         @notes-change="onNotesChange"
         @slide-change="onLocalSlideChange"
         @slide-index-change="onLocalSlideIndexChange"
@@ -534,6 +535,14 @@ function onTitleChange(newTitle: string) {
   document.title = newTitle
   scheduleSave()
   broadcastTitle(newTitle)
+}
+
+function onGeneratedTitle(generatedTitle: string) {
+  if (!canEditDeck.value) return
+  const currentTitle = title.value.trim().toLowerCase()
+  const isGenericTitle = !currentTitle || ['untitled', 'untitled presentation', 'new presentation'].includes(currentTitle)
+  if (!isGenericTitle) return
+  onTitleChange(generatedTitle)
 }
 
 function openShareDialog() {

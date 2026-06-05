@@ -261,6 +261,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'change', slides: AvnacDocumentV1[]): void
   (e: 'ready'): void
+  (e: 'generated-title', title: string): void
   (e: 'notes-change', index: number, text: string): void
   (e: 'slide-change', index: number, doc: AvnacDocumentV1): void
   (e: 'slide-index-change', index: number): void
@@ -636,6 +637,15 @@ function onTemplateInsert(doc: AvnacDocumentV1) {
   setTimeout(() => editorRef.value?.fitToViewport(), 60)
 }
 
+function inferGeneratedDeckTitle(doc: AvnacDocumentV1): string | null {
+  const objects = Array.isArray((doc as any)?.fabric?.objects) ? (doc as any).fabric.objects : []
+  const title = objects
+    .map((obj: any) => (typeof obj?.text === 'string' ? obj.text.replace(/\s+/g, ' ').trim() : ''))
+    .find((text: string) => text.length >= 3 && text.toLowerCase() !== 'click to add title')
+
+  return title ? title.slice(0, 90) : null
+}
+
 async function onAiGenerate(docs: AvnacDocumentV1[]) {
   if (props.readOnly) return
   const generated = cloneAvnacPlain(docs).filter((doc) =>
@@ -649,6 +659,8 @@ async function onAiGenerate(docs: AvnacDocumentV1[]) {
 
   pushDeckSnapshot()
   slides.value = generated
+  const generatedTitle = inferGeneratedDeckTitle(generated[0])
+  if (generatedTitle) emit('generated-title', generatedTitle)
   currentIndex.value = 0
   initialDoc.value = generated[0]
   if (editorRef.value) {
