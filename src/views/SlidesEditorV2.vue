@@ -192,7 +192,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { useFileStore } from '@/store/files'
 import { toast } from '@/composables/useToast'
 import { useSlidesCollaboration } from '@/composables/useSlidesCollaboration'
@@ -265,6 +265,11 @@ const applyingRemote = ref(false)
 
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 const FILES_ENDPOINT = `${API_BASE_URI}/app-files`
+
+function hasPendingEditableChanges() {
+  return hasUnsaved.value && canEditDeck.value
+}
+
 function applyLoadedDeckDoc(doc: any) {
   if (!doc) return
   currentDoc.value = doc
@@ -641,7 +646,10 @@ function copyShareLink() {
 }
 
 async function goBack() {
-  if (hasUnsaved.value) await persistDeck()
+  if (hasPendingEditableChanges()) {
+    const saved = await persistDeck()
+    if (!saved) return
+  }
   router.push('/slides')
 }
 
@@ -654,7 +662,10 @@ async function startNewDeckFromTemplate(theme: AvnacDeckTheme) {
     clearTimeout(saveTimer)
     saveTimer = null
   }
-  if (hasUnsaved.value) await persistDeck()
+  if (hasPendingEditableChanges()) {
+    const saved = await persistDeck()
+    if (!saved) return
+  }
   const slides = createAvnacSlidesForTheme(theme)
   deckId.value = null
   initialSlides.value = slides
@@ -680,8 +691,23 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (!hasPendingEditableChanges()) return
+  void persistDeck()
+  e.preventDefault()
+  e.returnValue = ''
+}
+
+onBeforeRouteLeave(async () => {
+  if (!hasPendingEditableChanges()) return true
+  const saved = await persistDeck()
+  if (saved) return true
+  return window.confirm('Presentation changes could not be saved. Leave this page anyway?')
+})
+
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
+  window.addEventListener('beforeunload', onBeforeUnload)
   const template = route.params.template as string | undefined
   if (template) {
     const theme = resolveAvnacDeckTheme(template)
@@ -739,6 +765,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (saveTimer) clearTimeout(saveTimer)
   window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('beforeunload', onBeforeUnload)
   leaveDeck()
 })
 </script>
