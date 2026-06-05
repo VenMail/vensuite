@@ -24,6 +24,7 @@ const { isVisible, isCollapsed } = storeToRefs(sidebarStore)
 const hideLayout = computed(() => route.meta.hideLayout === true)
 
 const routesWithSidebar = new Set([
+  'root',
   'home',
   'forms',
   'slides',
