@@ -49,7 +49,9 @@ export async function fetchSlideDecks(): Promise<SlideDeckSummary[]> {
     })
 
     const items: any[] = response.data?.data ?? response.data ?? []
-    const decks = items.map(parseSummaryFromApiItem)
+    const decks = items
+      .filter(item => !item?.is_trash)
+      .map(parseSummaryFromApiItem)
 
     slideDecksCache.value.clear()
     decks.forEach(d => slideDecksCache.value.set(d.id, d))
