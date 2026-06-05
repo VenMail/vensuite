@@ -72,15 +72,6 @@ const fetchMoreForms = async () => {
   await formStore.fetchForms();
 };
 
-const handleScroll = () => {
-  const scrollableHeight = document.documentElement.scrollHeight;
-  const currentScroll = window.scrollY + window.innerHeight;
-
-  if (currentScroll + 100 >= scrollableHeight) {
-    fetchMoreForms();
-  }
-};
-
 const createNewForm = (preset?: string) => {
   openWizard(preset);
 };
@@ -139,12 +130,10 @@ function handleGlobalSearch(event: Event) {
 onMounted(() => {
   document.title = currentTitle.value;
   formStore.fetchForms(true);
-  window.addEventListener("scroll", handleScroll);
   window.addEventListener("global-search", handleGlobalSearch);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("global-search", handleGlobalSearch);
 });
 </script>
@@ -202,6 +191,7 @@ onBeforeUnmount(() => {
         :compute-response-count="computeResponseCount"
         @view-responses="handleQuickViewResponses"
         @share="handleQuickViewShare"
+        @load-more="fetchMoreForms"
         @create-blank="createNewForm"
         @create-template="() => createNewFormFromTemplate(formTemplates[1])"
       />

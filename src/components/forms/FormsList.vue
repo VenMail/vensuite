@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Button from '@/components/ui/button/Button.vue';
 import QuickViewCard from '@/components/forms/QuickView.vue';
@@ -21,10 +21,13 @@ interface Emits {
   (e: 'share', form: AppForm): void;
   (e: 'create-blank'): void;
   (e: 'create-template'): void;
+  (e: 'load-more'): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+const loadMoreSentinel = ref<HTMLElement | null>(null);
+let observer: IntersectionObserver | null = null;
 
 const cardsContainerClass = computed(() => {
   if (props.viewMode === 'list') {
@@ -48,6 +51,38 @@ const handleCreateBlank = () => {
 const handleCreateTemplate = () => {
   emit('create-template');
 };
+
+const disconnectObserver = () => {
+  observer?.disconnect();
+  observer = null;
+};
+
+const setupLoadMoreObserver = async () => {
+  await nextTick();
+  disconnectObserver();
+
+  const sentinel = loadMoreSentinel.value;
+  if (!sentinel || !props.hasMore) return;
+
+  const scrollRoot = sentinel.closest('[data-radix-scroll-area-viewport]') as HTMLElement | null;
+  observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry?.isIntersecting && props.hasMore && !props.loading) {
+        emit('load-more');
+      }
+    },
+    {
+      root: scrollRoot,
+      rootMargin: '180px 0px',
+      threshold: 0,
+    },
+  );
+  observer.observe(sentinel);
+};
+
+onMounted(setupLoadMoreObserver);
+onBeforeUnmount(disconnectObserver);
+watch(() => [props.hasMore, props.loading, props.forms.length, props.viewMode], setupLoadMoreObserver);
 </script>
 
 <template>
@@ -121,6 +156,8 @@ const handleCreateTemplate = () => {
       <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-if="forms.length > 0">{{ t('Views.Forms.text.loading_more_forms') }}</span>
       <span class="ml-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base" v-else>{{ t('Views.Forms.text.loading') }}</span>
     </div>
+
+    <div v-if="hasMore" ref="loadMoreSentinel" class="h-px" aria-hidden="true"></div>
   </ScrollArea>
 </template>
 
