@@ -663,7 +663,7 @@ const topBarActions = computed(() => {
 })
 
 const homeContainerClass = computed(() => [
-  'h-screen text-gray-900 transition-colors duration-200',
+  'h-full min-h-0 text-gray-900 transition-colors duration-200',
   'bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.13),transparent_32%),linear-gradient(135deg,#f8fafc,#eef7f2_48%,#f7f3ea)]',
   'dark:bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_30%),linear-gradient(135deg,#0f172a,#111827_54%,#172033)]',
   'flex flex-col'

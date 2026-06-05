@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-gray-900 to-gray-800">
+  <div class="h-full min-h-0 flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:bg-gradient-to-br dark:from-gray-900 to-gray-800">
     <WorkspaceTopBar
       :title="currentTitle"
       :subtitle="mediaSubtitle"
@@ -12,9 +12,9 @@
       <template #stats>
         <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
           <span>{{ sortedMediaFiles.length }} items</span>
-          <span>•</span>
+          <span>&middot;</span>
           <span>{{ totalSize }}</span>
-          <span v-if="selectedFiles.size > 0">• {{ selectedFiles.size }} selected</span>
+          <span v-if="selectedFiles.size > 0">&middot; {{ selectedFiles.size }} selected</span>
         </div>
       </template>
       <template #extra>
@@ -889,9 +889,9 @@ const handleUploadComplete = async (uploadedFiles: FileData[]) => {
 
 // Lifecycle
 onMounted(async () => {
+  document.title = currentTitle.value
   try {
     await initialize()
-    document.title = currentTitle.value
   } catch (error) {
     toast.error('Failed to load media files')
   }

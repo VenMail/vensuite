@@ -620,6 +620,7 @@ function handleGlobalSearch(event: CustomEvent) {
 
 // Lifecycle
 onMounted(async () => {
+  document.title = "Trash - File Manager";
   document.addEventListener("click", handleOutsideClick);
   document.addEventListener("keydown", handleEscapeKey);
   window.addEventListener("global-search", handleGlobalSearch as EventListener);
@@ -627,8 +628,6 @@ onMounted(async () => {
   if (authStore.getToken()) {
     await fetchTrashedItems();
   }
-
-  document.title = "Trash - File Manager";
 });
 
 onUnmounted(() => {
@@ -642,7 +641,7 @@ onUnmounted(() => {
   <div
     v-if="isAuthenticated"
     :class="[
-      'flex h-screen text-gray-900 transition-colors duration-200',
+      'flex h-full min-h-0 overflow-hidden text-gray-900 transition-colors duration-200',
       theme.isDark.value
         ? 'bg-gradient-to-br from-gray-900 to-gray-800'
         : 'bg-gradient-to-br from-gray-50 to-gray-100',
@@ -1385,7 +1384,7 @@ onUnmounted(() => {
   <div
     v-else
     :class="[
-      'h-screen w-full flex flex-col items-center justify-center transition-colors duration-200',
+      'h-full min-h-0 w-full flex flex-col items-center justify-center transition-colors duration-200',
       theme.isDark.value
         ? 'bg-gradient-to-br from-gray-900 to-gray-800'
         : 'bg-gradient-to-br from-gray-50 to-gray-100',

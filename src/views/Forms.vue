@@ -137,6 +137,7 @@ function handleGlobalSearch(event: Event) {
 }
 
 onMounted(() => {
+  document.title = currentTitle.value;
   formStore.fetchForms(true);
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("global-search", handleGlobalSearch);
@@ -151,7 +152,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     :class="[
-      'h-screen text-gray-900 transition-colors duration-200',
+      'h-full min-h-0 flex flex-col overflow-hidden text-gray-900 transition-colors duration-200',
       'bg-gradient-to-br from-gray-50 to-gray-100',
       'dark:bg-gradient-to-br dark:from-gray-900 to-gray-800'
     ]"
@@ -183,7 +184,7 @@ onBeforeUnmount(() => {
     </WorkspaceTopBar>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 overflow-hidden">
+    <div class="flex-1 min-h-0 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 overflow-hidden">
       <!-- Template previews -->
       <TemplatePreview
         :templates="formTemplates"

@@ -84,6 +84,7 @@ async function loadStories() {
 }
 
 onMounted(() => {
+  document.title = currentTitle.value;
   window.addEventListener('global-search', handleGlobalSearch);
   loadStories();
 });
@@ -234,7 +235,7 @@ function handleGlobalSearch(event: Event) {
 <template>
   <div
     :class="[
-      'h-screen text-gray-900 transition-colors duration-200',
+      'h-full min-h-0 flex flex-col overflow-hidden text-gray-900 transition-colors duration-200',
       'bg-gradient-to-br from-gray-50 to-gray-100',
       'dark:bg-gradient-to-br dark:from-gray-900 to-gray-800',
     ]"
@@ -253,7 +254,7 @@ function handleGlobalSearch(event: Event) {
     />
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 overflow-hidden">
+    <div class="flex-1 min-h-0 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 overflow-hidden">
       <ScrollArea
         :class="[
           'flex-1 min-h-0 rounded-lg shadow-sm border',

@@ -118,7 +118,7 @@ watch(isAuthenticated, async (newValue) => {
 // Dynamic class for the main content area
 const mainContentClasses = computed(() =>
   cn(
-    'flex-1 overflow-auto',
+    'flex-1 min-h-0 overflow-auto',
     'bg-slate-50 dark:bg-slate-950',
     'transition-all duration-200',
     hideLayout.value ? 'w-full' : ''
@@ -127,7 +127,7 @@ const mainContentClasses = computed(() =>
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+  <div class="h-screen min-h-0 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950">
     <TopNav 
       v-if="!hideLayout"
       :isMobile="isMobile"
@@ -135,7 +135,7 @@ const mainContentClasses = computed(() =>
     />
 
     <!-- Main Content Area with Sidebar -->
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 min-h-0 overflow-hidden">
       <Sidebar 
         v-if="!hideLayout"
         :isVisible="isVisible" 
