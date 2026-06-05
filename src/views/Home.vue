@@ -127,14 +127,14 @@
                   Workspace
                 </p>
                 <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
-                  {{ fileStore.isOnline ? 'Synced' : 'Offline ready' }}
+                  {{ workspaceStatusLabel }}
                 </span>
               </div>
               <h1 class="workspace-title mt-2 text-slate-950 dark:text-white">
                 {{ currentTitle }}
               </h1>
               <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Browse, create, upload, sort, and organize documents, spreadsheets, slides, forms, media, and folders.
+                Browse, create, upload, sort, and organize the files in this workspace.
               </p>
             </div>
           </div>
@@ -472,6 +472,11 @@ const sortedItems = computed(() => {
 const activeViewLabel = computed(() =>
   viewControls.value.find((option) => option.value === viewMode.value)?.label || viewMode.value
 )
+
+const workspaceStatusLabel = computed(() => {
+  if (fileStore.isSyncing) return 'Syncing'
+  return fileStore.isOnline ? 'Online' : 'Offline'
+})
 
 const workspaceStats = computed(() => {
   const files = fileStore.allFiles

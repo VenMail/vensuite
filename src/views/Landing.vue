@@ -121,7 +121,7 @@ const goToGithub = () => {
         <div class="suite-visual">
           <div class="suite-visual-header">
             <span class="text-sm font-bold text-slate-700">Workspace modules</span>
-            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Actual product areas</span>
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Available modules</span>
           </div>
 
           <div class="suite-visual-grid">

@@ -196,6 +196,12 @@ const filteredAndSortedItems = computed(() => {
   return items;
 });
 
+const hasActiveFilters = computed(() =>
+  Boolean(searchValue.value) ||
+  filters.value.type !== "all" ||
+  filters.value.source !== "all"
+);
+
 const isAllSelected = computed(() => {
   return (
     filteredAndSortedItems.value.length > 0 &&
@@ -963,7 +969,7 @@ onUnmounted(() => {
               {{
                 trashItems.length === 0
                   ? $t('Views.Bin.heading.trash_is_empty')
-                  : searchValue || filters.type !== $t('Commons.heading.all') || filters.source !== $t('Commons.heading.all')
+                  : hasActiveFilters
                   ? $t('Views.Bin.heading.no_matching_items_found')
                   : $t('Views.Bin.heading.no_items_found')
               }}
