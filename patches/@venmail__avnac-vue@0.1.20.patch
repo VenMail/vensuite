@@ -1,5 +1,52 @@
+diff --git a/src/components/panels/EditorAiPanel.vue b/src/components/panels/EditorAiPanel.vue
+index f633af8cc75c961d25800b1c80360dd504cb41c6..8f0da70b0c675ecc076f300556e14bdf3167dcbd 100644
+--- a/src/components/panels/EditorAiPanel.vue
++++ b/src/components/panels/EditorAiPanel.vue
+@@ -213,6 +213,32 @@ function resolveApiUrl(): string {
+   return `${base}/ai/generate-slides`
+ }
+ 
++function apiErrorMessage(status: number, json: unknown): string {
++  const data = json && typeof json === 'object' ? json as Record<string, unknown> : {}
++  const apiMessage =
++    typeof data.message === 'string' ? data.message
++    : typeof (data.error as { message?: unknown } | undefined)?.message === 'string' ? (data.error as { message: string }).message
++    : null
++
++  if (status === 401 || status === 419) {
++    return 'Your Venmail session could not be verified. Refresh the workspace and try again.'
++  }
++
++  if (status === 403) {
++    return apiMessage ?? 'You do not have access to use AI slide generation from this workspace.'
++  }
++
++  if (status === 429) {
++    return apiMessage ?? 'AI slide generation is busy. Please try again in a minute.'
++  }
++
++  if (status >= 500) {
++    return apiMessage ?? 'AI slide generation is temporarily unavailable. Please try again shortly.'
++  }
++
++  return apiMessage ?? `Request failed (${status})`
++}
++
+ interface StoryBlock {
+   type: string
+   content: Record<string, unknown>
+@@ -409,8 +435,7 @@ async function generate() {
+     }
+ 
+     if (!resp.ok) {
+-      const errMsg = ((json as any)?.error?.message as string | undefined) ?? `Request failed (${resp.status})`
+-      error.value = errMsg
++      error.value = apiErrorMessage(resp.status, json)
+       return
+     }
+ 
 diff --git a/src/components/panels/EditorFloatingSidebar.vue b/src/components/panels/EditorFloatingSidebar.vue
-index d58b198866d984ee4f1129f059a361abfbd1f492..f8f1353e973c456c5a48f8f57a2a85c538c907fe 100644
+index d58b198866d984ee4f1129f059a361abfbd1f492..09f02e88e315989e5a8c6fd89caef00202e9de26 100644
 --- a/src/components/panels/EditorFloatingSidebar.vue
 +++ b/src/components/panels/EditorFloatingSidebar.vue
 @@ -6,8 +6,8 @@
@@ -49,7 +96,7 @@ index d58b198866d984ee4f1129f059a361abfbd1f492..f8f1353e973c456c5a48f8f57a2a85c5
        >
          <span v-html="item.icon" />
 diff --git a/src/composables/useLayerPanel.ts b/src/composables/useLayerPanel.ts
-index 4ce634919e816bd2f58065beef9a9be3702448d8..547279db66f56859166ec27bb5d34f490e925585 100644
+index 4ce634919e816bd2f58065beef9a9be3702448d8..4e084624850567ad0905411a181de1abb04114a8 100644
 --- a/src/composables/useLayerPanel.ts
 +++ b/src/composables/useLayerPanel.ts
 @@ -1,4 +1,4 @@
@@ -157,7 +204,7 @@ index 4ce634919e816bd2f58065beef9a9be3702448d8..547279db66f56859166ec27bb5d34f49
  
    return {
 diff --git a/src/lib/avnac-document-preview.ts b/src/lib/avnac-document-preview.ts
-index 5a0a8c3a7c203cf7a0aa05a41f481ad33934a82e..57b441b7b4889bbdbe89d64221729eb58ec72969 100644
+index 5a0a8c3a7c203cf7a0aa05a41f481ad33934a82e..0613a9439f7ea6b8c74efff48da647394f079f59 100644
 --- a/src/lib/avnac-document-preview.ts
 +++ b/src/lib/avnac-document-preview.ts
 @@ -6,6 +6,7 @@ import { migrateLegacyImageBlurFilters, installAvnacObjectCanvasBlur } from './a
@@ -177,7 +224,7 @@ index 5a0a8c3a7c203cf7a0aa05a41f481ad33934a82e..57b441b7b4889bbdbe89d64221729eb5
  
      const aw = doc.artboard.width
 diff --git a/src/lib/avnac-stroke-arrow.ts b/src/lib/avnac-stroke-arrow.ts
-index 3dda35d4f77ef71b98dcedd3061e78c0131237b7..e56315cd37f9492c7c119dd537d8fcddf5e31009 100644
+index 3dda35d4f77ef71b98dcedd3061e78c0131237b7..ed7d1b2b30555568825fbcd8786ad5d30060879c 100644
 --- a/src/lib/avnac-stroke-arrow.ts
 +++ b/src/lib/avnac-stroke-arrow.ts
 @@ -6,6 +6,7 @@ import {
