@@ -1231,6 +1231,26 @@
       </DialogContent>
     </Dialog>
 
+    <Dialog v-model:open="showDeleteConfirm">
+      <DialogContent class="w-full max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete form?</DialogTitle>
+          <DialogDescription>
+            This will permanently delete "{{ formTitle || $t('Commons.text.untitled_form') }}". This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" :disabled="isDeletingForm" @click="showDeleteConfirm = false">
+            {{ $t('Commons.button.cancel') }}
+          </Button>
+          <Button type="button" variant="destructive" :disabled="isDeletingForm" @click="confirmDeleteForm">
+            {{ isDeletingForm ? 'Deleting...' : $t('Commons.button.delete') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
     <Dialog v-model:open="showIntegrationsModal">
       <DialogContent class="w-full max-w-4xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
@@ -1365,9 +1385,11 @@ const stripeAccountId = ref(settingsStore.state.payment.stripe_account_id || "")
 const acceptingResponses = ref(true);
 const showShareModal = ref(false);
 const showIntegrationsModal = ref(false);
+const showDeleteConfirm = ref(false);
 const formPublicApiEnabled = ref(false);
 const formPublicApiKey = ref('');
 const isUpdatingPublicApi = ref(false);
+const isDeletingForm = ref(false);
 const isPublishingShare = ref(false);
 const shareTarget = ref<any>(null);
 const shareAutoPublic = ref(false);
@@ -1741,13 +1763,25 @@ const handleToggleAccepting = async () => {
   }
 };
 
-const handleDeleteForm = async () => {
+const handleDeleteForm = () => {
   if (!formId.value) return;
-  if (!window.confirm("Delete this form? This action cannot be undone.")) return;
-  const ok = await formStore.deleteForm(formId.value);
-  if (ok) {
-    router.push({ name: "forms" });
-  } else {
+  showDeleteConfirm.value = true;
+};
+
+const confirmDeleteForm = async () => {
+  if (!formId.value || isDeletingForm.value) return;
+  isDeletingForm.value = true;
+  try {
+    const ok = await formStore.deleteForm(formId.value);
+    if (ok) {
+      showDeleteConfirm.value = false;
+      router.push({ name: "forms" });
+    } else {
+      isDeletingForm.value = false;
+      toast.error("Could not delete form.");
+    }
+  } catch {
+    isDeletingForm.value = false;
     toast.error("Could not delete form.");
   }
 };
@@ -2681,6 +2715,19 @@ const normalizeTemplateBlock = (block: any): FormBlock => ({
   multiple: block.multiple,
 });
 
+const handleClickOutside = (e: MouseEvent) => {
+  const topbar = document.querySelector(".form-builder-new__topbar");
+  if (topbar && !topbar.contains(e.target as Node)) {
+    openDropdown.value = null;
+  }
+};
+
+const handleEscape = (e: KeyboardEvent) => {
+  if (e.key === "Escape") {
+    openDropdown.value = null;
+  }
+};
+
 onMounted(async () => {
   if (formId.value) {
     const form = await formStore.fetchForm(formId.value);
@@ -2826,27 +2873,13 @@ onMounted(async () => {
   isLoading.value = false;
 
   // Close dropdowns on outside click and Escape
-  const handleClickOutside = (e: MouseEvent) => {
-    const topbar = document.querySelector(".form-builder-new__topbar");
-    if (topbar && !topbar.contains(e.target as Node)) {
-      openDropdown.value = null;
-    }
-  };
-  const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      openDropdown.value = null;
-    }
-  };
   document.addEventListener("click", handleClickOutside);
   document.addEventListener("keydown", handleEscape);
-
-  onBeforeUnmount(() => {
-    document.removeEventListener("click", handleClickOutside);
-    document.removeEventListener("keydown", handleEscape);
-  });
 });
 
 onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutside);
+  document.removeEventListener("keydown", handleEscape);
   if (saveTimeout) clearTimeout(saveTimeout);
 });
 </script>

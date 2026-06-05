@@ -3,6 +3,14 @@ import { computed, ref } from "vue";
 import { PropType } from "vue";
 import { AppForm, FormDefinition, FormData } from "@/types";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { router } from "@/main";
 import { Trash2, Edit3, Share2, BarChart2, Eye } from "lucide-vue-next";
 import { useFormStore } from "@/store/forms";
@@ -96,7 +104,7 @@ const statusConfig = computed(() => {
 
 const createdLabel = computed(() => formatDate(props.form.created_at));
 const lastResponseLabel = computed(() =>
-  props.form.last_response_at ? formatRelative(props.form.last_response_at) : "—",
+  props.form.last_response_at ? formatRelative(props.form.last_response_at) : "--",
 );
 
 // Mobile-first responsive classes
@@ -131,6 +139,7 @@ const actionsClass = computed(() => [
 ]);
 
 const deleting = ref(false);
+const isDeleteDialogOpen = ref(false);
 
 const launchEditor = () => {
   if (!props.form.id) return;
@@ -155,20 +164,28 @@ const handleShareClick = () => {
   emit("share", props.form);
 };
 
+const requestDeleteDraft = () => {
+  if (!props.form.id || deleting.value) return;
+  isDeleteDialogOpen.value = true;
+};
+
 const deleteDraft = async () => {
   if (!props.form.id || deleting.value) return;
-  if (!window.confirm("Delete this draft form? This action cannot be undone.")) {
-    return;
-  }
   deleting.value = true;
-  const success = await formStore.deleteForm(props.form.id);
-  if (!success) {
+  try {
+    const success = await formStore.deleteForm(props.form.id);
+    if (!success) {
+      deleting.value = false;
+      return;
+    }
+    isDeleteDialogOpen.value = false;
+  } catch {
     deleting.value = false;
   }
 };
 
 function formatDate(value?: string | Date | null) {
-  if (!value) return "—";
+  if (!value) return "--";
   try {
     const date = typeof value === "string" ? new Date(value) : value;
     return date.toLocaleDateString(undefined, {
@@ -177,12 +194,12 @@ function formatDate(value?: string | Date | null) {
       year: "numeric",
     });
   } catch (error) {
-    return "—";
+    return "--";
   }
 }
 
 function formatRelative(value?: string | Date | null) {
-  if (!value) return "—";
+  if (!value) return "--";
   try {
     const date = typeof value === "string" ? new Date(value) : value;
     const now = Date.now();
@@ -208,7 +225,7 @@ function formatRelative(value?: string | Date | null) {
     }
     return formatDate(date);
   } catch (error) {
-    return "—";
+    return "--";
   }
 }
 </script>
@@ -334,7 +351,7 @@ function formatRelative(value?: string | Date | null) {
           type="button"
           class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-400 flex-shrink-0"
           :disabled="deleting"
-          @click.stop="deleteDraft"
+          @click.stop="requestDeleteDraft"
           aria-label="Delete draft form"
         >
           <Trash2 class="h-4 w-4" />
@@ -342,9 +359,28 @@ function formatRelative(value?: string | Date | null) {
       </div>
 
       <span v-if="deleting" class="mt-2 text-xs font-medium text-slate-400 dark:text-slate-500 whitespace-nowrap">
-        Deleting…
+        Deleting...
       </span>
     </footer>
+
+    <Dialog v-model:open="isDeleteDialogOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete draft form?</DialogTitle>
+          <DialogDescription>
+            This will permanently delete "{{ form.title || $t('Commons.heading.untitled_form') }}". This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" :disabled="deleting" @click="isDeleteDialogOpen = false">
+            {{ $t('Commons.button.cancel') }}
+          </Button>
+          <Button variant="destructive" :disabled="deleting" @click="deleteDraft">
+            {{ deleting ? 'Deleting...' : $t('Commons.button.delete') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </article>
 </template>
 
