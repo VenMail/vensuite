@@ -159,6 +159,7 @@
     "Home": {
       "heading": {
         "choose_a_template": "选择一个模板",
+        "create_in_workspace": "在工作区中创建",
         "no_files_found": "未找到文件",
         "no_matching_files_found": "未找到匹配的文件"
       },

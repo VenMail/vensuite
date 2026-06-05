@@ -73,7 +73,7 @@
             >
               <DialogHeader>
                 <DialogTitle class="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                  Create in workspace
+                  {{ $t('Views.Home.heading.create_in_workspace') }}
                 </DialogTitle>
               </DialogHeader>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-2">
@@ -99,7 +99,7 @@
                   @click="createNewPresentation"
                 >
                   <Presentation class="w-8 h-8 text-primary-600" />
-                  <span class="mt-2 text-sm font-medium">New presentation</span>
+                  <span class="mt-2 text-sm font-medium">{{ $t('Commons.button.new_presentation') }}</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -107,7 +107,7 @@
                   @click="createNewForm"
                 >
                   <FolderKanban class="w-8 h-8 text-primary-600" />
-                  <span class="mt-2 text-sm font-medium">New form</span>
+                  <span class="mt-2 text-sm font-medium">{{ $t('Commons.button.new_form') }}</span>
                 </Button>
               </div>
             </DialogContent>

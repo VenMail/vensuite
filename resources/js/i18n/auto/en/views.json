@@ -159,6 +159,7 @@
     "Home": {
       "heading": {
         "choose_a_template": "Choose a Template",
+        "create_in_workspace": "Create in workspace",
         "no_files_found": "No files found",
         "no_matching_files_found": "No matching files found"
       },
