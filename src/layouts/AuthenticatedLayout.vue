@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch, computed } from 'vue'
+import { onMounted, watch, computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/auth/index'
@@ -18,7 +18,7 @@ const { isAuthenticated } = storeToRefs(authStore)
 const { isMobile } = useMobileDetection({ breakpoint: 1024 })
 const sidebarStore = useSidebarStore()
 const { isVisible, isCollapsed } = storeToRefs(sidebarStore)
-// const searchValue = ref("")
+const lastDesktopCollapsed = ref(sidebarStore.isCollapsed)
 
 // Get hideLayout from route meta
 const hideLayout = computed(() => route.meta.hideLayout === true)
@@ -50,6 +50,8 @@ function syncSidebarForCurrentRoute() {
 
   if (isMobile.value) {
     sidebarStore.setCollapsed(true)
+  } else {
+    sidebarStore.setCollapsed(lastDesktopCollapsed.value)
   }
 }
 
@@ -61,6 +63,9 @@ const toggleSidebar = () => {
 
 const toggleCollapse = (collapsed: boolean) => {
   sidebarStore.setCollapsed(collapsed)
+  if (!isMobile.value) {
+    lastDesktopCollapsed.value = collapsed
+  }
 }
 
 onMounted(async () => {
