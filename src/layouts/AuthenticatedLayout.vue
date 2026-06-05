@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch, ref, computed } from 'vue'
+import { onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/auth/index'
@@ -16,7 +16,6 @@ const authStore = useAuthStore()
 const { isAuthenticated } = storeToRefs(authStore)
 
 const { isMobile } = useMobileDetection({ breakpoint: 1024 })
-const isDark = ref(false)
 const sidebarStore = useSidebarStore()
 const { isVisible, isCollapsed } = storeToRefs(sidebarStore)
 // const searchValue = ref("")
@@ -24,31 +23,36 @@ const { isVisible, isCollapsed } = storeToRefs(sidebarStore)
 // Get hideLayout from route meta
 const hideLayout = computed(() => route.meta.hideLayout === true)
 
-// Show sidebar on specific routes
-watch(() => route.name, (newRouteName) => {
+const routesWithSidebar = new Set([
+  'home',
+  'forms',
+  'slides',
+  'media',
+  'stories',
+  'docs-view',
+  'sheets-view',
+  'bin-view',
+])
+
+function syncSidebarForCurrentRoute() {
+  if (hideLayout.value) {
+    sidebarStore.setVisible(false)
+    return
+  }
+
+  const routeName = route.name
   const show = (
-    newRouteName === 'home' ||
-    newRouteName === 'forms' ||
-    newRouteName === 'slides' ||
-    newRouteName === 'media' ||
-    newRouteName === 'stories' ||
-    newRouteName === 'docs-view' ||
-    newRouteName === 'sheets-view' ||
-    newRouteName === 'bin-view' // Add bin-view to keep sidebar visible
+    typeof routeName === 'string' &&
+    routesWithSidebar.has(routeName)
   )
   sidebarStore.setVisible(show && !isMobile.value)
+
   if (isMobile.value) {
     sidebarStore.setCollapsed(true)
   }
-})
+}
 
-watch(isMobile, (mobile) => {
-  if (mobile) {
-    sidebarStore.enforceMobileDefaults()
-  } else if (!hideLayout.value) {
-    sidebarStore.enforceDesktopDefaults()
-  }
-}, { immediate: true })
+watch([() => route.name, isMobile, hideLayout], syncSidebarForCurrentRoute, { immediate: true })
 
 const toggleSidebar = () => {
   sidebarStore.toggleVisible()
@@ -57,15 +61,6 @@ const toggleSidebar = () => {
 const toggleCollapse = (collapsed: boolean) => {
   sidebarStore.setCollapsed(collapsed)
 }
-
-// const toggleDarkMode = () => {
-//   isDark.value = !isDark.value
-//   document.documentElement.classList.toggle('dark', isDark.value)
-// }
-
-// const navigateToRoute = (route: string) => {
-//   router.push(route)
-// }
 
 onMounted(async () => {
   // Handle authentication
@@ -85,12 +80,6 @@ onMounted(async () => {
       name: 'login',
       query: { redirect: router.currentRoute.value.fullPath }
     })
-  }
-  
-  // Check system preference for dark mode
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    isDark.value = true
-    document.documentElement.classList.add('dark')
   }
 })
 
