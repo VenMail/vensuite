@@ -73,10 +73,10 @@
             >
               <DialogHeader>
                 <DialogTitle class="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                  {{ $t('Views.Home.heading.choose_a_template') }}
+                  Create in workspace
                 </DialogTitle>
               </DialogHeader>
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 sm:gap-4 p-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-2">
                 <Button
                   variant="outline"
                   :class="['h-24 flex flex-col items-center justify-center', 'hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400']"
@@ -92,6 +92,22 @@
                 >
                   <TableIcon class="w-8 h-8 text-primary-600" />
                   <span class="mt-2 text-sm font-medium">{{ $t('Commons.button.new_spreadsheet') }}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  :class="['h-24 flex flex-col items-center justify-center', 'hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400']"
+                  @click="createNewPresentation"
+                >
+                  <Presentation class="w-8 h-8 text-primary-600" />
+                  <span class="mt-2 text-sm font-medium">New presentation</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  :class="['h-24 flex flex-col items-center justify-center', 'hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-400']"
+                  @click="createNewForm"
+                >
+                  <FolderKanban class="w-8 h-8 text-primary-600" />
+                  <span class="mt-2 text-sm font-medium">New form</span>
                 </Button>
               </div>
             </DialogContent>
@@ -476,8 +492,8 @@ const workspaceStats = computed(() => {
 const quickCreateActions = computed(() => [
   { label: 'Doc', icon: FileText, onClick: createNewDocument },
   { label: 'Sheet', icon: TableIcon, onClick: createNewSpreadsheet },
-  { label: 'Slides', icon: Presentation, onClick: () => router.push('/slides/new') },
-  { label: 'Form', icon: FolderKanban, onClick: () => router.push('/forms') }
+  { label: 'Slides', icon: Presentation, onClick: createNewPresentation },
+  { label: 'Form', icon: FolderKanban, onClick: createNewForm }
 ])
 
 function buildContextMenuActions({
@@ -676,6 +692,14 @@ function createNewDocument() {
 
 function createNewSpreadsheet() {
   router.push('/sheets/new')
+}
+
+function createNewPresentation() {
+  router.push('/slides/new')
+}
+
+function createNewForm() {
+  router.push({ name: 'form-template', params: { template: 'blank' } })
 }
 
 async function createNewFolder() {
