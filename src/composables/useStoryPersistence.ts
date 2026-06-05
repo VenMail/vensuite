@@ -13,7 +13,7 @@ import {
   type StoryDocument,
 } from '@/types/story';
 import type { StoryEditorReturn } from './useStoryEditor';
-import type { ShareMember, ShareLevel } from '@/utils/sharing';
+import type { ShareMember } from '@/utils/sharing';
 import { parseSharingInfoString, serializeSharingInfoString } from '@/utils/sharing';
 
 export interface UseStoryPersistenceOptions {
@@ -276,8 +276,9 @@ export function useStoryPersistence(options: UseStoryPersistenceOptions) {
         privacyType.value = Number(file.privacy_type ?? 7);
 
         if (file.sharing_info) {
-          const sharing = parseSharingInfoString(file.sharing_info);
-          shareMembers.value = (sharing as any).members || [];
+          shareMembers.value = parseSharingInfoString(file.sharing_info);
+        } else {
+          shareMembers.value = [];
         }
       }
     } catch (error) {
@@ -293,10 +294,7 @@ export function useStoryPersistence(options: UseStoryPersistenceOptions) {
     try {
       const payload: any = { privacy_type: value };
       if (shareMembers.value.length > 0) {
-        payload.sharing_info = serializeSharingInfoString({
-          members: shareMembers.value,
-          level: value as unknown as ShareLevel,
-        } as any);
+        payload.sharing_info = serializeSharingInfoString(shareMembers.value);
       }
 
       await axios.patch(`${FILES_ENDPOINT}/${storyId.value}`, payload, {

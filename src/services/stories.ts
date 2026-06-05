@@ -7,10 +7,53 @@ import { ref, computed } from 'vue';
 import { apiClient } from './apiClient';
 
 const STORIES_DEBUG = Boolean(import.meta.env.DEV);
+const SHAREABLE_PRIVACY_TYPES = new Set([1, 2, 3, 4]);
 const logStoriesDebug = (...args: unknown[]) => {
   if (!STORIES_DEBUG) return;
   console.log(...args);
 };
+
+function isSharedStoryItem(item: any): boolean {
+  return SHAREABLE_PRIVACY_TYPES.has(Number(item.privacy_type)) || Boolean(item.sharing?.share_slug || item.sharing_info);
+}
+
+function getStoryShareLink(item: any, shared: boolean): string | undefined {
+  if (!shared) return undefined;
+  const shareBase = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin;
+  return item.file_public_url || item.public_url || `${shareBase}/stories/${item.id}`;
+}
+
+function parseSceneCount(item: any): number {
+  if (item.metadata?.scene_count) {
+    return Number(item.metadata.scene_count);
+  }
+
+  if (item.content) {
+    try {
+      const data = JSON.parse(item.content);
+      return data.scenes?.length || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  return 0;
+}
+
+function parseStoryFromApiItem(item: any): StoryListItem {
+  const shared = isSharedStoryItem(item);
+
+  return {
+    id: item.id,
+    title: item.title || 'Untitled Story',
+    thumbnail: item.metadata?.thumbnail || undefined,
+    sceneCount: parseSceneCount(item),
+    lastModified: item.updated_at,
+    shared,
+    privacyType: Number(item.privacy_type ?? 7),
+    shareLink: getStoryShareLink(item, shared),
+  };
+}
 
 export interface StoryListItem {
   id: string;
@@ -59,35 +102,7 @@ export async function fetchStories(): Promise<StoryListItem[]> {
     const items: any[] = response.data.data || [];
     logStoriesDebug('Stories fetched:', items.length);
 
-    const storyItems: StoryListItem[] = items.map((item: any) => {
-      let sceneCount = 0;
-
-      // Try to get scene count from metadata
-      if (item.metadata?.scene_count) {
-        sceneCount = Number(item.metadata.scene_count);
-      } else if (item.content) {
-        // Parse from content as fallback
-        try {
-          const data = JSON.parse(item.content);
-          sceneCount = data.scenes?.length || 0;
-        } catch {
-          sceneCount = 0;
-        }
-      }
-
-      return {
-        id: item.id,
-        title: item.title || 'Untitled Story',
-        thumbnail: item.metadata?.thumbnail || undefined,
-        sceneCount,
-        lastModified: item.updated_at,
-        shared: item.sharing?.share_slug ? true : false,
-        privacyType: item.privacy_type || 7,
-        shareLink: item.sharing?.share_slug
-          ? `${window.location.origin}/stories/${item.sharing.share_slug}`
-          : undefined,
-      };
-    });
+    const storyItems: StoryListItem[] = items.map(parseStoryFromApiItem);
 
     // Clear cache and update with fresh data
     storiesCache.value.clear();
@@ -123,30 +138,7 @@ export async function fetchStory(storyId: string): Promise<StoryListItem | null>
     const response = await apiClient.get(`/app-files/${storyId}`);
     const item = response.data.data;
 
-    let sceneCount = 0;
-    if (item.metadata?.scene_count) {
-      sceneCount = Number(item.metadata.scene_count);
-    } else if (item.content) {
-      try {
-        const data = JSON.parse(item.content);
-        sceneCount = data.scenes?.length || 0;
-      } catch {
-        sceneCount = 0;
-      }
-    }
-
-    const story: StoryListItem = {
-      id: item.id,
-      title: item.title || 'Untitled Story',
-      thumbnail: item.metadata?.thumbnail || undefined,
-      sceneCount,
-      lastModified: item.updated_at,
-      shared: item.sharing?.share_slug ? true : false,
-      privacyType: item.privacy_type || 7,
-      shareLink: item.sharing?.share_slug
-        ? `${window.location.origin}/stories/${item.sharing.share_slug}`
-        : undefined,
-    };
+    const story = parseStoryFromApiItem(item);
 
     storiesCache.value.set(storyId, story);
     return story;
