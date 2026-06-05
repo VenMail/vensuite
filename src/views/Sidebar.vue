@@ -43,8 +43,8 @@ const items = [
 const router = useRouter()
 const route = useRoute()
 const activeItem = ref('Home')
-const { isMobile } = useMobileDetection({ breakpoint: 768 })
-const isTablet = computed(() => !isMobile.value && window.innerWidth >= 768 && window.innerWidth < 1024)
+const { isMobile } = useMobileDetection({ breakpoint: 1024 })
+const isEffectivelyCollapsed = computed(() => !isMobile.value && props.isCollapsed)
 const isDialogOpen = ref(false)
 
 function goToVenmail() {
@@ -82,7 +82,7 @@ const sidebarClasses = computed(() =>
     isMobile.value ? 'fixed inset-y-0 left-0 z-40 h-dvh shadow-2xl' : '',
     props.isVisible ? 'border-r bg-white/[0.88] dark:bg-slate-950/[0.88] backdrop-blur-xl border-slate-200/80 dark:border-slate-800/80 shadow-sm' : '',
     props.isVisible ? 'translate-x-0' : '-translate-x-full',
-    props.isVisible ? (isMobile.value ? 'w-64' : (props.isCollapsed ? 'w-16' : (isTablet.value ? 'w-56' : 'w-64'))) : 'w-0',
+    props.isVisible ? (isMobile.value ? 'w-64' : (isEffectivelyCollapsed.value ? 'w-16' : 'w-64')) : 'w-0',
   )
 )
 
@@ -181,10 +181,10 @@ function createNewFile(type: string, template?: string) {
             <DialogTrigger asChild>
               <button
                 class="flex items-center justify-center rounded-lg bg-slate-950 text-white shadow-sm transition-colors hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400 py-2"
-                :class="props.isCollapsed ? 'w-8' : 'flex-1'"
+                :class="isEffectivelyCollapsed ? 'w-8' : 'flex-1'"
               >
-                <Plus class="h-5 w-5" :class="props.isCollapsed ? '' : 'mr-2'" />
-                <span v-if="!props.isCollapsed">{{t('Commons.button.new')}}</span>
+                <Plus class="h-5 w-5" :class="isEffectivelyCollapsed ? '' : 'mr-2'" />
+                <span v-if="!isEffectivelyCollapsed">{{t('Commons.button.new')}}</span>
               </button>
             </DialogTrigger>
             <DialogContent>
@@ -233,14 +233,14 @@ function createNewFile(type: string, template?: string) {
               @click.prevent="setActiveItem(item.name, item.route)"
               :class="cn(
                 'flex items-center rounded-lg font-semibold transition-colors',
-                props.isCollapsed ? 'justify-center py-3 px-2' : 'px-3 py-2',
+                isEffectivelyCollapsed ? 'justify-center py-3 px-2' : 'px-3 py-2',
                 activeItem === item.name
                   ? 'bg-cyan-50 text-cyan-800 dark:bg-cyan-400/10 dark:text-cyan-200'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-100'
               )"
             >
-              <component :is="item.icon" class="h-5 w-5" :class="props.isCollapsed ? '' : 'mr-3'" />
-              <span v-if="!props.isCollapsed">{{ item.name }}</span>
+              <component :is="item.icon" class="h-5 w-5" :class="isEffectivelyCollapsed ? '' : 'mr-3'" />
+              <span v-if="!isEffectivelyCollapsed">{{ item.name }}</span>
             </a>
           </nav>
         </div>
