@@ -1,5 +1,4 @@
 import { toast } from '@/composables/useToast'
-import * as XLSX from 'xlsx'
 
 export function useSheetExport(vtableRef: any) {
   function getInstance() {
@@ -60,13 +59,14 @@ export function useSheetExport(vtableRef: any) {
     const columns = getSheetColumns(sheet)
 
     const headers = columns.map((col: any) => col.title || `Column ${col.field}`)
-    const wsData = [headers, ...data]
+    const rows = [headers, ...data]
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
+    const ExcelJS = await import('exceljs')
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Sheet1')
+    worksheet.addRows(rows)
 
-    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    const buffer = await workbook.xlsx.writeBuffer()
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     downloadBlob(blob, filename)
   }

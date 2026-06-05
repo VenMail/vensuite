@@ -1,5 +1,4 @@
 // src/utils/fileConverter.ts
-import * as XLSX from 'xlsx';
 import type { IVTableSheetOptions } from '@visactor/vtable-sheet';
 import { Editor, generateJSON } from '@tiptap/core';
 import { generateHTML } from '@tiptap/html';
@@ -948,13 +947,33 @@ function buildVTableWorkbookFromGrid(values: any[][], opts?: { title?: string; s
 
 async function convertXlsxToVTable(file: File): Promise<IVTableSheetOptions> {
   const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: 'array' });
-  const firstName = wb.SheetNames?.[0] || 'Sheet1';
-  const sheet = wb.Sheets?.[firstName];
-  const grid = sheet
-    ? (XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true }) as any[][])
-    : [];
+  const ExcelJS = await import('exceljs');
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buf);
+  const sheet = wb.worksheets[0];
+  const firstName = sheet?.name || 'Sheet1';
+  const grid: any[][] = [];
+
+  sheet?.eachRow((row) => {
+    const rowData: any[] = [];
+    row.eachCell({ includeEmpty: true }, (cell) => {
+      rowData.push(normalizeExcelCellValue(cell.value));
+    });
+    grid.push(rowData);
+  });
+
   return buildVTableWorkbookFromGrid(grid, { title: file.name.replace(/\.[^/.]+$/, '') || 'New Spreadsheet', sheetName: firstName });
+}
+
+function normalizeExcelCellValue(value: any): any {
+  if (value == null) return '';
+  if (value instanceof Date) return value;
+  if (typeof value !== 'object') return value;
+  if ('result' in value) return normalizeExcelCellValue(value.result);
+  if ('text' in value) return value.text;
+  if ('hyperlink' in value) return value.text || value.hyperlink;
+  if (Array.isArray(value.richText)) return value.richText.map((part: any) => part.text || '').join('');
+  return String(value);
 }
 
 function parseCsvToGrid(input: string): string[][] {
