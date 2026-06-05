@@ -1552,6 +1552,18 @@ defineExpose({
   justify-content: center;
   gap: 12px;
   padding: 12px;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+}
+
+.avnac-bottom-bar-content::-webkit-scrollbar {
+  display: none;
+}
+
+.avnac-bottom-bar-content > * {
+  flex: 0 0 auto;
 }
 
 .avnac-icon-btn {
@@ -1574,6 +1586,27 @@ defineExpose({
 }
 
 @media (max-width: 640px) {
+  .avnac-bottom-bar-content {
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 8px 6px;
+  }
+
+  .avnac-bottom-bar-content :deep(.avnac-zoom-bar) {
+    gap: 4px;
+    padding: 4px 6px;
+  }
+
+  .avnac-bottom-bar-content :deep(.avnac-zoom-bar .w-24) {
+    width: 4.5rem;
+  }
+
+  .avnac-bottom-bar-content :deep(.avnac-zoom-pct-btn),
+  .avnac-bottom-bar-content :deep(.avnac-zoom-pct-text) {
+    min-width: 2.5rem;
+    padding-inline: 4px;
+  }
+
   .avnac-ai-panel {
     left: 0.75rem !important;
     top: 0.75rem !important;
