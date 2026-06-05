@@ -162,6 +162,9 @@
     "srcRoot": "src"
   },
   "pnpm": {
+    "patchedDependencies": {
+      "@venmail/avnac-vue@0.1.20": "patches/@venmail__avnac-vue@0.1.20.patch"
+    },
     "overrides": {
       "tar@<7.5.16": "7.5.16",
       "markdown-it@<14.2.0": "14.2.0",

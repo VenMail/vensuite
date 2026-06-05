@@ -1,0 +1,108 @@
+diff --git a/src/composables/useLayerPanel.ts b/src/composables/useLayerPanel.ts
+index 4ce6349..547279d 100644
+--- a/src/composables/useLayerPanel.ts
++++ b/src/composables/useLayerPanel.ts
+@@ -1,4 +1,4 @@
+-import { computed } from 'vue'
++import { computed, onScopeDispose, ref, watch } from 'vue'
+ import type { ShallowRef } from 'vue'
+ import type { Canvas, FabricObject } from 'fabric'
+ import { getAvnacLayerName, setAvnacLayerName, ensureAvnacLayerId } from '#/lib/ensure-avnac-layer-id'
+@@ -21,7 +21,41 @@ export function useLayerPanel(
+   fabricCanvas: ShallowRef<Canvas | null>,
+ ) {
+   const canvasStore = useCanvasStore()
++  const revision = ref(0)
++  const bumpRevision = () => { revision.value += 1 }
++
++  watch(fabricCanvas, (canvas, _previous, onCleanup) => {
++    if (!canvas) return
++    const events = [
++      'object:added',
++      'object:removed',
++      'object:modified',
++      'selection:created',
++      'selection:updated',
++      'selection:cleared',
++    ]
++    events.forEach((event) => canvas.on(event as never, bumpRevision as never))
++    bumpRevision()
++    onCleanup(() => {
++      events.forEach((event) => canvas.off(event as never, bumpRevision as never))
++    })
++  }, { immediate: true })
++
++  onScopeDispose(() => {
++    const canvas = fabricCanvas.value
++    if (!canvas) return
++    ;[
++      'object:added',
++      'object:removed',
++      'object:modified',
++      'selection:created',
++      'selection:updated',
++      'selection:cleared',
++    ].forEach((event) => canvas.off(event as never, bumpRevision as never))
++  })
++
+   const layers = computed<LayerRow[]>(() => {
++    revision.value
+     const canvas = fabricCanvas.value
+     if (!canvas) return []
+     const objects = canvas.getObjects()
+@@ -43,6 +77,7 @@ export function useLayerPanel(
+     if (!obj) return
+     obj.visible = !(obj.visible ?? true)
+     canvas.requestRenderAll()
++    bumpRevision()
+   }
+ 
+   function renameLayer(stackIndex: number, name: string) {
+@@ -51,6 +86,7 @@ export function useLayerPanel(
+     const obj = canvas.getObjects()[stackIndex]
+     if (!obj) return
+     setAvnacLayerName(obj, name)
++    bumpRevision()
+   }
+ 
+   function bringForward(stackIndex: number) {
+@@ -60,6 +96,7 @@ export function useLayerPanel(
+     if (!obj) return
+     canvas.bringObjectForward(obj)
+     canvas.requestRenderAll()
++    bumpRevision()
+   }
+ 
+   function sendBackward(stackIndex: number) {
+@@ -69,6 +106,7 @@ export function useLayerPanel(
+     if (!obj) return
+     canvas.sendObjectBackwards(obj)
+     canvas.requestRenderAll()
++    bumpRevision()
+   }
+ 
+   function reorderById(orderedIds: string[]) {
+@@ -89,6 +127,7 @@ export function useLayerPanel(
+     toAdd.forEach((o) => canvas.remove(o))
+     toAdd.forEach((o, i) => canvas.insertAt(i, o))
+     canvas.requestRenderAll()
++    bumpRevision()
+   }
+ 
+   function deleteSelected() {
+@@ -98,6 +137,7 @@ export function useLayerPanel(
+     canvas.discardActiveObject()
+     active.forEach((o) => canvas.remove(o))
+     canvas.requestRenderAll()
++    bumpRevision()
+   }
+ 
+   function selectByIndex(stackIndex: number) {
+@@ -107,6 +147,7 @@ export function useLayerPanel(
+     if (!obj) return
+     canvas.setActiveObject(obj)
+     canvas.requestRenderAll()
++    bumpRevision()
+   }
+ 
+   return {
