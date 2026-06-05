@@ -149,7 +149,7 @@ export function useFileOperations() {
         } else if (['ppt', 'pptx'].includes(fileType || '')) {
           router.push(`/slides/${file.id}`)
         } else if (['pdf'].includes(fileType || '')) {
-          router.push(`/media/${file.id}`)
+          router.push({ name: 'file', params: { id: file.id } })
         } else {
           toast.info(t('Composables.UseFileOperations.toast.opening_file_in_appropriate'))
           // Fallback - try to determine editor based on file properties

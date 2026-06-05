@@ -1161,7 +1161,7 @@ async function createFormFromQuestions() {
     
     if (newForm?.id) {
       // Navigate to form builder
-      router.push(`/forms/${newForm.id}/edit-new`)
+      router.push({ name: 'form-edit', params: { id: newForm.id } })
       convertToFormOpen.value = false
     } else {
       throw new Error('Failed to create form: No ID returned')
