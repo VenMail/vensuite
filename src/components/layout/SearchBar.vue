@@ -146,8 +146,9 @@ watch(searchValue, () => {
   emitSearch()
 })
 
-// Clear filters when route changes
+// Each section has different content and filters; reset search when context changes.
 watch(() => route.path, () => {
+  searchValue.value = ""
   selectedFilters.value = []
   void nextTick(() => emitSearch())
 })
