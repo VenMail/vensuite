@@ -61,6 +61,7 @@ import {
 } from '@/components/ui/menubar'
 import { useFileStore } from '@/store/files'
 import { t } from '@/i18n'
+import { DEFAULT_WORKBOOK_DATA } from '@/assets/default-workbook-data'
 
 interface Collaborator { name: string; selection?: any; ts?: number }
 interface Props {
@@ -141,7 +142,7 @@ const recentFiles = computed(() => {
 async function handleNew() {
   try {
     if (props.mode === 'sheet') {
-      const newSheet = await fileStore.createNewDocument('xlsx', 'New Spreadsheet')
+      const newSheet = await fileStore.createNewDocument('xlsx', 'New Spreadsheet', JSON.stringify(DEFAULT_WORKBOOK_DATA))
       if (newSheet?.id) {
         await router.push(`/sheets/${newSheet.id}`)
       }

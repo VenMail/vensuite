@@ -4,6 +4,7 @@ import { useAuthStore } from "./auth";
 import type { DocumentFormat, LoadDocumentOptions, LoadDocumentResult, FileData } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 import { DEFAULT_BLANK_DOCUMENT_TEMPLATE } from "@/assets/doc-data";
+import { DEFAULT_WORKBOOK_DATA } from "@/assets/default-workbook-data";
 import { convertFileForEditor } from "@/utils/fileConverter";
 
 const API_BASE_URI = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
@@ -926,7 +927,10 @@ export const useFileStore = defineStore("files", {
     /** Create a new document - tries online first, falls back to local */
     async createNewDocument(fileType: string = "docx", title: string = "Untitled", content?: string): Promise<FileData> {
       // Use proper default content based on file type
-      const defaultContent = fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE : content || "";
+      const defaultContent = content
+        ?? (fileType === "docx" ? DEFAULT_BLANK_DOCUMENT_TEMPLATE
+          : fileType === "xlsx" ? JSON.stringify(DEFAULT_WORKBOOK_DATA)
+            : "");
       const auth = useAuthStore();
 
       const newDoc = {
