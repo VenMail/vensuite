@@ -6,7 +6,8 @@
 
 import { ref, computed } from 'vue'
 import { apiClient } from './apiClient'
-import type { SlideDeckSummary, AvnacDeckPayload, AvnacDocumentV1 } from '@/types/slides'
+import { migrateDeckPayload } from '@/utils/slideDeckPayload'
+import type { SlideDeckSummary, AvnacDocumentV1 } from '@/types/slides'
 
 const slideDecksCache = ref<Map<string, SlideDeckSummary>>(new Map())
 const isLoadingList = ref(false)
@@ -16,15 +17,9 @@ function parseSummaryFromApiItem(item: any): SlideDeckSummary {
   let firstSlide: AvnacDocumentV1 | undefined
 
   if (item.content) {
-    try {
-      const payload: AvnacDeckPayload = typeof item.content === 'string'
-        ? JSON.parse(item.content)
-        : item.content
-      if ((payload?.version === 3 || (payload as any)?.version === 'avnac-v1') && Array.isArray(payload.slides)) {
-        slideCount = payload.slides.length
-        firstSlide = payload.slides[0]
-      }
-    } catch { /* non-fatal */ }
+    const payload = migrateDeckPayload(item.content)
+    slideCount = payload.slides.length
+    firstSlide = payload.slides[0]
   }
 
   const shareBase = import.meta.env.VITE_SHARE_BASE_URL || window.location.origin
@@ -90,7 +85,7 @@ export async function createSlideDeck(
   theme?: string,
 ): Promise<SlideDeckSummary | null> {
   try {
-    const payload: AvnacDeckPayload = {
+    const payload = {
       version: 3,
       title,
       slides,

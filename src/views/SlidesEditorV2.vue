@@ -212,6 +212,7 @@ import {
   resolveAvnacDeckTheme,
   type AvnacDeckTheme,
 } from '@/utils/avnacSlideTemplates'
+import { migrateDeckPayload } from '@/utils/slideDeckPayload'
 import { cloneAvnacPlain, type AvnacDocumentV1 } from '@avnac/lib/avnac-document'
 import axios from 'axios'
 import { useAuthStore } from '@/store/auth'
@@ -396,14 +397,14 @@ async function persistDeck(): Promise<boolean> {
         file_name: `${title.value}.pptx`,
         file_type: 'pptx',
       } as any)
-      if (result?.document) applyLoadedDeckDoc(result.document)
+      if (!result?.document) throw new Error('Presentation save returned no document')
+      applyLoadedDeckDoc(result.document)
     } else {
       const doc = await fileStore.createNewDocument('pptx', title.value, content)
-      if (doc?.id) {
-        deckId.value = doc.id
-        applyLoadedDeckDoc(doc)
-        await router.replace(`/slides/${doc.id}`)
-      }
+      if (!doc?.id) throw new Error('Presentation create returned no document id')
+      deckId.value = doc.id
+      applyLoadedDeckDoc(doc)
+      await router.replace(`/slides/${doc.id}`)
     }
     hasUnsaved.value = false
     lastSavedAt.value = new Date()
@@ -734,44 +735,6 @@ onMounted(async () => {
     }
   }
 })
-
-interface MigratedDeck { slides: AvnacDocumentV1[]; notes: string[]; title: string }
-function migrateDeckPayload(rawContent: unknown): MigratedDeck {
-  const fallback: MigratedDeck = { slides: [], notes: [], title: '' }
-  if (!rawContent) return fallback
-  if (typeof rawContent !== 'string') return fallback
-  let parsed: any
-  try {
-    parsed = JSON.parse(rawContent)
-  } catch {
-    return fallback
-  }
-  if (!parsed || typeof parsed !== 'object') return fallback
-
-  let slidesIn: any[] = []
-  if (Array.isArray(parsed.slides)) slidesIn = parsed.slides
-  else if (Array.isArray(parsed.documents)) slidesIn = parsed.documents
-  else if (Array.isArray(parsed)) slidesIn = parsed
-
-  const slides: AvnacDocumentV1[] = []
-  for (const s of slidesIn) {
-    if (!s || typeof s !== 'object') continue
-    const ab = s.artboard
-    if (!ab || typeof ab.width !== 'number' || typeof ab.height !== 'number') continue
-    if (!s.fabric || typeof s.fabric !== 'object') continue
-    slides.push(cloneAvnacPlain(s))
-  }
-
-  const notesIn = Array.isArray(parsed.notes) ? parsed.notes.map((n: unknown) => typeof n === 'string' ? n : '') : []
-  while (notesIn.length < slides.length) notesIn.push('')
-  if (notesIn.length > slides.length) notesIn.length = slides.length
-
-  return {
-    slides,
-    notes: notesIn,
-    title: typeof parsed.title === 'string' ? parsed.title : '',
-  }
-}
 
 onBeforeUnmount(() => {
   if (saveTimer) clearTimeout(saveTimer)
