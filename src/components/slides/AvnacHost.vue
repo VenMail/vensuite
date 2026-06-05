@@ -190,9 +190,10 @@
 
     <SpeakerNotesPanel
       :model-value="currentNotes"
-      :open="props.showNotes && !props.readOnly"
-      @update:model-value="emit('notes-change', currentIndex, $event)"
-      @close="emit('notes-change', currentIndex, currentNotes)"
+      :open="props.showNotes"
+      :read-only="props.readOnly"
+      @update:model-value="onSpeakerNotesInput"
+      @close="onSpeakerNotesClose"
     />
     </div>
   </div>
@@ -282,6 +283,16 @@ const apiBaseUrl = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ??
 const slideAiApiUrl = `${apiBaseUrl}/ai/generate-slides`
 
 const currentNotes = computed(() => props.notes?.[currentIndex.value] ?? '')
+
+function onSpeakerNotesInput(value: string) {
+  if (props.readOnly) return
+  emit('notes-change', currentIndex.value, value)
+}
+
+function onSpeakerNotesClose() {
+  if (props.readOnly) return
+  emit('notes-change', currentIndex.value, currentNotes.value)
+}
 let deckMutationEventActive = false
 
 function syncCurrentSlideFromEditor() {

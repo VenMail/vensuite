@@ -287,7 +287,6 @@ const currentItems = computed<MenuItem[]>(() => {
 const mutatingActions = new Set([
   'undo',
   'redo',
-  'new-deck',
   'import-pptx',
   'rename',
   'size-wide',

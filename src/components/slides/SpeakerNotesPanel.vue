@@ -10,8 +10,10 @@
     </div>
     <textarea
       class="snp__textarea"
+      :class="{ 'snp__textarea--readonly': readOnly }"
       :value="modelValue"
-      placeholder="Add speaker notes for this slide..."
+      :placeholder="readOnly ? 'No speaker notes for this slide.' : 'Add speaker notes for this slide...'"
+      :readonly="readOnly"
       @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
     />
   </div>
@@ -21,6 +23,7 @@
 defineProps<{
   modelValue: string
   open: boolean
+  readOnly?: boolean
 }>()
 
 defineEmits<{
@@ -87,4 +90,9 @@ defineEmits<{
 }
 
 .snp__textarea::placeholder { color: var(--fg-subtle, #a1a1aa); }
+
+.snp__textarea--readonly {
+  cursor: default;
+  color: var(--fg-muted, #52525b);
+}
 </style>
