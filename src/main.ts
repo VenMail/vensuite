@@ -94,6 +94,24 @@ const routes = [
     component: () => import('./views/SigningPlayer.vue'),
     meta: { public: true },
   },
+  {
+    path: '/share/doc/:appFileId',
+    name: 'docs-share',
+    component: DocsEditor,
+    meta: { hideLayout: true, public: true },
+  },
+  {
+    path: '/share/sheet/:id',
+    name: 'sheet-share',
+    component: RunSheet,
+    meta: { hideLayout: true, public: true, allowGuest: true },
+  },
+  {
+    path: '/share/slide/:deckId',
+    name: 'slides-share',
+    component: () => import('./views/SlidesEditorV2.vue'),
+    meta: { hideLayout: true, public: true },
+  },
   
   // Authenticated routes with layout
   {
