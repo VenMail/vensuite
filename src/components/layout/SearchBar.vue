@@ -98,13 +98,24 @@ const availableFilters = computed(() => {
 })
 
 const hasActiveFilters = computed(() => selectedFilters.value.length > 0)
+const allowsMultipleFilters = computed(() => {
+  const path = route.path
+  return !(
+    path.includes('/forms') ||
+    path.includes('/slides') ||
+    path.includes('/stories') ||
+    path.includes('/bin')
+  )
+})
 
 function toggleFilter(filterValue: string) {
   const index = selectedFilters.value.indexOf(filterValue)
   if (index > -1) {
     selectedFilters.value.splice(index, 1)
-  } else {
+  } else if (allowsMultipleFilters.value) {
     selectedFilters.value.push(filterValue)
+  } else {
+    selectedFilters.value = [filterValue]
   }
   emitSearch()
 }
