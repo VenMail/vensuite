@@ -585,7 +585,10 @@ const filteredSpreadsheets = computed(() => {
   if (globalTypeFilters.value.length > 0) {
     files = files.filter(file => {
       const type = file.file_type?.toLowerCase() || "";
-      return globalTypeFilters.value.some(filter => type === filter);
+      return globalTypeFilters.value.some(filter => {
+        if (filter === "xlsx") return ["xlsx", "xls", "xlsm", "xlsb"].includes(type);
+        return type === filter;
+      });
     });
   }
 
