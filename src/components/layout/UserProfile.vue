@@ -111,7 +111,7 @@ const handleLogout = async () => {
 }
 
 const navigateTo = (route: string) => {
-  router.push(route)
+  window.location.href = `${venmailOrigin()}${route}`
 }
 
 const menuItems = [
