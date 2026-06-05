@@ -797,7 +797,7 @@
                   class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
                   @click="updatePaymentAmount"
                 >
-                  {{$t('Commons.button.date')}}
+                  {{$t('Commons.button.save_settings')}}
                 </button>
               </div>
             </div>
@@ -960,7 +960,7 @@
                         class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg"
                         @click="closeWebhooksModal"
                       >
-                        {{$t('Commons.button.date')}}
+                        {{$t('Commons.button.done')}}
                       </button>
                     </div>
                   </div>

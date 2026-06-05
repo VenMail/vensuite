@@ -50,7 +50,7 @@ import {
         </MenubarItem>
         <MenubarItem>
           <SaveIcon class="h-4 w-4 mr-2" />
-          {{$t('Commons.button.date')}}
+          {{$t('Commons.button.save')}}
         </MenubarItem>
         <MenubarItem>
           <DownloadIcon class="h-4 w-4 mr-2" />

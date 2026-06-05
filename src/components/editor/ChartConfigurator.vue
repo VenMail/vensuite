@@ -188,7 +188,7 @@
       <DialogFooter class="gap-2">
         <Button variant="outline" @click="handleCancel">{{$t('Commons.button.cancel')}}</Button>
         <Button @click="handleSubmit" :disabled="!isValid">
-          {{ isEditing ? $t('Commons.button.date') : $t('Commons.button.insert') }}
+          {{ isEditing ? $t('Commons.button.save') : $t('Commons.button.insert') }}
         </Button>
       </DialogFooter>
     </DialogContent>
