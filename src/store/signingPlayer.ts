@@ -12,23 +12,35 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   const error = ref<string | null>(null);
   const isCompleted = ref(false);
 
+  function hasCompletedValue(value: string | boolean | undefined): boolean {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return value.trim() !== '';
+    }
+
+    return false;
+  }
+
   const requiredFields = computed(() =>
     session.value?.fields.filter(f => f.required) || []
   );
 
   const completedFields = computed(() =>
-    session.value?.fields.filter(f => answers.value[f.id] !== undefined) || []
+    session.value?.fields.filter(f => hasCompletedValue(answers.value[f.id])) || []
   );
 
   const progress = computed(() => {
     const required = requiredFields.value.length;
     if (required === 0) return 1;
-    const filled = requiredFields.value.filter(f => answers.value[f.id] !== undefined).length;
+    const filled = requiredFields.value.filter(f => hasCompletedValue(answers.value[f.id])).length;
     return filled / required;
   });
 
   const canSubmit = computed(() =>
-    requiredFields.value.every(f => answers.value[f.id] !== undefined)
+    requiredFields.value.every(f => hasCompletedValue(answers.value[f.id]))
   );
 
   const fieldsByPage = computed(() => {

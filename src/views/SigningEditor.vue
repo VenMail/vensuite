@@ -156,6 +156,7 @@ async function handleSave() {
         signingRequestId: signingRequestId.value,
         fieldCount: store.fields.length,
         signerCount: store.signers.length,
+        signers: store.signers.map(s => ({ email: s.email, name: s.name })),
       }, openerOrigin);
       window.close();
     } else {
