@@ -117,19 +117,39 @@
       @change="onFilesChosen"
     />
 
-    <!-- Workspace document picker -->
-    <Dialog v-model:open="isPickerOpen">
-      <DialogContent
-        class="max-w-md rounded-xl border bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-0 gap-0 overflow-hidden"
+  </div>
+
+  <!-- Workspace document picker (Teleport avoids z-index / portal issues) -->
+  <Teleport to="body">
+    <div
+      v-if="isPickerOpen"
+      class="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm"
+      @click.self="closePicker"
+    >
+      <div
+        class="fixed left-1/2 top-1/2 z-[201] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ws-picker-title"
       >
-        <DialogHeader class="px-4 pt-4 pb-2">
-          <DialogTitle class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            Attach from workspace
-          </DialogTitle>
-          <DialogDescription class="text-xs text-gray-500 dark:text-gray-400">
-            Pick a document to use in this conversation.
-          </DialogDescription>
-        </DialogHeader>
+        <div class="flex items-start justify-between px-4 pt-4 pb-2">
+          <div>
+            <h2 id="ws-picker-title" class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              Attach from workspace
+            </h2>
+            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              Pick a document to use in this conversation.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="ml-4 flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Close"
+            @click="closePicker"
+          >
+            <X class="h-4 w-4" />
+          </button>
+        </div>
         <div class="px-4 pb-3">
           <div class="relative">
             <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
@@ -142,30 +162,39 @@
           </div>
         </div>
         <div class="max-h-64 overflow-y-auto border-t border-gray-100 dark:border-gray-700/60 py-1">
-          <button
-            v-for="file in filteredWorkspaceDocs"
-            :key="String(file.id)"
-            type="button"
-            class="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-            @click="pickWorkspaceDoc(file)"
+          <div
+            v-if="isLoadingDocs"
+            class="flex items-center justify-center px-4 py-6 gap-2 text-sm text-gray-400 dark:text-gray-500"
           >
-            <FileText class="h-4 w-4 text-violet-500 flex-shrink-0" />
-            <span class="truncate">{{ file.title || file.file_name }}</span>
-          </button>
-          <p
-            v-if="filteredWorkspaceDocs.length === 0"
-            class="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500"
-          >
-            {{ pickerQuery ? 'No documents match your search' : 'No documents in your workspace yet' }}
-          </p>
+            <Loader2 class="h-4 w-4 motion-safe:animate-spin" />
+            Loading…
+          </div>
+          <template v-else>
+            <button
+              v-for="file in filteredWorkspaceDocs"
+              :key="String(file.id)"
+              type="button"
+              class="flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              @click="pickWorkspaceDoc(file)"
+            >
+              <FileText class="h-4 w-4 text-violet-500 flex-shrink-0" />
+              <span class="truncate">{{ file.title || file.file_name }}</span>
+            </button>
+            <p
+              v-if="filteredWorkspaceDocs.length === 0"
+              class="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500"
+            >
+              {{ pickerQuery ? 'No documents match your search' : 'No documents in your workspace yet' }}
+            </p>
+          </template>
         </div>
-      </DialogContent>
-    </Dialog>
-  </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue';
+import { ref, computed, watch, watchEffect, nextTick, onMounted } from 'vue';
 import {
   Paperclip,
   ArrowUp,
@@ -184,13 +213,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/composables/useToast';
 import { useFileStore } from '@/store/files';
@@ -212,14 +234,42 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const isPickerOpen = ref(false);
 const pickerQuery = ref('');
+const isLoadingDocs = ref(false);
 const pendingNames = ref<string[]>([]);
 const pendingCount = computed(() => pendingNames.value.length);
+
+function closePicker() {
+  isPickerOpen.value = false;
+  pickerQuery.value = '';
+}
+
+watch(isPickerOpen, async (open) => {
+  if (!open) return;
+  isLoadingDocs.value = true;
+  try {
+    await fileStore.loadDocuments();
+  } catch {
+    // Show whatever is cached on error
+  } finally {
+    isLoadingDocs.value = false;
+  }
+});
+
+watchEffect((onCleanup) => {
+  if (!isPickerOpen.value) return;
+  const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closePicker(); };
+  window.addEventListener('keydown', handler);
+  onCleanup(() => window.removeEventListener('keydown', handler));
+});
 
 // ~8 rows of text-sm (20px line height) + vertical padding.
 const maxTextareaHeight = '176px';
 
 const canSend = computed(
-  () => text.value.trim().length > 0 && !props.streaming && pendingCount.value === 0,
+  () =>
+    (text.value.trim().length > 0 || chatStore.draftAttachments.length > 0) &&
+    !props.streaming &&
+    pendingCount.value === 0,
 );
 
 const workspaceDocs = computed<FileData[]>(() =>
@@ -340,8 +390,7 @@ function stripTags(html: string): string {
 }
 
 async function pickWorkspaceDoc(meta: FileData) {
-  isPickerOpen.value = false;
-  pickerQuery.value = '';
+  closePicker();
   const name = meta.title || meta.file_name || 'Document';
   const id = String(meta.id);
   if (chatStore.draftAttachments.some((a) => a.sourceFileId === id)) {

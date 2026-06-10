@@ -374,6 +374,8 @@ watch(
 // ── Lifecycle ────────────────────────────────────────────────────────
 
 onMounted(() => {
+  document.title = 'Assistant — VenSuite';
+
   // Make workspace documents available to the attachment picker.
   if (fileStore.allFiles.length === 0) {
     fileStore.loadDocuments().catch((error: unknown) => {

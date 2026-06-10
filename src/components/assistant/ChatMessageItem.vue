@@ -97,11 +97,9 @@ const showCursor = computed(
  */
 const renderedText = computed(() => {
   const text = props.message.text;
+  if (!text) return '';
   if (/<[a-z][\s\S]*>/i.test(text)) return text;
-  return text
-    .split(/\n{2,}/)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`)
-    .join('');
+  return renderMarkdown(text);
 });
 
 function escapeHtml(value: string): string {
@@ -109,5 +107,63 @@ function escapeHtml(value: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+function inlineRender(text: string): string {
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>');
+}
+
+function renderMarkdown(raw: string): string {
+  const lines = raw.split('\n');
+  const parts: string[] = [];
+  let listType: 'ul' | 'ol' | null = null;
+  const listItems: string[] = [];
+
+  const flushList = () => {
+    if (!listType) return;
+    parts.push(`<${listType}>${listItems.join('')}</${listType}>`);
+    listItems.length = 0;
+    listType = null;
+  };
+
+  for (const line of lines) {
+    const hm = /^(#{1,6})\s+(.+)/.exec(line);
+    if (hm) {
+      flushList();
+      parts.push(`<h${hm[1].length}>${inlineRender(hm[2])}</h${hm[1].length}>`);
+      continue;
+    }
+    const ul = /^[ \t]*[*\-]\s+(.+)/.exec(line);
+    if (ul) {
+      if (listType === 'ol') flushList();
+      listType = 'ul';
+      listItems.push(`<li>${inlineRender(ul[1])}</li>`);
+      continue;
+    }
+    const ol = /^[ \t]*\d+\.\s+(.+)/.exec(line);
+    if (ol) {
+      if (listType === 'ul') flushList();
+      listType = 'ol';
+      listItems.push(`<li>${inlineRender(ol[1])}</li>`);
+      continue;
+    }
+    if (/^[-_]{3,}$/.test(line.trim())) {
+      flushList();
+      parts.push('<hr>');
+      continue;
+    }
+    if (!line.trim()) {
+      flushList();
+      continue;
+    }
+    flushList();
+    parts.push(`<p>${inlineRender(line)}</p>`);
+  }
+  flushList();
+  return parts.join('');
 }
 </script>
