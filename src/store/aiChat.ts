@@ -31,6 +31,8 @@ export interface ChatMsg {
   docs: GeneratedDoc[];
   status: 'streaming' | 'done' | 'error';
   createdAt: number;
+  /** Transient pipeline stage shown while streaming; not meaningful after done. */
+  stage?: { id: string; label: string };
 }
 
 export interface Conversation {

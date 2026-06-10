@@ -127,6 +127,7 @@ import {
 import { toast } from '@/composables/useToast';
 import { useFileStore } from '@/store/files';
 import { useAiChatStore, type ChatMsg, type ChatAttachment } from '@/store/aiChat';
+import { useAiPrefsStore } from '@/store/aiPrefs';
 import { streamChat, sendChat, type ChatApiDocument, type ChatPayload } from '@/services/aiChat';
 import { createVensuiteDocParser } from '@/lib/vensuiteDocStream';
 import ConversationRail from '@/components/assistant/ConversationRail.vue';
@@ -138,6 +139,7 @@ const route = useRoute();
 const router = useRouter();
 const fileStore = useFileStore();
 const chatStore = useAiChatStore();
+const aiPrefs = useAiPrefsStore();
 
 const composerRef = ref<InstanceType<typeof ChatComposer> | null>(null);
 const scrollRef = ref<HTMLElement | null>(null);
@@ -225,9 +227,11 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
   // just-added user message is the final entry.
   const messages = chatStore.apiHistory;
   const documents = buildDocumentsPayload(attachments);
+  const selectedModel = aiPrefs.activeModelId;
   const payload: ChatPayload = {
     messages,
     ...(documents.length > 0 ? { documents } : {}),
+    ...(selectedModel ? { model: selectedModel } : {}),
   };
 
   const assistantMsg: ChatMsg = {
@@ -247,7 +251,7 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
   const update = (mutator: (msg: ChatMsg) => void) =>
     chatStore.updateMessage(conversationId, assistantMsg.id, mutator);
 
-  const parser = createVensuiteDocParser({
+  const makeParser = () => createVensuiteDocParser({
     onText: (t) => update((msg) => { msg.text += t; }),
     onDocStart: (title) =>
       update((msg) => {
@@ -265,10 +269,25 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
       }),
   });
 
+  const parserRef = { current: makeParser() };
+
+  const onStage = (stage: string, label: string) => {
+    update((msg) => { msg.stage = { id: stage, label }; });
+  };
+
+  const onRevise = () => {
+    parserRef.current.flush();
+    update((msg) => {
+      msg.text = '';
+      msg.docs = [];
+    });
+    parserRef.current = makeParser();
+  };
+
   let receivedAnyContent = false;
 
   const finalize = (status: ChatMsg['status']) => {
-    parser.flush();
+    parserRef.current.flush();
     update((msg) => {
       msg.status = status;
       for (const doc of msg.docs) {
@@ -288,7 +307,7 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
       try {
         const full = await sendChat(payload);
         receivedAnyContent = true;
-        parser.push(full);
+        parserRef.current.push(full);
         finalize('done');
         return;
       } catch (fallbackError) {
@@ -304,10 +323,12 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
       payload,
       (chunk) => {
         receivedAnyContent = true;
-        parser.push(chunk);
+        parserRef.current.push(chunk);
       },
       () => finalize('done'),
       (error) => { void onError(error); },
+      onStage,
+      onRevise,
     );
   } catch (error) {
     void onError(error instanceof Error ? error : new Error('Stream failed'));
@@ -375,6 +396,8 @@ watch(
 
 onMounted(() => {
   document.title = 'Assistant — VenSuite';
+
+  aiPrefs.fetchModels().catch(() => {});
 
   // Make workspace documents available to the attachment picker.
   if (fileStore.allFiles.length === 0) {

@@ -62,27 +62,63 @@
 
     <!-- Bottom row -->
     <div class="flex items-center justify-between px-2.5 pb-2.5 pt-1">
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <button
-            type="button"
-            class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors"
-            aria-label="Attach documents"
-          >
-            <Paperclip class="h-4 w-4" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" class="w-56">
-          <DropdownMenuItem class="gap-2 cursor-pointer" @click="triggerUpload">
-            <Upload class="h-4 w-4 text-gray-500" />
-            Upload .docx
-          </DropdownMenuItem>
-          <DropdownMenuItem class="gap-2 cursor-pointer" @click="isPickerOpen = true">
-            <FolderOpen class="h-4 w-4 text-gray-500" />
-            Choose from workspace
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div class="flex items-center gap-0.5">
+        <!-- Attachment picker -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button
+              type="button"
+              class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors"
+              aria-label="Attach documents"
+            >
+              <Paperclip class="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" class="w-56">
+            <DropdownMenuItem class="gap-2 cursor-pointer" @click="triggerUpload">
+              <Upload class="h-4 w-4 text-gray-500" />
+              Upload .docx
+            </DropdownMenuItem>
+            <DropdownMenuItem class="gap-2 cursor-pointer" @click="isPickerOpen = true">
+              <FolderOpen class="h-4 w-4 text-gray-500" />
+              Choose from workspace
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <!-- Model picker (only shown once models are loaded) -->
+        <DropdownMenu v-if="aiPrefs.models.length > 0">
+          <DropdownMenuTrigger as-child>
+            <button
+              type="button"
+              class="flex h-8 items-center gap-1 rounded-lg px-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors"
+              :aria-label="`AI model: ${aiPrefs.activeModelLabel}`"
+            >
+              <span class="font-medium">{{ aiPrefs.activeModelLabel }}</span>
+              <span
+                class="rounded px-1 py-px text-[10px] font-medium uppercase tracking-wide"
+                :class="tierBadgeClass(aiPrefs.activeModelTier)"
+              >{{ aiPrefs.activeModelTier }}</span>
+              <ChevronDown class="h-3 w-3 opacity-60" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" class="w-56">
+            <DropdownMenuItem
+              v-for="model in aiPrefs.models"
+              :key="model.id"
+              class="cursor-pointer gap-2"
+              :class="model.id === aiPrefs.activeModelId ? 'bg-violet-50 dark:bg-violet-500/15' : ''"
+              @click="aiPrefs.selectModel(model.id)"
+            >
+              <span class="flex-1">{{ model.label }}</span>
+              <span
+                class="rounded px-1.5 py-px text-[10px] font-medium uppercase tracking-wide"
+                :class="tierBadgeClass(model.tier)"
+              >{{ model.tier }}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <!-- Send / Stop -->
       <button
@@ -205,6 +241,7 @@ import {
   X,
   Loader2,
   Search,
+  ChevronDown,
 } from 'lucide-vue-next';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -217,6 +254,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/composables/useToast';
 import { useFileStore } from '@/store/files';
 import { useAiChatStore } from '@/store/aiChat';
+import { useAiPrefsStore } from '@/store/aiPrefs';
 import { convertDocxSmart } from '@/services/docx';
 import type { FileData } from '@/types';
 
@@ -228,6 +266,7 @@ const emit = defineEmits<{
 
 const fileStore = useFileStore();
 const chatStore = useAiChatStore();
+const aiPrefs = useAiPrefsStore();
 
 const text = ref('');
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
@@ -301,6 +340,17 @@ function roleBadgeClass(role: 'primary' | 'reference' | 'context'): string {
       return 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300';
     default:
       return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+  }
+}
+
+function tierBadgeClass(tier: string): string {
+  switch (tier) {
+    case 'fast':
+      return 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400';
+    case 'quality':
+      return 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400';
+    default:
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400';
   }
 }
 

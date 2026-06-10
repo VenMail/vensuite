@@ -23,6 +23,7 @@ export interface ChatApiDocument {
 export interface ChatPayload {
   messages: ChatApiMessage[];
   documents?: ChatApiDocument[];
+  model?: string;
 }
 
 function buildAuthRequestConfig() {
@@ -49,6 +50,8 @@ export async function streamChat(
   onChunk: (chunk: string) => void,
   onDone: () => void,
   onError: (error: Error) => void,
+  onStage?: (stage: string, label: string) => void,
+  onRevise?: () => void,
 ): Promise<AbortController> {
   const controller = new AbortController();
   try {
@@ -96,6 +99,8 @@ export async function streamChat(
                 onError(new Error(String(parsed.error)));
                 return;
               }
+              if (parsed.stage) onStage?.(parsed.stage, parsed.label ?? parsed.stage);
+              if (parsed.revise) onRevise?.();
               if (parsed.content) onChunk(parsed.content);
             } catch {
               if (data) onChunk(data);

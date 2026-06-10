@@ -27,6 +27,18 @@
 
   <!-- Assistant message -->
   <div v-else class="flex flex-col gap-3">
+    <!-- Pipeline stage chip (visible while streaming) -->
+    <div
+      v-if="message.status === 'streaming' && message.stage"
+      class="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 font-medium"
+    >
+      <span
+        class="inline-block h-1.5 w-1.5 rounded-full bg-violet-500 motion-safe:animate-pulse"
+        aria-hidden="true"
+      />
+      {{ message.stage.label }}
+    </div>
+
     <div
       v-if="message.text"
       class="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 [&>:first-child]:mt-0 [&>:last-child]:mb-0"
