@@ -355,6 +355,7 @@ import {
   FileText,
   FileIcon,
   X,
+  Wand2,
 } from "lucide-vue-next";
 import { useFileStore } from "@/store/files";
 import Button from "@/components/ui/button/Button.vue";
@@ -746,6 +747,14 @@ const topBarActions = computed(() => {
       component: Button,
       props: iconActionProps("Upload documents"),
       onClick: openUploadDialog,
+      requiresSelection: false,
+    },
+    {
+      key: "generate-from-docs",
+      icon: Wand2,
+      component: Button,
+      props: iconActionProps("Open AI Assistant"),
+      onClick: () => router.push("/assistant"),
       requiresSelection: false,
     },
     {

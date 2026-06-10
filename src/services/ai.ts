@@ -140,13 +140,15 @@ export type AIWriteAction =
   | 'change_tone'
   | 'translate'
   | 'summarize'
-  | 'continue';
+  | 'continue'
+  | 'update_from_reference';
 
 export interface AIWriteRequest {
   action: AIWriteAction;
   prompt?: string;
   selectedText?: string;
   surroundingContext?: string;
+  referenceText?: string;
   tone?: string;
   language?: string;
 }
@@ -164,10 +166,12 @@ export async function generateDocumentContent(
 ): Promise<AIWriteResponse> {
   try {
     const requestConfig = buildAuthRequestConfig();
+    // update_from_reference combines two documents and can take longer.
+    const timeout = request.action === 'update_from_reference' ? 120000 : 60000;
     const response = await apiClient.post<{ data: AIWriteResponse }>(
       "/ai/write",
       request,
-      { ...requestConfig, timeout: 60000 }
+      { ...requestConfig, timeout }
     );
     return response.data.data;
   } catch (error) {
@@ -241,4 +245,56 @@ export async function streamDocumentContent(
     onError(error instanceof Error ? error : new Error('Stream failed'));
   }
   return controller;
+}
+
+// ── Update Document From Reference ───────────────────────────────────
+
+export interface UpdateFromReferenceOptions {
+  /** HTML of the existing document to be updated (e.g. the current proposal). */
+  proposalHtml: string;
+  /** Text or HTML of the reference document (e.g. the new RFP). */
+  referenceText: string;
+  /** User instruction describing the desired update. */
+  prompt: string;
+  tone?: string;
+}
+
+/**
+ * Produce a new document by updating an existing document to address a
+ * reference document. Non-destructive — the caller decides what to do with
+ * the returned content.
+ */
+export async function updateDocumentFromReference(
+  opts: UpdateFromReferenceOptions
+): Promise<AIWriteResponse> {
+  return generateDocumentContent({
+    action: 'update_from_reference',
+    selectedText: opts.proposalHtml,
+    referenceText: opts.referenceText,
+    prompt: opts.prompt,
+    tone: opts.tone,
+  });
+}
+
+/**
+ * Streaming variant of {@link updateDocumentFromReference}.
+ */
+export async function streamUpdateDocumentFromReference(
+  opts: UpdateFromReferenceOptions,
+  onChunk: (chunk: string) => void,
+  onDone: () => void,
+  onError: (error: Error) => void,
+): Promise<AbortController> {
+  return streamDocumentContent(
+    {
+      action: 'update_from_reference',
+      selectedText: opts.proposalHtml,
+      referenceText: opts.referenceText,
+      prompt: opts.prompt,
+      tone: opts.tone,
+    },
+    onChunk,
+    onDone,
+    onError,
+  );
 }

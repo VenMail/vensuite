@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft, BookOpen } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft, BookOpen, Sparkles } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useRouter, useRoute } from 'vue-router'
 import { t } from '@/i18n'
@@ -31,6 +31,7 @@ const emit = defineEmits(['toggle', 'collapse'])
 
 const items = [
   { name: 'Home', icon: Home, route: '/' },
+  { name: 'Assistant', icon: Sparkles, route: '/assistant' },
   { name: 'Documents', icon: FileText, route: '/docs' },
   { name: 'Spreadsheets', icon: Table, route: '/sheets' },
   { name: 'Forms', icon: FileBoxIcon, route: '/forms' },

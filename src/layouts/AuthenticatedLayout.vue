@@ -26,6 +26,7 @@ const hideLayout = computed(() => route.meta.hideLayout === true)
 const routesWithSidebar = new Set([
   'root',
   'home',
+  'assistant',
   'forms',
   'slides',
   'media',

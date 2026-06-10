@@ -119,6 +119,7 @@ const routes = [
     component: AuthenticatedLayout,
     children: [
       { path: 'home', name: 'home', component: Home, meta: { allowGuest: true } },
+      { path: 'assistant', name: 'assistant', component: () => import('./views/AIWorkspace.vue') },
       { path: 'docs', name: 'docs-view', component: Documents },
       { path: 'docs/new', name: 'docs-new', component: DocsEditor, meta: { hideLayout: true } },
       { path: 'docs/t/:template', name: 'docs-template', component: DocsEditor, meta: { hideLayout: true } },

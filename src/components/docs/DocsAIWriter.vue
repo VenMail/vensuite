@@ -385,6 +385,7 @@ function getGeneratingLabel(action: AIWriteAction): string {
     translate: 'Translating...',
     summarize: 'Summarizing...',
     continue: 'Continuing...',
+    update_from_reference: 'Updating...',
   };
   return labels[action] || 'Generating...';
 }
