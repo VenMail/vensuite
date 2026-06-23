@@ -45,6 +45,14 @@ export interface SigningFieldValue {
   value: string | boolean;  // base64 PNG for signatures, string for text/date, boolean for checkbox
 }
 
+export interface SigningCompletionResponse {
+  status: string;
+  message: string;
+  signedDocumentStatusUrl?: string;
+  signedDocumentReady?: boolean;
+  downloadUrl?: string | null;
+}
+
 // Default field dimensions (percentage of page)
 export const FIELD_DEFAULTS: Record<SigningFieldType, { width: number; height: number }> = {
   signature: { width: 20, height: 5 },

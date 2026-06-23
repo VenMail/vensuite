@@ -15,7 +15,7 @@ declare module 'vue-signature-pad' {
     data: string;
   }
 
-  const VueSignaturePad: DefineComponent<{
+  export const VueSignaturePad: DefineComponent<{
     width?: string;
     height?: string;
     options?: SignaturePadOptions;

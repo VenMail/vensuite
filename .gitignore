@@ -32,3 +32,6 @@ artifacts/
 playwright-report/
 test-results/
 DocExCore/
+.npmrc
+.playwright-mcp/
+*.png

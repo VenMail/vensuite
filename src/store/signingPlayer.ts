@@ -11,6 +11,8 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   const isSubmitting = ref(false);
   const error = ref<string | null>(null);
   const isCompleted = ref(false);
+  const signedDocumentReady = ref(false);
+  const downloadUrl = ref<string | null>(null);
 
   function hasCompletedValue(value: string | boolean | undefined): boolean {
     if (typeof value === 'boolean') {
@@ -62,6 +64,8 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
       answers.value = {};
       currentPage.value = 0;
       isCompleted.value = false;
+      signedDocumentReady.value = false;
+      downloadUrl.value = null;
     } catch (e: any) {
       error.value = e?.data?.error || e?.message || 'Failed to load signing session';
     } finally {
@@ -84,7 +88,9 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
         ([fieldId, value]) => ({ fieldId, value })
       );
 
-      await signingApi.submitCompletion(token, fieldValues);
+      const completion = await signingApi.submitCompletion(token, fieldValues);
+      signedDocumentReady.value = Boolean(completion.signedDocumentReady);
+      downloadUrl.value = completion.downloadUrl || null;
       isCompleted.value = true;
       return true;
     } catch (e: any) {
@@ -107,6 +113,8 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     isSubmitting.value = false;
     error.value = null;
     isCompleted.value = false;
+    signedDocumentReady.value = false;
+    downloadUrl.value = null;
   }
 
   return {
@@ -117,6 +125,8 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     isSubmitting,
     error,
     isCompleted,
+    signedDocumentReady,
+    downloadUrl,
     requiredFields,
     completedFields,
     progress,

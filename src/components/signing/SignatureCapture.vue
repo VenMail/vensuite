@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue';
-import VueSignaturePad from 'vue-signature-pad';
+import { VueSignaturePad } from 'vue-signature-pad';
 
 const props = defineProps<{
   modelValue: boolean;

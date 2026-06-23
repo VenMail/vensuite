@@ -47,7 +47,7 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
 <template>
   <div class="signing-player min-h-screen bg-gray-100">
     <!-- Top bar -->
-    <header class="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white border-b shadow-sm">
+    <header v-if="!store.isCompleted" class="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white border-b shadow-sm">
       <div>
         <h1 class="text-sm font-semibold text-gray-800">
           {{ store.session?.documentName || 'Sign Document' }}
@@ -107,6 +107,18 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
         <p class="text-sm text-gray-500">
           Thank you for signing this document. All parties will be notified once everyone has signed.
         </p>
+        <div class="mt-6">
+          <a
+            v-if="store.downloadUrl"
+            :href="store.downloadUrl"
+            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            Download signed document
+          </a>
+          <p v-else class="text-xs text-gray-500">
+            The final signed document will be emailed to all parties once it is ready.
+          </p>
+        </div>
       </div>
     </div>
 

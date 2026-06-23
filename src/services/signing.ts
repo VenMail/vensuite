@@ -4,6 +4,7 @@ import type {
   SigningSession,
   SigningField,
   SigningFieldValue,
+  SigningCompletionResponse,
 } from '@/types/signing';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -56,11 +57,12 @@ async function fetchSignerSession(signerToken: string): Promise<SigningSession> 
 async function submitCompletion(
   signerToken: string,
   fieldValues: SigningFieldValue[]
-): Promise<void> {
-  await apiClient.post(
+): Promise<SigningCompletionResponse> {
+  const response = await apiClient.post(
     `${SIGNING_API_BASE}/api/signing/complete/${signerToken}`,
     { field_values: fieldValues }
   );
+  return response.data;
 }
 
 export const signingApi = {
