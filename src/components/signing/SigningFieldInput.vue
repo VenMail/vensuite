@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import type { SigningField } from '@/types/signing';
 import SignatureCapture from './SignatureCapture.vue';
 
@@ -16,6 +16,8 @@ const emit = defineEmits<{
 }>();
 
 const showSignaturePad = ref(false);
+const todayValue = new Date().toISOString().split('T')[0];
+const formInputClass = 'w-full h-full px-1 text-xs border-2 border-blue-400 rounded bg-white text-slate-950 placeholder:text-slate-500 dark:text-slate-950 dark:placeholder:text-slate-500 [color-scheme:light]';
 
 const style = computed(() => ({
   left: `${(props.field.x / 100) * props.pageWidth}px`,
@@ -41,6 +43,12 @@ function onCheckboxChange(e: Event) {
 function onDateChange(e: Event) {
   emit('updateValue', props.field.id, (e.target as HTMLInputElement).value);
 }
+
+onMounted(() => {
+  if (props.field.type === 'date' && !hasValue.value) {
+    emit('updateValue', props.field.id, todayValue);
+  }
+});
 </script>
 
 <template>
@@ -73,8 +81,8 @@ function onDateChange(e: Event) {
     <template v-else-if="field.type === 'date'">
       <input
         type="date"
-        :value="(value as string) || new Date().toISOString().split('T')[0]"
-        class="w-full h-full px-1 text-xs border-2 border-blue-400 rounded bg-white"
+        :value="(value as string) || todayValue"
+        :class="formInputClass"
         @change="onDateChange"
       />
     </template>
@@ -85,7 +93,7 @@ function onDateChange(e: Event) {
         type="text"
         :value="(value as string) || ''"
         :placeholder="field.label || 'Enter text'"
-        class="w-full h-full px-1 text-xs border-2 border-blue-400 rounded bg-white"
+        :class="formInputClass"
         @input="onTextChange"
       />
     </template>

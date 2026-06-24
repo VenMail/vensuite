@@ -13,6 +13,8 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   const isCompleted = ref(false);
   const signedDocumentReady = ref(false);
   const downloadUrl = ref<string | null>(null);
+  const signedDocumentStatusUrl = ref<string | null>(null);
+  let statusPollRun = 0;
 
   function hasCompletedValue(value: string | boolean | undefined): boolean {
     if (typeof value === 'boolean') {
@@ -66,6 +68,8 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
       isCompleted.value = false;
       signedDocumentReady.value = false;
       downloadUrl.value = null;
+      signedDocumentStatusUrl.value = null;
+      statusPollRun += 1;
     } catch (e: any) {
       error.value = e?.data?.error || e?.message || 'Failed to load signing session';
     } finally {
@@ -91,7 +95,13 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
       const completion = await signingApi.submitCompletion(token, fieldValues);
       signedDocumentReady.value = Boolean(completion.signedDocumentReady);
       downloadUrl.value = completion.downloadUrl || null;
+      signedDocumentStatusUrl.value = completion.signedDocumentStatusUrl || null;
       isCompleted.value = true;
+
+      if (signedDocumentStatusUrl.value && !downloadUrl.value) {
+        void pollSignedDocumentStatus(signedDocumentStatusUrl.value);
+      }
+
       return true;
     } catch (e: any) {
       error.value = e?.data?.error || e?.message || 'Failed to submit signatures';
@@ -106,6 +116,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   }
 
   function reset() {
+    statusPollRun += 1;
     session.value = null;
     answers.value = {};
     currentPage.value = 0;
@@ -115,6 +126,31 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     isCompleted.value = false;
     signedDocumentReady.value = false;
     downloadUrl.value = null;
+    signedDocumentStatusUrl.value = null;
+  }
+
+  async function pollSignedDocumentStatus(statusUrl: string) {
+    const pollRun = ++statusPollRun;
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise(resolve => setTimeout(resolve, attempt === 0 ? 1000 : 1500));
+
+      if (pollRun !== statusPollRun) {
+        return;
+      }
+
+      try {
+        const status = await signingApi.fetchSignedDocumentStatus(statusUrl);
+        signedDocumentReady.value = Boolean(status.signedDocumentReady);
+        downloadUrl.value = status.downloadUrl || null;
+
+        if (status.signedDocumentReady && status.downloadUrl) {
+          return;
+        }
+      } catch {
+        return;
+      }
+    }
   }
 
   return {
@@ -127,6 +163,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     isCompleted,
     signedDocumentReady,
     downloadUrl,
+    signedDocumentStatusUrl,
     requiredFields,
     completedFields,
     progress,

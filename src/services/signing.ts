@@ -65,9 +65,15 @@ async function submitCompletion(
   return response.data;
 }
 
+async function fetchSignedDocumentStatus(statusUrl: string): Promise<SigningCompletionResponse> {
+  const response = await apiClient.get(statusUrl);
+  return response.data;
+}
+
 export const signingApi = {
   fetchEditorSession,
   saveFields,
   fetchSignerSession,
   submitCompletion,
+  fetchSignedDocumentStatus,
 };

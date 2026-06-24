@@ -136,7 +136,7 @@ onMounted(async () => {
               v-model="typedName"
               type="text"
               placeholder="Type your name"
-              class="w-full px-3 py-2 border rounded-lg text-lg"
+              class="w-full px-3 py-2 border rounded-lg text-lg bg-white text-slate-950 placeholder:text-slate-500 dark:text-slate-950 dark:placeholder:text-slate-500 [color-scheme:light]"
             />
             <div
               class="h-24 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"

@@ -115,6 +115,9 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
           >
             Download signed document
           </a>
+          <p v-else-if="store.signedDocumentStatusUrl" class="text-xs text-gray-500">
+            Preparing the final signed document...
+          </p>
           <p v-else class="text-xs text-gray-500">
             The final signed document will be emailed to all parties once it is ready.
           </p>
