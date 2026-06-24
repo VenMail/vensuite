@@ -16,6 +16,29 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   const signedDocumentStatusUrl = ref<string | null>(null);
   let statusPollRun = 0;
 
+  function todayLocalDate(): string {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function defaultAnswersForFields(fields: SigningField[]): Record<string, string | boolean> {
+    const defaults: Record<string, string | boolean> = {};
+    const today = todayLocalDate();
+
+    for (const field of fields) {
+      if (field.type === 'date') {
+        defaults[field.id] = typeof field.value === 'string' && field.value.trim() !== ''
+          ? field.value
+          : today;
+      }
+    }
+
+    return defaults;
+  }
+
   function hasCompletedValue(value: string | boolean | undefined): boolean {
     if (typeof value === 'boolean') {
       return value;
@@ -63,7 +86,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     try {
       const data = await signingApi.fetchSignerSession(token);
       session.value = data;
-      answers.value = {};
+      answers.value = defaultAnswersForFields(data.fields || []);
       currentPage.value = 0;
       isCompleted.value = false;
       signedDocumentReady.value = false;

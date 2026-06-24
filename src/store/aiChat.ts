@@ -5,6 +5,7 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChatApiMessage } from '@/services/aiChat';
+import { recoverInterruptedAssistantMessage } from '@/lib/aiChatStreamState';
 
 export interface ChatAttachment {
   id: string;
@@ -19,7 +20,7 @@ export interface GeneratedDoc {
   id: string;
   title: string;
   html: string;
-  status: 'streaming' | 'ready';
+  status: 'streaming' | 'ready' | 'error';
   savedFileId?: string;
 }
 
@@ -59,13 +60,10 @@ function loadPersisted(): { conversations: Conversation[]; activeId: string | nu
       (c: unknown): c is Conversation =>
         !!c && typeof c === 'object' && Array.isArray((c as Conversation).messages),
     );
-    // Anything mid-stream when the page closed is finalized on load.
+    // Anything mid-stream when the page closed was interrupted, not completed.
     for (const convo of conversations) {
       for (const msg of convo.messages) {
-        if (msg.status === 'streaming') msg.status = 'done';
-        for (const doc of msg.docs ?? []) {
-          if (doc.status === 'streaming') doc.status = 'ready';
-        }
+        recoverInterruptedAssistantMessage(msg);
       }
     }
     const activeId =

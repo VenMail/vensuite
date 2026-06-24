@@ -129,6 +129,7 @@ import { useFileStore } from '@/store/files';
 import { useAiChatStore, type ChatMsg, type ChatAttachment } from '@/store/aiChat';
 import { useAiPrefsStore } from '@/store/aiPrefs';
 import { streamChat, sendChat, type ChatApiDocument, type ChatPayload } from '@/services/aiChat';
+import { createAssistantStreamState, finalizeAssistantMessage } from '@/lib/aiChatStreamState';
 import { createVensuiteDocParser } from '@/lib/vensuiteDocStream';
 import ConversationRail from '@/components/assistant/ConversationRail.vue';
 import ChatComposer from '@/components/assistant/ChatComposer.vue';
@@ -270,6 +271,7 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
   });
 
   const parserRef = { current: makeParser() };
+  const streamState = createAssistantStreamState();
 
   const onStage = (stage: string, label: string) => {
     update((msg) => { msg.stage = { id: stage, label }; });
@@ -282,17 +284,13 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
       msg.docs = [];
     });
     parserRef.current = makeParser();
+    streamState.resetForRevision();
   };
 
-  let receivedAnyContent = false;
-
-  const finalize = (status: ChatMsg['status']) => {
-    parserRef.current.flush();
+  const finalize = (status: Exclude<ChatMsg['status'], 'streaming'>) => {
+    parserRef.current.flush({ completeOpenDocument: status === 'done' });
     update((msg) => {
-      msg.status = status;
-      for (const doc of msg.docs) {
-        if (doc.status === 'streaming') doc.status = 'ready';
-      }
+      finalizeAssistantMessage(msg, status);
     });
     streamingMessageId.value = null;
     abortController = null;
@@ -302,11 +300,11 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
   const onError = async (error: Error) => {
     if (stoppedByUser || error.name === 'AbortError') return;
     console.warn('Chat stream failed:', error);
-    if (!receivedAnyContent) {
+    if (streamState.shouldUseFallback()) {
       // Nothing arrived — try the non-streaming endpoint before giving up.
       try {
         const full = await sendChat(payload);
-        receivedAnyContent = true;
+        streamState.markContentReceived();
         parserRef.current.push(full);
         finalize('done');
         return;
@@ -322,7 +320,7 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
     abortController = await streamChat(
       payload,
       (chunk) => {
-        receivedAnyContent = true;
+        streamState.markContentReceived();
         parserRef.current.push(chunk);
       },
       () => finalize('done'),
@@ -345,10 +343,7 @@ function stop() {
   streamingMessageId.value = null;
   if (convoId && msgId) {
     chatStore.updateMessage(convoId, msgId, (msg) => {
-      msg.status = 'done';
-      for (const doc of msg.docs) {
-        if (doc.status === 'streaming') doc.status = 'ready';
-      }
+      finalizeAssistantMessage(msg, 'done');
     });
     chatStore.autoTitle(convoId);
   }

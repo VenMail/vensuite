@@ -15,8 +15,16 @@ const emit = defineEmits<{
   updateValue: [fieldId: string, value: string | boolean];
 }>();
 
+function todayLocalDate(): string {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 const showSignaturePad = ref(false);
-const todayValue = new Date().toISOString().split('T')[0];
+const todayValue = todayLocalDate();
 const formInputClass = 'w-full h-full px-1 text-xs border-2 border-blue-400 rounded bg-white text-slate-950 placeholder:text-slate-500 dark:text-slate-950 dark:placeholder:text-slate-500 [color-scheme:light]';
 
 const style = computed(() => ({

@@ -20,11 +20,18 @@
         Writing…
       </span>
       <span
-        v-else
+        v-else-if="doc.status === 'ready'"
         class="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300"
       >
         <Check class="h-3 w-3" />
         Ready
+      </span>
+      <span
+        v-else
+        class="flex items-center gap-1.5 rounded-full bg-red-50 dark:bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-700 dark:text-red-300"
+      >
+        <AlertCircle class="h-3 w-3" />
+        Incomplete
       </span>
     </div>
 
@@ -100,7 +107,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { FileText, Check, Copy, RefreshCw, ExternalLink, Loader2 } from 'lucide-vue-next';
+import { FileText, Check, Copy, RefreshCw, ExternalLink, Loader2, AlertCircle } from 'lucide-vue-next';
 import Button from '@/components/ui/button/Button.vue';
 import { toast } from '@/composables/useToast';
 import { useFileStore } from '@/store/files';

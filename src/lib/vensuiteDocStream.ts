@@ -17,6 +17,10 @@ export interface DocStreamEvents {
   onDocEnd(): void;
 }
 
+export interface DocStreamFlushOptions {
+  completeOpenDocument?: boolean;
+}
+
 const OPEN_TAG = '<vensuite-doc';
 const CLOSE_TAG = '</vensuite-doc>';
 // Keep up to (tag.length - 1) trailing chars: anything shorter could be the
@@ -99,7 +103,9 @@ export function createVensuiteDocParser(events: DocStreamEvents) {
       }
     },
 
-    flush(): void {
+    flush(options: DocStreamFlushOptions = {}): void {
+      const completeOpenDocument = options.completeOpenDocument ?? true;
+
       if (mode === 'tag-open') {
         // Unterminated open tag — degrade gracefully by treating it as text.
         if (buffer) events.onText(buffer);
@@ -108,9 +114,9 @@ export function createVensuiteDocParser(events: DocStreamEvents) {
         return;
       }
       if (mode === 'doc') {
-        // Unterminated document — emit remainder and close cleanly.
+        // Unterminated document — emit remainder; caller decides whether to close it.
         if (buffer) events.onDocChunk(buffer);
-        events.onDocEnd();
+        if (completeOpenDocument) events.onDocEnd();
         buffer = '';
         mode = 'text';
         return;
