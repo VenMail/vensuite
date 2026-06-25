@@ -406,6 +406,11 @@ function onEditorReady(instance: any) {
   if (import.meta.env.DEV) {
     (window as any).__canvasEditor__ = instance;
   }
+  // If rawDocContent was set before the editor finished initialising
+  // (race with initializeDocument), load it now.
+  if (rawDocContent.value) {
+    loadContentIntoCanvas(rawDocContent.value);
+  }
 }
 
 let tocRefreshTimeout: ReturnType<typeof setTimeout> | null = null;

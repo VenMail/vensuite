@@ -150,6 +150,7 @@ const streamingMessageId = ref<string | null>(null);
 const isStreaming = computed(() => streamingMessageId.value !== null);
 let abortController: AbortController | null = null;
 let stoppedByUser = false;
+let activeParser: ReturnType<typeof createVensuiteDocParser> | null = null;
 
 const activeMessages = computed<ChatMsg[]>(
   () => chatStore.activeConversation?.messages ?? [],
@@ -271,6 +272,7 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
   });
 
   const parserRef = { current: makeParser() };
+  activeParser = parserRef.current;
   const streamState = createAssistantStreamState();
 
   const onStage = (stage: string, label: string) => {
@@ -284,11 +286,13 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
       msg.docs = [];
     });
     parserRef.current = makeParser();
+    activeParser = parserRef.current;
     streamState.resetForRevision();
   };
 
   const finalize = (status: Exclude<ChatMsg['status'], 'streaming'>) => {
     parserRef.current.flush({ completeOpenDocument: status === 'done' });
+    activeParser = null;
     update((msg) => {
       finalizeAssistantMessage(msg, status);
     });
@@ -342,6 +346,10 @@ function stop() {
   const msgId = streamingMessageId.value;
   streamingMessageId.value = null;
   if (convoId && msgId) {
+    // Flush any buffered parser tail before finalising so trailing
+    // text/document chunks are not lost (up to 14 chars can remain).
+    activeParser?.flush({ completeOpenDocument: true });
+    activeParser = null;
     chatStore.updateMessage(convoId, msgId, (msg) => {
       finalizeAssistantMessage(msg, 'done');
     });
