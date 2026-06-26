@@ -84,7 +84,7 @@ packageExtensionsChecksum: e768046b12d071024ef8b7b068fe3cec
 
 patchedDependencies:
   '@venmail/avnac-vue@0.1.20':
-    hash: 4qzc35waplesv6j5sjv5k6wlby
+    hash: pqz67kfc3xenupg6fkmbeohugm
     path: patches/@venmail__avnac-vue@0.1.20.patch
 
 importers:
@@ -168,7 +168,7 @@ importers:
         version: 2.26.2(@tiptap/core@2.26.2(@tiptap/pm@2.26.2))(@tiptap/pm@2.26.2)(vue@3.5.13(typescript@5.8.3))
       '@venmail/avnac-vue':
         specifier: ^0.1.20
-        version: 0.1.20(patch_hash=4qzc35waplesv6j5sjv5k6wlby)(fabric@7.4.0)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))
+        version: 0.1.20(patch_hash=pqz67kfc3xenupg6fkmbeohugm)(fabric@7.4.0)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))
       '@visactor/vtable-plugins':
         specifier: ^1.26.0
         version: 1.26.0(@visactor/vtable@1.26.0)
@@ -9124,7 +9124,7 @@ snapshots:
       d3-selection: 3.0.0
       d3-transition: 3.0.1(d3-selection@3.0.0)
 
-  '@venmail/avnac-vue@0.1.20(patch_hash=4qzc35waplesv6j5sjv5k6wlby)(fabric@7.4.0)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))':
+  '@venmail/avnac-vue@0.1.20(patch_hash=pqz67kfc3xenupg6fkmbeohugm)(fabric@7.4.0)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.13(typescript@5.8.3)))(sortablejs@1.14.0)(vue@3.5.13(typescript@5.8.3))':
     dependencies:
       chart.js: 4.5.1
       fabric: 7.4.0

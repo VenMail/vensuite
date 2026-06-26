@@ -1,3 +1,18 @@
+diff --git a/src/components/canvas/CanvasEditor.vue b/src/components/canvas/CanvasEditor.vue
+index ee40358a46989d682401655e55f873cc6e9c2688..cb918c22ee745579061727b677e1c5bb46f27ee9 100644
+--- a/src/components/canvas/CanvasEditor.vue
++++ b/src/components/canvas/CanvasEditor.vue
+@@ -320,8 +320,8 @@ watch(() => canvasStore.ready, async (ready) => {
+       fontSize:     tb.fontSize                  as number,
+       fontFamily:   (tb.fontFamily   ?? 'Inter') as string,
+       fontWeight:   (tb.fontWeight   ?? 'normal') as string,
+-      fontStyle:    (tb.fontStyle    ?? 'normal') as string,
+-      textAlign:    (tb.textAlign    ?? 'left')   as string,
++      fontStyle:    (tb.fontStyle    ?? 'normal') as any,
++      textAlign:    (tb.textAlign    ?? 'left')   as any,
+       fill:         (tb.fill         ?? '#262626') as string,
+       scaleX:       (tb.scaleX       ?? 1)        as number,
+       scaleY:       (tb.scaleY       ?? 1)        as number,
 diff --git a/src/components/panels/EditorAiPanel.vue b/src/components/panels/EditorAiPanel.vue
 index f633af8cc75c961d25800b1c80360dd504cb41c6..8f0da70b0c675ecc076f300556e14bdf3167dcbd 100644
 --- a/src/components/panels/EditorAiPanel.vue
@@ -46,7 +61,7 @@ index f633af8cc75c961d25800b1c80360dd504cb41c6..8f0da70b0c675ecc076f300556e14bdf
      }
  
 diff --git a/src/components/panels/EditorFloatingSidebar.vue b/src/components/panels/EditorFloatingSidebar.vue
-index d58b198866d984ee4f1129f059a361abfbd1f492..09f02e88e315989e5a8c6fd89caef00202e9de26 100644
+index d58b198866d984ee4f1129f059a361abfbd1f492..8a9c77acca771e8e2ae06cd98b07e5449a9d7dad 100644
 --- a/src/components/panels/EditorFloatingSidebar.vue
 +++ b/src/components/panels/EditorFloatingSidebar.vue
 @@ -6,8 +6,8 @@
@@ -96,7 +111,7 @@ index d58b198866d984ee4f1129f059a361abfbd1f492..09f02e88e315989e5a8c6fd89caef002
        >
          <span v-html="item.icon" />
 diff --git a/src/composables/useLayerPanel.ts b/src/composables/useLayerPanel.ts
-index 4ce634919e816bd2f58065beef9a9be3702448d8..4e084624850567ad0905411a181de1abb04114a8 100644
+index 4ce634919e816bd2f58065beef9a9be3702448d8..78f97838de1154ff04d5c43a34c3c74ff834cc35 100644
 --- a/src/composables/useLayerPanel.ts
 +++ b/src/composables/useLayerPanel.ts
 @@ -1,4 +1,4 @@
@@ -204,7 +219,7 @@ index 4ce634919e816bd2f58065beef9a9be3702448d8..4e084624850567ad0905411a181de1ab
  
    return {
 diff --git a/src/lib/avnac-document-preview.ts b/src/lib/avnac-document-preview.ts
-index 5a0a8c3a7c203cf7a0aa05a41f481ad33934a82e..0613a9439f7ea6b8c74efff48da647394f079f59 100644
+index 5a0a8c3a7c203cf7a0aa05a41f481ad33934a82e..13789c66057da1042db8c5e70eeb983ac4c0fc1c 100644
 --- a/src/lib/avnac-document-preview.ts
 +++ b/src/lib/avnac-document-preview.ts
 @@ -6,6 +6,7 @@ import { migrateLegacyImageBlurFilters, installAvnacObjectCanvasBlur } from './a
@@ -224,7 +239,7 @@ index 5a0a8c3a7c203cf7a0aa05a41f481ad33934a82e..0613a9439f7ea6b8c74efff48da64739
  
      const aw = doc.artboard.width
 diff --git a/src/lib/avnac-stroke-arrow.ts b/src/lib/avnac-stroke-arrow.ts
-index 3dda35d4f77ef71b98dcedd3061e78c0131237b7..ed7d1b2b30555568825fbcd8786ad5d30060879c 100644
+index 3dda35d4f77ef71b98dcedd3061e78c0131237b7..14ad3c44ea6d87b2baf25757563af4c5f1334567 100644
 --- a/src/lib/avnac-stroke-arrow.ts
 +++ b/src/lib/avnac-stroke-arrow.ts
 @@ -6,6 +6,7 @@ import {
