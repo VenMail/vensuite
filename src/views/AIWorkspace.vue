@@ -126,7 +126,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/composables/useToast';
 import { useFileStore } from '@/store/files';
-import { useAiChatStore, type ChatMsg, type ChatAttachment } from '@/store/aiChat';
+import { useAiChatStore, type ChatMsg, type ChatAttachment, type GeneratedDoc } from '@/store/aiChat';
 import { useAiPrefsStore } from '@/store/aiPrefs';
 import { streamChat, sendChat, type ChatApiDocument, type ChatPayload } from '@/services/aiChat';
 import { createAssistantStreamState, finalizeAssistantMessage } from '@/lib/aiChatStreamState';
@@ -151,6 +151,7 @@ const isStreaming = computed(() => streamingMessageId.value !== null);
 let abortController: AbortController | null = null;
 let stoppedByUser = false;
 let activeParser: ReturnType<typeof createVensuiteDocParser> | null = null;
+let preRevisionSnapshot: { text: string; docs: GeneratedDoc[] } | null = null;
 
 const activeMessages = computed<ChatMsg[]>(
   () => chatStore.activeConversation?.messages ?? [],
@@ -248,6 +249,7 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
   chatStore.appendMessage(conversationId, assistantMsg);
   streamingMessageId.value = assistantMsg.id;
   stoppedByUser = false;
+  preRevisionSnapshot = null;
   stickToBottom.value = true;
 
   const update = (mutator: (msg: ChatMsg) => void) =>
@@ -281,7 +283,13 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
 
   const onRevise = () => {
     parserRef.current.flush();
+    // Preserve the pre-revision draft so we can restore it if the post-revision
+    // stream fails (e.g. QUIC/connection drop during the polish pass).
     update((msg) => {
+      preRevisionSnapshot = {
+        text: msg.text,
+        docs: msg.docs.map((d) => ({ ...d })),
+      };
       msg.text = '';
       msg.docs = [];
     });
@@ -293,6 +301,7 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
   const finalize = (status: Exclude<ChatMsg['status'], 'streaming'>) => {
     parserRef.current.flush({ completeOpenDocument: status === 'done' });
     activeParser = null;
+    preRevisionSnapshot = null;
     update((msg) => {
       finalizeAssistantMessage(msg, status);
     });
@@ -305,7 +314,7 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
     if (stoppedByUser || error.name === 'AbortError') return;
     console.warn('Chat stream failed:', error);
     if (streamState.shouldUseFallback()) {
-      // Nothing arrived — try the non-streaming endpoint before giving up.
+      // Nothing arrived since last revision — try non-streaming fallback.
       try {
         const full = await sendChat(payload);
         streamState.markContentReceived();
@@ -314,7 +323,25 @@ async function startAssistantTurn(conversationId: string, attachments: ChatAttac
         return;
       } catch (fallbackError) {
         console.error('Chat fallback failed:', fallbackError);
+        // If we have a pre-revision snapshot, restore it as best-effort so
+        // the user doesn't lose the initial draft when the polish pass fails.
+        if (preRevisionSnapshot) {
+          parserRef.current.flush();
+          update((msg) => {
+            msg.text = preRevisionSnapshot!.text;
+            msg.docs = preRevisionSnapshot!.docs;
+          });
+          finalize('done');
+          toast.warning('The assistant could not complete the polish pass — showing the initial draft.');
+          return;
+        }
       }
+    } else {
+      // Content was received but the stream dropped mid-way. Keep what we
+      // have rather than discarding everything and showing an error.
+      finalize('done');
+      toast.warning('The assistant stream was interrupted — showing partial results.');
+      return;
     }
     finalize('error');
     toast.error('The assistant could not complete that request');

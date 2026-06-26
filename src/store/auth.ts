@@ -3,7 +3,7 @@ import axios from 'axios'
 import { Router } from 'vue-router'
 import { useFileStore } from './files'
 
-const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/auth/oauth'
+export const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:8000/auth/oauth'
 const ACCOUNTS_STORAGE_KEY = 'venAuthenticatedAccounts'
 const SELECTED_ACCOUNT_STORAGE_KEY = 'venSelectedAccountId'
 
@@ -172,6 +172,13 @@ export const useAuthStore = defineStore('auth', {
       this._isLoggingOut = true;
 
       try {
+        // Clear any service worker caches that might hold authenticated responses
+        // or stale app shells before wiping auth state.
+        try {
+          const keys = await caches.keys()
+          await Promise.all(keys.map(key => caches.delete(key)))
+        } catch { }
+
         // Reset in-memory auth state
         this.token = null;
         this.isAuthenticated = false;
@@ -248,8 +255,15 @@ export const useAuthStore = defineStore('auth', {
       // Clear authentication state and tokens, but intentionally preserve
       // offline file data so drafts can sync after re-login.
       try {
+        // Wipe service worker caches to avoid any cross-session leakage.
+        try {
+          const keys = await caches.keys()
+          await Promise.all(keys.map(key => caches.delete(key)))
+        } catch { }
+
         this.token = null;
         this.isAuthenticated = false;
+        this.hasLinkedAccounts = true; // Reset for next login
         this.firstName = "";
         this.lastName = "";
         this.email = "";

@@ -55,6 +55,20 @@ import { useSheetCharts } from '@/composables/useSheetCharts'
 const route = useRoute()
 const router = useRouter()
 
+// Online/offline state
+const isOffline = ref(!navigator.onLine)
+
+function handleOnline() {
+  isOffline.value = false
+  // Trigger save on reconnect if there are unsaved changes
+  if (vtableRef.value && isVTableReady.value && canEditSheet.value) {
+    saveData(vtableRef.value)
+  }
+}
+function handleOffline() {
+  isOffline.value = true
+}
+
 type VersionHistoryItem = {
   id: string;
   version_number: number;
@@ -110,6 +124,7 @@ const {
   editTitle,
   saveTitle,
   restoreCursorPosition,
+  handleBeforeUnload,
 } = sheetData
 
 // Debounced title save
@@ -1284,10 +1299,20 @@ onMounted(async () => {
   if (route.params.id && !route.params.template) {
     await loadSharingData()
   }
+
+  // Register online/offline listeners
+  window.addEventListener('online', handleOnline)
+  window.addEventListener('offline', handleOffline)
+
+  // Register beforeunload handler for unsaved changes
+  window.addEventListener('beforeunload', (e) => handleBeforeUnload(e, vtableRef.value))
 })
 
 onUnmounted(() => {
   leaveSheet()
+  // Cleanup online/offline listeners
+  window.removeEventListener('online', handleOnline)
+  window.removeEventListener('offline', handleOffline)
   // Cleanup auto-save timeouts
   if (saveTimeout) clearTimeout(saveTimeout)
   if (maxWaitTimeout) clearTimeout(maxWaitTimeout)
@@ -1412,6 +1437,13 @@ function onChartAction(key: string) {
             class="hidden sm:inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-600 dark:text-gray-300"
           >
             View only
+          </span>
+          <span
+            v-if="isOffline"
+            class="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            Offline
           </span>
         </div>
       </div>

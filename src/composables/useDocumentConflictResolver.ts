@@ -116,9 +116,9 @@ export function useDocumentConflictResolver(options: UseDocumentConflictResolver
     const left = (a ?? '').trim();
     const right = (b ?? '').trim();
     if (left === right) return false;
-    const diff = Math.abs(left.length - right.length);
-    if (diff > differenceThreshold) return true;
-    return (left.length === 0 && right.length > 0) || (right.length === 0 && left.length > 0);
+    // Ignore whitespace-only differences (e.g. trailing spaces, line-ending changes)
+    if (left.replace(/\s+/g, '') === right.replace(/\s+/g, '')) return false;
+    return true;
   };
 
   const openConflictDialog = (localDoc: FileData, remoteDoc: FileData, context: ConflictContext) => {

@@ -4,6 +4,7 @@
       :title="title"
       :is-saving="isSaving"
       :has-unsaved="hasUnsaved"
+      :is-offline="isOffline"
       :show-share="!!deckId"
       :show-chat="!!deckId && canJoinRealtime"
       :read-only="!canEditDeck"
@@ -256,6 +257,7 @@ const currentSlideIndex = ref(0)
 const shareOpen = ref(false)
 const accessDenied = ref(false)
 const privacyType = ref<number>(7)
+const isOffline = ref(!navigator.onLine)
 const shareMembers = ref<Array<{id: string, name: string, email: string, level: string}>>([])
 const currentDoc = ref<any | null>(null)
 const backendCanEdit = ref<boolean | null>(null)
@@ -376,6 +378,16 @@ const shareMembersForCard = computed<ShareMember[]>(() => {
 
 function getCurrentSlideIndex() {
   return currentSlideIndex.value
+}
+
+function handleOnline() {
+  isOffline.value = false
+  if (hasUnsaved.value && canEditDeck.value) {
+    void persistDeck()
+  }
+}
+function handleOffline() {
+  isOffline.value = true
 }
 
 function scheduleSave() {
@@ -728,6 +740,8 @@ onBeforeRouteLeave(async () => {
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
   window.addEventListener('beforeunload', onBeforeUnload)
+  window.addEventListener('online', handleOnline)
+  window.addEventListener('offline', handleOffline)
   document.title = title.value
   const template = route.params.template as string | undefined
   if (template) {
@@ -788,6 +802,8 @@ onBeforeUnmount(() => {
   if (saveTimer) clearTimeout(saveTimer)
   window.removeEventListener('keydown', onKeydown)
   window.removeEventListener('beforeunload', onBeforeUnload)
+  window.removeEventListener('online', handleOnline)
+  window.removeEventListener('offline', handleOffline)
   leaveDeck()
 })
 </script>

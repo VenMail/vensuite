@@ -109,6 +109,7 @@ const props = defineProps<{
   title: string
   isSaving?: boolean
   hasUnsaved?: boolean
+  isOffline?: boolean
   showShare?: boolean
   showChat?: boolean
   unreadCount?: number
@@ -171,6 +172,7 @@ function focusTitle() {
 
 // ─── Status ─────────────────────────────────────────────────────────────────
 const statusText = computed(() => {
+  if (props.isOffline) return 'Offline'
   if (props.isSaving) return 'Saving...'
   if (props.hasUnsaved) return 'Unsaved'
   return 'Saved'
@@ -179,7 +181,8 @@ const statusText = computed(() => {
 const statusClass = computed(() => ({
   'stb-status--saving': props.isSaving,
   'stb-status--unsaved': props.hasUnsaved && !props.isSaving,
-  'stb-status--saved': !props.isSaving && !props.hasUnsaved,
+  'stb-status--saved': !props.isOffline && !props.isSaving && !props.hasUnsaved,
+  'stb-status--offline': props.isOffline,
 }))
 
 // ─── Menu definitions ────────────────────────────────────────────────────────
@@ -498,6 +501,7 @@ function handleAction(id: string) {
 .stb-status--saving  { color: #2563eb; background: #eff6ff; }
 .stb-status--unsaved { color: #d97706; background: #fffbeb; }
 .stb-status--saved   { color: #16a34a; background: #f0fdf4; }
+.stb-status--offline  { color: #b45309; background: #fef3c7; }
 
 .stb-btn {
   display: inline-flex;

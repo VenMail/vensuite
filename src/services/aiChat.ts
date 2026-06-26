@@ -44,6 +44,9 @@ function buildAuthRequestConfig() {
  * Stream an assistant reply for the given conversation payload.
  * Chunks arrive as SSE lines: `data: {"content":"..."}` terminated by
  * `data: [DONE]`. Error chunks may be `data: {"error":"..."}`.
+ *
+ * If the initial connection fails before any content arrives (e.g. transient
+ * QUIC/HTTP3 errors), the fetch is retried once after a short delay.
  */
 export async function streamChat(
   payload: ChatPayload,
@@ -54,33 +57,39 @@ export async function streamChat(
   onRevise?: () => void,
 ): Promise<AbortController> {
   const controller = new AbortController();
-  try {
-    const authStore = useAuthStore();
-    const token = authStore.getToken?.() ?? authStore.token;
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+  const authStore = useAuthStore();
+  const token = authStore.getToken?.() ?? authStore.token;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 
-    const response = await fetch(`${API_BASE_URL}/ai/chat-stream`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
+  let contentReceived = false;
+  let retried = false;
 
-    if (!response.ok) {
-      throw new Error(`AI chat stream failed: ${response.status}`);
-    }
+  const doStream = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai/chat-stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
 
-    const reader = response.body?.getReader();
-    if (!reader) throw new Error('No response body');
+      if (!response.ok) {
+        throw new Error(`AI chat stream failed: ${response.status}`);
+      }
 
-    const decoder = new TextDecoder();
-    let buffer = '';
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
 
-    const processStream = async () => {
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      // Process the SSE stream inline so that a mid-stream network error
+      // (e.g. ERR_QUIC_PROTOCOL_ERROR) is caught by the outer catch block
+      // and can trigger a retry when no content has arrived yet.
       while (true) {
         const { done, value } = await reader.read();
         if (done) { onDone(); break; }
@@ -101,19 +110,35 @@ export async function streamChat(
               }
               if (parsed.stage) onStage?.(parsed.stage, parsed.label ?? parsed.stage);
               if (parsed.revise) onRevise?.();
-              if (parsed.content) onChunk(parsed.content);
+              if (parsed.content) {
+                contentReceived = true;
+                onChunk(parsed.content);
+              }
             } catch {
-              if (data) onChunk(data);
+              if (data) {
+                contentReceived = true;
+                onChunk(data);
+              }
             }
           }
         }
       }
-    };
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      // Retry once if the connection dropped before any content arrived.
+      // This handles transient QUIC/HTTP3 errors that Chrome sometimes
+      // encounters on the initial connection to the SSE endpoint.
+      if (!contentReceived && !retried) {
+        retried = true;
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        if (controller.signal.aborted) return;
+        return doStream();
+      }
+      onError(error instanceof Error ? error : new Error('Stream failed'));
+    }
+  };
 
-    processStream().catch(onError);
-  } catch (error) {
-    onError(error instanceof Error ? error : new Error('Stream failed'));
-  }
+  doStream();
   return controller;
 }
 

@@ -1,6 +1,7 @@
 import path from "node:path";
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
+import { VitePWA } from "vite-plugin-pwa";
 import IconsResolver from 'unplugin-icons/resolver';
 import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
@@ -48,6 +49,44 @@ export default defineConfig(({ mode }) => {
         autoInstall: false,
         scale: 1,
         defaultClass: 'i-icon',
+      }),
+      VitePWA({
+        registerType: 'autoUpdate',
+        injectRegister: 'auto',
+        manifest: false,
+        workbox: {
+          globPatterns: [
+            '**/*.{js,css,html,ico,png,svg,woff,woff2,ttf,eot,json}',
+          ],
+          // SPA shell fallback. The app is responsible for showing offline UI when API calls fail.
+          navigateFallback: '/index.html',
+          navigateFallbackDenylist: [
+            /^\/api\//,
+            /^\/storage\//,
+            /^\/manifest\.json$/,
+            /^\/sw\.js$/,
+          ],
+          // NOTE: We intentionally do NOT cache /api/* or /storage/* here. Those responses are
+          // authenticated and user-scoped; caching them in a shared SW cache would leak data
+          // across sessions on the same device. The app handles document offline storage via
+          // its own local cache layer (see src/store/files.ts).
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts',
+                expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+          ],
+        },
+        // Keep service worker disabled in dev to avoid HMR issues. Set to true only when testing PWA behavior.
+        devOptions: {
+          enabled: false,
+          type: 'module',
+        },
       }),
     ],
     optimizeDeps: {

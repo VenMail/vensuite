@@ -905,6 +905,9 @@ export const useFileStore = defineStore("files", {
     /** Clear all files state and offline caches (used during logout) */
     clearAll() {
       try {
+        // Tear down sync listeners and interval
+        try { (this as any)._syncCleanup?.(); } catch { }
+
         this.allFiles = [] as FileData[];
         this.recentFiles = [] as FileData[];
         this.cachedDocuments.clear();
@@ -915,7 +918,7 @@ export const useFileStore = defineStore("files", {
         // Remove offline caches and recent list
         const keys = Object.keys(localStorage);
         for (const k of keys) {
-          if (k.startsWith('document_') || k.startsWith('sheet_') || k.startsWith('file_') || k === 'VENX_RECENT') {
+          if (k.startsWith('document_') || k.startsWith('sheet_') || k.startsWith('file_') || k.startsWith('story_') || k === 'VENX_RECENT') {
             try { localStorage.removeItem(k); } catch { }
           }
         }
@@ -994,7 +997,7 @@ export const useFileStore = defineStore("files", {
     /** Check if a document ID is a local UUID */
     isLocalDocument(id: string): boolean {
       // UUIDs have a specific format, server IDs typically don't
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       return uuidRegex.test(id);
     },
 
@@ -1023,7 +1026,7 @@ export const useFileStore = defineStore("files", {
     /** Delete a local document from storage */
     deleteLocalDocument(id: string) {
       // Remove from localStorage
-      const prefixes = ["document", "sheet", "file"];
+      const prefixes = ["document", "sheet", "file", "story"];
       prefixes.forEach(prefix => {
         const key = `${prefix}_${id}`;
         localStorage.removeItem(key);
@@ -1048,13 +1051,14 @@ export const useFileStore = defineStore("files", {
       shouldRedirect?: boolean;
       redirectId?: string;
     }> {
-      document.last_viewed = new Date();
+      // Clone to avoid mutating the caller's object
+      const doc: FileData = { ...document, last_viewed: new Date() };
 
       // For new documents (no ID), don't save locally until we have a server ID
-      if (!document.id) {
+      if (!doc.id) {
         // Skip local save for new documents, go directly to API
         if (this.isOnline) {
-          const saveResult = await this.saveToAPI(document);
+          const saveResult = await this.saveToAPI(doc);
           if (saveResult) {
             // Save the server result locally
             this.saveToLocalCache(saveResult);
@@ -1069,20 +1073,20 @@ export const useFileStore = defineStore("files", {
       }
 
       // Save locally first for existing documents
-      this.saveToLocalCache(document);
-      this.updateFiles(document);
+      this.saveToLocalCache(doc);
+      this.updateFiles(doc);
 
       // Then attempt online sync if connected
       if (this.isOnline) {
-        const isLocalDoc = this.isLocalDocument(document.id);
-        const saveResult = await this.saveToAPI(document);
+        const isLocalDoc = this.isLocalDocument(doc.id);
+        const saveResult = await this.saveToAPI(doc);
 
         if (saveResult) {
           // Save was successful online
           if (isLocalDoc) {
             // This was a local document that now has a server ID
             // Delete the local version and return redirect info
-            this.deleteLocalDocument(document.id!);
+            this.deleteLocalDocument(doc.id!);
 
             return {
               document: saveResult,
@@ -1098,15 +1102,15 @@ export const useFileStore = defineStore("files", {
           }
         } else {
           // Online save failed - mark as dirty for later sync
-          document.isDirty = true;
-          this.queueForSync(document);
-          return { document, syncStatus: 'queued' };
+          doc.isDirty = true;
+          this.queueForSync(doc);
+          return { document: doc, syncStatus: 'queued' };
         }
       } else {
         // Offline - mark as dirty for later sync
-        document.isDirty = true;
-        this.queueForSync(document);
-        return { document, syncStatus: 'queued' };
+        doc.isDirty = true;
+        this.queueForSync(doc);
+        return { document: doc, syncStatus: 'queued' };
       }
     },
 
@@ -1197,11 +1201,20 @@ export const useFileStore = defineStore("files", {
 
       // Try loading from API if online
       if (this.isOnline) {
-        const apiDoc = await this.loadFromAPI(id);
-        if (apiDoc) {
-          this.cacheDocument(apiDoc);
-          this.updateFiles(apiDoc);
-          return apiDoc;
+        try {
+          const apiDoc = await this.loadFromAPI(id);
+          if (apiDoc) {
+            this.cacheDocument(apiDoc);
+            this.updateFiles(apiDoc);
+            return apiDoc;
+          }
+        } catch (apiError) {
+          // If it's an auth error, rethrow to let interceptors handle it
+          if (axios.isAxiosError(apiError) && apiError.response && [401, 403].includes(apiError.response.status)) {
+            throw apiError;
+          }
+          // For other errors (404, network), fall through to local storage
+          console.warn('loadFromAPI failed, falling back to local storage:', apiError);
         }
       }
 
@@ -1269,6 +1282,8 @@ export const useFileStore = defineStore("files", {
 
       this.isSyncing = true;
 
+      const failedIds: string[] = [];
+
       for (const [id, { data, attempts }] of this.pendingChanges.entries()) {
         if (attempts >= MAX_RETRIES) {
           this.pendingChanges.delete(id);
@@ -1292,11 +1307,16 @@ export const useFileStore = defineStore("files", {
         } else {
           this.pendingChanges.set(id, { data, attempts: attempts + 1 });
           this.syncStatus.set(id, 'pending');
+          failedIds.push(id);
         }
+      }
 
-        // Exponential backoff for failed attempts
-        if (!saved && attempts > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts)));
+      // Apply exponential backoff only to failed items, after processing all items
+      // so one failure doesn't block the rest of the queue.
+      if (failedIds.length > 0) {
+        const maxAttempts = Math.max(...failedIds.map(id => this.pendingChanges.get(id)?.attempts ?? 0));
+        if (maxAttempts > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, Math.min(maxAttempts, 5))));
         }
       }
 
@@ -1306,7 +1326,11 @@ export const useFileStore = defineStore("files", {
     /** Save to local cache */
     saveToLocalCache(document: FileData) {
       const key = `${this.getPrefix(document.file_type || "docx")}_${document.id}`;
-      localStorage.setItem(key, JSON.stringify(document));
+      try {
+        localStorage.setItem(key, JSON.stringify(document));
+      } catch (error) {
+        console.warn(`Failed to cache document ${key} in localStorage (likely quota exceeded):`, error);
+      }
       this.cacheDocument(document);
     },
 
@@ -1314,7 +1338,14 @@ export const useFileStore = defineStore("files", {
     loadFromLocalStorage(id: string, fileType?: string): FileData | null {
       const key = `${this.getPrefix(fileType || "docx")}_${id}`;
       const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : null;
+      if (!item) return null;
+      try {
+        return JSON.parse(item);
+      } catch (error) {
+        console.error(`Error parsing localStorage document ${key}:`, error);
+        localStorage.removeItem(key);
+        return null;
+      }
     },
 
     /** Cache document in memory */
@@ -1334,7 +1365,7 @@ export const useFileStore = defineStore("files", {
       if (recentIndex !== -1) this.recentFiles.splice(recentIndex, 1);
       this.recentFiles.unshift(document);
       if (this.recentFiles.length > 10) this.recentFiles.pop();
-      localStorage.setItem("VENX_RECENT", JSON.stringify(this.recentFiles.map(f => f.id)));
+      try { localStorage.setItem("VENX_RECENT", JSON.stringify(this.recentFiles.map(f => f.id))); } catch { }
     },
 
     async moveFile(fileId: string, newFolderId: string) {
@@ -1389,7 +1420,7 @@ export const useFileStore = defineStore("files", {
     loadOfflineDocuments(): FileData[] {
       const offlineDocs: FileData[] = [];
       for (const key of Object.keys(localStorage)) {
-        if (key.startsWith("document_") || key.startsWith("sheet_") || key.startsWith("file_")) {
+        if (key.startsWith("document_") || key.startsWith("sheet_") || key.startsWith("file_") || key.startsWith("story_")) {
           try {
             const item = JSON.parse(localStorage.getItem(key) || "{}");
             if (item && item.id) {
@@ -1406,6 +1437,8 @@ export const useFileStore = defineStore("files", {
                   item.file_type = "docx";
                 } else if (key.startsWith("sheet_")) {
                   item.file_type = "xlsx";
+                } else if (key.startsWith("story_")) {
+                  item.file_type = "story";
                 }
               }
 
@@ -1497,13 +1530,14 @@ export const useFileStore = defineStore("files", {
             continue;
           }
 
-          // If this is a purely local document (UUID) or missing on server, try to push it
+          // Only push purely local UUID documents to the server.
+          // Server IDs that are missing from the list may have been deleted
+          // on the server while the user was offline — re-pushing them would
+          // resurrect deleted documents.
           const isLocal = this.isLocalDocument(doc.id!);
-          const missingOnServer = !serverIdSet.has(doc.id!);
           const ownedByUser = !doc.employee_id || doc.employee_id === currentEmployee;
           
-          // Only reconcile valid local UUIDs, skip malformed IDs
-          if ((isLocal || missingOnServer) && ownedByUser) {
+          if (isLocal && ownedByUser) {
             // Ensure employee_id ownership when pushing
             if (!doc.employee_id && currentEmployee) {
               doc.employee_id = currentEmployee as any;
@@ -1604,7 +1638,7 @@ export const useFileStore = defineStore("files", {
           this.syncStatus.delete(id);
 
           // Remove from localStorage
-          const prefixes = ["document", "sheet", "file"];
+          const prefixes = ["document", "sheet", "file", "story"];
           prefixes.forEach(prefix => {
             const key = `${prefix}_${id}`;
             localStorage.removeItem(key);
@@ -1679,16 +1713,19 @@ export const useFileStore = defineStore("files", {
         }
       }
 
-      // Remove from localStorage and state
-      const prefix = this.getPrefix(doc.file_type || "docx");
-      const key = `${prefix}_${id}`;
-      localStorage.removeItem(key);
+      // Remove from localStorage and state (try all prefixes in case file_type changed)
+      const prefixes = ["document", "sheet", "file", "story"];
+      prefixes.forEach(prefix => {
+        const key = `${prefix}_${id}`;
+        localStorage.removeItem(key);
+      });
       this.allFiles.splice(docIndex, 1);
       this.recentFiles = this.recentFiles.filter((f) => f.id !== id);
 
-      // Remove from cache and pending changes
+      // Remove from cache, pending changes, and sync status
       this.cachedDocuments.delete(id);
       this.pendingChanges.delete(id);
+      this.syncStatus.delete(id);
 
       return true;
     },
@@ -1805,12 +1842,20 @@ export const useFileStore = defineStore("files", {
 
     /** Initialize sync handlers */
     async initialize() {
-      window.addEventListener("online", () => {
+      const onOnline = () => {
         this.isOnline = true;
         this.syncPendingChanges();
-      });
-      window.addEventListener("offline", () => (this.isOnline = false));
-      setInterval(() => this.isOnline && this.syncPendingChanges(), SYNC_INTERVAL);
+      };
+      const onOffline = () => { this.isOnline = false; };
+      window.addEventListener("online", onOnline);
+      window.addEventListener("offline", onOffline);
+      const intervalId = setInterval(() => { if (this.isOnline) this.syncPendingChanges(); }, SYNC_INTERVAL);
+      // Store cleanup refs so we can tear down during HMR or logout
+      (this as any)._syncCleanup = () => {
+        window.removeEventListener("online", onOnline);
+        window.removeEventListener("offline", onOffline);
+        clearInterval(intervalId);
+      };
     },
 
     /** Load only media files */

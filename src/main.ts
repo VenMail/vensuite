@@ -13,6 +13,7 @@ import { t } from './i18n'
 import mammothUrl from 'mammoth/mammoth.browser.min.js?url'
 import App from './App.vue'
 import { useAuthStore } from './auth/index'
+import { useFileStore } from './store/files'
 import { createAuthGuard } from './auth/router-guard'
 
 // Routes
@@ -177,6 +178,10 @@ const authStore = useAuthStore(pinia)
 authStore.setRouter(router)
 authStore.setupAxiosInterceptor()
 authStore.hydrate()
+
+// Initialize file store sync handlers (online/offline listeners + periodic sync)
+const fileStore = useFileStore(pinia)
+void fileStore.initialize()
 
 // Router guard
 const authGuard = createAuthGuard(authStore)
