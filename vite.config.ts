@@ -58,6 +58,7 @@ export default defineConfig(({ mode }) => {
           globPatterns: [
             '**/*.{js,css,html,ico,png,svg,woff,woff2,ttf,eot,json}',
           ],
+          maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
           // SPA shell fallback. The app is responsible for showing offline UI when API calls fail.
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [
