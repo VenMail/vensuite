@@ -36,10 +36,12 @@ const TH_STYLE = 'border:1px solid #ccc;padding:6px 8px;background-color:#f5f5f5
 const TD_STYLE = 'border:1px solid #ccc;padding:6px 8px;text-align:left';
 
 /** Tags that canvas-editor has no special handling for — unwrap them. */
-const UNWRAP_TAGS = new Set(['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'NAV', 'ASIDE', 'FIGURE', 'FIGCAPTION', 'VENSUITE-DOC']);
+const UNWRAP_TAGS = ['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'NAV', 'ASIDE', 'FIGURE', 'FIGCAPTION', 'VENSUITE-DOC'];
+const UNWRAP_SELECTOR = UNWRAP_TAGS.join(', ');
 
 /** Tags to remove entirely (no visual content). */
-const STRIP_TAGS = new Set(['SCRIPT', 'STYLE', 'LINK', 'META', 'TITLE', 'HEAD']);
+const STRIP_TAGS = ['SCRIPT', 'STYLE', 'LINK', 'META', 'TITLE', 'HEAD'];
+const STRIP_SELECTOR = STRIP_TAGS.join(', ');
 
 function ensureStyle(el: HTMLElement, defaultStyle: string): void {
   if (!el.getAttribute('style')) {
@@ -59,10 +61,10 @@ export function normalizeHtmlForCanvas(html: string): string {
   host.innerHTML = html;
 
   // 1. Strip dangerous/useless tags
-  host.querySelectorAll(STRIP_TAGS as unknown as string).forEach((el) => el.remove());
+  host.querySelectorAll(STRIP_SELECTOR).forEach((el) => el.remove());
 
   // 2. Unwrap layout tags (div, section, etc.) — canvas-editor doesn't handle them
-  let unwrapTargets = Array.from(host.querySelectorAll(UNWRAP_TAGS as unknown as string));
+  let unwrapTargets = Array.from(host.querySelectorAll(UNWRAP_SELECTOR));
   while (unwrapTargets.length) {
     for (const el of unwrapTargets) {
       const parent = el.parentNode;
@@ -74,7 +76,7 @@ export function normalizeHtmlForCanvas(html: string): string {
       parent.removeChild(el);
     }
     // Check again — unwrapping may have exposed new unwrap targets
-    unwrapTargets = Array.from(host.querySelectorAll(UNWRAP_TAGS as unknown as string));
+    unwrapTargets = Array.from(host.querySelectorAll(UNWRAP_SELECTOR));
   }
 
   // 3. Apply default heading styles
