@@ -332,6 +332,8 @@ import {
   serializeCanvasContent,
   parseDocContentForCanvas,
 } from '@/composables/useCanvasDocsEditor';
+import { normalizeHtmlForCanvas } from '@/lib/normalizeHtmlForCanvas';
+import { apiClient } from '@/services/apiClient';
 import { IWebsocketService, Message, useWebSocket } from '@/lib/wsService';
 import {
   parseSharingInfoString,
@@ -824,7 +826,7 @@ function handlePrint() {
 }
 
 function normalizeDocxExportContent(root: HTMLElement) {
-  const supported = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'OL', 'UL', 'TABLE']);
+  const supported = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'OL', 'UL', 'TABLE', 'BLOCKQUOTE', 'HR', 'A', 'STRONG', 'EM', 'BR']);
 
   if (!root.children.length && root.textContent?.trim()) {
     const p = document.createElement('p');
@@ -1043,6 +1045,51 @@ async function handleExport(format: string) {
         return;
       }
 
+      const orientation = pageSettings.pageOrientation === 'landscape' ? 'landscape' : 'portrait';
+      const pageSizeMap: Record<string, string> = { a4: 'a4', a3: 'a3', letter: 'letter', legal: 'legal' };
+      const pageSize = pageSizeMap[pageSettings.pageSize] ?? 'a4';
+
+      // Try server-side LibreOffice conversion first (high fidelity)
+      try {
+        const response = await apiClient.post(
+          'app-files/export-docx',
+          { html, title, orientation, page_size: pageSize },
+          { responseType: 'blob', timeout: 60000 }
+        );
+
+        // Verify the blob is actually a DOCX (ZIP magic: PK\x03\x04)
+        // If the server returned a JSON error with wrong Content-Type,
+        // the blob will be text, not binary DOCX.
+        const headerBlob = response.data.slice(0, 4);
+        const headerBuf = await headerBlob.arrayBuffer();
+        const headerBytes = new Uint8Array(headerBuf);
+        const isDocx = headerBytes[0] === 0x50 && headerBytes[1] === 0x4B
+          && headerBytes[2] === 0x03 && headerBytes[3] === 0x04;
+        if (!isDocx) {
+          // Try to read as text error message
+          const text = await response.data.text();
+          console.warn('[docs] Server returned non-DOCX response:', text);
+          throw new Error('Invalid DOCX response from server');
+        }
+
+        const blob = new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success('DOCX exported (LibreOffice)');
+        return;
+      } catch (serverErr) {
+        console.warn('[docs] Server-side DOCX export failed, falling back to client-side', serverErr);
+      }
+
+      // Fallback: client-side docx library
       const pageTwips: Record<string, { width: number; height: number }> = {
         a4: { width: 11907, height: 16838 },
         a3: { width: 16838, height: 23811 },
@@ -1050,7 +1097,7 @@ async function handleExport(format: string) {
         legal: { width: 12240, height: 20160 },
       };
       const basePageSize = pageTwips[pageSettings.pageSize] ?? pageTwips.a4;
-      const pageSize = pageSettings.pageOrientation === 'landscape'
+      const exportPageSize = pageSettings.pageOrientation === 'landscape'
         ? { width: basePageSize.height, height: basePageSize.width }
         : basePageSize;
 
@@ -1064,7 +1111,7 @@ async function handleExport(format: string) {
       await exportToDocx(container, {
         fileName: `${title}.docx`,
         toDownload: true,
-        pageSize,
+        pageSize: exportPageSize,
         margins: {
           top: Math.round(pageSettings.marginTop * 15),
           right: Math.round(pageSettings.marginRight * 15),
@@ -1073,7 +1120,7 @@ async function handleExport(format: string) {
         },
         orientation: pageSettings.pageOrientation,
       });
-      toast.success('DOCX exported');
+      toast.success('DOCX exported (client-side fallback)');
     } catch (err) {
       console.error('[docs] DOCX export error', err);
       toast.error('Failed to export DOCX');
@@ -1099,6 +1146,32 @@ function handlePageSizeChange(size: string) {
 }
 
 // ── Document loading ──────────────────────────────────────────────────────────
+
+/**
+ * Try to enrich HTML via LibreOffice round-trip (HTML→DOCX→HTML) through the
+ * backend docx_service. This produces fully-styled HTML with inline styles
+ * that canvas-editor's getComputedStyle-based parser can render with high
+ * fidelity. Falls back to normalizeHtmlForCanvas if the API is unavailable.
+ */
+async function enrichHtmlViaLibreOffice(html: string): Promise<string> {
+  // Strip <vensuite-doc> wrapper if present — it's a protocol tag from the AI
+  // that neither LibreOffice nor canvas-editor understands.
+  const cleanHtml = html.replace(/<\/?vensuite-doc[^>]*>/gi, '').trim();
+  try {
+    const response = await apiClient.post(
+      'app-files/enrich-html',
+      { html: cleanHtml, title: documentTitle.value || 'document' },
+      { timeout: 90000 }
+    );
+    if (response.data?.html) {
+      return response.data.html as string;
+    }
+  } catch (err) {
+    console.warn('[docs] LibreOffice HTML enrichment failed, using client-side normalization', err);
+  }
+  return normalizeHtmlForCanvas(cleanHtml);
+}
+
 async function loadContentIntoCanvas(content: any) {
   if (!canvasInstance) {
     // Store for CanvasEditorCore to pick up on mount
@@ -1114,7 +1187,8 @@ async function loadContentIntoCanvas(content: any) {
 
   // HTML bridge path (old Tiptap HTML or raw HTML)
   if (parsed.mode === 'html' && parsed.payload) {
-    try { canvasInstance.command.executeSetHTML({ main: parsed.payload }); return; } catch {}
+    const htmlForCanvas = await enrichHtmlViaLibreOffice(parsed.payload);
+    try { canvasInstance.command.executeSetHTML({ main: htmlForCanvas }); return; } catch {}
   }
 
   // Tiptap JSON — convert via Editor to HTML first using the old instance
@@ -1126,11 +1200,13 @@ async function loadContentIntoCanvas(content: any) {
         // Try to extract text/html representation from Tiptap JSON
         // Best we can do: stringify the text content as paragraphs
         const htmlFallback = tiptapJsonToHtmlFallback(parsed2);
-        try { canvasInstance.command.executeSetHTML({ main: htmlFallback }); return; } catch {}
+        const htmlForCanvas = await enrichHtmlViaLibreOffice(htmlFallback);
+        try { canvasInstance.command.executeSetHTML({ main: htmlForCanvas }); return; } catch {}
       }
     } catch {}
     if (trimmed.startsWith('<')) {
-      try { canvasInstance.command.executeSetHTML({ main: trimmed }); return; } catch {}
+      const htmlForCanvas = await enrichHtmlViaLibreOffice(trimmed);
+      try { canvasInstance.command.executeSetHTML({ main: htmlForCanvas }); return; } catch {}
     }
   }
 }
