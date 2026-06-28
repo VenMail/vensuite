@@ -1154,9 +1154,21 @@ function handlePageSizeChange(size: string) {
  * fidelity. Falls back to normalizeHtmlForCanvas if the API is unavailable.
  */
 async function enrichHtmlViaLibreOffice(html: string): Promise<string> {
-  // Strip <vensuite-doc> wrapper if present — it's a protocol tag from the AI
-  // that neither LibreOffice nor canvas-editor understands.
-  const cleanHtml = html.replace(/<\/?vensuite-doc[^>]*>/gi, '').trim();
+  // Replace the protocol-only <vensuite-doc> wrapper with a plain <div> so any
+  // wrapper-level inline styles are preserved through the LibreOffice round-trip.
+  // If the wrapper is already a plain <div> or absent, this is a no-op.
+  const host = document.createElement('div');
+  host.innerHTML = html;
+  host.querySelectorAll('vensuite-doc').forEach((el) => {
+    const div = document.createElement('div');
+    const style = (el as HTMLElement).getAttribute('style');
+    if (style) div.setAttribute('style', style);
+    while (el.firstChild) {
+      div.appendChild(el.firstChild);
+    }
+    el.parentNode?.replaceChild(div, el);
+  });
+  const cleanHtml = host.innerHTML;
   try {
     const response = await apiClient.post(
       'app-files/enrich-html',

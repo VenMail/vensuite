@@ -22,6 +22,18 @@ const TD_STYLE = 'border:1px solid #ccc;padding:6px 8px';
 const TH_STYLE = 'border:1px solid #ccc;padding:6px 8px;background-color:#f5f5f5;font-weight:bold';
 const LINK_STYLE = 'color:#2563eb;text-decoration:underline';
 
+// canvas-editor replaces H1-H6 with <div> during parsing, which drops the browser's
+// default heading sizes. Use canvas-editor's own default title sizes as a fallback
+// when the source heading does not already declare an inline font-size.
+const HEADING_SIZE_FALLBACK: Record<string, string> = {
+  H1: '26px',
+  H2: '24px',
+  H3: '22px',
+  H4: '20px',
+  H5: '18px',
+  H6: '16px',
+};
+
 /** Merge a style declaration into an element without overwriting existing values for the same property. */
 function mergeStyle(el: HTMLElement, additional: string): void {
   const existing = el.getAttribute('style') || '';
@@ -101,7 +113,19 @@ export function normalizeHtmlForCanvas(html: string): string {
     }
   }
 
-  // 5. Ensure tables have explicit geometry so canvas-editor can compute cell widths
+  // 5. Preserve heading sizes: canvas-editor replaces H1-H6 with <div>, which drops
+  // browser default sizing. Only add a fallback when the heading has no inline font-size.
+  host.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((el) => {
+    const style = (el as HTMLElement).getAttribute('style') || '';
+    if (!style.includes('font-size:')) {
+      const size = HEADING_SIZE_FALLBACK[el.nodeName];
+      if (size) {
+        mergeStyle(el as HTMLElement, `font-size:${size}`);
+      }
+    }
+  });
+
+  // 6. Ensure tables have explicit geometry so canvas-editor can compute cell widths
   host.querySelectorAll('table').forEach((table) => {
     ensureStyle(table as HTMLElement, TABLE_STYLE);
     if (!table.querySelector('colgroup')) {
@@ -127,7 +151,7 @@ export function normalizeHtmlForCanvas(html: string): string {
     ensureStyle(td as HTMLElement, TD_STYLE);
   });
 
-  // 6. Link fallback styling only when the anchor has no explicit color
+  // 7. Link fallback styling only when the anchor has no explicit color
   host.querySelectorAll('a').forEach((a) => {
     const style = (a as HTMLElement).getAttribute('style') || '';
     if (!style.includes('color:')) {
@@ -135,7 +159,7 @@ export function normalizeHtmlForCanvas(html: string): string {
     }
   });
 
-  // 7. Ensure empty paragraphs have a non-breaking space (canvas-editor needs content)
+  // 8. Ensure empty paragraphs have a non-breaking space (canvas-editor needs content)
   host.querySelectorAll('p').forEach((p) => {
     if (!p.textContent?.trim() && !p.innerHTML.trim()) {
       p.innerHTML = '&nbsp;';

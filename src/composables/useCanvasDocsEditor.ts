@@ -42,8 +42,33 @@ function getPageDimensions(size: string, orientation: 'portrait' | 'landscape') 
     : { width: dim.w, height: dim.h };
 }
 
+/** Extract the most common font-family from inline styles in an HTML string.
+ *  canvas-editor ignores font-family during HTML parsing and always falls back to
+ *  options.defaultFont, so detecting the document's base font improves fidelity.
+ */
+export function extractBaseFontFromHtml(html: string): string | null {
+  const host = document.createElement('div');
+  host.innerHTML = html;
+  const counts = new Map<string, number>();
+  host.querySelectorAll('[style]').forEach((el) => {
+    const style = (el as HTMLElement).getAttribute('style') || '';
+    const match = style.match(/font-family\s*:\s*([^;]+)/i);
+    if (match) {
+      const font = match[1].trim().replace(/['"]/g, '').split(',')[0].trim();
+      if (font && font !== 'inherit' && font !== 'initial') {
+        counts.set(font, (counts.get(font) || 0) + 1);
+      }
+    }
+  });
+  if (!counts.size) return null;
+  return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0][0];
+}
+
 /** Build canvas-editor constructor options from page settings */
-export function buildCanvasEditorOptions(settings: CanvasDocPageSettings) {
+export function buildCanvasEditorOptions(
+  settings: CanvasDocPageSettings,
+  defaultFontOverride?: string
+) {
   const { width, height } = getPageDimensions(settings.pageSize, settings.pageOrientation);
 
   const footer = settings.showPageNumbers
@@ -62,7 +87,7 @@ export function buildCanvasEditorOptions(settings: CanvasDocPageSettings) {
     pageGap: 30,
     footer: footer ? { disabled: false, defaultValue: footer } : undefined,
     header: { disabled: false },
-    defaultFont: 'Arial',
+    defaultFont: defaultFontOverride || 'Arial',
     defaultSize: 16,
     historyMaxRecordCount: 100,
     locale: 'en',

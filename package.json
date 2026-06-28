@@ -18,7 +18,7 @@
     "i18n:restore-invalid": "node ./scripts/restore-i18n-invalid.js"
   },
   "dependencies": {
-    "@hufe921/canvas-editor": "^0.9.131",
+    "@hufe921/canvas-editor": "^0.9.136",
     "@iconify-prerendered/vue-file-icons": "^0.25.1721244157",
     "@radix-icons/vue": "^1.0.0",
     "@tanstack/vue-table": "^8.21.3",

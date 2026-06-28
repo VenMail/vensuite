@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import type { CanvasDocPageSettings, CanvasRangeStyle } from '@/composables/useCanvasDocsEditor';
-import { buildCanvasEditorOptions, parseDocContentForCanvas } from '@/composables/useCanvasDocsEditor';
+import { buildCanvasEditorOptions, extractBaseFontFromHtml, parseDocContentForCanvas } from '@/composables/useCanvasDocsEditor';
 import { normalizeHtmlForCanvas } from '@/lib/normalizeHtmlForCanvas';
 
 // canvas-editor is a vanilla JS class — dynamic import to avoid SSR issues
@@ -49,12 +49,18 @@ async function initEditor() {
 
   const { default: Editor } = await import('@hufe921/canvas-editor');
 
+  const parsed = parseDocContentForCanvas(props.content);
+
+  // Use the document's primary font-family as the editor default font, because
+  // canvas-editor's HTML parser does not read font-family from inline styles.
+  const defaultFont = parsed.mode === 'html' && parsed.payload
+    ? extractBaseFontFromHtml(parsed.payload) || undefined
+    : undefined;
+
   const options = {
-    ...buildCanvasEditorOptions(props.settings),
+    ...buildCanvasEditorOptions(props.settings, defaultFont),
     mode: props.editable === false ? 'ReadOnly' : 'Edit',
   };
-
-  const parsed = parseDocContentForCanvas(props.content);
 
   // canvas-editor constructor: new Editor(container, data, options)
   // data can be IEditorData { main: IElement[] } or IElement[]
