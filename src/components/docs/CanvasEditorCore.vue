@@ -6,6 +6,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import type { CanvasDocPageSettings, CanvasRangeStyle } from '@/composables/useCanvasDocsEditor';
 import { buildCanvasEditorOptions, parseDocContentForCanvas } from '@/composables/useCanvasDocsEditor';
+import { normalizeHtmlForCanvas } from '@/lib/normalizeHtmlForCanvas';
 
 // canvas-editor is a vanilla JS class — dynamic import to avoid SSR issues
 type CanvasEditorInstance = any;
@@ -88,7 +89,8 @@ async function initEditor() {
   if (parsed.mode === 'html' && parsed.payload) {
     try {
       await nextTick();
-      editorInstance.command.executeSetHTML({ main: parsed.payload });
+      const normalizedHtml = normalizeHtmlForCanvas(parsed.payload);
+      editorInstance.command.executeSetHTML({ main: normalizedHtml });
     } catch (err) {
       console.warn('[canvas-editor] executeSetHTML failed, starting blank', err);
     }

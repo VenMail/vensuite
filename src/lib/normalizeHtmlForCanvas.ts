@@ -56,14 +56,14 @@ function ensureStyle(el: HTMLElement, defaultStyle: string): void {
 
 /** Remove all HTML comments and empty text nodes. */
 function cleanNode(host: HTMLElement): void {
-  const walker = document.createTreeWalker(host, NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT, null, false);
-  const toRemove: Node[] = [];
+  const walker = document.createTreeWalker(host, NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT, null);
+  const toRemove: ChildNode[] = [];
   let node: Node | null;
   while ((node = walker.nextNode()) !== null) {
     if (node.nodeType === Node.COMMENT_NODE) {
-      toRemove.push(node);
+      toRemove.push(node as ChildNode);
     } else if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
-      toRemove.push(node);
+      toRemove.push(node as ChildNode);
     }
   }
   toRemove.forEach((n) => n.remove());
