@@ -84,6 +84,11 @@ const routes = [
   },
   // Signing routes
   {
+    path: '/signing/documents',
+    name: 'signing-documents',
+    component: () => import('./views/SigningDocuments.vue'),
+  },
+  {
     path: '/signing/editor/:signingRequestId',
     name: 'signing-editor',
     component: () => import('./views/SigningEditor.vue'),

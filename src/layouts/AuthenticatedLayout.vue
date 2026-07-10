@@ -34,6 +34,7 @@ const routesWithSidebar = new Set([
   'docs-view',
   'sheets-view',
   'bin-view',
+  'signing-documents',
 ])
 
 function syncSidebarForCurrentRoute() {

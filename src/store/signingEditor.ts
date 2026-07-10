@@ -8,6 +8,34 @@ const generateId = () =>
     ? crypto.randomUUID()
     : `sf_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
+const DIMENSIONS_KEY = 'vensuite:signing-field-dimensions';
+
+function loadSavedDimensions(): Partial<Record<SigningFieldType, { width: number; height: number }>> {
+  try {
+    const raw = localStorage.getItem(DIMENSIONS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveDimensions(type: SigningFieldType, width: number, height: number) {
+  try {
+    const existing = loadSavedDimensions();
+    existing[type] = { width, height };
+    localStorage.setItem(DIMENSIONS_KEY, JSON.stringify(existing));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function getDimensionsForType(type: SigningFieldType): { width: number; height: number } {
+  const saved = loadSavedDimensions();
+  return saved[type] || FIELD_DEFAULTS[type];
+}
+
 export const useSigningEditorStore = defineStore('signing-editor', () => {
   const signingRequestId = ref<string | null>(null);
   const documentUrl = ref('');
@@ -97,15 +125,15 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     const signerEmail = activeSignerEmail.value;
     if (!signerEmail) return null;
 
-    const defaults = FIELD_DEFAULTS[type];
+    const dims = getDimensionsForType(type);
     const field: SigningField = {
       id: generateId(),
       type,
       pageIndex,
-      x: Math.max(0, Math.min(100 - defaults.width, x)),
-      y: Math.max(0, Math.min(100 - defaults.height, y)),
-      width: defaults.width,
-      height: defaults.height,
+      x: Math.max(0, Math.min(100 - dims.width, x)),
+      y: Math.max(0, Math.min(100 - dims.height, y)),
+      width: dims.width,
+      height: dims.height,
       signerEmail,
       required: type === 'signature' || type === 'initials',
     };
@@ -129,6 +157,8 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     if (!field) return;
     field.width = Math.max(2, Math.min(100 - field.x, width));
     field.height = Math.max(1, Math.min(100 - field.y, height));
+    // Persist dimensions for this field type so future fields use the same size
+    saveDimensions(field.type, field.width, field.height);
     isDirty.value = true;
   }
 

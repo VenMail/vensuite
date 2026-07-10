@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft, BookOpen, Sparkles } from 'lucide-vue-next'
+import { Home, FileText, Table, Image, ChevronLeft, ChevronRight, Plus, Trash2, FileBoxIcon, Presentation, ArrowLeft, BookOpen, Sparkles, PenTool } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { useRouter, useRoute } from 'vue-router'
 import { t } from '@/i18n'
@@ -35,6 +35,7 @@ const items = [
   { name: 'Documents', icon: FileText, route: '/docs' },
   { name: 'Spreadsheets', icon: Table, route: '/sheets' },
   { name: 'Forms', icon: FileBoxIcon, route: '/forms' },
+  { name: 'Signing', icon: PenTool, route: '/signing/documents' },
   { name: 'Slides', icon: Presentation, route: '/slides' },
   { name: 'Media', icon: Image, route: '/media' },
   { name: 'Stories', icon: BookOpen, route: '/stories' },
