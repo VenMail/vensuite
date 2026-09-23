@@ -11,6 +11,18 @@ export interface PdfPage {
   imageUrl: string;
 }
 
+export interface PdfFormField {
+  fieldName: string;
+  fieldType: string;       // 'Tx' (text), 'Btn' (button/checkbox), 'Ch' (choice), 'Sig' (signature)
+  fieldValue?: string;
+  pageIndex: number;       // 0-based
+  rect: [number, number, number, number]; // PDF coordinate space [x1, y1, x2, y2] (bottom-left origin)
+  width: number;           // PDF units
+  height: number;          // PDF units
+  pageWidth: number;       // PDF units (for percentage calc)
+  pageHeight: number;      // PDF units
+}
+
 let pdfjsPromise: Promise<typeof PdfjsLib> | null = null;
 
 async function getPdfjs(): Promise<typeof PdfjsLib> {
@@ -81,6 +93,47 @@ export function usePdfRenderer() {
     return page ? { width: page.width, height: page.height } : null;
   }
 
+  async function detectFormFields(): Promise<PdfFormField[]> {
+    if (!pdfDoc.value) return [];
+
+    const fields: PdfFormField[] = [];
+
+    for (let i = 1; i <= pdfDoc.value.numPages; i++) {
+      const page = await pdfDoc.value.getPage(i);
+      const annotations = await page.getAnnotations();
+
+      for (const ann of annotations) {
+        if (ann.subtype !== 'Widget') continue;
+        if (!ann.fieldName) continue;
+
+        const rect = ann.rect as [number, number, number, number];
+        const viewport = page.getViewport({ scale: 1 });
+        const pageWidth = viewport.width;
+        const pageHeight = viewport.height;
+
+        const [x1, y1, x2, y2] = rect;
+        const fieldWidth = Math.abs(x2 - x1);
+        const fieldHeight = Math.abs(y2 - y1);
+
+        fields.push({
+          fieldName: ann.fieldName,
+          fieldType: ann.fieldType || 'Tx',
+          fieldValue: ann.fieldValue as string | undefined,
+          pageIndex: i - 1,
+          rect: [x1, y1, x2, y2],
+          width: fieldWidth,
+          height: fieldHeight,
+          pageWidth,
+          pageHeight,
+        });
+      }
+
+      page.cleanup();
+    }
+
+    return fields;
+  }
+
   onUnmounted(() => {
     pdfDoc.value?.destroy();
     pdfDoc.value = null;
@@ -93,5 +146,6 @@ export function usePdfRenderer() {
     error,
     loadPdf,
     getPageDimensions,
+    detectFormFields,
   };
 }

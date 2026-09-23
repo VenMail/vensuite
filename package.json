@@ -20,6 +20,7 @@
   "dependencies": {
     "@hufe921/canvas-editor": "^0.9.136",
     "@iconify-prerendered/vue-file-icons": "^0.25.1721244157",
+    "@libpdf/core": "^0.4.1",
     "@radix-icons/vue": "^1.0.0",
     "@tanstack/vue-table": "^8.21.3",
     "@tiptap/core": "^2.26.1",
@@ -147,9 +148,9 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "unplugin-icons": "^22.5.0",
-    "vite-plugin-pwa": "^0.21.1",
     "unplugin-vue-components": "^30.0.0",
     "vite": "^7.3.2",
+    "vite-plugin-pwa": "^0.21.1",
     "volar-service-prettyhtml": "^0.0.62",
     "vue-tsc": "^2.2.10"
   },

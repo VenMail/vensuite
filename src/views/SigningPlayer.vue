@@ -3,12 +3,14 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSigningPlayerStore } from '@/store/signingPlayer';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
+import { useLibPdf } from '@/composables/useLibPdf';
 import PdfPageCanvas from '@/components/signing/PdfPageCanvas.vue';
 import SigningFieldInput from '@/components/signing/SigningFieldInput.vue';
 
 const route = useRoute();
 const store = useSigningPlayerStore();
 const pdf = usePdfRenderer();
+const libpdf = useLibPdf();
 
 const token = computed(() => route.params.token as string);
 const containerWidth = ref(700);
@@ -19,7 +21,20 @@ onMounted(async () => {
   await store.loadSession(token.value);
 
   if (store.session?.documentUrl) {
-    await pdf.loadPdf(store.session.documentUrl);
+    // Fetch PDF once and share with both renderers
+    try {
+      const response = await fetch(store.session.documentUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const pdfBuffer = await response.arrayBuffer();
+      // Slice first — pdfjs may detach/transfer the original ArrayBuffer
+      const libPdfBuffer = pdfBuffer.slice(0);
+      await pdf.loadPdf(pdfBuffer);
+      await libpdf.loadPdf(libPdfBuffer);
+    } catch {
+      // Fallback: let each renderer load from URL independently
+      await pdf.loadPdf(store.session.documentUrl);
+      try { await libpdf.loadPdf(store.session.documentUrl); } catch { /* LibPDF optional */ }
+    }
   }
 
   if (containerRef.value) {
@@ -34,9 +49,99 @@ onUnmounted(() => {
   resizeObserver?.disconnect();
 });
 
+const isProcessing = ref(false);
+
 async function handleSubmit() {
-  const success = await store.submit(token.value);
-  if (!success) return;
+  if (isProcessing.value || store.isSubmitting) return;
+  isProcessing.value = true;
+  // Build field values map for LibPDF
+  // Native AcroForm fields (text, checkbox, date) get filled by LibPDF
+  // Signature/initials fields get drawn as images by LibPDF
+  const nativeFieldValues: Record<string, string | boolean> = {};
+  const signatureDraws: Array<{ pageIndex: number; fieldId: string; value: string }> = [];
+
+  if (store.session) {
+    for (const field of store.session.fields) {
+      const answer = store.answers[field.id];
+      if (answer === undefined || answer === '') continue;
+
+      if (field.nativeFieldName && (field.type === 'text' || field.type === 'date' || field.type === 'checkbox')) {
+        // Native AcroForm field — fill via LibPDF
+        nativeFieldValues[field.nativeFieldName] = answer;
+      } else if (field.type === 'signature' || field.type === 'initials') {
+        // Signature image — draw on page via LibPDF
+        if (typeof answer === 'string' && (answer.startsWith('data:image/') || answer.length > 100)) {
+          signatureDraws.push({ pageIndex: field.pageIndex, fieldId: field.id, value: answer });
+        }
+      }
+    }
+  }
+
+  // If we have native fields or signatures, process with LibPDF
+  let filledPdfBytes: Uint8Array | null = null;
+
+  if (Object.keys(nativeFieldValues).length > 0 || signatureDraws.length > 0) {
+    try {
+      // Fill native form fields (mutates pdfDoc in-place)
+      if (Object.keys(nativeFieldValues).length > 0) {
+        const fillResult = await libpdf.fillForm(nativeFieldValues, { flatten: false });
+        if (fillResult === null) {
+          console.warn('LibPDF: form is empty or missing, skipping native field fill');
+        }
+      }
+
+      // Draw signature images on their respective pages (mutates pdfDoc in-place)
+      for (const draw of signatureDraws) {
+        const field = store.session?.fields.find(f => f.id === draw.fieldId);
+        if (!field) continue;
+
+        // Convert percentage coordinates to PDF user space
+        const page = libpdf.pdfDoc.value?.getPage(field.pageIndex);
+        if (!page) continue;
+
+        const pdfWidth = page.width;
+        const pdfHeight = page.height;
+        const x = (field.x / 100) * pdfWidth;
+        // PDF y is from bottom; field.y is from top
+        const y = pdfHeight - ((field.y + field.height) / 100) * pdfHeight;
+        const w = (field.width / 100) * pdfWidth;
+        const h = (field.height / 100) * pdfHeight;
+
+        // Convert base64 data URL or raw base64 to Uint8Array
+        const base64 = draw.value.includes(',')
+          ? draw.value.split(',')[1]
+          : draw.value;
+        if (!base64) continue;
+        const binaryStr = atob(base64);
+        const imageBytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          imageBytes[i] = binaryStr.charCodeAt(i);
+        }
+
+        await libpdf.drawImageOnPage(field.pageIndex, imageBytes, { x, y, width: w, height: h });
+      }
+
+      // Flatten form fields (bake values into page content) after all fills + draws
+      // Always flatten if a form exists — even with only signatures, empty fields should be baked
+      const form = libpdf.pdfDoc.value?.getForm();
+      if (form && !form.isEmpty) {
+        form.flatten();
+      }
+
+      filledPdfBytes = await libpdf.save();
+    } catch (e: any) {
+      console.error('LibPDF fill error:', e);
+      // Fall back to normal submit (backend overlay handles all fields)
+    }
+  }
+
+  // Submit with optional filled PDF
+  try {
+    const success = await store.submit(token.value, filledPdfBytes);
+    if (!success) return;
+  } finally {
+    isProcessing.value = false;
+  }
 }
 
 function handleFieldUpdate(fieldId: string, value: string | boolean) {
@@ -73,10 +178,10 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
 
         <button
           class="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="!store.canSubmit || store.isSubmitting"
+          :disabled="!store.canSubmit || store.isSubmitting || isProcessing"
           @click="handleSubmit"
         >
-          {{ store.isSubmitting ? 'Submitting...' : 'Complete Signing' }}
+          {{ isProcessing || store.isSubmitting ? 'Submitting...' : 'Complete Signing' }}
         </button>
       </div>
     </header>
@@ -158,10 +263,10 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
       <div class="flex justify-center pb-8">
         <button
           class="px-6 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="!store.canSubmit || store.isSubmitting"
+          :disabled="!store.canSubmit || store.isSubmitting || isProcessing"
           @click="handleSubmit"
         >
-          {{ store.isSubmitting ? 'Submitting...' : 'Complete Signing' }}
+          {{ isProcessing || store.isSubmitting ? 'Submitting...' : 'Complete Signing' }}
         </button>
       </div>
     </main>

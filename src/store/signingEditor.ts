@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { SigningField, SigningFieldType, SigningSigner } from '@/types/signing';
 import { FIELD_DEFAULTS, SIGNER_COLORS } from '@/types/signing';
+import type { PdfFormField } from '@/composables/usePdfRenderer';
 
 const generateId = () =>
   typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -144,6 +145,67 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     return field;
   }
 
+  function mapFieldType(pdfFieldType: string): SigningFieldType {
+    switch (pdfFieldType) {
+      case 'Tx': return 'text';
+      case 'Btn': return 'checkbox';
+      case 'Ch': return 'text';
+      case 'Sig': return 'signature';
+      default: return 'text';
+    }
+  }
+
+  function addFieldsFromAnnotations(annotations: PdfFormField[]): number {
+    const signerEmail = activeSignerEmail.value;
+    if (!signerEmail) return 0;
+
+    const existingNames = new Set(
+      fields.value
+        .map(f => f.nativeFieldName)
+        .filter(Boolean) as string[]
+    );
+
+    let added = 0;
+
+    for (const ann of annotations) {
+      if (existingNames.has(ann.fieldName)) continue;
+
+      const type = mapFieldType(ann.fieldType);
+
+      // PDF coordinates are bottom-left origin; convert to top-left origin percentages
+      const [x1, y1, x2, y2] = ann.rect;
+      const xPct = (x1 / ann.pageWidth) * 100;
+      // y1 is distance from bottom; convert to distance from top
+      const yPct = ((ann.pageHeight - y2) / ann.pageHeight) * 100;
+      const wPct = ((x2 - x1) / ann.pageWidth) * 100;
+      const hPct = ((y2 - y1) / ann.pageHeight) * 100;
+
+      const field: SigningField = {
+        id: generateId(),
+        type,
+        pageIndex: ann.pageIndex,
+        x: Math.max(0, Math.min(100 - wPct, xPct)),
+        y: Math.max(0, Math.min(100 - hPct, yPct)),
+        width: Math.max(2, wPct),
+        height: Math.max(1, hPct),
+        signerEmail,
+        label: ann.fieldName,
+        required: false,
+        nativeFieldName: ann.fieldName,
+      };
+
+      fields.value.push(field);
+      existingNames.add(ann.fieldName);
+      added++;
+    }
+
+    if (added > 0) {
+      isDirty.value = true;
+    }
+
+    return added;
+  }
+
   function moveField(fieldId: string, x: number, y: number) {
     const field = fields.value.find(f => f.id === fieldId);
     if (!field) return;
@@ -221,6 +283,7 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     addSigner,
     removeSigner,
     addField,
+    addFieldsFromAnnotations,
     moveField,
     resizeField,
     removeField,

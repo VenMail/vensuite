@@ -12,6 +12,7 @@ export interface SigningField {
   label?: string;
   required: boolean;
   value?: string | boolean; // filled value (for player)
+  nativeFieldName?: string; // native PDF AcroForm field name (for form filling)
 }
 
 export interface SigningSigner {

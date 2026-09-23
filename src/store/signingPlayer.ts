@@ -104,7 +104,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     answers.value = { ...answers.value, [fieldId]: value };
   }
 
-  async function submit(token: string): Promise<boolean> {
+  async function submit(token: string, filledPdfBytes?: Uint8Array | null): Promise<boolean> {
     if (!canSubmit.value) return false;
 
     isSubmitting.value = true;
@@ -115,7 +115,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
         ([fieldId, value]) => ({ fieldId, value })
       );
 
-      const completion = await signingApi.submitCompletion(token, fieldValues);
+      const completion = await signingApi.submitCompletion(token, fieldValues, filledPdfBytes);
       signedDocumentReady.value = Boolean(completion.signedDocumentReady);
       downloadUrl.value = completion.downloadUrl || null;
       signedDocumentStatusUrl.value = completion.signedDocumentStatusUrl || null;

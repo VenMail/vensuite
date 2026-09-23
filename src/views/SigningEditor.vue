@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSigningEditorStore } from '@/store/signingEditor';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
+import { useLibPdf } from '@/composables/useLibPdf';
 import { signingApi } from '@/services/signing';
 import PdfPageCanvas from '@/components/signing/PdfPageCanvas.vue';
 import SigningFieldOverlay from '@/components/signing/SigningFieldOverlay.vue';
@@ -15,10 +16,12 @@ const route = useRoute();
 const router = useRouter();
 const store = useSigningEditorStore();
 const pdf = usePdfRenderer();
+const libpdf = useLibPdf();
 
 const signingRequestId = computed(() => route.params.signingRequestId as string);
 const token = computed(() => (route.query.token as string) || undefined);
 const isSaving = ref(false);
+const isDetecting = ref(false);
 const saveError = ref<string | null>(null);
 const containerWidth = ref(700);
 const containerRef = ref<HTMLElement | null>(null);
@@ -70,7 +73,19 @@ onMounted(async () => {
       fields: data.fields || [],
       signers: data.signers || [],
     });
-    await pdf.loadPdf(data.documentUrl);
+    // Fetch PDF once and share with both renderers
+    try {
+      const response = await fetch(data.documentUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const pdfBuffer = await response.arrayBuffer();
+      const libPdfBuffer = pdfBuffer.slice(0);
+      await pdf.loadPdf(pdfBuffer);
+      await libpdf.loadPdf(libPdfBuffer);
+    } catch {
+      // Fallback: load from URL independently
+      await pdf.loadPdf(data.documentUrl);
+      try { await libpdf.loadPdf(data.documentUrl); } catch { /* LibPDF optional */ }
+    }
     if (pdf.error.value) {
       saveError.value = pdf.error.value;
     }
@@ -112,6 +127,60 @@ function handlePageDrop(e: DragEvent, pageIndex: number) {
 function handleAddFieldFromPalette(type: SigningFieldType) {
   // Add to center of current page
   store.addField(type, store.currentPage, 40, 40);
+}
+
+async function handleDetectFormFields() {
+  if (isDetecting.value) return;
+  isDetecting.value = true;
+  try {
+    // Use LibPDF for form detection (better field type info than pdfjs)
+    const libPdfFields = await libpdf.detectFormFields();
+    if (libPdfFields.length > 0) {
+      // Convert LibPDF field info to the PdfFormField format expected by the store
+      const annotations = libPdfFields.map(f => {
+        // Map LibPDF types to pdfjs field type codes
+        let fieldType = 'Tx'; // default: text
+        if (f.type === 'checkbox' || f.type === 'radio') fieldType = 'Btn';
+        else if (f.type === 'signature') fieldType = 'Sig';
+
+        return {
+          fieldName: f.name,
+          fieldType,
+          fieldValue: typeof f.value === 'string' ? f.value : undefined,
+          pageIndex: f.pageIndex,
+          rect: f.rect,
+          width: f.width,
+          height: f.height,
+          pageWidth: f.pageWidth,
+          pageHeight: f.pageHeight,
+        };
+      });
+      const added = store.addFieldsFromAnnotations(annotations);
+      if (added > 0) {
+        toast.success(`Detected and added ${added} form field${added > 1 ? 's' : ''} from the PDF.`);
+      } else {
+        toast.info('All detected form fields have already been added.');
+      }
+      return;
+    }
+
+    // Fallback to pdfjs detection if LibPDF found nothing
+    const pdfjsAnnotations = await pdf.detectFormFields();
+    if (pdfjsAnnotations.length === 0) {
+      toast.info('No form fields detected in this PDF.');
+      return;
+    }
+    const added = store.addFieldsFromAnnotations(pdfjsAnnotations);
+    if (added > 0) {
+      toast.success(`Detected and added ${added} form field${added > 1 ? 's' : ''} from the PDF.`);
+    } else {
+      toast.info('All detected form fields have already been added.');
+    }
+  } catch (e: any) {
+    saveError.value = e?.message || 'Failed to detect form fields';
+  } finally {
+    isDetecting.value = false;
+  }
 }
 
 function handlePageDragOver(e: DragEvent) {
@@ -247,6 +316,25 @@ async function handleSave() {
           :active-signer-color="activeSigner?.color"
           @add-field="handleAddFieldFromPalette"
         />
+
+        <!-- Detect Form Fields -->
+        <div class="space-y-2">
+          <button
+            type="button"
+            class="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-3 py-2.5 text-sm font-medium text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="isDetecting || pdf.isLoading.value"
+            @click="handleDetectFormFields"
+          >
+            <svg v-if="isDetecting" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            <span>{{ isDetecting ? 'Detecting...' : 'Detect Form Fields' }}</span>
+          </button>
+          <p class="px-1 text-xs leading-5 text-stone-500">
+            Automatically detect existing PDF form fields and add them to the document.
+          </p>
+        </div>
       </aside>
 
       <!-- PDF area -->

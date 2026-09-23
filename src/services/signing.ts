@@ -56,8 +56,32 @@ async function fetchSignerSession(signerToken: string): Promise<SigningSession> 
 
 async function submitCompletion(
   signerToken: string,
-  fieldValues: SigningFieldValue[]
+  fieldValues: SigningFieldValue[],
+  filledPdfBytes?: Uint8Array | ArrayBuffer | null
 ): Promise<SigningCompletionResponse> {
+  if (filledPdfBytes) {
+    // Send filled PDF as multipart form data
+    const formData = new FormData();
+    // Send field_values as JSON string — backend will decode it
+    formData.append('field_values', JSON.stringify(fieldValues));
+    // Create a fresh ArrayBuffer copy for Blob (avoids SharedArrayBuffer type issues)
+    const bytes = filledPdfBytes instanceof ArrayBuffer
+      ? new Uint8Array(filledPdfBytes)
+      : new Uint8Array(filledPdfBytes);
+    const ab = new ArrayBuffer(bytes.byteLength);
+    new Uint8Array(ab).set(bytes);
+    const blob = new Blob([ab], { type: 'application/pdf' });
+    formData.append('filled_pdf', blob, 'filled.pdf');
+
+    // Let the browser/axios set Content-Type automatically — it must include
+    // the multipart boundary, which a manual header would strip.
+    const response = await apiClient.post(
+      `${SIGNING_API_BASE}/api/signing/complete/${signerToken}`,
+      formData
+    );
+    return response.data;
+  }
+
   const response = await apiClient.post(
     `${SIGNING_API_BASE}/api/signing/complete/${signerToken}`,
     { field_values: fieldValues }
@@ -134,10 +158,10 @@ async function prepareSigningRequest(params: PrepareSigningRequestParams): Promi
   if (params.mail_id) formData.append('mail_id', params.mail_id);
   if (params.send_email !== undefined) formData.append('send_email', String(params.send_email));
 
+  // Let the browser/axios set Content-Type automatically (boundary must be included)
   const response = await apiClient.post(
     `${SIGNING_API_BASE}/api/v1/signing-requests/prepare`,
-    formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } }
+    formData
   );
   return response.data.data;
 }
