@@ -4,8 +4,10 @@ import { useRoute } from 'vue-router';
 import { useSigningPlayerStore } from '@/store/signingPlayer';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
 import { useLibPdf } from '@/composables/useLibPdf';
+import { useSavedSignatures } from '@/composables/useSavedSignatures';
 import PdfPageCanvas from '@/components/signing/PdfPageCanvas.vue';
 import SigningFieldInput from '@/components/signing/SigningFieldInput.vue';
+import SignatureCapture from '@/components/signing/SignatureCapture.vue';
 
 const route = useRoute();
 const store = useSigningPlayerStore();
@@ -16,6 +18,25 @@ const token = computed(() => route.params.token as string);
 const containerWidth = ref(700);
 const containerRef = ref<HTMLElement | null>(null);
 let resizeObserver: ResizeObserver | null = null;
+
+const { savedSignatures } = useSavedSignatures(() => store.session?.signerEmail);
+const savedSignatureDismissed = ref(false);
+const showSavedSignaturePicker = ref(false);
+
+const suggestedSignature = computed(() => savedSignatures.value[0] ?? null);
+const showSavedSignatureBanner = computed(() =>
+  !store.isCompleted
+  && !savedSignatureDismissed.value
+  && store.emptySignatureFields.length > 0
+  && suggestedSignature.value !== null
+);
+
+function applyRememberedSignature(dataUrl: string) {
+  if (store.fillSignatureFields(dataUrl) > 0) {
+    savedSignatureDismissed.value = true;
+  }
+  showSavedSignaturePicker.value = false;
+}
 
 onMounted(async () => {
   await store.loadSession(token.value);
@@ -255,6 +276,41 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
           ×
         </button>
       </div>
+
+      <div
+        v-if="showSavedSignatureBanner && suggestedSignature"
+        class="mx-auto flex max-w-3xl flex-wrap items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3"
+      >
+        <img
+          :src="suggestedSignature.dataUrl"
+          alt="Remembered signature"
+          class="h-10 w-24 object-contain"
+        />
+        <p class="min-w-0 flex-1 text-sm text-blue-900">
+          Use your saved signature <span class="text-blue-700">({{ suggestedSignature.label }})</span>?
+        </p>
+        <button
+          type="button"
+          class="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          @click="applyRememberedSignature(suggestedSignature.dataUrl)"
+        >
+          Use my saved signature
+        </button>
+        <button
+          type="button"
+          class="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-800 rounded-lg"
+          @click="showSavedSignaturePicker = true"
+        >
+          Choose another
+        </button>
+      </div>
+
+      <SignatureCapture
+        v-model="showSavedSignaturePicker"
+        :signer-email="store.session?.signerEmail"
+        initial-mode="saved"
+        @save="applyRememberedSignature"
+      />
 
       <div
         v-for="page in pdf.pages.value"

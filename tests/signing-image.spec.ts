@@ -60,6 +60,24 @@ function expectMultipartImageRequest(request: Request, filename: string): void {
   expectMultipartFileRequest(request, filename, [0x89, 0x50, 0x4e, 0x47], '"image":{}');
 }
 
+function fieldValuesFromRequest(request: Request): Array<{ fieldId: string; value: string | boolean }> {
+  const body = request.postDataBuffer();
+  expect(body).not.toBeNull();
+  const rawBody = body!.toString('latin1');
+
+  if (rawBody.trimStart().startsWith('{')) {
+    const payload = JSON.parse(rawBody) as {
+      field_values?: Array<{ fieldId: string; value: string | boolean }>;
+    };
+    expect(payload.field_values).toBeDefined();
+    return payload.field_values!;
+  }
+
+  const fieldValuesJson = rawBody.match(/name="field_values"\r\n\r\n([^\r\n]*)/)?.[1];
+  expect(fieldValuesJson).toBeTruthy();
+  return JSON.parse(fieldValuesJson!) as Array<{ fieldId: string; value: string | boolean }>;
+}
+
 async function fulfillJson(route: Route, payload: unknown, status = 200): Promise<void> {
   await route.fulfill({
     status,
@@ -141,7 +159,8 @@ function signatureField(id: string, overrides: Record<string, unknown> = {}): Re
 async function mockSignerSession(
   page: Page,
   fields: Array<Record<string, unknown>>,
-  signerEmail = 'alice@example.com'
+  signerEmail = 'alice@example.com',
+  sessionOverrides: Record<string, unknown> = {}
 ): Promise<void> {
   await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
     fulfillJson(route, {
@@ -153,6 +172,7 @@ async function mockSignerSession(
       documentName: 'Passport Form.pdf',
       pageCount: 1,
       fields,
+      ...sessionOverrides,
     })
   );
 }
@@ -1208,7 +1228,7 @@ test('does not offer one signer\'s saved signatures to another signer on the sam
   await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
   await page.getByText('Click to Sign').click();
 
-  await expect(page.getByRole('button', { name: 'Saved' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Saved', exact: true })).toHaveCount(0);
 });
 
 test('offers a signer\'s own saved signatures in the capture modal', async ({ page }) => {
@@ -1219,7 +1239,7 @@ test('offers a signer\'s own saved signatures in the capture modal', async ({ pa
   await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
   await page.getByText('Click to Sign').click();
 
-  await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Saved', exact: true })).toBeVisible();
 });
 
 test('fills every empty signature field and leaves other answers alone', async ({ page }) => {
@@ -1283,10 +1303,7 @@ test('fills every empty signature field and leaves other answers alone', async (
   await page.getByRole('main').getByRole('button', { name: 'Complete Signing' }).click();
 
   await expect.poll(() => completion.request !== null).toBe(true);
-  const body = completion.request!.postDataBuffer()!.toString('latin1');
-  const fieldValuesJson = body.match(/name="field_values"\r\n\r\n([^\r\n]*)/)?.[1];
-  expect(fieldValuesJson).toBeTruthy();
-  const fieldValues = JSON.parse(fieldValuesJson!) as Array<{ fieldId: string; value: string | boolean }>;
+  const fieldValues = fieldValuesFromRequest(completion.request!);
   expect(fieldValues).toHaveLength(4);
   expect(fieldValues).toEqual(expect.arrayContaining([
     { fieldId: 'signature-empty-1', value: rememberedSignature.dataUrl },
@@ -1297,4 +1314,165 @@ test('fills every empty signature field and leaves other answers alone', async (
   expect(fieldValues).not.toEqual(
     expect.arrayContaining([expect.objectContaining({ fieldId: 'initials-empty' })])
   );
+});
+
+test('offers a remembered signature and fills every empty signature field', async ({ page }) => {
+  const rememberedSignature = savedSignature('Remembered signature');
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [rememberedSignature]);
+  await mockSignerSession(page, [
+    signatureField('signature-empty-1', { x: 10, y: 20 }),
+    signatureField('signature-empty-2', { x: 40, y: 20 }),
+  ]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByText(/Use your saved signature/)).toBeVisible();
+  await expect(page.getByAltText('Remembered signature')).toHaveAttribute('src', rememberedSignature.dataUrl);
+
+  await page.getByRole('button', { name: 'Choose another' }).click();
+  await expect(page.getByText(rememberedSignature.label, { exact: true })).toBeVisible();
+  await page.getByText(rememberedSignature.label, { exact: true }).click();
+  await expect(page.getByText(/Use your saved signature/)).toHaveCount(0);
+  await page.getByRole('main').getByRole('button', { name: 'Complete Signing' }).click();
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  expect(fieldValuesFromRequest(completion.request!)).toEqual([
+    { fieldId: 'signature-empty-1', value: rememberedSignature.dataUrl },
+    { fieldId: 'signature-empty-2', value: rememberedSignature.dataUrl },
+  ]);
+});
+
+test('does not overwrite a signature the signer already provided', async ({ page }) => {
+  const rememberedSignature = savedSignature('Remembered signature');
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [rememberedSignature]);
+  await mockSignerSession(page, [
+    signatureField('signature-empty', { x: 10, y: 20 }),
+    signatureField('signature-filled', { x: 40, y: 20 }),
+  ]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByText('Click to Sign').first()).toBeVisible();
+  await page.evaluate(async () => {
+    const { useSigningPlayerStore } = await import('/src/store/signingPlayer.ts');
+    useSigningPlayerStore().setFieldValue('signature-filled', 'original-signature');
+  });
+  await expect(page.getByText(/Use your saved signature/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Use my saved signature' }).click();
+  await page.getByRole('main').getByRole('button', { name: 'Complete Signing' }).click();
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  expect(fieldValuesFromRequest(completion.request!)).toEqual(expect.arrayContaining([
+    { fieldId: 'signature-empty', value: rememberedSignature.dataUrl },
+    { fieldId: 'signature-filled', value: 'original-signature' },
+  ]));
+});
+
+test('does not fill initials fields with a remembered signature', async ({ page }) => {
+  const rememberedSignature = savedSignature('Remembered signature');
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [rememberedSignature]);
+  await mockSignerSession(page, [
+    signatureField('signature-empty', { x: 10, y: 20 }),
+    {
+      id: 'initials-empty',
+      type: 'initials',
+      pageIndex: 0,
+      x: 40,
+      y: 20,
+      width: 15,
+      height: 10,
+      signerEmail: 'alice@example.com',
+      label: 'Initials',
+      required: false,
+    },
+  ]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByText(/Use your saved signature/)).toBeVisible();
+  await page.getByRole('button', { name: 'Use my saved signature' }).click();
+  await page.getByRole('main').getByRole('button', { name: 'Complete Signing' }).click();
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  const fieldValues = fieldValuesFromRequest(completion.request!);
+  expect(fieldValues).toEqual([
+    { fieldId: 'signature-empty', value: rememberedSignature.dataUrl },
+  ]);
+  expect(fieldValues).not.toEqual(
+    expect.arrayContaining([expect.objectContaining({ fieldId: 'initials-empty' })])
+  );
+});
+
+test('hides the banner with no saved signatures, no empty signature field, or a completed session', async ({ page }) => {
+  const sessionUrl = `**/api/signing/session/${SIGNER_TOKEN}`;
+  const signingUrl = `${APP}/signing/sign/${SIGNER_TOKEN}`;
+  const savedKey = 'vensuite:saved-signatures:alice@example.com';
+  const savedValue = JSON.stringify([savedSignature('Remembered signature')]);
+
+  await mockDocument(page);
+  await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [savedKey, savedValue]);
+
+  // Control case: the banner should be available when all visibility rules pass.
+  await mockSignerSession(page, [signatureField('signature-empty')]);
+  await page.goto(signingUrl);
+  await expect(page.getByRole('main')).toBeVisible();
+  await expect(page.getByText(/Use your saved signature/)).toBeVisible();
+
+  await page.evaluate((key) => window.localStorage.removeItem(key), savedKey);
+  await page.unroute(sessionUrl);
+  await mockSignerSession(page, [signatureField('signature-empty')]);
+  await page.goto(signingUrl);
+  await expect(page.getByRole('main')).toBeVisible();
+  await expect(page.getByText(/Use your saved signature/)).toHaveCount(0);
+
+  await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [savedKey, savedValue]);
+  await page.unroute(sessionUrl);
+  await mockSignerSession(page, [signatureField('signature-filled')]);
+  await page.goto(signingUrl);
+  await expect(page.getByRole('main')).toBeVisible();
+  await page.evaluate(async () => {
+    const { useSigningPlayerStore } = await import('/src/store/signingPlayer.ts');
+    useSigningPlayerStore().setFieldValue('signature-filled', 'original-signature');
+  });
+  await expect(page.getByText(/Use your saved signature/)).toHaveCount(0);
+
+  await page.unroute(sessionUrl);
+  await mockSignerSession(page, [signatureField('signature-empty')], 'alice@example.com', { completed: true });
+  await page.goto(signingUrl);
+  await expect(page.getByText('Already Signed')).toBeVisible();
+  await expect(page.getByText(/Use your saved signature/)).toHaveCount(0);
 });

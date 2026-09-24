@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue';
+import { ref, onMounted, nextTick, computed, watch } from 'vue';
 import { VueSignaturePad } from 'vue-signature-pad';
 import { useSavedSignatures } from '@/composables/useSavedSignatures';
 
@@ -7,6 +7,7 @@ const props = defineProps<{
   modelValue: boolean;
   signerName?: string;
   signerEmail?: string;
+  initialMode?: CaptureMode;
 }>();
 
 const emit = defineEmits<{
@@ -16,6 +17,10 @@ const emit = defineEmits<{
 
 type CaptureMode = 'draw' | 'type' | 'upload' | 'saved';
 const mode = ref<CaptureMode>('draw');
+
+watch(() => props.modelValue, (open) => {
+  if (open && props.initialMode) mode.value = props.initialMode;
+});
 interface SignaturePadInstance {
   clearSignature(): void;
   saveSignature(type?: string): { isEmpty: boolean; data: string };
