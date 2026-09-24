@@ -170,12 +170,9 @@ async function uploadSignerImage(
   return response.data;
 }
 
-// Signer-uploaded image values are stored as public-disk paths (not URLs), so the
-// player rebuilds a displayable URL from the same mailer origin it calls the API on.
-function storageUrl(pathOrUrl: string): string {
-  if (!pathOrUrl) return '';
-  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
-  return `${SIGNING_API_BASE}/storage/${pathOrUrl.replace(/^\/+/, '')}`;
+// Signer-uploaded values remain private storage paths; previews use the token-gated route.
+function signerImageUrl(signerToken: string, fieldId: string): string {
+  return `${SIGNING_API_BASE}/api/signing/image/${signerToken}/${fieldId}`;
 }
 
 async function fetchSignerSession(signerToken: string): Promise<SigningSession> {
@@ -343,7 +340,7 @@ export const signingApi = {
   saveFields,
   uploadEditorImage,
   uploadSignerImage,
-  storageUrl,
+  signerImageUrl,
   fetchSignerSession,
   submitCompletion,
   fetchSignedDocumentStatus,

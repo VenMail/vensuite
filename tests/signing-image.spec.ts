@@ -39,6 +39,17 @@ async function fulfillPreflight(route: Route): Promise<void> {
   });
 }
 
+async function mockSignerImage(page: Page, signerToken: string, fieldId: string): Promise<void> {
+  await page.route(`**/api/signing/image/${signerToken}/${fieldId}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'image/png',
+      headers: CORS_HEADERS,
+      body: onePixelPng(),
+    })
+  );
+}
+
 async function mockDocument(page: Page): Promise<void> {
   await page.route(DOCUMENT_URL, (route) =>
     route.fulfill({
@@ -226,6 +237,7 @@ test('lets a signer upload their passport image and submits the stored path', as
     if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
     return fulfillJson(route, { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath });
   });
+  await mockSignerImage(page, SIGNER_TOKEN, 'alice-passport');
   await page.route(`**/api/signing/complete/${SIGNER_TOKEN}`, async (route) => {
     if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
     submitted = route.request().postDataJSON();
@@ -250,7 +262,7 @@ test('lets a signer upload their passport image and submits the stored path', as
 
   await expect(page.locator('img[alt="Passport photo"]')).toHaveAttribute(
     'src',
-    `${SIGNING_ORIGIN}/storage/${storedPath}`
+    `${SIGNING_ORIGIN}/api/signing/image/${SIGNER_TOKEN}/alice-passport`
   );
   await expect(submit).toBeEnabled();
 

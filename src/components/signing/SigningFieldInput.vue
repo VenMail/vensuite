@@ -169,9 +169,10 @@ onMounted(() => {
     <template v-else-if="field.type === 'image'">
       <div class="relative w-full h-full overflow-visible">
         <div class="w-full h-full border-2 border-dashed border-blue-400 rounded bg-blue-50 flex items-center justify-center overflow-hidden focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-600">
+          <!-- A failed preview load must not clear the uploaded path or block signing. -->
           <img
             v-if="hasValue && typeof value === 'string'"
-            :src="signingApi.storageUrl(value as string)"
+            :src="signingApi.signerImageUrl(signerToken, field.id)"
             :alt="field.label || 'Uploaded image'"
             class="max-w-full max-h-full object-contain"
           />
