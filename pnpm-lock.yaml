@@ -92,8 +92,8 @@ importers:
   .:
     dependencies:
       '@hufe921/canvas-editor':
-        specifier: ^0.9.136
-        version: 0.9.136
+        specifier: ^1.0.3
+        version: 1.0.3
       '@iconify-prerendered/vue-file-icons':
         specifier: ^0.25.1721244157
         version: 0.25.1721244157(vue@3.5.13(typescript@5.8.3))
@@ -1374,8 +1374,8 @@ packages:
     peerDependencies:
       hono: 4.12.25
 
-  '@hufe921/canvas-editor@0.9.136':
-    resolution: {integrity: sha512-Q+Aay/fNJOueWgTjv8YRoOUf1QHvInvaqPAtjLXZMvhwCXZn2JyTY+WOu+BspFEe0ehUgthlf4lI8t4m0/hAzQ==}
+  '@hufe921/canvas-editor@1.0.3':
+    resolution: {integrity: sha512-L4/6HbU1tE5Etpj/icQHAfUmPDByofhBxmAWWicBaFdumw22pnWV/TnBunpExm5AorEjsgXnjffLF/nUcxoAJw==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -8030,7 +8030,7 @@ snapshots:
     dependencies:
       hono: 4.12.25
 
-  '@hufe921/canvas-editor@0.9.136': {}
+  '@hufe921/canvas-editor@1.0.3': {}
 
   '@humanfs/core@0.19.1': {}
 
