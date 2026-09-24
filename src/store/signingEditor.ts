@@ -146,6 +146,47 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     return field;
   }
 
+  interface AddImageFieldOptions {
+    pageIndex: number;
+    x: number;
+    y: number;
+    assigned: boolean;
+    label?: string;
+    src?: string;
+    path?: string;
+  }
+
+  function addImageField(options: AddImageFieldOptions): SigningField | null {
+    // Assigned slots belong to the active signer and are required (passport photos).
+    // Unassigned slots are document-level decorations the sender already supplied.
+    const signerEmail = options.assigned ? activeSignerEmail.value : null;
+    if (options.assigned && !signerEmail) return null;
+
+    const dims = getDimensionsForType('image');
+    const field: SigningField = {
+      id: generateId(),
+      type: 'image',
+      pageIndex: options.pageIndex,
+      x: Math.max(0, Math.min(100 - dims.width, options.x)),
+      y: Math.max(0, Math.min(100 - dims.height, options.y)),
+      width: dims.width,
+      height: dims.height,
+      required: Boolean(signerEmail),
+    };
+
+    if (signerEmail) {
+      field.signerEmail = signerEmail;
+      field.label = options.label ?? 'Image';
+    }
+    if (options.src) field.src = options.src;
+    if (options.path) field.path = options.path;
+
+    fields.value.push(field);
+    selectedFieldId.value = field.id;
+    isDirty.value = true;
+    return field;
+  }
+
   function mapFieldType(pdfFieldType: string): SigningFieldType {
     switch (pdfFieldType) {
       case 'Tx': return 'text';
@@ -284,6 +325,7 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     addSigner,
     removeSigner,
     addField,
+    addImageField,
     addFieldsFromAnnotations,
     moveField,
     resizeField,
