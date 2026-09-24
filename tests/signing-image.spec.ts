@@ -850,7 +850,6 @@ test('shows a read-only already-signed state for a completed signer with a persi
       documentUrl: DOCUMENT_URL,
       documentName: 'Passport Form.pdf',
       pageCount: 1,
-      signerStatus: 'completed',
       fields: [
         {
           id: 'alice-passport',
