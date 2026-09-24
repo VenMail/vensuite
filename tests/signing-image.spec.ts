@@ -1242,6 +1242,26 @@ test('offers a signer\'s own saved signatures in the capture modal', async ({ pa
   await expect(page.getByRole('button', { name: 'Saved', exact: true })).toBeVisible();
 });
 
+test('purges legacy global saved signatures instead of offering them to the next signer', async ({ page }) => {
+  await mockDocument(page);
+  // Signatures written by the previous global-key implementation cannot be
+  // attributed to a signer, so they must be removed from the device rather
+  // than shown to whoever signs next.
+  await page.addInitScript(
+    ([key, value]) => window.localStorage.setItem(key, value),
+    ['vensuite:saved-signatures', JSON.stringify([savedSignature('Legacy signature')])]
+  );
+  await mockSignerSession(page, [signatureField('sig-1')], 'alice@example.com');
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByText('Click to Sign').click();
+
+  await expect(page.getByRole('button', { name: 'Saved', exact: true })).toHaveCount(0);
+  expect(
+    await page.evaluate(() => window.localStorage.getItem('vensuite:saved-signatures'))
+  ).toBeNull();
+});
+
 test('fills every empty signature field and leaves other answers alone', async ({ page }) => {
   const rememberedSignature = savedSignature('Drawn — 12 Sep');
   const completion = await captureMultipartRequest(
