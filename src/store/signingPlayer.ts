@@ -99,6 +99,12 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     !isCompleted.value && requiredFields.value.every(f => hasCompletedValue(answers.value[f.id]))
   );
 
+  const emptySignatureFields = computed(() =>
+    (session.value?.fields || []).filter(
+      (field) => field.type === 'signature' && !hasCompletedValue(answers.value[field.id])
+    )
+  );
+
   const fieldsByPage = computed(() => {
     const grouped: Record<number, SigningField[]> = {};
     for (const field of session.value?.fields || []) {
@@ -134,6 +140,14 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
 
   function setFieldValue(fieldId: string, value: string | boolean) {
     answers.value = { ...answers.value, [fieldId]: value };
+  }
+
+  function fillSignatureFields(dataUrl: string): number {
+    const targets = emptySignatureFields.value;
+    for (const field of targets) {
+      setFieldValue(field.id, dataUrl);
+    }
+    return targets.length;
   }
 
   async function submit(token: string, filledPdfBytes?: Uint8Array | null): Promise<boolean> {
@@ -236,9 +250,11 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     completedFields,
     progress,
     canSubmit,
+    emptySignatureFields,
     fieldsByPage,
     loadSession,
     setFieldValue,
+    fillSignatureFields,
     submit,
     clearSubmitError,
     setCurrentPage,

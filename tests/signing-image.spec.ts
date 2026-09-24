@@ -1221,3 +1221,80 @@ test('offers a signer\'s own saved signatures in the capture modal', async ({ pa
 
   await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible();
 });
+
+test('fills every empty signature field and leaves other answers alone', async ({ page }) => {
+  const rememberedSignature = savedSignature('Drawn — 12 Sep');
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [rememberedSignature]);
+  await mockSignerSession(page, [
+    signatureField('signature-empty-1', { x: 10, y: 20 }),
+    signatureField('signature-empty-2', { x: 40, y: 20 }),
+    signatureField('signature-filled', { x: 10, y: 45, value: 'original-signature' }),
+    {
+      id: 'initials-empty',
+      type: 'initials',
+      pageIndex: 0,
+      x: 40,
+      y: 45,
+      width: 15,
+      height: 10,
+      signerEmail: 'alice@example.com',
+      label: 'Initials',
+      required: false,
+    },
+    {
+      id: 'text-filled',
+      type: 'text',
+      pageIndex: 0,
+      x: 10,
+      y: 70,
+      width: 30,
+      height: 10,
+      signerEmail: 'alice@example.com',
+      label: 'Reference',
+      required: true,
+      value: 'original text',
+    },
+  ]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByText('Click to Sign').first()).toBeVisible();
+
+  const fillResult = await page.evaluate(async ({ dataUrl }) => {
+    const { useSigningPlayerStore } = await import('/src/store/signingPlayer.ts');
+    const store = useSigningPlayerStore();
+    store.setFieldValue('signature-filled', 'original-signature');
+    store.setFieldValue('text-filled', 'original text');
+    return store.fillSignatureFields(dataUrl);
+  }, { dataUrl: rememberedSignature.dataUrl });
+
+  expect(fillResult).toBe(2);
+  await page.getByRole('main').getByRole('button', { name: 'Complete Signing' }).click();
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  const body = completion.request!.postDataBuffer()!.toString('latin1');
+  const fieldValuesJson = body.match(/name="field_values"\r\n\r\n([^\r\n]*)/)?.[1];
+  expect(fieldValuesJson).toBeTruthy();
+  const fieldValues = JSON.parse(fieldValuesJson!) as Array<{ fieldId: string; value: string | boolean }>;
+  expect(fieldValues).toHaveLength(4);
+  expect(fieldValues).toEqual(expect.arrayContaining([
+    { fieldId: 'signature-empty-1', value: rememberedSignature.dataUrl },
+    { fieldId: 'signature-empty-2', value: rememberedSignature.dataUrl },
+    { fieldId: 'signature-filled', value: 'original-signature' },
+    { fieldId: 'text-filled', value: 'original text' },
+  ]));
+  expect(fieldValues).not.toEqual(
+    expect.arrayContaining([expect.objectContaining({ fieldId: 'initials-empty' })])
+  );
+});
