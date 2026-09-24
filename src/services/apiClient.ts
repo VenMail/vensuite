@@ -37,11 +37,11 @@ export const multipartApiClient: AxiosInstance = axios.create({
   timeout: MULTIPART_UPLOAD_TIMEOUT_MS,
 });
 
-// Every route under these namespaces is authenticated by a signing-link token
-// (or the editor builder token), not by the VenSuite app session. Keep this as
-// a namespace predicate so newly added signing routes are covered by default;
-// the separate /api/signing-requests management API remains app-authenticated.
-const TOKEN_AUTHENTICATED_SIGNING_ROUTE = /(?:^|\/)api\/(?:signing|composer\/signing)(?:\/|$)/;
+// Signing routes are authenticated by a signing-link token (or the editor
+// builder token), not by the VenSuite app session. Keep this as a namespace
+// predicate so newly added token routes are covered by default, while the
+// app-authenticated completed-document download remains an explicit exception.
+const TOKEN_AUTHENTICATED_SIGNING_ROUTE = /(?:^|\/)api\/(?:signing\/(?!completed(?:\/|$))|composer\/signing)/;
 
 function isTokenAuthenticatedSigningRequest(url: string): boolean {
   return TOKEN_AUTHENTICATED_SIGNING_ROUTE.test(url);

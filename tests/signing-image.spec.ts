@@ -216,6 +216,29 @@ test('still logs out the app for a 401 from a normal app API route', async ({ pa
   expect(await page.evaluate(() => localStorage.getItem('venAuthToken'))).toBeNull();
 });
 
+test('still logs out the app for an app-authenticated completed-document route', async ({ page }) => {
+  await page.goto(`${APP}/home`);
+  await page.evaluate(() => localStorage.setItem('venAuthToken', 'playwright-test-token'));
+  await page.reload();
+  await page.route('**/api/signing/completed/req-123/signed-document', (route) =>
+    fulfillJson(route, { message: 'Unauthenticated.' }, 401)
+  );
+
+  const result = await page.evaluate(async () => {
+    const { apiClient } = await import('/src/services/apiClient.ts');
+    try {
+      await apiClient.get('/api/signing/completed/req-123/signed-document');
+      return { status: 200 };
+    } catch (error: any) {
+      return { status: error?.status };
+    }
+  });
+
+  expect(result).toEqual({ status: 401 });
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/login');
+  expect(await page.evaluate(() => localStorage.getItem('venAuthToken'))).toBeNull();
+});
+
 test('opens a tokenized signing editor for a guest session', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
