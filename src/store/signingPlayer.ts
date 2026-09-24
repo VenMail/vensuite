@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { SigningSession, SigningField, SigningFieldValue, SigningCompletionResponse } from '@/types/signing';
-import { getApiErrorMessage, getRetryAfterDelayMs, signingApi } from '@/services/signing';
+import {
+  getApiErrorMessage,
+  retryOnSigningLock,
+  SIGNING_SUBMIT_RETRY_DEADLINE_MS,
+  signingApi,
+} from '@/services/signing';
 
 export const useSigningPlayerStore = defineStore('signing-player', () => {
   const session = ref<SigningSession | null>(null);
@@ -106,13 +111,6 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     answers.value = { ...answers.value, [fieldId]: value };
   }
 
-  const LOCK_CONTENTION = 'signing_operation_in_progress';
-  const SUBMIT_LOCK_RETRIES = 3;
-
-  function isLockContention(err: any): boolean {
-    return err?.status === 409 && err?.data?.code === LOCK_CONTENTION;
-  }
-
   async function submit(token: string, filledPdfBytes?: Uint8Array | null): Promise<boolean> {
     if (!canSubmit.value) return false;
 
@@ -124,21 +122,10 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
         ([fieldId, value]) => ({ fieldId, value })
       );
 
-      let completion: SigningCompletionResponse | null = null;
-      let lastError: any = null;
-
-      for (let attempt = 0; attempt <= SUBMIT_LOCK_RETRIES; attempt += 1) {
-        try {
-          completion = await signingApi.submitCompletion(token, fieldValues, filledPdfBytes);
-          break;
-        } catch (err: any) {
-          lastError = err;
-          if (!isLockContention(err) || attempt === SUBMIT_LOCK_RETRIES) throw err;
-          await new Promise(resolve => setTimeout(resolve, getRetryAfterDelayMs(err)));
-        }
-      }
-
-      if (!completion) throw lastError;
+      const completion: SigningCompletionResponse = await retryOnSigningLock(
+        () => signingApi.submitCompletion(token, fieldValues, filledPdfBytes),
+        SIGNING_SUBMIT_RETRY_DEADLINE_MS
+      );
 
       signedDocumentReady.value = Boolean(completion.signedDocumentReady);
       downloadUrl.value = completion.downloadUrl || null;

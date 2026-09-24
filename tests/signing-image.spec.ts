@@ -573,6 +573,189 @@ test('lets a signer upload their passport image and submits the stored path', as
   ]);
 });
 
+test('keeps retrying a signer upload past the old three-attempt cutoff', async ({ page }) => {
+  let attempts = 0;
+  const storedPath = `signing-images/${REQUEST_ID}/fields/retry-passport.png`;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    attempts += 1;
+    if (attempts <= 7) {
+      return route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        headers: { ...CORS_HEADERS, 'retry-after': '0' },
+        body: JSON.stringify({
+          code: 'signing_operation_in_progress',
+          message: 'Another signing operation is already in progress for this request.',
+        }),
+      });
+    }
+    return fulfillJson(route, { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath });
+  });
+  await mockSignerImage(page, SIGNER_TOKEN, 'alice-passport');
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByTestId('signer-image-input')).toBeVisible();
+  await page.clock.install();
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'passport.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect.poll(() => attempts).toBeGreaterThan(0);
+  for (let tick = 0; tick < 15; tick += 1) {
+    await page.clock.runFor(1000);
+    await page.waitForTimeout(10);
+  }
+
+  await expect.poll(() => attempts).toBe(8);
+  await expect(page.locator('img[alt="Passport photo"]')).toHaveAttribute(
+    'src',
+    `${SIGNING_ORIGIN}/api/signing/image/${SIGNER_TOKEN}/alice-passport`
+  );
+});
+
+test('keeps retrying completion past the old three-attempt cutoff', async ({ page }) => {
+  let attempts = 0;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [],
+    })
+  );
+  await page.route(`**/api/signing/complete/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    attempts += 1;
+    if (attempts <= 5) {
+      return route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        headers: { ...CORS_HEADERS, 'retry-after': '0' },
+        body: JSON.stringify({
+          code: 'signing_operation_in_progress',
+          message: 'Another signing operation is already in progress for this request.',
+        }),
+      });
+    }
+    return fulfillJson(route, {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    });
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  const submit = page.getByRole('main').getByRole('button', { name: 'Complete Signing' });
+  await expect(submit).toBeEnabled();
+  await page.clock.install();
+  await submit.click();
+
+  await expect.poll(() => attempts).toBeGreaterThan(0);
+  for (let tick = 0; tick < 15; tick += 1) {
+    await page.clock.runFor(1000);
+    await page.waitForTimeout(10);
+  }
+
+  await expect.poll(() => attempts).toBe(6);
+  await expect(page.getByText('Signing Complete')).toBeVisible();
+});
+
+test('stops a signer upload retry loop at its deadline', async ({ page }) => {
+  let attempts = 0;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    attempts += 1;
+    return route.fulfill({
+      status: 409,
+      contentType: 'application/json',
+      headers: { ...CORS_HEADERS, 'retry-after': '0' },
+      body: JSON.stringify({ code: 'signing_operation_in_progress' }),
+    });
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.clock.install();
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'passport.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect.poll(() => attempts).toBeGreaterThan(0);
+  for (let tick = 0; tick < 30; tick += 1) {
+    await page.clock.runFor(1000);
+    await page.waitForTimeout(10);
+  }
+
+  await expect(page.getByRole('alert')).toBeVisible();
+  expect(attempts).toBeGreaterThan(3);
+  expect(attempts).toBeLessThanOrEqual(50);
+});
+
 test('shows only the image slots assigned to the signing signer', async ({ page }) => {
   await mockDocument(page);
   await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>

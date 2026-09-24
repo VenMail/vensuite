@@ -18,6 +18,11 @@ const DEFAULT_RETRY_DELAY_MS = 2000;
 const MIN_RETRY_DELAY_MS = 500;
 const MAX_RETRY_DELAY_MS = 5000;
 
+// The backend leases are 15 seconds for image uploads and 60 seconds for
+// completion. Leave a small margin while keeping the wait finite.
+export const SIGNING_UPLOAD_RETRY_DEADLINE_MS = 20000;
+export const SIGNING_SUBMIT_RETRY_DEADLINE_MS = 70000;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -93,6 +98,44 @@ export function getRetryAfterDelayMs(error: unknown): number {
   if (!Number.isFinite(seconds) || seconds < 0) return DEFAULT_RETRY_DELAY_MS;
 
   return Math.min(MAX_RETRY_DELAY_MS, Math.max(MIN_RETRY_DELAY_MS, seconds * 1000));
+}
+
+export function isSigningLockContention(error: unknown): boolean {
+  return isRecord(error)
+    && error.status === 409
+    && isRecord(error.data)
+    && error.data.code === 'signing_operation_in_progress';
+}
+
+export interface RetryTimingOptions {
+  now?: () => number;
+  sleep?: (delayMs: number) => Promise<void>;
+}
+
+export async function retryOnSigningLock<T>(
+  operation: (attempt: number) => Promise<T>,
+  deadlineMs: number,
+  options: RetryTimingOptions = {}
+): Promise<T> {
+  const now = options.now ?? (() => Date.now());
+  const sleep = options.sleep ?? ((delayMs: number) =>
+    new Promise<void>(resolve => setTimeout(resolve, delayMs)));
+  const startedAt = now();
+
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await operation(attempt);
+    } catch (error) {
+      if (!isSigningLockContention(error)) throw error;
+
+      const elapsedMs = now() - startedAt;
+      if (elapsedMs >= deadlineMs) throw error;
+
+      const remainingMs = deadlineMs - elapsedMs;
+      const delayMs = Math.min(getRetryAfterDelayMs(error), remainingMs);
+      await sleep(delayMs);
+    }
+  }
 }
 
 async function fetchEditorSession(

@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { getApiErrorMessage, getRetryAfterDelayMs, signingApi } from '@/services/signing';
+import {
+  getApiErrorMessage,
+  retryOnSigningLock,
+  SIGNING_UPLOAD_RETRY_DEADLINE_MS,
+  signingApi,
+} from '@/services/signing';
 import type { SigningField } from '@/types/signing';
 import SignatureCapture from './SignatureCapture.vue';
 
@@ -58,27 +63,11 @@ const isUploading = ref(false);
 const uploadError = ref<string | null>(null);
 const imageInputId = `signer-image-input-${props.field.id}`;
 
-const LOCK_CONTENTION = 'signing_operation_in_progress';
-const UPLOAD_RETRIES = 2;
-
-function isLockContention(err: any): boolean {
-  return err?.status === 409 && err?.data?.code === LOCK_CONTENTION;
-}
-
 async function uploadWithRetry(file: File): Promise<{ path: string }> {
-  let lastError: any = null;
-
-  for (let attempt = 0; attempt <= UPLOAD_RETRIES; attempt += 1) {
-    try {
-      return await signingApi.uploadSignerImage(props.signerToken, props.field.id, file);
-    } catch (err) {
-      lastError = err;
-      if (!isLockContention(err) || attempt === UPLOAD_RETRIES) throw err;
-      await new Promise(resolve => setTimeout(resolve, getRetryAfterDelayMs(err)));
-    }
-  }
-
-  throw lastError;
+  return retryOnSigningLock(
+    () => signingApi.uploadSignerImage(props.signerToken, props.field.id, file),
+    SIGNING_UPLOAD_RETRY_DEADLINE_MS
+  );
 }
 
 async function onImageSelected(e: Event) {
