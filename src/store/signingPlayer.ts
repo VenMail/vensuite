@@ -17,6 +17,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   const error = ref<string | null>(null);
   const submitError = ref<string | null>(null);
   const isCompleted = ref(false);
+  const isAlreadyCompleted = ref(false);
   const signedDocumentReady = ref(false);
   const downloadUrl = ref<string | null>(null);
   const signedDocumentStatusUrl = ref<string | null>(null);
@@ -30,21 +31,6 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     return `${year}-${month}-${day}`;
   }
 
-  function defaultAnswersForFields(fields: SigningField[]): Record<string, string | boolean> {
-    const defaults: Record<string, string | boolean> = {};
-    const today = todayLocalDate();
-
-    for (const field of fields) {
-      if (field.type === 'date') {
-        defaults[field.id] = typeof field.value === 'string' && field.value.trim() !== ''
-          ? field.value
-          : today;
-      }
-    }
-
-    return defaults;
-  }
-
   function hasCompletedValue(value: string | boolean | undefined): boolean {
     if (typeof value === 'boolean') {
       return value;
@@ -55,6 +41,43 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     }
 
     return false;
+  }
+
+  function defaultAnswersForFields(
+    fields: SigningField[],
+    hydratePersistedValues = false
+  ): Record<string, string | boolean> {
+    const defaults: Record<string, string | boolean> = {};
+    const today = todayLocalDate();
+
+    for (const field of fields) {
+      if (hydratePersistedValues && hasCompletedValue(field.value)) {
+        defaults[field.id] = field.value as string | boolean;
+      } else if (field.type === 'date') {
+        defaults[field.id] = typeof field.value === 'string' && field.value.trim() !== ''
+          ? field.value
+          : today;
+      }
+    }
+
+    return defaults;
+  }
+
+  function sessionIndicatesCompletedSigner(data: SigningSession): boolean {
+    const explicitStatus = data.signerStatus
+      ?? data.signer_status
+      ?? data.signer?.status
+      ?? data.status;
+    if (typeof explicitStatus === 'string' && explicitStatus.toLowerCase() === 'completed') {
+      return true;
+    }
+    if (data.completed === true) return true;
+
+    // Older backends do not expose signer status, but persist all required
+    // values only when completion succeeds. Treat that complete set as the
+    // completion signal; partial answers remain in the normal editable flow.
+    const required = data.fields.filter(field => field.required);
+    return required.length > 0 && required.every(field => hasCompletedValue(field.value));
   }
 
   const requiredFields = computed(() =>
@@ -73,7 +96,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   });
 
   const canSubmit = computed(() =>
-    requiredFields.value.every(f => hasCompletedValue(answers.value[f.id]))
+    !isCompleted.value && requiredFields.value.every(f => hasCompletedValue(answers.value[f.id]))
   );
 
   const fieldsByPage = computed(() => {
@@ -92,10 +115,12 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
 
     try {
       const data = await signingApi.fetchSignerSession(token);
+      const alreadyCompleted = sessionIndicatesCompletedSigner(data);
       session.value = data;
-      answers.value = defaultAnswersForFields(data.fields || []);
+      answers.value = defaultAnswersForFields(data.fields || [], alreadyCompleted);
       currentPage.value = 0;
-      isCompleted.value = false;
+      isCompleted.value = alreadyCompleted;
+      isAlreadyCompleted.value = alreadyCompleted;
       signedDocumentReady.value = false;
       downloadUrl.value = null;
       signedDocumentStatusUrl.value = null;
@@ -131,6 +156,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
       downloadUrl.value = completion.downloadUrl || null;
       signedDocumentStatusUrl.value = completion.signedDocumentStatusUrl || null;
       isCompleted.value = true;
+      isAlreadyCompleted.value = false;
 
       if (signedDocumentStatusUrl.value && !downloadUrl.value) {
         void pollSignedDocumentStatus(signedDocumentStatusUrl.value);
@@ -163,6 +189,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     error.value = null;
     submitError.value = null;
     isCompleted.value = false;
+    isAlreadyCompleted.value = false;
     signedDocumentReady.value = false;
     downloadUrl.value = null;
     signedDocumentStatusUrl.value = null;
@@ -201,6 +228,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     error,
     submitError,
     isCompleted,
+    isAlreadyCompleted,
     signedDocumentReady,
     downloadUrl,
     signedDocumentStatusUrl,

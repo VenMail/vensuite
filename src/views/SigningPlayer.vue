@@ -211,9 +211,14 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
         <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <span class="text-2xl text-green-600">OK</span>
         </div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-2">Signing Complete</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">
+          {{ store.isAlreadyCompleted ? 'Already Signed' : 'Signing Complete' }}
+        </h2>
         <p class="text-sm text-gray-500">
-          Thank you for signing this document. All parties will be notified once everyone has signed.
+          {{ store.isAlreadyCompleted
+            ? 'Your completed responses are saved and this signing session is read-only.'
+            : 'Thank you for signing this document. All parties will be notified once everyone has signed.'
+          }}
         </p>
         <div class="mt-6">
           <a

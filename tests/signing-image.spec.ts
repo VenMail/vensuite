@@ -792,6 +792,50 @@ test('shows only the image slots assigned to the signing signer', async ({ page 
   await expect(page.getByText('Bob passport')).toHaveCount(0);
 });
 
+test('shows a read-only already-signed state for a completed signer with a persisted image', async ({ page }) => {
+  const storedPath = `signing-images/${REQUEST_ID}/fields/completed-passport.png`;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      signerStatus: 'completed',
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+          value: storedPath,
+        },
+      ],
+    })
+  );
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+
+  await expect(page.getByText('Already Signed')).toBeVisible();
+  await expect(page.getByTestId('signer-image-input')).toHaveCount(0);
+  await expect(page.getByRole('main').getByRole('button', { name: 'Complete Signing' })).toHaveCount(0);
+  const answers = await page.evaluate(async () => {
+    const { useSigningPlayerStore } = await import('/src/store/signingPlayer.ts');
+    return useSigningPlayerStore().answers;
+  });
+  expect(answers['alice-passport']).toBe(storedPath);
+});
+
 test('blocks Done while a stamp upload is in flight', async ({ page }) => {
   const storedPath = `signing-images/${REQUEST_ID}/static/delayed-logo.png`;
 

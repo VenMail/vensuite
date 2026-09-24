@@ -41,6 +41,12 @@ export interface SigningSession {
   documentName: string;
   pageCount: number;
   fields: SigningField[];   // only fields for this signer
+  // Optional completion metadata returned by newer signing backends.
+  signerStatus?: string;
+  signer_status?: string;
+  status?: string;
+  completed?: boolean;
+  signer?: { status?: string };
 }
 
 export interface SigningFieldValue {
