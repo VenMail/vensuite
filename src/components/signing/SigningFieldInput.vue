@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { signingApi } from '@/services/signing';
+import { getApiErrorMessage, getRetryAfterDelayMs, signingApi } from '@/services/signing';
 import type { SigningField } from '@/types/signing';
 import SignatureCapture from './SignatureCapture.vue';
 
@@ -56,6 +56,7 @@ function onDateChange(e: Event) {
 
 const isUploading = ref(false);
 const uploadError = ref<string | null>(null);
+const imageInputId = `signer-image-input-${props.field.id}`;
 
 const LOCK_CONTENTION = 'signing_operation_in_progress';
 const UPLOAD_RETRIES = 2;
@@ -73,7 +74,7 @@ async function uploadWithRetry(file: File): Promise<{ path: string }> {
     } catch (err) {
       lastError = err;
       if (!isLockContention(err) || attempt === UPLOAD_RETRIES) throw err;
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, getRetryAfterDelayMs(err)));
     }
   }
 
@@ -91,8 +92,8 @@ async function onImageSelected(e: Event) {
   try {
     const uploaded = await uploadWithRetry(file);
     emit('updateValue', props.field.id, uploaded.path);
-  } catch (err: any) {
-    uploadError.value = err?.data?.error || 'Upload failed. Please try again.';
+  } catch (err: unknown) {
+    uploadError.value = getApiErrorMessage(err, 'Upload failed. Please try again.');
   } finally {
     isUploading.value = false;
   }
@@ -166,27 +167,32 @@ onMounted(() => {
 
     <!-- Image (signer upload) -->
     <template v-else-if="field.type === 'image'">
-      <div class="w-full h-full border-2 border-dashed border-blue-400 rounded bg-blue-50 flex items-center justify-center overflow-hidden">
-        <img
-          v-if="hasValue && typeof value === 'string'"
-          :src="signingApi.storageUrl(value as string)"
-          :alt="field.label || 'Uploaded image'"
-          class="max-w-full max-h-full object-contain"
-        />
-        <label
-          v-else
-          class="w-full h-full flex flex-col items-center justify-center gap-1 text-xs font-medium text-blue-700 cursor-pointer"
-        >
-          <span>{{ field.label || 'Upload image' }}</span>
-          <span class="text-[10px] font-normal text-blue-600">Click to choose a file</span>
+      <div class="relative w-full h-full overflow-visible">
+        <div class="w-full h-full border-2 border-dashed border-blue-400 rounded bg-blue-50 flex items-center justify-center overflow-hidden focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-600">
+          <img
+            v-if="hasValue && typeof value === 'string'"
+            :src="signingApi.storageUrl(value as string)"
+            :alt="field.label || 'Uploaded image'"
+            class="max-w-full max-h-full object-contain"
+          />
+          <label
+            v-else
+            :for="imageInputId"
+            class="w-full h-full flex flex-col items-center justify-center gap-1 text-xs font-medium text-blue-700 cursor-pointer peer-focus:ring-2 peer-focus:ring-inset peer-focus:ring-blue-600"
+          >
+            <span>{{ field.label || 'Upload image' }}</span>
+            <span class="text-[10px] font-normal text-blue-600">Click to choose a file</span>
+          </label>
           <input
+            v-if="!hasValue || typeof value !== 'string'"
+            :id="imageInputId"
             type="file"
             accept="image/png,image/jpeg,image/gif"
-            class="hidden"
+            class="peer sr-only"
             data-testid="signer-image-input"
             @change="onImageSelected"
           />
-        </label>
+        </div>
       </div>
       <p
         v-if="isUploading"
@@ -196,7 +202,8 @@ onMounted(() => {
       </p>
       <p
         v-if="uploadError"
-        class="absolute left-0 top-full mt-1 whitespace-nowrap text-[10px] text-red-600"
+        role="alert"
+        class="absolute left-0 top-full z-20 mt-1 max-h-24 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto whitespace-normal break-words rounded border border-red-200 bg-white/95 px-1.5 py-1 text-[10px] leading-4 text-red-700 shadow-sm"
       >
         {{ uploadError }}
       </p>

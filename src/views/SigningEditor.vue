@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSigningEditorStore } from '@/store/signingEditor';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
 import { useLibPdf } from '@/composables/useLibPdf';
-import { signingApi } from '@/services/signing';
+import { getApiErrorMessage, signingApi } from '@/services/signing';
 import PdfPageCanvas from '@/components/signing/PdfPageCanvas.vue';
 import SigningFieldOverlay from '@/components/signing/SigningFieldOverlay.vue';
 import FieldPalette from '@/components/signing/FieldPalette.vue';
@@ -169,8 +169,8 @@ async function handleStampSelected(e: Event) {
       path: uploaded.path,
     });
     toast.success('Image placed on the document.');
-  } catch (e: any) {
-    toast.error(e?.data?.error || 'Failed to upload the image.');
+  } catch (e: unknown) {
+    toast.error(getApiErrorMessage(e, 'Failed to upload the image.'));
   } finally {
     isUploadingStamp.value = false;
   }
@@ -236,6 +236,10 @@ function handlePageDragOver(e: DragEvent) {
 }
 
 async function handleSave() {
+  if (isUploadingStamp.value) {
+    toast.info('Wait for the image upload to finish.');
+    return;
+  }
   if (store.fields.length === 0) {
     saveError.value = 'Please add at least one signature field';
     return;
@@ -339,7 +343,7 @@ async function handleSave() {
         <!-- Save -->
         <button
           class="inline-flex items-center rounded-xl bg-[#2d6a4f] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#25563f] disabled:cursor-not-allowed disabled:opacity-50"
-          :disabled="isSaving || store.fields.length === 0"
+          :disabled="isSaving || isUploadingStamp || store.fields.length === 0"
           @click="handleSave"
         >
           {{ isSaving ? 'Saving...' : 'Done' }}

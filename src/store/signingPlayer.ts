@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { SigningSession, SigningField, SigningFieldValue, SigningCompletionResponse } from '@/types/signing';
-import { signingApi } from '@/services/signing';
+import { getApiErrorMessage, getRetryAfterDelayMs, signingApi } from '@/services/signing';
 
 export const useSigningPlayerStore = defineStore('signing-player', () => {
   const session = ref<SigningSession | null>(null);
@@ -10,6 +10,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   const isLoading = ref(false);
   const isSubmitting = ref(false);
   const error = ref<string | null>(null);
+  const submitError = ref<string | null>(null);
   const isCompleted = ref(false);
   const signedDocumentReady = ref(false);
   const downloadUrl = ref<string | null>(null);
@@ -82,6 +83,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   async function loadSession(token: string): Promise<void> {
     isLoading.value = true;
     error.value = null;
+    submitError.value = null;
 
     try {
       const data = await signingApi.fetchSignerSession(token);
@@ -93,8 +95,8 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
       downloadUrl.value = null;
       signedDocumentStatusUrl.value = null;
       statusPollRun += 1;
-    } catch (e: any) {
-      error.value = e?.data?.error || e?.message || 'Failed to load signing session';
+    } catch (e: unknown) {
+      error.value = getApiErrorMessage(e, 'Failed to load signing session');
     } finally {
       isLoading.value = false;
     }
@@ -106,7 +108,6 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
 
   const LOCK_CONTENTION = 'signing_operation_in_progress';
   const SUBMIT_LOCK_RETRIES = 3;
-  const LOCK_RETRY_DELAY_MS = 2000;
 
   function isLockContention(err: any): boolean {
     return err?.status === 409 && err?.data?.code === LOCK_CONTENTION;
@@ -116,7 +117,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     if (!canSubmit.value) return false;
 
     isSubmitting.value = true;
-    error.value = null;
+    submitError.value = null;
 
     try {
       const fieldValues: SigningFieldValue[] = Object.entries(answers.value).map(
@@ -133,7 +134,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
         } catch (err: any) {
           lastError = err;
           if (!isLockContention(err) || attempt === SUBMIT_LOCK_RETRIES) throw err;
-          await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
+          await new Promise(resolve => setTimeout(resolve, getRetryAfterDelayMs(err)));
         }
       }
 
@@ -149,12 +150,16 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
       }
 
       return true;
-    } catch (e: any) {
-      error.value = e?.data?.error || e?.message || 'Failed to submit signatures';
+    } catch (e: unknown) {
+      submitError.value = getApiErrorMessage(e, 'Failed to submit signatures');
       return false;
     } finally {
       isSubmitting.value = false;
     }
+  }
+
+  function clearSubmitError() {
+    submitError.value = null;
   }
 
   function setCurrentPage(page: number) {
@@ -169,6 +174,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     isLoading.value = false;
     isSubmitting.value = false;
     error.value = null;
+    submitError.value = null;
     isCompleted.value = false;
     signedDocumentReady.value = false;
     downloadUrl.value = null;
@@ -206,6 +212,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     isLoading,
     isSubmitting,
     error,
+    submitError,
     isCompleted,
     signedDocumentReady,
     downloadUrl,
@@ -218,6 +225,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     loadSession,
     setFieldValue,
     submit,
+    clearSubmitError,
     setCurrentPage,
     reset,
   };

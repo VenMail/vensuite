@@ -14,6 +14,87 @@ const EDITOR_TOKEN_HEADER = 'X-Signing-Editor-Token';
 // The base URL may differ from VenSuite's own API
 const SIGNING_API_BASE = import.meta.env.VITE_SIGNING_API_BASE_URL || API_BASE.replace('/api/v1', '');
 
+const DEFAULT_RETRY_DELAY_MS = 2000;
+const MIN_RETRY_DELAY_MS = 500;
+const MAX_RETRY_DELAY_MS = 5000;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function firstValidationMessage(errors: unknown): string | null {
+  if (!isRecord(errors)) return null;
+
+  for (const messages of Object.values(errors)) {
+    if (!Array.isArray(messages)) continue;
+    const message = messages.find(value => typeof value === 'string' && value.trim() !== '');
+    if (typeof message === 'string') return message.trim();
+  }
+
+  return null;
+}
+
+/**
+ * Extracts the most useful user-facing text from the normalized API error shape.
+ * Validation responses often include a generic top-level message, so include
+ * the first field detail when one is available to make the error actionable.
+ */
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (isRecord(error)) {
+    const data = error.data;
+    if (isRecord(data)) {
+      const explicitError = typeof data.error === 'string' ? data.error.trim() : '';
+      if (explicitError) return explicitError;
+
+      const message = typeof data.message === 'string' ? data.message.trim() : '';
+      const validationMessage = firstValidationMessage(data.errors);
+      if (message && validationMessage) return `${message} ${validationMessage}`;
+      if (message) return message;
+      if (validationMessage) return validationMessage;
+    }
+
+    const directMessage = typeof error.message === 'string' ? error.message.trim() : '';
+    if (directMessage) return directMessage;
+  }
+
+  return fallback;
+}
+
+function headerValue(headers: unknown, name: string): unknown {
+  if (!isRecord(headers)) return undefined;
+
+  const lowerName = name.toLowerCase();
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() === lowerName) return headers[key];
+  }
+
+  const get = headers.get;
+  if (typeof get === 'function') {
+    try {
+      return get.call(headers, name);
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
+}
+
+/** Returns a bounded retry delay, honoring a numeric Retry-After response header. */
+export function getRetryAfterDelayMs(error: unknown): number {
+  const rawValue = headerValue(isRecord(error) ? error.headers : undefined, 'retry-after');
+  const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+  const seconds = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim() !== ''
+      ? Number(value.trim())
+      : Number.NaN;
+
+  if (!Number.isFinite(seconds) || seconds < 0) return DEFAULT_RETRY_DELAY_MS;
+
+  return Math.min(MAX_RETRY_DELAY_MS, Math.max(MIN_RETRY_DELAY_MS, seconds * 1000));
+}
+
 async function fetchEditorSession(
   signingRequestId: string,
   token?: string

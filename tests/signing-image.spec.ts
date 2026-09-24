@@ -18,9 +18,9 @@ interface SavedTemplate {
   signers: Array<Record<string, unknown>>;
 }
 
-async function fulfillJson(route: Route, payload: unknown): Promise<void> {
+async function fulfillJson(route: Route, payload: unknown, status = 200): Promise<void> {
   await route.fulfill({
-    status: 200,
+    status,
     contentType: 'application/json',
     headers: CORS_HEADERS,
     body: JSON.stringify(payload),
@@ -295,4 +295,130 @@ test('shows only the image slots assigned to the signing signer', async ({ page 
   await expect(page.getByTestId('signer-image-input')).toHaveCount(1);
   await expect(page.getByText('Alice passport')).toBeVisible();
   await expect(page.getByText('Bob passport')).toHaveCount(0);
+});
+
+test('blocks Done while a stamp upload is in flight', async ({ page }) => {
+  const storedPath = `signing-images/${REQUEST_ID}/static/delayed-logo.png`;
+
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+  ]);
+  const saved = await captureSavedTemplate(page);
+  let releaseUpload!: () => void;
+  const uploadReleased = new Promise<void>((resolve) => {
+    releaseUpload = resolve;
+  });
+
+  await page.route(`**/api/composer/signing/${REQUEST_ID}/image`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    await uploadReleased;
+    return fulfillJson(route, { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath });
+  });
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+
+  const done = page.getByRole('button', { name: 'Done' });
+  await page.getByTestId('add-image-field').click();
+  await expect(done).toBeEnabled();
+
+  await page.getByTestId('add-stamp-field').click();
+  await page.getByTestId('stamp-file-input').setInputFiles({
+    name: 'logo.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect(done).toBeDisabled();
+  releaseUpload();
+  await expect(done).toBeEnabled();
+
+  await done.click();
+  await expect.poll(() => saved.value?.signing_fields.length).toBe(2);
+});
+
+test('shows the signer image validation message when upload is rejected', async ({ page }) => {
+  const validationMessage = 'The image may not be greater than 10240 kilobytes.';
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    return fulfillJson(route, {
+      message: 'The given data was invalid.',
+      errors: { image: [validationMessage] },
+    }, 422);
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'too-large.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  const alert = page.getByRole('alert');
+  await expect(alert).toBeVisible();
+  await expect(alert).toContainText(validationMessage);
+});
+
+test('keeps the document visible after a terminal submit failure', async ({ page }) => {
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [],
+    })
+  );
+  await page.route(`**/api/signing/complete/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    return fulfillJson(route, { message: 'The signing session has expired.' }, 422);
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  const main = page.getByRole('main');
+  const submit = main.getByRole('button', { name: 'Complete Signing' });
+  await expect(main).toBeVisible();
+  await expect(submit).toBeEnabled();
+
+  await submit.click();
+
+  const alert = page.getByRole('alert');
+  await expect(alert).toContainText('The signing session has expired.');
+  await expect(main).toBeVisible();
+  await expect(submit).toBeEnabled();
+  await expect(page.getByText('Unable to load document')).toHaveCount(0);
+
+  await alert.getByRole('button', { name: 'Dismiss submission error' }).click();
+  await expect(alert).toHaveCount(0);
 });

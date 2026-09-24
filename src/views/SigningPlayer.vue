@@ -236,6 +236,22 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
     <!-- Document -->
     <main v-else ref="containerRef" class="max-w-4xl mx-auto p-6 space-y-6">
       <div
+        v-if="store.submitError"
+        role="alert"
+        class="mx-auto flex max-w-3xl items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+      >
+        <p class="min-w-0 flex-1">{{ store.submitError }}</p>
+        <button
+          type="button"
+          aria-label="Dismiss submission error"
+          class="shrink-0 rounded px-1 text-lg leading-none text-red-600 hover:text-red-800"
+          @click="store.clearSubmitError"
+        >
+          ×
+        </button>
+      </div>
+
+      <div
         v-for="page in pdf.pages.value"
         :key="page.pageIndex"
         class="relative flex justify-center"
