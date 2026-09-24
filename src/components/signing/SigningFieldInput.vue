@@ -62,6 +62,19 @@ function onDateChange(e: Event) {
 const isUploading = ref(false);
 const uploadError = ref<string | null>(null);
 const imageInputId = `signer-image-input-${props.field.id}`;
+const ERROR_MAX_HEIGHT_PX = 96;
+
+const uploadErrorPositionClass = computed(() => {
+  const fieldTop = (props.field.y / 100) * props.pageHeight;
+  const fieldBottom = ((props.field.y + props.field.height) / 100) * props.pageHeight;
+  const roomBelow = props.pageHeight - fieldBottom;
+  const roomAbove = fieldTop;
+  const preferredRoom = Math.max(roomAbove, roomBelow);
+
+  return roomBelow >= Math.min(ERROR_MAX_HEIGHT_PX + 8, preferredRoom)
+    ? 'top-full mt-1'
+    : 'bottom-full mb-1';
+});
 
 async function uploadWithRetry(file: File): Promise<{ path: string }> {
   return retryOnSigningLock(
@@ -193,7 +206,9 @@ onMounted(() => {
       <p
         v-if="uploadError"
         role="alert"
-        class="absolute left-0 top-full z-20 mt-1 max-h-24 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto whitespace-normal break-words rounded border border-red-200 bg-white/95 px-1.5 py-1 text-[10px] leading-4 text-red-700 shadow-sm"
+        class="absolute left-0 z-20 max-h-24 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto whitespace-normal break-words rounded border border-red-200 bg-white/95 px-1.5 py-1 text-[10px] leading-4 text-red-700 shadow-sm"
+        :class="uploadErrorPositionClass"
+        aria-live="assertive"
       >
         {{ uploadError }}
       </p>

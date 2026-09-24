@@ -947,6 +947,64 @@ test('shows the signer image validation message when upload is rejected', async 
   await expect(alert).toContainText(validationMessage);
 });
 
+test('keeps a validation error inside the page for a field near the bottom', async ({ page }) => {
+  const validationMessage = 'The image may not be greater than 10240 kilobytes.';
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 88,
+          width: 25,
+          height: 8,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      message: 'The given data was invalid.',
+      errors: { image: [validationMessage] },
+    }, 422)
+  );
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'too-large.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  const error = page.getByRole('alert');
+  await expect(error).toContainText(validationMessage);
+  const fitsInsidePage = await error.evaluate((element) => {
+    const pageElement = element.closest('.pdf-page');
+    if (!pageElement) return false;
+    const errorBox = element.getBoundingClientRect();
+    const pageBox = pageElement.getBoundingClientRect();
+    return errorBox.top >= pageBox.top
+      && errorBox.bottom <= pageBox.bottom
+      && errorBox.left >= pageBox.left
+      && errorBox.right <= pageBox.right;
+  });
+  expect(fitsInsidePage).toBe(true);
+});
+
 test('keeps the document visible after a terminal submit failure', async ({ page }) => {
   await mockDocument(page);
   await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
