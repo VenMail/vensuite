@@ -69,9 +69,10 @@ secondary *Choose another* affordance.
 *Choose another* opens the existing `SignatureCapture` modal directly on its
 "Saved" tab. That tab's `mode` is currently component-local with no external
 entry point, so the modal needs a minimal way to be opened in that mode from
-outside (an optional initial-mode input plus existing v-model open/close).
-Picking a signature there fills the field the signer was working on, unchanged
-from today's behaviour.
+outside (an optional initial-mode input plus the existing v-model open/close).
+Picking a signature there applies it to every empty `signature` field, exactly
+like the primary action. The per-field modals keep their current behaviour of
+filling only their own field.
 
 Behaviour:
 
