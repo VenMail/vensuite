@@ -103,6 +103,60 @@ async function mockDocument(page: Page, pdfBytes: Buffer = minimalPdfBytes()): P
   );
 }
 
+const ONE_PIXEL_PNG_DATA_URL = `data:image/png;base64,${onePixelPng().toString('base64')}`;
+
+function savedSignature(label: string) {
+  return {
+    id: `sig-${label}`,
+    label,
+    dataUrl: ONE_PIXEL_PNG_DATA_URL,
+    type: 'drawn',
+    createdAt: Date.now(),
+  };
+}
+
+async function seedSavedSignatures(page: Page, email: string, entries: unknown[]): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => window.localStorage.setItem(key, value),
+    [`vensuite:saved-signatures:${email.trim().toLowerCase()}`, JSON.stringify(entries)]
+  );
+}
+
+function signatureField(id: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id,
+    type: 'signature',
+    pageIndex: 0,
+    x: 10,
+    y: 20,
+    width: 25,
+    height: 10,
+    signerEmail: 'alice@example.com',
+    label: `Signature ${id}`,
+    required: true,
+    ...overrides,
+  };
+}
+
+async function mockSignerSession(
+  page: Page,
+  fields: Array<Record<string, unknown>>,
+  signerEmail = 'alice@example.com'
+): Promise<void> {
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail,
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields,
+    })
+  );
+}
+
 async function mockEditorSession(
   page: Page,
   fields: Array<Record<string, unknown>>,
@@ -1144,4 +1198,26 @@ test('keeps the document visible after a terminal submit failure', async ({ page
 
   await alert.getByRole('button', { name: 'Dismiss submission error' }).click();
   await expect(alert).toHaveCount(0);
+});
+
+test('does not offer one signer\'s saved signatures to another signer on the same device', async ({ page }) => {
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'bob@example.com', [savedSignature('Bob signature')]);
+  await mockSignerSession(page, [signatureField('sig-1')], 'alice@example.com');
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByText('Click to Sign').click();
+
+  await expect(page.getByRole('button', { name: 'Saved' })).toHaveCount(0);
+});
+
+test('offers a signer\'s own saved signatures in the capture modal', async ({ page }) => {
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [savedSignature('Alice signature')]);
+  await mockSignerSession(page, [signatureField('sig-1')]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByText('Click to Sign').click();
+
+  await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible();
 });

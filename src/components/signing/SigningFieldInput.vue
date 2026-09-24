@@ -15,6 +15,7 @@ const props = defineProps<{
   pageWidth: number;
   pageHeight: number;
   signerName?: string;
+  signerEmail?: string;
   signerToken: string;
 }>();
 
@@ -130,6 +131,7 @@ onMounted(() => {
       <SignatureCapture
         v-model="showSignaturePad"
         :signer-name="signerName"
+        :signer-email="signerEmail"
         @save="onSignatureSave"
       />
     </template>

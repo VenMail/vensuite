@@ -6,6 +6,7 @@ import { useSavedSignatures } from '@/composables/useSavedSignatures';
 const props = defineProps<{
   modelValue: boolean;
   signerName?: string;
+  signerEmail?: string;
 }>();
 
 const emit = defineEmits<{
@@ -26,7 +27,9 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const uploadPreview = ref<string | null>(null);
 const uploadError = ref<string | null>(null);
 
-const { savedSignatures, saveSignature, deleteSignature } = useSavedSignatures();
+const { savedSignatures, saveSignature, deleteSignature } = useSavedSignatures(
+  () => props.signerEmail
+);
 
 const hasSavedSignatures = computed(() => savedSignatures.value.length > 0);
 
