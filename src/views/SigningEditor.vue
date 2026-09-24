@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useSigningEditorStore } from '@/store/signingEditor';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
 import { useLibPdf } from '@/composables/useLibPdf';
@@ -13,7 +13,6 @@ import type { SigningFieldType } from '@/types/signing';
 import { toast } from '@/composables/useToast';
 
 const route = useRoute();
-const router = useRouter();
 const store = useSigningEditorStore();
 const pdf = usePdfRenderer();
 const libpdf = useLibPdf();
@@ -28,16 +27,6 @@ const containerRef = ref<HTMLElement | null>(null);
 const stampInputRef = ref<HTMLInputElement | null>(null);
 const isUploadingStamp = ref(false);
 let resizeObserver: ResizeObserver | null = null;
-
-function redirectToLogin() {
-  router.replace({
-    name: 'login',
-    query: {
-      instant: 'true',
-      redirect: route.fullPath,
-    },
-  });
-}
 
 function isAuthFailure(error: any): boolean {
   return error?.status === 401 || error?.status === 419 || error?.status === 403;
@@ -94,11 +83,13 @@ onMounted(async () => {
     }
   } catch (e: any) {
     if (isAuthFailure(e)) {
-      saveError.value = 'Your session expired. Redirecting to sign in...';
-      redirectToLogin();
+      saveError.value = getApiErrorMessage(
+        e,
+        'This signing editor link is invalid or has expired.'
+      );
       return;
     }
-    saveError.value = e?.data?.error || 'Failed to load document';
+    saveError.value = getApiErrorMessage(e, 'Failed to load document');
   }
 
   // Measure container width
@@ -285,11 +276,13 @@ async function handleSave() {
     }
   } catch (e: any) {
     if (isAuthFailure(e)) {
-      saveError.value = 'Your session expired. Redirecting to sign in...';
-      redirectToLogin();
+      saveError.value = getApiErrorMessage(
+        e,
+        'This signing editor link is invalid or has expired.'
+      );
       return;
     }
-    saveError.value = e?.data?.error || 'Failed to save template';
+    saveError.value = getApiErrorMessage(e, 'Failed to save template');
   } finally {
     isSaving.value = false;
   }

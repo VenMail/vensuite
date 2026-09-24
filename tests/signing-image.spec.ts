@@ -215,6 +215,43 @@ test('still logs out the app for a 401 from a normal app API route', async ({ pa
   expect(await page.evaluate(() => localStorage.getItem('venAuthToken'))).toBeNull();
 });
 
+test('opens a tokenized signing editor for a guest session', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    await mockDocument(page);
+    await mockEditorSession(page, [], [
+      { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+    ]);
+
+    await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+
+    await expect(page).toHaveURL(new RegExp(`/signing/editor/${REQUEST_ID}\\?token=${EDITOR_TOKEN}$`));
+    await expect(page.getByRole('heading', { name: 'Passport Form.pdf' })).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test('shows an invalid-token editor error without redirecting a guest to login', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    await page.route(`**/api/signing/editor/${REQUEST_ID}`, (route) =>
+      fulfillJson(route, { error: 'Invalid or expired editor link' }, 401)
+    );
+
+    await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=invalid-editor-token`);
+
+    await expect(page).toHaveURL(/\/signing\/editor\/req-123\?token=invalid-editor-token$/);
+    await expect(page.getByText('Invalid or expired editor link')).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
 test('places image fields for two different signers and saves them', async ({ page }) => {
   await mockDocument(page);
   await mockEditorSession(page, [], [
