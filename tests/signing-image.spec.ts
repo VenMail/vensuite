@@ -147,6 +147,74 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test('does not log out the app when an expired signer image token returns 401', async ({ page }) => {
+  const expiredMessage = 'Invalid or expired signing link';
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, { error: expiredMessage }, 401)
+  );
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'passport.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect(page.getByRole('alert')).toContainText(expiredMessage);
+  await expect(page).toHaveURL(new RegExp(`/signing/sign/${SIGNER_TOKEN}$`));
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('venAuthToken'))).toBe('playwright-test-token');
+});
+
+test('still logs out the app for a 401 from a normal app API route', async ({ page }) => {
+  await page.goto(`${APP}/home`);
+  await page.evaluate(() => localStorage.setItem('venAuthToken', 'playwright-test-token'));
+  await page.reload();
+  await page.route('**/api/v1/protected-resource', (route) =>
+    fulfillJson(route, { message: 'Unauthenticated.' }, 401)
+  );
+
+  const result = await page.evaluate(async () => {
+    const { apiClient } = await import('/src/services/apiClient.ts');
+    try {
+      await apiClient.get('/api/v1/protected-resource');
+      return { status: 200 };
+    } catch (error: any) {
+      return { status: error?.status };
+    }
+  });
+
+  expect(result).toEqual({ status: 401 });
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/login');
+  expect(await page.evaluate(() => localStorage.getItem('venAuthToken'))).toBeNull();
+});
+
 test('places image fields for two different signers and saves them', async ({ page }) => {
   await mockDocument(page);
   await mockEditorSession(page, [], [

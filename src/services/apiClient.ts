@@ -27,10 +27,25 @@ export const apiClient: AxiosInstance = axios.create({
 });
 
 // A JSON Content-Type makes Axios stringify FormData and drop File contents.
+// Uploads get a much longer timeout than JSON calls: the server accepts files up
+// to 10 MB, which can take well over 20s to transfer on a slow mobile connection.
+// A timeout only caps the worst case, so the fast path is unaffected.
+const MULTIPART_UPLOAD_TIMEOUT_MS = 120000;
+
 export const multipartApiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 20000,
+  timeout: MULTIPART_UPLOAD_TIMEOUT_MS,
 });
+
+// Every route under these namespaces is authenticated by a signing-link token
+// (or the editor builder token), not by the VenSuite app session. Keep this as
+// a namespace predicate so newly added signing routes are covered by default;
+// the separate /api/signing-requests management API remains app-authenticated.
+const TOKEN_AUTHENTICATED_SIGNING_ROUTE = /(?:^|\/)api\/(?:signing|composer\/signing)(?:\/|$)/;
+
+function isTokenAuthenticatedSigningRequest(url: string): boolean {
+  return TOKEN_AUTHENTICATED_SIGNING_ROUTE.test(url);
+}
 
 function registerInterceptors(client: AxiosInstance): void {
   // Automatically attach auth token from localStorage to every request
@@ -58,11 +73,7 @@ function registerInterceptors(client: AxiosInstance): void {
             const status = error.response.status;
             const responseData = error.response.data;
             const requestUrl = String(error.config?.url || "");
-            const isSigningRequest =
-              requestUrl.includes("/api/signing/session/") ||
-              requestUrl.includes("/api/signing/complete/") ||
-              requestUrl.includes("/api/signing/editor/") ||
-              requestUrl.includes("/api/composer/signing/");
+            const isSigningRequest = isTokenAuthenticatedSigningRequest(requestUrl);
             const isTokenIssue =
               !isSigningRequest &&
               (status === 401 ||
