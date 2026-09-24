@@ -65,6 +65,7 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
   const fieldsBySigner = computed(() => {
     const grouped: Record<string, SigningField[]> = {};
     for (const field of fields.value) {
+      if (!field.signerEmail) continue;
       if (!grouped[field.signerEmail]) grouped[field.signerEmail] = [];
       grouped[field.signerEmail].push(field);
     }
@@ -85,7 +86,7 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     const providedSigners = data.signers || [];
     const inferredSigners = providedSigners.length > 0
       ? providedSigners
-      : Array.from(new Set((data.fields || []).map((field) => field.signerEmail).filter(Boolean)))
+      : Array.from(new Set((data.fields || []).map((field) => field.signerEmail).filter((email): email is string => Boolean(email))))
           .map((email, index) => ({
             email,
             name: email.split('@')[0],

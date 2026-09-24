@@ -45,6 +45,7 @@ function isAuthFailure(error: any): boolean {
 const fieldCounts = computed(() => {
   const counts: Record<string, number> = {};
   for (const f of store.fields) {
+    if (!f.signerEmail) continue;
     counts[f.signerEmail] = (counts[f.signerEmail] || 0) + 1;
   }
   return counts;

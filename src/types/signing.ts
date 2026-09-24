@@ -1,4 +1,4 @@
-export type SigningFieldType = 'signature' | 'initials' | 'date' | 'text' | 'checkbox';
+export type SigningFieldType = 'signature' | 'initials' | 'date' | 'text' | 'checkbox' | 'image';
 
 export interface SigningField {
   id: string;
@@ -8,11 +8,13 @@ export interface SigningField {
   y: number;                // percentage of page height (0-100)
   width: number;            // percentage of page width
   height: number;           // percentage of page height
-  signerEmail: string;      // which signer this field is assigned to
+  signerEmail?: string;     // absent => static document image (never shown to signers)
   label?: string;
   required: boolean;
-  value?: string | boolean; // filled value (for player)
+  value?: string | boolean; // filled value (player): base64 PNG for signatures, storage path for images
   nativeFieldName?: string; // native PDF AcroForm field name (for form filling)
+  src?: string;             // absolute URL of a sender-placed image (editor rendering)
+  path?: string;            // relative public-disk path of a sender-placed image (PDF burn-in)
 }
 
 export interface SigningSigner {
@@ -43,7 +45,7 @@ export interface SigningSession {
 
 export interface SigningFieldValue {
   fieldId: string;
-  value: string | boolean;  // base64 PNG for signatures, string for text/date, boolean for checkbox
+  value: string | boolean;  // base64 PNG for signatures, relative public-disk path for image fields, string for text/date, boolean for checkbox
 }
 
 export interface SigningCompletionResponse {
@@ -61,6 +63,7 @@ export const FIELD_DEFAULTS: Record<SigningFieldType, { width: number; height: n
   date: { width: 15, height: 3 },
   text: { width: 20, height: 3 },
   checkbox: { width: 3, height: 3 },
+  image: { width: 25, height: 10 },
 };
 
 // Signer colors for visual distinction
