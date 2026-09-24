@@ -858,6 +858,88 @@ test('shows a read-only already-signed state for a completed signer with a persi
   expect(answers['alice-passport']).toBe(storedPath);
 });
 
+test('warns on dirty editor route leave and does not warn after a confirmed save', async ({ page }) => {
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+  ]);
+  const saved = await captureSavedTemplate(page);
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+  await expect(page.getByText('Alice Example - alice@example.com')).toBeVisible();
+  await expect(page.locator('.pdf-page')).toHaveCount(1);
+  await page.getByTestId('add-image-field').click();
+  await expect(page.locator('.signing-field-overlay')).toHaveCount(1);
+
+  const dirtyLeave = await page.evaluate(async () => {
+    let confirmations = 0;
+    const originalConfirm = window.confirm;
+    window.confirm = () => {
+      confirmations += 1;
+      return false;
+    };
+    const app = (document.querySelector('#app') as any).__vue_app__;
+    const router = app.config.globalProperties.$router;
+    const { useSigningEditorStore } = await import('/src/store/signingEditor.ts');
+    const before = {
+      opener: Boolean(window.opener),
+      dirty: useSigningEditorStore().isDirty,
+      route: router.currentRoute.value.fullPath,
+    };
+    await router.push('/login').catch(() => undefined);
+    window.confirm = originalConfirm;
+    return { confirmations, path: window.location.pathname, before };
+  });
+  expect(dirtyLeave).toEqual({
+    confirmations: 1,
+    path: `/signing/editor/${REQUEST_ID}`,
+    before: { opener: false, dirty: true, route: `/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}` },
+  });
+
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect.poll(() => saved.value?.signing_fields.length).toBe(1);
+
+  const cleanLeave = await page.evaluate(async () => {
+    let confirmations = 0;
+    const originalConfirm = window.confirm;
+    window.confirm = () => {
+      confirmations += 1;
+      return false;
+    };
+    const app = (document.querySelector('#app') as any).__vue_app__;
+    const router = app.config.globalProperties.$router;
+    await router.push('/login').catch(() => undefined);
+    window.confirm = originalConfirm;
+    return { confirmations, path: window.location.pathname };
+  });
+  expect(cleanLeave).toEqual({ confirmations: 0, path: '/login' });
+});
+
+test('keeps the editor dirty after a failed save', async ({ page }) => {
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+  ]);
+  await page.route(`**/api/composer/signing/${REQUEST_ID}/save-template`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    return fulfillJson(route, {
+      message: 'The given data was invalid.',
+      errors: { 'signing_fields.0.label': ['The label field is required.'] },
+    }, 422);
+  });
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+  await page.getByTestId('add-image-field').click();
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByText('The label field is required.')).toBeVisible();
+
+  const dirty = await page.evaluate(async () => {
+    const { useSigningEditorStore } = await import('/src/store/signingEditor.ts');
+    return useSigningEditorStore().isDirty;
+  });
+  expect(dirty).toBe(true);
+});
+
 test('blocks Done while a stamp upload is in flight', async ({ page }) => {
   const storedPath = `signing-images/${REQUEST_ID}/static/delayed-logo.png`;
 

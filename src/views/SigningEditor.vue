@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { onBeforeRouteLeave, useRoute } from 'vue-router';
 import { useSigningEditorStore } from '@/store/signingEditor';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
 import { useLibPdf } from '@/composables/useLibPdf';
@@ -32,6 +32,23 @@ function isAuthFailure(error: any): boolean {
   return error?.status === 401 || error?.status === 419 || error?.status === 403;
 }
 
+function hasUnsavedEditorChanges(): boolean {
+  // The composer owns the lifecycle of its popup. Let it close the editor
+  // normally rather than trapping the opener flow in a browser confirmation.
+  return !window.opener && (store.isDirty || isUploadingStamp.value);
+}
+
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+  if (!hasUnsavedEditorChanges()) return;
+  event.preventDefault();
+  event.returnValue = '';
+}
+
+onBeforeRouteLeave(() => {
+  if (!hasUnsavedEditorChanges()) return true;
+  return window.confirm('You have unsaved signing fields. Leave without saving?');
+});
+
 // Field counts per signer for the signer list
 const fieldCounts = computed(() => {
   const counts: Record<string, number> = {};
@@ -56,6 +73,7 @@ const activeSignerLabel = computed(() => {
 
 // Load signing session on mount
 onMounted(async () => {
+  window.addEventListener('beforeunload', handleBeforeUnload);
   try {
     const data = await signingApi.fetchEditorSession(signingRequestId.value, token.value);
     store.initEditor({
@@ -102,6 +120,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
   resizeObserver?.disconnect();
 });
 
@@ -250,6 +269,7 @@ async function handleSave() {
       store.signers.map(s => ({ email: s.email, name: s.name })),
       token.value
     );
+    store.markSaved();
 
     // Notify the opener window (mailer_web composer)
     if (window.opener) {

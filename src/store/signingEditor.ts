@@ -282,6 +282,10 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     activeSignerEmail.value = email;
   }
 
+  function markSaved() {
+    isDirty.value = false;
+  }
+
   function setCurrentPage(page: number) {
     currentPage.value = page;
   }
@@ -332,6 +336,7 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     removeField,
     selectField,
     setActiveSigner,
+    markSaved,
     setCurrentPage,
     setZoom,
     reset,
