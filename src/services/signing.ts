@@ -46,6 +46,57 @@ async function saveFields(
   );
 }
 
+export interface UploadedSigningImage {
+  url: string;
+  path: string;
+}
+
+async function uploadEditorImage(
+  signingRequestId: string,
+  file: File,
+  token?: string
+): Promise<UploadedSigningImage> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers[EDITOR_TOKEN_HEADER] = token;
+  }
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  // Let the browser/axios set Content-Type automatically (multipart boundary).
+  const response = await apiClient.post(
+    `${SIGNING_API_BASE}/api/composer/signing/${signingRequestId}/image`,
+    formData,
+    { headers }
+  );
+  return response.data;
+}
+
+async function uploadSignerImage(
+  signerToken: string,
+  fieldId: string,
+  file: File
+): Promise<UploadedSigningImage> {
+  const formData = new FormData();
+  formData.append('fieldId', fieldId);
+  formData.append('image', file);
+
+  const response = await apiClient.post(
+    `${SIGNING_API_BASE}/api/signing/upload-image/${signerToken}`,
+    formData
+  );
+  return response.data;
+}
+
+// Signer-uploaded image values are stored as public-disk paths (not URLs), so the
+// player rebuilds a displayable URL from the same mailer origin it calls the API on.
+function storageUrl(pathOrUrl: string): string {
+  if (!pathOrUrl) return '';
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  return `${SIGNING_API_BASE}/storage/${pathOrUrl.replace(/^\/+/, '')}`;
+}
+
 async function fetchSignerSession(signerToken: string): Promise<SigningSession> {
   // This is a public endpoint — no auth header needed, the token IS the auth
   const response = await apiClient.get(
@@ -209,6 +260,9 @@ async function getSignerUrl(id: string, email?: string): Promise<{ signing_url: 
 export const signingApi = {
   fetchEditorSession,
   saveFields,
+  uploadEditorImage,
+  uploadSignerImage,
+  storageUrl,
   fetchSignerSession,
   submitCompletion,
   fetchSignedDocumentStatus,
