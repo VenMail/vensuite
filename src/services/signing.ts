@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient, postFormData } from './apiClient';
 import type {
   SigningTemplate,
   SigningSession,
@@ -145,13 +145,12 @@ async function uploadEditorImage(
   const formData = new FormData();
   formData.append('image', file);
 
-  // Let the browser/axios set Content-Type automatically (multipart boundary).
-  const response = await apiClient.post(
+  // The shared JSON Content-Type would stringify FormData and discard the file.
+  return postFormData<UploadedSigningImage>(
     `${SIGNING_API_BASE}/api/composer/signing/${signingRequestId}/image`,
     formData,
     { headers }
   );
-  return response.data;
 }
 
 async function uploadSignerImage(
@@ -163,11 +162,10 @@ async function uploadSignerImage(
   formData.append('fieldId', fieldId);
   formData.append('image', file);
 
-  const response = await apiClient.post(
+  return postFormData<UploadedSigningImage>(
     `${SIGNING_API_BASE}/api/signing/upload-image/${signerToken}`,
     formData
   );
-  return response.data;
 }
 
 // Signer-uploaded values remain private storage paths; previews use the token-gated route.
@@ -202,13 +200,11 @@ async function submitCompletion(
     const blob = new Blob([ab], { type: 'application/pdf' });
     formData.append('filled_pdf', blob, 'filled.pdf');
 
-    // Let the browser/axios set Content-Type automatically — it must include
-    // the multipart boundary, which a manual header would strip.
-    const response = await apiClient.post(
+    // The shared JSON Content-Type would stringify FormData and discard the PDF.
+    return postFormData<SigningCompletionResponse>(
       `${SIGNING_API_BASE}/api/signing/complete/${signerToken}`,
       formData
     );
-    return response.data;
   }
 
   const response = await apiClient.post(
@@ -287,12 +283,12 @@ async function prepareSigningRequest(params: PrepareSigningRequestParams): Promi
   if (params.mail_id) formData.append('mail_id', params.mail_id);
   if (params.send_email !== undefined) formData.append('send_email', String(params.send_email));
 
-  // Let the browser/axios set Content-Type automatically (boundary must be included)
-  const response = await apiClient.post(
+  // The shared JSON Content-Type would stringify FormData and discard the document.
+  const response = await postFormData<{ data: PrepareSigningRequestResponse }>(
     `${SIGNING_API_BASE}/api/v1/signing-requests/prepare`,
     formData
   );
-  return response.data.data;
+  return response.data;
 }
 
 async function sendSigningRequest(

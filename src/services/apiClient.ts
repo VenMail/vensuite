@@ -26,62 +26,82 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 20000,
 });
 
-// Automatically attach auth token from localStorage to every request
-apiClient.interceptors.request.use((config) => {
-  try {
-    const token = localStorage.getItem('venAuthToken');
-    if (token && !config.headers?.Authorization) {
-      config.headers = config.headers || {};
-      (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
-    }
-  } catch {
-    // Silently ignore localStorage errors
-  }
-  return config;
+// A JSON Content-Type makes Axios stringify FormData and drop File contents.
+export const multipartApiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 20000,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response) {
-      try {
-        const pinia = getActivePinia();
-        if (pinia) {
-          const authStore = useAuthStore(pinia);
-          const status = error.response.status;
-          const responseData = error.response.data;
-          const requestUrl = String(error.config?.url || "");
-          const isSigningRequest =
-            requestUrl.includes("/api/signing/session/") ||
-            requestUrl.includes("/api/signing/complete/") ||
-            requestUrl.includes("/api/signing/editor/") ||
-            requestUrl.includes("/api/composer/signing/");
-          const isTokenIssue =
-            !isSigningRequest &&
-            (status === 401 ||
-              status === 419 ||
-              (status === 403 &&
-                typeof responseData?.message === "string" &&
-                /token|unauthorized|unauthenticated/i.test(responseData.message)));
-
-          if (isTokenIssue && authStore.isAuthenticated && authStore.getToken()) {
-            await authStore.handleTokenExpiration();
-          }
-        }
-      } catch {
-        // Keep the original request failure if auth cleanup cannot run.
+function registerInterceptors(client: AxiosInstance): void {
+  // Automatically attach auth token from localStorage to every request
+  client.interceptors.request.use((config) => {
+    try {
+      const token = localStorage.getItem('venAuthToken');
+      if (token && !config.headers?.Authorization) {
+        config.headers = config.headers || {};
+        (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
       }
-
-      return Promise.reject({
-        status: error.response.status,
-        data: error.response.data,
-        headers: error.response.headers,
-        config: error.config,
-      });
+    } catch {
+      // Silently ignore localStorage errors
     }
-    return Promise.reject(error);
-  }
-);
+    return config;
+  });
+
+  client.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      if (error.response) {
+        try {
+          const pinia = getActivePinia();
+          if (pinia) {
+            const authStore = useAuthStore(pinia);
+            const status = error.response.status;
+            const responseData = error.response.data;
+            const requestUrl = String(error.config?.url || "");
+            const isSigningRequest =
+              requestUrl.includes("/api/signing/session/") ||
+              requestUrl.includes("/api/signing/complete/") ||
+              requestUrl.includes("/api/signing/editor/") ||
+              requestUrl.includes("/api/composer/signing/");
+            const isTokenIssue =
+              !isSigningRequest &&
+              (status === 401 ||
+                status === 419 ||
+                (status === 403 &&
+                  typeof responseData?.message === "string" &&
+                  /token|unauthorized|unauthenticated/i.test(responseData.message)));
+
+            if (isTokenIssue && authStore.isAuthenticated && authStore.getToken()) {
+              await authStore.handleTokenExpiration();
+            }
+          }
+        } catch {
+          // Keep the original request failure if auth cleanup cannot run.
+        }
+
+        return Promise.reject({
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers,
+          config: error.config,
+        });
+      }
+      return Promise.reject(error);
+    }
+  );
+}
+
+registerInterceptors(apiClient);
+registerInterceptors(multipartApiClient);
+
+export async function postFormData<T>(
+  url: string,
+  formData: FormData,
+  config?: AxiosRequestConfig
+): Promise<T> {
+  const response = await multipartApiClient.post<T>(url, formData, config);
+  return response.data;
+}
 
 export const withRequestOptions = (options: RequestOptions = {}): AxiosRequestConfig => {
   const { auth, idempotencyKey, config } = options;

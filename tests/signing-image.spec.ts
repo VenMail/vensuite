@@ -1,4 +1,4 @@
-import { test, expect, type Page, type Route } from '@playwright/test';
+import { test, expect, type Page, type Request, type Route } from '@playwright/test';
 import { minimalPdfBytes, onePixelPng } from './fixtures/pdfFixtures';
 
 const APP = process.env.TEST_BASE_URL || 'http://localhost:5173';
@@ -16,6 +16,48 @@ const CORS_HEADERS = { 'access-control-allow-origin': '*' };
 interface SavedTemplate {
   signing_fields: Array<Record<string, unknown>>;
   signers: Array<Record<string, unknown>>;
+}
+
+interface CapturedRequest {
+  request: Request | null;
+}
+
+async function captureMultipartRequest(
+  page: Page,
+  url: string,
+  responsePayload: unknown
+): Promise<CapturedRequest> {
+  const captured: CapturedRequest = { request: null };
+
+  await page.route(url, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    captured.request = route.request();
+    return fulfillJson(route, responsePayload);
+  });
+
+  return captured;
+}
+
+function expectMultipartFileRequest(
+  request: Request,
+  filename: string,
+  magicBytes: number[],
+  emptyJsonPart: string
+): void {
+  expect(request.headers()['content-type']).toMatch(/^multipart\/form-data; boundary=/);
+
+  const body = request.postDataBuffer();
+  expect(body).not.toBeNull();
+  if (!body) return;
+
+  const rawBody = body.toString('latin1');
+  expect(rawBody).toContain(`filename="${filename}"`);
+  expect(body.includes(Buffer.from(magicBytes))).toBe(true);
+  expect(rawBody).not.toContain(emptyJsonPart);
+}
+
+function expectMultipartImageRequest(request: Request, filename: string): void {
+  expectMultipartFileRequest(request, filename, [0x89, 0x50, 0x4e, 0x47], '"image":{}');
 }
 
 async function fulfillJson(route: Route, payload: unknown, status = 200): Promise<void> {
@@ -137,10 +179,11 @@ test('uploads a stamp image and saves it without a signer', async ({ page }) => 
     { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
   ]);
   const saved = await captureSavedTemplate(page);
-  await page.route(`**/api/composer/signing/${REQUEST_ID}/image`, async (route) => {
-    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
-    return fulfillJson(route, { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath });
-  });
+  const upload = await captureMultipartRequest(
+    page,
+    `**/api/composer/signing/${REQUEST_ID}/image`,
+    { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath }
+  );
 
   await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
 
@@ -150,6 +193,9 @@ test('uploads a stamp image and saves it without a signer', async ({ page }) => 
     mimeType: 'image/png',
     buffer: onePixelPng(),
   });
+
+  await expect.poll(() => upload.request !== null).toBe(true);
+  expectMultipartImageRequest(upload.request!, 'logo.png');
 
   await page.getByRole('button', { name: 'Done' }).click();
 
@@ -201,6 +247,131 @@ test('renders placed image fields when the editor is reopened', async ({ page })
     'src',
     `${SIGNING_ORIGIN}/storage/${staticPath}`
   );
+});
+
+test('uploads the signer image as real multipart form data', async ({ page }) => {
+  const storedPath = `signing-images/${REQUEST_ID}/fields/passport.png`;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  const upload = await captureMultipartRequest(
+    page,
+    `**/api/signing/upload-image/${SIGNER_TOKEN}`,
+    { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath }
+  );
+  await mockSignerImage(page, SIGNER_TOKEN, 'alice-passport');
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'passport.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect.poll(() => upload.request !== null).toBe(true);
+  expectMultipartImageRequest(upload.request!, 'passport.png');
+  await expect(page.locator('img[alt="Passport photo"]')).toHaveAttribute(
+    'src',
+    `${SIGNING_ORIGIN}/api/signing/image/${SIGNER_TOKEN}/alice-passport`
+  );
+});
+
+test('sends the client-filled PDF as real multipart form data', async ({ page }) => {
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  const result = await page.evaluate(
+    async ({ signerToken, pdfBytes }) => {
+      const { signingApi } = await import('/src/services/signing.ts');
+      return signingApi.submitCompletion(
+        signerToken,
+        [{ fieldId: 'alice-signature', value: 'signed' }],
+        new Uint8Array(pdfBytes)
+      );
+    },
+    { signerToken: SIGNER_TOKEN, pdfBytes: Array.from(minimalPdfBytes()) }
+  );
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  expectMultipartFileRequest(
+    completion.request!,
+    'filled.pdf',
+    [0x25, 0x50, 0x44, 0x46],
+    '"filled_pdf":{}'
+  );
+  expect(result.status).toBe('completed');
+});
+
+test('prepares signing requests as real multipart form data', async ({ page }) => {
+  const preparedSigningRequest = {
+    id: REQUEST_ID,
+    document_name: 'Contract.pdf',
+    status: 'draft',
+    document_url: `${SIGNING_ORIGIN}/api/signing/editor/${REQUEST_ID}/document`,
+    editor_url: `${SIGNING_ORIGIN}/signing/editor/${REQUEST_ID}`,
+    editor_token: EDITOR_TOKEN,
+    signers: [{ name: 'Alice Example', email: 'alice@example.com', status: 'pending' }],
+    created_at: '2026-09-24T00:00:00Z',
+  };
+  const prepare = await captureMultipartRequest(
+    page,
+    '**/api/v1/signing-requests/prepare',
+    { data: preparedSigningRequest }
+  );
+
+  const result = await page.evaluate(async ({ pdfBytes }) => {
+    const { signingApi } = await import('/src/services/signing.ts');
+    return signingApi.prepareSigningRequest({
+      document: new File([new Uint8Array(pdfBytes)], 'contract.pdf', {
+        type: 'application/pdf',
+      }),
+      document_name: 'Contract.pdf',
+      signers: [{ name: 'Alice Example', email: 'alice@example.com' }],
+      message: 'Please sign',
+      send_email: false,
+    });
+  }, { pdfBytes: Array.from(minimalPdfBytes()) });
+
+  await expect.poll(() => prepare.request !== null).toBe(true);
+  expectMultipartFileRequest(
+    prepare.request!,
+    'contract.pdf',
+    [0x25, 0x50, 0x44, 0x46],
+    '"document":{}'
+  );
+  expect(result).toMatchObject({ id: REQUEST_ID, editor_token: EDITOR_TOKEN });
 });
 
 test('lets a signer upload their passport image and submits the stored path', async ({ page }) => {
