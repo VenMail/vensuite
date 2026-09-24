@@ -1,5 +1,5 @@
 import { test, expect, type Page, type Request, type Route } from '@playwright/test';
-import { minimalPdfBytes, onePixelPng } from './fixtures/pdfFixtures';
+import { minimalPdfBytes, multiPagePdfBytes, onePixelPng } from './fixtures/pdfFixtures';
 
 const APP = process.env.TEST_BASE_URL || 'http://localhost:5173';
 const SIGNING_ORIGIN = (process.env.VITE_SIGNING_API_BASE_URL || 'http://localhost:8000').replace(
@@ -92,13 +92,13 @@ async function mockSignerImage(page: Page, signerToken: string, fieldId: string)
   );
 }
 
-async function mockDocument(page: Page): Promise<void> {
+async function mockDocument(page: Page, pdfBytes: Buffer = minimalPdfBytes()): Promise<void> {
   await page.route(DOCUMENT_URL, (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/pdf',
       headers: CORS_HEADERS,
-      body: minimalPdfBytes(),
+      body: pdfBytes,
     })
   );
 }
@@ -106,14 +106,15 @@ async function mockDocument(page: Page): Promise<void> {
 async function mockEditorSession(
   page: Page,
   fields: Array<Record<string, unknown>>,
-  signers: Array<Record<string, unknown>>
+  signers: Array<Record<string, unknown>>,
+  pageCount = 1
 ): Promise<void> {
   await page.route(`**/api/signing/editor/${REQUEST_ID}`, (route) =>
     fulfillJson(route, {
       id: REQUEST_ID,
       documentUrl: DOCUMENT_URL,
       documentName: 'Passport Form.pdf',
-      pageCount: 1,
+      pageCount,
       fields,
       signers,
     })
@@ -250,6 +251,29 @@ test('shows an invalid-token editor error without redirecting a guest to login',
   } finally {
     await context.close();
   }
+});
+
+test('places palette fields on the page the sender is viewing', async ({ page }) => {
+  await mockDocument(page, multiPagePdfBytes());
+  await mockEditorSession(
+    page,
+    [],
+    [{ email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' }],
+    2
+  );
+  const saved = await captureSavedTemplate(page);
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+  await expect(page.locator('.pdf-page')).toHaveCount(2);
+
+  await page.locator('.pdf-page').nth(1).click();
+  await page.getByTestId('add-image-field').click();
+  await page.locator('.pdf-page').nth(0).click();
+  await page.getByRole('button', { name: /Signature/ }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
+
+  await expect.poll(() => saved.value?.signing_fields.length).toBe(2);
+  expect(saved.value!.signing_fields.map(field => field.pageIndex)).toEqual([1, 0]);
 });
 
 test('places image fields for two different signers and saves them', async ({ page }) => {

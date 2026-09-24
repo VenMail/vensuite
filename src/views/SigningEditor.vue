@@ -415,6 +415,7 @@ async function handleSave() {
             class="relative"
             @drop="handlePageDrop($event, page.pageIndex)"
             @dragover="handlePageDragOver"
+            @click="store.setCurrentPage(page.pageIndex)"
           >
             <PdfPageCanvas
               :image-url="page.imageUrl"
