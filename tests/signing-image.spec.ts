@@ -300,6 +300,28 @@ test('places image fields for two different signers and saves them', async ({ pa
   expect(fields[0].path).toBeUndefined();
 });
 
+test('surfaces Laravel field validation details when saving the editor template', async ({ page }) => {
+  const validationMessage = 'The label field is required.';
+
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+  ]);
+  await page.route(`**/api/composer/signing/${REQUEST_ID}/save-template`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    return fulfillJson(route, {
+      message: 'The given data was invalid.',
+      errors: { 'signing_fields.0.label': [validationMessage] },
+    }, 422);
+  });
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+  await page.getByTestId('add-image-field').click();
+  await page.getByRole('button', { name: 'Done' }).click();
+
+  await expect(page.getByText('The given data was invalid. The label field is required.')).toBeVisible();
+});
+
 test('uploads a stamp image and saves it without a signer', async ({ page }) => {
   const storedPath = `signing-images/${REQUEST_ID}/static/logo.png`;
 
