@@ -89,6 +89,9 @@ test.beforeEach(async ({ page }) => {
     localStorage.clear();
     sessionStorage.clear();
   });
+  await page.addInitScript(() => {
+    localStorage.setItem('venAuthToken', 'playwright-test-token');
+  });
 });
 
 test('places image fields for two different signers and saves them', async ({ page }) => {

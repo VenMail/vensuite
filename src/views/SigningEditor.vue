@@ -25,6 +25,8 @@ const isDetecting = ref(false);
 const saveError = ref<string | null>(null);
 const containerWidth = ref(700);
 const containerRef = ref<HTMLElement | null>(null);
+const stampInputRef = ref<HTMLInputElement | null>(null);
+const isUploadingStamp = ref(false);
 let resizeObserver: ResizeObserver | null = null;
 
 function redirectToLogin() {
@@ -128,6 +130,50 @@ function handlePageDrop(e: DragEvent, pageIndex: number) {
 function handleAddFieldFromPalette(type: SigningFieldType) {
   // Add to center of current page
   store.addField(type, store.currentPage, 40, 40);
+}
+
+function handleAddImage(assigned: boolean) {
+  if (!assigned) {
+    stampInputRef.value?.click();
+    return;
+  }
+
+  if (!store.activeSignerEmail) {
+    toast.error('Select a signer before placing an image field.');
+    return;
+  }
+
+  store.addImageField({
+    pageIndex: store.currentPage,
+    x: 40,
+    y: 40,
+    assigned: true,
+  });
+}
+
+async function handleStampSelected(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  isUploadingStamp.value = true;
+  try {
+    const uploaded = await signingApi.uploadEditorImage(signingRequestId.value, file, token.value);
+    store.addImageField({
+      pageIndex: store.currentPage,
+      x: 40,
+      y: 40,
+      assigned: false,
+      src: uploaded.url,
+      path: uploaded.path,
+    });
+    toast.success('Image placed on the document.');
+  } catch (e: any) {
+    toast.error(e?.data?.error || 'Failed to upload the image.');
+  } finally {
+    isUploadingStamp.value = false;
+  }
 }
 
 async function handleDetectFormFields() {
@@ -313,9 +359,20 @@ async function handleSave() {
           @remove-signer="store.removeSigner"
         />
 
+        <input
+          ref="stampInputRef"
+          type="file"
+          accept="image/png,image/jpeg,image/gif"
+          class="hidden"
+          data-testid="stamp-file-input"
+          @change="handleStampSelected"
+        />
+
         <FieldPalette
           :active-signer-color="activeSigner?.color"
+          :uploading-stamp="isUploadingStamp"
           @add-field="handleAddFieldFromPalette"
+          @add-image="handleAddImage"
         />
 
         <!-- Detect Form Fields -->
