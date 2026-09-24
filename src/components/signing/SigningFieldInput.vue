@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { signingApi } from '@/services/signing';
 import type { SigningField } from '@/types/signing';
 import SignatureCapture from './SignatureCapture.vue';
 
@@ -9,6 +10,7 @@ const props = defineProps<{
   pageWidth: number;
   pageHeight: number;
   signerName?: string;
+  signerToken: string;
 }>();
 
 const emit = defineEmits<{
@@ -50,6 +52,50 @@ function onCheckboxChange(e: Event) {
 
 function onDateChange(e: Event) {
   emit('updateValue', props.field.id, (e.target as HTMLInputElement).value);
+}
+
+const isUploading = ref(false);
+const uploadError = ref<string | null>(null);
+
+const LOCK_CONTENTION = 'signing_operation_in_progress';
+const UPLOAD_RETRIES = 2;
+
+function isLockContention(err: any): boolean {
+  return err?.status === 409 && err?.data?.code === LOCK_CONTENTION;
+}
+
+async function uploadWithRetry(file: File): Promise<{ path: string }> {
+  let lastError: any = null;
+
+  for (let attempt = 0; attempt <= UPLOAD_RETRIES; attempt += 1) {
+    try {
+      return await signingApi.uploadSignerImage(props.signerToken, props.field.id, file);
+    } catch (err) {
+      lastError = err;
+      if (!isLockContention(err) || attempt === UPLOAD_RETRIES) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
+
+  throw lastError;
+}
+
+async function onImageSelected(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  isUploading.value = true;
+  uploadError.value = null;
+  try {
+    const uploaded = await uploadWithRetry(file);
+    emit('updateValue', props.field.id, uploaded.path);
+  } catch (err: any) {
+    uploadError.value = err?.data?.error || 'Upload failed. Please try again.';
+  } finally {
+    isUploading.value = false;
+  }
 }
 
 onMounted(() => {
@@ -116,6 +162,44 @@ onMounted(() => {
           @change="onCheckboxChange"
         />
       </label>
+    </template>
+
+    <!-- Image (signer upload) -->
+    <template v-else-if="field.type === 'image'">
+      <div class="w-full h-full border-2 border-dashed border-blue-400 rounded bg-blue-50 flex items-center justify-center overflow-hidden">
+        <img
+          v-if="hasValue && typeof value === 'string'"
+          :src="signingApi.storageUrl(value as string)"
+          :alt="field.label || 'Uploaded image'"
+          class="max-w-full max-h-full object-contain"
+        />
+        <label
+          v-else
+          class="w-full h-full flex flex-col items-center justify-center gap-1 text-xs font-medium text-blue-700 cursor-pointer"
+        >
+          <span>{{ field.label || 'Upload image' }}</span>
+          <span class="text-[10px] font-normal text-blue-600">Click to choose a file</span>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/gif"
+            class="hidden"
+            data-testid="signer-image-input"
+            @change="onImageSelected"
+          />
+        </label>
+      </div>
+      <p
+        v-if="isUploading"
+        class="absolute inset-0 flex items-center justify-center rounded bg-white/80 text-xs font-medium text-blue-700"
+      >
+        Uploading…
+      </p>
+      <p
+        v-if="uploadError"
+        class="absolute left-0 top-full mt-1 whitespace-nowrap text-[10px] text-red-600"
+      >
+        {{ uploadError }}
+      </p>
     </template>
   </div>
 </template>

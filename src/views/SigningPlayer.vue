@@ -73,6 +73,9 @@ async function handleSubmit() {
         if (typeof answer === 'string' && (answer.startsWith('data:image/') || answer.length > 100)) {
           signatureDraws.push({ pageIndex: field.pageIndex, fieldId: field.id, value: answer });
         }
+      } else if (field.type === 'image') {
+        // Image values are public-disk paths; the backend burns them into the PDF.
+        continue;
       }
     }
   }
@@ -253,6 +256,7 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
               :page-width="pageWidth"
               :page-height="pageHeight"
               :signer-name="store.session?.signerName"
+              :signer-token="token"
               @update-value="handleFieldUpdate"
             />
           </template>

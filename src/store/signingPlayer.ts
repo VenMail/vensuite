@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { SigningSession, SigningField, SigningFieldValue } from '@/types/signing';
+import type { SigningSession, SigningField, SigningFieldValue, SigningCompletionResponse } from '@/types/signing';
 import { signingApi } from '@/services/signing';
 
 export const useSigningPlayerStore = defineStore('signing-player', () => {
@@ -104,6 +104,14 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     answers.value = { ...answers.value, [fieldId]: value };
   }
 
+  const LOCK_CONTENTION = 'signing_operation_in_progress';
+  const SUBMIT_LOCK_RETRIES = 3;
+  const LOCK_RETRY_DELAY_MS = 2000;
+
+  function isLockContention(err: any): boolean {
+    return err?.status === 409 && err?.data?.code === LOCK_CONTENTION;
+  }
+
   async function submit(token: string, filledPdfBytes?: Uint8Array | null): Promise<boolean> {
     if (!canSubmit.value) return false;
 
@@ -115,7 +123,22 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
         ([fieldId, value]) => ({ fieldId, value })
       );
 
-      const completion = await signingApi.submitCompletion(token, fieldValues, filledPdfBytes);
+      let completion: SigningCompletionResponse | null = null;
+      let lastError: any = null;
+
+      for (let attempt = 0; attempt <= SUBMIT_LOCK_RETRIES; attempt += 1) {
+        try {
+          completion = await signingApi.submitCompletion(token, fieldValues, filledPdfBytes);
+          break;
+        } catch (err: any) {
+          lastError = err;
+          if (!isLockContention(err) || attempt === SUBMIT_LOCK_RETRIES) throw err;
+          await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY_MS));
+        }
+      }
+
+      if (!completion) throw lastError;
+
       signedDocumentReady.value = Boolean(completion.signedDocumentReady);
       downloadUrl.value = completion.downloadUrl || null;
       signedDocumentStatusUrl.value = completion.signedDocumentStatusUrl || null;
