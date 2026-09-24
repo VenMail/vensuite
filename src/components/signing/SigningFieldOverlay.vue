@@ -23,14 +23,19 @@ const isResizing = ref(false);
 const dragStart = ref({ x: 0, y: 0, fieldX: 0, fieldY: 0 });
 const resizeStart = ref({ x: 0, y: 0, fieldW: 0, fieldH: 0 });
 
-const style = computed(() => ({
-  left: `${(props.field.x / 100) * props.pageWidth}px`,
-  top: `${(props.field.y / 100) * props.pageHeight}px`,
-  width: `${(props.field.width / 100) * props.pageWidth}px`,
-  height: `${(props.field.height / 100) * props.pageHeight}px`,
-  borderColor: props.signer?.color || '#3B82F6',
-  backgroundColor: (props.signer?.color || '#3B82F6') + '15',
-}));
+const style = computed(() => {
+  const color = props.signer?.color || '#3B82F6';
+  const isPlacedImage = props.field.type === 'image' && !!props.field.src;
+
+  return {
+    left: `${(props.field.x / 100) * props.pageWidth}px`,
+    top: `${(props.field.y / 100) * props.pageHeight}px`,
+    width: `${(props.field.width / 100) * props.pageWidth}px`,
+    height: `${(props.field.height / 100) * props.pageHeight}px`,
+    borderColor: color,
+    backgroundColor: isPlacedImage ? 'transparent' : color + '15',
+  };
+});
 
 const fieldIcon = computed(() => {
   switch (props.field.type) {
@@ -39,6 +44,7 @@ const fieldIcon = computed(() => {
     case 'date': return 'D';
     case 'text': return 'T';
     case 'checkbox': return '~';
+    case 'image': return 'IMG';
     default: return '?';
   }
 });
@@ -120,7 +126,25 @@ function onResizeEnd() {
     :style="style"
     @mousedown="onMouseDown"
   >
+    <template v-if="field.type === 'image'">
+      <img
+        v-if="field.src"
+        :src="field.src"
+        alt="Placed image"
+        class="h-full w-full rounded-lg object-contain"
+        draggable="false"
+      />
+      <span
+        v-else
+        class="rounded-lg border-2 border-dashed bg-white/80 px-2 py-1 text-[11px] font-medium shadow-sm"
+        :style="{ color: signer?.color || '#3B82F6' }"
+      >
+        {{ field.label || 'Image' }}
+      </span>
+    </template>
+
     <span
+      v-else
       class="inline-flex max-w-full items-center gap-1 rounded-lg bg-white/85 px-2 py-1 truncate shadow-sm"
       :style="{ color: signer?.color || '#3B82F6' }"
     >
