@@ -110,7 +110,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="signing-field-input absolute" :style="style">
+  <div class="signing-field-input absolute" :data-signing-field-id="field.id" :style="style">
     <!-- Signature / Initials -->
     <template v-if="field.type === 'signature' || field.type === 'initials'">
       <div

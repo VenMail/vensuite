@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSigningPlayerStore } from '@/store/signingPlayer';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
@@ -9,6 +9,7 @@ import PdfPageCanvas from '@/components/signing/PdfPageCanvas.vue';
 import SigningFieldInput from '@/components/signing/SigningFieldInput.vue';
 import CompletedSigningField from '@/components/signing/CompletedSigningField.vue';
 import SignatureCapture from '@/components/signing/SignatureCapture.vue';
+import type { SigningField } from '@/types/signing';
 
 const route = useRoute();
 const store = useSigningPlayerStore();
@@ -32,11 +33,62 @@ const showSavedSignatureBanner = computed(() =>
   && suggestedSignature.value !== null
 );
 
-function applyRememberedSignature(dataUrl: string) {
+function compareFieldPosition(a: SigningField, b: SigningField): number {
+  return a.pageIndex - b.pageIndex || a.y - b.y || a.x - b.x;
+}
+
+function isUnfilled(value: string | boolean | undefined): boolean {
+  return value !== true && (typeof value !== 'string' || value.trim() === '');
+}
+
+function waitForFieldElement(fieldId: string): Promise<HTMLElement | null> {
+  const root = containerRef.value;
+  if (!root) return Promise.resolve(null);
+  const find = () => [...root.querySelectorAll<HTMLElement>('[data-signing-field-id]')]
+    .find(element => element.dataset.signingFieldId === fieldId) ?? null;
+  const existing = find();
+  if (existing) return Promise.resolve(existing);
+
+  return new Promise(resolve => {
+    const observer = new MutationObserver(() => {
+      const field = find();
+      if (!field) return;
+      clearTimeout(timeout);
+      observer.disconnect();
+      resolve(field);
+    });
+    const timeout = window.setTimeout(() => {
+      observer.disconnect();
+      resolve(null);
+    }, 5000);
+    observer.observe(root, { childList: true, subtree: true });
+  });
+}
+
+async function applyRememberedSignature(dataUrl: string) {
+  const lastSignature = [...store.emptySignatureFields].sort(compareFieldPosition).at(-1);
   if (store.fillSignatureFields(dataUrl) > 0) {
     savedSignatureDismissed.value = true;
   }
   showSavedSignaturePicker.value = false;
+
+  if (!lastSignature) return;
+  await nextTick();
+  // Wait until the clicked banner button has been removed and its click finishes.
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+
+  const unfinished = store.requiredFields
+    .filter(field => isUnfilled(store.answers[field.id]))
+    .sort(compareFieldPosition);
+  const nextField = unfinished.find(field => compareFieldPosition(field, lastSignature) > 0)
+    ?? unfinished[0];
+  if (!nextField) return;
+
+  const target = await waitForFieldElement(nextField.id);
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  target.querySelector<HTMLElement>('input, button, textarea, select, [tabindex]')
+    ?.focus({ preventScroll: true });
 }
 
 onMounted(async () => {

@@ -1391,6 +1391,51 @@ test('offers a remembered signature and fills every empty signature field', asyn
   ]);
 });
 
+test('moves to the next required field after remembered signatures across pages', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  await mockDocument(page, multiPagePdfBytes());
+  await seedSavedSignatures(page, 'alice@example.com', [savedSignature('Remembered signature')]);
+  await mockSignerSession(page, [
+    signatureField('signature-first', { pageIndex: 0, y: 20 }),
+    signatureField('signature-last', { pageIndex: 1, y: 20 }),
+    {
+      id: 'next-required', type: 'text', pageIndex: 1, x: 10, y: 60,
+      width: 35, height: 8, signerEmail: 'alice@example.com',
+      label: 'Job title', required: true,
+    },
+  ], 'alice@example.com', { pageCount: 2 });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByRole('button', { name: 'Use my saved signature' }).click();
+  expect(pageErrors).toEqual([]);
+
+  const nextInput = page.locator('[data-signing-field-id="next-required"] input');
+  await expect(nextInput).toBeFocused();
+  await expect.poll(async () => nextInput.evaluate((input) => {
+    const rect = input.getBoundingClientRect();
+    return rect.top >= 0 && rect.bottom <= window.innerHeight;
+  })).toBe(true);
+});
+
+test('wraps to the first unfinished required field after remembered signatures', async ({ page }) => {
+  await mockDocument(page, multiPagePdfBytes());
+  await seedSavedSignatures(page, 'alice@example.com', [savedSignature('Remembered signature')]);
+  await mockSignerSession(page, [
+    {
+      id: 'first-required', type: 'text', pageIndex: 0, x: 10, y: 20,
+      width: 35, height: 8, signerEmail: 'alice@example.com',
+      label: 'Job title', required: true,
+    },
+    signatureField('signature-last', { pageIndex: 1, y: 20 }),
+  ], 'alice@example.com', { pageCount: 2 });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByRole('button', { name: 'Use my saved signature' }).click();
+
+  await expect(page.locator('[data-signing-field-id="first-required"] input')).toBeFocused();
+});
+
 test('does not overwrite a signature the signer already provided', async ({ page }) => {
   const rememberedSignature = savedSignature('Remembered signature');
   const completion = await captureMultipartRequest(
