@@ -114,6 +114,15 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     return grouped;
   });
 
+  const completedFieldsByPage = computed(() => {
+    const grouped: Record<number, SigningField[]> = {};
+    for (const field of session.value?.completedFields || []) {
+      if (!grouped[field.pageIndex]) grouped[field.pageIndex] = [];
+      grouped[field.pageIndex].push(field);
+    }
+    return grouped;
+  });
+
   async function loadSession(token: string): Promise<void> {
     isLoading.value = true;
     error.value = null;
@@ -252,6 +261,7 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     canSubmit,
     emptySignatureFields,
     fieldsByPage,
+    completedFieldsByPage,
     loadSession,
     setFieldValue,
     fillSignatureFields,
