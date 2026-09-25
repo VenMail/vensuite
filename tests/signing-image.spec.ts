@@ -222,6 +222,24 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test('later signer sees a completed signature without being able to edit it', async ({ page }) => {
+  await mockDocument(page);
+  await mockSignerSession(page, [
+    signatureField('bob-signature', { signerEmail: 'bob@example.com', y: 40 }),
+  ], 'bob@example.com', {
+    completedFields: [signatureField('alice-signature', {
+      signerEmail: 'alice@example.com',
+      value: ONE_PIXEL_PNG_DATA_URL,
+    })],
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+
+  await expect(page.locator('img[alt="Completed signature"]')).toBeVisible();
+  await expect(page.locator('img[alt="Completed signature"]')).toHaveAttribute('src', ONE_PIXEL_PNG_DATA_URL);
+  await expect(page.getByRole('button', { name: 'Click to Sign' })).toHaveCount(1);
+});
+
 test('does not log out the app when an expired signer image token returns 401', async ({ page }) => {
   const expiredMessage = 'Invalid or expired signing link';
 

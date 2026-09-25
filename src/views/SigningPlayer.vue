@@ -7,6 +7,7 @@ import { useLibPdf } from '@/composables/useLibPdf';
 import { useSavedSignatures } from '@/composables/useSavedSignatures';
 import PdfPageCanvas from '@/components/signing/PdfPageCanvas.vue';
 import SigningFieldInput from '@/components/signing/SigningFieldInput.vue';
+import CompletedSigningField from '@/components/signing/CompletedSigningField.vue';
 import SignatureCapture from '@/components/signing/SignatureCapture.vue';
 
 const route = useRoute();
@@ -325,6 +326,13 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
           :original-height="page.height"
         >
           <template #default="{ pageWidth, pageHeight }">
+            <CompletedSigningField
+              v-for="field in store.completedFieldsByPage[page.pageIndex] || []"
+              :key="`completed-${field.id}`"
+              :field="field"
+              :page-width="pageWidth"
+              :page-height="pageHeight"
+            />
             <SigningFieldInput
               v-for="field in store.fieldsByPage[page.pageIndex] || []"
               :key="field.id"
