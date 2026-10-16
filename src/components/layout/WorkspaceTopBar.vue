@@ -617,18 +617,39 @@ const toggleDetails = () => {
 
 <style scoped>
 .workspace-topbar {
+  position: relative;
+  overflow: hidden;
   border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.84);
+  background:
+    linear-gradient(105deg, rgba(255, 255, 255, 0.94), rgba(255, 252, 250, 0.9) 58%, rgba(247, 251, 255, 0.9));
   padding: 0.8rem 0.9rem;
   box-shadow: 0 16px 42px rgba(15, 23, 42, 0.07);
   backdrop-filter: blur(18px);
   transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
+.workspace-topbar::before {
+  position: absolute;
+  top: 0;
+  right: 1.25rem;
+  left: auto;
+  width: min(11rem, 34%);
+  height: 2px;
+  content: '';
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, rgba(255, 92, 57, 0), rgba(255, 92, 57, 0.9) 45%, rgba(37, 99, 235, 0.65));
+}
+
+.workspace-topbar > * {
+  position: relative;
+  z-index: 1;
+}
+
 .dark .workspace-topbar {
   border-color: rgba(148, 163, 184, 0.18);
-  background: rgba(15, 23, 42, 0.78);
+  background:
+    linear-gradient(105deg, rgba(15, 23, 42, 0.94), rgba(24, 23, 35, 0.9) 58%, rgba(16, 28, 48, 0.9));
   box-shadow: 0 16px 42px rgba(0, 0, 0, 0.2);
 }
 

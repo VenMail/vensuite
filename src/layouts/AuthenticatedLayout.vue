@@ -115,8 +115,7 @@ watch(isAuthenticated, async (newValue) => {
 // Dynamic class for the main content area
 const mainContentClasses = computed(() =>
   cn(
-    'flex-1 min-h-0 overflow-auto',
-    'bg-slate-50 dark:bg-slate-950',
+    'venmail-workspace-surface flex-1 min-h-0 overflow-auto',
     'transition-all duration-200',
     hideLayout.value ? 'w-full' : ''
   )
@@ -124,7 +123,7 @@ const mainContentClasses = computed(() =>
 </script>
 
 <template>
-  <div class="h-screen min-h-0 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950">
+  <div class="venmail-app-shell h-screen min-h-0 overflow-hidden flex flex-col">
     <TopNav 
       v-if="!hideLayout"
       :isMobile="isMobile"
