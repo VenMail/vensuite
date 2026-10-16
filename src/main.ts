@@ -82,12 +82,7 @@ const routes = [
     component: () => import('./views/FormPlayerHost.vue'),
     meta: { public: true },
   },
-  // Signing routes
-  {
-    path: '/signing/documents',
-    name: 'signing-documents',
-    component: () => import('./views/SigningDocuments.vue'),
-  },
+  // Public signing routes
   {
     path: '/signing/editor/:signingRequestId',
     name: 'signing-editor',
@@ -154,6 +149,7 @@ const routes = [
       { path: 'forms/:id/settings', name: 'form-settings', component: FormBuilder, meta: { hideLayout: true } },
       { path: 'forms/:id/responses', name: 'form-responses', component: () => import('./views/FormResponses.vue'), meta: { hideLayout: true } },
       { path: 'media', name: 'media', component: Media },
+      { path: 'signing/documents', name: 'signing-documents', component: () => import('./views/SigningDocuments.vue') },
       { path: 'bin', name: 'bin-view', component: Bin },
       { path: 'picker', name: 'file-picker', component: FilePicker, meta: { hideLayout: true } },
       { path: 'import/:id', name: 'import', component: ImportView, meta: { hideLayout: true } },

@@ -203,6 +203,7 @@
         <!-- File Icon and Title/Date Section -->
         <div
           v-if="showCheckbox || isSelected"
+          :class="fileSelectionCheckboxClass"
           class="z-10 flex h-5 w-5 cursor-pointer items-center justify-center rounded border border-slate-300 bg-white transition-all duration-200 dark:border-cyan-400"
           @click.stop="$emit('select-file', file.id, $event)"
         >
@@ -339,6 +340,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, PropType, onMounted } from "vue";
 import { Settings, Loader, CheckIcon } from "lucide-vue-next";
+import { fileSelectionCheckboxClass } from "@/lib/fileItemLayout";
 import { Button } from "@/components/ui/button";
 import FileIcon from "./FileIcon.vue";
 import MobileFileItem from "./home/MobileFileItem.vue";
