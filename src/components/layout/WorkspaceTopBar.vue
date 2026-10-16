@@ -50,10 +50,21 @@
           <span v-if="showMobileActions" class="absolute -top-1 -right-1 h-2 w-2 bg-primary-500 rounded-full"></span>
         </Button>
       </div>
+      <Button
+        v-if="collapsible"
+        variant="ghost"
+        size="icon"
+        :aria-label="isCollapsed ? 'Expand header details' : 'Collapse header details'"
+        :title="isCollapsed ? 'Expand header details' : 'Collapse header details'"
+        @click="toggleDetails"
+      >
+        <ChevronDown v-if="isCollapsed" class="h-4 w-4" />
+        <ChevronUp v-else class="h-4 w-4" />
+      </Button>
     </div>
 
     <!-- Mobile Navigation -->
-    <div v-if="showNavigation && breadcrumbs?.length" class="flex items-center gap-2 mb-2 sm:mb-3 md:hidden">
+    <div v-if="showDetails && showNavigation && breadcrumbs?.length" class="flex items-center gap-2 mb-2 sm:mb-3 md:hidden">
       <button
         class="inline-flex items-center justify-center h-7 w-7 rounded-md border transition-colors shrink-0"
         :class="navigationButtonClass"
@@ -79,7 +90,7 @@
     </div>
 
     <!-- Mobile Stats & Filters -->
-    <div class="flex flex-col gap-2 sm:gap-3 md:hidden">
+    <div v-if="showDetails" class="flex flex-col gap-2 sm:gap-3 md:hidden">
       <!-- Mobile Stats -->
       <div v-if="stats?.length" class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
         <template v-for="(stat, index) in stats" :key="stat.label">
@@ -136,7 +147,7 @@
       leave-from-class="transform opacity-100 scale-100"
       leave-to-class="transform opacity-0 scale-95"
     >
-      <div v-if="showMobileActions && getVisibleActions().length" class="sm:hidden mt-2">
+      <div v-if="showDetails && showMobileActions && getVisibleActions().length" class="sm:hidden mt-2">
         <div class="relative">
           <!-- Dropdown Arrow -->
           <div class="absolute -top-2 right-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-gray-50 dark:border-b-gray-800"></div>
@@ -197,7 +208,7 @@
     </Transition>
 
     <!-- Mobile Filters Dropdown -->
-    <div v-if="showMobileFilters && filters?.length" class="sm:hidden mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div v-if="showDetails && showMobileFilters && filters?.length" class="sm:hidden mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       <div class="grid grid-cols-2 gap-2">
         <Button
           v-for="filter in filters.slice(3)"
@@ -286,10 +297,21 @@
             <MoreHorizontal class="h-4 w-4" />
           </Button>
         </div>
+        <Button
+          v-if="collapsible"
+          variant="ghost"
+          size="icon"
+          :aria-label="isCollapsed ? 'Expand header details' : 'Collapse header details'"
+          :title="isCollapsed ? 'Expand header details' : 'Collapse header details'"
+          @click="toggleDetails"
+        >
+          <ChevronDown v-if="isCollapsed" class="h-4 w-4" />
+          <ChevronUp v-else class="h-4 w-4" />
+        </Button>
       </div>
 
       <!-- Second Row: Stats + Filters + View Options -->
-      <div class="flex flex-row items-center gap-3 flex-wrap">
+      <div v-if="showDetails" class="flex flex-row items-center gap-3 flex-wrap">
         <slot name="stats">
           <div v-if="stats?.length" class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <template v-for="(stat, index) in stats" :key="stat.label">
@@ -401,9 +423,20 @@
             </template>
           </component>
         </div>
+        <Button
+          v-if="collapsible"
+          variant="ghost"
+          size="icon"
+          :aria-label="isCollapsed ? 'Expand header details' : 'Collapse header details'"
+          :title="isCollapsed ? 'Expand header details' : 'Collapse header details'"
+          @click="toggleDetails"
+        >
+          <ChevronDown v-if="isCollapsed" class="h-4 w-4" />
+          <ChevronUp v-else class="h-4 w-4" />
+        </Button>
       </div>
 
-      <div class="flex flex-row items-center gap-4">
+      <div v-if="showDetails" class="flex flex-row items-center gap-4">
         <slot name="stats">
           <div v-if="stats?.length" class="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
             <template v-for="(stat, index) in stats" :key="stat.label">
@@ -449,8 +482,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ArrowUp, MoreHorizontal, X } from 'lucide-vue-next'
+import { ArrowUp, ChevronDown, ChevronUp, MoreHorizontal, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import { isWorkspaceHeaderExpanded } from '@/lib/workspaceHeader'
 
 interface BreadcrumbItem {
   id?: string | null
@@ -534,6 +568,10 @@ const props = defineProps({
   viewOptions: {
     type: Array as () => ViewOption[],
     default: () => []
+  },
+  collapsible: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -544,6 +582,8 @@ const showMobileActions = ref(false)
 const showMobileFilters = ref(false)
 const showTabletActions = ref(false)
 const showTabletFilters = ref(false)
+const isCollapsed = ref(false)
+const showDetails = computed(() => isWorkspaceHeaderExpanded(props.collapsible, isCollapsed.value))
 
 // Computed property to filter actions based on selection state
 const getVisibleActions = () => {
@@ -568,6 +608,10 @@ const emitAction = (action: ActionItem) => {
     action.onClick()
   }
   emit('action', action)
+}
+
+const toggleDetails = () => {
+  isCollapsed.value = !isCollapsed.value
 }
 </script>
 

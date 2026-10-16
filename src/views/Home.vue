@@ -11,6 +11,7 @@
         :breadcrumbs="breadcrumbs"
         :can-navigate-up="canNavigateUp"
         :actions="topBarActions"
+        collapsible
         :has-selection="selectedFiles.size > 0"
         :selected-count="selectedFiles.size"
         @navigate-up="handleNavigateUp"
@@ -114,42 +115,6 @@
           </Dialog>
         </template>
       </WorkspaceTopBar>
-
-      <section
-        v-if="!currentFolderId && suggestedFiles.length > 0"
-        class="rounded-xl border border-slate-200/80 bg-white/85 p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/80 sm:p-5"
-        aria-labelledby="suggested-files-heading"
-      >
-        <div class="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 id="suggested-files-heading" class="text-base font-semibold text-slate-950 dark:text-white">Suggested files</h2>
-            <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Recent activity</p>
-          </div>
-          <span class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ suggestedFiles.length }} files</span>
-        </div>
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <button
-            v-for="file in suggestedFiles"
-            :key="file.id"
-            class="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-left transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-cyan-500"
-            @click="file.id && openFile(file.id)"
-          >
-            <div class="flex h-28 items-center justify-center overflow-hidden bg-white dark:bg-slate-900">
-              <img
-                v-if="file.thumbnail_url"
-                :src="file.thumbnail_url"
-                :alt="file.title"
-                class="h-full w-full object-cover"
-              />
-              <FileText v-else class="h-9 w-9 text-cyan-600 dark:text-cyan-300" aria-hidden="true" />
-            </div>
-            <div class="p-3">
-              <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ file.title }}</p>
-              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ formatActivityDate(file) }}</p>
-            </div>
-          </button>
-        </div>
-      </section>
 
       <ScrollArea
         :class="[
@@ -332,7 +297,6 @@ import MediaViewer from '@/components/media/MediaViewer.vue'
 import Landing from './Landing.vue'
 import type { FileData } from '@/types'
 import { useMediaTypes } from '@/composables/useMediaTypes'
-import { selectSuggestedFiles } from '@/lib/fileSuggestions'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -442,8 +406,6 @@ const sortedItems = computed(() => {
   }
   return list.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
 })
-
-const suggestedFiles = computed(() => selectSuggestedFiles<FileData>(fileStore.allFiles, 8))
 
 function buildContextMenuActions({
   selectedIds,
@@ -635,15 +597,6 @@ function handleSort(sort: HomeSort) {
 
 function handleViewChange(mode: HomeViewMode) {
   viewMode.value = mode
-}
-
-function formatActivityDate(file: FileData): string {
-  const activity = file.last_viewed || file.updated_at || file.created_at
-  if (!activity) return 'Recent file'
-
-  const date = new Date(activity)
-  if (Number.isNaN(date.getTime())) return 'Recent file'
-  return `Updated ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
 }
 
 async function handleNavigateUp() {
