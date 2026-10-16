@@ -477,6 +477,10 @@
         <slot name="extra" />
       </div>
     </div>
+
+    <div v-if="showDetails && $slots.insights" class="workspace-topbar-insights">
+      <slot name="insights" />
+    </div>
   </header>
 </template>
 
@@ -644,6 +648,10 @@ const toggleDetails = () => {
 .workspace-topbar > * {
   position: relative;
   z-index: 1;
+}
+
+.workspace-topbar-insights {
+  margin-top: 0.85rem;
 }
 
 .dark .workspace-topbar {

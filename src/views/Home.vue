@@ -62,6 +62,31 @@
           </div>
         </template>
 
+        <template #insights>
+          <section class="grid gap-4 rounded-xl border border-slate-200/80 bg-white/65 p-4 shadow-sm backdrop-blur-sm dark:border-slate-700/80 dark:bg-slate-950/45 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">File summary</span>
+              <span
+                class="rounded-full px-2.5 py-1 text-xs font-bold"
+                :class="fileStore.isOnline ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200'"
+              >
+                {{ workspaceStatusLabel }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div v-for="stat in workspaceStats" :key="stat.label" class="min-w-20 rounded-lg border border-slate-200/80 bg-white/75 px-3 py-2.5 dark:border-slate-700/70 dark:bg-slate-900/70">
+                <span class="block text-lg font-extrabold text-slate-950 dark:text-white">{{ stat.value }}</span>
+                <span class="mt-0.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ stat.label }}</span>
+              </div>
+              <div class="min-w-20 rounded-lg border border-slate-200/80 bg-white/75 px-3 py-2.5 dark:border-slate-700/70 dark:bg-slate-900/70">
+                <span class="block text-lg font-extrabold text-slate-950 dark:text-white">{{ selectedFiles.size }}</span>
+                <span class="mt-0.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Selected</span>
+              </div>
+            </div>
+          </section>
+        </template>
+
         <template #action-new>
           <Dialog>
             <DialogTrigger asChild>
@@ -297,6 +322,7 @@ import MediaViewer from '@/components/media/MediaViewer.vue'
 import Landing from './Landing.vue'
 import type { FileData } from '@/types'
 import { useMediaTypes } from '@/composables/useMediaTypes'
+import { summarizeWorkspaceFiles } from '@/lib/workspaceInsights'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -405,6 +431,19 @@ const sortedItems = computed(() => {
     })
   }
   return list.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+})
+
+const workspaceSummary = computed(() => summarizeWorkspaceFiles(fileStore.allFiles))
+
+const workspaceStats = computed(() => [
+  { label: 'Files', value: workspaceSummary.value.files },
+  { label: 'Documents', value: workspaceSummary.value.documents },
+  { label: 'Sheets', value: workspaceSummary.value.sheets }
+])
+
+const workspaceStatusLabel = computed(() => {
+  if (fileStore.isSyncing) return 'Syncing'
+  return fileStore.isOnline ? 'Online' : 'Offline'
 })
 
 function buildContextMenuActions({
