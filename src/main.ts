@@ -92,7 +92,7 @@ const routes = [
     path: '/signing/editor/:signingRequestId',
     name: 'signing-editor',
     component: () => import('./views/SigningEditor.vue'),
-    meta: { hideLayout: true },
+    meta: { hideLayout: true, public: true },
   },
   {
     path: '/signing/sign/:token',

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { SigningFieldType } from '@/types/signing';
 
-defineProps<{
+const props = defineProps<{
   activeSignerColor?: string;
+  uploadingStamp?: boolean;
 }>();
 
 const emit = defineEmits<{
   addField: [type: SigningFieldType];
+  addImage: [assigned: boolean];
 }>();
 
 const fieldTypes: Array<{ type: SigningFieldType; label: string; icon: string }> = [
@@ -47,6 +49,44 @@ function onDragStart(e: DragEvent, type: SigningFieldType) {
           {{ ft.icon }}
         </span>
         <span class="mt-2 block font-semibold text-slate-800">{{ ft.label }}</span>
+      </button>
+    </div>
+
+    <div class="mt-5 space-y-2">
+      <h3 class="px-1 text-xs font-semibold uppercase tracking-[0.22em] text-stone-500">Images</h3>
+      <button
+        type="button"
+        data-testid="add-image-field"
+        class="w-full cursor-pointer rounded-2xl border border-stone-200 bg-white px-3 py-3 text-xs shadow-sm transition hover:-translate-y-0.5 hover:border-stone-300 hover:bg-stone-50"
+        @click="emit('addImage', true)"
+      >
+        <span
+          class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl text-xs font-bold text-white shadow-sm"
+          :style="{ backgroundColor: activeSignerColor || '#3B82F6' }"
+        >
+          IMG
+        </span>
+        <span class="mt-2 block font-semibold text-slate-800">Image (signer uploads)</span>
+        <span class="mt-1 block text-[11px] leading-4 text-stone-500">
+          Places an empty slot for the selected signer, e.g. a passport photo.
+        </span>
+      </button>
+      <button
+        type="button"
+        data-testid="add-stamp-field"
+        :disabled="uploadingStamp"
+        class="w-full cursor-pointer rounded-2xl border border-stone-200 bg-white px-3 py-3 text-xs shadow-sm transition hover:-translate-y-0.5 hover:border-stone-300 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
+        @click="emit('addImage', false)"
+      >
+        <span class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-stone-700 text-xs font-bold text-white shadow-sm">
+          IMG
+        </span>
+        <span class="mt-2 block font-semibold text-slate-800">
+          {{ uploadingStamp ? 'Uploading…' : 'Stamp / Logo' }}
+        </span>
+        <span class="mt-1 block text-[11px] leading-4 text-stone-500">
+          Uploads an image and places it on the document for everyone.
+        </span>
       </button>
     </div>
   </div>

@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient, postFormData } from './apiClient';
 import type {
   SigningTemplate,
   SigningSession,
@@ -13,6 +13,130 @@ const EDITOR_TOKEN_HEADER = 'X-Signing-Editor-Token';
 // Signing API calls go to the mailer_web backend (not the VenSuite API)
 // The base URL may differ from VenSuite's own API
 const SIGNING_API_BASE = import.meta.env.VITE_SIGNING_API_BASE_URL || API_BASE.replace('/api/v1', '');
+
+const DEFAULT_RETRY_DELAY_MS = 2000;
+const MIN_RETRY_DELAY_MS = 500;
+const MAX_RETRY_DELAY_MS = 5000;
+
+// The backend leases are 15 seconds for image uploads and 60 seconds for
+// completion. Leave a small margin while keeping the wait finite.
+export const SIGNING_UPLOAD_RETRY_DEADLINE_MS = 20000;
+export const SIGNING_SUBMIT_RETRY_DEADLINE_MS = 70000;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function firstValidationMessage(errors: unknown): string | null {
+  if (!isRecord(errors)) return null;
+
+  for (const messages of Object.values(errors)) {
+    if (!Array.isArray(messages)) continue;
+    const message = messages.find(value => typeof value === 'string' && value.trim() !== '');
+    if (typeof message === 'string') return message.trim();
+  }
+
+  return null;
+}
+
+/**
+ * Extracts the most useful user-facing text from the normalized API error shape.
+ * Validation responses often include a generic top-level message, so include
+ * the first field detail when one is available to make the error actionable.
+ */
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (isRecord(error)) {
+    const data = error.data;
+    if (isRecord(data)) {
+      const explicitError = typeof data.error === 'string' ? data.error.trim() : '';
+      if (explicitError) return explicitError;
+
+      const message = typeof data.message === 'string' ? data.message.trim() : '';
+      const validationMessage = firstValidationMessage(data.errors);
+      if (message && validationMessage) return `${message} ${validationMessage}`;
+      if (message) return message;
+      if (validationMessage) return validationMessage;
+    }
+
+    const directMessage = typeof error.message === 'string' ? error.message.trim() : '';
+    if (directMessage) return directMessage;
+  }
+
+  return fallback;
+}
+
+function headerValue(headers: unknown, name: string): unknown {
+  if (!isRecord(headers)) return undefined;
+
+  const lowerName = name.toLowerCase();
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() === lowerName) return headers[key];
+  }
+
+  const get = headers.get;
+  if (typeof get === 'function') {
+    try {
+      return get.call(headers, name);
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
+}
+
+/** Returns a bounded retry delay, honoring a numeric Retry-After response header. */
+export function getRetryAfterDelayMs(error: unknown): number {
+  const rawValue = headerValue(isRecord(error) ? error.headers : undefined, 'retry-after');
+  const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+  const seconds = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim() !== ''
+      ? Number(value.trim())
+      : Number.NaN;
+
+  if (!Number.isFinite(seconds) || seconds < 0) return DEFAULT_RETRY_DELAY_MS;
+
+  return Math.min(MAX_RETRY_DELAY_MS, Math.max(MIN_RETRY_DELAY_MS, seconds * 1000));
+}
+
+export function isSigningLockContention(error: unknown): boolean {
+  return isRecord(error)
+    && error.status === 409
+    && isRecord(error.data)
+    && error.data.code === 'signing_operation_in_progress';
+}
+
+export interface RetryTimingOptions {
+  now?: () => number;
+  sleep?: (delayMs: number) => Promise<void>;
+}
+
+export async function retryOnSigningLock<T>(
+  operation: (attempt: number) => Promise<T>,
+  deadlineMs: number,
+  options: RetryTimingOptions = {}
+): Promise<T> {
+  const now = options.now ?? (() => Date.now());
+  const sleep = options.sleep ?? ((delayMs: number) =>
+    new Promise<void>(resolve => setTimeout(resolve, delayMs)));
+  const startedAt = now();
+
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await operation(attempt);
+    } catch (error) {
+      if (!isSigningLockContention(error)) throw error;
+
+      const elapsedMs = now() - startedAt;
+      if (elapsedMs >= deadlineMs) throw error;
+
+      const remainingMs = deadlineMs - elapsedMs;
+      const delayMs = Math.min(getRetryAfterDelayMs(error), remainingMs);
+      await sleep(delayMs);
+    }
+  }
+}
 
 async function fetchEditorSession(
   signingRequestId: string,
@@ -46,6 +170,52 @@ async function saveFields(
   );
 }
 
+export interface UploadedSigningImage {
+  url: string;
+  path: string;
+}
+
+async function uploadEditorImage(
+  signingRequestId: string,
+  file: File,
+  token?: string
+): Promise<UploadedSigningImage> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers[EDITOR_TOKEN_HEADER] = token;
+  }
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  // The shared JSON Content-Type would stringify FormData and discard the file.
+  return postFormData<UploadedSigningImage>(
+    `${SIGNING_API_BASE}/api/composer/signing/${signingRequestId}/image`,
+    formData,
+    { headers }
+  );
+}
+
+async function uploadSignerImage(
+  signerToken: string,
+  fieldId: string,
+  file: File
+): Promise<UploadedSigningImage> {
+  const formData = new FormData();
+  formData.append('fieldId', fieldId);
+  formData.append('image', file);
+
+  return postFormData<UploadedSigningImage>(
+    `${SIGNING_API_BASE}/api/signing/upload-image/${signerToken}`,
+    formData
+  );
+}
+
+// Signer-uploaded values remain private storage paths; previews use the token-gated route.
+function signerImageUrl(signerToken: string, fieldId: string): string {
+  return `${SIGNING_API_BASE}/api/signing/image/${signerToken}/${fieldId}`;
+}
+
 async function fetchSignerSession(signerToken: string): Promise<SigningSession> {
   // This is a public endpoint — no auth header needed, the token IS the auth
   const response = await apiClient.get(
@@ -73,13 +243,11 @@ async function submitCompletion(
     const blob = new Blob([ab], { type: 'application/pdf' });
     formData.append('filled_pdf', blob, 'filled.pdf');
 
-    // Let the browser/axios set Content-Type automatically — it must include
-    // the multipart boundary, which a manual header would strip.
-    const response = await apiClient.post(
+    // The shared JSON Content-Type would stringify FormData and discard the PDF.
+    return postFormData<SigningCompletionResponse>(
       `${SIGNING_API_BASE}/api/signing/complete/${signerToken}`,
       formData
     );
-    return response.data;
   }
 
   const response = await apiClient.post(
@@ -158,12 +326,12 @@ async function prepareSigningRequest(params: PrepareSigningRequestParams): Promi
   if (params.mail_id) formData.append('mail_id', params.mail_id);
   if (params.send_email !== undefined) formData.append('send_email', String(params.send_email));
 
-  // Let the browser/axios set Content-Type automatically (boundary must be included)
-  const response = await apiClient.post(
+  // The shared JSON Content-Type would stringify FormData and discard the document.
+  const response = await postFormData<{ data: PrepareSigningRequestResponse }>(
     `${SIGNING_API_BASE}/api/v1/signing-requests/prepare`,
     formData
   );
-  return response.data.data;
+  return response.data;
 }
 
 async function sendSigningRequest(
@@ -209,6 +377,9 @@ async function getSignerUrl(id: string, email?: string): Promise<{ signing_url: 
 export const signingApi = {
   fetchEditorSession,
   saveFields,
+  uploadEditorImage,
+  uploadSignerImage,
+  signerImageUrl,
   fetchSignerSession,
   submitCompletion,
   fetchSignedDocumentStatus,

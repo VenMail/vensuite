@@ -26,62 +26,93 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 20000,
 });
 
-// Automatically attach auth token from localStorage to every request
-apiClient.interceptors.request.use((config) => {
-  try {
-    const token = localStorage.getItem('venAuthToken');
-    if (token && !config.headers?.Authorization) {
-      config.headers = config.headers || {};
-      (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
-    }
-  } catch {
-    // Silently ignore localStorage errors
-  }
-  return config;
+// A JSON Content-Type makes Axios stringify FormData and drop File contents.
+// Uploads get a much longer timeout than JSON calls: the server accepts files up
+// to 10 MB, which can take well over 20s to transfer on a slow mobile connection.
+// A timeout only caps the worst case, so the fast path is unaffected.
+const MULTIPART_UPLOAD_TIMEOUT_MS = 120000;
+
+export const multipartApiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: MULTIPART_UPLOAD_TIMEOUT_MS,
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response) {
-      try {
-        const pinia = getActivePinia();
-        if (pinia) {
-          const authStore = useAuthStore(pinia);
-          const status = error.response.status;
-          const responseData = error.response.data;
-          const requestUrl = String(error.config?.url || "");
-          const isSigningRequest =
-            requestUrl.includes("/api/signing/session/") ||
-            requestUrl.includes("/api/signing/complete/") ||
-            requestUrl.includes("/api/signing/editor/") ||
-            requestUrl.includes("/api/composer/signing/");
-          const isTokenIssue =
-            !isSigningRequest &&
-            (status === 401 ||
-              status === 419 ||
-              (status === 403 &&
-                typeof responseData?.message === "string" &&
-                /token|unauthorized|unauthenticated/i.test(responseData.message)));
+// Signing routes are authenticated by a signing-link token (or the editor
+// builder token), not by the VenSuite app session. Keep this as a namespace
+// predicate so newly added token routes are covered by default, while the
+// app-authenticated completed-document download remains an explicit exception.
+const TOKEN_AUTHENTICATED_SIGNING_ROUTE = /(?:^|\/)api\/(?:signing\/(?!completed(?:\/|$))|composer\/signing)/;
 
-          if (isTokenIssue && authStore.isAuthenticated && authStore.getToken()) {
-            await authStore.handleTokenExpiration();
-          }
-        }
-      } catch {
-        // Keep the original request failure if auth cleanup cannot run.
+function isTokenAuthenticatedSigningRequest(url: string): boolean {
+  return TOKEN_AUTHENTICATED_SIGNING_ROUTE.test(url);
+}
+
+function registerInterceptors(client: AxiosInstance): void {
+  // Automatically attach auth token from localStorage to every request
+  client.interceptors.request.use((config) => {
+    try {
+      const token = localStorage.getItem('venAuthToken');
+      if (token && !config.headers?.Authorization) {
+        config.headers = config.headers || {};
+        (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
       }
-
-      return Promise.reject({
-        status: error.response.status,
-        data: error.response.data,
-        headers: error.response.headers,
-        config: error.config,
-      });
+    } catch {
+      // Silently ignore localStorage errors
     }
-    return Promise.reject(error);
-  }
-);
+    return config;
+  });
+
+  client.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      if (error.response) {
+        try {
+          const pinia = getActivePinia();
+          if (pinia) {
+            const authStore = useAuthStore(pinia);
+            const status = error.response.status;
+            const responseData = error.response.data;
+            const requestUrl = String(error.config?.url || "");
+            const isSigningRequest = isTokenAuthenticatedSigningRequest(requestUrl);
+            const isTokenIssue =
+              !isSigningRequest &&
+              (status === 401 ||
+                status === 419 ||
+                (status === 403 &&
+                  typeof responseData?.message === "string" &&
+                  /token|unauthorized|unauthenticated/i.test(responseData.message)));
+
+            if (isTokenIssue && authStore.isAuthenticated && authStore.getToken()) {
+              await authStore.handleTokenExpiration();
+            }
+          }
+        } catch {
+          // Keep the original request failure if auth cleanup cannot run.
+        }
+
+        return Promise.reject({
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers,
+          config: error.config,
+        });
+      }
+      return Promise.reject(error);
+    }
+  );
+}
+
+registerInterceptors(apiClient);
+registerInterceptors(multipartApiClient);
+
+export async function postFormData<T>(
+  url: string,
+  formData: FormData,
+  config?: AxiosRequestConfig
+): Promise<T> {
+  const response = await multipartApiClient.post<T>(url, formData, config);
+  return response.data;
+}
 
 export const withRequestOptions = (options: RequestOptions = {}): AxiosRequestConfig => {
   const { auth, idempotencyKey, config } = options;

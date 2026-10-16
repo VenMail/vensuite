@@ -1,0 +1,1561 @@
+import { test, expect, type Page, type Request, type Route } from '@playwright/test';
+import { minimalPdfBytes, multiPagePdfBytes, onePixelPng } from './fixtures/pdfFixtures';
+
+const APP = process.env.TEST_BASE_URL || 'http://localhost:5173';
+const SIGNING_ORIGIN = (process.env.VITE_SIGNING_API_BASE_URL || 'http://localhost:8000').replace(
+  /\/api\/v1\/?$/,
+  ''
+);
+
+const REQUEST_ID = 'req-123';
+const EDITOR_TOKEN = 'editor-token-abc';
+const SIGNER_TOKEN = 'signer-token-abc';
+const DOCUMENT_URL = `${SIGNING_ORIGIN}/api/signing/editor/${REQUEST_ID}/document`;
+const CORS_HEADERS = { 'access-control-allow-origin': '*' };
+
+interface SavedTemplate {
+  signing_fields: Array<Record<string, unknown>>;
+  signers: Array<Record<string, unknown>>;
+}
+
+interface CapturedRequest {
+  request: Request | null;
+}
+
+async function captureMultipartRequest(
+  page: Page,
+  url: string,
+  responsePayload: unknown
+): Promise<CapturedRequest> {
+  const captured: CapturedRequest = { request: null };
+
+  await page.route(url, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    captured.request = route.request();
+    return fulfillJson(route, responsePayload);
+  });
+
+  return captured;
+}
+
+function expectMultipartFileRequest(
+  request: Request,
+  filename: string,
+  magicBytes: number[],
+  emptyJsonPart: string
+): void {
+  expect(request.headers()['content-type']).toMatch(/^multipart\/form-data; boundary=/);
+
+  const body = request.postDataBuffer();
+  expect(body).not.toBeNull();
+  if (!body) return;
+
+  const rawBody = body.toString('latin1');
+  expect(rawBody).toContain(`filename="${filename}"`);
+  expect(body.includes(Buffer.from(magicBytes))).toBe(true);
+  expect(rawBody).not.toContain(emptyJsonPart);
+}
+
+function expectMultipartImageRequest(request: Request, filename: string): void {
+  expectMultipartFileRequest(request, filename, [0x89, 0x50, 0x4e, 0x47], '"image":{}');
+}
+
+function fieldValuesFromRequest(request: Request): Array<{ fieldId: string; value: string | boolean }> {
+  const body = request.postDataBuffer();
+  expect(body).not.toBeNull();
+  const rawBody = body!.toString('latin1');
+
+  if (rawBody.trimStart().startsWith('{')) {
+    const payload = JSON.parse(rawBody) as {
+      field_values?: Array<{ fieldId: string; value: string | boolean }>;
+    };
+    expect(payload.field_values).toBeDefined();
+    return payload.field_values!;
+  }
+
+  const fieldValuesJson = rawBody.match(/name="field_values"\r\n\r\n([^\r\n]*)/)?.[1];
+  expect(fieldValuesJson).toBeTruthy();
+  return JSON.parse(fieldValuesJson!) as Array<{ fieldId: string; value: string | boolean }>;
+}
+
+async function fulfillJson(route: Route, payload: unknown, status = 200): Promise<void> {
+  await route.fulfill({
+    status,
+    contentType: 'application/json',
+    headers: CORS_HEADERS,
+    body: JSON.stringify(payload),
+  });
+}
+
+async function fulfillPreflight(route: Route): Promise<void> {
+  await route.fulfill({
+    status: 204,
+    headers: {
+      ...CORS_HEADERS,
+      'access-control-allow-methods': 'GET, POST, OPTIONS',
+      'access-control-allow-headers': 'content-type, x-signing-editor-token, authorization',
+    },
+    body: '',
+  });
+}
+
+async function mockSignerImage(page: Page, signerToken: string, fieldId: string): Promise<void> {
+  await page.route(`**/api/signing/image/${signerToken}/${fieldId}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'image/png',
+      headers: CORS_HEADERS,
+      body: onePixelPng(),
+    })
+  );
+}
+
+async function mockDocument(page: Page, pdfBytes: Buffer = minimalPdfBytes()): Promise<void> {
+  await page.route(DOCUMENT_URL, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/pdf',
+      headers: CORS_HEADERS,
+      body: pdfBytes,
+    })
+  );
+}
+
+const ONE_PIXEL_PNG_DATA_URL = `data:image/png;base64,${onePixelPng().toString('base64')}`;
+
+function savedSignature(label: string) {
+  return {
+    id: `sig-${label}`,
+    label,
+    dataUrl: ONE_PIXEL_PNG_DATA_URL,
+    type: 'drawn',
+    createdAt: Date.now(),
+  };
+}
+
+async function seedSavedSignatures(page: Page, email: string, entries: unknown[]): Promise<void> {
+  await page.addInitScript(
+    ([key, value]) => window.localStorage.setItem(key, value),
+    [`vensuite:saved-signatures:${email.trim().toLowerCase()}`, JSON.stringify(entries)]
+  );
+}
+
+function signatureField(id: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id,
+    type: 'signature',
+    pageIndex: 0,
+    x: 10,
+    y: 20,
+    width: 25,
+    height: 10,
+    signerEmail: 'alice@example.com',
+    label: `Signature ${id}`,
+    required: true,
+    ...overrides,
+  };
+}
+
+async function mockSignerSession(
+  page: Page,
+  fields: Array<Record<string, unknown>>,
+  signerEmail = 'alice@example.com',
+  sessionOverrides: Record<string, unknown> = {}
+): Promise<void> {
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail,
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields,
+      ...sessionOverrides,
+    })
+  );
+}
+
+async function mockEditorSession(
+  page: Page,
+  fields: Array<Record<string, unknown>>,
+  signers: Array<Record<string, unknown>>,
+  pageCount = 1
+): Promise<void> {
+  await page.route(`**/api/signing/editor/${REQUEST_ID}`, (route) =>
+    fulfillJson(route, {
+      id: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount,
+      fields,
+      signers,
+    })
+  );
+}
+
+async function captureSavedTemplate(page: Page): Promise<{ value: SavedTemplate | null }> {
+  const captured: { value: SavedTemplate | null } = { value: null };
+
+  await page.route(`**/api/composer/signing/${REQUEST_ID}/save-template`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    captured.value = route.request().postDataJSON() as SavedTemplate;
+    return fulfillJson(route, {
+      signing_request_id: REQUEST_ID,
+      field_count: captured.value.signing_fields.length,
+      signers: captured.value.signers,
+    });
+  });
+
+  return captured;
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.goto(APP);
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('venAuthToken', 'playwright-test-token');
+  });
+});
+
+test('later signer sees a completed signature without being able to edit it', async ({ page }) => {
+  await mockDocument(page);
+  await mockSignerSession(page, [
+    signatureField('bob-signature', { signerEmail: 'bob@example.com', y: 40 }),
+  ], 'bob@example.com', {
+    completedFields: [signatureField('alice-signature', {
+      signerEmail: 'alice@example.com',
+      value: ONE_PIXEL_PNG_DATA_URL,
+    })],
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+
+  await expect(page.locator('img[alt="Completed signature"]')).toBeVisible();
+  await expect(page.locator('img[alt="Completed signature"]')).toHaveAttribute('src', ONE_PIXEL_PNG_DATA_URL);
+  await expect(page.getByRole('button', { name: 'Click to Sign' })).toHaveCount(1);
+});
+
+test('does not log out the app when an expired signer image token returns 401', async ({ page }) => {
+  const expiredMessage = 'Invalid or expired signing link';
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, { error: expiredMessage }, 401)
+  );
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'passport.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect(page.getByRole('alert')).toContainText(expiredMessage);
+  await expect(page).toHaveURL(new RegExp(`/signing/sign/${SIGNER_TOKEN}$`));
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('venAuthToken'))).toBe('playwright-test-token');
+});
+
+test('still logs out the app for a 401 from a normal app API route', async ({ page }) => {
+  await page.goto(`${APP}/home`);
+  await page.evaluate(() => localStorage.setItem('venAuthToken', 'playwright-test-token'));
+  await page.reload();
+  await page.route('**/api/v1/protected-resource', (route) =>
+    fulfillJson(route, { message: 'Unauthenticated.' }, 401)
+  );
+
+  const result = await page.evaluate(async () => {
+    const { apiClient } = await import('/src/services/apiClient.ts');
+    try {
+      await apiClient.get('/api/v1/protected-resource');
+      return { status: 200 };
+    } catch (error: any) {
+      return { status: error?.status };
+    }
+  });
+
+  expect(result).toEqual({ status: 401 });
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/login');
+  expect(await page.evaluate(() => localStorage.getItem('venAuthToken'))).toBeNull();
+});
+
+test('still logs out the app for an app-authenticated completed-document route', async ({ page }) => {
+  await page.goto(`${APP}/home`);
+  await page.evaluate(() => localStorage.setItem('venAuthToken', 'playwright-test-token'));
+  await page.reload();
+  await page.route('**/api/signing/completed/req-123/signed-document', (route) =>
+    fulfillJson(route, { message: 'Unauthenticated.' }, 401)
+  );
+
+  const result = await page.evaluate(async () => {
+    const { apiClient } = await import('/src/services/apiClient.ts');
+    try {
+      await apiClient.get('/api/signing/completed/req-123/signed-document');
+      return { status: 200 };
+    } catch (error: any) {
+      return { status: error?.status };
+    }
+  });
+
+  expect(result).toEqual({ status: 401 });
+  await expect.poll(() => new URL(page.url()).pathname).toBe('/login');
+  expect(await page.evaluate(() => localStorage.getItem('venAuthToken'))).toBeNull();
+});
+
+test('opens a tokenized signing editor for a guest session', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    await mockDocument(page);
+    await mockEditorSession(page, [], [
+      { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+    ]);
+
+    await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+
+    await expect(page).toHaveURL(new RegExp(`/signing/editor/${REQUEST_ID}\\?token=${EDITOR_TOKEN}$`));
+    await expect(page.getByRole('heading', { name: 'Passport Form.pdf' })).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test('shows an invalid-token editor error without redirecting a guest to login', async ({ browser }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  try {
+    await page.route(`**/api/signing/editor/${REQUEST_ID}`, (route) =>
+      fulfillJson(route, { error: 'Invalid or expired editor link' }, 401)
+    );
+
+    await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=invalid-editor-token`);
+
+    await expect(page).toHaveURL(/\/signing\/editor\/req-123\?token=invalid-editor-token$/);
+    await expect(page.getByText('Invalid or expired editor link')).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test('places palette fields on the page the sender is viewing', async ({ page }) => {
+  await mockDocument(page, multiPagePdfBytes());
+  await mockEditorSession(
+    page,
+    [],
+    [{ email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' }],
+    2
+  );
+  const saved = await captureSavedTemplate(page);
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+  await expect(page.locator('.pdf-page')).toHaveCount(2);
+
+  await page.locator('.pdf-page').nth(1).click();
+  await page.getByTestId('add-image-field').click();
+  await page.locator('.pdf-page').nth(0).click();
+  await page.getByRole('button', { name: /Signature/ }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
+
+  await expect.poll(() => saved.value?.signing_fields.length).toBe(2);
+  expect(saved.value!.signing_fields.map(field => field.pageIndex)).toEqual([1, 0]);
+});
+
+test('places image fields for two different signers and saves them', async ({ page }) => {
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+    { email: 'bob@example.com', name: 'Bob Example', color: '#10B981' },
+  ]);
+  const saved = await captureSavedTemplate(page);
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+
+  await page.getByTestId('add-image-field').click();
+  await page.getByText('bob@example.com').click();
+  await page.getByTestId('add-image-field').click();
+  await page.getByRole('button', { name: 'Done' }).click();
+
+  await expect.poll(() => saved.value?.signing_fields.length).toBe(2);
+
+  const fields = saved.value!.signing_fields;
+  expect(fields[0]).toMatchObject({ type: 'image', signerEmail: 'alice@example.com', required: true });
+  expect(fields[1]).toMatchObject({ type: 'image', signerEmail: 'bob@example.com', required: true });
+  expect(fields[0].src).toBeUndefined();
+  expect(fields[0].path).toBeUndefined();
+});
+
+test('surfaces Laravel field validation details when saving the editor template', async ({ page }) => {
+  const validationMessage = 'The label field is required.';
+
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+  ]);
+  await page.route(`**/api/composer/signing/${REQUEST_ID}/save-template`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    return fulfillJson(route, {
+      message: 'The given data was invalid.',
+      errors: { 'signing_fields.0.label': [validationMessage] },
+    }, 422);
+  });
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+  await page.getByTestId('add-image-field').click();
+  await page.getByRole('button', { name: 'Done' }).click();
+
+  await expect(page.getByText('The given data was invalid. The label field is required.')).toBeVisible();
+});
+
+test('uploads a stamp image and saves it without a signer', async ({ page }) => {
+  const storedPath = `signing-images/${REQUEST_ID}/static/logo.png`;
+
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+  ]);
+  const saved = await captureSavedTemplate(page);
+  const upload = await captureMultipartRequest(
+    page,
+    `**/api/composer/signing/${REQUEST_ID}/image`,
+    { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath }
+  );
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+
+  await page.getByTestId('add-stamp-field').click();
+  await page.getByTestId('stamp-file-input').setInputFiles({
+    name: 'logo.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect.poll(() => upload.request !== null).toBe(true);
+  expectMultipartImageRequest(upload.request!, 'logo.png');
+
+  await page.getByRole('button', { name: 'Done' }).click();
+
+  await expect.poll(() => saved.value?.signing_fields.length).toBe(1);
+  const field = saved.value!.signing_fields[0];
+  expect(field).toMatchObject({ type: 'image', path: storedPath, required: false });
+  expect(field.signerEmail ?? '').toBe('');
+});
+
+test('renders placed image fields when the editor is reopened', async ({ page }) => {
+  const staticPath = `signing-images/${REQUEST_ID}/static/logo.png`;
+
+  await mockDocument(page);
+  await mockEditorSession(
+    page,
+    [
+      {
+        id: 'alice-passport',
+        type: 'image',
+        pageIndex: 0,
+        x: 10,
+        y: 20,
+        width: 25,
+        height: 10,
+        signerEmail: 'alice@example.com',
+        label: 'Passport photo',
+        required: true,
+      },
+      {
+        id: 'company-logo',
+        type: 'image',
+        pageIndex: 0,
+        x: 5,
+        y: 5,
+        width: 20,
+        height: 8,
+        required: false,
+        src: `${SIGNING_ORIGIN}/storage/${staticPath}`,
+        path: staticPath,
+      },
+    ],
+    [{ email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' }]
+  );
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+
+  await expect(page.getByText('Passport photo')).toBeVisible();
+  await expect(page.locator('img[alt="Placed image"]')).toHaveAttribute(
+    'src',
+    `${SIGNING_ORIGIN}/storage/${staticPath}`
+  );
+});
+
+test('uploads the signer image as real multipart form data', async ({ page }) => {
+  const storedPath = `signing-images/${REQUEST_ID}/fields/passport.png`;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  const upload = await captureMultipartRequest(
+    page,
+    `**/api/signing/upload-image/${SIGNER_TOKEN}`,
+    { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath }
+  );
+  await mockSignerImage(page, SIGNER_TOKEN, 'alice-passport');
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'passport.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect.poll(() => upload.request !== null).toBe(true);
+  expectMultipartImageRequest(upload.request!, 'passport.png');
+  await expect(page.locator('img[alt="Passport photo"]')).toHaveAttribute(
+    'src',
+    `${SIGNING_ORIGIN}/api/signing/image/${SIGNER_TOKEN}/alice-passport`
+  );
+});
+
+test('sends the client-filled PDF as real multipart form data', async ({ page }) => {
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  const result = await page.evaluate(
+    async ({ signerToken, pdfBytes }) => {
+      const { signingApi } = await import('/src/services/signing.ts');
+      return signingApi.submitCompletion(
+        signerToken,
+        [{ fieldId: 'alice-signature', value: 'signed' }],
+        new Uint8Array(pdfBytes)
+      );
+    },
+    { signerToken: SIGNER_TOKEN, pdfBytes: Array.from(minimalPdfBytes()) }
+  );
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  expectMultipartFileRequest(
+    completion.request!,
+    'filled.pdf',
+    [0x25, 0x50, 0x44, 0x46],
+    '"filled_pdf":{}'
+  );
+  expect(result.status).toBe('completed');
+});
+
+test('prepares signing requests as real multipart form data', async ({ page }) => {
+  const preparedSigningRequest = {
+    id: REQUEST_ID,
+    document_name: 'Contract.pdf',
+    status: 'draft',
+    document_url: `${SIGNING_ORIGIN}/api/signing/editor/${REQUEST_ID}/document`,
+    editor_url: `${SIGNING_ORIGIN}/signing/editor/${REQUEST_ID}`,
+    editor_token: EDITOR_TOKEN,
+    signers: [{ name: 'Alice Example', email: 'alice@example.com', status: 'pending' }],
+    created_at: '2026-09-24T00:00:00Z',
+  };
+  const prepare = await captureMultipartRequest(
+    page,
+    '**/api/v1/signing-requests/prepare',
+    { data: preparedSigningRequest }
+  );
+
+  const result = await page.evaluate(async ({ pdfBytes }) => {
+    const { signingApi } = await import('/src/services/signing.ts');
+    return signingApi.prepareSigningRequest({
+      document: new File([new Uint8Array(pdfBytes)], 'contract.pdf', {
+        type: 'application/pdf',
+      }),
+      document_name: 'Contract.pdf',
+      signers: [{ name: 'Alice Example', email: 'alice@example.com' }],
+      message: 'Please sign',
+      send_email: false,
+    });
+  }, { pdfBytes: Array.from(minimalPdfBytes()) });
+
+  await expect.poll(() => prepare.request !== null).toBe(true);
+  expectMultipartFileRequest(
+    prepare.request!,
+    'contract.pdf',
+    [0x25, 0x50, 0x44, 0x46],
+    '"document":{}'
+  );
+  expect(result).toMatchObject({ id: REQUEST_ID, editor_token: EDITOR_TOKEN });
+});
+
+test('lets a signer upload their passport image and submits the stored path', async ({ page }) => {
+  const storedPath = `signing-images/${REQUEST_ID}/fields/abc123.png`;
+  let submitted: { field_values?: Array<{ fieldId: string; value: string }> } | null = null;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    return fulfillJson(route, { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath });
+  });
+  await mockSignerImage(page, SIGNER_TOKEN, 'alice-passport');
+  await page.route(`**/api/signing/complete/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    submitted = route.request().postDataJSON();
+    return fulfillJson(route, {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    });
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+
+  const submit = page.getByRole('main').getByRole('button', { name: 'Complete Signing' });
+  await expect(submit).toBeDisabled();
+
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'passport.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect(page.locator('img[alt="Passport photo"]')).toHaveAttribute(
+    'src',
+    `${SIGNING_ORIGIN}/api/signing/image/${SIGNER_TOKEN}/alice-passport`
+  );
+  await expect(submit).toBeEnabled();
+
+  await submit.click();
+
+  await expect.poll(() => submitted?.field_values).toEqual([
+    { fieldId: 'alice-passport', value: storedPath },
+  ]);
+});
+
+test('keeps retrying a signer upload past the old three-attempt cutoff', async ({ page }) => {
+  let attempts = 0;
+  const storedPath = `signing-images/${REQUEST_ID}/fields/retry-passport.png`;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    attempts += 1;
+    if (attempts <= 7) {
+      return route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        headers: { ...CORS_HEADERS, 'retry-after': '0' },
+        body: JSON.stringify({
+          code: 'signing_operation_in_progress',
+          message: 'Another signing operation is already in progress for this request.',
+        }),
+      });
+    }
+    return fulfillJson(route, { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath });
+  });
+  await mockSignerImage(page, SIGNER_TOKEN, 'alice-passport');
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByTestId('signer-image-input')).toBeVisible();
+  await page.clock.install();
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'passport.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect.poll(() => attempts).toBeGreaterThan(0);
+  for (let tick = 0; tick < 15; tick += 1) {
+    await page.clock.runFor(1000);
+    await page.waitForTimeout(10);
+  }
+
+  await expect.poll(() => attempts).toBe(8);
+  await expect(page.locator('img[alt="Passport photo"]')).toHaveAttribute(
+    'src',
+    `${SIGNING_ORIGIN}/api/signing/image/${SIGNER_TOKEN}/alice-passport`
+  );
+});
+
+test('keeps retrying completion past the old three-attempt cutoff', async ({ page }) => {
+  let attempts = 0;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [],
+    })
+  );
+  await page.route(`**/api/signing/complete/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    attempts += 1;
+    if (attempts <= 5) {
+      return route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        headers: { ...CORS_HEADERS, 'retry-after': '0' },
+        body: JSON.stringify({
+          code: 'signing_operation_in_progress',
+          message: 'Another signing operation is already in progress for this request.',
+        }),
+      });
+    }
+    return fulfillJson(route, {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    });
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  const submit = page.getByRole('main').getByRole('button', { name: 'Complete Signing' });
+  await expect(submit).toBeEnabled();
+  await page.clock.install();
+  await submit.click();
+
+  await expect.poll(() => attempts).toBeGreaterThan(0);
+  for (let tick = 0; tick < 15; tick += 1) {
+    await page.clock.runFor(1000);
+    await page.waitForTimeout(10);
+  }
+
+  await expect.poll(() => attempts).toBe(6);
+  await expect(page.getByText('Signing Complete')).toBeVisible();
+});
+
+test('stops a signer upload retry loop at its deadline', async ({ page }) => {
+  let attempts = 0;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    attempts += 1;
+    return route.fulfill({
+      status: 409,
+      contentType: 'application/json',
+      headers: { ...CORS_HEADERS, 'retry-after': '0' },
+      body: JSON.stringify({ code: 'signing_operation_in_progress' }),
+    });
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.clock.install();
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'passport.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect.poll(() => attempts).toBeGreaterThan(0);
+  for (let tick = 0; tick < 30; tick += 1) {
+    await page.clock.runFor(1000);
+    await page.waitForTimeout(10);
+  }
+
+  await expect(page.getByRole('alert')).toBeVisible();
+  expect(attempts).toBeGreaterThan(3);
+  expect(attempts).toBeLessThanOrEqual(50);
+});
+
+test('shows only the image slots assigned to the signing signer', async ({ page }) => {
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      // The backend filters fields per signer, so Bob's slot is absent here.
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Alice passport',
+          required: true,
+        },
+      ],
+    })
+  );
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+
+  await expect(page.getByTestId('signer-image-input')).toHaveCount(1);
+  await expect(page.getByText('Alice passport')).toBeVisible();
+  await expect(page.getByText('Bob passport')).toHaveCount(0);
+});
+
+test('shows a read-only already-signed state for a completed signer with a persisted image', async ({ page }) => {
+  const storedPath = `signing-images/${REQUEST_ID}/fields/completed-passport.png`;
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+          value: storedPath,
+        },
+      ],
+    })
+  );
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+
+  await expect(page.getByText('Already Signed')).toBeVisible();
+  await expect(page.getByTestId('signer-image-input')).toHaveCount(0);
+  await expect(page.getByRole('main').getByRole('button', { name: 'Complete Signing' })).toHaveCount(0);
+  const answers = await page.evaluate(async () => {
+    const { useSigningPlayerStore } = await import('/src/store/signingPlayer.ts');
+    return useSigningPlayerStore().answers;
+  });
+  expect(answers['alice-passport']).toBe(storedPath);
+});
+
+test('warns on dirty editor route leave and does not warn after a confirmed save', async ({ page }) => {
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+  ]);
+  const saved = await captureSavedTemplate(page);
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+  await expect(page.getByText('Alice Example - alice@example.com')).toBeVisible();
+  await expect(page.locator('.pdf-page')).toHaveCount(1);
+  await page.getByTestId('add-image-field').click();
+  await expect(page.locator('.signing-field-overlay')).toHaveCount(1);
+
+  const dirtyLeave = await page.evaluate(async () => {
+    let confirmations = 0;
+    const originalConfirm = window.confirm;
+    window.confirm = () => {
+      confirmations += 1;
+      return false;
+    };
+    const app = (document.querySelector('#app') as any).__vue_app__;
+    const router = app.config.globalProperties.$router;
+    const { useSigningEditorStore } = await import('/src/store/signingEditor.ts');
+    const before = {
+      opener: Boolean(window.opener),
+      dirty: useSigningEditorStore().isDirty,
+      route: router.currentRoute.value.fullPath,
+    };
+    await router.push('/login').catch(() => undefined);
+    window.confirm = originalConfirm;
+    return { confirmations, path: window.location.pathname, before };
+  });
+  expect(dirtyLeave).toEqual({
+    confirmations: 1,
+    path: `/signing/editor/${REQUEST_ID}`,
+    before: { opener: false, dirty: true, route: `/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}` },
+  });
+
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect.poll(() => saved.value?.signing_fields.length).toBe(1);
+
+  const cleanLeave = await page.evaluate(async () => {
+    let confirmations = 0;
+    const originalConfirm = window.confirm;
+    window.confirm = () => {
+      confirmations += 1;
+      return false;
+    };
+    const app = (document.querySelector('#app') as any).__vue_app__;
+    const router = app.config.globalProperties.$router;
+    await router.push('/login').catch(() => undefined);
+    window.confirm = originalConfirm;
+    return { confirmations, path: window.location.pathname };
+  });
+  expect(cleanLeave).toEqual({ confirmations: 0, path: '/login' });
+});
+
+test('keeps the editor dirty after a failed save', async ({ page }) => {
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+  ]);
+  await page.route(`**/api/composer/signing/${REQUEST_ID}/save-template`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    return fulfillJson(route, {
+      message: 'The given data was invalid.',
+      errors: { 'signing_fields.0.label': ['The label field is required.'] },
+    }, 422);
+  });
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+  await page.getByTestId('add-image-field').click();
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByText('The label field is required.')).toBeVisible();
+
+  const dirty = await page.evaluate(async () => {
+    const { useSigningEditorStore } = await import('/src/store/signingEditor.ts');
+    return useSigningEditorStore().isDirty;
+  });
+  expect(dirty).toBe(true);
+});
+
+test('blocks Done while a stamp upload is in flight', async ({ page }) => {
+  const storedPath = `signing-images/${REQUEST_ID}/static/delayed-logo.png`;
+
+  await mockDocument(page);
+  await mockEditorSession(page, [], [
+    { email: 'alice@example.com', name: 'Alice Example', color: '#3B82F6' },
+  ]);
+  const saved = await captureSavedTemplate(page);
+  let releaseUpload!: () => void;
+  const uploadReleased = new Promise<void>((resolve) => {
+    releaseUpload = resolve;
+  });
+
+  await page.route(`**/api/composer/signing/${REQUEST_ID}/image`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    await uploadReleased;
+    return fulfillJson(route, { url: `${SIGNING_ORIGIN}/storage/${storedPath}`, path: storedPath });
+  });
+
+  await page.goto(`${APP}/signing/editor/${REQUEST_ID}?token=${EDITOR_TOKEN}`);
+
+  const done = page.getByRole('button', { name: 'Done' });
+  await page.getByTestId('add-image-field').click();
+  await expect(done).toBeEnabled();
+
+  await page.getByTestId('add-stamp-field').click();
+  await page.getByTestId('stamp-file-input').setInputFiles({
+    name: 'logo.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  await expect(done).toBeDisabled();
+  releaseUpload();
+  await expect(done).toBeEnabled();
+
+  await done.click();
+  await expect.poll(() => saved.value?.signing_fields.length).toBe(2);
+});
+
+test('shows the signer image validation message when upload is rejected', async ({ page }) => {
+  const validationMessage = 'The image may not be greater than 10240 kilobytes.';
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 20,
+          width: 25,
+          height: 10,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    return fulfillJson(route, {
+      message: 'The given data was invalid.',
+      errors: { image: [validationMessage] },
+    }, 422);
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'too-large.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  const alert = page.getByRole('alert');
+  await expect(alert).toBeVisible();
+  await expect(alert).toContainText(validationMessage);
+});
+
+test('keeps a validation error inside the page for a field near the bottom', async ({ page }) => {
+  const validationMessage = 'The image may not be greater than 10240 kilobytes.';
+
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [
+        {
+          id: 'alice-passport',
+          type: 'image',
+          pageIndex: 0,
+          x: 10,
+          y: 88,
+          width: 25,
+          height: 8,
+          signerEmail: 'alice@example.com',
+          label: 'Passport photo',
+          required: true,
+        },
+      ],
+    })
+  );
+  await page.route(`**/api/signing/upload-image/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      message: 'The given data was invalid.',
+      errors: { image: [validationMessage] },
+    }, 422)
+  );
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByTestId('signer-image-input').setInputFiles({
+    name: 'too-large.png',
+    mimeType: 'image/png',
+    buffer: onePixelPng(),
+  });
+
+  const error = page.getByRole('alert');
+  await expect(error).toContainText(validationMessage);
+  const fitsInsidePage = await error.evaluate((element) => {
+    const pageElement = element.closest('.pdf-page');
+    if (!pageElement) return false;
+    const errorBox = element.getBoundingClientRect();
+    const pageBox = pageElement.getBoundingClientRect();
+    return errorBox.top >= pageBox.top
+      && errorBox.bottom <= pageBox.bottom
+      && errorBox.left >= pageBox.left
+      && errorBox.right <= pageBox.right;
+  });
+  expect(fitsInsidePage).toBe(true);
+});
+
+test('keeps the document visible after a terminal submit failure', async ({ page }) => {
+  await mockDocument(page);
+  await page.route(`**/api/signing/session/${SIGNER_TOKEN}`, (route) =>
+    fulfillJson(route, {
+      token: SIGNER_TOKEN,
+      signerEmail: 'alice@example.com',
+      signerName: 'Alice Example',
+      signingRequestId: REQUEST_ID,
+      documentUrl: DOCUMENT_URL,
+      documentName: 'Passport Form.pdf',
+      pageCount: 1,
+      fields: [],
+    })
+  );
+  await page.route(`**/api/signing/complete/${SIGNER_TOKEN}`, async (route) => {
+    if (route.request().method() === 'OPTIONS') return fulfillPreflight(route);
+    return fulfillJson(route, { message: 'The signing session has expired.' }, 422);
+  });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  const main = page.getByRole('main');
+  const submit = main.getByRole('button', { name: 'Complete Signing' });
+  await expect(main).toBeVisible();
+  await expect(submit).toBeEnabled();
+
+  await submit.click();
+
+  const alert = page.getByRole('alert');
+  await expect(alert).toContainText('The signing session has expired.');
+  await expect(main).toBeVisible();
+  await expect(submit).toBeEnabled();
+  await expect(page.getByText('Unable to load document')).toHaveCount(0);
+
+  await alert.getByRole('button', { name: 'Dismiss submission error' }).click();
+  await expect(alert).toHaveCount(0);
+});
+
+test('does not offer one signer\'s saved signatures to another signer on the same device', async ({ page }) => {
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'bob@example.com', [savedSignature('Bob signature')]);
+  await mockSignerSession(page, [signatureField('sig-1')], 'alice@example.com');
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByText('Click to Sign').click();
+
+  await expect(page.getByRole('button', { name: 'Saved', exact: true })).toHaveCount(0);
+});
+
+test('offers a signer\'s own saved signatures in the capture modal', async ({ page }) => {
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [savedSignature('Alice signature')]);
+  await mockSignerSession(page, [signatureField('sig-1')]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByText('Click to Sign').click();
+
+  await expect(page.getByRole('button', { name: 'Saved', exact: true })).toBeVisible();
+});
+
+test('purges legacy global saved signatures instead of offering them to the next signer', async ({ page }) => {
+  await mockDocument(page);
+  // Signatures written by the previous global-key implementation cannot be
+  // attributed to a signer, so they must be removed from the device rather
+  // than shown to whoever signs next.
+  await page.addInitScript(
+    ([key, value]) => window.localStorage.setItem(key, value),
+    ['vensuite:saved-signatures', JSON.stringify([savedSignature('Legacy signature')])]
+  );
+  await mockSignerSession(page, [signatureField('sig-1')], 'alice@example.com');
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByText('Click to Sign').click();
+
+  await expect(page.getByRole('button', { name: 'Saved', exact: true })).toHaveCount(0);
+  expect(
+    await page.evaluate(() => window.localStorage.getItem('vensuite:saved-signatures'))
+  ).toBeNull();
+});
+
+test('fills every empty signature field and leaves other answers alone', async ({ page }) => {
+  const rememberedSignature = savedSignature('Drawn — 12 Sep');
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [rememberedSignature]);
+  await mockSignerSession(page, [
+    signatureField('signature-empty-1', { x: 10, y: 20 }),
+    signatureField('signature-empty-2', { x: 40, y: 20 }),
+    signatureField('signature-filled', { x: 10, y: 45, value: 'original-signature' }),
+    {
+      id: 'initials-empty',
+      type: 'initials',
+      pageIndex: 0,
+      x: 40,
+      y: 45,
+      width: 15,
+      height: 10,
+      signerEmail: 'alice@example.com',
+      label: 'Initials',
+      required: false,
+    },
+    {
+      id: 'text-filled',
+      type: 'text',
+      pageIndex: 0,
+      x: 10,
+      y: 70,
+      width: 30,
+      height: 10,
+      signerEmail: 'alice@example.com',
+      label: 'Reference',
+      required: true,
+      value: 'original text',
+    },
+  ]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByText('Click to Sign').first()).toBeVisible();
+
+  const fillResult = await page.evaluate(async ({ dataUrl }) => {
+    const { useSigningPlayerStore } = await import('/src/store/signingPlayer.ts');
+    const store = useSigningPlayerStore();
+    store.setFieldValue('signature-filled', 'original-signature');
+    store.setFieldValue('text-filled', 'original text');
+    return store.fillSignatureFields(dataUrl);
+  }, { dataUrl: rememberedSignature.dataUrl });
+
+  expect(fillResult).toBe(2);
+  await page.getByRole('main').getByRole('button', { name: 'Complete Signing' }).click();
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  const fieldValues = fieldValuesFromRequest(completion.request!);
+  expect(fieldValues).toHaveLength(4);
+  expect(fieldValues).toEqual(expect.arrayContaining([
+    { fieldId: 'signature-empty-1', value: rememberedSignature.dataUrl },
+    { fieldId: 'signature-empty-2', value: rememberedSignature.dataUrl },
+    { fieldId: 'signature-filled', value: 'original-signature' },
+    { fieldId: 'text-filled', value: 'original text' },
+  ]));
+  expect(fieldValues).not.toEqual(
+    expect.arrayContaining([expect.objectContaining({ fieldId: 'initials-empty' })])
+  );
+});
+
+test('offers a remembered signature and fills every empty signature field', async ({ page }) => {
+  const rememberedSignature = savedSignature('Remembered signature');
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [rememberedSignature]);
+  await mockSignerSession(page, [
+    signatureField('signature-empty-1', { x: 10, y: 20 }),
+    signatureField('signature-empty-2', { x: 40, y: 20 }),
+  ]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByText(/Use your saved signature/)).toBeVisible();
+  await expect(page.getByAltText('Remembered signature')).toHaveAttribute('src', rememberedSignature.dataUrl);
+
+  await page.getByRole('button', { name: 'Choose another' }).click();
+  await expect(page.getByText(rememberedSignature.label, { exact: true })).toBeVisible();
+  await page.getByText(rememberedSignature.label, { exact: true }).click();
+  await expect(page.getByText(/Use your saved signature/)).toHaveCount(0);
+  await page.getByRole('main').getByRole('button', { name: 'Complete Signing' }).click();
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  expect(fieldValuesFromRequest(completion.request!)).toEqual([
+    { fieldId: 'signature-empty-1', value: rememberedSignature.dataUrl },
+    { fieldId: 'signature-empty-2', value: rememberedSignature.dataUrl },
+  ]);
+});
+
+test('moves to the next required field after remembered signatures across pages', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  await mockDocument(page, multiPagePdfBytes());
+  await seedSavedSignatures(page, 'alice@example.com', [savedSignature('Remembered signature')]);
+  await mockSignerSession(page, [
+    signatureField('signature-first', { pageIndex: 0, y: 20 }),
+    signatureField('signature-last', { pageIndex: 1, y: 20 }),
+    {
+      id: 'next-required', type: 'text', pageIndex: 1, x: 10, y: 60,
+      width: 35, height: 8, signerEmail: 'alice@example.com',
+      label: 'Job title', required: true,
+    },
+  ], 'alice@example.com', { pageCount: 2 });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByRole('button', { name: 'Use my saved signature' }).click();
+  expect(pageErrors).toEqual([]);
+
+  const nextInput = page.locator('[data-signing-field-id="next-required"] input');
+  await expect(nextInput).toBeFocused();
+  await expect.poll(async () => nextInput.evaluate((input) => {
+    const rect = input.getBoundingClientRect();
+    return rect.top >= 0 && rect.bottom <= window.innerHeight;
+  })).toBe(true);
+});
+
+test('wraps to the first unfinished required field after remembered signatures', async ({ page }) => {
+  await mockDocument(page, multiPagePdfBytes());
+  await seedSavedSignatures(page, 'alice@example.com', [savedSignature('Remembered signature')]);
+  await mockSignerSession(page, [
+    {
+      id: 'first-required', type: 'text', pageIndex: 0, x: 10, y: 20,
+      width: 35, height: 8, signerEmail: 'alice@example.com',
+      label: 'Job title', required: true,
+    },
+    signatureField('signature-last', { pageIndex: 1, y: 20 }),
+  ], 'alice@example.com', { pageCount: 2 });
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await page.getByRole('button', { name: 'Use my saved signature' }).click();
+
+  await expect(page.locator('[data-signing-field-id="first-required"] input')).toBeFocused();
+});
+
+test('does not overwrite a signature the signer already provided', async ({ page }) => {
+  const rememberedSignature = savedSignature('Remembered signature');
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [rememberedSignature]);
+  await mockSignerSession(page, [
+    signatureField('signature-empty', { x: 10, y: 20 }),
+    signatureField('signature-filled', { x: 40, y: 20 }),
+  ]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByText('Click to Sign').first()).toBeVisible();
+  await page.evaluate(async () => {
+    const { useSigningPlayerStore } = await import('/src/store/signingPlayer.ts');
+    useSigningPlayerStore().setFieldValue('signature-filled', 'original-signature');
+  });
+  await expect(page.getByText(/Use your saved signature/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Use my saved signature' }).click();
+  await page.getByRole('main').getByRole('button', { name: 'Complete Signing' }).click();
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  expect(fieldValuesFromRequest(completion.request!)).toEqual(expect.arrayContaining([
+    { fieldId: 'signature-empty', value: rememberedSignature.dataUrl },
+    { fieldId: 'signature-filled', value: 'original-signature' },
+  ]));
+});
+
+test('does not fill initials fields with a remembered signature', async ({ page }) => {
+  const rememberedSignature = savedSignature('Remembered signature');
+  const completion = await captureMultipartRequest(
+    page,
+    `**/api/signing/complete/${SIGNER_TOKEN}`,
+    {
+      status: 'completed',
+      message: 'Signed',
+      signedDocumentReady: true,
+      downloadUrl: null,
+    }
+  );
+
+  await mockDocument(page);
+  await seedSavedSignatures(page, 'alice@example.com', [rememberedSignature]);
+  await mockSignerSession(page, [
+    signatureField('signature-empty', { x: 10, y: 20 }),
+    {
+      id: 'initials-empty',
+      type: 'initials',
+      pageIndex: 0,
+      x: 40,
+      y: 20,
+      width: 15,
+      height: 10,
+      signerEmail: 'alice@example.com',
+      label: 'Initials',
+      required: false,
+    },
+  ]);
+
+  await page.goto(`${APP}/signing/sign/${SIGNER_TOKEN}`);
+  await expect(page.getByText(/Use your saved signature/)).toBeVisible();
+  await page.getByRole('button', { name: 'Use my saved signature' }).click();
+  await page.getByRole('main').getByRole('button', { name: 'Complete Signing' }).click();
+
+  await expect.poll(() => completion.request !== null).toBe(true);
+  const fieldValues = fieldValuesFromRequest(completion.request!);
+  expect(fieldValues).toEqual([
+    { fieldId: 'signature-empty', value: rememberedSignature.dataUrl },
+  ]);
+  expect(fieldValues).not.toEqual(
+    expect.arrayContaining([expect.objectContaining({ fieldId: 'initials-empty' })])
+  );
+});
+
+test('hides the banner with no saved signatures, no empty signature field, or a completed session', async ({ page }) => {
+  const sessionUrl = `**/api/signing/session/${SIGNER_TOKEN}`;
+  const signingUrl = `${APP}/signing/sign/${SIGNER_TOKEN}`;
+  const savedKey = 'vensuite:saved-signatures:alice@example.com';
+  const savedValue = JSON.stringify([savedSignature('Remembered signature')]);
+
+  await mockDocument(page);
+  await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [savedKey, savedValue]);
+
+  // Control case: the banner should be available when all visibility rules pass.
+  await mockSignerSession(page, [signatureField('signature-empty')]);
+  await page.goto(signingUrl);
+  await expect(page.getByRole('main')).toBeVisible();
+  await expect(page.getByText(/Use your saved signature/)).toBeVisible();
+
+  await page.evaluate((key) => window.localStorage.removeItem(key), savedKey);
+  await page.unroute(sessionUrl);
+  await mockSignerSession(page, [signatureField('signature-empty')]);
+  await page.goto(signingUrl);
+  await expect(page.getByRole('main')).toBeVisible();
+  await expect(page.getByText(/Use your saved signature/)).toHaveCount(0);
+
+  await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [savedKey, savedValue]);
+  await page.unroute(sessionUrl);
+  await mockSignerSession(page, [signatureField('signature-filled')]);
+  await page.goto(signingUrl);
+  await expect(page.getByRole('main')).toBeVisible();
+  await page.evaluate(async () => {
+    const { useSigningPlayerStore } = await import('/src/store/signingPlayer.ts');
+    useSigningPlayerStore().setFieldValue('signature-filled', 'original-signature');
+  });
+  await expect(page.getByText(/Use your saved signature/)).toHaveCount(0);
+
+  await page.unroute(sessionUrl);
+  await mockSignerSession(page, [signatureField('signature-empty')], 'alice@example.com', { completed: true });
+  await page.goto(signingUrl);
+  await expect(page.getByText('Already Signed')).toBeVisible();
+  await expect(page.getByText(/Use your saved signature/)).toHaveCount(0);
+});

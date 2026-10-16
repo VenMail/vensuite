@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import {
+  getApiErrorMessage,
+  retryOnSigningLock,
+  SIGNING_UPLOAD_RETRY_DEADLINE_MS,
+  signingApi,
+} from '@/services/signing';
 import type { SigningField } from '@/types/signing';
 import SignatureCapture from './SignatureCapture.vue';
 
@@ -9,6 +15,8 @@ const props = defineProps<{
   pageWidth: number;
   pageHeight: number;
   signerName?: string;
+  signerEmail?: string;
+  signerToken: string;
 }>();
 
 const emit = defineEmits<{
@@ -52,6 +60,48 @@ function onDateChange(e: Event) {
   emit('updateValue', props.field.id, (e.target as HTMLInputElement).value);
 }
 
+const isUploading = ref(false);
+const uploadError = ref<string | null>(null);
+const imageInputId = `signer-image-input-${props.field.id}`;
+const ERROR_MAX_HEIGHT_PX = 96;
+
+const uploadErrorPositionClass = computed(() => {
+  const fieldTop = (props.field.y / 100) * props.pageHeight;
+  const fieldBottom = ((props.field.y + props.field.height) / 100) * props.pageHeight;
+  const roomBelow = props.pageHeight - fieldBottom;
+  const roomAbove = fieldTop;
+  const preferredRoom = Math.max(roomAbove, roomBelow);
+
+  return roomBelow >= Math.min(ERROR_MAX_HEIGHT_PX + 8, preferredRoom)
+    ? 'top-full mt-1'
+    : 'bottom-full mb-1';
+});
+
+async function uploadWithRetry(file: File): Promise<{ path: string }> {
+  return retryOnSigningLock(
+    () => signingApi.uploadSignerImage(props.signerToken, props.field.id, file),
+    SIGNING_UPLOAD_RETRY_DEADLINE_MS
+  );
+}
+
+async function onImageSelected(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  isUploading.value = true;
+  uploadError.value = null;
+  try {
+    const uploaded = await uploadWithRetry(file);
+    emit('updateValue', props.field.id, uploaded.path);
+  } catch (err: unknown) {
+    uploadError.value = getApiErrorMessage(err, 'Upload failed. Please try again.');
+  } finally {
+    isUploading.value = false;
+  }
+}
+
 onMounted(() => {
   if (props.field.type === 'date' && !hasValue.value) {
     emit('updateValue', props.field.id, todayValue);
@@ -60,7 +110,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="signing-field-input absolute" :style="style">
+  <div class="signing-field-input absolute" :data-signing-field-id="field.id" :style="style">
     <!-- Signature / Initials -->
     <template v-if="field.type === 'signature' || field.type === 'initials'">
       <div
@@ -81,6 +131,7 @@ onMounted(() => {
       <SignatureCapture
         v-model="showSignaturePad"
         :signer-name="signerName"
+        :signer-email="signerEmail"
         @save="onSignatureSave"
       />
     </template>
@@ -116,6 +167,53 @@ onMounted(() => {
           @change="onCheckboxChange"
         />
       </label>
+    </template>
+
+    <!-- Image (signer upload) -->
+    <template v-else-if="field.type === 'image'">
+      <div class="relative w-full h-full overflow-visible">
+        <div class="w-full h-full border-2 border-dashed border-blue-400 rounded bg-blue-50 flex items-center justify-center overflow-hidden focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-600">
+          <!-- A failed preview load must not clear the uploaded path or block signing. -->
+          <img
+            v-if="hasValue && typeof value === 'string'"
+            :src="signingApi.signerImageUrl(signerToken, field.id)"
+            :alt="field.label || 'Uploaded image'"
+            class="max-w-full max-h-full object-contain"
+          />
+          <label
+            v-else
+            :for="imageInputId"
+            class="w-full h-full flex flex-col items-center justify-center gap-1 text-xs font-medium text-blue-700 cursor-pointer peer-focus:ring-2 peer-focus:ring-inset peer-focus:ring-blue-600"
+          >
+            <span>{{ field.label || 'Upload image' }}</span>
+            <span class="text-[10px] font-normal text-blue-600">Click to choose a file</span>
+          </label>
+          <input
+            v-if="!hasValue || typeof value !== 'string'"
+            :id="imageInputId"
+            type="file"
+            accept="image/png,image/jpeg,image/gif"
+            class="peer sr-only"
+            data-testid="signer-image-input"
+            @change="onImageSelected"
+          />
+        </div>
+      </div>
+      <p
+        v-if="isUploading"
+        class="absolute inset-0 flex items-center justify-center rounded bg-white/80 text-xs font-medium text-blue-700"
+      >
+        Uploading…
+      </p>
+      <p
+        v-if="uploadError"
+        role="alert"
+        class="absolute left-0 z-20 max-h-24 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto whitespace-normal break-words rounded border border-red-200 bg-white/95 px-1.5 py-1 text-[10px] leading-4 text-red-700 shadow-sm"
+        :class="uploadErrorPositionClass"
+        aria-live="assertive"
+      >
+        {{ uploadError }}
+      </p>
     </template>
   </div>
 </template>

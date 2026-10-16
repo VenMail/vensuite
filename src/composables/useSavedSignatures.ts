@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue';
+import { computed, ref, watch, toValue, type MaybeRefOrGetter, type Ref } from 'vue';
 
 export interface SavedSignature {
   id: string;
@@ -8,12 +8,18 @@ export interface SavedSignature {
   createdAt: number;
 }
 
-const STORAGE_KEY = 'vensuite:saved-signatures';
+const LEGACY_STORAGE_KEY = 'vensuite:saved-signatures';
 const MAX_SAVED = 12;
 
-function loadFromStorage(): SavedSignature[] {
+const scopeCache = new Map<string, Ref<SavedSignature[]>>();
+
+function storageKeyFor(email: string): string {
+  return `${LEGACY_STORAGE_KEY}:${email.trim().toLowerCase()}`;
+}
+
+function loadFromStorage(key: string): SavedSignature[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -25,17 +31,37 @@ function loadFromStorage(): SavedSignature[] {
   }
 }
 
-function saveToStorage(signatures: SavedSignature[]) {
+let legacyPurged = false;
+
+function purgeLegacyKey(): void {
+  if (legacyPurged) return;
+  legacyPurged = true;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(signatures));
+    // Entries under the old global key cannot be attributed to a signer, and
+    // leaving them readable is the shared-device leak this scoping closes.
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch {
-    // storage full or unavailable — silently ignore
+    // Storage unavailable: nothing to purge.
   }
 }
 
-const savedSignatures = ref<SavedSignature[]>(loadFromStorage());
+function scopeFor(email: string): Ref<SavedSignature[]> {
+  const key = storageKeyFor(email);
+  const cached = scopeCache.get(key);
+  if (cached) return cached;
 
-watch(savedSignatures, (val) => saveToStorage(val), { deep: true });
+  purgeLegacyKey();
+  const state = ref<SavedSignature[]>(loadFromStorage(key));
+  watch(state, (value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // Storage full or unavailable: keep the in-memory value.
+    }
+  }, { deep: true });
+  scopeCache.set(key, state);
+  return state;
+}
 
 function generateId(): string {
   return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -43,35 +69,44 @@ function generateId(): string {
     : `sig_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-function saveSignature(dataUrl: string, type: SavedSignature['type'], label?: string): SavedSignature {
-  const existing = savedSignatures.value.find((s) => s.dataUrl === dataUrl);
-  if (existing) return existing;
+export function useSavedSignatures(signerEmail: MaybeRefOrGetter<string | null | undefined>) {
+  const scope = computed(() => {
+    const email = toValue(signerEmail);
+    return email ? scopeFor(email) : null;
+  });
 
-  const entry: SavedSignature = {
-    id: generateId(),
-    label: label || `${type} signature`,
-    dataUrl,
-    type,
-    createdAt: Date.now(),
-  };
+  const savedSignatures = computed<SavedSignature[]>(() => scope.value?.value ?? []);
 
-  savedSignatures.value = [entry, ...savedSignatures.value].slice(0, MAX_SAVED);
-  return entry;
-}
+  function saveSignature(
+    dataUrl: string,
+    type: SavedSignature['type'],
+    label?: string
+  ): SavedSignature | undefined {
+    const state = scope.value;
+    if (!state) return undefined;
+    const existing = state.value.find((s) => s.dataUrl === dataUrl);
+    if (existing) return existing;
 
-function deleteSignature(id: string) {
-  savedSignatures.value = savedSignatures.value.filter((s) => s.id !== id);
-}
+    const entry: SavedSignature = {
+      id: generateId(),
+      label: label || `${type} signature`,
+      dataUrl,
+      type,
+      createdAt: Date.now(),
+    };
+    state.value = [entry, ...state.value].slice(0, MAX_SAVED);
+    return entry;
+  }
 
-function getSignature(id: string): SavedSignature | undefined {
-  return savedSignatures.value.find((s) => s.id === id);
-}
+  function deleteSignature(id: string) {
+    const state = scope.value;
+    if (!state) return;
+    state.value = state.value.filter((s) => s.id !== id);
+  }
 
-export function useSavedSignatures() {
-  return {
-    savedSignatures,
-    saveSignature,
-    deleteSignature,
-    getSignature,
-  };
+  function getSignature(id: string): SavedSignature | undefined {
+    return savedSignatures.value.find((s) => s.id === id);
+  }
+
+  return { savedSignatures, saveSignature, deleteSignature, getSignature };
 }

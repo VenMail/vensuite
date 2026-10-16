@@ -65,6 +65,7 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
   const fieldsBySigner = computed(() => {
     const grouped: Record<string, SigningField[]> = {};
     for (const field of fields.value) {
+      if (!field.signerEmail) continue;
       if (!grouped[field.signerEmail]) grouped[field.signerEmail] = [];
       grouped[field.signerEmail].push(field);
     }
@@ -85,7 +86,7 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     const providedSigners = data.signers || [];
     const inferredSigners = providedSigners.length > 0
       ? providedSigners
-      : Array.from(new Set((data.fields || []).map((field) => field.signerEmail).filter(Boolean)))
+      : Array.from(new Set((data.fields || []).map((field) => field.signerEmail).filter((email): email is string => Boolean(email))))
           .map((email, index) => ({
             email,
             name: email.split('@')[0],
@@ -138,6 +139,47 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
       signerEmail,
       required: type === 'signature' || type === 'initials',
     };
+
+    fields.value.push(field);
+    selectedFieldId.value = field.id;
+    isDirty.value = true;
+    return field;
+  }
+
+  interface AddImageFieldOptions {
+    pageIndex: number;
+    x: number;
+    y: number;
+    assigned: boolean;
+    label?: string;
+    src?: string;
+    path?: string;
+  }
+
+  function addImageField(options: AddImageFieldOptions): SigningField | null {
+    // Assigned slots belong to the active signer and are required (passport photos).
+    // Unassigned slots are document-level decorations the sender already supplied.
+    const signerEmail = options.assigned ? activeSignerEmail.value : null;
+    if (options.assigned && !signerEmail) return null;
+
+    const dims = getDimensionsForType('image');
+    const field: SigningField = {
+      id: generateId(),
+      type: 'image',
+      pageIndex: options.pageIndex,
+      x: Math.max(0, Math.min(100 - dims.width, options.x)),
+      y: Math.max(0, Math.min(100 - dims.height, options.y)),
+      width: dims.width,
+      height: dims.height,
+      required: Boolean(signerEmail),
+    };
+
+    if (signerEmail) {
+      field.signerEmail = signerEmail;
+      field.label = options.label ?? 'Image';
+    }
+    if (options.src) field.src = options.src;
+    if (options.path) field.path = options.path;
 
     fields.value.push(field);
     selectedFieldId.value = field.id;
@@ -240,6 +282,10 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     activeSignerEmail.value = email;
   }
 
+  function markSaved() {
+    isDirty.value = false;
+  }
+
   function setCurrentPage(page: number) {
     currentPage.value = page;
   }
@@ -283,12 +329,14 @@ export const useSigningEditorStore = defineStore('signing-editor', () => {
     addSigner,
     removeSigner,
     addField,
+    addImageField,
     addFieldsFromAnnotations,
     moveField,
     resizeField,
     removeField,
     selectField,
     setActiveSigner,
+    markSaved,
     setCurrentPage,
     setZoom,
     reset,

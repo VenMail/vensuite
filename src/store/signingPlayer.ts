@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { SigningSession, SigningField, SigningFieldValue } from '@/types/signing';
-import { signingApi } from '@/services/signing';
+import type { SigningSession, SigningField, SigningFieldValue, SigningCompletionResponse } from '@/types/signing';
+import {
+  getApiErrorMessage,
+  retryOnSigningLock,
+  SIGNING_SUBMIT_RETRY_DEADLINE_MS,
+  signingApi,
+} from '@/services/signing';
 
 export const useSigningPlayerStore = defineStore('signing-player', () => {
   const session = ref<SigningSession | null>(null);
@@ -10,7 +15,9 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   const isLoading = ref(false);
   const isSubmitting = ref(false);
   const error = ref<string | null>(null);
+  const submitError = ref<string | null>(null);
   const isCompleted = ref(false);
+  const isAlreadyCompleted = ref(false);
   const signedDocumentReady = ref(false);
   const downloadUrl = ref<string | null>(null);
   const signedDocumentStatusUrl = ref<string | null>(null);
@@ -24,21 +31,6 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     return `${year}-${month}-${day}`;
   }
 
-  function defaultAnswersForFields(fields: SigningField[]): Record<string, string | boolean> {
-    const defaults: Record<string, string | boolean> = {};
-    const today = todayLocalDate();
-
-    for (const field of fields) {
-      if (field.type === 'date') {
-        defaults[field.id] = typeof field.value === 'string' && field.value.trim() !== ''
-          ? field.value
-          : today;
-      }
-    }
-
-    return defaults;
-  }
-
   function hasCompletedValue(value: string | boolean | undefined): boolean {
     if (typeof value === 'boolean') {
       return value;
@@ -49,6 +41,43 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     }
 
     return false;
+  }
+
+  function defaultAnswersForFields(
+    fields: SigningField[],
+    hydratePersistedValues = false
+  ): Record<string, string | boolean> {
+    const defaults: Record<string, string | boolean> = {};
+    const today = todayLocalDate();
+
+    for (const field of fields) {
+      if (hydratePersistedValues && hasCompletedValue(field.value)) {
+        defaults[field.id] = field.value as string | boolean;
+      } else if (field.type === 'date') {
+        defaults[field.id] = typeof field.value === 'string' && field.value.trim() !== ''
+          ? field.value
+          : today;
+      }
+    }
+
+    return defaults;
+  }
+
+  function sessionIndicatesCompletedSigner(data: SigningSession): boolean {
+    const explicitStatus = data.signerStatus
+      ?? data.signer_status
+      ?? data.signer?.status
+      ?? data.status;
+    if (typeof explicitStatus === 'string' && explicitStatus.toLowerCase() === 'completed') {
+      return true;
+    }
+    if (data.completed === true) return true;
+
+    // Older backends do not expose signer status, but persist all required
+    // values only when completion succeeds. Treat that complete set as the
+    // completion signal; partial answers remain in the normal editable flow.
+    const required = data.fields.filter(field => field.required);
+    return required.length > 0 && required.every(field => hasCompletedValue(field.value));
   }
 
   const requiredFields = computed(() =>
@@ -67,7 +96,13 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
   });
 
   const canSubmit = computed(() =>
-    requiredFields.value.every(f => hasCompletedValue(answers.value[f.id]))
+    !isCompleted.value && requiredFields.value.every(f => hasCompletedValue(answers.value[f.id]))
+  );
+
+  const emptySignatureFields = computed(() =>
+    (session.value?.fields || []).filter(
+      (field) => field.type === 'signature' && !hasCompletedValue(answers.value[field.id])
+    )
   );
 
   const fieldsByPage = computed(() => {
@@ -79,22 +114,34 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     return grouped;
   });
 
+  const completedFieldsByPage = computed(() => {
+    const grouped: Record<number, SigningField[]> = {};
+    for (const field of session.value?.completedFields || []) {
+      if (!grouped[field.pageIndex]) grouped[field.pageIndex] = [];
+      grouped[field.pageIndex].push(field);
+    }
+    return grouped;
+  });
+
   async function loadSession(token: string): Promise<void> {
     isLoading.value = true;
     error.value = null;
+    submitError.value = null;
 
     try {
       const data = await signingApi.fetchSignerSession(token);
+      const alreadyCompleted = sessionIndicatesCompletedSigner(data);
       session.value = data;
-      answers.value = defaultAnswersForFields(data.fields || []);
+      answers.value = defaultAnswersForFields(data.fields || [], alreadyCompleted);
       currentPage.value = 0;
-      isCompleted.value = false;
+      isCompleted.value = alreadyCompleted;
+      isAlreadyCompleted.value = alreadyCompleted;
       signedDocumentReady.value = false;
       downloadUrl.value = null;
       signedDocumentStatusUrl.value = null;
       statusPollRun += 1;
-    } catch (e: any) {
-      error.value = e?.data?.error || e?.message || 'Failed to load signing session';
+    } catch (e: unknown) {
+      error.value = getApiErrorMessage(e, 'Failed to load signing session');
     } finally {
       isLoading.value = false;
     }
@@ -104,34 +151,51 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     answers.value = { ...answers.value, [fieldId]: value };
   }
 
+  function fillSignatureFields(dataUrl: string): number {
+    const targets = emptySignatureFields.value;
+    for (const field of targets) {
+      setFieldValue(field.id, dataUrl);
+    }
+    return targets.length;
+  }
+
   async function submit(token: string, filledPdfBytes?: Uint8Array | null): Promise<boolean> {
     if (!canSubmit.value) return false;
 
     isSubmitting.value = true;
-    error.value = null;
+    submitError.value = null;
 
     try {
       const fieldValues: SigningFieldValue[] = Object.entries(answers.value).map(
         ([fieldId, value]) => ({ fieldId, value })
       );
 
-      const completion = await signingApi.submitCompletion(token, fieldValues, filledPdfBytes);
+      const completion: SigningCompletionResponse = await retryOnSigningLock(
+        () => signingApi.submitCompletion(token, fieldValues, filledPdfBytes),
+        SIGNING_SUBMIT_RETRY_DEADLINE_MS
+      );
+
       signedDocumentReady.value = Boolean(completion.signedDocumentReady);
       downloadUrl.value = completion.downloadUrl || null;
       signedDocumentStatusUrl.value = completion.signedDocumentStatusUrl || null;
       isCompleted.value = true;
+      isAlreadyCompleted.value = false;
 
       if (signedDocumentStatusUrl.value && !downloadUrl.value) {
         void pollSignedDocumentStatus(signedDocumentStatusUrl.value);
       }
 
       return true;
-    } catch (e: any) {
-      error.value = e?.data?.error || e?.message || 'Failed to submit signatures';
+    } catch (e: unknown) {
+      submitError.value = getApiErrorMessage(e, 'Failed to submit signatures');
       return false;
     } finally {
       isSubmitting.value = false;
     }
+  }
+
+  function clearSubmitError() {
+    submitError.value = null;
   }
 
   function setCurrentPage(page: number) {
@@ -146,7 +210,9 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     isLoading.value = false;
     isSubmitting.value = false;
     error.value = null;
+    submitError.value = null;
     isCompleted.value = false;
+    isAlreadyCompleted.value = false;
     signedDocumentReady.value = false;
     downloadUrl.value = null;
     signedDocumentStatusUrl.value = null;
@@ -183,7 +249,9 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     isLoading,
     isSubmitting,
     error,
+    submitError,
     isCompleted,
+    isAlreadyCompleted,
     signedDocumentReady,
     downloadUrl,
     signedDocumentStatusUrl,
@@ -191,10 +259,14 @@ export const useSigningPlayerStore = defineStore('signing-player', () => {
     completedFields,
     progress,
     canSubmit,
+    emptySignatureFields,
     fieldsByPage,
+    completedFieldsByPage,
     loadSession,
     setFieldValue,
+    fillSignatureFields,
     submit,
+    clearSubmitError,
     setCurrentPage,
     reset,
   };

@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSigningPlayerStore } from '@/store/signingPlayer';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
 import { useLibPdf } from '@/composables/useLibPdf';
+import { useSavedSignatures } from '@/composables/useSavedSignatures';
 import PdfPageCanvas from '@/components/signing/PdfPageCanvas.vue';
 import SigningFieldInput from '@/components/signing/SigningFieldInput.vue';
+import CompletedSigningField from '@/components/signing/CompletedSigningField.vue';
+import SignatureCapture from '@/components/signing/SignatureCapture.vue';
+import type { SigningField } from '@/types/signing';
 
 const route = useRoute();
 const store = useSigningPlayerStore();
@@ -16,6 +20,76 @@ const token = computed(() => route.params.token as string);
 const containerWidth = ref(700);
 const containerRef = ref<HTMLElement | null>(null);
 let resizeObserver: ResizeObserver | null = null;
+
+const { savedSignatures } = useSavedSignatures(() => store.session?.signerEmail);
+const savedSignatureDismissed = ref(false);
+const showSavedSignaturePicker = ref(false);
+
+const suggestedSignature = computed(() => savedSignatures.value[0] ?? null);
+const showSavedSignatureBanner = computed(() =>
+  !store.isCompleted
+  && !savedSignatureDismissed.value
+  && store.emptySignatureFields.length > 0
+  && suggestedSignature.value !== null
+);
+
+function compareFieldPosition(a: SigningField, b: SigningField): number {
+  return a.pageIndex - b.pageIndex || a.y - b.y || a.x - b.x;
+}
+
+function isUnfilled(value: string | boolean | undefined): boolean {
+  return value !== true && (typeof value !== 'string' || value.trim() === '');
+}
+
+function waitForFieldElement(fieldId: string): Promise<HTMLElement | null> {
+  const root = containerRef.value;
+  if (!root) return Promise.resolve(null);
+  const find = () => [...root.querySelectorAll<HTMLElement>('[data-signing-field-id]')]
+    .find(element => element.dataset.signingFieldId === fieldId) ?? null;
+  const existing = find();
+  if (existing) return Promise.resolve(existing);
+
+  return new Promise(resolve => {
+    const observer = new MutationObserver(() => {
+      const field = find();
+      if (!field) return;
+      clearTimeout(timeout);
+      observer.disconnect();
+      resolve(field);
+    });
+    const timeout = window.setTimeout(() => {
+      observer.disconnect();
+      resolve(null);
+    }, 5000);
+    observer.observe(root, { childList: true, subtree: true });
+  });
+}
+
+async function applyRememberedSignature(dataUrl: string) {
+  const lastSignature = [...store.emptySignatureFields].sort(compareFieldPosition).at(-1);
+  if (store.fillSignatureFields(dataUrl) > 0) {
+    savedSignatureDismissed.value = true;
+  }
+  showSavedSignaturePicker.value = false;
+
+  if (!lastSignature) return;
+  await nextTick();
+  // Wait until the clicked banner button has been removed and its click finishes.
+  await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+
+  const unfinished = store.requiredFields
+    .filter(field => isUnfilled(store.answers[field.id]))
+    .sort(compareFieldPosition);
+  const nextField = unfinished.find(field => compareFieldPosition(field, lastSignature) > 0)
+    ?? unfinished[0];
+  if (!nextField) return;
+
+  const target = await waitForFieldElement(nextField.id);
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  target.querySelector<HTMLElement>('input, button, textarea, select, [tabindex]')
+    ?.focus({ preventScroll: true });
+}
 
 onMounted(async () => {
   await store.loadSession(token.value);
@@ -73,6 +147,9 @@ async function handleSubmit() {
         if (typeof answer === 'string' && (answer.startsWith('data:image/') || answer.length > 100)) {
           signatureDraws.push({ pageIndex: field.pageIndex, fieldId: field.id, value: answer });
         }
+      } else if (field.type === 'image') {
+        // Image values are public-disk paths; the backend burns them into the PDF.
+        continue;
       }
     }
   }
@@ -208,9 +285,14 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
         <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <span class="text-2xl text-green-600">OK</span>
         </div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-2">Signing Complete</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">
+          {{ store.isAlreadyCompleted ? 'Already Signed' : 'Signing Complete' }}
+        </h2>
         <p class="text-sm text-gray-500">
-          Thank you for signing this document. All parties will be notified once everyone has signed.
+          {{ store.isAlreadyCompleted
+            ? 'Your completed responses are saved and this signing session is read-only.'
+            : 'Thank you for signing this document. All parties will be notified once everyone has signed.'
+          }}
         </p>
         <div class="mt-6">
           <a
@@ -233,6 +315,57 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
     <!-- Document -->
     <main v-else ref="containerRef" class="max-w-4xl mx-auto p-6 space-y-6">
       <div
+        v-if="store.submitError"
+        role="alert"
+        class="mx-auto flex max-w-3xl items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+      >
+        <p class="min-w-0 flex-1">{{ store.submitError }}</p>
+        <button
+          type="button"
+          aria-label="Dismiss submission error"
+          class="shrink-0 rounded px-1 text-lg leading-none text-red-600 hover:text-red-800"
+          @click="store.clearSubmitError"
+        >
+          ×
+        </button>
+      </div>
+
+      <div
+        v-if="showSavedSignatureBanner && suggestedSignature"
+        class="mx-auto flex max-w-3xl flex-wrap items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3"
+      >
+        <img
+          :src="suggestedSignature.dataUrl"
+          alt="Remembered signature"
+          class="h-10 w-24 object-contain"
+        />
+        <p class="min-w-0 flex-1 text-sm text-blue-900">
+          Use your saved signature <span class="text-blue-700">({{ suggestedSignature.label }})</span>?
+        </p>
+        <button
+          type="button"
+          class="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          @click="applyRememberedSignature(suggestedSignature.dataUrl)"
+        >
+          Use my saved signature
+        </button>
+        <button
+          type="button"
+          class="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-800 rounded-lg"
+          @click="showSavedSignaturePicker = true"
+        >
+          Choose another
+        </button>
+      </div>
+
+      <SignatureCapture
+        v-model="showSavedSignaturePicker"
+        :signer-email="store.session?.signerEmail"
+        initial-mode="saved"
+        @save="applyRememberedSignature"
+      />
+
+      <div
         v-for="page in pdf.pages.value"
         :key="page.pageIndex"
         class="relative flex justify-center"
@@ -245,6 +378,13 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
           :original-height="page.height"
         >
           <template #default="{ pageWidth, pageHeight }">
+            <CompletedSigningField
+              v-for="field in store.completedFieldsByPage[page.pageIndex] || []"
+              :key="`completed-${field.id}`"
+              :field="field"
+              :page-width="pageWidth"
+              :page-height="pageHeight"
+            />
             <SigningFieldInput
               v-for="field in store.fieldsByPage[page.pageIndex] || []"
               :key="field.id"
@@ -253,6 +393,8 @@ function handleFieldUpdate(fieldId: string, value: string | boolean) {
               :page-width="pageWidth"
               :page-height="pageHeight"
               :signer-name="store.session?.signerName"
+              :signer-email="store.session?.signerEmail"
+              :signer-token="token"
               @update-value="handleFieldUpdate"
             />
           </template>

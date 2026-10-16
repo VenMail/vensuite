@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { onBeforeRouteLeave, useRoute } from 'vue-router';
 import { useSigningEditorStore } from '@/store/signingEditor';
 import { usePdfRenderer } from '@/composables/usePdfRenderer';
 import { useLibPdf } from '@/composables/useLibPdf';
-import { signingApi } from '@/services/signing';
+import { getApiErrorMessage, signingApi } from '@/services/signing';
 import PdfPageCanvas from '@/components/signing/PdfPageCanvas.vue';
 import SigningFieldOverlay from '@/components/signing/SigningFieldOverlay.vue';
 import FieldPalette from '@/components/signing/FieldPalette.vue';
@@ -13,7 +13,6 @@ import type { SigningFieldType } from '@/types/signing';
 import { toast } from '@/composables/useToast';
 
 const route = useRoute();
-const router = useRouter();
 const store = useSigningEditorStore();
 const pdf = usePdfRenderer();
 const libpdf = useLibPdf();
@@ -25,26 +24,36 @@ const isDetecting = ref(false);
 const saveError = ref<string | null>(null);
 const containerWidth = ref(700);
 const containerRef = ref<HTMLElement | null>(null);
+const stampInputRef = ref<HTMLInputElement | null>(null);
+const isUploadingStamp = ref(false);
 let resizeObserver: ResizeObserver | null = null;
-
-function redirectToLogin() {
-  router.replace({
-    name: 'login',
-    query: {
-      instant: 'true',
-      redirect: route.fullPath,
-    },
-  });
-}
 
 function isAuthFailure(error: any): boolean {
   return error?.status === 401 || error?.status === 419 || error?.status === 403;
 }
 
+function hasUnsavedEditorChanges(): boolean {
+  // The composer owns the lifecycle of its popup. Let it close the editor
+  // normally rather than trapping the opener flow in a browser confirmation.
+  return !window.opener && (store.isDirty || isUploadingStamp.value);
+}
+
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+  if (!hasUnsavedEditorChanges()) return;
+  event.preventDefault();
+  event.returnValue = '';
+}
+
+onBeforeRouteLeave(() => {
+  if (!hasUnsavedEditorChanges()) return true;
+  return window.confirm('You have unsaved signing fields. Leave without saving?');
+});
+
 // Field counts per signer for the signer list
 const fieldCounts = computed(() => {
   const counts: Record<string, number> = {};
   for (const f of store.fields) {
+    if (!f.signerEmail) continue;
     counts[f.signerEmail] = (counts[f.signerEmail] || 0) + 1;
   }
   return counts;
@@ -64,6 +73,7 @@ const activeSignerLabel = computed(() => {
 
 // Load signing session on mount
 onMounted(async () => {
+  window.addEventListener('beforeunload', handleBeforeUnload);
   try {
     const data = await signingApi.fetchEditorSession(signingRequestId.value, token.value);
     store.initEditor({
@@ -91,11 +101,13 @@ onMounted(async () => {
     }
   } catch (e: any) {
     if (isAuthFailure(e)) {
-      saveError.value = 'Your session expired. Redirecting to sign in...';
-      redirectToLogin();
+      saveError.value = getApiErrorMessage(
+        e,
+        'This signing editor link is invalid or has expired.'
+      );
       return;
     }
-    saveError.value = e?.data?.error || 'Failed to load document';
+    saveError.value = getApiErrorMessage(e, 'Failed to load document');
   }
 
   // Measure container width
@@ -108,6 +120,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload);
   resizeObserver?.disconnect();
 });
 
@@ -127,6 +140,50 @@ function handlePageDrop(e: DragEvent, pageIndex: number) {
 function handleAddFieldFromPalette(type: SigningFieldType) {
   // Add to center of current page
   store.addField(type, store.currentPage, 40, 40);
+}
+
+function handleAddImage(assigned: boolean) {
+  if (!assigned) {
+    stampInputRef.value?.click();
+    return;
+  }
+
+  if (!store.activeSignerEmail) {
+    toast.error('Select a signer before placing an image field.');
+    return;
+  }
+
+  store.addImageField({
+    pageIndex: store.currentPage,
+    x: 40,
+    y: 40,
+    assigned: true,
+  });
+}
+
+async function handleStampSelected(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  isUploadingStamp.value = true;
+  try {
+    const uploaded = await signingApi.uploadEditorImage(signingRequestId.value, file, token.value);
+    store.addImageField({
+      pageIndex: store.currentPage,
+      x: 40,
+      y: 40,
+      assigned: false,
+      src: uploaded.url,
+      path: uploaded.path,
+    });
+    toast.success('Image placed on the document.');
+  } catch (e: unknown) {
+    toast.error(getApiErrorMessage(e, 'Failed to upload the image.'));
+  } finally {
+    isUploadingStamp.value = false;
+  }
 }
 
 async function handleDetectFormFields() {
@@ -189,6 +246,10 @@ function handlePageDragOver(e: DragEvent) {
 }
 
 async function handleSave() {
+  if (isUploadingStamp.value) {
+    toast.info('Wait for the image upload to finish.');
+    return;
+  }
   if (store.fields.length === 0) {
     saveError.value = 'Please add at least one signature field';
     return;
@@ -208,6 +269,7 @@ async function handleSave() {
       store.signers.map(s => ({ email: s.email, name: s.name })),
       token.value
     );
+    store.markSaved();
 
     // Notify the opener window (mailer_web composer)
     if (window.opener) {
@@ -234,11 +296,13 @@ async function handleSave() {
     }
   } catch (e: any) {
     if (isAuthFailure(e)) {
-      saveError.value = 'Your session expired. Redirecting to sign in...';
-      redirectToLogin();
+      saveError.value = getApiErrorMessage(
+        e,
+        'This signing editor link is invalid or has expired.'
+      );
       return;
     }
-    saveError.value = e?.data?.error || 'Failed to save template';
+    saveError.value = getApiErrorMessage(e, 'Failed to save template');
   } finally {
     isSaving.value = false;
   }
@@ -292,7 +356,7 @@ async function handleSave() {
         <!-- Save -->
         <button
           class="inline-flex items-center rounded-xl bg-[#2d6a4f] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#25563f] disabled:cursor-not-allowed disabled:opacity-50"
-          :disabled="isSaving || store.fields.length === 0"
+          :disabled="isSaving || isUploadingStamp || store.fields.length === 0"
           @click="handleSave"
         >
           {{ isSaving ? 'Saving...' : 'Done' }}
@@ -312,9 +376,20 @@ async function handleSave() {
           @remove-signer="store.removeSigner"
         />
 
+        <input
+          ref="stampInputRef"
+          type="file"
+          accept="image/png,image/jpeg,image/gif"
+          class="hidden"
+          data-testid="stamp-file-input"
+          @change="handleStampSelected"
+        />
+
         <FieldPalette
           :active-signer-color="activeSigner?.color"
+          :uploading-stamp="isUploadingStamp"
           @add-field="handleAddFieldFromPalette"
+          @add-image="handleAddImage"
         />
 
         <!-- Detect Form Fields -->
@@ -360,6 +435,7 @@ async function handleSave() {
             class="relative"
             @drop="handlePageDrop($event, page.pageIndex)"
             @dragover="handlePageDragOver"
+            @click="store.setCurrentPage(page.pageIndex)"
           >
             <PdfPageCanvas
               :image-url="page.imageUrl"
