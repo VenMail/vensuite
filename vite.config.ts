@@ -176,6 +176,9 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
       'import.meta.env.VITE_AUTH_URL': JSON.stringify(env.VITE_AUTH_URL),
       'import.meta.env.VITE_OAUTH_REDIRECT_URI': JSON.stringify(env.VITE_OAUTH_REDIRECT_URI),
+      // The repository's deployment environments use SOCKET_BASE_URL. Expose it
+      // under Vite's client-safe prefix for all collaboration clients.
+      'import.meta.env.VITE_SOCKET_BASE_URL': JSON.stringify(env.VITE_SOCKET_BASE_URL || env.SOCKET_BASE_URL),
       'import.meta.env.SOCKET_BASE_URL': JSON.stringify(env.SOCKET_BASE_URL),
     },
     css: {

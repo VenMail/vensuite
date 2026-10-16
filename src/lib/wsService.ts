@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { useAuthStore } from '@/store/auth'
+import { secureSocketUrl } from '@/lib/socketUrl'
 
 const WS_DEBUG = Boolean(import.meta.env.DEV)
 const debugLog = (...args: unknown[]) => {
@@ -60,7 +61,10 @@ export class WebSocketService implements IWebsocketService {
   private reconnectTimeoutId: number | null = null
   private activeSheets: Map<string, MessageListener> = new Map()
 
-  public constructor(public readonly url: string) {
+  public readonly url: string
+
+  public constructor(url: string) {
+    this.url = secureSocketUrl(url)
     WebSocketService.instances.add(this)
   }
 
@@ -238,10 +242,11 @@ const wsServicesByUrl: Map<string, WebSocketService> = new Map()
 
 export function useWebSocket() {
   function initializeWebSocket(url: string): WebSocketService {
-    let svc = wsServicesByUrl.get(url)
+    const secureUrl = secureSocketUrl(url)
+    let svc = wsServicesByUrl.get(secureUrl)
     if (!svc) {
-      svc = new WebSocketService(url)
-      wsServicesByUrl.set(url, svc)
+      svc = new WebSocketService(secureUrl)
+      wsServicesByUrl.set(secureUrl, svc)
       svc.connect()
     } else if (!svc.isConnected.value) {
       svc.connect()
@@ -250,10 +255,11 @@ export function useWebSocket() {
   }
 
   function disposeWebSocket(url: string) {
-    const svc = wsServicesByUrl.get(url)
+    const secureUrl = secureSocketUrl(url)
+    const svc = wsServicesByUrl.get(secureUrl)
     if (svc) {
       svc.disconnect()
-      wsServicesByUrl.delete(url)
+      wsServicesByUrl.delete(secureUrl)
     }
   }
 

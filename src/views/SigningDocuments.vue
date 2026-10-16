@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { signingApi, type SigningRequestSummary } from '@/services/signing';
+import {
+  filterSigningRequests,
+  signingCounts,
+  type SigningFilter,
+} from '@/lib/signingDashboard';
 import { toast } from '@/composables/useToast';
 import { useAuthStore } from '@/store/auth';
 import {
@@ -30,6 +35,7 @@ const currentUserFullName = computed(() => {
 const requests = ref<SigningRequestSummary[]>([]);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+const activeFilter = ref<SigningFilter>('all');
 
 // Upload dialog state
 const showUploadDialog = ref(false);
@@ -67,21 +73,17 @@ function getStatusConfig(status: string) {
   return statusConfig[status] || statusConfig.draft;
 }
 
-const sortedRequests = computed(() => {
-  return [...requests.value].sort((a, b) => {
+const filteredRequests = computed(() => {
+  const newestFirst = [...requests.value].sort((a, b) => {
     const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
     const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
     return bDate - aDate;
   });
+
+  return filterSigningRequests(newestFirst, activeFilter.value);
 });
 
-const stats = computed(() => {
-  const total = requests.value.length;
-  const completed = requests.value.filter(r => r.status === 'completed').length;
-  const pending = requests.value.filter(r => r.status === 'pending' || r.status === 'partially_signed').length;
-  const draft = requests.value.filter(r => r.status === 'draft').length;
-  return { total, completed, pending, draft };
-});
+const stats = computed(() => signingCounts(requests.value));
 
 async function fetchRequests() {
   isLoading.value = true;
@@ -352,48 +354,35 @@ onMounted(() => {
       'dark:bg-gradient-to-br dark:from-gray-900 to-gray-800'
     ]"
   >
-    <!-- Header -->
-    <header class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
+    <header class="flex flex-col gap-4 border-b border-gray-200 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-center sm:justify-between shrink-0">
       <div>
-        <h1 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <PenTool class="w-5 h-5 text-cyan-600" />
-          Signing
+        <h1 class="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
+          <PenTool class="h-5 w-5 text-cyan-600" />
+          Document signing
         </h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          Upload, prepare, and track documents for signature
-        </p>
+        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Prepare, send, and download signed documents.</p>
       </div>
-      <button
-        class="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
-        @click="openUploadDialog"
-      >
-        <Upload class="w-4 h-4" />
-        Upload Document
-      </button>
+      <div class="grid grid-cols-4 gap-2 sm:gap-3">
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">All</p>
+          <p class="text-lg font-bold text-gray-900 dark:text-white">{{ stats.all }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Drafts</p>
+          <p class="text-lg font-bold text-gray-900 dark:text-white">{{ stats.drafts }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Pending</p>
+          <p class="text-lg font-bold text-gray-900 dark:text-white">{{ stats.pending }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Signed</p>
+          <p class="text-lg font-bold text-gray-900 dark:text-white">{{ stats.signed }}</p>
+        </div>
+      </div>
     </header>
 
-    <!-- Stats bar -->
-    <div class="flex items-center gap-6 px-6 py-3 border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 shrink-0">
-      <div class="flex items-center gap-2">
-        <FileText class="w-4 h-4 text-gray-400" />
-        <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ stats.total }} total</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <Clock class="w-4 h-4 text-amber-500" />
-        <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ stats.pending }} pending</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <CheckCircle2 class="w-4 h-4 text-green-500" />
-        <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ stats.completed }} completed</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <PenTool class="w-4 h-4 text-gray-400" />
-        <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ stats.draft }} drafts</span>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <div class="flex-1 min-h-0 overflow-auto p-6">
+    <div class="flex-1 min-h-0 overflow-auto bg-gray-50 p-4 dark:bg-gray-950 sm:p-6">
       <!-- Loading -->
       <div v-if="isLoading" class="flex items-center justify-center py-20">
         <Loader2 class="w-8 h-8 text-cyan-600 animate-spin" />
@@ -408,82 +397,94 @@ onMounted(() => {
         </button>
       </div>
 
-      <!-- Empty state -->
-      <div v-else-if="sortedRequests.length === 0" class="flex flex-col items-center justify-center py-20">
-        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-          <PenTool class="w-8 h-8 text-gray-400" />
-        </div>
-        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300">No documents yet</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm text-center">
-          Upload a PDF or DOCX to start collecting signatures. You can add signing fields and invite signers.
-        </p>
-        <button
-          class="mt-6 inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
-          @click="openUploadDialog"
-        >
-          <Upload class="w-4 h-4" />
-          Upload your first document
-        </button>
-      </div>
+      <div v-else class="mx-auto grid max-w-7xl grid-cols-1 gap-4 xl:grid-cols-[minmax(20rem,0.8fr)_minmax(0,2fr)]">
+        <section class="h-fit rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-5">
+          <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Send for signing</h2>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Signer email is required before sending.</p>
+          <button
+            class="mt-5 flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 px-5 py-8 text-center transition hover:border-cyan-400 hover:bg-cyan-50/50 dark:border-gray-700 dark:hover:bg-cyan-400/5"
+            @click="openUploadDialog"
+          >
+            <span class="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-300">
+              <Upload class="h-5 w-5" />
+            </span>
+            <span class="text-sm font-semibold text-gray-900 dark:text-white">Upload document</span>
+            <span class="mt-1 text-xs text-gray-500 dark:text-gray-400">PDF or DOCX</span>
+          </button>
+          <div class="mt-5 rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/70 dark:text-gray-300">
+            <p class="font-medium text-gray-900 dark:text-white">Draft documents</p>
+            <p class="mt-1">Fields must be prepared before invitations are sent.</p>
+          </div>
+        </section>
 
-      <!-- Request cards -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div class="flex flex-col gap-3 border-b border-gray-200 px-4 py-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div>
+              <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Requests and signed documents</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Completed documents include a final PDF.</p>
+            </div>
+            <div class="inline-flex rounded-lg border border-gray-200 p-1 text-sm dark:border-gray-700">
+              <button
+                v-for="filter in ([
+                  { id: 'all', label: 'All' },
+                  { id: 'in-progress', label: 'In progress' },
+                  { id: 'signed', label: 'Signed' },
+                ] as Array<{ id: SigningFilter; label: string }>)"
+                :key="filter.id"
+                class="rounded-md px-3 py-1.5 font-medium transition"
+                :class="activeFilter === filter.id ? 'bg-slate-950 text-white dark:bg-cyan-400 dark:text-slate-950' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'"
+                @click="activeFilter = filter.id"
+              >
+                {{ filter.label }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="requests.length === 0" class="flex flex-col items-center justify-center px-6 py-16 text-center">
+            <span class="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+              <PenTool class="h-7 w-7 text-gray-400" />
+            </span>
+            <h3 class="mt-4 text-base font-semibold text-gray-700 dark:text-gray-300">No signing requests</h3>
+            <button
+              class="mt-5 inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 dark:bg-cyan-500 dark:text-slate-950 dark:hover:bg-cyan-400"
+              @click="openUploadDialog"
+            >
+              <Upload class="h-4 w-4" />
+              Upload document
+            </button>
+          </div>
+
+          <div v-else-if="filteredRequests.length === 0" class="px-5 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+            No {{ activeFilter === 'signed' ? 'signed documents' : 'requests in progress' }}.
+          </div>
+
+          <div v-else class="divide-y divide-gray-100 dark:divide-gray-800">
         <div
-          v-for="req in sortedRequests"
+          v-for="req in filteredRequests"
           :key="req.id"
-          class="group relative bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow p-5"
+          class="group grid gap-3 px-4 py-4 transition hover:bg-gray-50 dark:hover:bg-gray-800/40 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5"
         >
-          <!-- Status badge -->
-          <div class="flex items-start justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <FileText class="w-5 h-5 text-gray-400 shrink-0" />
-              <h3 class="font-semibold text-gray-900 dark:text-white truncate text-sm" :title="req.document_name">
+          <div class="min-w-0">
+            <div class="flex min-w-0 items-center gap-2">
+              <FileText class="h-5 w-5 shrink-0 text-gray-400" />
+              <h3 class="truncate text-sm font-semibold text-gray-900 dark:text-white" :title="req.document_name">
                 {{ req.document_name }}
               </h3>
             </div>
-            <span
-              class="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+            <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+              <span
+                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium"
               :class="getStatusConfig(req.status).class"
             >
               <component :is="getStatusConfig(req.status).icon" class="w-3 h-3" />
               {{ getStatusConfig(req.status).label }}
-            </span>
-          </div>
-
-          <!-- Signers summary -->
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            {{ signerStatusSummary(req.signers) }}
-          </p>
-
-          <!-- Signer emails -->
-          <div v-if="req.signers && req.signers.length > 0" class="mb-3">
-            <div
-              v-for="(signer, i) in req.signers.slice(0, 3)"
-              :key="i"
-              class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 py-0.5"
-            >
-              <span
-                class="w-1.5 h-1.5 rounded-full"
-                :class="{
-                  'bg-green-500': signer.status === 'completed',
-                  'bg-amber-500': signer.status === 'pending' || !signer.status,
-                  'bg-red-500': signer.status === 'declined',
-                }"
-              />
-              <span class="truncate">{{ signer.email }}</span>
+              </span>
+              <span>{{ signerStatusSummary(req.signers) }}</span>
+              <span>{{ formatDate(req.created_at) }}</span>
             </div>
-            <p v-if="req.signers.length > 3" class="text-xs text-gray-400 mt-0.5">
-              +{{ req.signers.length - 3 }} more
-            </p>
           </div>
 
-          <!-- Date -->
-          <p class="text-xs text-gray-400 mb-4">
-            Created {{ formatDate(req.created_at) }}
-          </p>
-
-          <!-- Actions -->
-          <div class="flex flex-wrap items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2 sm:justify-end">
             <button
               v-if="req.status === 'draft'"
               class="inline-flex items-center gap-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-400/10 px-3 py-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-400/20 transition"
@@ -543,6 +544,8 @@ onMounted(() => {
             </button>
           </div>
         </div>
+          </div>
+        </section>
       </div>
     </div>
 

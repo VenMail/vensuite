@@ -124,6 +124,23 @@
         <button type="button" title="Toggle landscape/portrait" class="toolbar-btn" @click="emit('update:pageOrientation', pageOrientation === 'landscape' ? 'portrait' : 'landscape')"><RotateCcw class="h-4 w-4" /></button>
       </div>
 
+      <span class="toolbar-divider" />
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button type="button" title="View options" class="toolbar-btn"><Ruler class="h-4 w-4" /></button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuCheckboxItem
+            :checked="showHorizontalRuler"
+            @select.prevent
+            @update:checked="emit('update:showHorizontalRuler', $event)"
+          >
+            Horizontal ruler
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <!-- Comments (right-aligned) -->
       <div class="ml-auto flex items-center gap-1">
         <button type="button" title="Comments" class="toolbar-btn" @click="emit('toggleComments')">
@@ -162,9 +179,15 @@ import {
   Superscript, Subscript as SubscriptIcon, AlignLeft, AlignCenter, AlignRight,
   AlignJustify, List, ListOrdered, Table as TableIcon, Image as ImageIcon,
   Link2, Scissors, Minus, Search, FileDown, FileText, Printer, RotateCcw,
-  MessageSquare, Type, Highlighter,
+  MessageSquare, Type, Highlighter, Ruler,
 } from 'lucide-vue-next';
 import type { CanvasRangeStyle } from '@/composables/useCanvasDocsEditor';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 
 const props = defineProps<{
@@ -172,6 +195,7 @@ const props = defineProps<{
   rangeStyle: CanvasRangeStyle;
   pageSize: string;
   pageOrientation: string;
+  showHorizontalRuler: boolean;
   unreadCount?: number;
 }>();
 
@@ -182,6 +206,7 @@ const emit = defineEmits<{
   (e: 'toggleFindReplace'): void;
   (e: 'update:pageSize', val: string): void;
   (e: 'update:pageOrientation', val: string): void;
+  (e: 'update:showHorizontalRuler', val: boolean): void;
 }>();
 
 const FONTS = ['Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana', 'Inter', 'Roboto'];

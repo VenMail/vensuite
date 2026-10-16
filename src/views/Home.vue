@@ -115,66 +115,39 @@
         </template>
       </WorkspaceTopBar>
 
-      <section class="workspace-overview-panel">
-        <div class="workspace-briefing">
-          <div class="flex items-start gap-3">
-            <div class="workspace-briefing-icon">
-              <FolderKanban class="h-6 w-6" />
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <p class="text-xs font-extrabold uppercase text-cyan-700 dark:text-cyan-300">
-                  Workspace
-                </p>
-                <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
-                  {{ workspaceStatusLabel }}
-                </span>
-              </div>
-              <h1 class="workspace-title mt-2 text-slate-950 dark:text-white">
-                {{ currentTitle }}
-              </h1>
-              <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                Browse, create, upload, sort, and organize the files in this workspace.
-              </p>
-            </div>
+      <section
+        v-if="!currentFolderId && suggestedFiles.length > 0"
+        class="rounded-xl border border-slate-200/80 bg-white/85 p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/80 sm:p-5"
+        aria-labelledby="suggested-files-heading"
+      >
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 id="suggested-files-heading" class="text-base font-semibold text-slate-950 dark:text-white">Suggested files</h2>
+            <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Recent activity</p>
           </div>
-
-          <div class="mt-5 grid gap-2 sm:grid-cols-3">
-            <div class="workspace-detail">
-              <span class="workspace-detail-label">Current folder</span>
-              <span class="workspace-detail-value">{{ currentTitle }}</span>
-            </div>
-            <div class="workspace-detail">
-              <span class="workspace-detail-label">Selected</span>
-              <span class="workspace-detail-value">{{ selectedFiles.size }} items</span>
-            </div>
-            <div class="workspace-detail">
-              <span class="workspace-detail-label">View</span>
-              <span class="workspace-detail-value">{{ activeViewLabel }}</span>
-            </div>
-          </div>
+          <span class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ suggestedFiles.length }} files</span>
         </div>
-
-        <div class="workspace-side-panel">
-          <div class="grid grid-cols-3 gap-2">
-            <div v-for="stat in workspaceStats" :key="stat.label" class="workspace-stat">
-              <span class="block text-xl font-extrabold text-slate-950 dark:text-white">{{ stat.value }}</span>
-              <span class="mt-1 block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">{{ stat.label }}</span>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <button
+            v-for="file in suggestedFiles"
+            :key="file.id"
+            class="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50 text-left transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-cyan-500"
+            @click="file.id && openFile(file.id)"
+          >
+            <div class="flex h-28 items-center justify-center overflow-hidden bg-white dark:bg-slate-900">
+              <img
+                v-if="file.thumbnail_url"
+                :src="file.thumbnail_url"
+                :alt="file.title"
+                class="h-full w-full object-cover"
+              />
+              <FileText v-else class="h-9 w-9 text-cyan-600 dark:text-cyan-300" aria-hidden="true" />
             </div>
-          </div>
-
-          <div class="mt-3 grid grid-cols-2 gap-2">
-            <Button
-              v-for="action in quickCreateActions"
-              :key="action.label"
-              variant="outline"
-              class="quick-create-button"
-              @click="action.onClick"
-            >
-              <component :is="action.icon" class="h-4 w-4" />
-              <span>{{ action.label }}</span>
-            </Button>
-          </div>
+            <div class="p-3">
+              <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ file.title }}</p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ formatActivityDate(file) }}</p>
+            </div>
+          </button>
         </div>
       </section>
 
@@ -359,6 +332,7 @@ import MediaViewer from '@/components/media/MediaViewer.vue'
 import Landing from './Landing.vue'
 import type { FileData } from '@/types'
 import { useMediaTypes } from '@/composables/useMediaTypes'
+import { selectSuggestedFiles } from '@/lib/fileSuggestions'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -402,7 +376,7 @@ const {
   onNavigate: () => clearSelection()
 })
 
-const homeSubtitle = computed(() => 'All files')
+const homeSubtitle = ''
 
 const itemsInCurrentFolder = computed(() => {
   const folderId = currentFolderId.value
@@ -469,37 +443,7 @@ const sortedItems = computed(() => {
   return list.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
 })
 
-const activeViewLabel = computed(() =>
-  viewControls.value.find((option) => option.value === viewMode.value)?.label || viewMode.value
-)
-
-const workspaceStatusLabel = computed(() => {
-  if (fileStore.isSyncing) return 'Syncing'
-  return fileStore.isOnline ? 'Online' : 'Offline'
-})
-
-const workspaceStats = computed(() => {
-  const files = fileStore.allFiles
-  const docs = files.filter((file: FileData) =>
-    ['doc', 'docx', 'txt', 'rtf', 'pdf'].includes((file.file_type || '').toLowerCase())
-  ).length
-  const sheets = files.filter((file: FileData) =>
-    ['xls', 'xlsx', 'csv', 'ods'].includes((file.file_type || '').toLowerCase())
-  ).length
-
-  return [
-    { label: 'Files', value: files.length },
-    { label: 'Docs', value: docs },
-    { label: 'Sheets', value: sheets }
-  ]
-})
-
-const quickCreateActions = computed(() => [
-  { label: 'Doc', icon: FileText, onClick: createNewDocument },
-  { label: 'Sheet', icon: TableIcon, onClick: createNewSpreadsheet },
-  { label: 'Slides', icon: Presentation, onClick: createNewPresentation },
-  { label: 'Form', icon: FolderKanban, onClick: createNewForm }
-])
+const suggestedFiles = computed(() => selectSuggestedFiles<FileData>(fileStore.allFiles, 8))
 
 function buildContextMenuActions({
   selectedIds,
@@ -691,6 +635,15 @@ function handleSort(sort: HomeSort) {
 
 function handleViewChange(mode: HomeViewMode) {
   viewMode.value = mode
+}
+
+function formatActivityDate(file: FileData): string {
+  const activity = file.last_viewed || file.updated_at || file.created_at
+  if (!activity) return 'Recent file'
+
+  const date = new Date(activity)
+  if (Number.isNaN(date.getTime())) return 'Recent file'
+  return `Updated ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
 }
 
 async function handleNavigateUp() {
@@ -983,152 +936,6 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.workspace-overview-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 22rem;
-  gap: 1rem;
-}
-
-.workspace-title {
-  font-family: Onest, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 1.5rem;
-  font-weight: 720;
-  line-height: 1.25;
-  letter-spacing: 0;
-}
-
-.workspace-briefing,
-.workspace-side-panel {
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(18px);
-}
-
-.workspace-briefing {
-  padding: 1rem;
-}
-
-.workspace-side-panel {
-  padding: 0.85rem;
-}
-
-.dark .workspace-briefing,
-.dark .workspace-side-panel {
-  border-color: rgba(148, 163, 184, 0.18);
-  background: rgba(15, 23, 42, 0.76);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
-}
-
-.workspace-briefing-icon {
-  display: flex;
-  height: 3rem;
-  width: 3rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.75rem;
-  background: #0f172a;
-  color: #67e8f9;
-}
-
-.workspace-detail {
-  display: flex;
-  min-height: 3.1rem;
-  flex-direction: column;
-  justify-content: center;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 0.65rem;
-  background: rgba(248, 250, 252, 0.9);
-  padding: 0.65rem 0.8rem;
-  text-align: left;
-  color: #334155;
-}
-
-.workspace-detail-label {
-  font-size: 0.6875rem;
-  font-weight: 800;
-  line-height: 1rem;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.workspace-detail-value {
-  margin-top: 0.15rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.875rem;
-  font-weight: 700;
-  line-height: 1.25rem;
-  color: #0f172a;
-}
-
-.dark .workspace-detail {
-  border-color: rgba(148, 163, 184, 0.16);
-  background: rgba(30, 41, 59, 0.72);
-}
-
-.dark .workspace-detail-label {
-  color: #94a3b8;
-}
-
-.dark .workspace-detail-value {
-  color: #e2e8f0;
-}
-
-.workspace-stat {
-  min-height: 4.25rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 0.65rem;
-  background: rgba(248, 250, 252, 0.92);
-  padding: 0.75rem;
-}
-
-.dark .workspace-stat {
-  border-color: rgba(148, 163, 184, 0.16);
-  background: rgba(30, 41, 59, 0.66);
-}
-
-.quick-create-button {
-  display: inline-flex;
-  height: 2.65rem;
-  justify-content: center;
-  gap: 0.45rem;
-  border-color: rgba(15, 23, 42, 0.14);
-  background: rgba(255, 255, 255, 0.78);
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.dark .quick-create-button {
-  border-color: rgba(148, 163, 184, 0.18);
-  background: rgba(15, 23, 42, 0.64);
-  color: #f8fafc;
-}
-
-@media (max-width: 1180px) {
-  .workspace-overview-panel {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .workspace-overview-panel {
-    gap: 0.75rem;
-  }
-
-  .workspace-title {
-    font-size: 1.375rem;
-    line-height: 1.25;
-  }
-
-  .workspace-briefing,
-  .workspace-side-panel {
-    border-radius: 0.65rem;
-  }
-}
 @media (min-width: 640px) {
   .empty-state {
     padding: 4rem;

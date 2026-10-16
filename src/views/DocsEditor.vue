@@ -68,6 +68,7 @@
         :range-style="rangeStyle"
         :page-size="pageSettings.pageSize"
         :page-orientation="pageSettings.pageOrientation"
+        :show-horizontal-ruler="pageSettings.showHorizontalRuler"
         :unread-count="unreadCount"
         @export="handleExport"
         @print="handlePrint"
@@ -75,6 +76,7 @@
         @toggle-find-replace="isFindReplaceOpen = !isFindReplaceOpen"
         @update:page-size="handlePageSizeChange"
         @update:page-orientation="(v) => pageSettings.pageOrientation = v as any"
+        @update:show-horizontal-ruler="pageSettings.showHorizontalRuler = $event"
       />
 
       <!-- Find / Replace bar -->
@@ -146,6 +148,20 @@
            :class="isViewMode ? 'bg-white dark:bg-gray-950' : 'bg-gray-100 dark:bg-gray-800'">
         <div class="canvas-page-wrapper py-6 print:py-0"
              :style="zoomLevel !== 100 ? { transformOrigin: 'top center', transform: `scale(${zoomLevel / 100})` } : {}">
+          <PageRuler
+            v-if="!isViewMode && pageSettings.showHorizontalRuler"
+            class="mb-2"
+            orientation="horizontal"
+            :page-width="canvasPageDimensions.width"
+            :page-height="canvasPageDimensions.height"
+            :margin-top="pageSettings.marginTop"
+            :margin-bottom="pageSettings.marginBottom"
+            :margin-left="pageSettings.marginLeft"
+            :margin-right="pageSettings.marginRight"
+            unit="in"
+            @update:margin-left="pageSettings.marginLeft = $event"
+            @update:margin-right="pageSettings.marginRight = $event"
+          />
           <CanvasEditorCore
             ref="canvasCoreRef"
             :content="rawDocContent"
@@ -310,6 +326,7 @@ import axios from 'axios';
 import DocsTitleBar from '@/components/forms/DocsTitleBar.vue';
 import ShareCard from '@/components/ShareCard.vue';
 import PageBadgeOverlay from '@/components/docs/PageBadgeOverlay.vue';
+import PageRuler from '@/components/forms/PageRuler.vue';
 import DocsStatusBar from '@/components/docs/DocsStatusBar.vue';
 import CanvasEditorCore from '@/components/docs/CanvasEditorCore.vue';
 import DocsCanvasToolbar from '@/components/docs/DocsCanvasToolbar.vue';
@@ -399,6 +416,19 @@ const {
 
 const canvasCoreRef   = ref<InstanceType<typeof CanvasEditorCore> | null>(null);
 let   canvasInstance: any = null;
+
+const canvasPageDimensions = computed(() => {
+  const pageSizes: Record<string, { width: number; height: number }> = {
+    a4: { width: 794, height: 1123 },
+    a3: { width: 1123, height: 1587 },
+    letter: { width: 816, height: 1056 },
+    legal: { width: 816, height: 1344 },
+  };
+  const dimensions = pageSizes[pageSettings.pageSize] || pageSizes.a4;
+  return pageSettings.pageOrientation === 'landscape'
+    ? { width: dimensions.height, height: dimensions.width }
+    : dimensions;
+});
 
 // Raw content passed to CanvasEditorCore on first load
 const rawDocContent = ref<any>(null);
@@ -1578,6 +1608,8 @@ onUnmounted(() => {
 
 .canvas-page-wrapper {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
   min-height: 100%;
 }

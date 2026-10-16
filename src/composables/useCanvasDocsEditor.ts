@@ -10,6 +10,7 @@ export interface CanvasDocPageSettings {
   marginRight: number;
   showPageNumbers: boolean;
   pageNumberPosition: string;
+  showHorizontalRuler: boolean;
 }
 
 export interface CanvasRangeStyle {
@@ -154,6 +155,7 @@ export function useCanvasDocsEditor() {
     marginRight: 120,
     showPageNumbers: true,
     pageNumberPosition: 'bottom-right',
+    showHorizontalRuler: true,
   });
 
   const rangeStyle = ref<CanvasRangeStyle>({});
