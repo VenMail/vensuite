@@ -11,6 +11,7 @@ import FieldPalette from '@/components/signing/FieldPalette.vue';
 import SignerList from '@/components/signing/SignerList.vue';
 import type { SigningFieldType } from '@/types/signing';
 import { toast } from '@/composables/useToast';
+import { sendSigningCompletion } from '@/utils/signingCompletion.js';
 
 const route = useRoute();
 const store = useSigningEditorStore();
@@ -271,7 +272,18 @@ async function handleSave() {
     );
     store.markSaved();
 
-    // Notify the opener window (mailer_web composer)
+    const completion = {
+      type: 'signing-editor-done',
+      signingRequestId: signingRequestId.value,
+      fieldCount: store.fields.length,
+      signerCount: store.signers.length,
+      signers: store.signers.map(s => ({ email: s.email, name: s.name })),
+    };
+    if (sendSigningCompletion(window, document.referrer, completion)) {
+      return;
+    }
+
+    // Preserve compatibility with existing editor sessions.
     if (window.opener) {
       let openerOrigin = '*';
       try {
@@ -282,13 +294,7 @@ async function handleSave() {
         openerOrigin = '*';
       }
 
-      window.opener.postMessage({
-        type: 'signing-editor-done',
-        signingRequestId: signingRequestId.value,
-        fieldCount: store.fields.length,
-        signerCount: store.signers.length,
-        signers: store.signers.map(s => ({ email: s.email, name: s.name })),
-      }, openerOrigin);
+      window.opener.postMessage(completion, openerOrigin);
       window.close();
     } else {
       saveError.value = null;
