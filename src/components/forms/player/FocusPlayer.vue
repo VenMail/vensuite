@@ -22,6 +22,7 @@
         :show-errors="attempted"
         @update:model-value="updateAnswer"
         @enter="handleNext"
+        @advance="scheduleAdvance"
       />
     </div>
 
@@ -42,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { ArrowLeft, ArrowRight } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import QuestionRenderer from '@/components/forms/player/QuestionRenderer.vue';
@@ -82,7 +83,13 @@ const showSkip = computed(() =>
 
 const attempted = ref(false);
 const questionStep = ref<HTMLElement | null>(null);
-watch(() => currentQuestion.value?.id, () => { attempted.value = false; });
+let advanceTimer: ReturnType<typeof setTimeout> | undefined;
+const cancelAdvance = () => clearTimeout(advanceTimer);
+onBeforeUnmount(cancelAdvance);
+watch(() => currentQuestion.value?.id, () => {
+  attempted.value = false;
+  cancelAdvance();
+});
 watch(questionStep, (step) => step?.focus(), { flush: 'post' });
 
 const focusQuestion = () => questionStep.value?.focus();
@@ -94,6 +101,7 @@ const updateAnswer = (value: unknown) => {
 };
 
 const handleNext = () => {
+  cancelAdvance();
   const question = currentQuestion.value;
   if (!question || props.isSubmitting) return;
   if (getAnswerError(question, answerValue.value)) {
@@ -111,7 +119,16 @@ const handleNext = () => {
   }
 };
 
+const scheduleAdvance = () => {
+  cancelAdvance();
+  const questionId = currentQuestion.value?.id;
+  advanceTimer = setTimeout(() => {
+    if (currentQuestion.value?.id === questionId && hasNextQuestion.value) handleNext();
+  }, 200);
+};
+
 const handleBack = () => {
+  cancelAdvance();
   if (canGoBack.value) playerStore.advanceToQuestion(questionOrder.value[currentIndex.value - 1]);
 };
 </script>

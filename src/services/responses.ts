@@ -1,5 +1,5 @@
-import { questionLogic } from '@/utils/formOptions.js';
-import { apiClient, withRequestOptions, type RequestOptions } from "./apiClient";
+import { normalizeFormOptions, questionLogic } from '@/utils/formOptions.js';
+import { apiClient, multipartApiClient, withRequestOptions, type RequestOptions } from "./apiClient";
 import type {
   FormDefinition,
   FormQuestion,
@@ -47,31 +47,11 @@ const normalizePublicQuestionType = (type: unknown): string => {
   return TYPE_ALIASES[normalized] ?? normalized;
 };
 
-const normalizePublicOptions = (rawOptions: unknown): any[] | undefined => {
-  if (!Array.isArray(rawOptions)) return undefined;
-  return rawOptions.map((option, index) => {
-    if (typeof option === "string") {
-      return { label: option, value: option };
-    }
-    if (option && typeof option === "object") {
-      const record = option as Record<string, unknown>;
-      const label = (record.label as string) ?? (record.value as string);
-      if (label) {
-        return {
-          ...(record.value ? { value: String(record.value) } : {}),
-          label,
-        };
-      }
-    }
-    return { label: `Option ${index + 1}`, value: `option-${index + 1}` };
-  });
-};
-
 const normalizePublicQuestion = (question: any, pageId: string, fallbackIndex: number): FormQuestion => {
   const type = normalizePublicQuestionType(question?.type ?? question?.field_type);
   const id = question?.id ? String(question.id) : `${pageId}-question-${fallbackIndex}`;
   const config = (question?.config ?? {}) as Record<string, unknown>;
-  const options = normalizePublicOptions(config.options ?? question?.options);
+  const options = normalizeFormOptions(config.options ?? question?.options);
   const titleCandidate =
     question?.question ??
     question?.prompt ??
@@ -93,6 +73,13 @@ const normalizePublicQuestion = (question: any, pageId: string, fallbackIndex: n
     visibility_condition: question?.visibility_condition ?? null,
     logic: questionLogic(question),
     calculation: config.calculation ?? question?.calculation,
+    validation: question?.validation ?? config.validation,
+    min: config.min ?? question?.min,
+    max: config.max ?? question?.max,
+    step: config.step ?? question?.step,
+    show_labels: config.show_labels ?? question?.show_labels,
+    allow_international: config.allow_international ?? question?.allow_international,
+    multiple: config.multiple ?? question?.multiple,
   };
 };
 
@@ -467,6 +454,16 @@ export const fetchPublicForm = async (
   );
   return normalizePublicFormDefinition(response.data?.data);
 };
+
+export async function uploadFormAnswer(slug: string, questionId: string, file: File): Promise<string> {
+  const body = new FormData();
+  body.append('question_id', questionId);
+  body.append('file', file);
+  const response = await multipartApiClient.post(`${PUBLIC_BASE_PATH}/${slug}/uploads`, body);
+  const url = response.data?.data?.file_url;
+  if (typeof url !== 'string' || !url) throw new Error('Missing uploaded file URL');
+  return url;
+}
 
 export const submitResponse = async (
   slug: string,

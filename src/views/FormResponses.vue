@@ -303,10 +303,13 @@
                     <p v-if="answer.description" class="text-xs text-muted-foreground">{{ answer.description }}</p>
                   </header>
                   <div class="mt-3 text-sm">
-                    <Button v-if="answer.fileUrl" variant="outline" size="sm" class="shadow-sm" @click="downloadFileAnswer(answer)">
-                      <Download class="mr-2 h-4 w-4" />
-                      Download {{ answer.formatted }}
-                    </Button>
+                    <ul v-if="answer.attachments.length" class="grid gap-2">
+                      <li v-for="file in answer.attachments" :key="file.url">
+                        <a :href="file.url" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 break-all font-medium underline underline-offset-2">
+                          <Download class="h-4 w-4 shrink-0" aria-hidden="true" />{{ file.name }}
+                        </a>
+                      </li>
+                    </ul>
                     <pre v-else-if="answer.isMultiline" class="rounded-lg bg-muted/40 p-3 text-sm leading-relaxed text-foreground">{{ answer.formatted }}</pre>
                     <p v-else class="text-foreground">{{ answer.formatted }}</p>
                   </div>
@@ -339,6 +342,7 @@ import { useFormStore } from '@/store/forms';
 import { useFileStore } from '@/store/files';
 import { useAuthStore } from '@/store/auth';
 import { fetchResponseDetail } from '@/services/forms';
+import { getChoiceLabels } from '@/utils/formOptions.js';
 import type {
   AppFormResponseDetail,
   AppFormResponseAnswer,
@@ -431,6 +435,7 @@ const sheetSettings = reactive<{ sheetId: string | null; autoSync: boolean }>({ 
 const hasAutoSynced = ref(false);
 
 const questionLookup = ref<Record<string, string>>({});
+const questionDefinitions = ref<Record<string, FormQuestion>>({});
 const questionOrder = ref<string[]>([]);
 
 const themeContext = inject<{
@@ -531,7 +536,7 @@ interface DetailAnswerItem {
   questionTitle: string;
   description?: string;
   formatted: string;
-  fileUrl?: string | null;
+  attachments: { name: string; url: string }[];
   isMultiline: boolean;
 }
 
@@ -552,7 +557,7 @@ const detailAnswers = computed<DetailAnswerItem[]>(() => {
       questionTitle,
       description: answer.question?.description,
       formatted,
-      fileUrl: answer.file_url ?? null,
+      attachments: responseAttachments(answer),
       isMultiline: formatted.includes('\n'),
     };
   });
@@ -635,12 +640,47 @@ const formatPaymentStatus = (status: string | null) => {
   }
 };
 
+const responseAttachments = (answer: AppFormResponseAnswer): DetailAnswerItem['attachments'] => {
+  const value = answer.meta?.attachments;
+  const candidates = Array.isArray(value)
+    ? value
+    : [{ name: answer.file_path?.split('/').pop() || 'Download file', url: answer.file_url }];
+  return candidates.filter((file) => {
+    if (!file || typeof file.name !== 'string' || typeof file.url !== 'string') return false;
+    try {
+      return ['https:', 'http:'].includes(new URL(file.url).protocol);
+    } catch {
+      return false;
+    }
+  });
+};
+
 const formatAnswerValue = (answer: AppFormResponseAnswer): string => {
   if (answer.file_url) {
     const fileName = answer.file_path?.split('/').pop();
     return fileName ?? 'Download file';
   }
 
+  const attachments = answer.meta?.attachments;
+  if (Array.isArray(attachments) && attachments.length
+      && attachments.every((file) => file && typeof file.name === 'string')) {
+    return attachments.map((file) => file.name).join(', ');
+  }
+
+  const snapshot = answer.meta?.choice_label;
+  if (typeof snapshot === 'string' || (Array.isArray(snapshot) && snapshot.every((label) => typeof label === 'string'))) {
+    return formatBasicValue(snapshot);
+  }
+
+  const question = answer.question ?? questionDefinitions.value[String(answer.question_id)];
+  if (question?.type === 'yesno') {
+    if ([true, 'true', 1, '1'].includes(answer.value as string | number | boolean)) return 'Yes';
+    if ([false, 'false', 0, '0'].includes(answer.value as string | number | boolean)) return 'No';
+  }
+  if (question && 'options' in question) {
+    const labels = getChoiceLabels(answer.value, question.options, question.type === 'checkbox' || question.type === 'tags');
+    if (labels !== undefined) return formatBasicValue(labels);
+  }
   return formatBasicValue(answer.value);
 };
 
@@ -669,6 +709,7 @@ const getQuestionTitle = (questionId: number | string | undefined, fallback?: st
 const buildQuestionLookup = (definition: FormDefinition | null | undefined) => {
   if (!definition) return;
   const map: Record<string, string> = {};
+  const definitions: Record<string, FormQuestion> = {};
   const order: string[] = [];
 
   const pushQuestion = (question: FormQuestion | undefined) => {
@@ -676,6 +717,7 @@ const buildQuestionLookup = (definition: FormDefinition | null | undefined) => {
     const id = String(question.id);
     if (!map[id]) {
       map[id] = question.question ?? `Question ${id}`;
+      definitions[id] = question;
       order.push(id);
     }
   };
@@ -693,6 +735,7 @@ const buildQuestionLookup = (definition: FormDefinition | null | undefined) => {
   }
 
   questionLookup.value = map;
+  questionDefinitions.value = definitions;
   questionOrder.value = order;
 };
 
@@ -700,7 +743,7 @@ const formatBasicValue = (value: unknown): string => {
   if (value === null || value === undefined || value === '') return '—';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (Array.isArray(value)) {
-    return value.map((item) => formatBasicValue(item)).join(', ');
+    return value.length ? value.map((item) => formatBasicValue(item)).join(', ') : '—';
   }
   if (typeof value === 'object') {
     return Object.entries(value as Record<string, unknown>)
@@ -1180,11 +1223,6 @@ watch(
     }
   },
 );
-
-const downloadFileAnswer = (answer: DetailAnswerItem) => {
-  if (!answer.fileUrl) return;
-  window.open(answer.fileUrl, '_blank');
-};
 
 const toggleAutoSync = async (checked: boolean) => {
   sheetSettings.autoSync = !!checked;

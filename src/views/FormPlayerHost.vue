@@ -146,7 +146,8 @@ import { storeToRefs } from 'pinia';
 import FocusPlayer from '@/components/forms/player/FocusPlayer.vue';
 import ClassicPlayer from '@/components/forms/player/ClassicPlayer.vue';
 import PaymentStep from '@/components/forms/player/PaymentStep.vue';
-import { fetchPublicForm, submitResponse, updateResponseDraft, finalizeResponseSubmission } from '@/services/responses';
+import { fetchPublicForm, submitResponse, updateResponseDraft, finalizeResponseSubmission, uploadFormAnswer } from '@/services/responses';
+import { getChoiceLabels } from '@/utils/formOptions.js';
 import { getFormPattern } from '@/utils/formPatterns';
 import { previewCompletion } from '@/utils/formPreview.js';
 import { fetchForm } from '@/services/forms';
@@ -542,6 +543,23 @@ const startPaymentFlow = async (responseId: string) => {
   }
 };
 
+const uploadedFiles = new WeakMap<File, Map<string, string>>();
+const uploadAnswerFiles = async (slug: string, questionId: string, files: File[]) => {
+  const key = `${slug}/${questionId}`;
+  const attachments = [];
+  for (const file of files) {
+    let uploads = uploadedFiles.get(file);
+    if (!uploads) {
+      uploads = new Map();
+      uploadedFiles.set(file, uploads);
+    }
+    const url = uploads.get(key) ?? await uploadFormAnswer(slug, questionId, file);
+    uploads.set(key, url);
+    attachments.push({ name: file.name, url });
+  }
+  return attachments;
+};
+
 const submitAnswers = async () => {
   if (!formDefinition.value || isSubmitting.value) return;
   isSubmitting.value = true;
@@ -555,12 +573,33 @@ const submitAnswers = async () => {
   }
 
   try {
+    const { visible, answers } = playerStore.resolvedPath;
+    const definition = formDefinition.value;
+    const questions = new Map(definition.questions?.map((question) => [question.id, question]));
     const payload = {
-      answers: playerStore.questionOrder.filter((id) =>
-        !formDefinition.value?.logic_rules?.length || id in playerStore.resolvedPath.answers,
-      ).map((id) => ({
-        question_id: id,
-        value: playerStore.resolvedPath.answers[id] ?? null,
+      answers: await Promise.all(visible.filter((id) => !definition.logic_rules?.length || id in answers).map(async (id) => {
+        const question = questions.get(id);
+        const value = answers[id] ?? null;
+        if (question?.type === 'file') {
+          const files = (Array.isArray(value) ? value : [value]).filter((item): item is File => item instanceof File);
+          if (files.length) {
+            const attachments = await uploadAnswerFiles(currentSlug, id, files);
+            return {
+              question_id: id,
+              value: attachments.length === 1 ? attachments[0].url : JSON.stringify(attachments.map(({ url }) => url)),
+              meta: { attachments },
+            };
+          }
+        }
+        const multiple = question?.type === 'checkbox' || question?.type === 'tags';
+        const choiceLabel = question && (multiple || question.type === 'select' || question.type === 'radio') && 'options' in question
+          ? getChoiceLabels(value, question.options, multiple)
+          : undefined;
+        return {
+          question_id: id,
+          value,
+          ...(choiceLabel !== undefined ? { meta: { choice_label: choiceLabel } } : {}),
+        };
       })),
       captcha_token: playerState.value.captchaToken ?? undefined,
     };
