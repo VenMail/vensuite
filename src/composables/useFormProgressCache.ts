@@ -1,6 +1,5 @@
 import { watch, type WatchStopHandle } from 'vue';
 import { useFormPlayerStore } from '@/store/formPlayer';
-import { useDebounceFn } from '@vueuse/core';
 
 const STORAGE_PREFIX = 'VENX_FORM_PROGRESS_';
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -24,7 +23,7 @@ const isFileValue = (value: unknown): boolean =>
 const sanitizeAnswers = (answers: Record<string, unknown>): Record<string, unknown> => {
   const clean: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(answers)) {
-    if (!isFileValue(value)) {
+    if (!isFileValue(value) && !(Array.isArray(value) && value.some(isFileValue))) {
       clean[key] = value;
     }
   }
@@ -73,7 +72,11 @@ export const useFormProgressCache = () => {
     }
   };
 
-  const debouncedSave = useDebounceFn(saveProgress, SAVE_DEBOUNCE_MS);
+  let pendingSave: ReturnType<typeof setTimeout> | undefined;
+  const scheduleSave = () => {
+    clearTimeout(pendingSave);
+    pendingSave = setTimeout(saveProgress, SAVE_DEBOUNCE_MS);
+  };
 
   const loadProgress = (): CachedFormProgress | null => {
     const identifier = getFormIdentifier();
@@ -126,7 +129,7 @@ export const useFormProgressCache = () => {
     }
 
     // Restore current question position
-    if (cached.currentQuestionId) {
+    if (cached.currentQuestionId && playerStore.questionOrder.includes(cached.currentQuestionId)) {
       playerStore.state.currentQuestionId = cached.currentQuestionId;
     }
 
@@ -156,32 +159,20 @@ export const useFormProgressCache = () => {
   };
 
   const startWatching = () => {
-    // Watch answers for changes and persist
-    stopHandles.push(
-      watch(
-        () => playerStore.state.answers,
-        () => {
-          debouncedSave();
-        },
-        { deep: true },
-      ),
-    );
-
-    // Watch current question changes
-    stopHandles.push(
-      watch(
-        () => playerStore.state.currentQuestionId,
-        () => {
-          debouncedSave();
-        },
-      ),
-    );
+    if (stopHandles.length) return;
+    window.addEventListener('pagehide', saveProgress);
+    stopHandles.push(watch(
+      () => [playerStore.state.answers, playerStore.state.currentQuestionId, playerStore.state.responseId],
+      scheduleSave,
+      { deep: true },
+    ));
   };
 
   const stopWatching = () => {
     stopHandles.forEach((stop) => stop());
     stopHandles.length = 0;
-    ;(debouncedSave as any).cancel?.();
+    clearTimeout(pendingSave);
+    window.removeEventListener('pagehide', saveProgress);
   };
 
   return {

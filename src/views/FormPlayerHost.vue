@@ -20,23 +20,13 @@
         <p>{{$t('Views.FormPlayerHost.text.we_will_ask_for')}}</p>
       </div>
 
-      <aside v-if="stage === 'playing'" class="player-host__context" aria-label="Form summary">
-        <div>
-          <p class="player-host__eyebrow">{{ formContextLabel }}</p>
+      <header v-if="stage === 'playing' && (!isClassicMode || isPreview)" class="player-host__context">
+        <div v-if="!isClassicMode">
           <h1>{{ formTitle }}</h1>
           <p v-if="formDescription">{{ formDescription }}</p>
         </div>
-        <dl v-if="isClassicMode" class="player-host__meta">
-          <div>
-            <dt>Questions</dt>
-            <dd>{{ questionCountText }}</dd>
-          </div>
-          <div>
-            <dt>Time</dt>
-            <dd>{{ estimatedTimeText }}</dd>
-          </div>
-        </dl>
-      </aside>
+        <span v-if="isPreview" class="player-host__preview">Preview</span>
+      </header>
 
       <div
         v-if="showPaymentReminder"
@@ -49,7 +39,7 @@
       <main
         :class="[
           'player-host__body',
-          stage === 'completed' ? 'player-host__body--completed' : '',
+          stage === 'completed' || stage === 'welcome' ? 'player-host__body--standalone' : '',
           isClassicMode
             ? 'player-host__body--classic'
             : 'player-host__body--focus'
@@ -65,29 +55,16 @@
         </section>
 
         <section v-else-if="stage === 'welcome' && showResumePrompt" class="player-host__welcome">
-          <div
-            class="welcome-card"
-          >
-            <div class="resume-icon mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--player-accent)]/10">
-              <svg class="h-8 w-8 text-[var(--player-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2>{{ $t('Commons.heading.welcome_back') ?? 'Welcome back!' }}</h2>
-            <p class="text-slate-600 dark:text-slate-300">{{ $t('Views.FormPlayerHost.text.you_have_unsaved_progress') ?? 'You have unsaved progress on this form. Would you like to continue where you left off?' }}</p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                type="button"
-                class="player-host__button player-host__button--primary"
-                @click="resumeForm"
-              >
+          <div class="welcome-card welcome-card--intro">
+            <p class="welcome-card__form">{{ formTitle }}</p>
+            <h1>Continue your response</h1>
+            <p class="welcome-card__description">Your draft is saved on this device.</p>
+            <div class="welcome-card__actions">
+              <button type="button" class="player-host__button player-host__button--primary" @click="resumeForm">
                 {{ $t('Commons.button.resume') ?? 'Resume' }}
+                <ArrowRight :size="17" aria-hidden="true" />
               </button>
-              <button
-                type="button"
-                class="player-host__button player-host__button--secondary"
-                @click="startFresh"
-              >
+              <button type="button" class="player-host__button player-host__button--secondary" @click="startFresh">
                 {{ $t('Commons.button.start_over') ?? 'Start over' }}
               </button>
             </div>
@@ -95,17 +72,14 @@
         </section>
 
         <section v-else-if="stage === 'welcome'" class="player-host__welcome">
-          <div
-            class="welcome-card"
-          >
-            <h2>{{ welcomeScreen?.title ?? $t('Commons.heading.welcome') }}</h2>
-            <p v-if="welcomeScreen?.subtitle" class="text-slate-600 dark:text-slate-300">{{ welcomeScreen?.subtitle }}</p>
-            <button
-              type="button"
-              class="player-host__button player-host__button--primary"
-              @click="startForm"
-            >
-              {{ welcomeScreen?.button_text ?? $t('Commons.text.start') }}
+          <div class="welcome-card welcome-card--intro">
+            <span v-if="isPreview" class="player-host__preview">Preview</span>
+            <p v-if="welcomeTitle !== formTitle" class="welcome-card__form">{{ formTitle }}</p>
+            <h1>{{ welcomeTitle }}</h1>
+            <p v-if="welcomeDescription" class="welcome-card__description">{{ welcomeDescription }}</p>
+            <button type="button" class="player-host__button player-host__button--primary" @click="startForm">
+              {{ welcomeScreen?.button_text || $t('Commons.text.start') }}
+              <ArrowRight :size="17" aria-hidden="true" />
             </button>
           </div>
         </section>
@@ -113,6 +87,7 @@
         <FocusPlayer
           v-else-if="stage === 'playing' && mode === 'focus'"
           :is-submitting="isSubmitting"
+          :submission-error="loadError"
           :label-placement="labelPlacement"
           :density="formDensity"
           @complete="handleCompletionRequest"
@@ -121,6 +96,7 @@
         <ClassicPlayer
           v-else-if="stage === 'playing' && mode === 'classic'"
           :is-submitting="isSubmitting"
+          :submission-error="loadError"
           :label-placement="labelPlacement"
           :density="formDensity"
           @submit="handleCompletionRequest"
@@ -163,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { ArrowRight, Check } from 'lucide-vue-next';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
@@ -226,12 +202,13 @@ watch(stage, (nextStage) => {
 }, { flush: 'post' });
 const formTitle = computed(() => formDefinition.value?.title || 'Untitled form');
 const formDescription = computed(() => formDefinition.value?.description || '');
-const formContextLabel = computed(() => formIdParam.value ? 'Preview' : 'Secure form');
-const questionCount = computed(() => formDefinition.value?.questions?.length ?? 0);
-const questionCountText = computed(() => `${questionCount.value || 0}`);
-const estimatedTimeText = computed(() => {
-  const minutes = Math.max(1, Math.ceil((questionCount.value || 1) * 0.45));
-  return `${minutes} min`;
+const welcomeTitle = computed(() => {
+  const title = welcomeScreen.value?.title?.trim();
+  return title && title !== 'Welcome' ? title : formTitle.value;
+});
+const welcomeDescription = computed(() => {
+  const subtitle = welcomeScreen.value?.subtitle?.trim();
+  return subtitle && subtitle !== 'Let’s get to know you better' ? subtitle : formDescription.value;
 });
 
 const theme = computed(() => formDefinition.value?.theme);
@@ -320,6 +297,9 @@ const rootStyle = computed(() => {
   const mutedElevation = (theme.value as any)?.muted_elevation ?? '0 14px 36px rgba(15, 23, 42, 0.08)';
 
   const styles: Record<string, string> = {
+    '--player-action-bg': textColor,
+    '--player-action-text': surfaceColor,
+    '--player-action-hover': `color-mix(in srgb, ${textColor} 88%, ${surfaceColor})`,
     '--player-bg': backgroundColor,
     '--player-pattern': getFormPattern(theme.value?.background_pattern).image,
     '--player-pattern-size': getFormPattern(theme.value?.background_pattern).size,
@@ -425,6 +405,7 @@ const applyDefinition = (definition: FormDefinition) => {
   }
 
   ensureWelcomeStage();
+  watchDraft();
 };
 
 const customFontLinkId = 'form-player-custom-font';
@@ -498,30 +479,31 @@ const loadForm = async () => {
   }
 };
 
+const watchDraft = () => {
+  if (stage.value === 'playing' && !isPreview.value && formDefinition.value?.settings?.save_partial_responses !== false) {
+    progressCache.startWatching();
+  }
+};
+
 const startForm = () => {
   showResumePrompt.value = false;
   stage.value = 'playing';
-  if (!isPreview.value) progressCache.startWatching();
+  watchDraft();
 };
 
 const resumeForm = () => {
   const restored = progressCache.restoreProgress();
   showResumePrompt.value = false;
-  if (restored) {
-    stage.value = 'playing';
-    if (!isPreview.value) progressCache.startWatching();
-    toast.success('Progress restored. Pick up where you left off!');
-  } else {
-    ensureWelcomeStage();
-    if (!isPreview.value) progressCache.startWatching();
-  }
+  if (restored) stage.value = 'playing';
+  else ensureWelcomeStage();
+  watchDraft();
 };
 
 const startFresh = () => {
   progressCache.clearProgress();
   showResumePrompt.value = false;
   ensureWelcomeStage();
-  if (!isPreview.value) progressCache.startWatching();
+  watchDraft();
 };
 
 const startPaymentFlow = async (responseId: string) => {
@@ -557,13 +539,13 @@ const startPaymentFlow = async (responseId: string) => {
 };
 
 const submitAnswers = async () => {
-  if (!formDefinition.value) return;
+  if (!formDefinition.value || isSubmitting.value) return;
   isSubmitting.value = true;
   loadError.value = null;
 
   const currentSlug = submissionSlug.value;
   if (!currentSlug) {
-    toast.error('This form is not publicly accessible yet. Publish to allow submissions.');
+    loadError.value = 'This form is currently unavailable for submissions.';
     isSubmitting.value = false;
     return;
   }
@@ -585,8 +567,7 @@ const submitAnswers = async () => {
 
     const responseId = String(responseResult.response.id);
     if (!responseId || Number(responseId) <= 0) {
-      toast.error('Could not create response. Please try again.');
-      loadError.value = 'Missing response ID';
+      loadError.value = 'Couldn’t submit your response. Try again.';
       stage.value = 'playing';
       return;
     }
@@ -611,8 +592,7 @@ const submitAnswers = async () => {
         captcha_token: playerState.value.captchaToken ?? undefined,
       });
     } catch (error: any) {
-      const message = error?.data?.message ?? 'Failed to finalize response.';
-      toast.error(message);
+      const message = error?.data?.message ?? 'Couldn’t submit your response. Try again.';
       loadError.value = message;
       stage.value = 'playing';
       return;
@@ -654,10 +634,8 @@ const submitAnswers = async () => {
     progressCache.clearProgress();
     progressCache.stopWatching();
     stage.value = 'completed';
-    toast.success('Response submitted successfully.');
   } catch (error: any) {
-    const message = error?.data?.message ?? 'Failed to submit response.';
-    toast.error(message);
+    const message = error?.data?.message ?? 'Couldn’t submit your response. Try again.';
     loadError.value = message;
     stage.value = 'playing';
   } finally {
@@ -757,6 +735,11 @@ watch(formDefinition, (newDefinition) => {
 
 onMounted(() => {
   loadForm();
+});
+
+onBeforeUnmount(() => {
+  progressCache.stopWatching();
+  removeCustomFontLink();
 });
 
 watch(
@@ -882,69 +865,45 @@ watch(
 
 .player-host__context {
   display: flex;
+  width: min(100%, 46rem);
+  min-width: 0;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 1.5rem;
-  padding: 1rem 1.25rem;
-  color: var(--player-text-color, #0f172a);
-  border: 1px solid var(--player-surface-border);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--player-surface) 82%, transparent);
-  box-shadow: var(--player-muted-elevation);
-  backdrop-filter: blur(18px);
+  gap: 1rem;
+  margin: 0 auto;
+  padding-inline: 0.15rem;
+  color: var(--player-text-color);
 }
 
 .player-host__context h1 {
-  margin: 0.25rem 0 0;
-  color: var(--player-text-color, #0f172a);
+  color: inherit;
   font-family: var(--player-heading-font, inherit);
-  font-size: clamp(1.2rem, 2vw, 1.55rem);
-  font-weight: 750;
-  letter-spacing: 0;
-  line-height: 0.98;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  font-weight: 720;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .player-host__context p {
-  max-width: 650px;
-  margin-top: 0.75rem;
-  color: color-mix(in srgb, var(--player-text-color) 68%, transparent);
+  margin-top: 0.4rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
-.player-host__eyebrow {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--player-accent);
-}
-
-.player-host__meta {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(74px, 1fr));
-  gap: 0.75rem;
-  margin: 0;
-  flex: 0 0 auto;
-}
-
-.player-host__meta div {
-  padding: 0.75rem;
-  border: 1px solid var(--player-muted-border);
-  border-radius: 8px;
-  background: var(--player-muted-surface);
-}
-
-.player-host__meta dt {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: color-mix(in srgb, var(--player-text-color) 52%, transparent);
-}
-
-.player-host__meta dd {
-  margin: 0.2rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 750;
+.player-host__preview {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  margin-inline-start: auto;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--player-surface-border);
+  border-radius: 0.45rem;
+  background: var(--player-surface);
+  color: var(--player-text-color);
+  font-size: 0.8rem;
+  font-weight: 650;
 }
 
 .player-host__body {
@@ -956,8 +915,10 @@ watch(
 }
 
 .player-host__body--classic {
+  width: min(100%, 52rem);
+  margin: 0 auto;
   border: 1px solid var(--player-surface-border);
-  border-radius: 12px;
+  border-radius: 1.25rem;
   padding: clamp(1.5rem, 4vw, 3rem);
   background: var(--player-surface);
   box-shadow: var(--player-elevation);
@@ -1038,7 +999,7 @@ watch(
 .player-host__welcome {
   display: grid;
   place-items: center;
-  min-height: 320px;
+  min-height: clamp(22rem, 64svh, 44rem);
 }
 
 .welcome-card {
@@ -1064,7 +1025,40 @@ watch(
   margin-bottom: 1.5rem;
 }
 
-.player-host__body--completed {
+.welcome-card--intro {
+  width: min(42rem, 100%);
+  gap: 1rem;
+  padding: clamp(2rem, 6.5vw, 4.5rem);
+  border-top: 3px solid var(--player-accent);
+  border-radius: 1.25rem;
+  text-align: start;
+}
+
+.welcome-card--intro .player-host__preview { margin-inline-start: 0; }
+.welcome-card--intro .welcome-card__form { margin: 0; font-size: 0.875rem; font-weight: 650; }
+.welcome-card--intro h1 {
+  max-width: 18ch;
+  font-family: var(--player-heading-font, inherit);
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  font-weight: 720;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.welcome-card--intro .welcome-card__description { max-width: 42ch; margin: 0; line-height: 1.6; }
+.welcome-card__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.welcome-card--intro .player-host__button {
+  justify-self: start;
+  margin-top: 0.5rem;
+  border-radius: 0.6rem;
+  background: var(--player-action-bg);
+  color: var(--player-action-text);
+  box-shadow: none;
+}
+.welcome-card--intro .player-host__button--primary:hover { background: var(--player-action-hover); }
+.welcome-card--intro .player-host__button--secondary { background: var(--player-surface); color: var(--player-text-color); }
+
+.player-host__body--standalone {
   padding: 0;
   border: 0;
   background: none;
@@ -1167,12 +1161,5 @@ watch(
     padding: 1rem;
   }
 
-  .player-host__context {
-    flex-direction: column;
-  }
-
-  .player-host__meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 </style>

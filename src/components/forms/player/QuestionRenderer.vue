@@ -1,12 +1,12 @@
 <template>
-  <div :class="containerClass">
+  <div :class="containerClass" @focusout="handleFocusOut">
     <div :class="labelWrapperClass">
-      <label :for="inputId" class="question-label flex items-baseline gap-1.5 text-base font-semibold leading-tight text-slate-950 dark:text-white">
+      <label :id="`${inputId}-label`" :for="inputId" class="question-label flex items-baseline gap-1.5 text-base font-semibold leading-tight text-slate-950 dark:text-white">
         <span>{{ label }}</span>
         <span v-if="required" class="text-rose-500" aria-label="required">*</span>
       </label>
 
-      <p v-if="description" class="text-sm text-slate-600 dark:text-slate-400">
+      <p v-if="description" :id="`${inputId}-description`" class="question-note">
         {{ description }}
       </p>
     </div>
@@ -19,13 +19,15 @@
       :id="inputId"
       :type="inputType"
       :step="type === 'number' ? 'any' : undefined"
+      :autocomplete="autocomplete"
       class="form-control w-full"
       :placeholder="placeholder"
       :value="stringValue"
       :disabled="disabled"
       :required="required"
-      :aria-invalid="hasError ? 'true' : 'false'"
-      @keydown.enter.prevent="emitEnter"
+      :aria-invalid="hasError || undefined"
+      :aria-describedby="describedBy"
+      @keydown.enter="emitEnter"
       @input="updateValue(($event.target as HTMLInputElement).value)"
     />
 
@@ -33,17 +35,18 @@
       <textarea
       v-else-if="isLongInput"
       :id="inputId"
-      class="form-control min-h-[150px] w-full resize-y"
+      class="form-control min-h-[120px] w-full resize-y"
       :placeholder="placeholder"
       :value="stringValue"
       :disabled="disabled"
       :required="required"
-      :aria-invalid="hasError ? 'true' : 'false'"
+      :aria-invalid="hasError || undefined"
+      :aria-describedby="describedBy"
       @input="updateValue(($event.target as HTMLTextAreaElement).value)"
     />
 
      
-      <fieldset v-else-if="type === 'radio'" class="space-y-2.5">
+      <fieldset v-else-if="type === 'radio'" :aria-labelledby="`${inputId}-label`" :aria-describedby="describedBy" class="space-y-2.5">
         <label
         v-for="(option, idx) in options"
         :key="option.value"
@@ -77,6 +80,8 @@
       :value="(modelValue as string) ?? ''"
       :disabled="disabled"
       :required="required"
+      :aria-invalid="hasError || undefined"
+      :aria-describedby="describedBy"
       @change="updateValue(($event.target as HTMLSelectElement).value)"
     >
       <option value="" disabled>{{$t('Forms.Player.QuestionRenderer.text.select_an_option')}}</option>
@@ -86,7 +91,7 @@
     </select>
 
        
-      <fieldset v-else-if="isMultiChoice" class="space-y-2.5">
+      <fieldset v-else-if="isMultiChoice" :aria-labelledby="`${inputId}-label`" :aria-describedby="describedBy" class="space-y-2.5">
         <label
         v-for="(option, idx) in options"
         :key="option.value"
@@ -112,7 +117,7 @@
       </fieldset>
 
        
-      <div v-else-if="type === 'yesno'" class="flex items-center gap-4">
+      <div v-else-if="type === 'yesno'" role="group" :aria-labelledby="`${inputId}-label`" :aria-describedby="describedBy" class="flex items-center gap-4">
         <button
           type="button"
           :class="[
@@ -122,6 +127,7 @@
               : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
           ]"
           :disabled="disabled"
+          :aria-pressed="modelValue != null && booleanValue"
           @click="updateValue(true)"
         >
           <kbd v-if="showShortcutLabels" class="inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold" :class="booleanValue === true ? 'border-white/30 bg-white/10' : 'border-slate-300 dark:border-slate-600'">Y</kbd>
@@ -136,6 +142,7 @@
               : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
           ]"
           :disabled="disabled"
+          :aria-pressed="modelValue != null && !booleanValue"
           @click="updateValue(false)"
         >
           <kbd v-if="showShortcutLabels" class="inline-flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold" :class="booleanValue === false && modelValue != null ? 'border-white/30 bg-white/10' : 'border-slate-300 dark:border-slate-600'">N</kbd>
@@ -176,6 +183,7 @@
               : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
           ]"
           :disabled="disabled"
+          :aria-pressed="numberValue === ratingValue"
           @click="updateValue(ratingValue)"
         >
           {{ ratingValue }}
@@ -220,19 +228,20 @@
       :value="stringValue"
       :disabled="disabled"
       :required="required"
-      :aria-invalid="hasError ? 'true' : 'false'"
-      @keydown.enter.prevent="emitEnter"
+      :aria-invalid="hasError || undefined"
+      :aria-describedby="describedBy"
+      @keydown.enter="emitEnter"
       @input="updateValue(($event.target as HTMLInputElement).value)"
     />
 
        
-      <p v-if="question.help_text" class="text-xs text-slate-500 dark:text-slate-400">
+      <p v-if="question.help_text" :id="`${inputId}-help`" class="question-note">
         {{ question.help_text }}
       </p>
-      <p v-if="lengthHint" class="text-xs text-slate-500 dark:text-slate-400">
+      <p v-if="lengthHint" :id="`${inputId}-length`" class="question-note">
         {{ lengthHint }}
       </p>
-      <p v-if="errorMessage" class="text-xs font-semibold text-rose-600 dark:text-rose-400">
+      <p v-if="errorMessage" :id="`${inputId}-error`" role="alert" class="question-error">
         {{ errorMessage }}
       </p>
     </div>
@@ -240,9 +249,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { FormDensity, FormLabelPlacement, FormQuestion, Option, TextValidation, FormPhoneQuestion } from '@/types';
-import { defaultValidations } from '@/types';
+import { computed, ref } from 'vue';
+import type { FormDensity, FormLabelPlacement, FormQuestion, Option } from '@/types';
+import { getAnswerError, getAnswerRules, isEmptyAnswer } from '@/utils/formAnswerValidation';
 import { getOptionShortcutLabel } from '@/composables/useFormKeyboard';
 
 const props = defineProps<{
@@ -252,6 +261,7 @@ const props = defineProps<{
   labelPlacement?: FormLabelPlacement;
   density?: FormDensity;
   showShortcutLabels?: boolean;
+  showErrors?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -339,7 +349,20 @@ const fileNames = computed(() => {
 
 const updateValue = (value: unknown) => emit('update:modelValue', value);
 
-const emitEnter = () => emit('enter');
+const emitEnter = (event: KeyboardEvent) => {
+  if (event.isComposing || event.repeat) return;
+  event.preventDefault();
+  emit('enter');
+};
+
+const autocomplete = computed(() => ({
+  email: 'email',
+  phone: 'tel',
+  fname: 'given-name',
+  lname: 'family-name',
+  fullName: 'name',
+  website: 'url',
+})[type.value as string]);
 
 const toggleCheckbox = (optionValue: string, checked: boolean) => {
   const current = arrayValue.value.slice();
@@ -390,43 +413,28 @@ const fieldWrapperClass = computed(() => {
 });
 
 const choiceOptionClass = (selected: boolean) => [
-  'choice-option group flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-all',
-  selected
-    ? 'choice-option--active'
-    : 'border-slate-200 bg-white/85 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/55 dark:hover:border-slate-600',
+  'choice-option group flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-colors',
+  { 'choice-option--active': selected },
 ];
 
-// Validation and hints
-const activeValidation = computed<TextValidation | undefined>(() => {
-  const t = type.value as keyof typeof defaultValidations;
-  let base = defaultValidations[t as string];
-  const qVal = (props.question as any).validation as TextValidation | undefined;
-  if (type.value === 'phone') {
-    const allowIntl = (props.question as FormPhoneQuestion).allow_international ?? true;
-    const phoneRegex = allowIntl ? /^\+?[0-9\s()-]{10,20}$/ : /^[0-9\s()-]{10,15}$/;
-    base = { inputType: 'phone', regex: phoneRegex, minLength: allowIntl ? 10 : 10, maxLength: allowIntl ? 20 : 15 } as TextValidation;
+const blurred = ref(false);
+const handleFocusOut = (event: FocusEvent) => {
+  const field = event.currentTarget as HTMLElement;
+  if (!(event.relatedTarget instanceof Node) || !field.contains(event.relatedTarget)) {
+    blurred.value = !isEmptyAnswer(props.modelValue);
   }
-  return { ...(base || {}), ...(qVal || {}) } as TextValidation | undefined;
-});
-
-const hasError = computed(() => Boolean((errorMessage.value || '').length));
-
-const errorMessage = computed(() => {
-  const val = stringValue.value;
-  if (!required.value && !val) return '';
-  if (required.value && !val) return '';
-  const rules = activeValidation.value;
-  if (!rules) return '';
-  if (rules.minLength && val.length < rules.minLength) return `Minimum length is ${rules.minLength} characters`;
-  if (rules.maxLength && val.length > rules.maxLength) return `Maximum length is ${rules.maxLength} characters`;
-  if (rules.regex && !rules.regex.test(val)) {
-    if (type.value === 'email') return 'Enter a valid email address';
-    if (type.value === 'phone') return 'Enter a valid phone number';
-    if (type.value === 'website') return 'Enter a valid URL';
-    return 'Invalid format';
-  }
-  return '';
-});
+};
+const activeValidation = computed(() => getAnswerRules(props.question));
+const errorMessage = computed(() =>
+  props.showErrors || blurred.value ? getAnswerError(props.question, props.modelValue) : '',
+);
+const hasError = computed(() => Boolean(errorMessage.value));
+const describedBy = computed(() => [
+  description.value && `${inputId.value}-description`,
+  props.question.help_text && `${inputId.value}-help`,
+  lengthHint.value && `${inputId.value}-length`,
+  errorMessage.value && `${inputId.value}-error`,
+].filter(Boolean).join(' ') || undefined);
 
 const lengthHint = computed(() => {
   if (!isLongInput.value) return '';
@@ -439,7 +447,11 @@ const lengthHint = computed(() => {
 </script>
 
 <style scoped>
-.question-label { color: var(--player-text-color, #0f172a); }
+.question-label { color: var(--player-text-color, #0f172a); overflow-wrap: anywhere; }
+.question-note { color: inherit; font-size: 0.9rem; line-height: 1.55; }
+.question-error { color: inherit; border-inline-start: 3px solid #db5269; padding-inline-start: 0.65rem; font-size: 0.9rem; font-weight: 650; }
+.form-control[aria-invalid="true"] { border-color: #db5269; }
+.choice-option:focus-within { outline: 2px solid var(--player-accent); outline-offset: 2px; }
 
 :deep(input:focus),
 :deep(textarea:focus),
@@ -451,7 +463,7 @@ const lengthHint = computed(() => {
 .form-control {
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--player-text-color, #0f172a) 18%, transparent);
-  background: color-mix(in srgb, var(--player-surface, #fff) 92%, white);
+  background: var(--player-surface, #fff);
   padding: 0.85rem 1rem;
   color: var(--player-text-color, #0f172a);
   font-size: 0.98rem;
@@ -461,7 +473,7 @@ const lengthHint = computed(() => {
 }
 
 .form-control::placeholder {
-  color: #94a3b8;
+  color: color-mix(in srgb, var(--player-text-color) 70%, var(--player-surface));
 }
 
 .form-control:focus {
@@ -477,18 +489,18 @@ const lengthHint = computed(() => {
 }
 
 .choice-option {
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-height: 44px;
+  border-color: var(--player-surface-border);
+  background: var(--player-surface);
 }
-
+.choice-option:hover {
+  border-color: var(--player-accent);
+}
 .choice-option--active {
-  border-color: color-mix(in srgb, var(--player-accent, #3b82f6) 62%, white);
-  background: color-mix(in srgb, var(--player-accent, #3b82f6) 9%, white);
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--player-accent, #3b82f6) 12%, transparent);
+  border-color: var(--player-accent);
+  background: color-mix(in srgb, var(--player-accent) 10%, var(--player-surface));
 }
-
-.choice-option--active span:last-child {
-  color: #0f172a;
-}
+.choice-option span:last-child { color: var(--player-text-color); }
 
 :deep(input[type="radio"]:checked),
 :deep(input[type="checkbox"]:checked) {
@@ -510,22 +522,20 @@ const lengthHint = computed(() => {
   background-color: var(--player-accent, #3b82f6);
 }
 
-.yesno-btn {
-  --tw-ring-color: var(--player-accent, #3b82f6);
+.yesno-btn, .rating-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border-color: var(--player-surface-border);
+  background: var(--player-surface);
+  color: var(--player-text-color);
 }
-
-.yesno-btn--active {
-  border-color: var(--player-accent, #3b82f6);
-  background-color: var(--player-accent, #3b82f6);
+.yesno-btn--active, .rating-btn--active {
+  border-color: var(--player-accent);
+  background: color-mix(in srgb, var(--player-accent) 14%, var(--player-surface));
 }
-
-.rating-btn {
-  --tw-ring-color: var(--player-accent, #3b82f6);
-}
-
-.rating-btn--active {
-  border-color: var(--player-accent, #3b82f6);
-  background-color: var(--player-accent, #3b82f6);
+.yesno-btn:focus-visible, .rating-btn:focus-visible {
+  outline: 2px solid var(--player-accent);
+  outline-offset: 2px;
 }
 
 .file-input-themed {
@@ -545,12 +555,4 @@ const lengthHint = computed(() => {
   background-color: color-mix(in srgb, var(--player-accent, #3b82f6) 25%, transparent);
 }
 
-:global(.dark) .choice-option--active {
-  border-color: color-mix(in srgb, var(--player-accent, #3b82f6) 68%, #1e293b);
-  background: color-mix(in srgb, var(--player-accent, #3b82f6) 18%, #0f172a);
-}
-
-:global(.dark) .choice-option--active span:last-child {
-  color: #f8fafc;
-}
 </style>
