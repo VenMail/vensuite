@@ -4,10 +4,11 @@
     <div
       class="form-builder-new__topbar sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800"
     >
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between">
         <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
           <button
-            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 shrink-0"
+            v-show="!previewDefinition"
+            class="p-2 min-h-11 min-w-11 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 shrink-0"
             aria-label="Back to forms"
             @click="handleBack"
           >
@@ -16,6 +17,7 @@
           <div class="min-w-0 flex-1">
             <input
               v-model="formTitle"
+              :readonly="Boolean(previewDefinition) || previewOpening"
               type="text"
               placeholder="Untitled Form"
               class="text-base sm:text-lg font-semibold bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 w-full"
@@ -24,15 +26,16 @@
             <div
               class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1"
             >
-              <span v-if="isSaving">Saving...</span>
-              <span v-else-if="lastSaved">Saved {{ lastSaved }}</span>
-              <span v-else>{{$t('Commons.text.unsaved_changes')}}</span>
+              <span v-if="isSaving">Saving…</span>
+              <span v-else-if="invalidLogicIds.length" class="builder-logic--invalid">Incomplete rules</span>
+              <span v-else-if="draftVersion !== persistedVersion">{{ $t('Commons.text.unsaved_changes') }}</span>
+              <span v-else-if="!isLoading" :title="lastSaved || undefined">Saved</span>
             </div>
           </div>
         </div>
 
          
-        <div class="hidden lg:flex items-center gap-3">
+        <div v-if="!previewDefinition" class="hidden lg:flex items-center gap-1.5">
            
           <button
             class="p-2 rounded-lg transition-colors"
@@ -56,15 +59,7 @@
             Design
           </button>
 
-          <button
-            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            @click="handlePreview"
-          >
-            <Eye class="w-4 h-4" />
-            {{$t('Commons.button.preview')}}
-          </button>
 
-           
           <button
             class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             @click="openShareModal"
@@ -180,7 +175,7 @@
         </div>
 
          
-        <div class="flex lg:hidden items-center gap-2 shrink-0">
+        <div v-if="!previewDefinition" class="flex lg:hidden items-center gap-2 shrink-0">
            
           <div class="relative">
             <button
@@ -231,18 +226,7 @@
                 Design
               </button>
 
-              <button
-                class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
-                @click="
-                  handlePreview();
-                  openDropdown = null;
-                "
-              >
-                <Eye class="w-4 h-4" />
-                {{$t('Commons.button.preview')}}
-              </button>
 
-               
               <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors text-left"
                 @click="
@@ -395,6 +379,19 @@
           </div>
         </div>
       </div>
+      <div class="builder-modes">
+        <div class="builder-modes__tabs" role="group" aria-label="Form view">
+          <button ref="editModeButton" type="button" :aria-pressed="!previewDefinition" @click="exitPreview">Edit</button>
+          <button ref="previewModeButton" type="button" :aria-pressed="Boolean(previewDefinition)" :disabled="previewOpening || isLoading || !blocks.length" @click="handlePreview">
+            <Eye :size="16" aria-hidden="true" />
+            {{ previewOpening ? 'Preparing…' : 'Preview' }}
+          </button>
+        </div>
+        <div v-if="previewDefinition" class="builder-modes__devices" role="group" aria-label="Preview width">
+          <button type="button" :aria-pressed="previewWidth === 'desktop'" @click="previewWidth = 'desktop'">Desktop</button>
+          <button type="button" :aria-pressed="previewWidth === 'phone'" @click="previewWidth = 'phone'">Phone width</button>
+        </div>
+      </div>
     </div>
      
     <div v-if="isLoading" class="max-w-3xl mx-auto px-6 py-24 animate-pulse">
@@ -413,7 +410,7 @@
       </div>
     </div>
 
-    <div v-else class="form-builder-new__content max-w-3xl mx-auto px-6 py-12">
+    <div v-else v-show="!previewDefinition" :inert="previewOpening" class="form-builder-new__content max-w-3xl mx-auto px-6 py-12">
        
       <div class="form-builder-new__header mb-12">
          
@@ -576,7 +573,8 @@
         <TransitionGroup name="block-list">
           <div
             v-for="(block, index) in blocks"
-            :key="block.id"
+            :key="blockRenderKeys.get(block.id) ?? block.id"
+            :id="`builder-question-${block.id}`"
             :class="[
               'block-wrapper group rounded-2xl transition-shadow',
               draggingBlockId === block.id ? 'opacity-60 cursor-grabbing' : 'cursor-grab',
@@ -604,12 +602,22 @@
               @move-up="handleMoveUp"
               @move-down="handleMoveDown"
               @insert-below="handleInsertBelow"
-              @request-slash-menu="openSlashMenu"
-              @close-slash-menu="closeSlashMenu"
+              @choose-type="openTypePicker($event, 'replace')"
             />
-            <CalculationEditor v-if="block.type === 'calculated'" :block="block" :previous="blocks.slice(0, index)" @update="handleBlockUpdate" />
-            <p v-if="invalidLogicIds.includes(block.id)" role="alert" class="mt-2 text-sm text-rose-700">Complete or remove invalid logic before saving.</p>
-            <ConditionEditor :block="block" :previous="blocks.slice(0, index)" :following="blocks.slice(index + 1)" @update="handleBlockUpdate" />
+            <div class="builder-question__actions">
+              <button
+                type="button"
+                :class="{ 'builder-logic--invalid': invalidLogicIds.includes(block.id) }"
+                :aria-label="`${block.type === 'calculated' ? 'Calculation and logic' : 'Logic'} for ${block.question || 'question ' + (index + 1)}`"
+                aria-haspopup="dialog"
+                @click="openLogic(block.id)"
+              >
+                <GitBranch :size="16" aria-hidden="true" />
+                {{ block.type === 'calculated' ? 'Calculation & logic' : 'Logic' }}
+                <span v-if="ruleCount(block)">{{ ruleCount(block) }}</span>
+              </button>
+              <span v-if="invalidLogicIds.includes(block.id)" class="builder-logic--invalid" role="status">Incomplete rule</span>
+            </div>
           </div>
         </TransitionGroup>
         <div
@@ -627,65 +635,54 @@
       </div>
 
        
-      <div class="mt-6">
-        <button
-          class="add-block-button group w-full flex items-center gap-3 px-4 py-4 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-          @click="handleAddBlock"
-        >
-          <Plus class="w-5 h-5" />
-          <span class="text-sm font-medium">{{$t('Views.FormBuilder.text.add_a_question')}}</span>
-          <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto"
-            >{{$t('Commons.text.or_press')}}
-            <kbd
-              class="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono"
-              >/</kbd
-            ></span
-          >
+      <div class="builder-add">
+        <button ref="addQuestionButton" type="button" aria-haspopup="dialog" @click="openTypePicker()">
+          <Plus :size="18" aria-hidden="true" />
+          Add question
         </button>
-      </div>
-
-       
-      <div v-if="blocks.length === 0" class="empty-state mt-20 text-center">
-        <div
-          class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 mb-6"
-        >
-          <Sparkles class="w-10 h-10 text-blue-600 dark:text-blue-400" />
-        </div>
-        <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-          {{$t('Views.FormBuilder.heading.start_building_your_form')}}
-        </h3>
-        <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-          {{$t('Views.FormBuilder.text.add_questions_customize_fields')}}
-        </p>
-        <div class="flex items-center justify-center gap-3">
-          <button
-            class="px-6 py-3 text-sm font-medium text-white bg-primary-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-primary-600 rounded-lg transition-colors"
-            @click="handleAddBlock"
-          >
-            <Plus class="w-4 h-4 inline mr-2" />
-            {{$t('Views.FormBuilder.button.add_first_question')}}
-          </button>
-          <button
-            class="px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            @click="handleUseAI"
-          >
-            <Wand2 class="w-4 h-4 inline mr-2" />
-            {{$t('Views.FormBuilder.button.generate_with_ai')}}
-          </button>
-        </div>
+        <button v-if="!blocks.length" type="button" class="builder-add__secondary" @click="handleUseAI">
+          <Wand2 :size="16" aria-hidden="true" />
+          {{ $t('Views.FormBuilder.button.generate_with_ai') }}
+        </button>
       </div>
     </div>
 
-     
-    <SlashMenu
-      v-if="showSlashMenu"
-      :filter="slashMenuFilter"
-      :position="slashMenuPosition"
-      @select="handleSlashSelect"
-      @close="closeSlashMenu"
+    <section v-if="previewDefinition" class="builder-preview" aria-label="Form preview">
+      <div :class="['builder-preview__frame', { 'builder-preview__frame--phone': previewWidth === 'phone' }]">
+        <FormPlayerHost :preview-definition="previewDefinition" />
+      </div>
+    </section>
+
+    <QuestionPicker
+      :open="Boolean(questionPicker)"
+      :current-type="pickerCurrentType"
+      @select="selectQuestionType"
+      @close="questionPicker = null"
+      @restore-focus="restorePickerFocus"
     />
 
-     
+    <Dialog :open="Boolean(logicBlock)" @update:open="!$event && (logicBlockId = null)">
+      <DialogContent
+        class="logic-panel w-[calc(100%_-_24px)] max-w-2xl gap-0 overflow-hidden rounded-2xl p-0"
+        @close-auto-focus="restoreLogicFocus"
+      >
+        <template v-if="logicBlock">
+          <div class="logic-panel__header">
+            <DialogTitle>Question logic</DialogTitle>
+            <DialogDescription>{{ logicBlock.question || 'Untitled question' }}</DialogDescription>
+          </div>
+          <div class="logic-panel__body">
+            <p v-if="invalidLogicIds.includes(logicBlock.id)" class="logic-panel__error" role="status">Complete the rule before saving or previewing.</p>
+            <section v-if="logicBlock.type === 'calculated'" aria-label="Calculation">
+              <h3>Calculation</h3>
+              <CalculationEditor :block="logicBlock" :previous="blocks.slice(0, logicIndex)" @update="handleBlockUpdate" />
+            </section>
+            <ConditionEditor :block="logicBlock" :previous="blocks.slice(0, logicIndex)" :following="blocks.slice(logicIndex + 1)" @update="handleBlockUpdate" />
+          </div>
+        </template>
+      </DialogContent>
+    </Dialog>
+
     <FormConfigWizard
       v-if="showConfigWizard"
       :initial-config="formConfig ?? undefined"
@@ -1292,14 +1289,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, shallowRef, computed, defineAsyncComponent, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   ArrowLeft,
   Eye,
+  GitBranch,
   Send,
   Plus,
-  Sparkles,
   Wand2,
   X,
   Settings,
@@ -1324,7 +1321,7 @@ import CalculationEditor from "@/components/forms/blocks/CalculationEditor.vue";
 import { mapSavedFormIds } from '@/utils/formIdMapping.js';
 import { validateFormLogic, remapConditions, remapCalculation } from '@/utils/formFlow.js';
 import { createSaveQueue } from '@/utils/formSaveQueue.js';
-import SlashMenu from "@/components/forms/blocks/SlashMenu.vue";
+import QuestionPicker from "@/components/forms/blocks/QuestionPicker.vue";
 import FormConfigWizard from "@/components/forms/FormConfigWizardSimple.vue";
 import FormDesignPanel from "@/components/forms/FormDesignPanel.vue";
 import WebhooksPanel from "@/components/forms/WebhooksPanel.vue";
@@ -1349,6 +1346,7 @@ import { generateCompleteForm } from "../services/ai";
 import Input from "@/components/ui/input/Input.vue";
 import { t } from '@/i18n';
 
+const FormPlayerHost = defineAsyncComponent(() => import("./FormPlayerHost.vue"));
 const route = useRoute();
 const router = useRouter();
 const formStore = useFormStore();
@@ -1363,11 +1361,24 @@ const pagesState = ref<FormPage[]>([]);
 const isLoading = ref(true);
 
 const blocks = ref<FormBlock[]>([]);
+const blockRenderKeys = new Map<string, string>();
 const focusedBlockId = ref<string | null>(null);
 const invalidLogicIds = computed(() => validateFormLogic(blocks.value.map((block) => ({ id: block.id, type: block.type, calculation: block.calculation, logic: block.logic, visibility_condition: block.visibilityCondition }))));
-const showSlashMenu = ref(false);
-const slashMenuFilter = ref("");
-const slashMenuPosition = ref({ top: 0, left: 0 });
+const questionPicker = ref<{ blockId?: string; mode: 'add' | 'insert' | 'replace' } | null>(null);
+const pickerCurrentType = computed(() => questionPicker.value?.mode === 'replace'
+  ? blocks.value.find((block) => block.id === questionPicker.value?.blockId)?.type
+  : undefined);
+const addQuestionButton = ref<HTMLButtonElement | null>(null);
+const logicBlockId = ref<string | null>(null);
+const logicIndex = computed(() => blocks.value.findIndex((block) => block.id === logicBlockId.value));
+const logicBlock = computed(() => blocks.value[logicIndex.value]);
+const savedDefinition = shallowRef<FormDefinition | null>(null);
+const previewDefinition = shallowRef<FormDefinition | null>(null);
+const previewOpening = ref(false);
+const previewWidth = ref<'desktop' | 'phone'>('desktop');
+const editModeButton = ref<HTMLButtonElement | null>(null);
+const previewModeButton = ref<HTMLButtonElement | null>(null);
+let editScroll = 0;
 const showAIDialog = ref(false);
 const aiPrompt = ref("");
 const isGenerating = ref(false);
@@ -2130,10 +2141,14 @@ const applyConfigToSettings = (config: FormConfig) => {
 
 // Auto-save functionality
 let saveTimeout: NodeJS.Timeout | null = null;
+const draftVersion = ref(0);
+const persistedVersion = ref(0);
 const triggerSave = () => {
+  draftVersion.value++;
   if (saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async () => {
-    await saveForm();
+  saveTimeout = setTimeout(() => {
+    saveTimeout = null;
+    void saveForm();
   }, 2000);
 };
 
@@ -2150,6 +2165,7 @@ const performSave = async () => {
   if (!formId.value || invalidLogicIds.value.length) return false;
 
   isSaving.value = true;
+  const savingVersion = draftVersion.value;
   try {
     ensurePagesInitialized(formDescription.value);
 
@@ -2189,7 +2205,14 @@ const performSave = async () => {
       toast.error(formStore.error || 'Could not save form.');
       return false;
     }
+    savedDefinition.value = saved;
+    persistedVersion.value = savingVersion;
     const mapping = mapSavedFormIds(pagesPayload, saved.pages ?? []);
+    for (const [localId, savedId] of Object.entries(mapping.questions)) {
+      if (localId === savedId) continue;
+      blockRenderKeys.set(savedId, blockRenderKeys.get(localId) ?? localId);
+      blockRenderKeys.delete(localId);
+    }
     pagesState.value = pagesState.value.map((page) => ({ ...page, id: mapping.pages[page.id] ?? page.id }));
     blocks.value = blocks.value.map((block) => ({
       ...block,
@@ -2203,6 +2226,9 @@ const performSave = async () => {
       calculation: remapCalculation(block.calculation, mapping.questions),
     }));
     if (focusedBlockId.value) focusedBlockId.value = mapping.questions[focusedBlockId.value] ?? focusedBlockId.value;
+    if (logicBlockId.value) logicBlockId.value = mapping.questions[logicBlockId.value] ?? logicBlockId.value;
+    if (questionPicker.value?.blockId) questionPicker.value.blockId = mapping.questions[questionPicker.value.blockId] ?? questionPicker.value.blockId;
+    if (pickerFocusId) pickerFocusId = mapping.questions[pickerFocusId] ?? pickerFocusId;
     const now = new Date();
     lastSaved.value = now.toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -2290,45 +2316,80 @@ const handleMoveDown = (blockId: string) => {
   applyBlockReorder(index, index + 1);
 };
 
-const handleInsertBelow = (blockId: string) => {
-  const index = blocks.value.findIndex((b) => b.id === blockId);
-  const newBlock: FormBlock = {
-    id: crypto.randomUUID(),
-    type: "short",
-    category: "text",
-    question: "",
-    required: false,
-    pageId: blocks.value[index]?.pageId ?? pagesState.value[0]?.id,
-  };
-  blocks.value.splice(index + 1, 0, newBlock);
-  focusedBlockId.value = newBlock.id;
+let pickerTrigger: HTMLElement | null = null;
+let pickerFocusId: string | null = null;
+let logicTrigger: HTMLElement | null = null;
+const ruleCount = (block: FormBlock) =>
+  Number(Boolean(block.visibilityCondition)) + (block.logic ? 1 + (block.logic.fallbacks?.length ?? 0) : 0);
+
+const openLogic = (blockId: string) => {
+  logicTrigger = document.activeElement as HTMLElement | null;
+  logicBlockId.value = blockId;
+};
+
+const restoreLogicFocus = (event: Event) => {
+  event.preventDefault();
+  const trigger = logicTrigger;
+  void nextTick(() => (trigger?.isConnected ? trigger : previewModeButton.value)?.focus());
+};
+
+const openTypePicker = (blockId?: string, mode: 'add' | 'insert' | 'replace' = 'add') => {
+  pickerTrigger = document.activeElement as HTMLElement | null;
+  pickerFocusId = null;
+  questionPicker.value = { mode, blockId };
+};
+
+const handleInsertBelow = (blockId: string) => openTypePicker(blockId, 'insert');
+
+const selectQuestionType = (type: FormBlock['type']) => {
+  const picker = questionPicker.value;
+  if (!picker) return;
+  const index = blocks.value.findIndex((block) => block.id === picker.blockId);
+  const original = blocks.value[index];
+  if (picker.mode !== 'add' && !original) {
+    questionPicker.value = null;
+    return;
+  }
+
+  const block: FormBlock = picker.mode === 'replace'
+    ? { ...original }
+    : {
+      id: crypto.randomUUID(),
+      type,
+      category: BLOCK_CATEGORY_BY_TYPE[type],
+      question: '',
+      required: false,
+      pageId: original?.pageId ?? pagesState.value.at(-1)?.id,
+    };
+  block.type = type;
+  block.category = BLOCK_CATEGORY_BY_TYPE[type];
+  if (type === 'calculated') {
+    block.required = false;
+    block.calculation ??= { operator: 'add', left: { value: 0 }, right: { value: 0 } };
+  }
+  if (['radio', 'checkbox', 'select'].includes(type) && !block.options?.length) {
+    block.options = ['Option 1', 'Option 2', 'Option 3'];
+    block.optionValues = block.options.map((label) => ({ label, value: crypto.randomUUID() }));
+  }
+
+  if (picker.mode === 'replace') blocks.value.splice(index, 1, block);
+  else if (picker.mode === 'insert') blocks.value.splice(index + 1, 0, block);
+  else blocks.value.push(block);
+
+  pickerFocusId = block.id;
+  questionPicker.value = null;
   triggerSave();
 };
 
-const handleAddBlock = () => {
-  const newBlock: FormBlock = {
-    id: crypto.randomUUID(),
-    type: "short",
-    category: "text",
-    question: "",
-    required: false,
-    pageId: pagesState.value.at(-1)?.id,
-  };
-  blocks.value.push(newBlock);
-  focusedBlockId.value = newBlock.id;
-  closeSlashMenu();
-  triggerSave();
-};
-
-const openSlashMenu = (payload: {
-  blockId: string;
-  filter: string;
-  position: { top: number; left: number };
-}) => {
-  showSlashMenu.value = true;
-  slashMenuFilter.value = payload.filter;
-  slashMenuPosition.value = payload.position;
-  focusedBlockId.value = payload.blockId;
+const restorePickerFocus = (event: Event) => {
+  event.preventDefault();
+  void nextTick(() => {
+    const input = pickerFocusId
+      ? document.getElementById(`builder-question-${pickerFocusId}`)?.querySelector('input')
+      : null;
+    if (input) input.closest('.block-wrapper')?.scrollIntoView({ block: 'nearest' });
+    (input ?? (pickerTrigger?.isConnected ? pickerTrigger : addQuestionButton.value))?.focus({ preventScroll: Boolean(input) });
+  });
 };
 
 const draggingBlockId = ref<string | null>(null);
@@ -2425,46 +2486,6 @@ const onDropToEnd = () => {
 const onDragEnd = () => {
   draggingBlockId.value = null;
   dropIndex.value = null;
-};
-
-const handleSlashSelect = (type: FormBlock["type"]) => {
-  if (!focusedBlockId.value) {
-    closeSlashMenu();
-    return;
-  }
-
-  const index = blocks.value.findIndex((block) => block.id === focusedBlockId.value);
-  if (index === -1) {
-    closeSlashMenu();
-    return;
-  }
-
-  const block = { ...blocks.value[index] };
-  if (block.question?.includes("/")) {
-    const slashIndex = block.question.lastIndexOf("/");
-    block.question = block.question.slice(0, slashIndex).trimEnd();
-  }
-
-  block.type = type;
-
-  block.category = BLOCK_CATEGORY_BY_TYPE[type];
-  if (type === "calculated") block.required = false;
-
-  if (
-    (type === "radio" || type === "checkbox" || type === "select") &&
-    (!block.options || block.options.length === 0)
-  ) {
-    block.options = ["Option 1", "Option 2", "Option 3"];
-  }
-
-  blocks.value.splice(index, 1, block);
-  closeSlashMenu();
-  triggerSave();
-};
-
-const closeSlashMenu = () => {
-  showSlashMenu.value = false;
-  slashMenuFilter.value = "";
 };
 
 const handleUseAI = () => {
@@ -2624,23 +2645,35 @@ const ensurePublishedShareSlug = async (): Promise<FormDefinition | null> => {
 };
 
 const handlePreview = async () => {
-  if (!formId.value) return;
+  if (!formId.value || previewOpening.value || previewDefinition.value) return;
 
   if (invalidLogicIds.value.length) {
-    toast.error('Complete or remove invalid logic before previewing.');
+    openLogic(invalidLogicIds.value[0]);
     return;
   }
-  const previewWindow = window.open('', '_blank');
-  if (!previewWindow) {
-    toast.error('Allow pop-ups to open the preview.');
-    return;
+  openDropdown.value = null;
+  editScroll = window.scrollY;
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = null;
+  previewOpening.value = true;
+  try {
+    if ((!savedDefinition.value || draftVersion.value !== persistedVersion.value) && !await saveForm()) return;
+    if (!savedDefinition.value) return;
+    previewDefinition.value = savedDefinition.value;
+    await nextTick();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    editModeButton.value?.focus({ preventScroll: true });
+  } finally {
+    previewOpening.value = false;
   }
-  previewWindow.opener = null;
-  if (!await saveForm()) {
-    previewWindow.close();
-    return;
-  }
-  previewWindow.location.href = `/f/by-id/${encodeURIComponent(formId.value)}`;
+};
+
+const exitPreview = async () => {
+  if (!previewDefinition.value) return;
+  previewDefinition.value = null;
+  await nextTick();
+  window.scrollTo({ top: editScroll, behavior: 'instant' });
+  previewModeButton.value?.focus({ preventScroll: true });
 };
 
 const handlePublish = async () => {
@@ -2762,6 +2795,7 @@ onMounted(async () => {
   if (formId.value) {
     const form = await formStore.fetchForm(formId.value);
     if (form) {
+      savedDefinition.value = form;
       formTitle.value = form.title || "";
       // Initialize accepting responses from form settings if present
       try {
@@ -2920,11 +2954,91 @@ onBeforeUnmount(() => {
 .form-builder-new { font-family: Onest, Inter, ui-sans-serif, system-ui, sans-serif; }
 .form-builder-new__topbar { box-shadow: 0 1px 0 rgba(15,23,42,.03); }
 .form-builder-new__content { padding-top: clamp(2rem, 5vw, 3.5rem); }
+.form-builder-new__content .block-wrapper { scroll-margin-top: 8rem; }
 .form-builder-new__header { margin-bottom: 2rem; }
 .form-builder-new__header > .builder-title { field-sizing: content; min-height: 1.2em; max-height: 6em; resize: none; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.035em; line-height: 1.15; }
 .form-builder-new__header > textarea { font-size: 1rem; line-height: 1.6; }
 .form-builder-new :deep(button:focus-visible), .form-builder-new :deep(input:focus-visible), .form-builder-new :deep(textarea:focus-visible), .form-builder-new :deep(select:focus-visible) { outline: 2px solid #0f766e; outline-offset: 2px; }
 @media (max-width: 640px) { .form-builder-new__content { padding-left: 1rem; padding-right: 1rem; } }
+
+.builder-modes {
+  display: flex;
+  width: min(100%, 64rem);
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: auto;
+  padding: 0 1rem 0.55rem;
+}
+.builder-modes__tabs, .builder-modes__devices {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 0.65rem;
+  background: #eef1f3;
+}
+:global(.dark) .builder-modes__tabs, :global(.dark) .builder-modes__devices { background: #1f2937; }
+.builder-modes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+.builder-modes button[aria-pressed="true"] { color: #0f172a; background: #fff; box-shadow: 0 1px 4px #0f172a18; }
+:global(.dark) .builder-modes button[aria-pressed="true"] { color: #f8fafc; background: #334155; }
+.builder-modes button:disabled { opacity: 0.6; }
+.builder-question__actions { display: flex; align-items: center; gap: 0.75rem; padding: 0.1rem 0.2rem; font-size: 0.8rem; font-weight: 650; }
+.builder-question__actions button { display: inline-flex; min-height: 44px; align-items: center; gap: 0.4rem; padding-inline: 0.6rem; border-radius: 0.5rem; }
+.builder-question__actions button:hover { background: color-mix(in srgb, currentColor 7%, transparent); }
+.builder-question__actions button span { padding-inline: 0.35rem; border-radius: 0.3rem; background: color-mix(in srgb, currentColor 10%, transparent); }
+.builder-logic--invalid, .logic-panel__error { color: #a12436; }
+:global(.dark) .builder-logic--invalid, :global(.dark) .logic-panel__error { color: #fda4af; }
+.builder-add { display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 1rem; }
+.builder-add button { display: inline-flex; min-height: 44px; align-items: center; gap: 0.5rem; padding: 0.6rem 0.9rem; border-radius: 0.6rem; background: #0f172a; color: #fff; font-weight: 650; }
+:global(.dark) .builder-add button { background: #f1f5f9; color: #0f172a; }
+.builder-add .builder-add__secondary { background: transparent; color: inherit; border: 1px solid currentColor; }
+:global(.logic-panel > button), :global(.picker-dialog > button) { display: grid; place-items: center; width: 44px; height: 44px; top: 0.45rem; right: 0.45rem; }
+.logic-panel__header { padding: 1.25rem 2.6rem 1rem 1.25rem; border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent); }
+.logic-panel__header h2 { font-size: 1.25rem; font-weight: 720; }
+.logic-panel__header p { margin-top: 0.3rem; overflow-wrap: anywhere; }
+.logic-panel__body { display: grid; gap: 1rem; max-height: 69dvh; overflow: auto; overscroll-behavior: contain; padding: 1rem 1.25rem 1.25rem; }
+.logic-panel__body h3 { font-weight: 700; }
+.logic-panel__error { padding: 0.6rem; border: 1px solid currentColor; border-radius: 0.5rem; font-size: 0.85rem; }
+.builder-preview { min-height: calc(100svh - 7rem); padding: clamp(0.7rem, 3vw, 1.75rem); }
+.builder-preview__frame {
+  container-type: inline-size;
+  overflow: clip;
+  width: min(100%, 75rem);
+  margin-inline: auto;
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  border-radius: 1rem;
+}
+.builder-preview__frame--phone { max-width: 390px; }
+.builder-preview__frame :deep(.player-host) { min-height: max(35rem, calc(100svh - 10rem)); }
+.builder-preview__frame :deep(.player-host::before) { position: absolute; }
+@container (max-width: 550px) {
+  .builder-preview__frame :deep(.player-host) { padding: 1rem; }
+  .builder-preview__frame :deep(.form-question-layout) { grid-template-columns: 1fr; }
+  .builder-preview__frame :deep(.focus-player) { padding: 1.4rem; }
+  .builder-preview__frame :deep(.focus-question .question-label) { font-size: 1.5rem; }
+  .builder-preview__frame :deep(.completion-card),
+  .builder-preview__frame :deep(.welcome-card--intro) { padding: 2rem; }
+  .builder-preview__frame :deep(.completion-card h2),
+  .builder-preview__frame :deep(.welcome-card--intro h1) { font-size: 2rem; }
+}
+@media (max-width: 550px) {
+  .builder-modes__devices { display: none; }
+  .builder-modes button { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .block-list-move, .block-list-enter-active, .block-list-leave-active { transition: none !important; }
+  :global(.logic-panel), :global(.picker-dialog) { animation: none !important; }
+}
 
 .block-list-move,
 .block-list-enter-active,

@@ -157,11 +157,13 @@ import { toast } from '@/composables/useToast';
 import type { FormCompletionScreen, FormDefinition, FormWelcomeScreen, FormDensity, FormLabelPlacement, FormResponse } from '@/types';
 import { useAuthStore } from '@/store/auth';
 
+const props = defineProps<{ previewDefinition?: FormDefinition }>();
+
 const route = useRoute();
 const router = useRouter();
 const slug = computed(() => route.params.slug as string | undefined);
 const formIdParam = computed(() => route.params.id as string | undefined);
-const isPreview = computed(() => Boolean(formIdParam.value));
+const isPreview = computed(() => Boolean(props.previewDefinition || formIdParam.value));
 
 const playerStore = useFormPlayerStore();
 const { state: playerState, mode } = storeToRefs(playerStore);
@@ -460,7 +462,9 @@ const loadForm = async () => {
 
   try {
     let definition: FormDefinition;
-    if (slug.value) {
+    if (props.previewDefinition) {
+      definition = props.previewDefinition;
+    } else if (slug.value) {
       definition = await fetchPublicForm(slug.value);
     } else if (formIdParam.value) {
       const authOptions = resolveAuthOptions();

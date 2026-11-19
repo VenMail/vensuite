@@ -1,9 +1,8 @@
 <template>
   <div
-    ref="blockEl"
     class="block-item-new group relative"
     :class="{
-      'ring-2 ring-blue-500 dark:ring-blue-400': isFocused,
+      'block-item-new--active': isFocused,
     }"
   >
      
@@ -28,7 +27,7 @@
       class="block-item-new__content bg-white dark:bg-gray-800 rounded-xl border-2 transition-all p-6"
       :class="[
         isFocused
-          ? 'border-blue-500 dark:border-blue-400 shadow-lg'
+          ? 'border-teal-600 dark:border-teal-400'
           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
       ]"
     >
@@ -39,9 +38,9 @@
           v-model="localBlock.question"
           type="text"
           :placeholder="getPlaceholder()"
-          class="w-full text-lg font-medium bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+          class="w-full text-lg font-semibold bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           @focus="$emit('focus')"
-          @blur="handleBlur"
+          @blur="emit('blur')"
           @input="handleUpdate"
           @keydown="handleKeyDown"
         />
@@ -52,7 +51,8 @@
         <div class="flex items-center gap-3">
           <button
             class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            @click="showTypeMenu = !showTypeMenu"
+            aria-haspopup="dialog"
+            @click="emit('choose-type', block.id)"
           >
             <component :is="getBlockIcon()" class="w-4 h-4" />
             {{ getBlockLabel() }}
@@ -60,21 +60,7 @@
           </button>
           
            
-          <div
-            v-if="showTypeMenu"
-            class="absolute z-10 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2"
-            style="top: 100%"
-          >
-            <button
-              v-for="item in slashMenuItems"
-              :key="item.id"
-              class="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3"
-              @click="changeType(item.type)"
-            >
-              <component :is="getIcon(item.icon)" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span class="text-sm text-gray-900 dark:text-gray-100">{{ item.label }}</span>
-            </button>
-          </div>
+
         </div>
         
         <label v-if="localBlock.type !== 'calculated'" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
@@ -226,7 +212,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
+import { ref, watch, nextTick } from "vue";
 import {
   GripVertical,
   Plus,
@@ -268,8 +254,7 @@ const emit = defineEmits<{
   (e: "move-up", id: string): void;
   (e: "move-down", id: string): void;
   (e: "insert-below", id: string): void;
-  (e: "request-slash-menu", payload: { blockId: string; filter: string; position: { top: number; left: number } }): void;
-  (e: "close-slash-menu"): void;
+  (e: "choose-type", id: string): void;
 }>();
 
 const cloneBlock = (block: FormBlock): FormBlock => ({
@@ -280,7 +265,6 @@ const cloneBlock = (block: FormBlock): FormBlock => ({
 });
 
 const localBlock = ref<FormBlock>(cloneBlock(props.block));
-const showTypeMenu = ref(false);
 const questionInput = ref<HTMLInputElement | null>(null);
 
 watch(
@@ -302,8 +286,6 @@ watch(
         const length = questionInput.value?.value.length || 0;
         questionInput.value?.setSelectionRange(length, length);
       });
-    } else if (!focused) {
-      showTypeMenu.value = false;
     }
   }
 );
@@ -344,40 +326,14 @@ const getPlaceholder = () => {
   return "Type your question here...";
 };
 
-const handleBlur = () => {
-  emit("blur");
-  emit("close-slash-menu");
-};
-
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === "Escape") {
-    emit("close-slash-menu");
-    return;
-  }
-
-  if (event.key === "Enter" && !event.shiftKey) {
+  if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
-    emit("insert-below", localBlock.value.id);
-    emit("close-slash-menu");
-    return;
-  }
-
-  if (event.key === "Tab") {
-    emit("close-slash-menu");
-    return;
-  }
-
-  if (event.key === "/" && !event.altKey && !event.ctrlKey && !event.metaKey) {
-    nextTick(() => {
-      updateSlashMenuState();
-    });
-    return;
-  }
-
-  if (event.key.length === 1 || event.key === "Backspace" || event.key === "Delete") {
-    nextTick(() => {
-      updateSlashMenuState();
-    });
+    emit('insert-below', localBlock.value.id);
+  } else if (event.key === '/' && !localBlock.value.question.trim()) {
+    event.preventDefault();
+    emit('choose-type', localBlock.value.id);
   }
 };
 
@@ -392,72 +348,6 @@ const getInputPlaceholder = () => {
 
 const handleUpdate = () => {
   emit("update", localBlock.value);
-  updateSlashMenuState();
-};
-
-const changeType = (newType: FormBlock["type"]) => {
-  const categoryMap: Record<FormBlock["type"], FormBlock["category"]> = {
-    short: "text",
-    long: "text",
-    email: "text",
-    phone: "text",
-    date: "text",
-    time: "text",
-    radio: "choice",
-    checkbox: "choices",
-    select: "choice",
-    rating: "rating",
-    slider: "rating",
-    file: "file",
-    yesno: "switch",
-    calculated: "info",
-    number: "text",
-  };
-
-  localBlock.value.type = newType;
-  localBlock.value.category = categoryMap[newType] || "text";
-  if (newType === 'calculated') { localBlock.value.required = false; localBlock.value.calculation ??= { operator: 'add', left: { value: 0 }, right: { value: 0 } }; }
-
-  if ((newType === "radio" || newType === "checkbox" || newType === "select") && (!localBlock.value.options || localBlock.value.options.length === 0)) {
-    localBlock.value.options = ["Option 1", "Option 2", "Option 3"];
-    localBlock.value.optionValues = localBlock.value.options.map((label) => ({ value: crypto.randomUUID(), label }));
-  }
-
-  showTypeMenu.value = false;
-  emit("close-slash-menu");
-  handleUpdate();
-};
-
-const updateSlashMenuState = () => {
-  const value = localBlock.value.question ?? "";
-  const slashIndex = value.lastIndexOf("/");
-  if (slashIndex === -1) {
-    emit("close-slash-menu");
-    return;
-  }
-
-  const prefix = value.slice(0, slashIndex);
-  if (prefix && !/\s$/.test(prefix)) {
-    emit("close-slash-menu");
-    return;
-  }
-
-  const filter = value.slice(slashIndex + 1);
-  const input = questionInput.value;
-  if (!input) {
-    emit("close-slash-menu");
-    return;
-  }
-
-  const rect = input.getBoundingClientRect();
-  emit("request-slash-menu", {
-    blockId: localBlock.value.id,
-    filter,
-    position: {
-      top: rect.bottom + window.scrollY,
-      left: rect.left + window.scrollX,
-    },
-  });
 };
 
 const updateOption = (index: number) => {
@@ -490,18 +380,6 @@ const removeOption = (index: number) => {
 };
 
 // Close type menu on outside click
-const blockEl = ref<HTMLElement | null>(null);
-const handleClickOutside = (e: MouseEvent) => {
-  if (showTypeMenu.value && blockEl.value && !blockEl.value.contains(e.target as Node)) {
-    showTypeMenu.value = false;
-  }
-};
-onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-});
-onBeforeUnmount(() => {
-  document.removeEventListener("click", handleClickOutside);
-});
 </script>
 
 <style scoped>
