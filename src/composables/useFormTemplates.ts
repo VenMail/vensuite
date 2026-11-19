@@ -1,3 +1,5 @@
+import { premiumFormTemplates } from '@/utils/premiumFormTemplates.js';
+import { getFormPattern } from '@/utils/formPatterns';
 import {
   FileText,
   MessageSquare,
@@ -22,14 +24,10 @@ export const useFormTemplates = () => {
   const TEMPLATE_STORAGE_PREFIX = 'VENX_FORM_TEMPLATE_';
 
   const formTemplates: FormTemplate[] = [
-    {
-      name: 'Blank Form',
-      slug: 'blank',
-      subtitle: 'Start from scratch',
-      badge: 'Blank',
-      icon: FileText,
-      previewStyle: 'background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);',
-    },
+    ...premiumFormTemplates.map((template) => ({
+      name: template.name, slug: template.slug, subtitle: template.subtitle, badge: 'Featured',
+      icon: FileText, previewStyle: `background-color: ${template.theme.background_color}; background-image: ${getFormPattern(template.theme.background_pattern).image.replaceAll('currentColor', `${template.theme.primary_color}33`)}; background-size: ${getFormPattern(template.theme.background_pattern).size};`,
+    })),
     {
       name: 'Contact Form',
       slug: 'contact',
@@ -92,6 +90,14 @@ export const useFormTemplates = () => {
       icon: UserPlus,
       previewStyle: 'background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);',
       preset: 'Create an application form with experience and qualification fields',
+    },
+    {
+      name: 'Blank Form',
+      slug: 'blank',
+      subtitle: 'Start from scratch',
+      badge: 'Blank',
+      icon: FileText,
+      previewStyle: 'background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);',
     },
   ];
 

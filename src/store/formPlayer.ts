@@ -7,6 +7,7 @@ import type {
   LogicRule,
 } from "@/types";
 import { useLogicEngine } from "@/composables/useLogicEngine";
+import { resolveFormPath } from "@/utils/formFlow.js";
 
 type PlayerMode = "focus" | "classic";
 
@@ -86,8 +87,8 @@ export const useFormPlayerStore = defineStore("form-player", () => {
 
   const answeredCount = computed(() => Object.keys(state.value.answers).length);
 
-  const questionOrder = computed(() => {
-    if (!state.value.formDefinition) return [] as string[];
+  const resolvedPath = computed(() => {
+    if (!state.value.formDefinition) return { visible: [] as string[], answers: {} as Record<string, AnswerValue> };
     const ids: string[] = [];
     state.value.formDefinition.pages?.forEach((page) => {
       page.question_order?.forEach((id) => {
@@ -101,8 +102,10 @@ export const useFormPlayerStore = defineStore("form-player", () => {
         ids.push(question.id);
       }
     });
-    return ids;
+    const byId = new Map(questions.value.map((question) => [question.id, question]));
+    return resolveFormPath(ids.map((id) => byId.get(id)).filter((question): question is FormQuestion => Boolean(question)), state.value.answers);
   });
+  const questionOrder = computed(() => resolvedPath.value.visible);
 
   const setFormDefinition = (form: FormDefinition, slug: string) => {
     state.value.formDefinition = form;
@@ -110,8 +113,7 @@ export const useFormPlayerStore = defineStore("form-player", () => {
     state.value.layoutMode = form.layout_mode;
     state.value.seenQuestionIds = [];
     state.value.answers = {};
-    const firstQuestionId = form.pages?.[0]?.question_order?.[0] ?? form.questions?.[0]?.id ?? null;
-    state.value.currentQuestionId = firstQuestionId;
+    state.value.currentQuestionId = questionOrder.value[0] ?? null;
     state.value.progress = 0;
     state.value.paymentRequired = !!form.payment?.enabled;
     state.value.paymentIntentId = null;
@@ -170,7 +172,7 @@ export const useFormPlayerStore = defineStore("form-player", () => {
     state.value.answers[questionId] = value;
   };
 
-  const getAnswerValue = (questionId: string): AnswerValue => state.value.answers[questionId] ?? null;
+  const getAnswerValue = (questionId: string): AnswerValue => resolvedPath.value.answers[questionId] ?? null;
 
   const markSubmitting = (submitting: boolean) => {
     state.value.isSubmitting = submitting;
@@ -267,6 +269,7 @@ export const useFormPlayerStore = defineStore("form-player", () => {
     remainingQuestions,
     answeredCount,
     questionOrder,
+    resolvedPath,
     setFormDefinition,
     answerQuestion,
     advanceToQuestion,

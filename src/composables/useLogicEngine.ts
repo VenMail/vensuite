@@ -1,3 +1,4 @@
+import { evaluateConditions } from '@/utils/formFlow.js';
 import type { FormDefinition, LogicRule, LogicCondition, LogicAction } from "@/types";
 
 interface EvaluateOptions {
@@ -14,67 +15,7 @@ interface LogicEvaluationResult {
   endedForm: boolean;
 }
 
-const meetsCondition = (condition: LogicCondition, answers: Record<string, unknown>) => {
-  const answer = answers[condition.question_id];
-  switch (condition.operator) {
-    case "equals":
-      return answer === condition.value;
-    case "not_equals":
-      return answer !== condition.value;
-    case "contains":
-      if (Array.isArray(answer)) {
-        return (answer as unknown[]).includes(condition.value as never);
-      }
-      if (typeof answer === "string" && typeof condition.value === "string") {
-        return answer.includes(condition.value);
-      }
-      return false;
-    case "not_contains":
-      if (Array.isArray(answer)) {
-        return !(answer as unknown[]).includes(condition.value as never);
-      }
-      if (typeof answer === "string" && typeof condition.value === "string") {
-        return !answer.includes(condition.value);
-      }
-      return true;
-    case "greater_than":
-      return typeof answer === "number" && typeof condition.value === "number"
-        ? answer > condition.value
-        : false;
-    case "less_than":
-      return typeof answer === "number" && typeof condition.value === "number"
-        ? answer < condition.value
-        : false;
-    case "greater_or_equal":
-      return typeof answer === "number" && typeof condition.value === "number"
-        ? answer >= condition.value
-        : false;
-    case "less_or_equal":
-      return typeof answer === "number" && typeof condition.value === "number"
-        ? answer <= condition.value
-        : false;
-    case "matches_regex":
-      if (typeof answer === "string" && typeof condition.value === "string") {
-        try {
-          const regex = new RegExp(condition.value);
-          return regex.test(answer);
-        } catch (error) {
-          console.warn("Invalid regex in logic condition", condition.value, error);
-        }
-      }
-      return false;
-    default:
-      return false;
-  }
-};
-
-const evaluateRule = (rule: LogicRule, answers: Record<string, unknown>) => {
-  if (!rule.conditions.length) return false;
-  if (rule.logic_type === "AND") {
-    return rule.conditions.every((condition) => meetsCondition(condition, answers));
-  }
-  return rule.conditions.some((condition) => meetsCondition(condition, answers));
-};
+const evaluateRule = (rule: LogicRule, answers: Record<string, unknown>) => evaluateConditions(rule, answers);
 
 const buildQuestionSequence = (form?: FormDefinition | null) => {
   if (!form) return [] as string[];

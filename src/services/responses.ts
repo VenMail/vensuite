@@ -1,3 +1,4 @@
+import { questionLogic } from '@/utils/formOptions.js';
 import { apiClient, withRequestOptions, type RequestOptions } from "./apiClient";
 import type {
   FormDefinition,
@@ -37,6 +38,7 @@ const CATEGORY_BY_TYPE: Record<string, string> = {
   yesno: "switch",
   number: "text",
   statement: "info",
+  calculated: "info",
 };
 
 const normalizePublicQuestionType = (type: unknown): string => {
@@ -89,7 +91,8 @@ const normalizePublicQuestion = (question: any, pageId: string, fallbackIndex: n
     options: options as any,
     metadata: question?.metadata as any,
     visibility_condition: question?.visibility_condition ?? null,
-    logic: question?.logic,
+    logic: questionLogic(question),
+    calculation: config.calculation ?? question?.calculation,
   };
 };
 
@@ -168,7 +171,7 @@ const normalizePublicFormDefinition = (raw: any): FormDefinition => {
 };
 
 export interface SubmitResponsePayload {
-  answers: Record<string, unknown>;
+  answers: CreateResponseAnswers;
   metadata?: Record<string, unknown>;
   captcha_token?: string;
 }
@@ -245,8 +248,8 @@ const toNumericId = (value: unknown): number | undefined => {
 const normalizeAnswerValueForApi = (value: unknown): unknown => {
   if (value == null) return value;
   if (Array.isArray(value)) return value;
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
+  if (typeof value === "string" || typeof value === "boolean") return value;
+  if (typeof value === "number" || typeof value === "bigint") {
     return String(value);
   }
   if (value instanceof Date) {

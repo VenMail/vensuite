@@ -3,9 +3,6 @@
     <header class="flex flex-col gap-4 border-b pb-5" style="border-color: var(--player-surface-border, rgba(203,213,225,0.5));">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div class="flex flex-col gap-2.5">
-          <span class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-gray-500 dark:text-gray-400">
-            {{ definition?.organization_id ? $t('Commons.text.form_preview') : $t('Commons.text.form_responses') }}
-          </span>
           <h1 class="text-[2.25rem] font-semibold leading-tight text-gray-950 sm:text-[2.6rem] dark:text-gray-100" style="font-family: var(--player-heading-font, inherit);">
             {{ definition?.title || $t('Commons.heading.untitled_form') }}
           </h1>
@@ -117,9 +114,6 @@
         <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
           {{ canSubmit ? $t('Forms.Player.ClassicPlayer.text.ready_to_submit') : $t('Forms.Player.ClassicPlayer.text.please_complete_required_fields') }}
         </p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">
-          {{ canSubmit ? $t('Forms.Player.ClassicPlayer.text.review_your_responses_before') : $t('Forms.Player.ClassicPlayer.text.required_fields_are_marked') }}
-        </p>
       </div>
 
       <button
@@ -199,7 +193,7 @@ const navigationSettings = computed(() => playerState.value.formDefinition?.navi
 const showProgress = computed(() => navigationSettings.value?.show_progress ?? true);
 
 const definition = computed(() => playerState.value.formDefinition ?? null);
-const allQuestions = computed<FormQuestion[]>(() => definition.value?.questions ?? []);
+const allQuestions = computed<FormQuestion[]>(() => (definition.value?.questions ?? []).filter((question) => playerStore.questionOrder.includes(question.id)));
 
 interface QuestionSection {
   id: string;

@@ -232,7 +232,10 @@ export const useFormEditorStore = defineStore("form-editor", () => {
 
     const ownerPosition = rule.owner_id ? questionPositionMap.value[rule.owner_id] : undefined;
 
-    rule.conditions.forEach((condition, index) => {
+    const leafConditions = (conditions: LogicRule["conditions"]): LogicCondition[] =>
+      conditions.flatMap((condition) => "conditions" in condition ? leafConditions(condition.conditions) : [condition]);
+
+    leafConditions(rule.conditions).forEach((condition, index) => {
       if (!condition.question_id) {
         issues.push(`Condition ${index + 1} is missing a question reference`);
         return;

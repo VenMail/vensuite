@@ -4,6 +4,7 @@ import { useFormStore } from "@/store/forms";
 import { useFormTemplates } from "@/composables/useFormTemplates";
 import { useFormFilters } from "@/composables/useFormFilters";
 import { useFormWizard } from "@/composables/useFormWizard";
+import { premiumFormTemplates } from '@/utils/premiumFormTemplates.js';
 import { FileText, Grid, List, MessageSquare, Plus, UserPlus } from "lucide-vue-next";
 import FormWizard from "@/components/forms/FormWizard.vue";
 import Button from "@/components/ui/button/Button.vue";
@@ -77,6 +78,14 @@ const createNewForm = (preset?: string) => {
 };
 
 const createNewFormFromTemplate = (template: FormTemplate) => {
+  const premium = premiumFormTemplates.find((item) => item.slug === template.slug);
+  if (premium) {
+    void handleWizardCreate({
+      title: premium.title, description: premium.description, theme: premium.theme,
+      blocks: premium.blocks.map((block) => ({ ...block, id: crypto.randomUUID() })),
+    });
+    return;
+  }
   createNewForm(template.preset || "");
 };
 
@@ -194,7 +203,7 @@ onBeforeUnmount(() => {
         @share="handleQuickViewShare"
         @load-more="fetchMoreForms"
         @create-blank="createNewForm"
-        @create-template="() => createNewFormFromTemplate(formTemplates[1])"
+        @create-template="() => createNewFormFromTemplate(formTemplates.find((template) => template.slug === 'contact')!)"
       />
     </div>
 

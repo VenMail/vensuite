@@ -2,6 +2,8 @@ import { ref } from 'vue';
 import { useFormStore } from '@/store/forms';
 import { useFormTemplates } from './useFormTemplates';
 import { router } from '@/main';
+import { toast } from '@/composables/useToast';
+import type { FormTheme } from '@/types';
 
 export const useFormWizard = () => {
   const formStore = useFormStore();
@@ -90,7 +92,7 @@ export const useFormWizard = () => {
     return base;
   };
 
-  const handleWizardCreate = async (data: { title: string; description: string; blocks: any[] }) => {
+  const handleWizardCreate = async (data: { title: string; description: string; blocks: any[]; theme?: FormTheme }) => {
     let pageId: string = crypto.randomUUID();
 
     const questions = data.blocks.map((block, index) => buildQuestionPayload(block, index, pageId));
@@ -134,14 +136,14 @@ export const useFormWizard = () => {
           blocks: data.blocks,
         });
 
-        await formStore.updateForm(form.id, {
+        const saved = await formStore.updateForm(form.id, {
           title: data.title,
           description: data.description,
           layout_mode: form.layout_mode ?? 'auto',
           pages: [pagePayload],
           questions,
           logic_rules: [],
-          settings: form.settings,
+          settings: { ...form.settings, ...(data.theme ? { theme: data.theme } : {}) } as any,
           header: form.header,
           typography: form.typography,
           theme: form.theme,
@@ -152,10 +154,23 @@ export const useFormWizard = () => {
           security: form.security,
           payment: form.payment,
         });
+        if (!saved) {
+          toast.error(formStore.error || 'Could not save form.');
+          return;
+        }
       }
 
+      if (!needsBackfill && data.theme) {
+        const saved = await formStore.updateForm(form.id, { settings: { ...form.settings, theme: data.theme } as any });
+        if (!saved) {
+          toast.error(formStore.error || 'Could not save form.');
+          return;
+        }
+      }
       showWizard.value = false;
       router.replace({ name: 'form-edit', params: { id: form.id } });
+    } else {
+      toast.error(formStore.error || 'Could not create form.');
     }
   };
 

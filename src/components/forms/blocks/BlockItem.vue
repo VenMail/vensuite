@@ -302,6 +302,8 @@ if (
 
 const getPlaceholder = () => {
   const placeholders: Record<BlockType, string> = {
+    number: "Number",
+    calculated: "Calculation",
     short: "Type your question here...",
     long: "Type your question here...",
     email: "What's your email address?",
@@ -330,6 +332,8 @@ const getInputPlaceholder = () => {
 
 const getBlockLabel = () => {
   const labels: Record<BlockType, string> = {
+    number: "Number",
+    calculated: "Calculation",
     short: "Short Text",
     long: "Long Text",
     email: "Email",
@@ -349,6 +353,8 @@ const getBlockLabel = () => {
 
 const getBlockIcon = () => {
   const icons: Record<BlockType, any> = {
+    calculated: Type,
+    number: Type,
     short: Type,
     long: AlignLeft,
     email: Mail,

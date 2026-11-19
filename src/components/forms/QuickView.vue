@@ -78,7 +78,6 @@ const fieldCount = computed(() => {
   }
   return 0;
 });
-const shareSlug = computed(() => props.form.sharing?.share_slug ?? props.form.slug ?? null);
 const isList = computed(() => props.viewMode === "list");
 const isDraft = computed(() => (props.form.status ?? "draft") === "draft");
 
@@ -148,11 +147,7 @@ const launchEditor = () => {
 
 const previewForm = () => {
   if (!props.form.id) return;
-  const shareSlugValue = shareSlug.value;
-  const target = !isDraft.value && shareSlugValue
-    ? `/f/${shareSlugValue}`
-    : `/f/by-id/${props.form.id}`;
-  router.push(target);
+  router.push(`/f/by-id/${encodeURIComponent(props.form.id)}`);
 };
 
 const handleResponsesClick = () => {
