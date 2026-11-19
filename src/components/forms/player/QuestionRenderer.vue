@@ -51,6 +51,7 @@
         v-for="(option, idx) in options"
         :key="option.value"
         :class="choiceOptionClass(modelValue === option.value)"
+        @click="requestAdvance($event)"
       >
         <span v-if="showShortcutLabels" class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] font-semibold transition-colors" :class="modelValue === option.value ? 'shortcut-badge--active text-white' : 'border-slate-300 bg-white text-slate-500 group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400'">
           {{ getOptionShortcutLabel(idx) }}
@@ -66,7 +67,7 @@
           :class="{ 'sr-only': showShortcutLabels }"
           @change="updateValue(option.value)"
         />
-          <span class="text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-950 dark:text-slate-300 dark:group-hover:text-white">
+          <span class="choice-option__label text-sm font-medium">
           {{ option.label }}
         </span>
       </label>
@@ -110,7 +111,7 @@
           :class="{ 'sr-only': showShortcutLabels }"
           @change="toggleCheckbox(option.value, ($event.target as HTMLInputElement).checked)"
         />
-          <span class="text-sm font-medium text-slate-700 transition-colors group-hover:text-slate-950 dark:text-slate-300 dark:group-hover:text-white">
+          <span class="choice-option__label text-sm font-medium">
           {{ option.label }}
         </span>
       </label>
@@ -123,8 +124,8 @@
           :class="[
             'yesno-btn inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50',
             booleanValue === true
-              ? 'yesno-btn--active text-white'
-              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+              ? 'yesno-btn--active'
+              : ''
           ]"
           :disabled="disabled"
           :aria-pressed="modelValue != null && booleanValue"
@@ -138,8 +139,8 @@
           :class="[
             'yesno-btn inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[var(--player-accent)] disabled:cursor-not-allowed disabled:opacity-50',
             booleanValue === false && modelValue != null
-              ? 'yesno-btn--active text-white'
-              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+              ? 'yesno-btn--active'
+              : ''
           ]"
           :disabled="disabled"
           :aria-pressed="modelValue != null && !booleanValue"
@@ -178,13 +179,13 @@
           type="button"
           :class="[
             'flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 rating-btn',
-            numberValue >= ratingValue
-              ? 'rating-btn--active text-white'
-              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+            modelValue != null && numberValue >= ratingValue
+              ? 'rating-btn--active'
+              : ''
           ]"
           :disabled="disabled"
-          :aria-pressed="numberValue === ratingValue"
-          @click="updateValue(ratingValue)"
+          :aria-pressed="modelValue != null && numberValue === ratingValue"
+          @click="selectRating(ratingValue)"
         >
           {{ ratingValue }}
         </button>
@@ -267,6 +268,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: unknown): void;
   (e: 'enter'): void;
+  (e: 'advance'): void;
 }>();
 
 const inputId = computed(() => `question-${props.question.id}`);
@@ -332,12 +334,13 @@ const arrayValue = computed<string[]>(() => {
 
 const numberValue = computed<number>(() => {
   const value = props.modelValue;
+  if (value == null || value === '') return sliderConfig.value?.min ?? 0;
   if (typeof value === 'number') return value;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : sliderConfig.value?.min ?? 0;
 });
 
-const booleanValue = computed(() => Boolean(props.modelValue));
+const booleanValue = computed(() => props.modelValue === true || props.modelValue === 'true' || props.modelValue === 1 || props.modelValue === '1');
 
 const fileNames = computed(() => {
   const value = props.modelValue;
@@ -348,6 +351,14 @@ const fileNames = computed(() => {
 });
 
 const updateValue = (value: unknown) => emit('update:modelValue', value);
+const requestAdvance = (event: MouseEvent) => {
+  // Radio arrow-key navigation must remain within the choice group.
+  if (!props.disabled && (!(event.target instanceof HTMLInputElement) || event.detail > 0)) emit('advance');
+};
+const selectRating = (value: number) => {
+  updateValue(value);
+  emit('advance');
+};
 
 const emitEnter = (event: KeyboardEvent) => {
   if (event.isComposing || event.repeat) return;
@@ -500,7 +511,8 @@ const lengthHint = computed(() => {
   border-color: var(--player-accent);
   background: color-mix(in srgb, var(--player-accent) 10%, var(--player-surface));
 }
-.choice-option span:last-child { color: var(--player-text-color); }
+.choice-option__label { color: var(--player-text-color); }
+.choice-option__label:empty::before { content: "—"; }
 
 :deep(input[type="radio"]:checked),
 :deep(input[type="checkbox"]:checked) {
@@ -529,6 +541,7 @@ const lengthHint = computed(() => {
   background: var(--player-surface);
   color: var(--player-text-color);
 }
+.yesno-btn:hover, .rating-btn:hover { border-color: var(--player-accent); }
 .yesno-btn--active, .rating-btn--active {
   border-color: var(--player-accent);
   background: color-mix(in srgb, var(--player-accent) 14%, var(--player-surface));
