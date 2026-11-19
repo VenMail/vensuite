@@ -1,24 +1,48 @@
 <script setup lang="ts">
+import { Trash2 } from 'lucide-vue-next';
 import type { FormBlock } from './types';
 import ConditionGroupEditor from './ConditionGroupEditor.vue';
-import type { LogicCondition, LogicOperator, LogicRule } from '@/types';
-const props = defineProps<{ block: FormBlock; previous: FormBlock[]; following: FormBlock[] }>();
-const emit = defineEmits<{ (event: 'update', block: FormBlock): void }>();
-const save = (logic: LogicRule | undefined) => emit('update', { ...props.block, logic });
-const addRule = () => save({ id: props.block.id, scope: 'question', owner_id: props.block.id, logic_type: 'AND', conditions: [{ question_id: props.block.id, operator: 'equals', value: '' }], actions: [{ type: 'jump_to_question', target_id: props.following[0]?.id }] });
+import type { LogicConditionGroup, LogicRule } from '@/types';
+
+const props = defineProps<{ rule: LogicRule; questions: FormBlock[]; following: FormBlock[]; label: string }>();
+const emit = defineEmits<{ update: [rule: LogicRule]; remove: [] }>();
+const updateConditions = ({ logic_type, conditions }: LogicConditionGroup) =>
+  emit('update', { ...props.rule, logic_type, conditions });
+const changeDestination = (event: Event) => {
+  const destination = (event.target as HTMLSelectElement).value;
+  emit('update', {
+    ...props.rule,
+    actions: destination === '__end__' ? [{ type: 'end_form' }] : [{ type: 'jump_to_question', target_id: destination }],
+  });
+};
 </script>
+
 <template>
-  <div class="border-t border-slate-200 pt-3 dark:border-slate-700">
-    <button v-if="!block.logic" type="button" class="rounded px-2 py-1 font-medium text-blue-700 hover:bg-blue-50" @click="addRule">Add skip rule</button>
-    <div v-else class="space-y-3">
-      <p class="font-medium">Skip when</p>
-      <ConditionGroupEditor :group="block.logic" :questions="[...previous, block]" @update="save({ ...block.logic!, logic_type: $event.logic_type, conditions: $event.conditions })" />
-      <label class="flex flex-wrap items-center gap-2">Go to
-        <select :value="block.logic.actions[0]?.type === 'end_form' ? '__end__' : block.logic.actions[0]?.target_id" class="min-w-0 rounded border border-slate-300 bg-transparent px-2 py-2" @change="save({ ...block.logic!, actions: ($event.target as HTMLSelectElement).value === '__end__' ? [{type:'end_form'}] : [{type:'jump_to_question', target_id: ($event.target as HTMLSelectElement).value}] })">
-          <option v-for="question in following" :key="question.id" :value="question.id">{{ question.question || 'Untitled question' }}</option><option value="__end__">End form</option>
-        </select>
-      </label>
-      <button type="button" class="rounded px-2 py-1 text-rose-700 hover:bg-rose-50" @click="save(undefined)">Remove skip rule</button>
+  <div class="branch-rule">
+    <div class="branch-rule__heading">
+      <p>{{ label }}</p>
+      <button type="button" class="logic-icon" aria-label="Remove branch" @click="emit('remove')">
+        <Trash2 :size="15" aria-hidden="true" />
+      </button>
     </div>
+    <ConditionGroupEditor :group="rule" :questions="questions" @update="updateConditions" />
+    <label class="branch-rule__destination">
+      Then go to
+      <select
+        aria-label="Branch destination"
+        :value="rule.actions[0]?.type === 'end_form' ? '__end__' : rule.actions[0]?.target_id"
+        @change="changeDestination"
+      >
+        <option value="" disabled>Choose a destination</option>
+        <option v-for="question in following" :key="question.id" :value="question.id">{{ question.question || 'Untitled question' }}</option>
+        <option value="__end__">End form</option>
+      </select>
+    </label>
   </div>
 </template>
+
+<style scoped>
+.branch-rule { display: grid; gap: 0.6rem; min-width: 0; padding-top: 0.5rem; border-top: 1px solid var(--logic-line); }
+.branch-rule__heading { display: flex; align-items: center; justify-content: space-between; font-weight: 700; }
+.branch-rule__destination { display: grid; gap: 0.35rem; font-size: 0.85rem; font-weight: 650; }
+</style>

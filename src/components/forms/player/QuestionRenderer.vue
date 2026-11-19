@@ -1,5 +1,5 @@
 <template>
-  <div :class="containerClass" @focusout="handleFocusOut">
+  <div class="form-question-layout" :class="containerClass" @focusout="handleFocusOut">
     <div :class="labelWrapperClass">
       <label :id="`${inputId}-label`" :for="inputId" class="question-label flex items-baseline gap-1.5 text-base font-semibold leading-tight text-slate-950 dark:text-white">
         <span>{{ label }}</span>
