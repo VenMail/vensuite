@@ -1,114 +1,58 @@
 <template>
-  <div
-    v-if="currentQuestion"
-    class="focus-player relative mx-auto my-4 flex min-h-[70vh] w-full max-w-3xl flex-col gap-8 border px-6 py-8 transition"
-    style="background: var(--player-surface, rgba(255,255,255,0.95)); border-color: var(--player-surface-border, rgba(203,213,225,0.5));"
-  >
-    <div class="space-y-6">
-      <div v-if="showProgress" class="space-y-4">
-        <div class="focus-progress-label">
-          <span>Question {{ currentStep }} of {{ totalSteps }}</span>
-          <span>{{ Math.round(progressPercent) }}%</span>
-        </div>
-
-        <div class="relative h-2 w-full overflow-hidden rounded-full" style="background: var(--player-progress-track, rgba(226,232,240,0.95));">
-          <div
-            class="h-full bg-gradient-to-r from-[var(--player-accent)] to-[var(--player-accent-strong)] transition-all duration-500 ease-out"
-            :style="{ width: `${progressPercent}%` }"
-          />
-        </div>
-      </div>
-
-      <Transition name="focus-slide" mode="out-in">
-        <div :key="currentQuestion.id" class="focus-question space-y-6">
-          <QuestionRenderer
-            :question="currentQuestion"
-            :model-value="answerValue"
-            :label-placement="labelPlacement"
-            :density="density"
-            :disabled="isSubmitting"
-            :show-shortcut-labels="true"
-            @update:model-value="onAnswerInputWithAutoAdvance"
-            @enter="handleEnter"
-          />
-        </div>
-      </Transition>
+  <section v-if="currentQuestion" class="focus-player">
+    <div v-if="showProgress" class="focus-progress">
+      <span>Question {{ currentStep }} of {{ totalSteps }}</span>
+      <progress :value="currentStep" :max="totalSteps" aria-label="Form progress" />
     </div>
 
-    <div class="focus-actions mt-auto flex flex-col gap-4">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p v-if="currentQuestion.type !== 'calculated'" class="text-sm text-gray-500 dark:text-gray-400">
-          {{ footerMessage }}
-        </p>
-        <div class="flex items-center gap-3">
-          <button
-            v-if="allowBack"
-            type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/40 hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="isSubmitting || !canGoBack"
-            @click="handleBack"
-          >
-            {{$t('Commons.button.back_2')}}
-            <kbd class="ml-1 hidden sm:inline-flex items-center rounded border border-gray-300/60 dark:border-gray-600/60 bg-gray-100/60 dark:bg-gray-800/60 px-1.5 py-0.5 text-[10px] font-mono leading-none text-gray-500 dark:text-gray-400">Esc</kbd>
-          </button>
-
-          <button
-            v-if="showSkip"
-            type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/40 hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="isSubmitting"
-            @click="handleSkip"
-          >
-            {{$t('Commons.button.skip')}}
-          </button>
-
-          <button
-            v-if="hasNextQuestion"
-            type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-            :style="{ background: 'var(--player-accent)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--player-accent) 25%, transparent)' }"
-            :disabled="isSubmitting || !canProceed"
-            @click="handleNext"
-          >
-            {{$t('Commons.button.next')}}
-            <kbd class="ml-1.5 hidden sm:inline-flex items-center rounded border border-white/30 bg-white/10 px-1.5 py-0.5 text-[10px] font-mono leading-none">Enter ↵</kbd>
-          </button>
-
-          <button
-            v-else
-            type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-            :style="{ background: 'var(--player-accent)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--player-accent) 25%, transparent)' }"
-            :disabled="isSubmitting || !canProceed"
-            @click="emitComplete"
-          >
-            {{ isSubmitting ? 'Submitting…' : $t('Commons.button.submit_form') }}
-            <kbd class="ml-1.5 hidden sm:inline-flex items-center rounded border border-white/30 bg-white/10 px-1.5 py-0.5 text-[10px] font-mono leading-none">Enter ↵</kbd>
-          </button>
-        </div>
-      </div>
+    <div
+      :key="currentQuestion.id"
+      ref="questionStep"
+      class="focus-question"
+      role="group"
+      tabindex="-1"
+      :aria-labelledby="`question-${currentQuestion.id}-label`"
+    >
+      <QuestionRenderer
+        :question="currentQuestion"
+        :model-value="answerValue"
+        :label-placement="labelPlacement"
+        :density="density"
+        :disabled="isSubmitting"
+        :show-errors="attempted"
+        @update:model-value="updateAnswer"
+        @enter="handleNext"
+      />
     </div>
-  </div>
 
-  <div
-    v-else
-    class="rounded-3xl border border-dashed border-gray-200 p-12 text-center text-gray-500 dark:border-gray-800 dark:text-gray-400"
-  >
-    <p>{{$t('Forms.Player.FocusPlayer.text.no_questions_available')}}</p>
-  </div>
+    <p v-if="submissionError" role="alert" class="focus-error">{{ submissionError }}</p>
+    <div class="focus-actions">
+      <button v-if="canGoBack" type="button" class="focus-button" :disabled="isSubmitting" @click="handleBack">
+        <ArrowLeft :size="17" aria-hidden="true" />
+        {{ $t('Commons.button.back_2') }}
+      </button>
+      <button type="button" class="focus-button focus-button--primary" :disabled="isSubmitting" @click="handleNext">
+        {{ isSubmitting ? 'Submitting…' : showSkip ? $t('Commons.button.skip') : hasNextQuestion ? $t('Commons.button.next') : $t('Commons.button.submit_form') }}
+        <ArrowRight v-if="!isSubmitting" :size="17" aria-hidden="true" />
+      </button>
+    </div>
+  </section>
+
+  <p v-else class="focus-empty">{{ $t('Forms.Player.FocusPlayer.text.no_questions_available') }}</p>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { ArrowLeft, ArrowRight } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import QuestionRenderer from '@/components/forms/player/QuestionRenderer.vue';
 import { useFormPlayerStore } from '@/store/formPlayer';
-import { useFormKeyboard } from '@/composables/useFormKeyboard';
-import type { FormDensity, FormLabelPlacement, FormQuestion, TextValidation, FormPhoneQuestion } from '@/types';
-import { defaultValidations } from '@/types';
+import { getAnswerError, isEmptyAnswer } from '@/utils/formAnswerValidation';
+import type { FormDensity, FormLabelPlacement } from '@/types';
 
 const props = defineProps<{
   isSubmitting?: boolean;
+  submissionError?: string | null;
   labelPlacement?: FormLabelPlacement;
   density?: FormDensity;
 }>();
@@ -124,242 +68,138 @@ const labelPlacement = computed<FormLabelPlacement>(() => props.labelPlacement ?
 const density = computed<FormDensity>(() => props.density ?? 'comfortable');
 
 const navigationSettings = computed(() => playerState.value.formDefinition?.navigation);
-const allowBack = computed(() => navigationSettings.value?.allow_back ?? false);
-const allowSkip = computed(() => navigationSettings.value?.allow_skip ?? false);
 const showProgress = computed(() => navigationSettings.value?.show_progress ?? true);
+const currentIndex = computed(() => questionOrder.value.indexOf(currentQuestion.value?.id ?? ''));
+const currentStep = computed(() => Math.max(1, currentIndex.value + 1));
+const totalSteps = computed(() => Math.max(currentStep.value, questionOrder.value.length));
+const hasNextQuestion = computed(() => currentIndex.value >= 0 && currentIndex.value < questionOrder.value.length - 1);
+const canGoBack = computed(() => (navigationSettings.value?.allow_back ?? true) && currentIndex.value > 0);
+const answerValue = computed(() => currentQuestion.value ? playerStore.getAnswerValue(currentQuestion.value.id) : null);
+const showSkip = computed(() =>
+  navigationSettings.value?.allow_skip && hasNextQuestion.value && !currentQuestion.value?.required
+  && currentQuestion.value?.type !== 'calculated' && isEmptyAnswer(answerValue.value),
+);
 
-const hasNextQuestion = computed(() => {
-  if (!currentQuestion.value) return false;
-  const ids = questionOrder.value;
-  const index = ids.indexOf(currentQuestion.value.id);
-  return index !== -1 && index < ids.length - 1;
-});
+const attempted = ref(false);
+const questionStep = ref<HTMLElement | null>(null);
+watch(() => currentQuestion.value?.id, () => { attempted.value = false; });
+watch(questionStep, (step) => step?.focus(), { flush: 'post' });
 
-const canGoBack = computed(() => {
-  if (!allowBack.value || !currentQuestion.value) return false;
-  const ids = questionOrder.value;
-  const index = ids.indexOf(currentQuestion.value.id);
-  return index > 0;
-});
+const focusQuestion = () => questionStep.value?.focus();
+onMounted(focusQuestion);
 
-const answerValue = computed(() => {
-  if (!currentQuestion.value) return null;
-  return playerStore.getAnswerValue(currentQuestion.value.id);
-});
-
-const progressPercent = computed(() => {
-  const progress = playerState.value.progress ?? 0;
-  return Math.round(progress * 100);
-});
-
-const totalSteps = computed(() => questionOrder.value.length || (currentQuestion.value ? 1 : 0));
-
-const currentStep = computed(() => {
-  if (!currentQuestion.value) return 0;
-  const index = questionOrder.value.indexOf(currentQuestion.value.id);
-  return index === -1 ? 1 : index + 1;
-});
-
-const showSkip = computed(() => allowSkip.value && hasNextQuestion.value);
-
-const isAnswerEmpty = (question: FormQuestion, value: unknown) => {
-  if (value == null) return true;
-  if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === 'string') return value.trim().length === 0;
-  if (typeof value === 'number') return Number.isNaN(value);
-  if (question.type === 'yesno') return false;
-  if (question.type === 'file') return value instanceof File ? false : Array.isArray(value) ? value.length === 0 : !value;
-  return false;
-};
-
-const activeValidation = computed<TextValidation | undefined>(() => {
-  const q = currentQuestion.value;
-  if (!q) return undefined;
-  const t = q.type as keyof typeof defaultValidations;
-  let base = defaultValidations[t as string];
-  const qVal = (q as any).validation as TextValidation | undefined;
-  if (q.type === 'phone') {
-    const allowIntl = (q as FormPhoneQuestion).allow_international ?? true;
-    const phoneRegex = allowIntl ? /^\+?[0-9\s()-]{10,20}$/ : /^[0-9\s()-]{10,15}$/;
-    base = { inputType: 'phone', regex: phoneRegex, minLength: allowIntl ? 10 : 10, maxLength: allowIntl ? 20 : 15 } as TextValidation;
-  }
-  return { ...(base || {}), ...(qVal || {}) } as TextValidation | undefined;
-});
-
-const isFormatValid = computed(() => {
-  const q = currentQuestion.value;
-  const val = answerValue.value;
-  if (!q) return false;
-  if (val == null || val === '') return !q.required; // empty is valid if not required
-  if (typeof val !== 'string') return true; // non-string types handled elsewhere
-  const rules = activeValidation.value;
-  if (!rules) return true;
-  if (rules.minLength && val.length < rules.minLength) return false;
-  if (rules.maxLength && val.length > rules.maxLength) return false;
-  if (rules.regex && !rules.regex.test(val)) return false;
-  return true;
-});
-
-const canProceed = computed(() => {
-  if (!currentQuestion.value) return false;
-  if (currentQuestion.value.required && isAnswerEmpty(currentQuestion.value, answerValue.value)) return false;
-  return isFormatValid.value;
-});
-
-
-const footerMessage = computed(() => currentQuestion.value?.required ? 'Required' : 'Optional');
-
-const setCurrentQuestionId = (targetId: string | null) => {
-  playerStore.advanceToQuestion(targetId);
-};
-
-const findAdjacentQuestionId = (offset: number) => {
-  if (!currentQuestion.value) return null;
-  const ids = questionOrder.value;
-  const index = ids.indexOf(currentQuestion.value.id);
-  if (index === -1) return null;
-  return ids[index + offset] ?? null;
-};
-
-const onAnswerInput = (value: unknown) => {
+const updateAnswer = (value: unknown) => {
   if (!currentQuestion.value) return;
-  playerStore.setAnswerValue(currentQuestion.value.id, value as any);
+  playerStore.setAnswerValue(currentQuestion.value.id, value as Parameters<typeof playerStore.setAnswerValue>[1]);
 };
 
 const handleNext = () => {
-  if (!currentQuestion.value) {
-    emitComplete();
+  const question = currentQuestion.value;
+  if (!question || props.isSubmitting) return;
+  if (getAnswerError(question, answerValue.value)) {
+    attempted.value = true;
+    questionStep.value?.querySelector<HTMLElement>('input, textarea, select, button')?.focus();
     return;
   }
-  if (!canProceed.value) return;
-  playerStore.answerQuestion(currentQuestion.value.id, playerStore.getAnswerValue(currentQuestion.value.id));
+
+  playerStore.answerQuestion(question.id, answerValue.value);
   if (!playerState.value.currentQuestionId) {
-    emitComplete();
+    // Keep the last answer available until submission succeeds, including when
+    // a rule ends the form early and the request has to be retried.
+    playerStore.advanceToQuestion(question.id);
+    emit('complete');
   }
-};
-
-const handleEnter = () => {
-  // In focus (wizard) mode, Enter should attempt to advance if valid
-  if (hasNextQuestion.value) {
-    handleNext();
-  } else {
-    if (canProceed.value) emitComplete();
-  }
-};
-
-const handleSkip = () => {
-  if (!currentQuestion.value) return;
-  const nextId = findAdjacentQuestionId(1);
-  setCurrentQuestionId(nextId);
 };
 
 const handleBack = () => {
-  const previousId = findAdjacentQuestionId(-1);
-  if (previousId) {
-    setCurrentQuestionId(previousId);
-  }
+  if (canGoBack.value) playerStore.advanceToQuestion(questionOrder.value[currentIndex.value - 1]);
 };
-
-const emitComplete = () => {
-  emit('complete');
-};
-
-// Auto-advance for single-choice questions (radio, yesno, rating)
-const AUTO_ADVANCE_DELAY = 400;
-let autoAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
-
-const onAnswerInputWithAutoAdvance = (value: unknown) => {
-  onAnswerInput(value);
-  const q = currentQuestion.value;
-  if (!q) return;
-  const autoAdvanceTypes = ['radio', 'yesno', 'rating'];
-  if (autoAdvanceTypes.includes(q.type) && hasNextQuestion.value) {
-    if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
-    autoAdvanceTimer = setTimeout(() => {
-      handleNext();
-    }, AUTO_ADVANCE_DELAY);
-  }
-};
-
-// Keyboard navigation
-const currentQuestionType = computed(() => currentQuestion.value?.type ?? null);
-const currentOptionCount = computed(() => {
-  const q = currentQuestion.value;
-  if (!q) return 0;
-  if ('options' in q && Array.isArray((q as any).options)) return (q as any).options.length;
-  return 0;
-});
-const submittingRef = computed(() => props.isSubmitting ?? false);
-
-const handleKeyboardSelectOption = (index: number) => {
-  const q = currentQuestion.value;
-  if (!q) return;
-  const opts = ('options' in q ? (q as any).options : []) as { value: string }[];
-  if (index >= opts.length) return;
-  const optionValue = opts[index].value;
-  if (q.type === 'radio' || q.type === 'select') {
-    onAnswerInputWithAutoAdvance(optionValue);
-  } else if (q.type === 'checkbox' || q.type === 'tags') {
-    const current = Array.isArray(playerStore.getAnswerValue(q.id)) ? [...(playerStore.getAnswerValue(q.id) as string[])] : [];
-    const idx = current.indexOf(optionValue);
-    if (idx !== -1) current.splice(idx, 1);
-    else current.push(optionValue);
-    onAnswerInput(current);
-  }
-};
-
-const handleKeyboardYes = () => {
-  onAnswerInputWithAutoAdvance(true);
-};
-
-const handleKeyboardNo = () => {
-  onAnswerInputWithAutoAdvance(false);
-};
-
-useFormKeyboard({
-  onNext: () => {
-    if (hasNextQuestion.value) handleNext();
-    else if (canProceed.value) emitComplete();
-  },
-  onBack: handleBack,
-  onSelectOption: handleKeyboardSelectOption,
-  onYes: handleKeyboardYes,
-  onNo: handleKeyboardNo,
-  questionType: currentQuestionType,
-  optionCount: currentOptionCount,
-  isSubmitting: submittingRef,
-});
 </script>
 
 <style scoped>
 .focus-player {
-  border-radius: 20px;
-  padding: clamp(1.5rem, 5vw, 3.5rem);
-  background: var(--player-surface, rgba(255,255,255,0.95));
-  border-color: var(--player-surface-border, rgba(203,213,225,0.5));
-  box-shadow: var(--player-elevation, 0 24px 70px rgba(15,23,42,0.13));
-  backdrop-filter: blur(18px);
+  display: grid;
+  width: min(100%, 46rem);
+  margin: 0 auto;
+  padding: clamp(1.4rem, 5vw, 3.25rem);
+  gap: clamp(1.6rem, 5vw, 2.6rem);
+  border: 1px solid var(--player-surface-border);
+  border-radius: 1.25rem;
+  background: var(--player-surface);
+  color: var(--player-text-color);
+  box-shadow: var(--player-muted-elevation);
 }
 
-.focus-progress-label { display: flex; justify-content: space-between; color: color-mix(in srgb, var(--player-text-color, #0f172a) 72%, transparent); font-size: .8rem; font-weight: 650; letter-spacing: .02em; }
-.focus-actions { border-top: 1px solid color-mix(in srgb, var(--player-text-color, #0f172a) 12%, transparent); padding-top: 1.25rem; }
-.focus-question { padding-top: clamp(1.5rem, 5vh, 3.5rem); }
-.focus-question :deep(.question-label) { color: var(--player-text-color, #0f172a); font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 700; letter-spacing: -.025em; line-height: 1.2; }
-.focus-question :deep(.form-control) { min-height: 3.5rem; font-size: 1.05rem; }
-@media (prefers-reduced-motion: reduce) { .focus-slide-enter-active, .focus-slide-leave-active { transition: none !important; } }
-
-.focus-slide-enter-active,
-.focus-slide-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+.focus-progress {
+  display: grid;
+  gap: 0.65rem;
+  font-size: 0.825rem;
+  font-weight: 650;
 }
 
-.focus-slide-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
+.focus-progress progress {
+  width: 100%;
+  height: 5px;
+  appearance: none;
+  overflow: hidden;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--player-progress-track);
+  color: var(--player-accent);
+}
+.focus-progress progress::-webkit-progress-bar { background: var(--player-progress-track); }
+.focus-progress progress::-webkit-progress-value { background: var(--player-accent); }
+.focus-progress progress::-moz-progress-bar { background: var(--player-accent); }
+
+.focus-question:focus { outline: none; }
+.focus-question :deep(.question-label) {
+  font-family: var(--player-heading-font, inherit);
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 720;
+  letter-spacing: -0.028em;
+  line-height: 1.2;
+}
+.focus-question :deep(.form-control) { min-height: 3.25rem; font-size: 1.0625rem; }
+
+.focus-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
 }
 
-.focus-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
+.focus-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 44px;
+  padding: 0.6rem 0.95rem;
+  border: 1px solid var(--player-surface-border);
+  border-radius: 0.6rem;
+  color: inherit;
+  font-weight: 650;
+}
+.focus-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--player-accent) 9%, var(--player-surface));
+}
+.focus-button--primary {
+  margin-inline-start: auto;
+  border-color: transparent;
+  background: var(--player-action-bg, #0f172a);
+  color: var(--player-action-text, #fff);
+}
+.focus-button--primary:hover:not(:disabled) { background: var(--player-action-hover, #24324b); }
+.focus-button:focus-visible { outline: 2px solid var(--player-accent); outline-offset: 3px; }
+.focus-button:disabled { opacity: 0.7; cursor: wait; }
+.focus-error { padding: 0.75rem; border: 1px solid currentColor; border-radius: 0.5rem; font-size: 0.9rem; }
+.focus-empty { padding: 2rem; text-align: center; }
+
+.focus-question { animation: question-enter 150ms ease-out; }
+@keyframes question-enter {
+  from { opacity: 0.85; transform: translateY(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .focus-question { animation: none; }
 }
 </style>
