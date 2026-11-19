@@ -184,6 +184,8 @@ import FocusPlayer from '@/components/forms/player/FocusPlayer.vue';
 import ClassicPlayer from '@/components/forms/player/ClassicPlayer.vue';
 import PaymentStep from '@/components/forms/player/PaymentStep.vue';
 import { fetchPublicForm, submitResponse, updateResponseDraft, finalizeResponseSubmission } from '@/services/responses';
+import { getFormPattern } from '@/utils/formPatterns';
+import { previewCompletion } from '@/utils/formPreview.js';
 import { fetchForm } from '@/services/forms';
 import { useFormPlayerStore } from '@/store/formPlayer';
 import { usePaymentClient } from '@/composables/usePaymentClient';
@@ -196,6 +198,7 @@ const route = useRoute();
 const router = useRouter();
 const slug = computed(() => route.params.slug as string | undefined);
 const formIdParam = computed(() => route.params.id as string | undefined);
+const isPreview = computed(() => Boolean(formIdParam.value));
 
 const playerStore = useFormPlayerStore();
 const { state: playerState, mode } = storeToRefs(playerStore);
@@ -223,7 +226,7 @@ const completionScreen = computed<FormCompletionScreen | null>(() => {
 });
 
 const completionTitle = computed(() => completionScreen.value?.title ?? 'Thank you!');
-const completionMessage = computed(() => completionScreen.value?.message ?? 'Your response has been recorded.');
+const completionMessage = computed(() => isPreview.value ? 'No response was submitted.' : completionScreen.value?.message ?? 'Your response has been recorded.');
 const completionButtonText = computed(() => completionScreen.value?.button_text ?? null);
 const formTitle = computed(() => formDefinition.value?.title || 'Untitled form');
 const formDescription = computed(() => formDefinition.value?.description || '');
@@ -322,6 +325,8 @@ const rootStyle = computed(() => {
 
   const styles: Record<string, string> = {
     '--player-bg': backgroundColor,
+    '--player-pattern': getFormPattern(theme.value?.background_pattern).image,
+    '--player-pattern-size': getFormPattern(theme.value?.background_pattern).size,
     '--player-text-color': textColor,
     '--player-accent': accentColor.value,
     '--player-accent-strong': accentColorStrong.value,
@@ -357,7 +362,7 @@ const logoAlignment = computed(() => header.value?.alignment ?? 'center');
 
 const emailRequired = computed(() => Boolean(settings.value?.collect_email));
 
-const showPaymentReminder = computed(() => Boolean(paymentSettings.value?.enabled && paymentSettings.value.amount_cents));
+const showPaymentReminder = computed(() => Boolean(!isPreview.value && paymentSettings.value?.enabled && paymentSettings.value.amount_cents));
 const paymentSummaryText = computed(() => {
   if (!paymentSettings.value?.amount_cents) return '';
   const amount = (paymentSettings.value.amount_cents / 100).toFixed(2);
@@ -417,7 +422,7 @@ const applyDefinition = (definition: FormDefinition) => {
 
   // Check for cached progress
   const savePartial = definition.settings?.save_partial_responses !== false;
-  if (savePartial && progressCache.hasProgress()) {
+  if (!isPreview.value && savePartial && progressCache.hasProgress()) {
     showResumePrompt.value = true;
     stage.value = 'welcome';
     return;
@@ -500,7 +505,7 @@ const loadForm = async () => {
 const startForm = () => {
   showResumePrompt.value = false;
   stage.value = 'playing';
-  progressCache.startWatching();
+  if (!isPreview.value) progressCache.startWatching();
 };
 
 const resumeForm = () => {
@@ -508,11 +513,11 @@ const resumeForm = () => {
   showResumePrompt.value = false;
   if (restored) {
     stage.value = 'playing';
-    progressCache.startWatching();
+    if (!isPreview.value) progressCache.startWatching();
     toast.success('Progress restored. Pick up where you left off!');
   } else {
     ensureWelcomeStage();
-    progressCache.startWatching();
+    if (!isPreview.value) progressCache.startWatching();
   }
 };
 
@@ -520,7 +525,7 @@ const startFresh = () => {
   progressCache.clearProgress();
   showResumePrompt.value = false;
   ensureWelcomeStage();
-  progressCache.startWatching();
+  if (!isPreview.value) progressCache.startWatching();
 };
 
 const startPaymentFlow = async (responseId: string) => {
@@ -569,7 +574,12 @@ const submitAnswers = async () => {
 
   try {
     const payload = {
-      answers: { ...playerState.value.answers },
+      answers: playerStore.questionOrder.filter((id) =>
+        !formDefinition.value?.logic_rules?.length || id in playerStore.resolvedPath.answers,
+      ).map((id) => ({
+        question_id: id,
+        value: playerStore.resolvedPath.answers[id] ?? null,
+      })),
       captcha_token: playerState.value.captchaToken ?? undefined,
     };
 
@@ -659,8 +669,9 @@ const submitAnswers = async () => {
   }
 };
 
-const handleCompletionRequest = () => {
-  submitAnswers();
+const handleCompletionRequest = async () => {
+  const result = await previewCompletion(isPreview.value, async () => { await submitAnswers(); return 'submitted' as const; });
+  if (result === 'preview') stage.value = 'completed';
 };
 
 const buildSuccessRoute = () => {
@@ -792,12 +803,11 @@ watch(
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--player-text-color, #0f172a) 8%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--player-text-color, #0f172a) 8%, transparent) 1px, transparent 1px);
-  background-size: 44px 44px;
+  color: var(--player-text-color, #0f172a);
+  background-image: var(--player-pattern);
+  background-size: var(--player-pattern-size);
   mask-image: linear-gradient(180deg, rgba(0,0,0,0.38), transparent 72%);
-  opacity: 0.28;
+  opacity: 0.0224;
 }
 
 .player-host__shell {

@@ -77,7 +77,7 @@
           </div>
         </div>
         
-        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+        <label v-if="localBlock.type !== 'calculated'" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
           <input
             v-model="localBlock.required"
             type="checkbox"
@@ -93,7 +93,7 @@
          
         <div v-if="localBlock.category === 'text'" class="space-y-2">
           <input
-            v-if="localBlock.type === 'short' || localBlock.type === 'email' || localBlock.type === 'phone'"
+            v-if="localBlock.type === 'number' || localBlock.type === 'short' || localBlock.type === 'email' || localBlock.type === 'phone'"
             type="text"
             :placeholder="getInputPlaceholder()"
             disabled
@@ -136,7 +136,7 @@
               type="text"
               :placeholder="`Option ${index + 1}`"
               class="flex-1 px-3 py-2 text-sm bg-transparent border-b border-gray-200 dark:border-gray-700 outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-400"
-              @input="handleUpdate"
+              @input="updateOption(index)"
             />
             <button
               v-if="localBlock.options!.length > 1"
@@ -247,6 +247,8 @@ import {
   Clock,
   SlidersHorizontal,
   ToggleLeft,
+  Calculator,
+  Hash,
 } from "lucide-vue-next";
 import type { FormBlock } from "./types";
 import { slashMenuItems } from "./types";
@@ -273,6 +275,8 @@ const emit = defineEmits<{
 const cloneBlock = (block: FormBlock): FormBlock => ({
   ...block,
   options: block.options ? [...block.options] : undefined,
+  optionValues: block.optionValues?.map((option) => ({ ...option }))
+    ?? block.options?.map((label) => ({ value: label, label })),
 });
 
 const localBlock = ref<FormBlock>(cloneBlock(props.block));
@@ -318,6 +322,8 @@ const iconMap: Record<string, any> = {
   SlidersHorizontal,
   Upload,
   ToggleLeft,
+  Calculator,
+  Hash,
 };
 
 const getIcon = (iconName: string) => {
@@ -404,13 +410,17 @@ const changeType = (newType: FormBlock["type"]) => {
     slider: "rating",
     file: "file",
     yesno: "switch",
+    calculated: "info",
+    number: "text",
   };
 
   localBlock.value.type = newType;
   localBlock.value.category = categoryMap[newType] || "text";
+  if (newType === 'calculated') { localBlock.value.required = false; localBlock.value.calculation ??= { operator: 'add', left: { value: 0 }, right: { value: 0 } }; }
 
   if ((newType === "radio" || newType === "checkbox" || newType === "select") && (!localBlock.value.options || localBlock.value.options.length === 0)) {
     localBlock.value.options = ["Option 1", "Option 2", "Option 3"];
+    localBlock.value.optionValues = localBlock.value.options.map((label) => ({ value: crypto.randomUUID(), label }));
   }
 
   showTypeMenu.value = false;
@@ -450,6 +460,12 @@ const updateSlashMenuState = () => {
   });
 };
 
+const updateOption = (index: number) => {
+  const option = localBlock.value.optionValues?.[index];
+  if (option) option.label = localBlock.value.options?.[index] ?? '';
+  handleUpdate();
+};
+
 const addOption = (afterIndex?: number) => {
   if (!localBlock.value.options) {
     localBlock.value.options = [];
@@ -457,8 +473,10 @@ const addOption = (afterIndex?: number) => {
   const newOption = `Option ${localBlock.value.options.length + 1}`;
   if (afterIndex !== undefined) {
     localBlock.value.options.splice(afterIndex + 1, 0, newOption);
+    localBlock.value.optionValues?.splice(afterIndex + 1, 0, { value: crypto.randomUUID(), label: newOption });
   } else {
     localBlock.value.options.push(newOption);
+    localBlock.value.optionValues?.push({ value: crypto.randomUUID(), label: newOption });
   }
   handleUpdate();
 };
@@ -466,6 +484,7 @@ const addOption = (afterIndex?: number) => {
 const removeOption = (index: number) => {
   if (localBlock.value.options && localBlock.value.options.length > 1) {
     localBlock.value.options.splice(index, 1);
+    localBlock.value.optionValues?.splice(index, 1);
     handleUpdate();
   }
 };

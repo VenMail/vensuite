@@ -192,6 +192,7 @@ export interface FormTheme {
   background_color?: string;
   text_color?: string;
   surface_color?: string;
+  background_pattern?: 'none' | 'grid' | 'dots' | 'lines' | 'orbits';
 }
 
 export interface FormNavigation {
@@ -266,6 +267,7 @@ export type FormQuestion =
   | FormPhoneQuestion
   | FormWebsiteQuestion
   | FormNumberQuestion
+  | FormCalculatedQuestion
   | FormStatementBlock;
 
 export type FormQuestionType =
@@ -289,6 +291,7 @@ export type FormQuestionType =
   | "website"
   | "number"
   | "statement"
+  | "calculated"
   | "file"
   | "yesno";
 
@@ -312,7 +315,8 @@ export interface FormBaseQuestion {
   required: boolean;
   help_text?: string;
   logic?: LogicRule;
-  visibility_condition?: LogicCondition;
+  visibility_condition?: LogicConditionGroup;
+  calculation?: CalculationExpression;
   metadata?: Record<string, unknown>;
 }
 
@@ -436,15 +440,20 @@ export interface FormStatementBlock extends FormBaseQuestion {
   rich_text?: string;
 }
 
+export type CalculationExpression = { question_id: string } | { value: number } | { operator: 'add' | 'subtract' | 'multiply' | 'divide'; left: CalculationExpression; right: CalculationExpression };
+export interface FormCalculatedQuestion extends FormBaseQuestion { type: 'calculated'; category: 'info'; calculation?: CalculationExpression }
+export interface LogicConditionGroup { logic_type: 'AND' | 'OR'; conditions: (LogicCondition | LogicConditionGroup)[] }
+
 export interface LogicRule {
   id: string;
   scope: "form" | "page" | "question";
   owner_id?: string;
-  conditions: LogicCondition[];
+  conditions: (LogicCondition | LogicConditionGroup)[];
   logic_type: "AND" | "OR";
   actions: LogicAction[];
   order?: number;
   metadata?: Record<string, unknown>;
+  fallbacks?: LogicRule[];
 }
 
 export type LogicOperator =
@@ -669,6 +678,7 @@ const typeToLabelMap: Record<QuestionType, string> = {
   website: "Website",
   number: "Number",
   statement: "Statement",
+  calculated: "Calculation",
   file: "File Upload",
   rating: "Rating",
   yesno: "Yes/No",
@@ -694,6 +704,7 @@ export const typeToCategoryMap: Record<QuestionType, FieldCategory> = {
   website: "text",
   number: "text",
   statement: "info",
+  calculated: "info",
   file: "file",
   rating: "rating",
   yesno: "switch",

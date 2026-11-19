@@ -86,6 +86,23 @@
               </div>
             </FieldGroup>
 
+            <FieldGroup label="Background pattern">
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  v-for="pattern in formPatterns"
+                  :key="pattern.value"
+                  type="button"
+                  class="overflow-hidden rounded-lg border text-left text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+                  :class="(settingsStore.state.theme.background_pattern || 'grid') === pattern.value ? 'border-blue-600 ring-1 ring-blue-600' : 'border-gray-200 dark:border-gray-700'"
+                  :aria-pressed="(settingsStore.state.theme.background_pattern || 'grid') === pattern.value"
+                  @click="updateTheme({ background_pattern: pattern.value })"
+                >
+                  <span class="block h-12 bg-slate-50 text-slate-300" :style="{ backgroundImage: pattern.image, backgroundSize: pattern.size }" aria-hidden="true" />
+                  <span class="block px-2 py-2 text-gray-700 dark:text-gray-200">{{ pattern.label }}</span>
+                </button>
+              </div>
+            </FieldGroup>
+
             <!-- Button Style -->
             <FieldGroup label="Button Style">
               <div class="grid grid-cols-3 gap-2">
@@ -425,6 +442,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { formPatterns } from '@/utils/formPatterns';
 import { X, Plus, Maximize2, Columns, Wand2 } from 'lucide-vue-next';
 import { useFormSettingsStore } from '@/store/formSettings';
 import type { FormTheme, FormTypography, FormLabelPlacement, FormDensity, FormLayoutMode } from '@/types';

@@ -605,6 +605,9 @@
               @request-slash-menu="openSlashMenu"
               @close-slash-menu="closeSlashMenu"
             />
+            <CalculationEditor v-if="block.type === 'calculated'" :block="block" :previous="blocks.slice(0, index)" @update="handleBlockUpdate" />
+            <p v-if="invalidLogicIds.includes(block.id)" role="alert" class="mt-2 text-sm text-rose-700">Complete or remove invalid logic before saving.</p>
+            <ConditionEditor :block="block" :previous="blocks.slice(0, index)" :following="blocks.slice(index + 1)" @update="handleBlockUpdate" />
           </div>
         </TransitionGroup>
         <div
@@ -1314,6 +1317,11 @@ import IntegrationDialog from "@/components/forms/IntegrationDialog.vue";
 import { extractFormFields } from "@/utils/fieldExtractor";
 import { toast } from "@/composables/useToast";
 import BlockItemNew from "@/components/forms/blocks/BlockItemNew.vue";
+import ConditionEditor from "@/components/forms/blocks/ConditionEditor.vue";
+import CalculationEditor from "@/components/forms/blocks/CalculationEditor.vue";
+import { mapSavedFormIds } from '@/utils/formIdMapping.js';
+import { validateFormLogic, remapConditions, remapCalculation } from '@/utils/formFlow.js';
+import { createSaveQueue } from '@/utils/formSaveQueue.js';
 import SlashMenu from "@/components/forms/blocks/SlashMenu.vue";
 import FormConfigWizard from "@/components/forms/FormConfigWizardSimple.vue";
 import FormDesignPanel from "@/components/forms/FormDesignPanel.vue";
@@ -1354,6 +1362,7 @@ const isLoading = ref(true);
 
 const blocks = ref<FormBlock[]>([]);
 const focusedBlockId = ref<string | null>(null);
+const invalidLogicIds = computed(() => validateFormLogic(blocks.value.map((block) => ({ id: block.id, type: block.type, calculation: block.calculation, logic: block.logic, visibility_condition: block.visibilityCondition }))));
 const showSlashMenu = ref(false);
 const slashMenuFilter = ref("");
 const slashMenuPosition = ref({ top: 0, left: 0 });
@@ -1795,7 +1804,6 @@ const mapToSupportedType = (t: string): FormBlock["type"] => {
     case "lname":
     case "fullName":
     case "website":
-    case "number":
       return "short";
     case "address":
       return "long";
@@ -1813,7 +1821,7 @@ const mapToSupportedType = (t: string): FormBlock["type"] => {
 const normalizeBlock = (block: FormBlock): NormalizedFormBlock => {
   const type = mapToSupportedType((block.type as unknown) as string);
   const category = BLOCK_CATEGORY_BY_TYPE[type];
-  return { ...(block as any), type, category } as NormalizedFormBlock;
+  return { ...(block as any), type, category, ...(type === 'calculated' ? { required: false, calculation: block.calculation ?? { operator: 'add', left: { value: 0 }, right: { value: 0 } } } : {}) } as NormalizedFormBlock;
 };
 
 const ALLOWED_BLOCK_TYPES: FormBlock["type"][] = [
@@ -1830,6 +1838,8 @@ const ALLOWED_BLOCK_TYPES: FormBlock["type"][] = [
   "slider",
   "file",
   "yesno",
+  "calculated",
+  "number",
 ];
 
 type SupportedType = typeof ALLOWED_BLOCK_TYPES[number];
@@ -1852,6 +1862,8 @@ const BLOCK_CATEGORY_BY_TYPE: Record<FormBlock["type"], FormBlock["category"]> =
   slider: "rating",
   file: "file",
   yesno: "switch",
+  calculated: "info",
+  number: "text",
 };
 
 const ensurePagesInitialized = (description: string) => {
@@ -1901,6 +1913,7 @@ const serializeBlockToQuestion = (
     required: block.required,
     help_text: block.helpText,
     logic: block.logic,
+    calculation: block.calculation,
     visibility_condition: block.visibilityCondition,
     metadata: block.metadata,
   };
@@ -2122,8 +2135,17 @@ const triggerSave = () => {
   }, 2000);
 };
 
-const saveForm = async () => {
-  if (!formId.value) return;
+const remapBranchIds = (rule: import('@/types').LogicRule, mapping: Record<string, string>): import('@/types').LogicRule => ({
+  ...rule,
+  id: mapping[rule.id] ?? rule.id,
+  owner_id: rule.owner_id ? mapping[rule.owner_id] ?? rule.owner_id : undefined,
+  conditions: remapConditions(rule, mapping).conditions,
+  actions: rule.actions.map((action) => ({ ...action, target_id: action.target_id ? mapping[action.target_id] ?? action.target_id : undefined })),
+  fallbacks: rule.fallbacks?.map((fallback) => remapBranchIds(fallback, mapping)),
+});
+
+const performSave = async () => {
+  if (!formId.value || invalidLogicIds.value.length) return false;
 
   isSaving.value = true;
   try {
@@ -2139,7 +2161,7 @@ const saveForm = async () => {
       return serializeBlockToQuestion(block, pageId);
     });
 
-    await formStore.updateForm(formId.value, {
+    const saved = await formStore.updateForm(formId.value, {
       title: formTitle.value,
       pages: pagesPayload,
       questions: questionsPayload as FormQuestion[],
@@ -2161,18 +2183,41 @@ const saveForm = async () => {
       payment: settingsStore.state.payment,
     });
 
+    if (!saved) {
+      toast.error(formStore.error || 'Could not save form.');
+      return false;
+    }
+    const mapping = mapSavedFormIds(pagesPayload, saved.pages ?? []);
+    pagesState.value = pagesState.value.map((page) => ({ ...page, id: mapping.pages[page.id] ?? page.id }));
+    blocks.value = blocks.value.map((block) => ({
+      ...block,
+      id: mapping.questions[block.id] ?? block.id,
+      pageId: block.pageId ? mapping.pages[block.pageId] ?? block.pageId : block.pageId,
+      visibilityCondition: block.visibilityCondition ? {
+        ...block.visibilityCondition,
+        conditions: remapConditions(block.visibilityCondition, mapping.questions).conditions,
+      } : undefined,
+      logic: block.logic ? remapBranchIds(block.logic, mapping.questions) : undefined,
+      calculation: remapCalculation(block.calculation, mapping.questions),
+    }));
+    if (focusedBlockId.value) focusedBlockId.value = mapping.questions[focusedBlockId.value] ?? focusedBlockId.value;
     const now = new Date();
     lastSaved.value = now.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
     });
+    return true;
   } catch (error) {
     console.error("Failed to save form:", error);
-    console.error("Failed to save changes");
+    toast.error('Could not save form.');
+    return false;
   } finally {
     isSaving.value = false;
   }
 };
+
+const enqueueSave = createSaveQueue();
+const saveForm = () => enqueueSave(performSave);
 
 const handleTitleChange = () => {
   triggerSave();
@@ -2234,29 +2279,13 @@ const handleBlockDuplicate = (blockId: string) => {
 };
 
 const handleMoveUp = (blockId: string) => {
-  const index = blocks.value.findIndex((b) => b.id === blockId);
-  if (index > 0) {
-    // Create new array with swapped elements
-    const newBlocks = [...blocks.value];
-    const temp = newBlocks[index];
-    newBlocks[index] = newBlocks[index - 1];
-    newBlocks[index - 1] = temp;
-    blocks.value = newBlocks;
-    triggerSave();
-  }
+  const index = blocks.value.findIndex((block) => block.id === blockId);
+  applyBlockReorder(index, index - 1);
 };
 
 const handleMoveDown = (blockId: string) => {
-  const index = blocks.value.findIndex((b) => b.id === blockId);
-  if (index < blocks.value.length - 1) {
-    // Create new array with swapped elements
-    const newBlocks = [...blocks.value];
-    const temp = newBlocks[index];
-    newBlocks[index] = newBlocks[index + 1];
-    newBlocks[index + 1] = temp;
-    blocks.value = newBlocks;
-    triggerSave();
-  }
+  const index = blocks.value.findIndex((block) => block.id === blockId);
+  applyBlockReorder(index, index + 1);
 };
 
 const handleInsertBelow = (blockId: string) => {
@@ -2267,6 +2296,7 @@ const handleInsertBelow = (blockId: string) => {
     category: "text",
     question: "",
     required: false,
+    pageId: blocks.value[index]?.pageId ?? pagesState.value[0]?.id,
   };
   blocks.value.splice(index + 1, 0, newBlock);
   focusedBlockId.value = newBlock.id;
@@ -2280,6 +2310,7 @@ const handleAddBlock = () => {
     category: "text",
     question: "",
     required: false,
+    pageId: pagesState.value.at(-1)?.id,
   };
   blocks.value.push(newBlock);
   focusedBlockId.value = newBlock.id;
@@ -2310,6 +2341,11 @@ const applyBlockReorder = (fromIndex: number, toIndex: number) => {
   ) {
     return;
   }
+
+  const defaultPage = pagesState.value[0]?.id;
+  const movedPage = blocks.value[fromIndex]?.pageId ?? defaultPage;
+  const targetPage = blocks.value[Math.min(toIndex, blocks.value.length - 1)]?.pageId ?? defaultPage;
+  if (movedPage !== targetPage) return;
 
   const updated = [...blocks.value];
   const [moved] = updated.splice(fromIndex, 1);
@@ -2409,22 +2445,8 @@ const handleSlashSelect = (type: FormBlock["type"]) => {
 
   block.type = type;
 
-  const categoryMap: Record<string, FormBlock["category"]> = {
-    short: "text",
-    long: "text",
-    email: "text",
-    phone: "text",
-    date: "text",
-    time: "text",
-    radio: "choice",
-    checkbox: "choices",
-    select: "choice",
-    rating: "rating",
-    slider: "rating",
-    file: "file",
-    yesno: "switch",
-  };
-  block.category = categoryMap[type] ?? "text";
+  block.category = BLOCK_CATEGORY_BY_TYPE[type];
+  if (type === "calculated") block.required = false;
 
   if (
     (type === "radio" || type === "checkbox" || type === "select") &&
@@ -2602,15 +2624,21 @@ const ensurePublishedShareSlug = async (): Promise<FormDefinition | null> => {
 const handlePreview = async () => {
   if (!formId.value) return;
 
-  await saveForm();
-
-  const definition = await formStore.fetchForm(formId.value);
-  const isPublished = definition?.status === "published";
-  const shareSlug = definition?.sharing?.share_slug;
-  const target =
-    isPublished && shareSlug ? `/f/${shareSlug}` : `/f/by-id/${formId.value}`;
-
-  window.open(target, "_blank");
+  if (invalidLogicIds.value.length) {
+    toast.error('Complete or remove invalid logic before previewing.');
+    return;
+  }
+  const previewWindow = window.open('', '_blank');
+  if (!previewWindow) {
+    toast.error('Allow pop-ups to open the preview.');
+    return;
+  }
+  previewWindow.opener = null;
+  if (!await saveForm()) {
+    previewWindow.close();
+    return;
+  }
+  previewWindow.location.href = `/f/by-id/${encodeURIComponent(formId.value)}`;
 };
 
 const handlePublish = async () => {
@@ -2618,7 +2646,7 @@ const handlePublish = async () => {
 
   isPublishing.value = true;
   try {
-    await saveForm();
+    if (!await saveForm()) return;
     const definition = await ensurePublishedShareSlug();
     if (definition) {
       const effectiveDefinition: any = definition;
@@ -2835,9 +2863,11 @@ onMounted(async () => {
                 options: qAny.options?.map((opt: any) =>
                   typeof opt === "string" ? opt : opt.label || opt.value
                 ),
+                optionValues: qAny.options,
                 pageId: q.page_id,
                 helpText: qAny.help_text,
                 logic: qAny.logic,
+                calculation: qAny.calculation,
                 visibilityCondition: qAny.visibility_condition,
                 metadata: qAny.metadata,
                 // Rating/slider fields

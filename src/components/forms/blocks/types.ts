@@ -1,4 +1,4 @@
-import type { LogicCondition, LogicRule, Option } from "@/types";
+import type { CalculationExpression, LogicConditionGroup, LogicRule, Option } from "@/types";
 import { t } from '@/i18n';
 
 export type BlockType =
@@ -14,9 +14,11 @@ export type BlockType =
   | "rating"
   | "slider"
   | "file"
-  | "yesno";
+  | "yesno"
+  | "calculated"
+  | "number";
 
-export type BlockCategory = "text" | "choice" | "choices" | "rating" | "file" | "switch";
+export type BlockCategory = "text" | "choice" | "choices" | "rating" | "file" | "switch" | "info";
 
 export interface FormBlock {
   id: string;
@@ -47,7 +49,8 @@ export interface FormBlock {
   // Metadata
   helpText?: string;
   logic?: LogicRule;
-  visibilityCondition?: LogicCondition;
+  visibilityCondition?: LogicConditionGroup;
+  calculation?: CalculationExpression;
   metadata?: Record<string, unknown>;
   pageId?: string;
 }
@@ -63,6 +66,8 @@ export interface SlashMenuItem {
 }
 
 export const slashMenuItems: SlashMenuItem[] = [
+  { id: "number", label: "Number", description: "Numeric answer", icon: "Hash", type: "number", category: "text", keywords: ["number", "quantity", "amount"] },
+  { id: "calculated", label: "Calculation", description: "Calculate a value", icon: "Calculator", type: "calculated", category: "info", keywords: ["calculation", "total", "formula"] },
   {
     id: "short",
     label: "Short Text",

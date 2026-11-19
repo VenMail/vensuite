@@ -28,7 +28,7 @@
                     </Label>
                   </div>
                   <div v-if="field.logic" class="mt-2">
-                    <div class="mb-2">
+                    <div v-if="field.logic.conditions[0] && 'operator' in field.logic.conditions[0]" class="mb-2">
                       <Select v-model="field.logic.conditions[0].operator" class="mb-2">
                         <SelectTrigger>
                           <SelectValue placeholder="Select operator" />

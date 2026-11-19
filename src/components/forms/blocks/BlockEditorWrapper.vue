@@ -47,6 +47,7 @@ const SUPPORTED_BLOCK_TYPES: FormBlock["type"][] = [
   "slider",
   "file",
   "yesno",
+  "number",
 ];
 
 const mapQuestionTypeToBlockType = (type: FormQuestionType): FormBlock["type"] => {
@@ -87,6 +88,8 @@ const getBlockCategory = (type: FormBlock["type"]): FormBlock["category"] => {
     slider: "rating",
     file: "file",
     yesno: "switch",
+    calculated: "info",
+    number: "text",
   };
   return categoryMap[type];
 };

@@ -13,10 +13,12 @@
 
     <div :class="fieldWrapperClass">
        
+      <output v-if="type === 'calculated'" :id="inputId" class="form-control block w-full" :aria-label="label">{{ modelValue ?? '—' }}</output>
       <input
-      v-if="isShortInput"
+      v-else-if="isShortInput"
       :id="inputId"
       :type="inputType"
+      :step="type === 'number' ? 'any' : undefined"
       class="form-control w-full"
       :placeholder="placeholder"
       :value="stringValue"

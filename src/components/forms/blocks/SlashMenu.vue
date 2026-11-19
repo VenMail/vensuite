@@ -66,6 +66,8 @@ import {
   SlidersHorizontal,
   Upload,
   ToggleLeft,
+  Calculator,
+  Hash,
 } from "lucide-vue-next";
 import { slashMenuItems, type BlockType } from "./types";
 
@@ -98,6 +100,8 @@ const iconMap: Record<string, any> = {
   SlidersHorizontal,
   Upload,
   ToggleLeft,
+  Calculator,
+  Hash,
 };
 
 const getIcon = (iconName: string) => {

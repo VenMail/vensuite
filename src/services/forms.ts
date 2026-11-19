@@ -1,3 +1,4 @@
+import { normalizeFormOptions, questionLogic } from '@/utils/formOptions.js';
 import { apiClient, withRequestOptions, type RequestOptions } from "./apiClient";
 import type {
   AppForm,
@@ -20,10 +21,11 @@ const TYPE_ALIASES: Record<string, string> = {
   fname: "short",
   lname: "short",
   fullname: "short",
-  number: "short",
 };
 
 const CATEGORY_BY_TYPE: Record<string, string> = {
+  number: "text",
+  calculated: "info",
   short: "text",
   long: "text",
   email: "text",
@@ -45,18 +47,6 @@ const normalizeQuestionType = (type: unknown): string => {
   return TYPE_ALIASES[normalized] ?? normalized;
 };
 
-const normalizeOptions = (rawOptions: unknown): string[] | undefined => {
-  if (!Array.isArray(rawOptions)) return undefined;
-  return rawOptions.map((option, index) => {
-    if (typeof option === "string") return option;
-    if (option && typeof option === "object") {
-      const candidate = (option as Record<string, unknown>).label ?? (option as Record<string, unknown>).value;
-      if (candidate && typeof candidate === "string") return candidate;
-    }
-    return `Option ${index + 1}`;
-  });
-};
-
 const normalizeQuestion = (question: any, pageId: string, fallbackIndex: number): FormQuestion => {
   const normalizedType = normalizeQuestionType(question?.type);
   const config = (question?.config ?? {}) as Record<string, unknown>;
@@ -73,9 +63,10 @@ const normalizeQuestion = (question: any, pageId: string, fallbackIndex: number)
     required: Boolean(question?.required),
     position: question?.position ?? fallbackIndex,
     visibility_condition: question?.visibility_condition ?? null,
-    options: normalizeOptions(config.options ?? question?.options),
+    options: normalizeFormOptions(config.options ?? question?.options),
     validation: Array.isArray(question?.validation) ? question.validation : [],
-    logic: question?.logic ?? config.logic,
+    logic: questionLogic(question),
+    calculation: config.calculation ?? question?.calculation,
     metadata: question?.metadata ?? config.metadata,
     // Rating/slider type-specific fields
     icon_type: config.icon_type ?? question?.icon_type,

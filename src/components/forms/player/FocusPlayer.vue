@@ -10,9 +10,6 @@
           <span class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400 dark:text-gray-500">
             Step {{ currentStep }} of {{ totalSteps }}
           </span>
-          <h2 class="text-3xl font-semibold leading-tight text-gray-950 dark:text-gray-100">
-            {{ encouragementMessage }}
-          </h2>
           <p v-if="formTitle" class="max-w-xl text-sm font-medium text-gray-600 dark:text-gray-300">
             {{ formTitle }}
           </p>
@@ -47,7 +44,7 @@
 
     <div class="mt-auto flex flex-col gap-4 rounded-lg border px-6 py-5 transition" style="background: var(--player-muted-surface, rgba(248,250,252,0.85)); border-color: var(--player-muted-border, rgba(203,213,225,0.6)); box-shadow: var(--player-muted-elevation, 0 12px 32px rgba(15,23,42,0.08));">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p class="text-sm text-gray-500 dark:text-gray-400">
+        <p v-if="currentQuestion.type !== 'calculated'" class="text-sm text-gray-500 dark:text-gray-400">
           {{ footerMessage }}
         </p>
         <div class="flex items-center gap-3">
@@ -218,24 +215,7 @@ const canProceed = computed(() => {
 });
 
 
-const encouragementMessage = computed(() => {
-  if (!totalSteps.value) return 'Let’s get started';
-  if (progressPercent.value >= 90) return 'Almost there!';
-  if (progressPercent.value >= 60) return 'Great progress!';
-  if (progressPercent.value >= 30) return 'You’re doing well';
-  return 'Let’s get started';
-});
-
-const footerMessage = computed(() => {
-  if (!currentQuestion.value) return '';
-  if (currentQuestion.value.required) {
-    return 'This question is required. Provide an answer to continue.';
-  }
-  if (showSkip.value) {
-    return 'You can skip this question or come back later.';
-  }
-  return 'Provide your answer and use Next when you are ready.';
-});
+const footerMessage = computed(() => currentQuestion.value?.required ? 'Required' : 'Optional');
 
 const setCurrentQuestionId = (targetId: string | null) => {
   playerStore.advanceToQuestion(targetId);
