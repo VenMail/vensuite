@@ -33,6 +33,7 @@ const avnacImportRewriter = {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const shareBaseUrl = env.VITE_SHARE_BASE_URL || 'https://venia.cloud';
+  const offlineShell = '/index.html?offline-shell=1';
 
   return {
     plugins: [
@@ -52,26 +53,33 @@ export default defineConfig(({ mode }) => {
       }),
       VitePWA({
         registerType: 'autoUpdate',
-        injectRegister: 'auto',
+        injectRegister: null,
         manifest: false,
         workbox: {
           globPatterns: [
             '**/*.{js,css,html,ico,png,svg,woff,woff2,ttf,eot,json}',
           ],
           maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
-          // SPA shell fallback. The app is responsible for showing offline UI when API calls fail.
-          navigateFallback: '/index.html',
-          navigateFallbackDenylist: [
-            /^\/api\//,
-            /^\/storage\//,
-            /^\/manifest\.json$/,
-            /^\/sw\.js$/,
+          // Reserve a separate cache key for the offline shell. Otherwise the
+          // precache route matches /index.html before the network route does.
+          navigateFallback: null,
+          directoryIndex: null,
+          manifestTransforms: [
+            async (entries) => ({
+              manifest: entries.map((entry) =>
+                entry.url === 'index.html' ? { ...entry, url: offlineShell } : entry,
+              ),
+              warnings: [],
+            }),
           ],
-          // NOTE: We intentionally do NOT cache /api/* or /storage/* here. Those responses are
-          // authenticated and user-scoped; caching them in a shared SW cache would leak data
-          // across sessions on the same device. The app handles document offline storage via
-          // its own local cache layer (see src/store/files.ts).
           runtimeCaching: [
+            {
+              urlPattern: ({ request, sameOrigin, url }) =>
+                sameOrigin && request.mode === 'navigate'
+                && !/^\/(?:api|storage)(?:\/|$)/.test(url.pathname),
+              handler: 'NetworkOnly',
+              options: { precacheFallback: { fallbackURL: offlineShell } },
+            },
             {
               urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
               handler: 'CacheFirst',
