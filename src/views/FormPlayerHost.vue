@@ -49,6 +49,7 @@
       <main
         :class="[
           'player-host__body',
+          stage === 'completed' ? 'player-host__body--completed' : '',
           isClassicMode
             ? 'player-host__body--classic'
             : 'player-host__body--focus'
@@ -137,38 +138,23 @@
           @retry="handlePaymentRetry"
         />
 
-        <section v-else-if="stage === 'completed'" class="player-host__completion">
-          <div
-            :class="[
-              'completion-card',
-              isClassicMode ? 'completion-card--classic' : 'completion-card--focus'
-            ]"
-          >
-            <div
-              :class="[
-                'completion-card__badge',
-                isClassicMode
-                  ? 'completion-card__badge--classic'
-                  : 'completion-card__badge--focus'
-              ]"
+        <section v-else-if="stage === 'completed'" class="player-host__completion" aria-labelledby="completion-title">
+          <div class="completion-card">
+            <span class="completion-card__mark" aria-hidden="true">
+              <Check :size="21" :stroke-width="2.5" />
+            </span>
+            <p v-if="isPreview" class="completion-card__mode">Preview</p>
+            <h2 id="completion-title" ref="completionHeading" tabindex="-1">{{ completionTitle }}</h2>
+            <p v-if="completionMessage" class="completion-card__message">{{ completionMessage }}</p>
+            <button
+              v-if="completionButtonText"
+              type="button"
+              class="completion-card__action"
+              @click="reload"
             >
-              <svg viewBox="0 0 52 52" aria-hidden="true">
-                <circle cx="26" cy="26" r="25" />
-                <polyline points="16 26 23 33 36 20" />
-              </svg>
-            </div>
-            <div class="completion-card__body">
-              <h2>{{ completionTitle }}</h2>
-              <p v-if="completionMessage" class="text-slate-600 dark:text-slate-300">{{ completionMessage }}</p>
-              <button
-                v-if="completionButtonText"
-                type="button"
-                class="player-host__button player-host__button--secondary completion-card__button"
-                @click="reload"
-              >
-                {{ completionButtonText }}
-              </button>
-            </div>
+              {{ completionButtonText }}
+              <ArrowRight :size="16" aria-hidden="true" />
+            </button>
           </div>
         </section>
       </main>
@@ -178,6 +164,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { ArrowRight, Check } from 'lucide-vue-next';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import FocusPlayer from '@/components/forms/player/FocusPlayer.vue';
@@ -227,7 +214,16 @@ const completionScreen = computed<FormCompletionScreen | null>(() => {
 
 const completionTitle = computed(() => completionScreen.value?.title ?? 'Thank you!');
 const completionMessage = computed(() => isPreview.value ? 'No response was submitted.' : completionScreen.value?.message ?? 'Your response has been recorded.');
-const completionButtonText = computed(() => completionScreen.value?.button_text ?? null);
+const completionButtonText = computed(() => {
+  if (isPreview.value) return 'Restart preview';
+  const label = completionScreen.value?.button_text?.trim();
+  if (label && label !== 'Continue') return label;
+  return formDefinition.value?.sharing?.allow_resubmit ? 'Submit another response' : null;
+});
+const completionHeading = ref<HTMLHeadingElement | null>(null);
+watch(stage, (nextStage) => {
+  if (nextStage === 'completed') completionHeading.value?.focus();
+}, { flush: 'post' });
 const formTitle = computed(() => formDefinition.value?.title || 'Untitled form');
 const formDescription = computed(() => formDefinition.value?.description || '');
 const formContextLabel = computed(() => formIdParam.value ? 'Preview' : 'Secure form');
@@ -1039,16 +1035,13 @@ watch(
   box-shadow: 0 0 0 2px var(--player-bg, #fff), 0 0 0 4px var(--player-accent, #2563eb);
 }
 
-.player-host__welcome,
-.player-host__completion {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.player-host__welcome {
+  display: grid;
+  place-items: center;
   min-height: 320px;
 }
 
-.welcome-card,
-.completion-card {
+.welcome-card {
   width: min(480px, 100%);
   text-align: center;
   padding: 2.5rem 2rem;
@@ -1062,85 +1055,111 @@ watch(
   backdrop-filter: blur(18px);
 }
 
-.welcome-card h2,
-.completion-card h2 {
+.welcome-card h2 {
   font-size: clamp(1.8rem, 3.5vw, 2.4rem);
   margin-bottom: 0.75rem;
 }
 
-.welcome-card p,
-.completion-card p {
+.welcome-card p {
   margin-bottom: 1.5rem;
 }
 
-.completion-card__badge {
-  width: 104px;
-  height: 104px;
-  margin: 0 auto;
-  border-radius: 32px;
+.player-host__body--completed {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.player-host__completion {
   display: grid;
   place-items: center;
+  min-height: clamp(23rem, 72svh, 49rem);
+}
+
+.completion-card {
   position: relative;
+  width: min(42rem, 100%);
   overflow: hidden;
-  box-shadow: 0 20px 45px color-mix(in srgb, var(--player-accent, #2563eb) 18%, transparent);
-}
-
-.completion-card__badge svg {
-  width: 64px;
-  height: 64px;
-  stroke: white;
-  stroke-width: 5;
-  fill: none;
-}
-
-.completion-card__badge svg circle {
-  stroke: rgba(255, 255, 255, 0.2);
-}
-
-.completion-card__badge svg polyline {
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.completion-card__badge--classic {
-  background: linear-gradient(135deg, var(--player-accent, #2563eb), var(--player-accent-strong, #1d4ed8));
-}
-
-.completion-card__badge--focus {
-  background: white;
-  border: 2px solid var(--player-accent, #2563eb);
-  box-shadow: none;
-}
-
-.completion-card__badge--focus svg circle {
-  stroke: color-mix(in srgb, var(--player-accent, #2563eb) 18%, transparent);
-}
-
-.completion-card__badge--focus svg polyline {
-  stroke: var(--player-accent, #2563eb);
-}
-
-.completion-card__body {
-  display: grid;
-  gap: 1rem;
-}
-
-.completion-card__body p {
-  margin: 0;
-}
-
-.completion-card__button {
-  justify-self: center;
-}
-
-.completion-card--classic {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--player-accent, #2563eb) 8%, var(--player-surface)), var(--player-surface) 44%);
-  border: 1px solid color-mix(in srgb, var(--player-accent, #2563eb) 18%, transparent);
-}
-
-.completion-card--focus {
+  padding: clamp(2rem, 6.5vw, 4.5rem);
+  border: 1px solid var(--player-surface-border);
+  border-radius: 1.25rem;
   background: var(--player-surface);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: var(--player-text-color);
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+}
+
+.completion-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--player-accent);
+  content: '';
+}
+
+.completion-card__mark {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: 1.75rem;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--player-accent) 13%, var(--player-surface));
+  color: var(--player-text-color);
+}
+
+.completion-card__mode {
+  margin-bottom: 0.65rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.completion-card h2 {
+  max-width: 19ch;
+  color: inherit;
+  font-family: var(--player-heading-font, inherit);
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  font-weight: 720;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.completion-card h2:focus-visible {
+  outline: 2px solid var(--player-accent);
+  outline-offset: 5px;
+}
+
+.completion-card__message {
+  max-width: 42ch;
+  margin-top: 1rem;
+  color: inherit;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.completion-card__action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--player-surface-border);
+  border-radius: 0.55rem;
+  font-weight: 650;
+  text-align: left;
+}
+
+.completion-card__action:hover {
+  background: color-mix(in srgb, var(--player-accent) 8%, var(--player-surface));
+}
+
+.completion-card__action:focus-visible {
+  outline: 2px solid var(--player-accent);
+  outline-offset: 3px;
 }
 
 @media (max-width: 720px) {

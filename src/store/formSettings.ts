@@ -87,7 +87,6 @@ const createDefaultCompletionScreen = (): FormCompletionScreen => ({
   enabled: true,
   title: t('Store.FormSettings.heading.thank_you'),
   message: "We’ve received your response.",
-  button_text: "Continue",
   show_summary: false,
 });
 

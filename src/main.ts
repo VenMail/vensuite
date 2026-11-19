@@ -245,4 +245,17 @@ async function bootstrap() {
 
 void bootstrap();
 
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  // The entry filename changes with the build, bypassing cached worker scripts
+  // at the CDN. Keep the same scope so this replaces previous registrations.
+  const workerUrl = new URL('/sw.js', window.location.origin)
+  workerUrl.searchParams.set('release', new URL(import.meta.url).pathname.split('/').pop() ?? '')
+  const registerWorker = () => {
+    void navigator.serviceWorker.register(workerUrl, { scope: '/', updateViaCache: 'none' })
+      .catch((error) => console.warn('Service worker registration failed:', error))
+  }
+  if (document.readyState === 'complete') registerWorker()
+  else window.addEventListener('load', registerWorker, { once: true })
+}
+
 export { router }
