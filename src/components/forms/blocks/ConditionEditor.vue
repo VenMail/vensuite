@@ -10,7 +10,7 @@ const add = () => emit('update', { ...props.block, visibilityCondition: { logic_
 </script>
 
 <template>
-  <details v-if="previous.length || following.length || block.visibilityCondition || block.logic" class="mt-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
+  <details v-if="previous.length || following.length || block.visibilityCondition || block.logic" class="logic-disclosure mt-1 rounded-lg px-3 py-2 text-sm">
     <summary class="cursor-pointer font-medium text-slate-700 dark:text-slate-200">Logic<span v-if="block.visibilityCondition?.conditions.length"> · {{ block.visibilityCondition.conditions.length }}</span></summary>
     <div class="space-y-3 pt-3">
       <template v-if="block.visibilityCondition">
@@ -22,3 +22,10 @@ const add = () => emit('update', { ...props.block, visibilityCondition: { logic_
     </div>
   </details>
 </template>
+
+<style scoped>
+.logic-disclosure { color: #475569; }
+.logic-disclosure[open] { margin-top: .5rem; padding: 1rem; border: 1px solid #dbe2e8; background: #fff; }
+:global(.dark) .logic-disclosure { color: #cbd5e1; }
+:global(.dark) .logic-disclosure[open] { border-color: #475569; background: #1e293b; }
+</style>

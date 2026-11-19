@@ -7,7 +7,7 @@
     }"
   >
      
-    <div class="absolute -left-12 top-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity" @mousedown.prevent>
+    <div class="block-tools absolute -left-12 top-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity" @mousedown.prevent>
       <button
         class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
         title="Drag to reorder"
@@ -505,7 +505,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.block-item-new {
-  position: relative;
+.block-item-new { position: relative; border-radius: 16px; }
+.block-item-new__content { border-width: 1px; border-radius: 16px; box-shadow: 0 4px 18px rgba(15,23,42,.045); }
+.block-item-new:focus-within .block-tools { opacity: 1; }
+@media (max-width: 640px) {
+  .block-tools { position: static; flex-direction: row; justify-content: flex-end; opacity: 1; padding: 0 .5rem .25rem; }
+  .block-tools button { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .block-item-new__content { padding: 1.1rem; }
 }
 </style>

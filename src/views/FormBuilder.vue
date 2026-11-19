@@ -8,6 +8,7 @@
         <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
           <button
             class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 shrink-0"
+            aria-label="Back to forms"
             @click="handleBack"
           >
             <ArrowLeft class="w-5 h-5" />
@@ -553,16 +554,17 @@
           </Transition>
         </div>
 
-        <input
+        <textarea
           v-model="formTitle"
-          type="text"
+          rows="1"
+          aria-label="Form title"
           placeholder="Untitled Form"
-          class="text-5xl font-bold w-full bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 mb-4"
+          class="builder-title text-5xl font-bold w-full bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 mb-4"
           @input="handleTitleChange"
         />
         <textarea
           v-model="formDescription"
-          placeholder="Add a description to help people understand your form..."
+          placeholder="Description (optional)"
           rows="2"
           class="text-lg w-full bg-transparent border-none outline-none text-gray-600 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
           @input="handleDescriptionChange"
@@ -2915,6 +2917,15 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.form-builder-new { font-family: Onest, Inter, ui-sans-serif, system-ui, sans-serif; }
+.form-builder-new__topbar { box-shadow: 0 1px 0 rgba(15,23,42,.03); }
+.form-builder-new__content { padding-top: clamp(2rem, 5vw, 3.5rem); }
+.form-builder-new__header { margin-bottom: 2rem; }
+.form-builder-new__header > .builder-title { field-sizing: content; min-height: 1.2em; max-height: 6em; resize: none; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.035em; line-height: 1.15; }
+.form-builder-new__header > textarea { font-size: 1rem; line-height: 1.6; }
+.form-builder-new :deep(button:focus-visible), .form-builder-new :deep(input:focus-visible), .form-builder-new :deep(textarea:focus-visible), .form-builder-new :deep(select:focus-visible) { outline: 2px solid #0f766e; outline-offset: 2px; }
+@media (max-width: 640px) { .form-builder-new__content { padding-left: 1rem; padding-right: 1rem; } }
+
 .block-list-move,
 .block-list-enter-active,
 .block-list-leave-active {

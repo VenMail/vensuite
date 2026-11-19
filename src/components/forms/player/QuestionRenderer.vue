@@ -1,7 +1,7 @@
 <template>
   <div :class="containerClass">
     <div :class="labelWrapperClass">
-      <label :for="inputId" class="flex items-baseline gap-1.5 text-base font-semibold leading-tight text-slate-950 dark:text-white">
+      <label :for="inputId" class="question-label flex items-baseline gap-1.5 text-base font-semibold leading-tight text-slate-950 dark:text-white">
         <span>{{ label }}</span>
         <span v-if="required" class="text-rose-500" aria-label="required">*</span>
       </label>
@@ -414,7 +414,7 @@ const hasError = computed(() => Boolean((errorMessage.value || '').length));
 const errorMessage = computed(() => {
   const val = stringValue.value;
   if (!required.value && !val) return '';
-  if (required.value && !val) return 'This field is required';
+  if (required.value && !val) return '';
   const rules = activeValidation.value;
   if (!rules) return '';
   if (rules.minLength && val.length < rules.minLength) return `Minimum length is ${rules.minLength} characters`;
@@ -432,13 +432,15 @@ const lengthHint = computed(() => {
   if (!isLongInput.value) return '';
   const rules = activeValidation.value;
   const hints: string[] = [];
-  if (rules?.minLength) hints.push(`Min ${rules.minLength}`);
+  if (rules?.minLength && rules.minLength > 1) hints.push(`Min ${rules.minLength}`);
   if (rules?.maxLength) hints.push(`Max ${rules.maxLength}`);
   return hints.length ? `${hints.join(' · ')} characters` : '';
 });
 </script>
 
 <style scoped>
+.question-label { color: var(--player-text-color, #0f172a); }
+
 :deep(input:focus),
 :deep(textarea:focus),
 :deep(select:focus) {
@@ -451,7 +453,7 @@ const lengthHint = computed(() => {
   border: 1px solid color-mix(in srgb, var(--player-text-color, #0f172a) 18%, transparent);
   background: color-mix(in srgb, var(--player-surface, #fff) 92%, white);
   padding: 0.85rem 1rem;
-  color: #0f172a;
+  color: var(--player-text-color, #0f172a);
   font-size: 0.98rem;
   line-height: 1.45;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
@@ -541,17 +543,6 @@ const lengthHint = computed(() => {
 
 .file-input-themed:hover::file-selector-button {
   background-color: color-mix(in srgb, var(--player-accent, #3b82f6) 25%, transparent);
-}
-
-:global(.dark) .form-control {
-  border-color: rgba(71, 85, 105, 0.85);
-  background: rgba(15, 23, 42, 0.78);
-  color: #f8fafc;
-  box-shadow: none;
-}
-
-:global(.dark) .form-control::placeholder {
-  color: #64748b;
 }
 
 :global(.dark) .choice-option--active {

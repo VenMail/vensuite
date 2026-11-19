@@ -26,7 +26,7 @@
           <h1>{{ formTitle }}</h1>
           <p v-if="formDescription">{{ formDescription }}</p>
         </div>
-        <dl class="player-host__meta">
+        <dl v-if="isClassicMode" class="player-host__meta">
           <div>
             <dt>Questions</dt>
             <dd>{{ questionCountText }}</dd>
@@ -888,7 +888,8 @@ watch(
   display: flex;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: clamp(1rem, 2vw, 1.4rem);
+  padding: 1rem 1.25rem;
+  color: var(--player-text-color, #0f172a);
   border: 1px solid var(--player-surface-border);
   border-radius: 12px;
   background: color-mix(in srgb, var(--player-surface) 82%, transparent);
@@ -898,8 +899,9 @@ watch(
 
 .player-host__context h1 {
   margin: 0.25rem 0 0;
+  color: var(--player-text-color, #0f172a);
   font-family: var(--player-heading-font, inherit);
-  font-size: clamp(1.65rem, 4vw, 3.2rem);
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
   font-weight: 750;
   letter-spacing: 0;
   line-height: 0.98;

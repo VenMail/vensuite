@@ -6,16 +6,9 @@
   >
     <div class="space-y-6">
       <div v-if="showProgress" class="space-y-4">
-        <div class="flex flex-col items-center gap-2 text-center">
-          <span class="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400 dark:text-gray-500">
-            Step {{ currentStep }} of {{ totalSteps }}
-          </span>
-          <p v-if="formTitle" class="max-w-xl text-sm font-medium text-gray-600 dark:text-gray-300">
-            {{ formTitle }}
-          </p>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            {{ Math.round(progressPercent) }}% complete
-          </p>
+        <div class="focus-progress-label">
+          <span>Question {{ currentStep }} of {{ totalSteps }}</span>
+          <span>{{ Math.round(progressPercent) }}%</span>
         </div>
 
         <div class="relative h-2 w-full overflow-hidden rounded-full" style="background: var(--player-progress-track, rgba(226,232,240,0.95));">
@@ -42,7 +35,7 @@
       </Transition>
     </div>
 
-    <div class="mt-auto flex flex-col gap-4 rounded-lg border px-6 py-5 transition" style="background: var(--player-muted-surface, rgba(248,250,252,0.85)); border-color: var(--player-muted-border, rgba(203,213,225,0.6)); box-shadow: var(--player-muted-elevation, 0 12px 32px rgba(15,23,42,0.08));">
+    <div class="focus-actions mt-auto flex flex-col gap-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p v-if="currentQuestion.type !== 'calculated'" class="text-sm text-gray-500 dark:text-gray-400">
           {{ footerMessage }}
@@ -160,7 +153,6 @@ const progressPercent = computed(() => {
 });
 
 const totalSteps = computed(() => questionOrder.value.length || (currentQuestion.value ? 1 : 0));
-const formTitle = computed(() => playerState.value.formDefinition?.title ?? '');
 
 const currentStep = computed(() => {
   if (!currentQuestion.value) return 0;
@@ -341,12 +333,20 @@ useFormKeyboard({
 
 <style scoped>
 .focus-player {
-  border-radius: 12px;
+  border-radius: 20px;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
   background: var(--player-surface, rgba(255,255,255,0.95));
   border-color: var(--player-surface-border, rgba(203,213,225,0.5));
   box-shadow: var(--player-elevation, 0 24px 70px rgba(15,23,42,0.13));
   backdrop-filter: blur(18px);
 }
+
+.focus-progress-label { display: flex; justify-content: space-between; color: color-mix(in srgb, var(--player-text-color, #0f172a) 72%, transparent); font-size: .8rem; font-weight: 650; letter-spacing: .02em; }
+.focus-actions { border-top: 1px solid color-mix(in srgb, var(--player-text-color, #0f172a) 12%, transparent); padding-top: 1.25rem; }
+.focus-question { padding-top: clamp(1.5rem, 5vh, 3.5rem); }
+.focus-question :deep(.question-label) { color: var(--player-text-color, #0f172a); font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 700; letter-spacing: -.025em; line-height: 1.2; }
+.focus-question :deep(.form-control) { min-height: 3.5rem; font-size: 1.05rem; }
+@media (prefers-reduced-motion: reduce) { .focus-slide-enter-active, .focus-slide-leave-active { transition: none !important; } }
 
 .focus-slide-enter-active,
 .focus-slide-leave-active {
